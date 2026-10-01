@@ -490,10 +490,68 @@ async function copyLink(btn, link) {
   setTimeout(() => { if (btn.isConnected) btn.textContent = orig; }, 2500);
 }
 
+// ---------- PWA install prompt ----------
+let _pwaPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); _pwaPrompt = e;
+  const banner = $('installBanner'); if (banner) banner.hidden = false;
+});
+window.addEventListener('appinstalled', () => {
+  _pwaPrompt = null;
+  const banner = $('installBanner'); if (banner) banner.hidden = true;
+});
+
+// ---------- online / offline ----------
+function updateNetStatus() {
+  const bar = $('offlineBar'); if (!bar) return;
+  bar.hidden = navigator.onLine;
+}
+window.addEventListener('online', () => { updateNetStatus(); showNotice("You're back online.", ""); });
+window.addEventListener('offline', updateNetStatus);
+
+// ---------- new-posts toast ----------
+let _newCount = 0, _seenSizes = {};
+function trackNew(coll, rows) {
+  const prev = _seenSizes[coll]; _seenSizes[coll] = rows.length;
+  if (prev == null) return;
+  const added = rows.length - prev;
+  if (added > 0) {
+    _newCount += added;
+    const t = $('newToast');
+    if (t) { const s = t.querySelector('span'); if (s) s.textContent = _newCount + ' new post' + (_newCount > 1 ? 's' : '') + ' arrived — tap to see ↑'; t.hidden = false; }
+  }
+}
+
+// ---------- bottom navigation ----------
+function renderBottomNav() {
+  const nav = $('bottomNav'); if (!nav) return;
+  const icons = { doubts: '❓', ideas: '💡', clubs: '🏛' };
+  const labels = { doubts: 'Doubts', ideas: 'Ideas', clubs: 'Clubs' };
+  nav.replaceChildren(
+    ...['doubts', 'ideas', 'clubs'].map(tab => {
+      const cnt = state[TABS[tab].coll].length;
+      return el('button', { type: 'button', class: 'bnav-btn' + (state.tab === tab ? ' active' : ''), onclick: () => {
+        if (state.tab === tab) return;
+        state.tab = tab; state.group = 'All'; state.filter = 'all'; state.query = '';
+        state.selected = null; state.mode = 'intro'; $('search').value = '';
+        try { history.replaceState(null, '', '#' + tab); } catch (_) {} render();
+      } },
+        el('span', { class: 'bnav-icon' }, icons[tab]),
+        el('span', { class: 'bnav-label' }, labels[tab]),
+        cnt > 0 && el('span', { class: 'bnav-count' }, cnt > 99 ? '99+' : String(cnt))
+      );
+    }),
+    el('button', { type: 'button', class: 'bnav-btn', onclick: () => showPanel('leaders') },
+      el('span', { class: 'bnav-icon' }, '🏆'), el('span', { class: 'bnav-label' }, 'Board')),
+    el('button', { type: 'button', class: 'bnav-btn' + (!getName() ? ' bnav-pulse' : ''), onclick: () => { state.afterName = null; showPanel(getName() ? 'me' : 'name'); } },
+      el('span', { class: 'bnav-icon' }, getName() ? getAvatar() : '👤'), el('span', { class: 'bnav-label' }, getName() ? 'Me' : 'Profile'))
+  );
+}
+
 // ---------- rendering ----------
 function renderTrendBar() {
   const bar = document.getElementById("trendBar");
-  if (!bar || !state.loaded) return;
+  if (!bar) return;
   const cutoff = Date.now() - 6 * 3600 * 1000; // last 6 hours
   const counts = {};
   for (const d of state.doubts) if ((d.createdAt || 0) > cutoff) counts[d.subject] = (counts[d.subject] || 0) + 2;
@@ -1041,14 +1099,36 @@ function renderExams() {
 
 function renderIntro() {
   const t = TABS[state.tab];
-  const steps = state.tab === "doubts"
-    ? "1. Ask: pick the subject and write the question. Add a photo of your notebook or write it on the notebook page.\n2. Answer: open any doubt and explain the steps. You can attach your handwritten working too.\n3. Resolve: the student who asked marks the answer that helped. Tap “I have this doubt too” on doubts you share."
-    : "1. Share: post an idea for a project, startup, research or campus. Sketch it on the notebook page if that helps.\n2. Like: tap ♥ on ideas you want to see happen.\n3. Build: reply with thoughts, improvements or an offer to join.";
+  // Live stats
+  const totalPosts = state.doubts.length + state.ideas.length + state.clubs.length;
+  const students = new Set([...state.doubts, ...state.ideas, ...state.clubs].filter(p => !p.anonymous).map(p => p.authorId)).size;
+  const resolved = state.doubts.filter(d => d.resolvedReplyId).length;
+  const open = state.doubts.length - resolved;
+  const statsRow = totalPosts > 0 ? el(“div”, { class: “intro-stats” },
+    el(“div”, { class: “intro-stat” }, el(“span”, { class: “intro-stat-n” }, totalPosts), el(“span”, { class: “intro-stat-l” }, “posts”)),
+    el(“div”, { class: “intro-stat” }, el(“span”, { class: “intro-stat-n” }, students), el(“span”, { class: “intro-stat-l” }, “students”)),
+    state.tab === “doubts” && el(“div”, { class: “intro-stat ok” }, el(“span”, { class: “intro-stat-n” }, resolved), el(“span”, { class: “intro-stat-l” }, “resolved”)),
+    state.tab === “doubts” && open > 0 && el(“div”, { class: “intro-stat warn” }, el(“span”, { class: “intro-stat-n” }, open), el(“span”, { class: “intro-stat-l” }, “need help”))
+  ) : null;
+
+  const steps = state.tab === “doubts”
+    ? “1. Ask: pick the subject and write the question. Add a photo of your notebook or write it on the notebook page.\n2. Answer: open any doubt and explain the steps. You can attach your handwritten working too.\n3. Resolve: the student who asked marks the answer that helped. Tap “I have this doubt too” on doubts you share.”
+    : “1. Share: post an idea for a project, startup, research or campus. Sketch it on the notebook page if that helps.\n2. Like: tap ♥ on ideas you want to see happen.\n3. Build: reply with thoughts, improvements or an offer to join.”;
+
+  // Keyboard shortcut hint (desktop)
+  const kbHint = window.matchMedia(“(pointer: fine)”).matches
+    ? el(“p”, { class: “hint kb-hint” }, “⌨️ Press / to search · N to ask · Esc to go back”)
+    : null;
+
   return [
-    el("h2", {}, "How it works"),
-    el("p", { class: "body" }, steps),
-    el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", onclick: openAsk }, t.ask)),
-  ];
+    el(“h2”, {}, “How it works”),
+    statsRow,
+    el(“p”, { class: “body” }, steps),
+    el(“div”, { class: “rowbtns” },
+      el(“button”, { class: “btn primary”, type: “button”, onclick: openAsk }, t.ask),
+      el(“button”, { class: “btn”, type: “button”, onclick: () => showPanel(“network”) }, “🌐 RGUKT Network”)),
+    kbHint,
+  ].filter(Boolean);
 }
 
 function renderName() {
@@ -1179,7 +1259,13 @@ function renderView() {
   else if (!own) actions.push(el("button", { class: "like", type: "button", "aria-pressed": String(on), onclick: () => toggleLike(d) }, "🙋 " + (on ? "You have this doubt too" : "I have this doubt too") + " · " + votes));
   else if (votes) actions.push(el("span", { class: "likes" }, "🙋 " + votes + (votes === 1 ? " classmate has" : " classmates have") + " this doubt too"));
   const shareText = (state.tab === "doubts" ? "Can you help with this doubt? " : "Check out this idea: ") + d.title + " " + itemLink(d.id);
-  actions.push(el("a", { class: "btn sm wa", href: "https://wa.me/?text=" + encodeURIComponent(shareText), target: "_blank", rel: "noopener" }, "Share on WhatsApp"));
+  if (navigator.share) {
+    actions.push(el("button", { class: "btn sm", type: "button", onclick: async () => {
+      try { await navigator.share({ title: d.title, text: shareText, url: itemLink(d.id) }); } catch (_) {}
+    } }, "📤 Share"));
+  } else {
+    actions.push(el("a", { class: "btn sm wa", href: "https://wa.me/?text=" + encodeURIComponent(shareText), target: "_blank", rel: "noopener" }, "Share on WhatsApp"));
+  }
   actions.push(el("button", { class: "btn sm", type: "button", onclick: (e) => copyLink(e.currentTarget, itemLink(d.id)) }, "Copy link"));
   if (own) {
     actions.push(el("button", { class: "linkbtn", type: "button", onclick: () => { state.mode = "edit"; render(); } }, "Edit"));
@@ -1270,7 +1356,7 @@ function openAsk() {
 
 let sheetKey = "";
 function render() {
-  renderHeader(); renderTrendBar(); renderCampusBar(); renderRail(); renderList();
+  renderHeader(); renderTrendBar(); renderCampusBar(); renderRail(); renderList(); renderBottomNav();
   // Forms keep what the student is typing while live updates arrive.
   const key = ["ask", "edit", "name"].includes(state.mode) ? state.mode + state.tab : "";
   if (key && key === sheetKey) return;
@@ -1375,12 +1461,65 @@ render();
     if (!opened && deep && deep[2] && state[TABS[state.tab].coll].some(x => x.id === deep[2])) { opened = true; openItem(deep[2]); return; }
     render();
   };
-  store.subscribe("doubts", rows => { state.doubts = live(rows); update(); }, onErr);
-  store.subscribe("ideas", rows => { state.ideas = live(rows); update(); }, onErr);
+  store.subscribe("doubts", rows => { const live_ = live(rows); trackNew("doubts", live_); state.doubts = live_; update(); }, onErr);
+  store.subscribe("ideas", rows => { const live_ = live(rows); trackNew("ideas", live_); state.ideas = live_; update(); }, onErr);
   store.subscribe("replies", rows => { state.replies = live(rows); update(); }, onErr);
   store.subscribe("likes", rows => { state.likes = rows; update(); }, onErr);
-  store.subscribe("clubs", rows => { state.clubs = live(rows); update(); }, e => {});
+  store.subscribe("clubs", rows => { const live_ = live(rows); trackNew("clubs", live_); state.clubs = live_; update(); }, e => {});
 })();
+
+// ---------- PWA, keyboard shortcuts, offline, FAB ----------
+
+// Service worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js?v=30').catch(() => {});
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
+  if (e.key === '/' && !e.ctrlKey && !e.metaKey) { e.preventDefault(); $('search').focus(); $('search').select(); }
+  if (e.key === 'n' && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); openAsk(); }
+  if (e.key === 'Escape') { if (state.mode !== 'intro') { state.mode = 'intro'; state.selected = null; render(); } }
+});
+
+// Offline status
+updateNetStatus();
+
+// FAB
+const fabAsk = $('fabAsk');
+if (fabAsk) fabAsk.addEventListener('click', openAsk);
+
+// New-posts toast: dismiss on tap
+const newToast = $('newToast');
+if (newToast) {
+  newToast.addEventListener('click', () => {
+    _newCount = 0; newToast.hidden = true;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+}
+
+// PWA install banner
+const installBtn = $('installBtn');
+if (installBtn) {
+  installBtn.addEventListener('click', async () => {
+    if (!_pwaPrompt) return;
+    _pwaPrompt.prompt();
+    const { outcome } = await _pwaPrompt.userChoice;
+    _pwaPrompt = null;
+    const banner = $('installBanner'); if (banner) banner.hidden = true;
+    if (outcome === 'accepted') showNotice('App installed! Open it from your home screen.', '');
+  });
+}
+const installDismiss = $('installDismiss');
+if (installDismiss) {
+  installDismiss.addEventListener('click', () => {
+    const banner = $('installBanner'); if (banner) banner.hidden = true;
+    try { localStorage.setItem('dd-install-dismissed', '1'); } catch (_) {}
+  });
+}
+// Don't show install banner again if dismissed
+try { if (localStorage.getItem('dd-install-dismissed')) { const b = $('installBanner'); if (b) b.hidden = true; } } catch (_) {}
 
 // ---------- smart subject detection ----------
 const SUBJECT_KEYWORDS = {

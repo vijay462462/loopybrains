@@ -1,0 +1,22 @@
+{
+  "name": "RGUKT Spark",
+  "short_name": "Spark",
+  "description": "One question can light up four campuses. RGUKT Ongole, Nuzvudu, RK Valley & Srikakulam.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b0d1c",
+  "theme_color": "#7c3aed",
+  "categories": ["education", "social"],
+  "lang": "en-IN",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Ask a doubt", "url": "./#doubts", "description": "Post a new doubt" },
+    { "name": "Share an idea", "url": "./#ideas", "description": "Share an idea" },
+    { "name": "Clubs", "url": "./#clubs", "description": "Browse clubs" }
+  ]
+}
