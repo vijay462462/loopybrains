@@ -1,14 +1,13 @@
 // Doubt Desk settings. Edit this file to change subjects or connect the database.
 window.DOUBT_DESK_CONFIG = {
   // Paste your Firebase web app config here (Firebase console > Project settings > Your apps).
-  // Until you do, the site runs in demo mode: posts are saved only in that one browser.
   firebase: {
-    apiKey: "PASTE_API_KEY",
+    apiKey: "AIzaSyBulu10AZTsX2dWS7IWkMhpRrfyxoiyvyE",
     authDomain: "doubt-desk-e6f39.firebaseapp.com",
     projectId: "doubt-desk-e6f39",
     storageBucket: "doubt-desk-e6f39.firebasestorage.app",
-    messagingSenderId: "",
-    appId: "",
+    messagingSenderId: "530725630149",
+    appId: "1:530725630149:web:02a51823f13de09ebdc0ac",
   },
 
   // Subjects shown in the Doubts tab, in this order.
