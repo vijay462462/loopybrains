@@ -6,6 +6,8 @@ const SUBJECTS = (CFG.subjects && CFG.subjects.length) ? CFG.subjects : ["Maths"
 const CATS = (CFG.ideaCategories && CFG.ideaCategories.length) ? CFG.ideaCategories : ["Project", "Other"];
 const PALETTE = ["#6366f1", "#0ea5e9", "#10b981", "#f59e0b", "#a855f7", "#ec4899", "#ef4444", "#14b8a6", "#84cc16", "#f97316", "#64748b"];
 const FB_VERSION = "10.12.2";
+const MOTTO = CFG.tagline || "Ask boldly. Answer together. Innovate endlessly.";
+const MAX_PAGES = 3;
 
 const TABS = {
   doubts: {
@@ -29,6 +31,7 @@ const state = {
   doubts: [], ideas: [], replies: [], likes: [], loaded: false,
   selected: null, mode: "intro", // intro | view | ask | edit | name
   afterName: null,
+  replyPages: [], // notebook pages attached to the reply being written
 };
 let store = null;
 const $ = (id) => document.getElementById(id);
@@ -96,6 +99,7 @@ async function firebaseStore(conf) {
     set: (coll, id, data) => fs.setDoc(fs.doc(db, coll, id), data),
     update: (coll, id, data) => fs.updateDoc(fs.doc(db, coll, id), data),
     remove: (coll, id) => fs.deleteDoc(fs.doc(db, coll, id)),
+    get: async (coll, id) => { const snap = await fs.getDoc(fs.doc(db, coll, id)); return snap.exists() ? snap.data() : null; },
   };
 }
 function localStore() {
@@ -117,20 +121,222 @@ function localStore() {
     set: async (coll, id, v) => { (data[coll] ||= {})[id] = v; emit(coll); },
     update: async (coll, id, v) => { (data[coll] ||= {})[id] = { ...(data[coll][id] || {}), ...v }; emit(coll); },
     remove: async (coll, id) => { if (data[coll]) delete data[coll][id]; emit(coll); },
+    get: async (coll, id) => (data[coll] || {})[id] || null,
   };
+}
+
+// ---------- notebook pages: photos, uploaded images and handwriting ----------
+const PAGE_ONLY = "(see attached notebook page)";
+const pageCache = new Map(); // page id -> data URL, or a promise of one while loading
+
+function loadImage(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("unreadable image")); };
+    img.src = url;
+  });
+}
+// Shrinks a photo or drawing to a JPEG small enough for one database document (about 500 KB).
+function toJpeg(src, w, h) {
+  let scale = Math.min(1, 1400 / Math.max(w, h)), q = 0.78;
+  for (let i = 0; i < 8; i++) {
+    const c = document.createElement("canvas");
+    c.width = Math.max(1, Math.round(w * scale)); c.height = Math.max(1, Math.round(h * scale));
+    const x = c.getContext("2d");
+    x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height);
+    x.drawImage(src, 0, 0, c.width, c.height);
+    const url = c.toDataURL("image/jpeg", q);
+    if (url.length <= 700000) return url;
+    if (q > 0.5) q -= 0.1; else scale *= 0.8;
+  }
+  throw new Error("image too large");
+}
+async function savePages(urls, parentId, ids) {
+  const out = [];
+  for (let i = 0; i < urls.length; i++) {
+    const id = (ids && ids[i]) || store.newId("pages");
+    pageCache.set(id, urls[i]);
+    await store.set("pages", id, { data: urls[i], parentId, createdAt: Date.now() });
+    out.push(id);
+  }
+  return out;
+}
+async function removePages(ids) {
+  for (const id of ids || []) { try { await store.remove("pages", id); } catch (_) {} }
+}
+async function loadPage(id) {
+  if (!pageCache.has(id)) pageCache.set(id, store.get("pages", id).then(d => (d && d.data) || null).catch(() => null));
+  const url = await pageCache.get(id);
+  pageCache.set(id, url);
+  return url;
+}
+
+function pagesView(ids) {
+  return el("div", { class: "thumbs" }, ids.map((id, i) => {
+    const img = el("img", { alt: "Notebook page " + (i + 1) });
+    loadPage(id).then(u => { if (u) img.src = u; else img.alt = "Page not available"; });
+    return el("button", { type: "button", class: "thumb", "aria-label": "Open page " + (i + 1), onclick: () => openViewer(ids, i) }, img);
+  }));
+}
+
+// Buttons to add pages to a post or reply. `list` collects data URLs and is kept by the caller.
+function attachPicker(list, max) {
+  const thumbs = el("div", { class: "thumbs" });
+  const msg = el("p", { class: "hint", hidden: true });
+  const say = (t) => { msg.textContent = t; msg.hidden = !t; };
+  const draw = () => {
+    thumbs.replaceChildren(...list.map((u, i) => el("div", { class: "thumb" },
+      el("img", { src: u, alt: "Page " + (i + 1) }),
+      el("button", { type: "button", class: "x", "aria-label": "Remove page " + (i + 1), onclick: () => { list.splice(i, 1); say(""); draw(); } }, "×"))));
+  };
+  const add = async (files) => {
+    say("");
+    for (const f of files) {
+      if (list.length >= max) { say("You can attach up to " + max + " pages."); break; }
+      try { const img = await loadImage(f); list.push(toJpeg(img, img.naturalWidth, img.naturalHeight)); }
+      catch (_) { say("Could not read that file. Use a JPG or PNG photo."); }
+    }
+    draw();
+  };
+  const pick = (capture) => {
+    if (list.length >= max) { say("You can attach up to " + max + " pages."); return; }
+    const inp = el("input", { type: "file", accept: "image/*", multiple: !capture, capture: capture ? "environment" : null, hidden: true });
+    inp.addEventListener("change", () => { add([...inp.files]); inp.remove(); });
+    document.body.append(inp); inp.click();
+  };
+  draw();
+  if (max <= 0) return null;
+  return el("div", { class: "attach" },
+    el("div", { class: "rowbtns" },
+      el("button", { type: "button", class: "btn sm", onclick: () => pick(true) }, "📷 Take photo"),
+      el("button", { type: "button", class: "btn sm", onclick: () => pick(false) }, "🖼 Upload image"),
+      el("button", { type: "button", class: "btn sm", onclick: () => {
+        if (list.length >= max) { say("You can attach up to " + max + " pages."); return; }
+        openNotebook((u) => { list.push(u); draw(); });
+      } }, "✍ Write on notebook")),
+    thumbs, msg);
+}
+
+function openViewer(ids, start) {
+  let i = start;
+  const img = el("img", { alt: "" });
+  const cap = el("span", { class: "ovcap" });
+  const body = el("div", { class: "ovbody" }, img);
+  img.addEventListener("click", () => img.classList.toggle("zoom"));
+  const show = async () => {
+    cap.textContent = "Page " + (i + 1) + " of " + ids.length + " · tap the page to zoom";
+    img.classList.remove("zoom"); img.src = (await loadPage(ids[i])) || ""; img.alt = "Notebook page " + (i + 1);
+  };
+  const step = (d) => { i = (i + d + ids.length) % ids.length; show(); };
+  const close = () => { ov.remove(); document.removeEventListener("keydown", onKey); };
+  const onKey = (e) => { if (e.key === "Escape") close(); else if (e.key === "ArrowRight") step(1); else if (e.key === "ArrowLeft") step(-1); };
+  const ov = el("div", { class: "overlay", role: "dialog", "aria-modal": "true", "aria-label": "Notebook page" },
+    el("div", { class: "ovbar" }, cap,
+      ids.length > 1 && el("button", { type: "button", class: "btn sm", onclick: () => step(-1) }, "‹ Prev"),
+      ids.length > 1 && el("button", { type: "button", class: "btn sm", onclick: () => step(1) }, "Next ›"),
+      el("button", { type: "button", class: "btn sm primary", onclick: close }, "Close")),
+    body);
+  document.addEventListener("keydown", onKey);
+  document.body.append(ov);
+  show();
+}
+
+// A notebook page students write on with a finger, stylus or mouse.
+function drawPaper(x, W, H, kind) {
+  x.fillStyle = "#fffef7"; x.fillRect(0, 0, W, H);
+  if (kind === "ruled") {
+    x.strokeStyle = "#b9cdf0"; x.lineWidth = 2;
+    for (let y = 140; y < H; y += 50) { x.beginPath(); x.moveTo(0, y); x.lineTo(W, y); x.stroke(); }
+    x.strokeStyle = "#f2a3a3"; x.beginPath(); x.moveTo(110, 0); x.lineTo(110, H); x.stroke();
+  } else if (kind === "grid") {
+    x.strokeStyle = "#dbe4f3"; x.lineWidth = 1.5;
+    for (let v = 40; v < W; v += 40) { x.beginPath(); x.moveTo(v, 0); x.lineTo(v, H); x.stroke(); }
+    for (let v = 40; v < H; v += 40) { x.beginPath(); x.moveTo(0, v); x.lineTo(W, v); x.stroke(); }
+  }
+}
+function openNotebook(onDone) {
+  const W = 1000, H = 1400;
+  let paper = "ruled", color = "#1d3fbf", size = 4, erasing = false, strokes = [], cur = null;
+  const bg = el("canvas", { width: W, height: H, class: "nb-bg" });
+  const ink = el("canvas", { width: W, height: H, class: "nb-ink", "aria-label": "Notebook page, draw here" });
+  const bx = bg.getContext("2d"), ctx = ink.getContext("2d");
+  ctx.lineCap = "round"; ctx.lineJoin = "round";
+  drawPaper(bx, W, H, paper);
+  const style = (s) => { ctx.globalCompositeOperation = s.erase ? "destination-out" : "source-over"; ctx.strokeStyle = s.color; ctx.lineWidth = s.size; };
+  const drawStroke = (s) => {
+    style(s); ctx.beginPath();
+    s.pts.forEach((p, k) => k ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]));
+    if (s.pts.length === 1) ctx.lineTo(s.pts[0][0] + 0.1, s.pts[0][1]);
+    ctx.stroke();
+  };
+  const redraw = () => { ctx.clearRect(0, 0, W, H); strokes.forEach(drawStroke); };
+  const pos = (e) => { const r = ink.getBoundingClientRect(); return [(e.clientX - r.left) * W / r.width, (e.clientY - r.top) * H / r.height]; };
+  ink.addEventListener("pointerdown", (e) => {
+    e.preventDefault(); ink.setPointerCapture(e.pointerId);
+    cur = { color, size: erasing ? size * 6 : size, erase: erasing, pts: [pos(e)] };
+    strokes.push(cur); drawStroke(cur);
+  });
+  ink.addEventListener("pointermove", (e) => {
+    if (!cur) return;
+    const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+    let last = cur.pts[cur.pts.length - 1];
+    style(cur); ctx.beginPath(); ctx.moveTo(last[0], last[1]);
+    for (const ev of (evs.length ? evs : [e])) { last = pos(ev); cur.pts.push(last); ctx.lineTo(last[0], last[1]); }
+    ctx.stroke();
+  });
+  const end = () => { cur = null; };
+  ink.addEventListener("pointerup", end); ink.addEventListener("pointercancel", end);
+
+  const group = (label, items) => el("div", { class: "nbgroup", role: "group", "aria-label": label }, items);
+  const pressed = (btns, active) => btns.forEach(b => b.setAttribute("aria-pressed", String(b === active)));
+  const colors = [["Blue", "#1d3fbf"], ["Black", "#1b1b1f"], ["Red", "#c62828"], ["Green", "#1b7a3d"]].map(([n, c]) =>
+    el("button", { type: "button", class: "swatch", style: "--sw:" + c, "aria-label": n + " pen", "aria-pressed": String(c === color), onclick: (e) => { color = c; erasing = false; pressed(colors, e.currentTarget); pressed([eraser], null); } }));
+  const sizes = [["Fine", 2.5], ["Medium", 4], ["Bold", 8]].map(([n, v]) =>
+    el("button", { type: "button", class: "btn sm", "aria-pressed": String(v === size), onclick: (e) => { size = v; pressed(sizes, e.currentTarget); } }, n));
+  const eraser = el("button", { type: "button", class: "btn sm", "aria-pressed": "false", onclick: () => { erasing = !erasing; eraser.setAttribute("aria-pressed", String(erasing)); } }, "Eraser");
+  const papers = [["Ruled", "ruled"], ["Grid", "grid"], ["Plain", "plain"]].map(([n, k]) =>
+    el("button", { type: "button", class: "btn sm", "aria-pressed": String(k === paper), onclick: (e) => { paper = k; drawPaper(bx, W, H, paper); pressed(papers, e.currentTarget); } }, n));
+  const msg = el("span", { class: "hint" });
+  const close = () => { ov.remove(); document.documentElement.classList.remove("nb-open"); };
+  const ov = el("div", { class: "overlay nb", role: "dialog", "aria-modal": "true", "aria-label": "Write on notebook" },
+    el("div", { class: "ovbar nbbar" },
+      group("Pen colour", colors), group("Pen size", sizes),
+      group("Tools", [eraser,
+        el("button", { type: "button", class: "btn sm", onclick: () => { strokes.pop(); redraw(); } }, "Undo"),
+        el("button", { type: "button", class: "btn sm", onclick: () => { strokes = []; redraw(); } }, "Clear")]),
+      group("Paper", papers)),
+    el("div", { class: "nbpage" }, el("div", { class: "nbsheet" }, bg, ink)),
+    el("div", { class: "ovbar" }, msg,
+      el("button", { type: "button", class: "btn sm", onclick: close }, "Cancel"),
+      el("button", { type: "button", class: "btn sm primary", onclick: () => {
+        if (!strokes.length) { msg.textContent = "Write something on the page first."; return; }
+        const out = el("canvas", { width: W, height: H });
+        const ox = out.getContext("2d"); ox.drawImage(bg, 0, 0); ox.drawImage(ink, 0, 0);
+        onDone(toJpeg(out, W, H)); close();
+      } }, "Add this page")));
+  document.documentElement.classList.add("nb-open");
+  document.body.append(ov);
+}
+
+async function copyLink(btn, link) {
+  try { await navigator.clipboard.writeText(link); btn.textContent = "Link copied"; }
+  catch (_) { btn.textContent = link; }
+  setTimeout(() => { if (btn.isConnected) btn.textContent = "Copy link"; }, 2500);
 }
 
 // ---------- rendering ----------
 function renderHeader() {
   const t = TABS[state.tab];
   document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === state.tab)));
-  $("tagline").textContent = t.tagline;
+  $("tagline").textContent = MOTTO;
   $("askBtn").textContent = t.ask;
   $("nameBtn").textContent = getName() ? "You: " + getName() : "Set your name";
   $("search").placeholder = state.tab === "doubts" ? "Search doubts" : "Search ideas";
   $("rail").setAttribute("aria-label", t.groupLabel);
   const opts = state.tab === "doubts"
-    ? [["all", "All"], ["open", "Unanswered"], ["done", "Resolved"]]
+    ? [["all", "Newest"], ["asked", "Most asked"], ["open", "Unanswered"], ["done", "Resolved"]]
     : [["all", "Newest"], ["top", "Most liked"]];
   const f = $("filter");
   if (f.dataset.tab !== state.tab) {
@@ -156,14 +362,18 @@ function visible() {
   let rows = state[t.coll].filter(d =>
     (state.group === "All" || d[t.field] === state.group) &&
     (!q || ((d.title || "") + " " + (d.body || "")).toLowerCase().includes(q)));
-  if (state.tab === "doubts" && state.filter !== "all") rows = rows.filter(d => (state.filter === "done") === !!d.resolvedReplyId);
+  if (state.tab === "doubts" && (state.filter === "open" || state.filter === "done")) rows = rows.filter(d => (state.filter === "done") === !!d.resolvedReplyId);
   rows.sort((a, b) => b.createdAt - a.createdAt);
-  if (state.tab === "ideas" && state.filter === "top") rows.sort((a, b) => likesFor(b.id).length - likesFor(a.id).length);
+  if (state.filter === "top" || state.filter === "asked") rows.sort((a, b) => likesFor(b.id).length - likesFor(a.id).length);
   return rows;
 }
 
+function itemLink(id) { return location.origin + location.pathname + "#" + state.tab + "/" + id; }
 function openItem(id) {
-  state.selected = id; state.mode = "view"; render();
+  if (state.selected !== id) state.replyPages = [];
+  state.selected = id; state.mode = "view";
+  try { history.replaceState(null, "", "#" + state.tab + "/" + id); } catch (_) {}
+  render();
   if (innerWidth <= 1000) $("sheet").scrollIntoView({ behavior: "smooth" });
 }
 
@@ -179,8 +389,12 @@ function renderList() {
   $("list").replaceChildren(...rows.map(d => {
     const n = repliesFor(d.id).length, g = d[t.field];
     const meta = [el("span", { class: "tag", ...colorAttrs(g) }, g)];
-    if (state.tab === "doubts") meta.push(el("span", { class: "pill " + (d.resolvedReplyId ? "done" : "open") }, d.resolvedReplyId ? "Resolved" : (n ? "Open" : "Unanswered")));
-    else meta.push(el("span", { class: "likes" }, "♥ " + likesFor(d.id).length));
+    const votes = likesFor(d.id).length;
+    if (state.tab === "doubts") {
+      meta.push(el("span", { class: "pill " + (d.resolvedReplyId ? "done" : "open") }, d.resolvedReplyId ? "Resolved" : (n ? "Open" : "Unanswered")));
+      if (votes) meta.push(el("span", { class: "likes" }, "🙋 " + votes));
+    } else meta.push(el("span", { class: "likes" }, "♥ " + votes));
+    if (d.pages && d.pages.length) meta.push(el("span", {}, "📎 " + d.pages.length + (d.pages.length === 1 ? " page" : " pages")));
     meta.push(el("span", {}, n + " " + t.replyNoun + (n === 1 ? "" : "s")), el("span", {}, who(d) + " · " + ago(d.createdAt)));
     return el("button", {
       type: "button", class: "item", ...colorAttrs(g),
@@ -192,8 +406,8 @@ function renderList() {
 function renderIntro() {
   const t = TABS[state.tab];
   const steps = state.tab === "doubts"
-    ? "1. Ask: pick the subject and write the full question with what you tried.\n2. Answer: open any doubt and explain how to solve it.\n3. Resolve: the student who asked marks the answer that helped."
-    : "1. Share: post an idea for a project, startup, research or campus.\n2. Like: tap ♥ on ideas you want to see happen.\n3. Build: reply with thoughts, improvements or an offer to join.";
+    ? "1. Ask: pick the subject and write the question. Add a photo of your notebook or write it on the notebook page.\n2. Answer: open any doubt and explain the steps. You can attach your handwritten working too.\n3. Resolve: the student who asked marks the answer that helped. Tap “I have this doubt too” on doubts you share."
+    : "1. Share: post an idea for a project, startup, research or campus. Sketch it on the notebook page if that helps.\n2. Like: tap ♥ on ideas you want to see happen.\n3. Build: reply with thoughts, improvements or an offer to join.";
   return [
     el("h2", {}, "How it works"),
     el("p", { class: "body" }, steps),
@@ -225,6 +439,7 @@ function renderAsk(existing) {
   const label = existing ? "Save changes" : (state.tab === "doubts" ? "Post doubt" : "Post idea");
   const current = existing ? existing[t.field] : (state.group !== "All" ? state.group : t.groups[0]);
   const groups = t.groups.includes(current) ? t.groups : [...t.groups, current];
+  const newPages = []; // data URLs added in this form
   const form = el("form", { class: "form", onsubmit: async (e) => {
     e.preventDefault();
     const title = form.elements.title.value.trim(), body = form.elements.body.value.trim(), group = form.elements.group.value;
@@ -232,16 +447,22 @@ function renderAsk(existing) {
     const btn = form.querySelector("button[type=submit]"); btn.disabled = true; btn.textContent = "Saving…";
     try {
       if (existing) {
-        await store.update(t.coll, existing.id, { title: title.slice(0, 200), body: body.slice(0, 5000), [t.field]: group, authorName: getName() || existing.authorName });
+        const kept = existing.pages || [];
+        const added = newPages.slice(0, Math.max(0, MAX_PAGES - kept.length));
+        const addedIds = await savePages(added, existing.id);
+        await store.update(t.coll, existing.id, { title: title.slice(0, 200), body: body.slice(0, 5000), [t.field]: group, authorName: getName() || existing.authorName, pages: [...kept, ...addedIds] });
         state.mode = "view"; render(); return;
       }
       const id = store.newId(t.coll);
-      const doc = { title: title.slice(0, 200), body: body.slice(0, 5000), [t.field]: group, authorId: store.uid, authorName: getName(), createdAt: Date.now() };
+      const pageIds = newPages.map(u => { const pid = store.newId("pages"); pageCache.set(pid, u); return pid; });
+      const doc = { title: title.slice(0, 200), body: body.slice(0, 5000), [t.field]: group, authorId: store.uid, authorName: getName(), createdAt: Date.now(), pages: pageIds };
       if (state.tab === "doubts") doc.resolvedReplyId = null;
       // Show the new post straight away; the live update replaces it with the saved copy.
       state[t.coll] = [{ id, ...doc }, ...state[t.coll].filter(x => x.id !== id)];
       state.group = "All"; state.query = ""; $("search").value = "";
       openItem(id);
+      // Pages are saved first so classmates never see a post with missing pages.
+      await savePages(newPages, id, pageIds);
       await store.set(t.coll, id, doc);
     } catch (e2) {
       state.mode = "ask"; render();
@@ -252,6 +473,8 @@ function renderAsk(existing) {
       el("label", {}, state.tab === "doubts" ? "Your question" : "Your idea", el("input", { id: "f-title", name: "title", maxlength: "200", required: true, placeholder: t.placeholder })),
       el("label", {}, state.tab === "doubts" ? "Subject" : "Category", el("select", { id: "f-group", name: "group" }, groups.map(s => el("option", { selected: s === current }, s))))),
     el("label", {}, "Details", el("textarea", { id: "f-body", name: "body", maxlength: "5000", placeholder: t.bodyHint })),
+    existing && existing.pages && existing.pages.length ? el("p", { class: "hint" }, "This post already has " + existing.pages.length + " page(s). You can add up to " + Math.max(0, MAX_PAGES - existing.pages.length) + " more.") : null,
+    attachPicker(newPages, existing ? MAX_PAGES - ((existing.pages || []).length) : MAX_PAGES),
     err,
     el("div", { class: "rowbtns" },
       el("button", { class: "btn primary", type: "submit" }, label),
@@ -274,15 +497,20 @@ function renderView() {
     el("h2", {}, d.title),
   ];
   if (d.body) out.push(el("p", { class: "body" }, d.body));
+  if (d.pages && d.pages.length) out.push(pagesView(d.pages));
   const actions = [];
-  if (state.tab === "ideas") {
-    const on = liked(d.id), n = likesFor(d.id).length;
-    actions.push(el("button", { class: "like", type: "button", "aria-pressed": String(on), onclick: () => toggleLike(d) }, "♥ " + (on ? "Liked" : "Like") + " · " + n));
-  }
+  const on = liked(d.id), votes = likesFor(d.id).length;
+  if (state.tab === "ideas") actions.push(el("button", { class: "like", type: "button", "aria-pressed": String(on), onclick: () => toggleLike(d) }, "♥ " + (on ? "Liked" : "Like") + " · " + votes));
+  else if (!own) actions.push(el("button", { class: "like", type: "button", "aria-pressed": String(on), onclick: () => toggleLike(d) }, "🙋 " + (on ? "You have this doubt too" : "I have this doubt too") + " · " + votes));
+  else if (votes) actions.push(el("span", { class: "likes" }, "🙋 " + votes + (votes === 1 ? " classmate has" : " classmates have") + " this doubt too"));
+  const shareText = (state.tab === "doubts" ? "Can you help with this doubt? " : "Check out this idea: ") + d.title + " " + itemLink(d.id);
+  actions.push(el("a", { class: "btn sm wa", href: "https://wa.me/?text=" + encodeURIComponent(shareText), target: "_blank", rel: "noopener" }, "Share on WhatsApp"));
+  actions.push(el("button", { class: "btn sm", type: "button", onclick: (e) => copyLink(e.currentTarget, itemLink(d.id)) }, "Copy link"));
   if (own) {
     actions.push(el("button", { class: "linkbtn", type: "button", onclick: () => { state.mode = "edit"; render(); } }, "Edit"));
     actions.push(el("button", { class: "linkbtn danger", type: "button", onclick: (e) => confirmDelete(e.currentTarget, async () => {
-      for (const r of reps) { try { await store.remove("replies", r.id); } catch (_) {} }
+      for (const r of reps) { await removePages(r.pages); try { await store.remove("replies", r.id); } catch (_) {} }
+      await removePages(d.pages);
       await store.remove(t.coll, d.id);
       state.selected = null; state.mode = "intro"; render();
     }) }, "Delete"));
@@ -296,28 +524,34 @@ function renderView() {
     if (own && state.tab === "doubts") tools.push(el("button", { class: "linkbtn", type: "button", onclick: () => store.update("doubts", d.id, { resolvedReplyId: best ? null : r.id }).catch(e => showNotice(errText(e))) }, best ? "Unmark" : "Mark as helpful"));
     if (mine(r) || own) tools.push(el("button", { class: "linkbtn danger", type: "button", onclick: (e) => confirmDelete(e.currentTarget, async () => {
       if (best) await store.update("doubts", d.id, { resolvedReplyId: null });
+      await removePages(r.pages);
       await store.remove("replies", r.id);
     }) }, "Delete"));
     list.append(el("div", { class: "ans" + (best ? " best" : "") },
       el("div", { class: "who" }, el("strong", {}, who(r)), el("span", {}, ago(r.createdAt)), best && el("span", { class: "pill done" }, "Helped"), ...tools),
-      el("p", { class: "body" }, r.body)));
+      r.body && r.body !== PAGE_ONLY && el("p", { class: "body" }, r.body),
+      r.pages && r.pages.length ? pagesView(r.pages) : null));
   }
   out.push(list);
 
   const form = el("form", { class: "form", onsubmit: async (e) => {
     e.preventDefault();
     const body = form.elements.reply.value.trim();
-    if (!body) return;
+    const pages = state.replyPages.slice();
+    if (!body && !pages.length) return;
     if (!getName()) { state.afterName = "view"; state.mode = "name"; render(); return; }
     const id = store.newId("replies");
-    const doc = { parentId: d.id, parentColl: t.coll, body: body.slice(0, 5000), authorId: store.uid, authorName: getName(), createdAt: Date.now() };
+    const pageIds = pages.map(u => { const pid = store.newId("pages"); pageCache.set(pid, u); return pid; });
+    const doc = { parentId: d.id, parentColl: t.coll, body: (body || PAGE_ONLY).slice(0, 5000), authorId: store.uid, authorName: getName(), createdAt: Date.now(), pages: pageIds };
     state.replies = [...state.replies, { id, ...doc }];
+    state.replyPages = [];
     form.reset(); render();
-    try { await store.set("replies", id, doc); }
+    try { await savePages(pages, id, pageIds); await store.set("replies", id, doc); }
     catch (e2) { state.replies = state.replies.filter(x => x.id !== id); render(); showNotice(errText(e2)); }
   } },
     el("label", { for: "f-reply", class: "label" }, t.replyLabel),
     el("textarea", { id: "f-reply", name: "reply", maxlength: "5000", placeholder: state.tab === "doubts" ? "Explain step by step. Show the working, not only the result." : "Add a thought, an improvement, or offer to help build it." }),
+    attachPicker(state.replyPages, MAX_PAGES),
     el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "submit" }, t.replyBtn)));
   out.push(form);
   return out;
@@ -384,7 +618,8 @@ $("search").addEventListener("input", (e) => { state.query = e.target.value; ren
 $("filter").addEventListener("change", (e) => { state.filter = e.target.value; renderList(); });
 
 // ---------- start ----------
-if (location.hash === "#ideas") state.tab = "ideas";
+const deep = /^#(doubts|ideas)(?:\/([\w-]+))?$/.exec(location.hash);
+if (deep) state.tab = deep[1];
 render();
 (async () => {
   const conf = CFG.firebase || {};
@@ -399,7 +634,14 @@ render();
   if (store.demo) showNotice("Demo mode: posts are saved only in this browser. Add your Firebase settings to config.js so the whole class shares one board.", "demo");
   const onErr = (e) => { state.loaded = true; render(); showNotice("Lost connection to the board. Reload the page. (" + ((e && e.code) || "error") + ")"); };
   let pending = 4;
-  const ready = () => { if (--pending <= 0 || state.loaded) { state.loaded = true; render(); } };
+  let opened = false;
+  const ready = () => {
+    if (--pending <= 0 || state.loaded) {
+      state.loaded = true;
+      if (!opened && deep && deep[2] && state[TABS[state.tab].coll].some(x => x.id === deep[2])) { opened = true; openItem(deep[2]); return; }
+      render();
+    }
+  };
   store.subscribe("doubts", rows => { state.doubts = rows; ready(); }, onErr);
   store.subscribe("ideas", rows => { state.ideas = rows; ready(); }, onErr);
   store.subscribe("replies", rows => { state.replies = rows; ready(); }, onErr);

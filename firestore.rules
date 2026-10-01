@@ -39,6 +39,15 @@ service cloud.firestore {
       allow delete: if true;
     }
 
+    // Notebook pages: photos and handwriting saved as compressed JPEG data URLs.
+    match /pages/{id} {
+      allow read: if true;
+      allow create: if request.resource.data.data is string
+        && request.resource.data.data.size() <= 750000
+        && str(request.resource.data.parentId, 1, 100);
+      allow delete: if true;
+    }
+
     match /likes/{id} {
       allow read: if true;
       allow create: if str(request.resource.data.uid, 8, 80)
