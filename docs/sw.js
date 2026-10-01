@@ -1,12 +1,13 @@
-// RGUKT Spark service worker — v30
-// Cache app shell for instant load; let Firebase data always go to network.
-const CACHE = 'spark-v31';
+// RGUKT Spark service worker — v32
+// Cache versioned assets only. Never cache index.html so updates deploy instantly.
+const CACHE = 'spark-v32';
 const SHELL = [
-  './',
-  './style.css?v=31',
-  './config.js?v=31',
-  './quiz.js?v=31',
-  './app.js?v=31',
+  // Note: './' (index.html) is intentionally NOT cached — always serve fresh so
+  // new versions reach users without needing a manual cache clear.
+  './style.css?v=32',
+  './config.js?v=32',
+  './quiz.js?v=32',
+  './app.js?v=32',
   './manifest.json',
   './icon.svg',
 ];
@@ -28,8 +29,10 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   const url = e.request.url;
-  // Never cache Firebase / Google APIs — they must always go to network.
-  if (url.includes('firebase') || url.includes('gstatic.com') || url.includes('googleapis.com') || url.includes('firestore.googleapis.com')) return;
+  // Never intercept Firebase / Google APIs — must always go to network.
+  if (url.includes('firebase') || url.includes('gstatic.com') || url.includes('googleapis.com')) return;
+  // Never cache HTML documents — always fetch fresh so SW updates deploy instantly.
+  if (e.request.destination === 'document' || e.request.mode === 'navigate') return;
   e.respondWith(
     fetch(e.request)
       .then(r => {
