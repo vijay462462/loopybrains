@@ -782,7 +782,7 @@ function expertHelp(d) {
 
 function renderLearn() {
   const pending = state.doubts.filter(needsMentor).sort((a, b) => a.createdAt - b.createdAt);
-  const msg = "Hi! Students of G Block need help with these doubts:\n" + pending.slice(0, 10).map((d, i) => (i + 1) + ". [" + d.subject + "] " + d.title + " " + location.origin + location.pathname + "#doubts/" + d.id).join("\n") + "\nThe class code is needed to open them. Thank you!";
+  const msg = "Hi! Students of G Block Mind Hub need help with these doubts:\n" + pending.slice(0, 10).map((d, i) => (i + 1) + ". [" + d.subject + "] " + d.title + " " + location.origin + location.pathname + "#doubts/" + d.id).join("\n") + "\nThe class code is needed to open them. Thank you!";
   return [
     el("h2", {}, "📚 Learn from IIT"),
     el("p", { class: "hint" }, "Free courses and lectures by IIT professors. NPTEL course forums are answered by IIT teaching assistants."),
