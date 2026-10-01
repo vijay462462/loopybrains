@@ -1,58 +1,93 @@
 rules_version = '2';
-// Security rules for Doubt Desk. Paste this into Firebase console > Firestore Database > Rules.
-// Students do not sign in. Each phone has a random device id (authorId), and the
-// rules check post shape and that edits keep the original author and time.
+// Security rules for G Block Doubt Desk.
+// Paste into Firebase console > Firestore Database > Rules, after replacing YOUR-CLASS-CODE
+// with your private class code. Never commit the real code to this public repository.
+//
+// - Everything lives under rooms/<class code>/, so only people who know the code can read or post.
+// - Nothing can be permanently deleted from the website; "Delete" sets deleted: true.
+// - Every write is checked for allowed fields, sizes and a current timestamp.
 service cloud.firestore {
   match /databases/{database}/documents {
     function str(v, min, max) { return v is string && v.size() >= min && v.size() <= max; }
-    function validPost(groupField) {
-      let d = request.resource.data;
-      return str(d.title, 3, 200) && str(d.body, 0, 5000) && str(d[groupField], 1, 60)
-        && str(d.authorName, 1, 40) && str(d.authorId, 8, 80) && d.createdAt is number;
-    }
-    function sameAuthor() {
+    function optBool(d, k) { return !(k in d) || d[k] is bool; }
+    function optList(d, k, n) { return !(k in d) || (d[k] is list && d[k].size() <= n); }
+    function recent(t) { return t is int && t > request.time.toMillis() - 600000 && t < request.time.toMillis() + 600000; }
+    function unchanged() {
       return request.resource.data.authorId == resource.data.authorId
         && request.resource.data.createdAt == resource.data.createdAt;
     }
-
-    match /doubts/{id} {
-      allow read: if true;
-      allow create: if validPost('subject');
-      allow update: if validPost('subject') && sameAuthor();
-      allow delete: if true;
+    function validPost(groupField) {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['title', 'body', groupField, 'authorId', 'authorName', 'anonymous', 'urgent',
+                               'createdAt', 'pages', 'resolvedReplyId', 'deleted', 'reports', 'editedAt'])
+        && str(d.title, 3, 200) && str(d.body, 0, 5000) && str(d[groupField], 1, 60)
+        && str(d.authorName, 1, 40) && str(d.authorId, 8, 80) && d.createdAt is int
+        && optBool(d, 'anonymous') && optBool(d, 'urgent') && optBool(d, 'deleted')
+        && optList(d, 'pages', 3) && optList(d, 'reports', 100)
+        && (!('resolvedReplyId' in d) || d.resolvedReplyId == null || str(d.resolvedReplyId, 1, 100));
+    }
+    function newPost(groupField) {
+      return validPost(groupField) && recent(request.resource.data.createdAt)
+        && request.resource.data.get('deleted', false) == false && !('reports' in request.resource.data);
+    }
+    function validReply() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['parentId', 'parentColl', 'body', 'authorId', 'authorName', 'anonymous',
+                               'createdAt', 'pages', 'deleted', 'reports'])
+        && str(d.body, 1, 5000) && str(d.authorName, 1, 40) && str(d.authorId, 8, 80)
+        && d.parentColl in ['doubts', 'ideas'] && str(d.parentId, 1, 100) && d.createdAt is int
+        && optBool(d, 'anonymous') && optBool(d, 'deleted') && optList(d, 'pages', 3) && optList(d, 'reports', 100);
     }
 
-    match /ideas/{id} {
-      allow read: if true;
-      allow create: if validPost('category');
-      allow update: if validPost('category') && sameAuthor();
-      allow delete: if true;
-    }
+    match /rooms/{room} {
+      function member() { return room == 'YOUR-CLASS-CODE'; }
 
-    match /replies/{id} {
-      allow read: if true;
-      allow create: if str(request.resource.data.body, 1, 5000)
-        && str(request.resource.data.authorName, 1, 40)
-        && str(request.resource.data.authorId, 8, 80)
-        && request.resource.data.parentColl in ['doubts', 'ideas']
-        && str(request.resource.data.parentId, 1, 100);
-      allow delete: if true;
-    }
+      match /doubts/{id} {
+        allow read: if member();
+        allow create: if member() && newPost('subject');
+        allow update: if member() && validPost('subject') && unchanged();
+        allow delete: if false;
+      }
 
-    // Notebook pages: photos and handwriting saved as compressed JPEG data URLs.
-    match /pages/{id} {
-      allow read: if true;
-      allow create: if request.resource.data.data is string
-        && request.resource.data.data.size() <= 750000
-        && str(request.resource.data.parentId, 1, 100);
-      allow delete: if true;
-    }
+      match /ideas/{id} {
+        allow read: if member();
+        allow create: if member() && newPost('category');
+        allow update: if member() && validPost('category') && unchanged();
+        allow delete: if false;
+      }
 
-    match /likes/{id} {
-      allow read: if true;
-      allow create: if str(request.resource.data.uid, 8, 80)
-        && id == request.resource.data.ideaId + '_' + request.resource.data.uid;
-      allow delete: if true;
+      match /replies/{id} {
+        allow read: if member();
+        allow create: if member() && validReply() && recent(request.resource.data.createdAt)
+          && request.resource.data.get('deleted', false) == false && !('reports' in request.resource.data);
+        // Replies can only be hidden (deleted) or reported after posting.
+        allow update: if member() && validReply() && unchanged()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['deleted', 'reports']);
+        allow delete: if false;
+      }
+
+      // Notebook pages: photos and handwriting saved as compressed JPEG data URLs.
+      match /pages/{id} {
+        allow read: if member();
+        allow create: if member()
+          && request.resource.data.keys().hasOnly(['data', 'parentId', 'createdAt'])
+          && str(request.resource.data.data, 30, 750000)
+          && str(request.resource.data.parentId, 1, 100) && recent(request.resource.data.createdAt);
+        allow update, delete: if false;
+      }
+
+      // Likes, "I have this doubt too", reactions and quiz answers. Id must be <ideaId>_<uid>.
+      match /likes/{id} {
+        allow read: if member();
+        allow create: if member()
+          && request.resource.data.keys().hasOnly(['ideaId', 'uid', 'createdAt', 'name'])
+          && str(request.resource.data.uid, 8, 80) && str(request.resource.data.ideaId, 1, 200)
+          && id == request.resource.data.ideaId + '_' + request.resource.data.uid
+          && recent(request.resource.data.createdAt)
+          && (!('name' in request.resource.data) || str(request.resource.data.name, 1, 40));
+        allow delete: if member();
+        allow update: if false;
+      }
     }
   }
 }

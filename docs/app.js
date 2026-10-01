@@ -89,19 +89,19 @@ function deviceId() {
     return id;
   } catch (_) { return "d-" + Math.random().toString(36).slice(2); }
 }
-async function firebaseStore(conf) {
+async function firebaseStore(conf, prefix = "") {
   const base = "https://www.gstatic.com/firebasejs/" + FB_VERSION + "/";
   const [{ initializeApp }, fs] = await Promise.all([import(base + "firebase-app.js"), import(base + "firebase-firestore.js")]);
   const app = initializeApp(conf);
   const db = fs.getFirestore(app);
   return {
     uid: deviceId(), demo: false,
-    subscribe: (coll, cb, onErr) => fs.onSnapshot(fs.collection(db, coll), snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))), onErr),
-    newId: (coll) => fs.doc(fs.collection(db, coll)).id,
-    set: (coll, id, data) => fs.setDoc(fs.doc(db, coll, id), data),
-    update: (coll, id, data) => fs.updateDoc(fs.doc(db, coll, id), data),
-    remove: (coll, id) => fs.deleteDoc(fs.doc(db, coll, id)),
-    get: async (coll, id) => { const snap = await fs.getDoc(fs.doc(db, coll, id)); return snap.exists() ? snap.data() : null; },
+    subscribe: (coll, cb, onErr) => fs.onSnapshot(fs.collection(db, prefix + coll), snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))), onErr),
+    newId: (coll) => fs.doc(fs.collection(db, prefix + coll)).id,
+    set: (coll, id, data) => fs.setDoc(fs.doc(db, prefix + coll, id), data),
+    update: (coll, id, data) => fs.updateDoc(fs.doc(db, prefix + coll, id), data),
+    remove: (coll, id) => fs.deleteDoc(fs.doc(db, prefix + coll, id)),
+    get: async (coll, id) => { const snap = await fs.getDoc(fs.doc(db, prefix + coll, id)); return snap.exists() ? snap.data() : null; },
   };
 }
 function localStore() {
@@ -125,6 +125,82 @@ function localStore() {
     remove: async (coll, id) => { if (data[coll]) delete data[coll][id]; emit(coll); },
     get: async (coll, id) => (data[coll] || {})[id] || null,
   };
+}
+
+// ---------- safety: class code, language filter, spam limit, reports ----------
+const PRIVATE = !!CFG.privateClass;
+function getCode() { try { return localStorage.getItem("dd-class-code") || ""; } catch (_) { return ""; } }
+function setCode(v) { try { v ? localStorage.setItem("dd-class-code", v) : localStorage.removeItem("dd-class-code"); } catch (_) {} }
+const cleanCode = (v) => String(v || "").trim().toUpperCase().replace(/\s+/g, "");
+
+// Words that block a post. Matching ignores case and common symbol swaps (@ for a, 0 for o, and so on).
+const BLOCKED = ["fuck", "fucker", "fucking", "motherfucker", "shit", "bitch", "bastard", "asshole", "dick", "pussy", "slut", "whore", "cunt", "nigga", "nigger",
+  "madarchod", "behenchod", "bhenchod", "bhosdike", "bhosdi", "chutiya", "chutiye", "gandu", "lund", "randi", "harami", "kamina", "kutta",
+  "lanja", "lanjakodaka", "dengu", "dengey", "puku", "modda", "pooku", "naayala", "nayala", "sulli", "otha", "punda", "thevidiya"];
+function hasBadWords(text) {
+  const t = " " + String(text || "").toLowerCase().replace(/[@4]/g, "a").replace(/[0]/g, "o").replace(/[1!|]/g, "i").replace(/[3]/g, "e").replace(/[$5]/g, "s").replace(/[^a-z\u0900-\u0d7f]+/g, " ") + " ";
+  const joined = t.replace(/ /g, "");
+  return BLOCKED.some(w => t.includes(" " + w + " ") || t.includes(" " + w + "s ") || (w.length >= 8 && joined.includes(w)));
+}
+const LANGUAGE_MSG = "Please keep it respectful. Remove abusive words and try again.";
+
+// At most one post every 15 seconds and 15 posts an hour from one phone or computer.
+function spamCheck() {
+  let times = [];
+  try { times = JSON.parse(localStorage.getItem("dd-post-times") || "[]"); } catch (_) {}
+  const now = Date.now(), recent = times.filter(t => now - t < 3600000);
+  if (recent.length && now - recent[recent.length - 1] < 15000) return "Slow down a little: wait " + Math.ceil((15000 - (now - recent[recent.length - 1])) / 1000) + " seconds before posting again.";
+  if (recent.length >= 15) return "You have posted 15 times in the last hour. Take a short break and try again later.";
+  return "";
+}
+function notePosted() {
+  let times = [];
+  try { times = JSON.parse(localStorage.getItem("dd-post-times") || "[]"); } catch (_) {}
+  times = [...times.filter(t => Date.now() - t < 3600000), Date.now()];
+  try { localStorage.setItem("dd-post-times", JSON.stringify(times)); } catch (_) {}
+}
+
+// Posts reported by this many classmates are hidden until the teacher checks them in Firebase.
+const REPORT_LIMIT = 3;
+const isHidden = (x) => (x.reports || []).length >= REPORT_LIMIT && !mine(x);
+const reportedByMe = (x) => store && (x.reports || []).includes(store.uid);
+async function reportPost(coll, x) {
+  if (!store || reportedByMe(x)) return;
+  const reports = [...new Set([...(x.reports || []), store.uid])].slice(0, 100);
+  try { await store.update(coll, x.id, { reports }); showNotice("Thanks. The post was reported. Posts with " + REPORT_LIMIT + " reports are hidden for everyone."); }
+  catch (e) { showNotice(errText(e)); }
+}
+function reportButton(coll, x) {
+  if (mine(x)) return null;
+  if (reportedByMe(x)) return el("span", { class: "hint" }, "🚩 Reported");
+  return el("button", { class: "linkbtn danger", type: "button", title: "Report abuse or spam", onclick: (e) => {
+    const b = e.currentTarget;
+    if (b.dataset.armed) { b.disabled = true; reportPost(coll, x); return; }
+    b.dataset.armed = "1"; b.textContent = "Tap again to report";
+    setTimeout(() => { if (b.isConnected) { delete b.dataset.armed; b.textContent = "🚩 Report"; } }, 3000);
+  } }, "🚩 Report");
+}
+// Delete only hides a post (deleted: true); nothing is erased, so the teacher can restore it in Firebase.
+const softDelete = (coll, id) => store.update(coll, id, { deleted: true });
+
+function renderGate(err) {
+  const form = el("form", { class: "form", onsubmit: (e) => {
+    e.preventDefault();
+    const v = cleanCode(form.elements.code.value);
+    if (!/^[A-Z0-9-]{4,40}$/.test(v)) { msg.textContent = "Enter the class code exactly as your teacher shared it."; msg.hidden = false; return; }
+    setCode(v); location.reload();
+  } });
+  const msg = el("p", { class: "err", hidden: !err }, err || "");
+  form.append(
+    el("label", {}, "Class code", el("input", { id: "f-code", name: "code", autocomplete: "off", autocapitalize: "characters", spellcheck: "false", placeholder: "e.g. GB-XXXXXX", maxlength: "40" })),
+    msg,
+    el("p", { class: "hint" }, "Ask your class representative or teacher for the code. It is saved on this phone, so you only enter it once."),
+    el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "submit" }, "Join class")));
+  $("sheet").replaceChildren(el("h2", {}, "🔐 Enter your class code"), form);
+  $("list").replaceChildren(el("div", { class: "empty" }, el("strong", {}, "This board is private"), "Only students with the class code can see and post doubts."));
+  $("rail").replaceChildren();
+  ["askBtn", "quizBtn", "leadersBtn", "nameBtn"].forEach(id => { $(id).hidden = true; });
+  setTimeout(() => form.elements.code.focus(), 0);
 }
 
 // ---------- notebook pages: photos, uploaded images and handwriting ----------
@@ -188,13 +264,14 @@ function shrinkDataUrl(u, limit) {
     img.src = u;
   });
 }
-async function removePages(ids) {
-  for (const id of ids || []) { if (String(id).startsWith("data:")) continue; try { await store.remove("pages", id); } catch (_) {} }
-}
+// Pages are kept when a post is deleted, so a deleted post can still be restored with its pages.
+async function removePages() {}
+const SAFE_IMAGE = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/;
 async function loadPage(id) {
-  if (String(id).startsWith("data:")) return id;
+  if (String(id).startsWith("data:")) return SAFE_IMAGE.test(id) ? id : null;
   if (!pageCache.has(id)) pageCache.set(id, store.get("pages", id).then(d => (d && d.data) || null).catch(() => null));
-  const url = await pageCache.get(id);
+  let url = await pageCache.get(id);
+  if (url && !SAFE_IMAGE.test(url)) url = null;
   pageCache.set(id, url);
   return url;
 }
@@ -388,7 +465,7 @@ function renderRail() {
 
 function visible() {
   const t = TABS[state.tab], q = state.query.trim().toLowerCase();
-  let rows = state[t.coll].filter(d =>
+  let rows = state[t.coll].filter(d => !isHidden(d) &&
     (state.group === "All" || d[t.field] === state.group) &&
     (!q || ((d.title || "") + " " + (d.body || "")).toLowerCase().includes(q)));
   if (state.tab === "doubts" && (state.filter === "open" || state.filter === "done")) rows = rows.filter(d => (state.filter === "done") === !!d.resolvedReplyId);
@@ -634,6 +711,7 @@ function renderMe() {
     el("div", { class: "rowbtns" },
       el("button", { class: "btn primary", type: "button", onclick: () => { state.mode = "quiz"; render(); } }, "🧠 Today's quiz"),
       el("button", { class: "btn", type: "button", onclick: () => { state.afterName = "me"; state.mode = "name"; render(); } }, "Change name"),
+      PRIVATE && el("button", { class: "btn", type: "button", onclick: () => { setCode(""); location.reload(); } }, "Change class code"),
       el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")),
   ];
 }
@@ -682,6 +760,7 @@ function renderName() {
     e.preventDefault();
     const v = form.elements.name.value.trim().slice(0, 40);
     if (v.length < 2) { err.textContent = "Enter at least 2 characters."; err.hidden = false; return; }
+    if (hasBadWords(v) || v.toLowerCase() === ANON.toLowerCase()) { err.textContent = "Please use your real name or nickname."; err.hidden = false; return; }
     setName(v); state.mode = state.afterName || (state.selected ? "view" : "intro"); state.afterName = null; render();
   } },
     el("label", {}, "Your name", el("input", { id: "f-name", name: "name", maxlength: "40", autocomplete: "name", placeholder: "e.g. Ravi K (CSE-B)", value: getName() })),
@@ -706,6 +785,9 @@ function renderAsk(existing) {
     const title = form.elements.title.value.trim(), body = form.elements.body.value.trim(), group = form.elements.group.value;
     const anonymous = form.elements.anon.checked, urgent = !!(form.elements.urgent && form.elements.urgent.checked);
     if (title.length < 3) { err.textContent = "Write a title of at least 3 characters."; err.hidden = false; return; }
+    if (hasBadWords(title + " " + body)) { err.textContent = LANGUAGE_MSG; err.hidden = false; return; }
+    const wait = existing ? "" : spamCheck();
+    if (wait) { err.textContent = wait; err.hidden = false; return; }
     const btn = form.querySelector("button[type=submit]"); btn.disabled = true; btn.textContent = "Saving…";
     try {
       if (existing) {
@@ -723,6 +805,7 @@ function renderAsk(existing) {
       state[t.coll] = [{ id, ...doc }, ...state[t.coll].filter(x => x.id !== id)];
       state.group = "All"; state.query = ""; $("search").value = "";
       openItem(id);
+      notePosted();
       // Pages are saved first so classmates never see a post with missing pages.
       doc.pages = await trySavePages(newPages, id, pageIds);
       state[t.coll] = state[t.coll].map(x => x.id === id ? { ...x, pages: doc.pages } : x);
@@ -754,6 +837,7 @@ function renderView() {
   const t = TABS[state.tab];
   const d = state[t.coll].find(x => x.id === state.selected);
   if (!d) return [el("p", { class: "hint" }, "This post was deleted or is still loading.")];
+  if (isHidden(d)) return [el("p", { class: "hint" }, "🚩 This post was hidden after reports from classmates.")];
   const own = mine(d), reps = repliesFor(d.id), g = d[t.field];
   const out = [
     el("div", { class: "meta" },
@@ -776,26 +860,26 @@ function renderView() {
   if (own) {
     actions.push(el("button", { class: "linkbtn", type: "button", onclick: () => { state.mode = "edit"; render(); } }, "Edit"));
     actions.push(el("button", { class: "linkbtn danger", type: "button", onclick: (e) => confirmDelete(e.currentTarget, async () => {
-      for (const r of reps) { await removePages(r.pages); try { await store.remove("replies", r.id); } catch (_) {} }
-      await removePages(d.pages);
-      await store.remove(t.coll, d.id);
+      await softDelete(t.coll, d.id);
       state.selected = null; state.mode = "intro"; render();
     }) }, "Delete"));
   }
+  const rep = reportButton(t.coll, d);
+  if (rep) actions.push(rep);
   if (actions.length) out.push(el("div", { class: "rowbtns" }, actions));
 
   const list = el("div", { class: "answers" }, el("div", { class: "label" }, reps.length ? reps.length + " " + t.replyNoun + (reps.length === 1 ? "" : "s") : "No " + t.replyNoun + "s yet"));
   for (const r of reps) {
+    if (isHidden(r)) { list.append(el("div", { class: "ans" }, el("p", { class: "hint" }, "🚩 This answer was hidden after reports from classmates."))); continue; }
     const best = state.tab === "doubts" && d.resolvedReplyId === r.id;
     const tools = [];
     if (own && state.tab === "doubts") tools.push(el("button", { class: "linkbtn", type: "button", onclick: () => { if (!best) celebrate(); store.update("doubts", d.id, { resolvedReplyId: best ? null : r.id }).catch(e => showNotice(errText(e))); } }, best ? "Unmark" : "Mark as helpful"));
     if (mine(r) || own) tools.push(el("button", { class: "linkbtn danger", type: "button", onclick: (e) => confirmDelete(e.currentTarget, async () => {
       if (best) await store.update("doubts", d.id, { resolvedReplyId: null });
-      await removePages(r.pages);
-      await store.remove("replies", r.id);
+      await softDelete("replies", r.id);
     }) }, "Delete"));
     list.append(el("div", { class: "ans" + (best ? " best" : "") },
-      el("div", { class: "who" }, el("strong", {}, who(r)), el("span", {}, ago(r.createdAt)), best && el("span", { class: "pill done" }, "Helped"), ...tools),
+      el("div", { class: "who" }, el("strong", {}, who(r)), el("span", {}, ago(r.createdAt)), best && el("span", { class: "pill done" }, "Helped"), ...tools, reportButton("replies", r)),
       r.body && r.body !== PAGE_ONLY && el("p", { class: "body" }, r.body),
       r.pages && r.pages.length ? pagesView(r.pages) : null,
       reactionBar(r)));
@@ -808,6 +892,10 @@ function renderView() {
     const pages = state.replyPages.slice();
     if (!body && !pages.length) return;
     if (!getName()) { state.afterName = "view"; state.mode = "name"; render(); return; }
+    if (hasBadWords(body)) { showNotice(LANGUAGE_MSG); return; }
+    const wait = spamCheck();
+    if (wait) { showNotice(wait); return; }
+    notePosted();
     const id = store.newId("replies");
     const pageIds = pages.map(u => { const pid = store.newId("pages"); pageCache.set(pid, u); return pid; });
     const anonymous = state.replyAnon;
@@ -904,15 +992,21 @@ render();
 (async () => {
   const conf = CFG.firebase || {};
   const configured = conf.apiKey && !String(conf.apiKey).startsWith("PASTE") && conf.projectId;
+  const code = getCode();
+  if (configured && PRIVATE && !code) { renderGate(); return; }
   try {
-    store = configured ? await firebaseStore(conf) : localStore();
+    store = configured ? await firebaseStore(conf, PRIVATE ? "rooms/" + code + "/" : "") : localStore();
   } catch (e) {
     console.error(e);
     showNotice("Could not connect to the class board. Check your internet and reload. (" + ((e && e.code) || "error") + ")");
     state.loaded = true; render(); return;
   }
   if (store.demo) showNotice("Demo mode: posts are saved only in this browser. Add your Firebase settings to config.js so the whole class shares one board.", "demo");
-  const onErr = (e) => { state.loaded = true; render(); showNotice("Lost connection to the board. Reload the page. (" + ((e && e.code) || "error") + ")"); };
+  const onErr = (e) => {
+    if (PRIVATE && String((e && e.code) || "").includes("permission")) { setCode(""); renderGate("That class code is not right. Check it with your teacher and try again."); return; }
+    state.loaded = true; render(); showNotice("Lost connection to the board. Reload the page. (" + ((e && e.code) || "error") + ")");
+  };
+  const live = (rows) => rows.filter(x => !x.deleted);
   let pending = 4;
   let opened = false;
   const ready = () => {
@@ -922,8 +1016,8 @@ render();
       render();
     }
   };
-  store.subscribe("doubts", rows => { state.doubts = rows; ready(); }, onErr);
-  store.subscribe("ideas", rows => { state.ideas = rows; ready(); }, onErr);
-  store.subscribe("replies", rows => { state.replies = rows; ready(); }, onErr);
+  store.subscribe("doubts", rows => { state.doubts = live(rows); ready(); }, onErr);
+  store.subscribe("ideas", rows => { state.ideas = live(rows); ready(); }, onErr);
+  store.subscribe("replies", rows => { state.replies = live(rows); ready(); }, onErr);
   store.subscribe("likes", rows => { state.likes = rows; ready(); }, onErr);
 })();
