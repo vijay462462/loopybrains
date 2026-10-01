@@ -222,7 +222,8 @@ function attachPicker(list, max) {
       try { const img = await loadImage(f); list.push(toJpeg(img, img.naturalWidth, img.naturalHeight)); }
       catch (_) { say("Could not read that file. Use a JPG or PNG photo."); }
     }
-    draw();
+    // The answer box may have been redrawn by a live update while the file picker was open.
+    if (thumbs.isConnected) draw(); else render();
   };
   const pick = (capture) => {
     if (list.length >= max) { say("You can attach up to " + max + " pages."); return; }
