@@ -80,6 +80,22 @@ function colorAttrs(name, tab = state.tab) {
 }
 function getName() { try { return localStorage.getItem("dd-name") || ""; } catch (_) { return ""; } }
 function setName(v) { try { localStorage.setItem("dd-name", v); } catch (_) {} }
+// Avatar icons for profile display
+const AVATARS = [
+  "🧑‍💻","👨‍🎓","👩‍🎓","🧑‍🏫","👨‍🔬","👩‍🔬","🧑‍🚀","👨‍💼","👩‍💼","🧑‍🎨",
+  "🦊","🐯","🦁","🐼","🐸","🦋","🦅","🐬","🦊","🌟",
+  "⚡","🎯","🔥","🌙","🎮","🎵","📐","🏆","💡","🚀"
+];
+function getAvatar() { try { return localStorage.getItem("dd-avatar") || AVATARS[0]; } catch (_) { return AVATARS[0]; } }
+function setAvatar(v) { try { localStorage.setItem("dd-avatar", v); } catch (_) {} }
+// Avatar for any user by their initials-based index (consistent per name)
+function avatarFor(name) {
+  if (!name || name === ANON) return "👤";
+  let h = 0; for (const ch of name) h = (h * 31 + ch.codePointAt(0)) % AVATARS.length;
+  return AVATARS[h];
+}
+// Render a small avatar circle element
+function avatarEl(icon, cls = "av") { return el("span", { class: cls, "aria-hidden": "true" }, icon); }
 const mine = (x) => x && store && x.authorId === store.uid;
 const who = (x) => mine(x) ? "You" : (x.authorName || "A student");
 const repliesFor = (id) => state.replies.filter(r => r.parentId === id).sort((a, b) => (isMentor(b) - isMentor(a)) || (a.createdAt - b.createdAt));
@@ -454,7 +470,7 @@ function renderHeader() {
 
   $("askBtn").textContent = t.ask;
   const me = store && state.loaded ? allStats().get(store.uid) : null;
-  $("nameBtn").textContent = getName() ? "👤 " + getName() + (me ? " · Lv " + me.level.n + (me.streak ? " · 🔥" + me.streak : "") : "") : "Set your name";
+  $("nameBtn").textContent = getName() ? getAvatar() + " " + getName() + (me ? " · Lv " + me.level.n + (me.streak ? " · 🔥" + me.streak : "") : "") : "Set your name";
   $("quizBtn").classList.toggle("dot", !!(store && state.loaded && QUIZ.length && !myQuizAnswer(dayNum())));
   $("search").placeholder = state.tab === "doubts" ? "Search doubts" : "Search ideas";
   $("rail").setAttribute("aria-label", t.groupLabel);
@@ -527,7 +543,8 @@ function renderList() {
       if (votes) meta.push(el("span", { class: "likes" }, "🙋 " + votes));
     } else meta.push(el("span", { class: "likes" }, "♥ " + votes));
     if (d.pages && d.pages.length) meta.push(el("span", {}, "📎 " + d.pages.length + (d.pages.length === 1 ? " page" : " pages")));
-    meta.push(el("span", {}, n + " " + t.replyNoun + (n === 1 ? "" : "s")), el("span", {}, who(d) + " · " + ago(d.createdAt)));
+    const av = d.anonymous ? avatarEl("👤") : avatarEl(mine(d) ? getAvatar() : avatarFor(d.authorName || ""));
+    meta.push(el("span", {}, n + " " + t.replyNoun + (n === 1 ? "" : "s")), el("span", { class: "author-row" }, av, who(d) + " · " + ago(d.createdAt)));
     return el("button", {
       type: "button", class: "item", ...colorAttrs(g),
       "aria-current": String(state.selected === d.id && state.mode === "view"), onclick: () => openItem(d.id),
@@ -701,6 +718,7 @@ function renderLeaders() {
   const list = rows.length
     ? el("ol", { class: "board" }, rows.map((p, i) => el("li", { class: p.id === meId ? "me" : null },
         el("span", { class: "rank" }, medal[i] || String(i + 1)),
+        avatarEl(p.id === meId ? getAvatar() : avatarFor(p.name || ""), "av av-lg"),
         el("span", { class: "who" }, el("strong", {}, (p.id === meId ? p.name + " (you)" : p.name) + " " + BADGES.filter(b => b[3](p)).map(b => b[0]).join("")),
           el("small", {}, "Lv " + p.level.n + " " + titleOf(p.points) + " · " + plural(p.answers, "answer") + " · " + p.helpful + " helpful · " + p.quizRight + " quiz" + (p.streak > 1 ? " · 🔥" + p.streak + "-day streak" : ""))),
         el("span", { class: "pts" }, p.points + " pts"))))
@@ -716,9 +734,21 @@ function renderLeaders() {
 function renderMe() {
   const p = (store && allStats().get(store.uid)) || { name: getName(), points: 0, answers: 0, helpful: 0, ideas: 0, quizRight: 0, streak: 0, reacts: 0, likes: 0, asked: 0, quizDone: 0, level: levelOf(0) };
   const lv = p.level, pct = Math.round((p.points - lv.from) * 100 / (lv.to - lv.from));
+  // Avatar picker row
+  const avatarPicker = el("div", { class: "avatar-picker" },
+    AVATARS.map(icon => {
+      const btn = el("button", { type: "button", class: "av-opt" + (getAvatar() === icon ? " selected" : ""), title: icon }, icon);
+      btn.addEventListener("click", () => { setAvatar(icon); render(); });
+      return btn;
+    }));
   return [
-    el("h2", {}, (getName() || "You") + " · Level " + lv.n),
-    el("p", { class: "hint" }, titleOf(p.points) + " · " + plural(p.points, "point")),
+    el("div", { class: "profile-hero" },
+      avatarEl(getAvatar(), "av av-hero"),
+      el("div", {},
+        el("h2", {}, (getName() || "You") + " · Level " + lv.n),
+        el("p", { class: "hint" }, titleOf(p.points) + " · " + plural(p.points, "point")))),
+    el("p", { class: "hint" }, "Your icon:"),
+    avatarPicker,
     el("div", { class: "xp", role: "progressbar", "aria-valuemin": "0", "aria-valuemax": "100", "aria-valuenow": String(pct), "aria-label": "Progress to next level" }, el("span", { style: "width:" + pct + "%" })),
     el("p", { class: "hint" }, (lv.to - p.points) + (lv.to - p.points === 1 ? " more point" : " more points") + " to reach level " + (lv.n + 1) + "."),
     el("div", { class: "stats" },
@@ -936,7 +966,7 @@ function renderView() {
       el("span", { class: "tag", ...colorAttrs(g) }, g),
       state.tab === "doubts" && isUrgent(d) && el("span", { class: "pill urgent" }, "🔥 Urgent"),
       state.tab === "doubts" && el("span", { class: "pill " + (d.resolvedReplyId ? "done" : "open") }, d.resolvedReplyId ? "Resolved" : "Open"),
-      el("span", {}, "By " + who(d) + " · " + ago(d.createdAt))),
+      el("span", { class: "author-row" }, d.anonymous ? avatarEl("👤") : avatarEl(mine(d) ? getAvatar() : avatarFor(d.authorName || "")), "By " + who(d) + " · " + ago(d.createdAt))),
     el("h2", {}, d.title),
   ];
   if (d.body) out.push(el("p", { class: "body" }, d.body));
@@ -972,7 +1002,7 @@ function renderView() {
       await softDelete("replies", r.id);
     }) }, "Delete"));
     list.append(el("div", { class: "ans" + (best ? " best" : "") + (isMentor(r) ? " mentor" : "") },
-      el("div", { class: "who" }, el("strong", {}, who(r)), isMentor(r) && el("span", { class: "pill mentor" }, "🎓 " + MENTORS.get(r.authorId)), el("span", {}, ago(r.createdAt)), best && el("span", { class: "pill done" }, "Helped"), ...tools, reportButton("replies", r)),
+      el("div", { class: "who" }, r.anonymous ? avatarEl("👤") : avatarEl(mine(r) ? getAvatar() : avatarFor(r.authorName || "")), el("strong", {}, who(r)), isMentor(r) && el("span", { class: "pill mentor" }, "🎓 " + MENTORS.get(r.authorId)), el("span", {}, ago(r.createdAt)), best && el("span", { class: "pill done" }, "Helped"), ...tools, reportButton("replies", r)),
       r.body && r.body !== PAGE_ONLY && el("p", { class: "body" }, r.body),
       r.pages && r.pages.length ? pagesView(r.pages) : null,
       reactionBar(r)));
@@ -1117,3 +1147,63 @@ render();
   store.subscribe("replies", rows => { state.replies = live(rows); ready(); }, onErr);
   store.subscribe("likes", rows => { state.likes = rows; ready(); }, onErr);
 })();
+
+// ---------- floating particles ----------
+(function startParticles() {
+  const c = document.getElementById("particles");
+  if (!c || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const ctx = c.getContext("2d");
+  const icons = ["💡","🔬","⚡","📐","🧮","🔭","💻","🛠","📡","🎓","🧠","🔋"];
+  let W, H, pts = [];
+  function resize() {
+    W = c.width = innerWidth; H = c.height = Math.min(200, innerHeight * 0.25);
+  }
+  resize();
+  addEventListener("resize", resize);
+  for (let i = 0; i < 18; i++) pts.push({
+    x: Math.random() * 1000, y: Math.random() * 200,
+    vx: (Math.random() - 0.5) * 0.4, vy: -0.2 - Math.random() * 0.3,
+    icon: icons[i % icons.length], size: 13 + Math.random() * 10,
+    alpha: 0.12 + Math.random() * 0.18,
+  });
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    for (const p of pts) {
+      p.x = (p.x + p.vx + W) % W;
+      p.y = p.y + p.vy;
+      if (p.y < -30) { p.y = H + 10; p.x = Math.random() * W; }
+      ctx.globalAlpha = p.alpha;
+      ctx.font = p.size + "px serif";
+      ctx.fillText(p.icon, p.x, p.y);
+    }
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ---------- 3D card tilt ----------
+document.addEventListener("mousemove", (e) => {
+  const card = e.target.closest(".item, .spot, .learn-card, .badge.got");
+  if (!card) return;
+  const r = card.getBoundingClientRect();
+  const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  const dx = (e.clientX - cx) / (r.width / 2), dy = (e.clientY - cy) / (r.height / 2);
+  card.style.transform = `perspective(600px) rotateY(${dx * 6}deg) rotateX(${-dy * 4}deg) scale(1.02)`;
+});
+document.addEventListener("mouseleave", (e) => {
+  const card = e.target.closest(".item, .spot, .learn-card, .badge.got");
+  if (card) card.style.transform = "";
+}, true);
+
+// ---------- button ripple ----------
+document.addEventListener("pointerdown", (e) => {
+  const btn = e.target.closest("button.btn, button.chip");
+  if (!btn) return;
+  const r = btn.getBoundingClientRect();
+  const rip = document.createElement("span");
+  rip.className = "ripple";
+  rip.style.cssText = `left:${e.clientX - r.left}px;top:${e.clientY - r.top}px`;
+  btn.appendChild(rip);
+  setTimeout(() => rip.remove(), 600);
+});

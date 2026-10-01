@@ -22,7 +22,14 @@ window.DOUBT_DESK_CONFIG = {
   // Subjects shown in the Doubts tab, in this order.
   // ECE subjects
   subjects: ["DLD", "CS", "DSP", "PRV", "AEC", "CN", "CO & D", "CS-2", "RFME",
-             "DS & A", "OS", "DBMS", "OOP", "TOC", "CD", "SE", "Python", "Maths"],
+             // CSE subjects
+             "DS & A", "OS", "DBMS", "OOP", "TOC", "CD", "SE", "Python", "Maths",
+             // Civil subjects
+             "SOM", "FM", "Struct", "Geo", "Trans", "Env", "Survey",
+             // Mech subjects
+             "Thermo", "FM-M", "MD", "MOM", "Mfg", "HT", "IC Eng",
+             // EEE subjects
+             "Circuits", "EM", "PS", "PE", "Control", "EMS", "PQ"],
 
   // Exam countdown shown at the top. Add one line per exam, date as YYYY-MM-DD, e.g.
   // { name: "DSP Mid-1", date: "2026-10-15" },
@@ -47,6 +54,30 @@ window.DOUBT_DESK_CONFIG = {
     "TOC": "Theory of Computation Automata", "CD": "Compiler Design",
     "SE": "Software Engineering", "Python": "Python for Data Science",
     "Maths": "Discrete Mathematics Engineering",
+    // Civil
+    "SOM": "Strength of Materials Mechanics of Solids",
+    "FM": "Fluid Mechanics Hydraulics",
+    "Struct": "Structural Analysis",
+    "Geo": "Geotechnical Engineering Soil Mechanics",
+    "Trans": "Transportation Engineering Highway",
+    "Env": "Environmental Engineering Water Treatment",
+    "Survey": "Surveying Civil Engineering",
+    // Mech
+    "Thermo": "Engineering Thermodynamics",
+    "FM-M": "Fluid Mechanics and Machinery",
+    "MD": "Machine Design",
+    "MOM": "Mechanics of Materials Strength",
+    "Mfg": "Manufacturing Technology Processes",
+    "HT": "Heat Transfer",
+    "IC Eng": "Internal Combustion Engines",
+    // EEE
+    "Circuits": "Electrical Circuit Analysis",
+    "EM": "Electrical Machines AC DC",
+    "PS": "Power Systems Transmission Distribution",
+    "PE": "Power Electronics Converters",
+    "Control": "Control Systems Engineering",
+    "EMS": "Electrical Measurements Instrumentation",
+    "PQ": "Power Quality Power Electronics",
   },
 
   // Categories shown in the Ideas tab.

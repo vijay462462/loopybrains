@@ -269,6 +269,30 @@ button.quiz-opt:hover { border-color: var(--accent); background: var(--accent-so
 [data-s="SE"] { --c: #14b8a6; }
 [data-s="Python"] { --c: #3b82f6; }
 [data-s="Maths"] { --c: #a855f7; }
+/* Civil */
+[data-s="SOM"] { --c: #b45309; }
+[data-s="FM"] { --c: #0369a1; }
+[data-s="Struct"] { --c: #6b7280; }
+[data-s="Geo"] { --c: #92400e; }
+[data-s="Trans"] { --c: #1d4ed8; }
+[data-s="Env"] { --c: #15803d; }
+[data-s="Survey"] { --c: #0f766e; }
+/* Mech */
+[data-s="Thermo"] { --c: #dc2626; }
+[data-s="FM-M"] { --c: #2563eb; }
+[data-s="MD"] { --c: #7c3aed; }
+[data-s="MOM"] { --c: #c2410c; }
+[data-s="Mfg"] { --c: #4b5563; }
+[data-s="HT"] { --c: #ea580c; }
+[data-s="IC Eng"] { --c: #9f1239; }
+/* EEE */
+[data-s="Circuits"] { --c: #ca8a04; }
+[data-s="EM"] { --c: #4338ca; }
+[data-s="PS"] { --c: #0e7490; }
+[data-s="PE"] { --c: #be185d; }
+[data-s="Control"] { --c: #166534; }
+[data-s="EMS"] { --c: #5b21b6; }
+[data-s="PQ"] { --c: #b91c1c; }
 /* Learn from IIT, expert help, mentors */
 .expert { display: grid; gap: 8px; padding: 12px; border-radius: 12px; border: 1px solid color-mix(in oklab, var(--accent) 35%, var(--line)); background: color-mix(in oklab, var(--accent) 7%, var(--sheet)); }
 .learn { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
@@ -284,3 +308,132 @@ a.linkbtn { text-decoration: none; }
 #tagline { min-height: 3.1em; transition: opacity .35s ease, transform .35s ease; }
 #tagline.swap { opacity: 0; transform: translateY(6px); }
 @media (prefers-reduced-motion: reduce) { #tagline { transition: none; } }
+
+/* ============================================================
+   Avatars
+   ============================================================ */
+.av {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; font-size: 16px; line-height: 1;
+  border-radius: 50%; background: color-mix(in oklab, var(--accent) 15%, var(--paper));
+  border: 1.5px solid color-mix(in oklab, var(--accent) 30%, var(--line));
+  flex-shrink: 0; vertical-align: middle; margin-right: 4px;
+  transition: transform .2s ease;
+}
+.av:hover { transform: scale(1.18) rotate(-6deg); }
+.av-lg { width: 34px; height: 34px; font-size: 20px; }
+.av-hero {
+  width: 72px; height: 72px; font-size: 42px; border-width: 3px;
+  box-shadow: 0 0 0 6px color-mix(in oklab, var(--accent) 15%, transparent),
+              0 4px 20px color-mix(in oklab, var(--accent) 25%, transparent);
+  animation: heroFloat 3s ease-in-out infinite;
+}
+@keyframes heroFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+.profile-hero {
+  display: flex; align-items: center; gap: 16px; margin-bottom: 8px;
+}
+.profile-hero h2 { margin: 0; }
+.author-row { display: inline-flex; align-items: center; gap: 2px; }
+
+/* Avatar picker */
+.avatar-picker {
+  display: flex; flex-wrap: wrap; gap: 6px; padding: 10px;
+  background: var(--paper); border: 1px solid var(--line); border-radius: 14px;
+  margin-bottom: 12px;
+}
+.av-opt {
+  width: 36px; height: 36px; font-size: 20px; border-radius: 10px;
+  border: 2px solid transparent; background: none; cursor: pointer;
+  transition: transform .15s ease, border-color .15s ease, background .15s ease;
+  display: flex; align-items: center; justify-content: center; padding: 0;
+}
+.av-opt:hover { transform: scale(1.25) rotate(-5deg); background: color-mix(in oklab, var(--accent) 12%, var(--paper)); }
+.av-opt.selected {
+  border-color: var(--accent); background: color-mix(in oklab, var(--accent) 18%, var(--paper));
+  transform: scale(1.15);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 25%, transparent);
+}
+
+/* ============================================================
+   Floating particles canvas
+   ============================================================ */
+#particles {
+  position: fixed; top: 0; left: 0; width: 100%; pointer-events: none;
+  z-index: 0; opacity: .6;
+}
+.wrap { position: relative; z-index: 1; }
+
+/* ============================================================
+   Card entrance animation
+   ============================================================ */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.item, .ans, .learn-card, .badge {
+  animation: slideUp .3s ease both;
+}
+.item:nth-child(1)  { animation-delay: .03s; }
+.item:nth-child(2)  { animation-delay: .06s; }
+.item:nth-child(3)  { animation-delay: .09s; }
+.item:nth-child(4)  { animation-delay: .12s; }
+.item:nth-child(5)  { animation-delay: .15s; }
+.item:nth-child(n+6){ animation-delay: .18s; }
+
+/* ============================================================
+   3D tilt — smooth transition when not being dragged
+   ============================================================ */
+.item, .spot, .learn-card, .badge.got {
+  transition: transform .15s ease, box-shadow .15s ease;
+  will-change: transform;
+}
+.item:hover, .spot:hover { box-shadow: 0 8px 32px color-mix(in oklab, var(--accent) 22%, transparent); }
+.learn-card:hover { box-shadow: 0 6px 24px color-mix(in oklab, var(--c) 30%, transparent); }
+
+/* ============================================================
+   Ripple effect on buttons
+   ============================================================ */
+button.btn, button.chip { overflow: hidden; position: relative; }
+.ripple {
+  position: absolute; border-radius: 50%;
+  width: 6px; height: 6px; margin: -3px;
+  background: color-mix(in oklab, currentColor 30%, transparent);
+  transform: scale(0); animation: ripple .55s ease-out forwards;
+  pointer-events: none;
+}
+@keyframes ripple {
+  to { transform: scale(60); opacity: 0; }
+}
+
+/* ============================================================
+   Subject rail pill pulse on new post
+   ============================================================ */
+@keyframes pillPop {
+  0%  { transform: scale(1); }
+  40% { transform: scale(1.18); }
+  100%{ transform: scale(1); }
+}
+.rail button:focus-visible, .rail button[aria-pressed="true"] {
+  animation: pillPop .25s ease;
+}
+
+/* ============================================================
+   h1 glow pulse
+   ============================================================ */
+h1 span {
+  animation: glowPulse 3.5s ease-in-out infinite;
+}
+@keyframes glowPulse {
+  0%, 100% { text-shadow: 0 0 8px color-mix(in oklab, var(--accent) 40%, transparent); }
+  50%       { text-shadow: 0 0 24px color-mix(in oklab, var(--accent) 70%, transparent), 0 0 40px color-mix(in oklab, var(--accent) 30%, transparent); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .item, .ans, .learn-card, .badge { animation: none; }
+  .av-hero { animation: none; }
+  .ripple { animation: none; }
+  h1 span { animation: none; }
+}
