@@ -152,9 +152,10 @@ function deviceId() {
 }
 async function firebaseStore(conf, prefix = "") {
   const base = "https://www.gstatic.com/firebasejs/" + FB_VERSION + "/";
-  const [{ initializeApp }, fs] = await Promise.all([import(base + "firebase-app.js"), import(base + "firebase-firestore.js")]);
+  const [{ initializeApp }, fs, st] = await Promise.all([import(base + "firebase-app.js"), import(base + "firebase-firestore.js"), import(base + "firebase-storage.js")]);
   const app = initializeApp(conf);
   const db = fs.getFirestore(app);
+  const storage = st.getStorage(app);
   return {
     uid: deviceId(), demo: false,
     subscribe: (coll, cb, onErr) => fs.onSnapshot(fs.collection(db, prefix + coll), snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))), onErr),
@@ -163,6 +164,16 @@ async function firebaseStore(conf, prefix = "") {
     update: (coll, id, data) => fs.updateDoc(fs.doc(db, prefix + coll, id), data),
     remove: (coll, id) => fs.deleteDoc(fs.doc(db, prefix + coll, id)),
     get: async (coll, id) => { const snap = await fs.getDoc(fs.doc(db, prefix + coll, id)); return snap.exists() ? snap.data() : null; },
+    uploadFile: async (file, onProgress) => {
+      const ext = (file.name.split(".").pop() || "bin").toLowerCase().replace(/[^a-z0-9]/g, "");
+      const path = "uploads/" + Date.now() + "_" + Math.random().toString(36).slice(2, 8) + "." + ext;
+      const fileRef = st.ref(storage, path);
+      const task = st.uploadBytesResumable(fileRef, file);
+      await new Promise((res, rej) => {
+        task.on("state_changed", snap => onProgress && onProgress(Math.round(snap.bytesTransferred / snap.totalBytes * 100)), rej, res);
+      });
+      return await st.getDownloadURL(fileRef);
+    },
   };
 }
 function localStore() {
@@ -384,6 +395,65 @@ function attachPicker(list, max) {
         openNotebook((u) => { list.push(u); draw(); });
       } }, "✍ Write on notebook")),
     thumbs, msg);
+}
+
+const FILE_ICONS = { pdf: "📄", doc: "📝", docx: "📝", ppt: "📊", pptx: "📊", xls: "📈", xlsx: "📈", zip: "🗜", rar: "🗜", mp4: "🎬", mp3: "🎵", txt: "📃", csv: "📋" };
+const fileIcon = (name) => { const ext = (name || "").split(".").pop().toLowerCase(); return FILE_ICONS[ext] || "📁"; };
+const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
+
+function filePicker(list) {
+  const rows = el("div", { class: "file-list" });
+  const msg = el("p", { class: "hint", hidden: true });
+  const say = (t) => { msg.textContent = t; msg.hidden = !t; };
+  const draw = () => {
+    rows.replaceChildren(...list.map((f, i) => el("div", { class: "file-item" },
+      el("span", { class: "file-ico" }, fileIcon(f.name)),
+      el("span", { class: "file-name" }, f.name),
+      f.pct !== undefined ? el("span", { class: "file-pct" }, f.pct + "%") : el("span", { class: "file-size" }, (f.size / 1024 < 1000 ? (f.size / 1024).toFixed(0) + " KB" : (f.size / 1024 / 1024).toFixed(1) + " MB")),
+      el("button", { type: "button", class: "x", disabled: f.pct !== undefined, "aria-label": "Remove",
+        onclick: () => { list.splice(i, 1); say(""); draw(); }
+      }, "×"))));
+  };
+  const add = async (files) => {
+    say("");
+    for (const f of files) {
+      if (list.length >= 5) { say("You can attach up to 5 files."); break; }
+      if (f.size > MAX_FILE_SIZE) { say(f.name + " is too large (max 20 MB)."); continue; }
+      const entry = { name: f.name, size: f.size, url: null, pct: 0 };
+      list.push(entry);
+      if (rows.isConnected) draw();
+      try {
+        entry.url = await store.uploadFile(f, pct => { entry.pct = pct; if (rows.isConnected) draw(); });
+        delete entry.pct;
+      } catch (err) {
+        list.splice(list.indexOf(entry), 1);
+        const isRules = String(err).includes("unauthorized") || String(err).includes("permission") || String(err).includes("storage/unauthorized");
+        say(isRules ? "Storage not enabled yet. In Firebase Console → Storage → Rules, allow writes for the uploads/ path." : "Upload failed: " + (err.message || err));
+      }
+      if (rows.isConnected) draw();
+    }
+  };
+  draw();
+  return el("div", { class: "file-attach" },
+    el("button", { type: "button", class: "btn sm", onclick: () => {
+      const inp = el("input", { type: "file", accept: "*/*", multiple: true, hidden: true });
+      inp.addEventListener("change", () => { add([...inp.files]); inp.remove(); });
+      document.body.append(inp); inp.click();
+    }}, "📎 Attach file (PDF, Word, any format)"),
+    rows, msg);
+}
+
+function renderFileAttachments(files) {
+  if (!files || !files.length) return null;
+  return el("div", { class: "file-attachments" },
+    ...files.map(f => el("a", { class: "file-dl", href: f.url, target: "_blank", rel: "noopener noreferrer" },
+      el("span", { class: "file-ico" }, fileIcon(f.name)),
+      el("div", { class: "file-meta" },
+        el("span", { class: "file-dl-name" }, f.name),
+        el("span", { class: "file-dl-size" }, f.size < 1024 * 1024 ? (f.size / 1024).toFixed(0) + " KB" : (f.size / 1024 / 1024).toFixed(1) + " MB")),
+      el("span", { class: "file-dl-btn" }, "⬇ Download")
+    ))
+  );
 }
 
 function openViewer(ids, start) {
@@ -711,6 +781,7 @@ function renderList() {
     } else meta.push(el("span", { class: "likes" }, "♥ " + votes));
     if (d.campus && CAMPUSES.length > 0) meta.push(el("span", { class: "campus-badge", style: "--cc:" + campusColor(d.campus) }, d.campus));
     if (d.pages && d.pages.length) meta.push(el("span", {}, "📎 " + d.pages.length + (d.pages.length === 1 ? " page" : " pages")));
+    if (d.fileAttachments && d.fileAttachments.length) meta.push(el("span", {}, "📁 " + d.fileAttachments.length + (d.fileAttachments.length === 1 ? " file" : " files")));
     const av = d.anonymous ? avatarEl("👤") : avatarEl(mine(d) ? getAvatar() : avatarFor(d.authorName || ""));
 
     meta.push(el("span", {}, n + " " + t.replyNoun + (n === 1 ? "" : "s")), el("span", { class: "author-row" }, av, who(d) + " · " + ago(d.createdAt)));
@@ -1234,9 +1305,205 @@ const PLACEMENT_RES = [
 
 let resourceTab = "formulas";
 let formulaOpen = null;
+let mcqSubj = null;
+let mcqRevealed = {};
+
+const GATE_MCQ = {
+  "DLD": [
+    { q: "Minimum number of flip-flops needed for a MOD-10 counter?",
+      opts: ["3","4","5","10"], ans: 1,
+      trick: "Shortcut: n flip-flops give 2ⁿ states. Need 2ⁿ ≥ 10 → n=4 (2⁴=16). Always use ceil(log₂ M) for MOD-M." },
+    { q: "Gray code of decimal 6 (binary 0110) is?",
+      opts: ["0101","0110","0100","0111"], ans: 0,
+      trick: "Shortcut: MSB stays same. Each Gray bit = XOR of that binary bit and the one to its left. 0,0⊕1=1,1⊕1=0,1⊕0=1 → 0101." },
+    { q: "A NAND gate is called a universal gate because?",
+      opts: ["It is fastest","It can implement AND/OR/NOT alone","It has 2 inputs","It uses least power"], ans: 1,
+      trick: "NOT A = A NAND A. AND = NOT(A NAND B). OR = (NOT A) NAND (NOT B). So NAND alone → any Boolean function." },
+    { q: "For a full adder, how many minterms does the carry-out have?",
+      opts: ["2","3","4","8"], ans: 2,
+      trick: "Cout=1 when ≥2 inputs are 1: (0,1,1),(1,0,1),(1,1,0),(1,1,1) → minterms 3,5,6,7 → 4 minterms." },
+    { q: "XOR of 1101 and 1010 equals?",
+      opts: ["0111","1111","0101","1001"], ans: 0,
+      trick: "XOR column by column: 1⊕1=0, 1⊕0=1, 0⊕1=1, 1⊕0=1 → 0111. Shortcut: XOR flips bits wherever second operand has 1." },
+  ],
+  "DSP": [
+    { q: "Nyquist sampling rate for a signal with maximum frequency 4 kHz?",
+      opts: ["4 kHz","8 kHz","2 kHz","16 kHz"], ans: 1,
+      trick: "fs ≥ 2·fmax. Always double the highest frequency. Below this rate → aliasing (frequencies overlap and distort)." },
+    { q: "Z-transform of the unit impulse δ[n] is?",
+      opts: ["z","1/z","1","z⁻¹"], ans: 2,
+      trick: "X(z)=Σx[n]z⁻ⁿ. δ[n]=1 only at n=0 → X(z)=1·z⁰=1. Memorise: Z{δ[n]}=1, Z{u[n]}=z/(z−1)." },
+    { q: "DFT complexity is O(N²). FFT reduces this to?",
+      opts: ["O(N)","O(N log N)","O(log N)","O(N²/2)"], ans: 1,
+      trick: "FFT uses divide-and-conquer: splits N-point DFT into two N/2 DFTs repeatedly → O(N log₂N). N=1024: DFT=1M ops, FFT=10K ops." },
+    { q: "A discrete-time system with impulse response h[n] is BIBO stable if?",
+      opts: ["h[n] is bounded","Σ|h[n]| < ∞","h[n]=0 for n<0","h[n] is periodic"], ans: 1,
+      trick: "Absolute summability test. Memorise: BIBO → Bounded Input, Bounded Output. Pole inside unit circle in Z-domain ↔ stable." },
+  ],
+  "AEC": [
+    { q: "Voltage gain of a Common-Emitter amplifier (with RC as collector resistance)?",
+      opts: ["gm·RC","−gm·RC","RC/gm","−RC/gm"], ans: 1,
+      trick: "Negative sign = 180° phase inversion (CE inverts signal). Magnitude = gm·RC. Larger RC or larger IC → higher gain." },
+    { q: "Transconductance gm of a BJT biased at IC = 2.6 mA (VT = 26 mV)?",
+      opts: ["0.1 mA/V","10 mA/V","100 mA/V","1 mA/V"], ans: 1,
+      trick: "gm = IC/VT = 2.6 mA / 26 mV = 100 mA/V = 0.1 A/V. Shortcut: gm(mA/V) = IC(mA)/26." },
+    { q: "In an ideal op-amp inverting amplifier, the voltage at the inverting input (V⁻) is?",
+      opts: ["Vin","Vout","0 V (virtual ground)","Vcc/2"], ans: 2,
+      trick: "Virtual ground: V⁻ = V⁺ = 0 V (non-inverting input grounded). 'Virtual' because no physical connection to ground — just forced by negative feedback." },
+    { q: "MOSFET enters saturation region when?",
+      opts: ["VGS > Vth only","VDS ≥ VGS − Vth","VDS < VGS − Vth","VGS = 0"], ans: 1,
+      trick: "Three regions: Cut-off (VGS<Vth), Triode (VDS < VGS−Vth), Saturation (VDS ≥ VGS−Vth). Saturation → ID = (k/2)(VGS−Vth)² independent of VDS." },
+  ],
+  "CS": [
+    { q: "Closed-loop transfer function with forward gain G(s) and feedback H(s) is?",
+      opts: ["G·H","G/(1+G·H)","G·H/(1+G)","1/(1+G·H)"], ans: 1,
+      trick: "Golden formula: T = G/(1+GH). Unity feedback → H=1 → T = G/(1+G). Denominator 1+GH = characteristic equation." },
+    { q: "Root locus starts (K=0) at open-loop __ and ends (K=∞) at open-loop __?",
+      opts: ["zeros, poles","poles, zeros","poles, poles","zeros, zeros"], ans: 1,
+      trick: "Rule 1: Starts at OL poles, ends at OL zeros (or infinity if #poles > #zeros). The number of branches = number of open-loop poles." },
+    { q: "For a Type-1 system with unit ramp input, steady-state error depends on?",
+      opts: ["Position constant Kp","Velocity constant Kv","Acceleration constant Ka","Zero"], ans: 1,
+      trick: "System type = number of open-loop integrators. Type 0→step error=1/(1+Kp), Type 1→ramp error=1/Kv, Type 2→parabola error=1/Ka." },
+    { q: "Gain Margin (GM) > 0 dB and Phase Margin (PM) > 0° means the system is?",
+      opts: ["Unstable","Marginally stable","Stable","Critically damped"], ans: 2,
+      trick: "Both margins positive → stable. GM=0dB or PM=0° → marginally stable. Negative → unstable. Larger margins = more robust." },
+  ],
+  "CN": [
+    { q: "Shannon's channel capacity theorem: C = ?",
+      opts: ["B·log₂(SNR)","B·log₂(1+SNR)","B·SNR","log₂(1+SNR)"], ans: 1,
+      trick: "1+SNR not SNR alone — the '+1' accounts for the noise power itself. Units: C in bps, B in Hz. Double SNR → add B·1 bps (diminishing returns)." },
+    { q: "To detect AND correct 1-bit error, minimum Hamming distance required is?",
+      opts: ["1","2","3","4"], ans: 2,
+      trick: "To detect d errors: dmin ≥ d+1. To correct d errors: dmin ≥ 2d+1. For 1-bit correction: dmin ≥ 3." },
+    { q: "A /28 subnet mask gives how many usable host addresses?",
+      opts: ["28","16","14","30"], ans: 2,
+      trick: "Host bits = 32−28 = 4. Total addresses = 2⁴ = 16. Usable = 16−2 = 14 (subtract network and broadcast). /29→6, /28→14, /27→30." },
+    { q: "In Go-Back-N protocol with 3-bit sequence numbers, maximum window size is?",
+      opts: ["8","7","4","6"], ans: 1,
+      trick: "GBN window = 2ⁿ−1 (reserve 1 slot). Selective Repeat window = 2ⁿ/2 = 2ⁿ⁻¹. 3-bit GBN: 2³−1 = 7." },
+  ],
+  "CO & D": [
+    { q: "A 5-stage pipeline processing 100 instructions. Speedup compared to non-pipelined?",
+      opts: ["~5×","~20×","~100×","~500×"], ans: 0,
+      trick: "Speedup = n·k / (k+n−1). n=100, k=5 → 500/104 ≈ 4.8 ≈ 5. For n>>k, speedup → k (number of stages). More stages = better for large programs." },
+    { q: "Average memory access time with cache hit rate h=0.9, Tc=10ns, Tm=100ns?",
+      opts: ["19ns","90ns","100ns","55ns"], ans: 0,
+      trick: "T_avg = h·Tc + (1−h)·Tm = 0.9×10 + 0.1×100 = 9+10 = 19 ns. Always fast with good hit rate!" },
+    { q: "Which hazard arises when instruction 2 reads a register written by instruction 1?",
+      opts: ["Structural","Control (branch)","WAR","RAW (data hazard)"], ans: 3,
+      trick: "RAW = Read After Write = true data dependency. WAR = Write After Read (anti-dependency). WAW = Write After Write (output). RAW is most common." },
+    { q: "Direct-mapped cache with 16 blocks. Block number 35 maps to cache line?",
+      opts: ["35","3","5","7"], ans: 1,
+      trick: "Cache line = block# mod cache_size = 35 mod 16 = 3. Direct-mapped: each main memory block has exactly one possible cache location." },
+  ],
+  "DS & A": [
+    { q: "Worst-case time complexity of QuickSort is O(?) and occurs when?",
+      opts: ["O(n log n), random input","O(n²), already sorted input","O(n), pivot is median","O(log n), balanced partition"], ans: 1,
+      trick: "Already sorted (or reverse-sorted) → pivot always picks min/max → partition into 0 and n−1 → n recursions of size n → O(n²). Use randomised pivot to avoid." },
+    { q: "Height of a complete binary tree with n nodes is?",
+      opts: ["n","n/2","⌊log₂ n⌋","⌈log₂ n⌉"], ans: 2,
+      trick: "Complete binary tree: nodes fill level by level. At height h, nodes range from 2ʰ to 2ʰ⁺¹−1. So h = ⌊log₂ n⌋. Height 0 = root only (1 node)." },
+    { q: "In an AVL tree, after insertion the tree is rebalanced if balance factor |BF| is?",
+      opts: ["> 0","> 1","= 1","= 0"], ans: 1,
+      trick: "BF = height(left) − height(right). Allowed: −1, 0, +1. If |BF| > 1 → rotate. 4 cases: LL→right rot, RR→left rot, LR→left-right rot, RL→right-left rot." },
+    { q: "Dijkstra's shortest path algorithm does NOT work correctly when?",
+      opts: ["Graph is directed","Graph has cycles","Graph has negative weight edges","Graph is disconnected"], ans: 2,
+      trick: "Dijkstra assumes once a node is finalised, its distance can't improve. Negative edges can violate this. Use Bellman-Ford for negative weights (detects negative cycles too)." },
+  ],
+  "OS": [
+    { q: "Which of the following is NOT one of the 4 necessary conditions for deadlock?",
+      opts: ["Mutual exclusion","Hold and wait","Preemption allowed","Circular wait"], ans: 2,
+      trick: "4 conditions: (1) Mutual exclusion (2) Hold & Wait (3) No preemption (4) Circular wait. 'Preemption allowed' actually PREVENTS deadlock — it's the opposite!" },
+    { q: "CPU utilisation formula for n identical processes each spending fraction p in I/O?",
+      opts: ["1−p","1−pⁿ","n(1−p)","1−n·p"], ans: 1,
+      trick: "All n processes block simultaneously with probability pⁿ. So CPU utilisation = 1−pⁿ. More processes or less I/O wait → CPU stays busier." },
+    { q: "Which page replacement algorithm has the lowest page fault rate but is unimplementable?",
+      opts: ["FIFO","LRU","Optimal (OPT)","Clock"], ans: 2,
+      trick: "OPT replaces the page not used for the longest time in future — requires future knowledge. Used only as a benchmark. LRU ≈ OPT in practice." },
+    { q: "In semaphore operations wait(S) and signal(S), what does wait(S) do?",
+      opts: ["S++","S−−; block if S<0","S=0","Check if S>0 only"], ans: 1,
+      trick: "wait(S): S−−; if S<0 → block. signal(S): S++; if S≤0 → wake one blocked process. Binary semaphore (0/1) = mutex lock." },
+  ],
+  "DBMS": [
+    { q: "A relation is in BCNF if for every non-trivial FD X→Y, X is a?",
+      opts: ["Primary key","Foreign key","Candidate key","Super key"], ans: 3,
+      trick: "BCNF: every determinant must be a super key (includes candidate key). BCNF is stronger than 3NF. If BCNF is lossless, prefer it; else use 3NF (preserves all FDs)." },
+    { q: "3NF removes which type of dependency that 2NF does NOT address?",
+      opts: ["Partial dependency","Multi-valued dependency","Transitive dependency","Join dependency"], ans: 2,
+      trick: "2NF: removes partial FDs (non-key attr depends on part of composite PK). 3NF: removes transitive FDs (non-key → non-key → PK). BCNF: removes all non-super-key determinants." },
+    { q: "Which SQL join returns ALL rows from both tables, with NULLs where no match?",
+      opts: ["INNER JOIN","LEFT JOIN","RIGHT JOIN","FULL OUTER JOIN"], ans: 3,
+      trick: "INNER = only matching rows. LEFT = all left + matching right. RIGHT = all right + matching left. FULL OUTER = all rows from both, NULLs for missing matches." },
+    { q: "In E-R model, a 'weak entity' is one that?",
+      opts: ["Has no attributes","Cannot exist without a related strong entity","Has only one attribute","Is not connected to any other entity"], ans: 1,
+      trick: "Weak entity has no key of its own — identified by partial key + owner entity. Example: 'Order-item' depends on 'Order'. Shown with double rectangle in ER diagram." },
+  ],
+  "Circuits": [
+    { q: "Maximum power transfer to load RL occurs when RL equals?",
+      opts: ["0","∞","Thevenin resistance RTh","2·RTh"], ans: 2,
+      trick: "RL = RTh → Pmax = Vth²/(4·RTh). Efficiency = 50% at max power transfer. In communication circuits efficiency is sacrificed for maximum signal power." },
+    { q: "In series RLC at resonance frequency f₀, what is the impedance?",
+      opts: ["Zero","Minimum = R","Maximum = R","Infinite"], ans: 1,
+      trick: "At resonance: XL = XC, they cancel. Z = R (minimum, purely resistive). f₀ = 1/(2π√LC). Q = ω₀L/R = bandwidth indicator." },
+    { q: "RMS value of v(t) = Vm·sin(ωt) is?",
+      opts: ["Vm","Vm/2","Vm/√2","Vm·√2"], ans: 2,
+      trick: "RMS = peak/√2 ≈ 0.707·Vm for pure sinusoid. Vrms = 230 V mains → Vpeak = 230√2 ≈ 325 V. Average of sin²(ωt) over full cycle = 1/2." },
+    { q: "Two 6Ω resistors in parallel give equivalent resistance of?",
+      opts: ["12Ω","6Ω","3Ω","1Ω"], ans: 2,
+      trick: "Parallel: 1/R = 1/R1 + 1/R2 = 1/6+1/6 = 2/6 → R=3Ω. Shortcut for equal resistors: R_eq = R/n (n resistors in parallel). Different: R1·R2/(R1+R2)." },
+  ],
+  "Maths": [
+    { q: "Eigenvalues of matrix [[3,1],[1,3]] are?",
+      opts: ["2, 4","3, 3","1, 5","0, 6"], ans: 0,
+      trick: "Shortcut: λ = (trace ± √(trace²−4·det)) / 2. Trace=6, det=9−1=8. λ=(6±√(36−32))/2=(6±2)/2 → 4 and 2." },
+    { q: "For mutually exclusive events A,B with P(A)=0.3, P(B)=0.4, P(A∪B)=?",
+      opts: ["0.12","0.58","0.7","0.5"], ans: 2,
+      trick: "Mutually exclusive → P(A∩B)=0. P(A∪B)=P(A)+P(B)−P(A∩B)=0.3+0.4−0=0.7. Independent ≠ mutually exclusive! Independent: P(A∩B)=P(A)·P(B)." },
+    { q: "Rank of matrix [[1,2,3],[2,4,6],[3,6,9]] is?",
+      opts: ["3","2","1","0"], ans: 2,
+      trick: "Row 2 = 2×Row 1, Row 3 = 3×Row 1 → all rows are linearly dependent → only 1 independent row → Rank = 1. Rank = number of non-zero rows after row reduction." },
+    { q: "Laplace transform of e^(at)·u(t) is?",
+      opts: ["1/(s+a)","1/(s−a)","a/(s²+a²)","s/(s²+a²)"], ans: 1,
+      trick: "L{e^(at)} = 1/(s−a), valid for s>a. Memorise: L{e^(−at)} = 1/(s+a). Frequency shifting: multiply by e^(at) in time → shift s by a in Laplace." },
+  ],
+  "Thermo": [
+    { q: "Carnot efficiency of an engine operating between 600K (hot) and 300K (cold)?",
+      opts: ["25%","33%","50%","75%"], ans: 2,
+      trick: "η = 1 − TL/TH = 1 − 300/600 = 0.5 = 50%. Always use absolute Kelvin! η represents the theoretical maximum — no real engine can exceed this." },
+    { q: "Which process occurs at constant temperature?",
+      opts: ["Adiabatic","Isobaric","Isochoric","Isothermal"], ans: 3,
+      trick: "Iso = same/constant. Thermal = temperature → Isothermal (T constant). Isobaric = pressure constant. Isochoric = volume constant. Adiabatic = no heat transfer (Q=0)." },
+    { q: "Second law of thermodynamics: entropy of an isolated system?",
+      opts: ["Always decreases","Remains constant","Always increases or stays same","Can be negative"], ans: 2,
+      trick: "ΔS ≥ 0 for isolated system. Reversible process → ΔS=0. Irreversible → ΔS>0. Entropy = measure of disorder. Heat flows hot→cold (not reverse) because it increases entropy." },
+  ],
+  "SOM": [
+    { q: "A steel rod (A = 100 mm², E = 200 GPa) carries axial load 50 kN. Stress = ?",
+      opts: ["500 MPa","0.5 MPa","5 MPa","50 MPa"], ans: 0,
+      trick: "σ = F/A = 50,000 N / 100 mm² = 500 N/mm² = 500 MPa. Keep units consistent: N and mm² gives MPa (=N/mm²) directly." },
+    { q: "A beam bends under load. Bending stress is maximum at?",
+      opts: ["Neutral axis","Centre of cross-section","Extreme fibre (top/bottom)","Mid-span"], ans: 2,
+      trick: "σ = My/I. Stress proportional to y (distance from neutral axis). Max y = extreme fibre → max stress. At neutral axis y=0 → zero bending stress." },
+    { q: "Euler's critical buckling load for a column with both ends pinned?",
+      opts: ["π²EI/L²","4π²EI/L²","π²EI/4L²","EI/L²"], ans: 0,
+      trick: "Both ends pinned → effective length Le = L → Pcr = π²EI/L². Both fixed → Le=L/2 → Pcr=4π²EI/L² (4× stronger!). One fixed one free → Le=2L (weakest)." },
+  ],
+  "EM": [
+    { q: "Synchronous speed of a 4-pole induction motor on 50 Hz supply?",
+      opts: ["750 rpm","1000 rpm","1500 rpm","3000 rpm"], ans: 2,
+      trick: "Ns = 120f/P = 120×50/4 = 1500 rpm. Memorise: 2-pole=3000, 4-pole=1500, 6-pole=1000, 8-pole=750 rpm for 50 Hz." },
+    { q: "A 3-phase induction motor runs at 1440 rpm with synchronous speed 1500 rpm. Slip = ?",
+      opts: ["0.04 (4%)","0.06 (6%)","0.96 (96%)","0.1 (10%)"], ans: 0,
+      trick: "s = (Ns−N)/Ns = (1500−1440)/1500 = 60/1500 = 0.04 = 4%. Full load slip is typically 3–8%. At synchronous speed s=0 (ideal, never reached)." },
+    { q: "Transformer EMF equation: E = 4.44·f·N·Φm. What does Φm represent?",
+      opts: ["Average flux","Peak (maximum) flux","RMS flux","Flux density"], ans: 1,
+      trick: "Φm = peak flux in Webers. The 4.44 = π/√2 ≈ 4.44 (form factor × π for sinusoidal flux). Larger core area or flux → higher EMF for same turns and frequency." },
+  ],
+};
+
 
 function renderResources() {
-  const tabs = [["formulas","⚡ Formulas"],["pyq","📋 PYQ"],["placement","💼 Placement"],["plan","🗓 Study Plan"]];
+  const tabs = [["formulas","⚡ Formulas"],["mcq","🎯 GATE MCQs"],["pyq","📋 PYQ"],["placement","💼 Placement"],["plan","🗓 Study Plan"]];
   const tabBar = el("div", { class: "resource-tabs" },
     ...tabs.map(([id, label]) => el("button", {
       type: "button", class: "resource-tab" + (resourceTab === id ? " active" : ""),
@@ -1262,6 +1529,49 @@ function renderResources() {
                 el("strong", { class: "formula-name" }, name),
                 el("pre", { class: "formula-body" }, formula)
               ))
+            )
+          );
+        })
+      ),
+    ];
+  } else if (resourceTab === "mcq") {
+    const mcqSubjects = Object.keys(GATE_MCQ);
+    const activeS = mcqSubj && GATE_MCQ[mcqSubj] ? mcqSubj : null;
+    content = [
+      el("p", { class: "hint" }, "Classic GATE-style objective questions with shortcut tricks. Tap a subject, choose your answer, then reveal the trick."),
+      el("div", { class: "formula-subj-list" },
+        ...mcqSubjects.map(s => {
+          const qs = GATE_MCQ[s];
+          const isOpen = activeS === s;
+          return el("div", {},
+            el("button", { type: "button", class: "formula-subj-btn", ...colorAttrs(s, "doubts"),
+              onclick: () => { mcqSubj = isOpen ? null : s; render(); },
+            }, el("span", {}, s), el("span", { class: "formula-count" }, qs.length + " questions"), el("span", { class: "formula-arrow" }, isOpen ? "▲" : "▼")),
+            isOpen && el("div", { class: "mcq-list" },
+              ...qs.map((item, idx) => {
+                const key = s + "-" + idx;
+                const chosen = mcqRevealed[key];
+                return el("div", { class: "mcq-card" + (chosen !== undefined ? " mcq-answered" : "") },
+                  el("p", { class: "mcq-q" }, "Q" + (idx+1) + ". " + item.q),
+                  el("div", { class: "mcq-opts" },
+                    ...item.opts.map((opt, oi) => {
+                      let cls = "mcq-opt";
+                      if (chosen !== undefined) {
+                        if (oi === item.ans) cls += " mcq-correct";
+                        else if (oi === chosen) cls += " mcq-wrong";
+                      }
+                      return el("button", { type: "button", class: cls,
+                        onclick: () => { mcqRevealed = { ...mcqRevealed, [key]: oi }; render(); },
+                        disabled: chosen !== undefined,
+                      }, String.fromCharCode(65+oi) + ") " + opt);
+                    })
+                  ),
+                  chosen !== undefined && el("div", { class: "mcq-trick" },
+                    el("span", { class: "mcq-trick-label" }, chosen === item.ans ? "✅ Correct! " : "❌ Wrong. "),
+                    el("pre", { class: "formula-body" }, item.trick)
+                  )
+                );
+              })
             )
           );
         })
@@ -1423,6 +1733,7 @@ function renderAsk(existing) {
   const current = existing ? existing[t.field] : (state.group !== "All" ? state.group : t.groups[0]);
   const groups = t.groups.includes(current) ? t.groups : [...t.groups, current];
   const newPages = []; // data URLs added in this form
+  const newFileLinks = []; // {name, url, size} uploaded via Firebase Storage
   const form = el("form", { class: "form", onsubmit: async (e) => {
     e.preventDefault();
     const title = form.elements.title.value.trim(), body = form.elements.body.value.trim(), group = form.elements.group.value;
@@ -1431,18 +1742,21 @@ function renderAsk(existing) {
     if (hasBadWords(title + " " + body)) { err.textContent = LANGUAGE_MSG; err.hidden = false; return; }
     const wait = existing ? "" : spamCheck();
     if (wait) { err.textContent = wait; err.hidden = false; return; }
+    if (newFileLinks.some(f => f.pct !== undefined)) { err.textContent = "Please wait for uploads to finish."; err.hidden = false; return; }
     const btn = form.querySelector("button[type=submit]"); btn.disabled = true; btn.textContent = "Saving…";
+    const readyFiles = newFileLinks.filter(f => f.url);
     try {
       if (existing) {
         const kept = existing.pages || [];
         const added = newPages.slice(0, Math.max(0, MAX_PAGES - kept.length));
         const addedIds = await trySavePages(added, existing.id);
-        await store.update(t.coll, existing.id, { title: title.slice(0, 200), body: body.slice(0, 5000), [t.field]: group, authorName: anonymous ? ANON : (getName() || existing.authorName), anonymous, urgent, pages: [...kept, ...addedIds] });
+        const keptFiles = existing.fileAttachments || [];
+        await store.update(t.coll, existing.id, { title: title.slice(0, 200), body: body.slice(0, 5000), [t.field]: group, authorName: anonymous ? ANON : (getName() || existing.authorName), anonymous, urgent, pages: [...kept, ...addedIds], fileAttachments: [...keptFiles, ...readyFiles] });
         state.mode = "view"; render(); return;
       }
       const id = store.newId(t.coll);
       const pageIds = newPages.map(u => { const pid = store.newId("pages"); pageCache.set(pid, u); return pid; });
-      const doc = { title: title.slice(0, 200), body: body.slice(0, 5000), [t.field]: group, authorId: store.uid, authorName: anonymous ? ANON : getName(), anonymous, urgent, createdAt: Date.now(), pages: pageIds };
+      const doc = { title: title.slice(0, 200), body: body.slice(0, 5000), [t.field]: group, authorId: store.uid, authorName: anonymous ? ANON : getName(), anonymous, urgent, createdAt: Date.now(), pages: pageIds, fileAttachments: readyFiles };
       if (state.tab === "doubts") { doc.resolvedReplyId = null; doc.bounty = bounty; }
       const myC = getCampus(); if (myC) doc.campus = myC;
       // Show the new post straight away; the live update replaces it with the saved copy.
@@ -1465,6 +1779,7 @@ function renderAsk(existing) {
     el("label", {}, "Details", el("textarea", { id: "f-body", name: "body", maxlength: "5000", placeholder: t.bodyHint })),
     existing && existing.pages && existing.pages.length ? el("p", { class: "hint" }, "This post already has " + existing.pages.length + " page(s). You can add up to " + Math.max(0, MAX_PAGES - existing.pages.length) + " more.") : null,
     attachPicker(newPages, existing ? MAX_PAGES - ((existing.pages || []).length) : MAX_PAGES),
+    store.uploadFile ? filePicker(newFileLinks) : null,
     el("div", { class: "checks" },
       el("label", { class: "check" }, el("input", { type: "checkbox", id: "f-anon", name: "anon", checked: !!(existing && existing.anonymous) }), "🙈 Post anonymously (classmates won't see your name)"),
       state.tab === "doubts" && el("label", { class: "check" }, el("input", { type: "checkbox", id: "f-urgent", name: "urgent", checked: !!(existing && existing.urgent) }), "🔥 Urgent: exam or deadline soon"),
@@ -1507,6 +1822,7 @@ function renderView() {
   ];
   if (d.body) out.push(el("p", { class: "body" }, d.body));
   if (d.pages && d.pages.length) out.push(pagesView(d.pages));
+  if (d.fileAttachments && d.fileAttachments.length) out.push(renderFileAttachments(d.fileAttachments));
   const actions = [];
   const on = liked(d.id), votes = likesFor(d.id).length;
   if (state.tab === "ideas") actions.push(el("button", { class: "like", type: "button", "aria-pressed": String(on), onclick: () => toggleLike(d) }, "♥ " + (on ? "Liked" : "Like") + " · " + votes));
@@ -1547,24 +1863,27 @@ function renderView() {
       el("div", { class: "who" }, r.anonymous ? avatarEl("👤") : avatarEl(mine(r) ? getAvatar() : avatarFor(r.authorName || "")), el("strong", {}, who(r)), isMentor(r) && el("span", { class: "pill mentor" }, "🎓 " + MENTORS.get(r.authorId)), el("span", {}, ago(r.createdAt)), best && el("span", { class: "pill done" }, "Helped"), ...tools, reportButton("replies", r)),
       r.body && r.body !== PAGE_ONLY && el("p", { class: "body" }, r.body),
       r.pages && r.pages.length ? pagesView(r.pages) : null,
+      r.fileAttachments && r.fileAttachments.length ? renderFileAttachments(r.fileAttachments) : null,
       reactionBar(r)));
   }
   out.push(list);
 
+  const replyFiles = [];
   const form = el("form", { class: "form", onsubmit: async (e) => {
     e.preventDefault();
     const body = form.elements.reply.value.trim();
     const pages = state.replyPages.slice();
-    if (!body && !pages.length) return;
+    if (!body && !pages.length && !replyFiles.filter(f => f.url).length) return;
     if (!getName()) { state.afterName = "view"; state.mode = "name"; render(); return; }
     if (hasBadWords(body)) { showNotice(LANGUAGE_MSG); return; }
+    if (replyFiles.some(f => f.pct !== undefined)) { showNotice("Please wait for uploads to finish."); return; }
     const wait = spamCheck();
     if (wait) { showNotice(wait); return; }
     notePosted();
     const id = store.newId("replies");
     const pageIds = pages.map(u => { const pid = store.newId("pages"); pageCache.set(pid, u); return pid; });
     const anonymous = state.replyAnon;
-    const doc = { parentId: d.id, parentColl: t.coll, body: (body || PAGE_ONLY).slice(0, 5000), authorId: store.uid, authorName: anonymous ? ANON : getName(), anonymous, createdAt: Date.now(), pages: pageIds };
+    const doc = { parentId: d.id, parentColl: t.coll, body: (body || PAGE_ONLY).slice(0, 5000), authorId: store.uid, authorName: anonymous ? ANON : getName(), anonymous, createdAt: Date.now(), pages: pageIds, fileAttachments: replyFiles.filter(f => f.url) };
     state.replies = [...state.replies, { id, ...doc }];
     state.replyPages = [];
     form.reset(); render();
@@ -1577,6 +1896,7 @@ function renderView() {
     el("label", { for: "f-reply", class: "label" }, t.replyLabel),
     el("textarea", { id: "f-reply", name: "reply", maxlength: "5000", placeholder: state.tab === "doubts" ? "Explain step by step. Show the working, not only the result." : "Add a thought, an improvement, or offer to help build it." }),
     attachPicker(state.replyPages, MAX_PAGES),
+    store.uploadFile ? filePicker(replyFiles) : null,
     el("label", { class: "check" }, el("input", { type: "checkbox", id: "f-reply-anon", checked: state.replyAnon, onchange: (e) => { state.replyAnon = e.target.checked; } }), "🙈 Answer anonymously"),
     el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "submit" }, t.replyBtn)));
   out.push(form);

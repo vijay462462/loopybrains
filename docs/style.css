@@ -834,3 +834,63 @@ h1 span {
 }
 .tip-icon { font-size: 22px; line-height: 1; flex-shrink: 0; margin-top: 2px; }
 .study-tip p { margin: 2px 0 0; }
+
+/* ============================================================
+   GATE MCQ cards (v39)
+   ============================================================ */
+.mcq-list { display: flex; flex-direction: column; gap: 12px; padding: 10px 6px 6px; }
+.mcq-card {
+  background: var(--bg); border: 1.5px solid var(--border); border-radius: 14px;
+  padding: 14px; display: flex; flex-direction: column; gap: 10px;
+}
+.mcq-card.mcq-answered { border-color: var(--accent); }
+.mcq-q { font: 700 .88rem/1.5 var(--f-body); margin: 0; }
+.mcq-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+@media (max-width: 480px) { .mcq-opts { grid-template-columns: 1fr; } }
+.mcq-opt {
+  padding: 8px 12px; border-radius: 10px; border: 1.5px solid var(--border);
+  background: var(--sheet); font: 600 .82rem var(--f-body); color: var(--text);
+  cursor: pointer; text-align: left; transition: background .12s, border-color .12s;
+}
+.mcq-opt:hover:not(:disabled) { background: color-mix(in oklab, var(--accent) 12%, var(--sheet)); border-color: var(--accent); }
+.mcq-opt:disabled { cursor: default; }
+.mcq-opt.mcq-correct { background: #dcfce7; border-color: #22c55e; color: #166534; }
+.mcq-opt.mcq-wrong   { background: #fee2e2; border-color: #ef4444; color: #991b1b; }
+@media (prefers-color-scheme: dark) {
+  .mcq-opt.mcq-correct { background: #052e16; color: #86efac; }
+  .mcq-opt.mcq-wrong   { background: #2d0000; color: #fca5a5; }
+}
+:root[data-theme="dark"] .mcq-opt.mcq-correct { background: #052e16; color: #86efac; }
+:root[data-theme="dark"] .mcq-opt.mcq-wrong   { background: #2d0000; color: #fca5a5; }
+.mcq-trick { display: flex; flex-direction: column; gap: 6px; }
+.mcq-trick-label { font: 700 .82rem var(--f-body); }
+
+/* ============================================================
+   File attachments (v39)
+   ============================================================ */
+.file-attach { margin: 8px 0; display: flex; flex-direction: column; gap: 6px; }
+.file-list { display: flex; flex-direction: column; gap: 5px; }
+.file-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px; border-radius: 10px;
+  background: var(--shade); border: 1.5px solid var(--border); font-size: .82rem;
+}
+.file-ico { font-size: 18px; flex-shrink: 0; }
+.file-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-size, .file-pct { font-size: .72rem; color: var(--muted); white-space: nowrap; }
+.file-pct { color: var(--accent); font-weight: 700; }
+
+.file-attachments { display: flex; flex-direction: column; gap: 7px; margin: 8px 0; }
+.file-dl {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 12px;
+  background: var(--sheet); border: 1.5px solid var(--border);
+  text-decoration: none; color: var(--text);
+  transition: background .12s;
+}
+.file-dl:hover { background: var(--shade); }
+.file-dl .file-ico { font-size: 20px; }
+.file-meta { flex: 1; display: flex; flex-direction: column; gap: 1px; overflow: hidden; }
+.file-dl-name { font: 600 .85rem/1.3 var(--f-body); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-dl-size { font-size: .7rem; color: var(--muted); }
+.file-dl-btn { font: 700 .75rem var(--f-body); color: var(--accent); white-space: nowrap; flex-shrink: 0; }
