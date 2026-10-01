@@ -1353,6 +1353,8 @@ renderExams();
 startCaptions();
 const deep = /^#(doubts|ideas|clubs)(?:\/([\w-]+))?$/.exec(location.hash);
 if (deep) state.tab = deep[1];
+// Show board immediately — Firebase will fill it in once connected
+state.loaded = true;
 render();
 (async () => {
   const conf = CFG.firebase || {};
@@ -1362,11 +1364,9 @@ render();
   } catch (e) {
     console.error(e);
     showNotice("Could not connect to the class board. Check your internet and reload. (" + ((e && e.code) || "error") + ")");
-    state.loaded = true; render(); return;
+    return;
   }
   if (store.demo) showNotice("Demo mode: posts are saved only in this browser. Add your Firebase settings to config.js so the whole class shares one board.", "demo");
-  // Show the board immediately — Firebase updates will fill it in
-  state.loaded = true; render();
   const live = (rows) => rows.filter(x => !x.deleted);
   let opened = false;
   const onErr = (e) => {
