@@ -50,7 +50,9 @@ const TABS = {
 
 // ---------- campus ----------
 const CAMPUSES = (CFG.campuses && CFG.campuses.length) ? CFG.campuses : [];
-const CAMPUS_COLORS = { NUZVID: "#7c3aed", ONGOLE: "#0d9488", BASAR: "#d97706", IDUPULAPAYA: "#dc2626" };
+const CAMPUS_COLORS = { NUZVID: "#7c3aed", ONGOLE: "#0d9488", RKVALLEY: "#2563eb", SRIKAKULAM: "#0891b2", BASAR: "#d97706", IDUPULAPAYA: "#dc2626" };
+const CAMPUS_ICON = { NUZVID: "🟣", ONGOLE: "🟢", RKVALLEY: "🔵", SRIKAKULAM: "🩵" };
+const CAMPUS_FULL = { NUZVID: "RGUKT Nuzvid", ONGOLE: "RGUKT Ongole", RKVALLEY: "RGUKT RK Valley", SRIKAKULAM: "RGUKT Srikakulam" };
 const campusColor = (c) => CAMPUS_COLORS[c] || "#6366f1";
 const getCampus = () => { try { return localStorage.getItem("dd-campus") || null; } catch(_){return null;} };
 const setCampus = (c) => { try { localStorage.setItem("dd-campus", c); } catch(_){} };
@@ -921,6 +923,26 @@ function renderNetwork() {
   ];
 }
 
+function campusStats() {
+  const map = {};
+  for (const c of CAMPUSES) map[c] = { campus: c, posts: 0, resolved: 0, answers: 0, points: 0 };
+  for (const d of state.doubts) {
+    if (!d.campus || !map[d.campus]) continue;
+    map[d.campus].posts++; map[d.campus].points += 1;
+    if (d.resolvedReplyId) { map[d.campus].resolved++; }
+  }
+  for (const i of state.ideas) if (i.campus && map[i.campus]) { map[i.campus].posts++; map[i.campus].points += 2; }
+  for (const c of state.clubs) if (c.campus && map[c.campus]) { map[c.campus].posts++; map[c.campus].points += 1; }
+  for (const r of state.replies) {
+    if (r.anonymous) continue;
+    const parent = state.doubts.find(d => d.id === r.parentId);
+    if (!parent || !parent.campus || !map[parent.campus]) continue;
+    map[parent.campus].answers++; map[parent.campus].points += 2;
+    if (parent.resolvedReplyId === r.id) map[parent.campus].points += 5;
+  }
+  return Object.values(map).sort((a, b) => b.points - a.points);
+}
+
 function renderLeaders() {
   const rows = [...allStats().values()].filter(p => p.points > 0).sort((a, b) => b.points - a.points).slice(0, 15);
   const medal = ["🥇", "🥈", "🥉"];
@@ -935,12 +957,33 @@ function renderLeaders() {
           el("small", {}, "Lv " + p.level.n + " " + titleOf(p.points) + " · " + plural(p.answers, "answer") + " · " + p.helpful + " helpful · " + p.quizRight + " quiz" + (p.streak > 1 ? " · 🔥" + p.streak + "-day streak" : ""))),
         el("span", { class: "pts" }, p.points + " pts"))))
     : el("p", { class: "hint" }, "No points yet. Answer a doubt or today's quiz to get on the board.");
+
+  // Campus rivalry board
+  const campuses = campusStats();
+  const maxPts = Math.max(...campuses.map(c => c.points), 1);
+  const rivalMedal = ["🥇","🥈","🥉","4️⃣"];
+  const rivalBoard = CAMPUSES.length > 0
+    ? el("div", { class: "rival-board" }, ...campuses.map((c, i) =>
+        el("div", { class: "rival-row" },
+          el("span", { class: "rival-rank" }, CAMPUS_ICON[c.campus] || rivalMedal[i] || String(i + 1)),
+          el("span", { class: "rival-name", style: "color:" + campusColor(c.campus) }, c.campus),
+          el("div", { class: "rival-bar-wrap" },
+            el("div", { class: "rival-bar", style: "width:" + Math.round(c.points * 100 / maxPts) + "%;background:" + campusColor(c.campus) })),
+          el("span", { class: "rival-score" }, c.points + " pts"),
+          el("span", { class: "rival-sub" }, c.posts + " posts · " + c.resolved + " solved")
+        )
+      ))
+    : null;
+
   return [
     el("h2", {}, "🏆 Top Helpers"),
     list,
     el("p", { class: "hint" }, "Points: answer a classmate's doubt +2 · answer marked helpful +5 more · each 👍💡🔥 on your answer +1 · daily quiz right +3 · share an idea +2 · each like on your idea +1 · ask a doubt +1. Anonymous posts don't count."),
+    rivalBoard && el("div", { class: "label" }, "🏫 Campus Rivalry — all 4 RGUKT campuses"),
+    rivalBoard,
+    rivalBoard && el("p", { class: "hint" }, "Campus score: ask a doubt +1 · share an idea +2 · helpful answer +5 · post in clubs +1. Compete with other campuses!"),
     el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")),
-  ];
+  ].filter(Boolean);
 }
 
 function renderHeatmap(p) {
@@ -1343,7 +1386,7 @@ function renderCampusPicker() {
         type: "button", class: "campus-pick-btn",
         style: "--cc:" + campusColor(c),
         onclick: () => { setCampus(c); state.mode = "intro"; render(); },
-      }, el("span", { class: "campus-pick-icon" }, c === "NUZVID" ? "🟣" : c === "ONGOLE" ? "🟢" : "🔵"), el("span", { class: "campus-pick-name" }, c), el("span", { class: "campus-pick-sub" }, "RGUKT " + c)))
+      }, el("span", { class: "campus-pick-icon" }, CAMPUS_ICON[c] || "🏫"), el("span", { class: "campus-pick-name" }, c), el("span", { class: "campus-pick-sub" }, CAMPUS_FULL[c] || "RGUKT " + c)))
     ),
     el("p", { class: "hint" }, "You can change campus later from your name button."),
     el("button", { class: "btn", type: "button", onclick: () => { state.mode = "intro"; render(); } }, "Skip for now"),
@@ -1463,7 +1506,7 @@ render();
 
 // Service worker
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js?v=36').catch(() => {});
+  navigator.serviceWorker.register('./sw.js?v=37').catch(() => {});
 }
 
 // Keyboard shortcuts
