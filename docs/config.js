@@ -1,7 +1,7 @@
 // Doubt Desk settings. Edit this file to change subjects or connect the database.
 window.DOUBT_DESK_CONFIG = {
   // Site title shown in the header
-  title: "RGUKT AP — Student Network",
+  title: "RGUKT Spark",
 
   // Paste your Firebase web app config here (Firebase console > Project settings > Your apps).
   firebase: {
@@ -19,10 +19,11 @@ window.DOUBT_DESK_CONFIG = {
 
   // Caption under the title. Add more lines to rotate between them every 5 seconds.
   captions: [
-    "One doubt. Many minds. Zero fear.",
-    "4 campuses. One network. Infinite ideas.",
+    "One question can light up four campuses.",
+    "4 campuses. One spark. Infinite ideas.",
     "Ask from Ongole. Answered from Srikakulam.",
-    "RGUKT students: build, connect, innovate.",
+    "Doubt today. Discover tomorrow.",
+    "RGUKT students: think, build, ignite.",
   ],
 
   // The 4 RGUKT AP campuses. Students pick theirs when they set their name.

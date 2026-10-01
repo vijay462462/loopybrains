@@ -1216,7 +1216,7 @@ document.getElementById("campusBar") && document.getElementById("campusBar").add
 });
 
 // Update page title from config
-if (CFG.title) { document.title = CFG.title; const h = document.getElementById("siteTitle"); if (h) { h.innerHTML = CFG.title.replace("—", "<br><span>") + "</span>"; } }
+if (CFG.title) { document.title = CFG.title; }
 
 // ---------- start ----------
 renderExams();
