@@ -11,7 +11,7 @@
 <meta name="referrer" content="no-referrer">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@500&display=swap">
-<link rel="stylesheet" href="style.css?v=19">
+<link rel="stylesheet" href="style.css?v=20">
 </head>
 <body>
 <div class="wrap">
@@ -28,6 +28,7 @@
       </div>
     </div>
     <div class="hdr-actions">
+      <button class="chip" id="themeBtn" type="button" aria-label="Toggle dark mode" title="Toggle dark/light">🌙</button>
       <button class="chip" id="networkBtn" type="button">🌐 RGUKT Network</button>
       <button class="chip" id="quizBtn" type="button">🧠 Daily Quiz</button>
       <button class="chip" id="learnBtn" type="button">📚 Learn from IIT</button>
@@ -38,6 +39,9 @@
   </header>
 
   <div class="notice" id="notice" hidden></div>
+
+  <!-- trending subjects bar -->
+  <div class="trend-bar" id="trendBar" hidden></div>
 
   <!-- campus filter bar -->
   <div class="campus-bar" id="campusBar" hidden>
@@ -64,8 +68,8 @@
     <aside class="sheet" id="sheet" aria-live="polite"></aside>
   </div>
 </div>
-<script src="config.js?v=19"></script>
-<script src="quiz.js?v=19"></script>
-<script type="module" src="app.js?v=19"></script>
+<script src="config.js?v=20"></script>
+<script src="quiz.js?v=20"></script>
+<script type="module" src="app.js?v=20"></script>
 </body>
 </html>

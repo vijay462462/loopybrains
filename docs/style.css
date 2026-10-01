@@ -507,3 +507,73 @@ h1 span {
 
 /* Leaderboard campus badge row */
 .board-name-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+/* ============================================================
+   Trending subjects bar
+   ============================================================ */
+.trend-bar {
+  display: flex; align-items: center; gap: 8px; padding: 6px 16px;
+  overflow-x: auto; scrollbar-width: none; background: var(--paper);
+  border-bottom: 1px solid var(--line); font-size: 13px;
+  animation: slideUp .2s ease both;
+}
+.trend-bar::-webkit-scrollbar { display: none; }
+.trend-label { font-weight: 700; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
+.trend-chip {
+  display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px;
+  border-radius: 14px; border: 1px solid var(--line); background: var(--sheet);
+  cursor: pointer; white-space: nowrap; font-size: 12px; font-weight: 600;
+  transition: transform .15s ease;
+}
+.trend-chip:hover { transform: translateY(-2px); }
+.trend-chip [data-s] { padding: 1px 6px; border-radius: 8px; font-size: 11px; background: var(--c-soft); color: var(--c-ink); }
+.trend-n { color: #ef4444; font-weight: 800; }
+
+/* ============================================================
+   Activity heatmap
+   ============================================================ */
+.heatmap {
+  display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 12px; padding: 8px;
+  background: var(--paper); border-radius: 10px; border: 1px solid var(--line);
+}
+.heat-cell {
+  width: 14px; height: 14px; border-radius: 3px;
+  background: var(--line); transition: transform .15s ease;
+}
+.heat-cell.hot {
+  background: linear-gradient(135deg, var(--accent), color-mix(in oklab, var(--accent) 70%, #f59e0b));
+  box-shadow: 0 0 6px color-mix(in oklab, var(--accent) 40%, transparent);
+  animation: heatPop .3s ease;
+}
+.heat-cell:hover { transform: scale(1.4); }
+@keyframes heatPop { from { transform: scale(0); } to { transform: scale(1); } }
+
+/* ============================================================
+   Campus Rivalry
+   ============================================================ */
+.rival-board { display: grid; gap: 8px; margin: 8px 0 4px; }
+.rival-row {
+  display: flex; align-items: center; gap: 8px; font-size: 13px;
+  animation: slideUp .3s ease both;
+}
+.rival-rank { font-size: 18px; width: 24px; flex-shrink: 0; text-align: center; }
+.rival-name { width: 100px; font-weight: 700; flex-shrink: 0; }
+.rival-bar-wrap { flex: 1; height: 8px; border-radius: 6px; background: var(--line); overflow: hidden; }
+.rival-bar { height: 100%; border-radius: 6px; transition: width .6s cubic-bezier(.22,1,.36,1); min-width: 4px; }
+.rival-score { font-weight: 800; color: var(--accent); width: 48px; text-align: right; flex-shrink: 0; }
+
+/* ============================================================
+   Smart subject detect hint
+   ============================================================ */
+#f-group { transition: box-shadow .25s ease; }
+#f-group:focus, #f-group[data-detected="true"] { box-shadow: 0 0 0 2px color-mix(in oklab, var(--accent) 40%, transparent); }
+
+/* ============================================================
+   Theme toggle button sizing
+   ============================================================ */
+#themeBtn { font-size: 18px; padding: 4px 10px; min-width: 38px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .heat-cell.hot { animation: none; }
+  .rival-bar { transition: none; }
+}

@@ -489,6 +489,27 @@ async function copyLink(btn, link) {
 }
 
 // ---------- rendering ----------
+function renderTrendBar() {
+  const bar = document.getElementById("trendBar");
+  if (!bar || !state.loaded) return;
+  const cutoff = Date.now() - 6 * 3600 * 1000; // last 6 hours
+  const counts = {};
+  for (const d of state.doubts) if ((d.createdAt || 0) > cutoff) counts[d.subject] = (counts[d.subject] || 0) + 2;
+  for (const r of state.replies) if ((r.createdAt || 0) > cutoff) {
+    const parent = state.doubts.find(d => d.id === r.parentId);
+    if (parent) counts[parent.subject] = (counts[parent.subject] || 0) + 1;
+  }
+  const hot = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  if (!hot.length) { bar.hidden = true; return; }
+  bar.hidden = false;
+  bar.replaceChildren(
+    el("span", { class: "trend-label" }, "🔥 Trending now:"),
+    ...hot.map(([s, n]) => el("button", { class: "trend-chip", type: "button",
+      onclick: () => { state.tab = "doubts"; state.group = s; render(); }
+    }, el("span", { ...colorAttrs(s, "doubts") }, s), el("span", { class: "trend-n" }, "+" + n)))
+  );
+}
+
 function renderCampusBar() {
   const bar = document.getElementById("campusBar");
   if (!bar) return;
@@ -725,6 +746,33 @@ function allStats() {
       if (q && a.opt === q.a) { p.quizRight++; p.points += 3; }
     }
   }
+    // Night Owl: any post created between midnight and 5am
+  const allUserPosts = [...state.doubts, ...state.ideas, ...state.clubs, ...state.replies];
+  for (const x of allUserPosts) {
+    if (!x.authorId || x.anonymous) continue;
+    const h = new Date(x.createdAt || 0).getHours();
+    if (h >= 0 && h < 5) { const p = people.get(x.authorId); if (p) p.nightPost = (p.nightPost || 0) + 1; }
+  }
+  // Cross-campus replies: reply to a post from a different campus
+  for (const r of state.replies) {
+    if (!r.authorId || r.anonymous || !r.campus) continue;
+    const parent = [...state.doubts, ...state.ideas, ...state.clubs].find(d => d.id === r.parentId);
+    if (parent && parent.campus && parent.campus !== r.campus) {
+      const p = people.get(r.authorId); if (p) p.crossCampus = (p.crossCampus || 0) + 1;
+    }
+  }
+  // Club posts in distinct clubs
+  const clubsBy = new Map();
+  for (const c of state.clubs) {
+    if (!c.authorId || c.anonymous) continue;
+    if (!clubsBy.has(c.authorId)) clubsBy.set(c.authorId, new Set());
+    clubsBy.get(c.authorId).add(c.club);
+  }
+  for (const [id, clubs] of clubsBy) { const p = people.get(id); if (p) p.clubsPosted = clubs.size; }
+  // Spark Starter: first post ever on the board (oldest authorId)
+  const allSorted = [...allUserPosts].sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+  if (allSorted[0] && allSorted[0].authorId) { const p = people.get(allSorted[0].authorId); if (p) p.firstPost = 1; }
+
   for (const p of people.values()) { p.streak = streakOf(p.days); p.level = levelOf(p.points); if (!p.name) p.name = "A student"; }
   return people;
 }
@@ -738,20 +786,40 @@ function streakOf(days) {
 // Level n needs 5·n·(n−1)/2 points: 0, 5, 15, 30, 50, 75 …
 function levelOf(points) { let n = 1; while (points >= 5 * n * (n + 1) / 2) n++; return { n, from: 5 * n * (n - 1) / 2, to: 5 * n * (n + 1) / 2 }; }
 const BADGES = [
-  ["🌱", "First Step", "Post anything", p => p.asked + p.answers + p.ideas + p.quizDone > 0],
-  ["🤝", "First Answer", "Answer a classmate's doubt", p => p.answers >= 1],
-  ["🧩", "Problem Solver", "3 answers marked helpful", p => p.helpful >= 3],
-  ["💡", "Idea Machine", "Share 3 ideas", p => p.ideas >= 3],
-  ["🧠", "Quiz Whiz", "5 quiz answers right", p => p.quizRight >= 5],
-  ["❤️", "Crowd Favourite", "10 reactions or likes received", p => p.reacts + p.likes >= 10],
-  ["🔥", "On Fire", "3-day streak", p => p.streak >= 3],
-  ["🏆", "Legend", "Reach 50 points", p => p.points >= 50],
+  ["🌱", "First Step",      "Post anything",                   p => p.asked + p.answers + p.ideas + p.quizDone > 0],
+  ["🤝", "First Answer",    "Answer a classmate's doubt",      p => p.answers >= 1],
+  ["🧩", "Problem Solver",  "3 answers marked helpful",        p => p.helpful >= 3],
+  ["💡", "Idea Machine",    "Share 3 ideas",                   p => p.ideas >= 3],
+  ["🧠", "Quiz Whiz",       "5 quiz answers right",            p => p.quizRight >= 5],
+  ["❤️", "Crowd Favourite", "10 reactions or likes received",  p => p.reacts + p.likes >= 10],
+  ["🔥", "On Fire",         "3-day streak",                    p => p.streak >= 3],
+  ["🏆", "Legend",          "Reach 50 points",                 p => p.points >= 50],
+  ["🌙", "Night Owl",       "Post after midnight",             p => p.nightPost > 0],
+  ["🌐", "Cross Campus",    "Reply to a different campus",     p => p.crossCampus > 0],
+  ["🏛",  "Club Founder",   "Post in 3 different clubs",       p => p.clubsPosted >= 3],
+  ["⚡", "Spark Starter",   "First to post in any subject",    p => p.firstPost > 0],
+  ["🎖",  "Veteran",        "Active for 7+ days total",        p => p.days && p.days.size >= 7],
 ];
 const TITLES = [[50, "Legend"], [25, "Mentor"], [10, "Helper"], [0, "Rising star"]];
 const titleOf = (pts) => TITLES.find(([min]) => pts >= min)[1];
 
 function renderNetwork() {
   const allPosts = [...state.doubts, ...state.ideas, ...state.clubs];
+  const allReplies = state.replies;
+  // Weekly rivalry: score = resolved doubts * 5 + replies * 2 + posts * 1 in last 7 days
+  const weekAgo = Date.now() - 7 * 86400000;
+  const weeklyScore = (campus) => {
+    let s = 0;
+    const weekPosts = allPosts.filter(p => p.campus === campus && (p.createdAt || 0) > weekAgo);
+    s += weekPosts.length;
+    const weekReplies = allReplies.filter(r => r.campus === campus && (r.createdAt || 0) > weekAgo);
+    s += weekReplies.length * 2;
+    const resolved = state.doubts.filter(d => d.campus === campus && d.resolvedReplyId && (d.createdAt || 0) > weekAgo);
+    s += resolved.length * 5;
+    return s;
+  };
+  const rivalScores = CAMPUSES.map(c => ({ c, score: weeklyScore(c), col: CAMPUS_COLOURS[c] || {} }))
+    .sort((a, b) => b.score - a.score);
   const campusStats = CAMPUSES.map(c => {
     const posts = allPosts.filter(p => p.campus === c).length;
     const members = new Set(allPosts.filter(p => p.campus === c && !p.anonymous).map(p => p.authorId)).size;
@@ -770,9 +838,23 @@ function renderNetwork() {
         state.campusFilter = c; state.mode = "intro"; render();
         document.querySelector(".campus-chip[data-campus='" + c + "']") && document.querySelector(".campus-chip[data-campus='" + c + "']").click();
       } }, "View posts →")));
+  // Weekly rivalry bar
+  const maxScore = Math.max(1, ...rivalScores.map(x => x.score));
+  const rivalSection = rivalScores[0].score > 0 ? [
+    el("div", { class: "label" }, "⚔️ This Week's Campus Rivalry"),
+    el("div", { class: "rival-board" }, ...rivalScores.map((x, i) =>
+      el("div", { class: "rival-row" },
+        el("span", { class: "rival-rank" }, ["🥇","🥈","🥉","4️⃣"][i] || String(i+1)),
+        el("span", { class: "rival-name" }, x.c.replace("RGUKT ", "")),
+        el("div", { class: "rival-bar-wrap" },
+          el("div", { class: "rival-bar", style: `width:${Math.round(x.score/maxScore*100)}%;background:${x.col.border||"var(--accent)"}` })),
+        el("span", { class: "rival-score" }, x.score + " pts")))),
+    el("p", { class: "hint" }, "Scored by posts, replies and resolved doubts this week. Updates live."),
+  ] : [];
   return [
-    el("h2", {}, "🌐 RGUKT AP Network"),
+    el("h2", {}, "🌐 RGUKT Spark Network"),
     el("p", { class: "hint" }, totalMembers + " students · " + totalPosts + " posts across 4 campuses"),
+    ...rivalSection,
     el("div", { class: "network-grid" }, ...campusCards),
     el("div", { class: "label" }, "What you can do"),
     el("ul", { class: "network-features" },
@@ -810,6 +892,16 @@ function renderLeaders() {
   ];
 }
 
+function renderHeatmap(p) {
+  const today = dayNum();
+  const cells = Array.from({ length: 30 }, (_, i) => {
+    const d = today - 29 + i;
+    const active = p.days && p.days.has(d);
+    return el("span", { class: "heat-cell" + (active ? " hot" : ""), title: active ? "Active" : "Inactive" });
+  });
+  return el("div", { class: "heatmap" }, ...cells);
+}
+
 function renderMe() {
   const p = (store && allStats().get(store.uid)) || { name: getName(), points: 0, answers: 0, helpful: 0, ideas: 0, quizRight: 0, streak: 0, reacts: 0, likes: 0, asked: 0, quizDone: 0, level: levelOf(0) };
   const lv = p.level, pct = Math.round((p.points - lv.from) * 100 / (lv.to - lv.from));
@@ -837,6 +929,8 @@ function renderMe() {
     store && el("details", { class: "quiz-y" }, el("summary", {}, MENTORS.has(store.uid) ? "🎓 You are a verified mentor" : "🎓 Are you an IIT mentor?"),
       el("p", { class: "hint" }, "Mentors: send this ID to the board's teacher so your answers show the mentor badge. It identifies this phone or computer."),
       el("div", { class: "rowbtns" }, el("code", { class: "devid" }, store.uid), el("button", { class: "btn sm", type: "button", onclick: (e) => copyLink(e.currentTarget, store.uid) }, "Copy ID"))),
+    el("div", { class: "label" }, "📅 Activity — last 30 days"),
+    renderHeatmap(p),
     el("div", { class: "label" }, "Badges"),
     el("div", { class: "badges" }, BADGES.map(([icon, name, how, test]) => el("div", { class: "badge" + (test(p) ? " got" : "") }, el("span", { class: "bicon" }, icon), el("b", {}, name), el("small", {}, how)))),
     el("div", { class: "rowbtns" },
@@ -1046,6 +1140,17 @@ function renderAsk(existing) {
       el("button", { class: "btn primary", type: "submit" }, label),
       el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Cancel")));
   if (existing) { form.elements.title.value = existing.title || ""; form.elements.body.value = existing.body || ""; }
+  // Smart subject detect: suggest subject based on keywords in title
+  if (state.tab === "doubts" && !existing) {
+    setTimeout(() => {
+      const titleInp = form.elements.title, grpSel = form.elements.group;
+      if (!titleInp || !grpSel) return;
+      titleInp.addEventListener("input", () => {
+        const s = detectSubject(titleInp.value);
+        if (s) { grpSel.value = s; }
+      });
+    }, 0);
+  }
   setTimeout(() => form.elements.title.focus(), 0);
   return [el("h2", {}, existing ? "Edit " + t.noun : t.ask), form];
 }
@@ -1164,7 +1269,7 @@ function openAsk() {
 
 let sheetKey = "";
 function render() {
-  renderHeader(); renderCampusBar(); renderRail(); renderList();
+  renderHeader(); renderTrendBar(); renderCampusBar(); renderRail(); renderList();
   // Forms keep what the student is typing while live updates arrive.
   const key = ["ask", "edit", "name"].includes(state.mode) ? state.mode + state.tab : "";
   if (key && key === sheetKey) return;
@@ -1206,6 +1311,29 @@ $("learnBtn").addEventListener("click", () => showPanel("learn"));
 $("nameBtn").addEventListener("click", () => { state.afterName = null; showPanel(getName() ? "me" : "name"); });
 $("search").addEventListener("input", (e) => { state.query = e.target.value; renderList(); });
 $("filter").addEventListener("change", (e) => { state.filter = e.target.value; renderList(); });
+
+// Theme toggle
+(function initTheme() {
+  try {
+    const saved = localStorage.getItem("dd-theme");
+    if (saved) document.documentElement.setAttribute("data-theme", saved);
+  } catch (_) {}
+})();
+const themeBtn = document.getElementById("themeBtn");
+if (themeBtn) {
+  themeBtn.addEventListener("click", () => {
+    const isDark = document.documentElement.getAttribute("data-theme") === "dark"
+      || (!document.documentElement.getAttribute("data-theme") && matchMedia("(prefers-color-scheme: dark)").matches);
+    const next = isDark ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", next);
+    themeBtn.textContent = next === "dark" ? "☀️" : "🌙";
+    try { localStorage.setItem("dd-theme", next); } catch (_) {}
+  });
+  // Set icon to match current theme
+  const isDark = document.documentElement.getAttribute("data-theme") === "dark"
+    || (!document.documentElement.getAttribute("data-theme") && matchMedia("(prefers-color-scheme: dark)").matches);
+  themeBtn.textContent = isDark ? "☀️" : "🌙";
+}
 
 // Campus bar chip clicks
 document.getElementById("campusBar") && document.getElementById("campusBar").addEventListener("click", (e) => {
@@ -1257,6 +1385,57 @@ render();
   store.subscribe("replies", rows => { state.replies = live(rows); ready(); }, onErr);
   store.subscribe("likes", rows => { state.likes = rows; ready(); }, onErr);
 })();
+
+// ---------- smart subject detection ----------
+const SUBJECT_KEYWORDS = {
+  "DLD":     ["flip flop","nand","nor","xor","gates","karnaugh","kmap","mux","decoder","encoder","counter","boolean","logic","sequential","combinational","register"],
+  "DSP":     ["z-transform","ztransform","fft","dft","filter","signal","sampling","nyquist","convolution","dtft","bibo","iir","fir","pole","zero","frequency response"],
+  "CN":      ["tcp","ip","udp","network","osi","router","switch","http","dns","socket","subnet","mac","ethernet","bandwidth","latency","protocol","packet"],
+  "AEC":     ["op-amp","opamp","bjt","mosfet","transistor","amplifier","feedback","diode","rectifier","biasing","gain","voltage","current","differential"],
+  "CS":      ["modulation","demodulation","am","fm","ssb","dsb","bandwidth","carrier","noise","snr","channel","radar","antenna"],
+  "PRV":     ["probability","random","gaussian","normal","poisson","bayes","variance","mean","pdf","cdf","expected value","markov","stochastic"],
+  "RFME":    ["microwave","waveguide","vswr","transmission line","antenna","klystron","gunn","s-parameter","smith chart","rf"],
+  "CO & D":  ["pipeline","instruction","cache","memory","cpu","alu","register","assembly","risc","cisc","addressing","bus","interrupt"],
+  "DS & A":  ["array","linked list","stack","queue","tree","graph","sort","search","recursion","dynamic programming","bfs","dfs","heap","hash","complexity"],
+  "OS":      ["process","thread","deadlock","semaphore","mutex","scheduling","page","memory","file system","ipc","fork","kernel","virtual memory"],
+  "DBMS":    ["sql","database","table","query","join","normalization","index","transaction","acid","schema","relational","nosql","er diagram","trigger"],
+  "OOP":     ["class","object","inheritance","polymorphism","encapsulation","abstraction","java","python","constructor","interface","override","overload"],
+  "TOC":     ["automata","dfa","nfa","regular","grammar","pushdown","turing","halting","context free","language","regex","chomsky"],
+  "CD":      ["compiler","lexical","parser","syntax","semantic","token","grammar","llr","slr","lalr","code generation","optimization"],
+  "SE":      ["agile","scrum","waterfall","sdlc","requirement","testing","uml","sprint","use case","project","design pattern"],
+  "Python":  ["python","list","dictionary","tuple","function","class","loop","numpy","pandas","matplotlib","lambda","import"],
+  "Maths":   ["graph theory","set","logic","proof","combinatorics","permutation","combination","discrete","number theory","matrix","eigen"],
+  "SOM":     ["stress","strain","beam","bending","shear","deflection","column","truss","elastic","modulus","moment of inertia"],
+  "FM":      ["fluid","flow","pressure","bernoulli","viscosity","pipe","turbulent","laminar","reynolds","pump","continuity"],
+  "Struct":  ["structure","frame","load","analysis","stiffness","displacement","reaction","force","method of joints"],
+  "Geo":     ["soil","clay","sand","consolidation","permeability","bearing capacity","foundation","compaction","shear strength"],
+  "Trans":   ["highway","traffic","pavement","gradient","curve","road","alignment","bitumen","vehicle","sight distance"],
+  "Env":     ["water treatment","sewage","pollution","bod","cod","sedimentation","chlorination","filtration","effluent"],
+  "Survey":  ["levelling","theodolite","traverse","chain","bearing","contour","tacheometry","total station","gps","gis"],
+  "Thermo":  ["thermodynamics","entropy","enthalpy","carnot","rankine","brayton","heat","work","temperature","ideal gas","specific heat"],
+  "FM-M":    ["pump","turbine","hydraulic","manometer","orifice","weir","pelton","francis","kaplan","cavitation"],
+  "MD":      ["gear","shaft","key","bearing","spring","design","fatigue","stress concentration","factor of safety","coupling"],
+  "MOM":     ["mechanics","torsion","deflection","strain energy","columns","buckling","euler","cantilever","simply supported"],
+  "Mfg":     ["casting","welding","machining","lathe","milling","forging","forming","tolerance","tool life","cutting"],
+  "HT":      ["conduction","convection","radiation","heat transfer","fourier","biot","nusselt","prandtl","stefan","fin"],
+  "IC Eng":  ["diesel","petrol","compression ratio","efficiency","valve","piston","carburetor","injection","engine","combustion"],
+  "Circuits":["kirchhoff","mesh","nodal","thevenin","norton","superposition","impedance","ac","dc","resistor","capacitor","inductor","phasor"],
+  "EM":      ["transformer","motor","generator","induction","synchronous","flux","torque","speed","rotor","stator","slip"],
+  "PS":      ["power system","transmission","distribution","bus","load flow","fault","protection","relay","stability","per unit"],
+  "PE":      ["inverter","rectifier","converter","chopper","pwm","thyristor","scr","mosfet","power electronics","drive"],
+  "Control": ["control system","transfer function","laplace","bode","root locus","nyquist","pid","stability","gain margin","phase"],
+  "EMS":     ["measurement","instrument","sensor","error","bridge","voltmeter","ammeter","wattmeter","calibration"],
+  "PQ":      ["power quality","harmonic","distortion","flicker","sag","swell","transient","thd","reactive power","compensation"],
+};
+function detectSubject(text) {
+  const t = text.toLowerCase();
+  let best = null, bestCount = 0;
+  for (const [subj, words] of Object.entries(SUBJECT_KEYWORDS)) {
+    const count = words.filter(w => t.includes(w)).length;
+    if (count > bestCount) { bestCount = count; best = subj; }
+  }
+  return bestCount > 0 ? best : null;
+}
 
 // ---------- floating particles ----------
 (function startParticles() {
