@@ -139,7 +139,7 @@ function loadImage(file) {
   });
 }
 // Shrinks a photo or drawing to a JPEG small enough for one database document (about 500 KB).
-function toJpeg(src, w, h) {
+function toJpeg(src, w, h, limit = 700000) {
   let scale = Math.min(1, 1400 / Math.max(w, h)), q = 0.78;
   for (let i = 0; i < 8; i++) {
     const c = document.createElement("canvas");
@@ -148,7 +148,7 @@ function toJpeg(src, w, h) {
     x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height);
     x.drawImage(src, 0, 0, c.width, c.height);
     const url = c.toDataURL("image/jpeg", q);
-    if (url.length <= 700000) return url;
+    if (url.length <= limit) return url;
     if (q > 0.5) q -= 0.1; else scale *= 0.8;
   }
   throw new Error("image too large");
@@ -163,23 +163,34 @@ async function savePages(urls, parentId, ids) {
   }
   return out;
 }
-// Saves pages; on failure shows why and returns null so the text can still be posted.
+// Saves pages and returns what the post should store in `pages`: page ids, or, when the
+// database refuses the pages collection (older rules), the photos themselves made small
+// enough to fit inside the post. Returns [] if nothing could be kept.
 async function trySavePages(urls, parentId, ids) {
   if (!urls.length) return [];
   try { return await savePages(urls, parentId, ids); }
   catch (e) {
     console.error(e);
-    const denied = String((e && e.code) || "").includes("permission");
-    showNotice(denied
-      ? "Your text was posted, but the photo or notebook page could not be saved. The board owner needs to update the Firebase rules to allow pages."
-      : "Your text was posted, but the photo or notebook page could not be saved. Check your internet and add it again with Edit.");
-    return null;
+    try { return await Promise.all(urls.map(u => shrinkDataUrl(u, Math.floor(700000 / urls.length)))); }
+    catch (_) {
+      showNotice("Your text was posted, but the photo or notebook page could not be saved. Check your internet and add it again with Edit.");
+      return [];
+    }
   }
 }
+function shrinkDataUrl(u, limit) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => { try { resolve(toJpeg(img, img.naturalWidth, img.naturalHeight, limit)); } catch (e) { reject(e); } };
+    img.onerror = reject;
+    img.src = u;
+  });
+}
 async function removePages(ids) {
-  for (const id of ids || []) { try { await store.remove("pages", id); } catch (_) {} }
+  for (const id of ids || []) { if (String(id).startsWith("data:")) continue; try { await store.remove("pages", id); } catch (_) {} }
 }
 async function loadPage(id) {
+  if (String(id).startsWith("data:")) return id;
   if (!pageCache.has(id)) pageCache.set(id, store.get("pages", id).then(d => (d && d.data) || null).catch(() => null));
   const url = await pageCache.get(id);
   pageCache.set(id, url);
@@ -462,7 +473,7 @@ function renderAsk(existing) {
       if (existing) {
         const kept = existing.pages || [];
         const added = newPages.slice(0, Math.max(0, MAX_PAGES - kept.length));
-        const addedIds = (await trySavePages(added, existing.id)) || [];
+        const addedIds = await trySavePages(added, existing.id);
         await store.update(t.coll, existing.id, { title: title.slice(0, 200), body: body.slice(0, 5000), [t.field]: group, authorName: getName() || existing.authorName, pages: [...kept, ...addedIds] });
         state.mode = "view"; render(); return;
       }
@@ -475,7 +486,8 @@ function renderAsk(existing) {
       state.group = "All"; state.query = ""; $("search").value = "";
       openItem(id);
       // Pages are saved first so classmates never see a post with missing pages.
-      if (!(await trySavePages(newPages, id, pageIds))) { doc.pages = []; state[t.coll] = state[t.coll].map(x => x.id === id ? { ...x, pages: [] } : x); render(); }
+      doc.pages = await trySavePages(newPages, id, pageIds);
+      state[t.coll] = state[t.coll].map(x => x.id === id ? { ...x, pages: doc.pages } : x);
       await store.set(t.coll, id, doc);
     } catch (e2) {
       state.mode = "ask"; render();
@@ -560,7 +572,7 @@ function renderView() {
     state.replyPages = [];
     form.reset(); render();
     try {
-      if (!(await trySavePages(pages, id, pageIds))) doc.pages = [];
+      doc.pages = await trySavePages(pages, id, pageIds);
       await store.set("replies", id, doc);
     }
     catch (e2) { state.replies = state.replies.filter(x => x.id !== id); render(); showNotice(errText(e2)); }
