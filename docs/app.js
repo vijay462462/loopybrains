@@ -1308,6 +1308,7 @@ let formulaOpen = null;
 let mcqSubj = null;
 let mcqRevealed = {};
 let syllabusSubj = null;
+let syllabusUnit = null; // "subject-unitIdx"
 
 // RGUKT AP syllabus — unit-wise topics for every subject
 const SYLLABUS = {
@@ -1324,7 +1325,22 @@ const SYLLABUS = {
         "Implementing circuits from Boolean expressions; universality of gates",
         "Boolean theorems, De Morgan's theorems",
         "Alternate logic gate representations; IEEE/ANSI standard logic symbols",
-      ]},
+      ], res: {
+        chapters: [
+          { book: "Tocci et al.", ref: "Ch. 1 (Introductory Concepts) + Ch. 2 (Number Systems and Codes)" },
+          { book: "Wakerly", ref: "Ch. 1 (Introduction to Digital Design)" },
+        ],
+        videos: [
+          { label: "▶ Neso Academy – Number Systems & Boolean Algebra (DLD Playlist)", url: "https://www.youtube.com/playlist?list=PLBlnK6fEyqRjMH3mWf6kwqiTbT798eAOm" },
+          { label: "▶ NPTEL – Digital Circuits (IIT Madras) Week 1", url: "https://nptel.ac.in/courses/117106114/" },
+          { label: "▶ YouTube Search: DLD Number Systems Boolean Algebra", url: "https://www.youtube.com/results?search_query=DLD+Number+Systems+Boolean+Algebra+lecture" },
+        ],
+        pdfs: [
+          { label: "📄 GFG – Number System in Digital Electronics", url: "https://www.geeksforgeeks.org/number-system-in-digital-electronics/" },
+          { label: "📄 GFG – Boolean Algebra & Logic Gates", url: "https://www.geeksforgeeks.org/digital-electronics-boolean-algebra/" },
+          { label: "📄 NPTEL Lecture Notes – Digital Circuits & Systems", url: "https://nptel.ac.in/courses/117106114/" },
+        ],
+      }},
       { title: "Unit II — Combinational Circuit Design", hours: "12 hrs", topics: [
         "Combinational circuit minimization using Boolean laws and Karnaugh maps",
         "Multi-level synthesis, timing hazards, logic levels and noise margins; Fan-out, Fan-in",
@@ -1333,7 +1349,22 @@ const SYLLABUS = {
         "Code converters; parity bit generators/checkers; magnitude comparator",
         "Delay, Area and Power analysis in combinational circuit designs",
         "Conversion of real-time statements into Boolean expressions; gate-level logic circuit design",
-      ]},
+      ], res: {
+        chapters: [
+          { book: "Tocci et al.", ref: "Ch. 3 (Logic Gates) + Ch. 4 (Boolean Algebra & Simplification) + Ch. 5 (Combinational Logic) + Ch. 6 (Functions of Combinational Logic)" },
+          { book: "Wakerly", ref: "Ch. 2 (Combinational Logic Design Principles) + Ch. 3 (Combinational Logic Design Practices)" },
+        ],
+        videos: [
+          { label: "▶ Neso Academy – K-Map Simplification & Adders", url: "https://www.youtube.com/results?search_query=Neso+Academy+K+map+karnaugh+map+simplification" },
+          { label: "▶ NPTEL – Digital Circuits Weeks 2–4 (Combinational)", url: "https://nptel.ac.in/courses/117106114/" },
+          { label: "▶ YouTube Search: Combinational Circuit Design K-map adder", url: "https://www.youtube.com/results?search_query=Combinational+circuit+design+kmap+adder+subtractor+DLD" },
+        ],
+        pdfs: [
+          { label: "📄 GFG – Karnaugh Map (K-Map)", url: "https://www.geeksforgeeks.org/k-map-karnaugh-map/" },
+          { label: "📄 GFG – Half Adder and Full Adder", url: "https://www.geeksforgeeks.org/half-adder-and-full-adder-circuit/" },
+          { label: "📄 GFG – Magnitude Comparator", url: "https://www.geeksforgeeks.org/magnitude-comparator-in-digital-logic/" },
+        ],
+      }},
       { title: "Unit III — Latches & Flip-Flops", hours: "10 hrs", topics: [
         "Bistable elements; S-R latch, S'-R' latch, S̄ latch with enable, D latch",
         "Race-around condition and elimination methods",
@@ -1341,7 +1372,22 @@ const SYLLABUS = {
         "Master-slave flip-flop; edge-triggered J-K flip-flop with asynchronous inputs; T flip-flop",
         "Excitation tables and characteristic equations",
         "Flip-flop timing: set-up time, hold-time (positive edge-triggered D flip-flop)",
-      ]},
+      ], res: {
+        chapters: [
+          { book: "Tocci et al.", ref: "Ch. 7 (Latches and Flip-Flops)" },
+          { book: "Wakerly", ref: "Ch. 5 (Sequential Logic Design Practices – Latches & FFs)" },
+        ],
+        videos: [
+          { label: "▶ Neso Academy – SR, D, JK, T Flip-Flops", url: "https://www.youtube.com/results?search_query=Neso+Academy+flip+flops+SR+JK+D+T+master+slave" },
+          { label: "▶ NPTEL – Digital Circuits Week 5 (Sequential Intro)", url: "https://nptel.ac.in/courses/117106114/" },
+          { label: "▶ YouTube Search: Latches Flip Flops DLD explained", url: "https://www.youtube.com/results?search_query=latches+flip+flops+SR+JK+D+T+race+around+condition+DLD" },
+        ],
+        pdfs: [
+          { label: "📄 GFG – Types of Flip-Flops and Conversions", url: "https://www.geeksforgeeks.org/flip-flop-types-their-conversion-and-applications/" },
+          { label: "📄 GFG – SR Flip-Flop", url: "https://www.geeksforgeeks.org/sr-flip-flop/" },
+          { label: "📄 GFG – Master-Slave JK Flip-Flop", url: "https://www.geeksforgeeks.org/master-slave-jk-flip-flop/" },
+        ],
+      }},
       { title: "Unit IV — Counters & Registers", hours: "14 hrs", topics: [
         "Frequency division and counting",
         "Design and analysis of asynchronous counters; delay and maximum clock frequency",
@@ -1349,21 +1395,66 @@ const SYLLABUS = {
         "BCD counter, Ring counter, Johnson counter",
         "State diagram overview (Present States, Next States, Present Outputs, Present Inputs)",
         "Serial/Parallel data transfer registers: PIPO, SISO, PISO, SIPO",
-      ]},
+      ], res: {
+        chapters: [
+          { book: "Tocci et al.", ref: "Ch. 8 (Counters and Registers)" },
+          { book: "Wakerly", ref: "Ch. 6 (Sequential Logic Design Practices – Counters & Registers)" },
+        ],
+        videos: [
+          { label: "▶ Neso Academy – Counters (Async & Sync) and Registers", url: "https://www.youtube.com/results?search_query=Neso+Academy+asynchronous+synchronous+counters+registers" },
+          { label: "▶ NPTEL – Digital Circuits Weeks 6–7 (Counters)", url: "https://nptel.ac.in/courses/117106114/" },
+          { label: "▶ YouTube Search: BCD Ring Johnson Counter PIPO SISO", url: "https://www.youtube.com/results?search_query=BCD+Ring+Johnson+counter+PIPO+SISO+PISO+SIPO+register+DLD" },
+        ],
+        pdfs: [
+          { label: "📄 GFG – Counters in Digital Logic", url: "https://www.geeksforgeeks.org/counters-in-digital-logic/" },
+          { label: "📄 GFG – Shift Registers", url: "https://www.geeksforgeeks.org/shift-registers-in-digital-logic/" },
+          { label: "📄 GFG – Ring Counter and Johnson Counter", url: "https://www.geeksforgeeks.org/ring-counter-in-digital-logic/" },
+        ],
+      }},
       { title: "Unit V — Decoders, Multiplexers & PLDs", hours: "10 hrs", topics: [
         "Decoders: Binary decoder; synthesis of logic functions using decoders; cascading binary decoders; seven-segment decoders and applications",
         "Multiplexers: synthesis of logic functions using multiplexers",
         "Demultiplexers: Realization; 1-4 and 1-8 line demultiplexers; demultiplexer tree",
         "Encoders: Priority encoders",
         "Implementation of functions using PLDs: PAL, PLA, PROM",
-      ]},
+      ], res: {
+        chapters: [
+          { book: "Tocci et al.", ref: "Ch. 9 (MSI Logic Circuits – Decoders, MUX, Encoders)" },
+          { book: "Wakerly", ref: "Ch. 4 (Combinational Logic Design Practices – MSI Parts)" },
+        ],
+        videos: [
+          { label: "▶ Neso Academy – Encoders, Decoders, MUX, DEMUX", url: "https://www.youtube.com/results?search_query=Neso+Academy+encoder+decoder+multiplexer+demultiplexer" },
+          { label: "▶ NPTEL – Digital Circuits Week 8 (MUX & PLDs)", url: "https://nptel.ac.in/courses/117106114/" },
+          { label: "▶ YouTube Search: PAL PLA PROM Programmable Logic Devices", url: "https://www.youtube.com/results?search_query=PAL+PLA+PROM+programmable+logic+devices+DLD" },
+        ],
+        pdfs: [
+          { label: "📄 GFG – Multiplexers in Digital Circuits", url: "https://www.geeksforgeeks.org/multiplexers-in-digital-logic/" },
+          { label: "📄 GFG – Decoder in Digital Electronics", url: "https://www.geeksforgeeks.org/binary-decoder-digital-electronics/" },
+          { label: "📄 GFG – Programmable Logic Devices (PAL, PLA)", url: "https://www.geeksforgeeks.org/programmable-logic-devices/" },
+        ],
+      }},
       { title: "Unit VI — Memory & Digital System Design", hours: "8 hrs", topics: [
         "Memory Structure and Timing: Static RAM (SRAM), Dynamic RAM (DRAM)",
         "Architecture: CPLD, FPGA",
         "Design and analysis of Digital circuits: Digital Clock",
         "Digital Calendar; Traffic Light Controller",
         "Mobile number sequence generators and other relevant topics",
-      ]},
+      ], res: {
+        chapters: [
+          { book: "Tocci et al.", ref: "Ch. 10 (Memory and Storage) + Ch. 11 (Integrated Circuit Technologies)" },
+          { book: "Wakerly", ref: "Ch. 7 (Sequential Logic Design Techniques – State Machines & Applications)" },
+        ],
+        videos: [
+          { label: "▶ NPTEL – Digital Circuits Weeks 9+ (Memory & System Design)", url: "https://nptel.ac.in/courses/117106114/" },
+          { label: "▶ YouTube Search: SRAM DRAM CPLD FPGA Digital Systems", url: "https://www.youtube.com/results?search_query=SRAM+DRAM+CPLD+FPGA+digital+system+design+DLD" },
+          { label: "▶ YouTube Search: Digital Clock Traffic Light Controller FSM", url: "https://www.youtube.com/results?search_query=digital+clock+traffic+light+controller+FSM+VHDL+Verilog" },
+        ],
+        pdfs: [
+          { label: "📄 GFG – Static RAM vs Dynamic RAM", url: "https://www.geeksforgeeks.org/difference-between-sram-and-dram/" },
+          { label: "📄 GFG – Introduction to FPGA", url: "https://www.geeksforgeeks.org/introduction-of-fpga-field-programmable-gate-array/" },
+          { label: "📄 GFG – CPLD vs FPGA", url: "https://www.geeksforgeeks.org/difference-between-cpld-and-fpga/" },
+        ],
+      }},
     ],
     textbooks: [
       "Ronald J. Tocci, Neal S. Widmer, Gregory L. Moss — 'Digital Systems', Pearson, 10th edition",
@@ -1663,6 +1754,24 @@ const SYLLABUS = {
   },
 };
 
+// Generate auto resources for units without hardcoded res data
+function genUnitRes(subj, unit) {
+  const topicHint = unit.title.replace(/^Unit [IVX\d]+ — /, "");
+  const q = encodeURIComponent(subj + " " + topicHint);
+  const nptelTerm = encodeURIComponent((window.DOUBT_DESK_CONFIG?.learn?.[subj] || subj) + " lecture");
+  return {
+    videos: [
+      { label: "▶ YouTube: " + topicHint, url: "https://www.youtube.com/results?search_query=" + q + "+lecture" },
+      { label: "▶ Neso Academy – " + subj + " Lectures", url: "https://www.youtube.com/results?search_query=Neso+Academy+" + encodeURIComponent(subj) },
+      { label: "▶ NPTEL – " + subj + " Course", url: "https://nptel.ac.in/courses/search?q=" + nptelTerm },
+    ],
+    pdfs: [
+      { label: "📄 GeeksforGeeks – " + topicHint, url: "https://www.geeksforgeeks.org/search/?q=" + encodeURIComponent(topicHint) },
+      { label: "📄 Google: " + topicHint + " notes PDF", url: "https://www.google.com/search?q=" + encodeURIComponent(topicHint + " " + subj + " notes PDF") },
+    ],
+  };
+}
+
 const GATE_MCQ = {
   "DLD": [
     { q: "Minimum number of flip-flops needed for a MOD-10 counter?",
@@ -1862,7 +1971,7 @@ function renderResources() {
   const tabBar = el("div", { class: "resource-tabs" },
     ...tabs.map(([id, label]) => el("button", {
       type: "button", class: "resource-tab" + (resourceTab === id ? " active" : ""),
-      onclick: () => { resourceTab = id; formulaOpen = null; syllabusSubj = null; mcqSubj = null; render(); },
+      onclick: () => { resourceTab = id; formulaOpen = null; syllabusSubj = null; syllabusUnit = null; mcqSubj = null; render(); },
     }, label))
   );
   let content = [];
@@ -1874,7 +1983,7 @@ function renderResources() {
       (byBranch[data.branch] ||= []).push(subj);
     }
     content = [
-      el("p", { class: "hint" }, "Unit-wise RGUKT AP syllabus for every subject. Tap a subject to expand its units and topics."),
+      el("p", { class: "hint" }, "RGUKT AP unit-wise syllabus. Tap a subject, then tap any unit to see topics and auto-linked textbook chapters, videos, and notes."),
       ...branches.map(branch => {
         const subjects = byBranch[branch] || [];
         if (!subjects.length) return null;
@@ -1886,19 +1995,53 @@ function renderResources() {
               const isOpen = syllabusSubj === s;
               return el("div", {},
                 el("button", { type: "button", class: "formula-subj-btn", ...colorAttrs(s, "doubts"),
-                  onclick: () => { syllabusSubj = isOpen ? null : s; render(); },
+                  onclick: () => { syllabusSubj = isOpen ? null : s; syllabusUnit = null; render(); },
                 }, el("span", {}, s), el("span", { class: "formula-count" }, data.units.length + " units"), el("span", { class: "formula-arrow" }, isOpen ? "▲" : "▼")),
                 isOpen && el("div", { class: "syl-units" },
                   data.code && el("div", { class: "syl-meta" },
                     el("span", { class: "syl-code" }, data.code),
                     el("span", { class: "syl-credits" }, data.credits)),
-                  ...data.units.map(u => el("div", { class: "syl-unit" },
-                    el("div", { class: "syl-unit-title" },
-                      u.title, u.hours && el("span", { class: "syl-hours" }, u.hours)),
-                    el("ul", { class: "syl-topics" },
-                      ...u.topics.map(t => el("li", {}, t))
-                    )
-                  )),
+                  ...data.units.map((u, ui) => {
+                    const ukey = s + "-" + ui;
+                    const uOpen = syllabusUnit === ukey;
+                    const res = u.res || genUnitRes(s, u);
+                    return el("div", { class: "syl-unit" },
+                      el("button", { type: "button", class: "syl-unit-btn" + (uOpen ? " open" : ""),
+                        onclick: () => { syllabusUnit = uOpen ? null : ukey; render(); }
+                      },
+                        el("span", { class: "syl-unit-num" }, "U" + (ui + 1)),
+                        el("span", { class: "syl-unit-name" }, u.title.replace(/^Unit [IVX\d]+ — /, "")),
+                        u.hours && el("span", { class: "syl-hours" }, u.hours),
+                        el("span", { class: "syl-unit-arr" }, uOpen ? "▲" : "▼")
+                      ),
+                      uOpen && el("div", { class: "syl-unit-body" },
+                        el("ul", { class: "syl-topics" }, ...u.topics.map(t => el("li", {}, t))),
+                        el("div", { class: "unit-res" },
+                          res.chapters && res.chapters.length && el("div", { class: "unit-res-section" },
+                            el("div", { class: "unit-res-label" }, "📚 Textbook Chapters"),
+                            el("div", { class: "unit-res-items" }, ...res.chapters.map(c =>
+                              el("div", { class: "unit-res-item" },
+                                el("strong", { class: "unit-res-book" }, c.book),
+                                el("span", {}, " — " + c.ref)
+                              )
+                            ))
+                          ),
+                          el("div", { class: "unit-res-section" },
+                            el("div", { class: "unit-res-label" }, "🎬 Video Resources"),
+                            el("div", { class: "unit-res-btns" }, ...res.videos.map(v =>
+                              el("a", { href: v.url, target: "_blank", rel: "noopener noreferrer", class: "unit-res-btn yt" }, v.label)
+                            ))
+                          ),
+                          el("div", { class: "unit-res-section" },
+                            el("div", { class: "unit-res-label" }, "📄 Notes & PDFs"),
+                            el("div", { class: "unit-res-btns" }, ...res.pdfs.map(p =>
+                              el("a", { href: p.url, target: "_blank", rel: "noopener noreferrer", class: "unit-res-btn pdf" }, p.label)
+                            ))
+                          )
+                        )
+                      )
+                    );
+                  }),
                   data.textbooks && el("div", { class: "syl-resources" },
                     el("div", { class: "syl-res-label" }, "📚 Text Books"),
                     el("ol", { class: "syl-topics" }, ...data.textbooks.map(b => el("li", {}, b)))),
@@ -1906,7 +2049,7 @@ function renderResources() {
                     el("div", { class: "syl-res-label" }, "📖 Reference Books"),
                     el("ol", { class: "syl-topics" }, ...data.refbooks.map(b => el("li", {}, b)))),
                   data.webres && el("div", { class: "syl-resources" },
-                    el("div", { class: "syl-res-label" }, "🌐 Web Resources"),
+                    el("div", { class: "syl-res-label" }, "🌐 NPTEL / Web Resources"),
                     el("ul", { class: "syl-topics" }, ...data.webres.map(w => el("li", {},
                       el("a", { href: w.url, target: "_blank", rel: "noopener noreferrer", class: "syl-link" }, w.label)
                     ))))
