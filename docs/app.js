@@ -4,14 +4,8 @@
 const CFG = window.DOUBT_DESK_CONFIG || {};
 const SUBJECTS = (CFG.subjects && CFG.subjects.length) ? CFG.subjects : ["Maths", "Physics", "Chemistry", "Other"];
 const CATS = (CFG.ideaCategories && CFG.ideaCategories.length) ? CFG.ideaCategories : ["Project", "Other"];
-const CAMPUSES = (CFG.campuses && CFG.campuses.length) ? CFG.campuses : [];
 const CLUBS = (CFG.clubs && CFG.clubs.length) ? CFG.clubs : ["Coding Club", "Other"];
-const CAMPUS_COLOURS = {
-  "RGUKT Ongole":     { bg: "#dbeafe", fg: "#1d4ed8", border: "#93c5fd" },
-  "RGUKT Nuzvudu":    { bg: "#d1fae5", fg: "#065f46", border: "#6ee7b7" },
-  "RGUKT RK Valley":  { bg: "#fce7f3", fg: "#9d174d", border: "#f9a8d4" },
-  "RGUKT Srikakulam": { bg: "#fef3c7", fg: "#92400e", border: "#fcd34d" },
-};
+
 const PALETTE = ["#6366f1", "#0ea5e9", "#10b981", "#f59e0b", "#a855f7", "#ec4899", "#ef4444", "#14b8a6", "#84cc16", "#f97316", "#64748b"];
 const FB_VERSION = "10.12.2";
 const MOTTO = CFG.tagline || "Ask boldly. Answer together. Innovate endlessly.";
@@ -47,18 +41,17 @@ const TABS = {
   },
   clubs: {
     coll: "clubs", field: "club", groups: CLUBS, groupLabel: "Clubs", noun: "post",
-    ask: "Post to a club", tagline: "Connect with students across all 4 RGUKT campuses. Share projects, find team members, plan events.",
+    ask: "Post to a club", tagline: "Connect with RGUKT students. Share projects, find team members, plan events.",
     replyNoun: "reply", replyLabel: "Your reply", replyBtn: "Post reply",
     placeholder: "e.g. Looking for teammates for a robotics project",
-    bodyHint: "Details, what help you need, which campuses can join.",
+    bodyHint: "Details, what help you need, who can join.",
   },
 };
 
 const state = {
   tab: "doubts", group: "All", query: "", filter: "all",
-  campusFilter: "All",
   doubts: [], ideas: [], clubs: [], replies: [], likes: [], loaded: false,
-  selected: null, mode: "intro", // intro | view | ask | edit | name | campus
+  selected: null, mode: "intro", // intro | view | ask | edit | name
   afterName: null,
   replyPages: [], // notebook pages attached to the reply being written
   replyAnon: false,
@@ -112,15 +105,7 @@ function avatarFor(name) {
 }
 // Render a small avatar circle element
 function avatarEl(icon, cls = "av") { return el("span", { class: cls, "aria-hidden": "true" }, icon); }
-// Campus helpers
-function getCampus() { try { return localStorage.getItem("dd-campus") || ""; } catch (_) { return ""; } }
-function setCampus(v) { try { localStorage.setItem("dd-campus", v); } catch (_) {} }
-function campusBadge(campus) {
-  if (!campus) return null;
-  const c = CAMPUS_COLOURS[campus] || { bg: "#f3f4f6", fg: "#374151", border: "#d1d5db" };
-  const short = campus.replace("RGUKT ", "");
-  return el("span", { class: "campus-badge", style: `background:${c.bg};color:${c.fg};border-color:${c.border}` }, "📍 " + short);
-}
+
 const mine = (x) => x && store && x.authorId === store.uid;
 const who = (x) => mine(x) ? "You" : (x.authorName || "A student");
 const repliesFor = (id) => state.replies.filter(r => r.parentId === id).sort((a, b) => (isMentor(b) - isMentor(a)) || (a.createdAt - b.createdAt));
@@ -570,15 +555,7 @@ function renderTrendBar() {
   );
 }
 
-function renderCampusBar() {
-  const bar = document.getElementById("campusBar");
-  if (!bar) return;
-  if (!CAMPUSES.length) { bar.hidden = true; return; }
-  bar.hidden = false;
-  bar.querySelectorAll(".campus-chip").forEach(btn => {
-    btn.classList.toggle("active", btn.dataset.campus === state.campusFilter);
-  });
-}
+
 function renderHeader() {
   const t = TABS[state.tab];
   document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === state.tab)));
@@ -615,7 +592,6 @@ function visible() {
   const t = TABS[state.tab], q = state.query.trim().toLowerCase();
   let rows = state[t.coll].filter(d => !isHidden(d) &&
     (state.group === "All" || d[t.field] === state.group) &&
-    (state.campusFilter === "All" || !d.campus || d.campus === state.campusFilter) &&
     (!q || ((d.title || "") + " " + (d.body || "")).toLowerCase().includes(q)));
   if (state.tab === "doubts" && (state.filter === "open" || state.filter === "done")) rows = rows.filter(d => (state.filter === "done") === !!d.resolvedReplyId);
   if (state.tab === "doubts" && state.filter === "mentor") rows = rows.filter(needsMentor);
@@ -660,7 +636,7 @@ function renderList() {
     } else meta.push(el("span", { class: "likes" }, "♥ " + votes));
     if (d.pages && d.pages.length) meta.push(el("span", {}, "📎 " + d.pages.length + (d.pages.length === 1 ? " page" : " pages")));
     const av = d.anonymous ? avatarEl("👤") : avatarEl(mine(d) ? getAvatar() : avatarFor(d.authorName || ""));
-    if (d.campus) meta.push(campusBadge(d.campus));
+
     meta.push(el("span", {}, n + " " + t.replyNoun + (n === 1 ? "" : "s")), el("span", { class: "author-row" }, av, who(d) + " · " + ago(d.createdAt)));
     return el("button", {
       type: "button", class: "item", ...colorAttrs(g),
@@ -767,17 +743,15 @@ function allStats() {
   const people = new Map();
   const get = (id, name, t) => {
     if (!id) return null;
-    const p = people.get(id) || { id, name: "", nameAt: -1, campus: "", points: 0, answers: 0, helpful: 0, ideas: 0, asked: 0, likes: 0, reacts: 0, quizRight: 0, quizDone: 0, days: new Set() };
+    const p = people.get(id) || { id, name: "", nameAt: -1, points: 0, answers: 0, helpful: 0, ideas: 0, asked: 0, likes: 0, reacts: 0, quizRight: 0, quizDone: 0, days: new Set() };
     if (name && name !== ANON && (t || 0) >= p.nameAt) { p.name = name; p.nameAt = t || 0; }
-    // pick the most-recently-seen campus for this author
-    if (id && store && id === store.uid && getCampus()) p.campus = getCampus();
     people.set(id, p);
     return p;
   };
   const active = (id, t) => { const p = get(id); if (p && t) p.days.add(dayNum(t)); };
   const helpfulIds = new Set(state.doubts.map(d => d.resolvedReplyId).filter(Boolean));
   const replyAuthor = new Map(state.replies.map(r => [r.id, r]));
-  for (const d of state.doubts) { active(d.authorId, d.createdAt); if (d.anonymous) continue; const p = get(d.authorId, d.authorName, d.createdAt); p.asked++; p.points += 1; if (d.campus && !p.campus) p.campus = d.campus; }
+  for (const d of state.doubts) { active(d.authorId, d.createdAt); if (d.anonymous) continue; const p = get(d.authorId, d.authorName, d.createdAt); p.asked++; p.points += 1; }
   for (const i of state.ideas) {
     active(i.authorId, i.createdAt); if (i.anonymous) continue;
     const p = get(i.authorId, i.authorName, i.createdAt); p.ideas++; p.points += 2;
@@ -811,14 +785,6 @@ function allStats() {
     if (!x.authorId || x.anonymous) continue;
     const h = new Date(x.createdAt || 0).getHours();
     if (h >= 0 && h < 5) { const p = people.get(x.authorId); if (p) p.nightPost = (p.nightPost || 0) + 1; }
-  }
-  // Cross-campus replies: reply to a post from a different campus
-  for (const r of state.replies) {
-    if (!r.authorId || r.anonymous || !r.campus) continue;
-    const parent = [...state.doubts, ...state.ideas, ...state.clubs].find(d => d.id === r.parentId);
-    if (parent && parent.campus && parent.campus !== r.campus) {
-      const p = people.get(r.authorId); if (p) p.crossCampus = (p.crossCampus || 0) + 1;
-    }
   }
   // Club posts in distinct clubs
   const clubsBy = new Map();
@@ -854,7 +820,6 @@ const BADGES = [
   ["🔥", "On Fire",         "3-day streak",                    p => p.streak >= 3],
   ["🏆", "Legend",          "Reach 50 points",                 p => p.points >= 50],
   ["🌙", "Night Owl",       "Post after midnight",             p => p.nightPost > 0],
-  ["🌐", "Cross Campus",    "Reply to a different campus",     p => p.crossCampus > 0],
   ["🏛",  "Club Founder",   "Post in 3 different clubs",       p => p.clubsPosted >= 3],
   ["⚡", "Spark Starter",   "First to post in any subject",    p => p.firstPost > 0],
   ["🎖",  "Veteran",        "Active for 7+ days total",        p => p.days && p.days.size >= 7],
@@ -864,64 +829,18 @@ const titleOf = (pts) => TITLES.find(([min]) => pts >= min)[1];
 
 function renderNetwork() {
   const allPosts = [...state.doubts, ...state.ideas, ...state.clubs];
-  const allReplies = state.replies;
-  // Weekly rivalry: score = resolved doubts * 5 + replies * 2 + posts * 1 in last 7 days
-  const weekAgo = Date.now() - 7 * 86400000;
-  const weeklyScore = (campus) => {
-    let s = 0;
-    const weekPosts = allPosts.filter(p => p.campus === campus && (p.createdAt || 0) > weekAgo);
-    s += weekPosts.length;
-    const weekReplies = allReplies.filter(r => r.campus === campus && (r.createdAt || 0) > weekAgo);
-    s += weekReplies.length * 2;
-    const resolved = state.doubts.filter(d => d.campus === campus && d.resolvedReplyId && (d.createdAt || 0) > weekAgo);
-    s += resolved.length * 5;
-    return s;
-  };
-  const rivalScores = CAMPUSES.map(c => ({ c, score: weeklyScore(c), col: CAMPUS_COLOURS[c] || {} }))
-    .sort((a, b) => b.score - a.score);
-  const campusStats = CAMPUSES.map(c => {
-    const posts = allPosts.filter(p => p.campus === c).length;
-    const members = new Set(allPosts.filter(p => p.campus === c && !p.anonymous).map(p => p.authorId)).size;
-    const col = CAMPUS_COLOURS[c] || {};
-    return { c, posts, members, col };
-  });
   const totalPosts = allPosts.length;
   const totalMembers = new Set(allPosts.filter(p => !p.anonymous).map(p => p.authorId)).size;
-  const campusCards = campusStats.map(({ c, posts, members, col }) =>
-    el("div", { class: "network-card", style: `--ncbg:${col.bg||"#f3f4f6"};--ncfg:${col.fg||"#374151"};--ncbr:${col.border||"#d1d5db"}` },
-      el("div", { class: "network-card-name" }, "🏫 " + c.replace("RGUKT ", "")),
-      el("div", { class: "network-card-stats" },
-        el("span", {}, "📝 " + posts + " posts"),
-        el("span", {}, "👥 " + members + " members")),
-      el("button", { class: "btn sm", type: "button", onclick: () => {
-        state.campusFilter = c; state.mode = "intro"; render();
-        document.querySelector(".campus-chip[data-campus='" + c + "']") && document.querySelector(".campus-chip[data-campus='" + c + "']").click();
-      } }, "View posts →")));
-  // Weekly rivalry bar
-  const maxScore = Math.max(1, ...rivalScores.map(x => x.score));
-  const rivalSection = rivalScores[0].score > 0 ? [
-    el("div", { class: "label" }, "⚔️ This Week's Campus Rivalry"),
-    el("div", { class: "rival-board" }, ...rivalScores.map((x, i) =>
-      el("div", { class: "rival-row" },
-        el("span", { class: "rival-rank" }, ["🥇","🥈","🥉","4️⃣"][i] || String(i+1)),
-        el("span", { class: "rival-name" }, x.c.replace("RGUKT ", "")),
-        el("div", { class: "rival-bar-wrap" },
-          el("div", { class: "rival-bar", style: `width:${Math.round(x.score/maxScore*100)}%;background:${x.col.border||"var(--accent)"}` })),
-        el("span", { class: "rival-score" }, x.score + " pts")))),
-    el("p", { class: "hint" }, "Scored by posts, replies and resolved doubts this week. Updates live."),
-  ] : [];
   return [
     el("h2", {}, "🌐 RGUKT Spark Network"),
-    el("p", { class: "hint" }, totalMembers + " students · " + totalPosts + " posts across 4 campuses"),
-    ...rivalSection,
-    el("div", { class: "network-grid" }, ...campusCards),
+    el("p", { class: "hint" }, totalMembers + " students · " + totalPosts + " posts"),
     el("div", { class: "label" }, "What you can do"),
     el("ul", { class: "network-features" },
       el("li", {}, "📚 Ask doubts that any RGUKT student can answer"),
-      el("li", {}, "💡 Share ideas for cross-campus projects"),
-      el("li", {}, "🏛 Join clubs and find teammates from all campuses"),
+      el("li", {}, "💡 Share ideas for projects and research"),
+      el("li", {}, "🏛 Join clubs and find teammates"),
       el("li", {}, "🏆 Compete on the all-RGUKT leaderboard"),
-      el("li", {}, "🎓 Learn from IIT mentors connected to any campus")),
+      el("li", {}, "🎓 Learn from IIT mentors")),
     el("div", { class: "rowbtns" },
       el("button", { class: "btn primary", type: "button", onclick: () => { state.tab = "clubs"; state.group = "All"; state.mode = "intro"; render(); } }, "🏛 Browse Clubs"),
       el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")),
@@ -938,8 +857,7 @@ function renderLeaders() {
         avatarEl(p.id === meId ? getAvatar() : avatarFor(p.name || ""), "av av-lg"),
         el("span", { class: "who" },
           el("span", { class: "board-name-row" },
-            el("strong", {}, (p.id === meId ? p.name + " (you)" : p.name) + " " + BADGES.filter(b => b[3](p)).map(b => b[0]).join("")),
-            p.campus && campusBadge(p.campus)),
+            el("strong", {}, (p.id === meId ? p.name + " (you)" : p.name) + " " + BADGES.filter(b => b[3](p)).map(b => b[0]).join(""))),
           el("small", {}, "Lv " + p.level.n + " " + titleOf(p.points) + " · " + plural(p.answers, "answer") + " · " + p.helpful + " helpful · " + p.quizRight + " quiz" + (p.streak > 1 ? " · 🔥" + p.streak + "-day streak" : ""))),
         el("span", { class: "pts" }, p.points + " pts"))))
     : el("p", { class: "hint" }, "No points yet. Answer a doubt or today's quiz to get on the board.");
@@ -976,8 +894,7 @@ function renderMe() {
       avatarEl(getAvatar(), "av av-hero"),
       el("div", {},
         el("h2", {}, (getName() || "You") + " · Level " + lv.n),
-        el("p", { class: "hint" }, titleOf(p.points) + " · " + plural(p.points, "point")),
-        getCampus() && campusBadge(getCampus()))),
+        el("p", { class: "hint" }, titleOf(p.points) + " · " + plural(p.points, "point")))),
     el("p", { class: "hint" }, "Your icon:"),
     avatarPicker,
     el("div", { class: "xp", role: "progressbar", "aria-valuemin": "0", "aria-valuemax": "100", "aria-valuenow": String(pct), "aria-label": "Progress to next level" }, el("span", { style: "width:" + pct + "%" })),
@@ -1113,7 +1030,7 @@ function renderIntro() {
 
   const steps = state.tab === “doubts”
     ? “1. Ask: pick the subject and write the question. Add a photo of your notebook or write it on the notebook page.\n2. Answer: open any doubt and explain the steps. You can attach your handwritten working too.\n3. Resolve: the student who asked marks the answer that helped. Tap “I have this doubt too” on doubts you share.”
-    : “1. Share: post an idea for a project, startup, research or campus. Sketch it on the notebook page if that helps.\n2. Like: tap ♥ on ideas you want to see happen.\n3. Build: reply with thoughts, improvements or an offer to join.”;
+    : “1. Share: post an idea for a project, startup or research. Sketch it on the notebook page if that helps.\n2. Like: tap ♥ on ideas you want to see happen.\n3. Build: reply with thoughts, improvements or an offer to join.”;
 
   // Keyboard shortcut hint (desktop)
   const kbHint = window.matchMedia(“(pointer: fine)”).matches
@@ -1133,19 +1050,6 @@ function renderIntro() {
 
 function renderName() {
   const err = el("p", { class: "err", hidden: true });
-  // Campus picker
-  const campusBtns = CAMPUSES.map(c => {
-    const col = CAMPUS_COLOURS[c] || {};
-    const btn = el("button", { type: "button", class: "campus-pick-btn" + (getCampus() === c ? " selected" : ""),
-      style: `--cbg:${col.bg||"#f3f4f6"};--cfg:${col.fg||"#374151"};--cbr:${col.border||"#d1d5db"}` }, c.replace("RGUKT ", "🏫 ") );
-    btn.addEventListener("click", () => { setCampus(c); campusBtns.forEach(b => b.classList.toggle("selected", b === btn)); });
-    return btn;
-  });
-  const campusSel = CAMPUSES.length ? [
-    el("label", {}, "Your campus"),
-    el("div", { class: "campus-pick-row" }, ...campusBtns),
-    el("p", { class: "hint" }, "Shows your campus badge on your posts so cross-campus friends know where you're from."),
-  ] : [];
   const form = el("form", { class: "form", onsubmit: (e) => {
     e.preventDefault();
     const v = form.elements.name.value.trim().slice(0, 40);
@@ -1155,7 +1059,6 @@ function renderName() {
   } },
     el("label", {}, "Your name", el("input", { id: "f-name", name: "name", maxlength: "40", autocomplete: "name", placeholder: "e.g. Ravi K (CSE-B)", value: getName() })),
     el("p", { class: "hint" }, "Classmates see this name on your doubts, ideas and replies. It is saved on this phone or computer."),
-    ...campusSel,
     err,
     el("div", { class: "rowbtns" },
       el("button", { class: "btn primary", type: "submit" }, "Save name"),
@@ -1190,8 +1093,7 @@ function renderAsk(existing) {
       }
       const id = store.newId(t.coll);
       const pageIds = newPages.map(u => { const pid = store.newId("pages"); pageCache.set(pid, u); return pid; });
-      const campus = getCampus() || null;
-      const doc = { title: title.slice(0, 200), body: body.slice(0, 5000), [t.field]: group, authorId: store.uid, authorName: anonymous ? ANON : getName(), anonymous, urgent, campus, createdAt: Date.now(), pages: pageIds };
+      const doc = { title: title.slice(0, 200), body: body.slice(0, 5000), [t.field]: group, authorId: store.uid, authorName: anonymous ? ANON : getName(), anonymous, urgent, createdAt: Date.now(), pages: pageIds };
       if (state.tab === "doubts") doc.resolvedReplyId = null;
       // Show the new post straight away; the live update replaces it with the saved copy.
       state[t.coll] = [{ id, ...doc }, ...state[t.coll].filter(x => x.id !== id)];
@@ -1247,8 +1149,7 @@ function renderView() {
       el("span", { class: "tag", ...colorAttrs(g) }, g),
       state.tab === "doubts" && isUrgent(d) && el("span", { class: "pill urgent" }, "🔥 Urgent"),
       state.tab === "doubts" && el("span", { class: "pill " + (d.resolvedReplyId ? "done" : "open") }, d.resolvedReplyId ? "Resolved" : "Open"),
-      el("span", { class: "author-row" }, d.anonymous ? avatarEl("👤") : avatarEl(mine(d) ? getAvatar() : avatarFor(d.authorName || "")), "By " + who(d) + " · " + ago(d.createdAt)),
-      d.campus && campusBadge(d.campus)),
+      el("span", { class: "author-row" }, d.anonymous ? avatarEl("👤") : avatarEl(mine(d) ? getAvatar() : avatarFor(d.authorName || "")), "By " + who(d) + " · " + ago(d.createdAt))),
     el("h2", {}, d.title),
   ];
   if (d.body) out.push(el("p", { class: "body" }, d.body));
@@ -1310,7 +1211,7 @@ function renderView() {
     const id = store.newId("replies");
     const pageIds = pages.map(u => { const pid = store.newId("pages"); pageCache.set(pid, u); return pid; });
     const anonymous = state.replyAnon;
-    const doc = { parentId: d.id, parentColl: t.coll, body: (body || PAGE_ONLY).slice(0, 5000), authorId: store.uid, authorName: anonymous ? ANON : getName(), anonymous, campus: getCampus() || null, createdAt: Date.now(), pages: pageIds };
+    const doc = { parentId: d.id, parentColl: t.coll, body: (body || PAGE_ONLY).slice(0, 5000), authorId: store.uid, authorName: anonymous ? ANON : getName(), anonymous, createdAt: Date.now(), pages: pageIds };
     state.replies = [...state.replies, { id, ...doc }];
     state.replyPages = [];
     form.reset(); render();
@@ -1356,7 +1257,7 @@ function openAsk() {
 
 let sheetKey = "";
 function render() {
-  renderHeader(); renderTrendBar(); renderCampusBar(); renderRail(); renderList(); renderBottomNav();
+  renderHeader(); renderTrendBar(); renderRail(); renderList(); renderBottomNav();
   // Forms keep what the student is typing while live updates arrive.
   const key = ["ask", "edit", "name"].includes(state.mode) ? state.mode + state.tab : "";
   if (key && key === sheetKey) return;
@@ -1422,13 +1323,6 @@ if (themeBtn) {
   themeBtn.textContent = isDark ? "☀️" : "🌙";
 }
 
-// Campus bar chip clicks
-document.getElementById("campusBar") && document.getElementById("campusBar").addEventListener("click", (e) => {
-  const chip = e.target.closest(".campus-chip");
-  if (!chip) return;
-  state.campusFilter = chip.dataset.campus;
-  renderCampusBar(); renderList();
-});
 
 // Update page title from config
 if (CFG.title) { document.title = CFG.title; }
@@ -1472,7 +1366,7 @@ render();
 
 // Service worker
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js?v=32').catch(() => {});
+  navigator.serviceWorker.register('./sw.js?v=33').catch(() => {});
 }
 
 // Keyboard shortcuts

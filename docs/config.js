@@ -19,20 +19,14 @@ window.DOUBT_DESK_CONFIG = {
 
   // Caption under the title. Add more lines to rotate between them every 5 seconds.
   captions: [
-    "One question can light up four campuses.",
-    "4 campuses. One spark. Infinite ideas.",
-    "Ask from Ongole. Answered from Srikakulam.",
+    "Ask boldly. Answer together. Innovate endlessly.",
     "Doubt today. Discover tomorrow.",
     "RGUKT students: think, build, ignite.",
+    "Every doubt you ask today is a concept you own tomorrow.",
+    "Great engineers ask the questions others skip.",
   ],
 
-  // The 4 RGUKT AP campuses. Students pick theirs when they set their name.
-  campuses: [
-    "RGUKT Ongole",
-    "RGUKT Nuzvudu",
-    "RGUKT RK Valley",
-    "RGUKT Srikakulam",
-  ],
+  campuses: [],
 
   // Clubs shown in the Clubs tab. Add or rename clubs here.
   clubs: [

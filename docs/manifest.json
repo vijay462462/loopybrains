@@ -1,7 +1,7 @@
 {
   "name": "RGUKT Spark",
   "short_name": "Spark",
-  "description": "One question can light up four campuses. RGUKT Ongole, Nuzvudu, RK Valley & Srikakulam.",
+  "description": "Ask doubts, share ideas and run clubs — RGUKT Spark.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
