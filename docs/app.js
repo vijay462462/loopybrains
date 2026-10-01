@@ -32,7 +32,9 @@ const state = {
   selected: null, mode: "intro", // intro | view | ask | edit | name
   afterName: null,
   replyPages: [], // notebook pages attached to the reply being written
+  replyAnon: false,
 };
+const ANON = "Anonymous";
 let store = null;
 const $ = (id) => document.getElementById(id);
 
@@ -390,10 +392,12 @@ function visible() {
   if (state.tab === "doubts" && (state.filter === "open" || state.filter === "done")) rows = rows.filter(d => (state.filter === "done") === !!d.resolvedReplyId);
   rows.sort((a, b) => b.createdAt - a.createdAt);
   if (state.filter === "top" || state.filter === "asked") rows.sort((a, b) => likesFor(b.id).length - likesFor(a.id).length);
+  else if (state.tab === "doubts") rows.sort((a, b) => (isUrgent(b) - isUrgent(a)) || (b.createdAt - a.createdAt));
   return rows;
 }
 
 function itemLink(id) { return location.origin + location.pathname + "#" + state.tab + "/" + id; }
+const isUrgent = (d) => (d.urgent && !d.resolvedReplyId) ? 1 : 0;
 function openItem(id) {
   if (state.selected !== id) state.replyPages = [];
   state.selected = id; state.mode = "view";
@@ -411,12 +415,18 @@ function renderList() {
       : el("div", { class: "empty" }, el("strong", {}, state.tab === "doubts" ? "No doubts yet" : "No ideas yet"), "Press “" + t.ask + "” to post the first one."));
     return;
   }
-  $("list").replaceChildren(...rows.map(d => {
+  const spot = spotlight();
+  const spotCard = spot && el("button", { type: "button", class: "spot", onclick: () => openItem(spot.d.id) },
+    el("span", { class: "spot-k" }, "⭐ Doubt of the Day"),
+    el("strong", {}, spot.d.title),
+    el("span", { class: "spot-why" }, spot.why + " Can you solve it?"));
+  $("list").replaceChildren(...(spotCard ? [spotCard] : []), ...rows.map(d => {
     const n = repliesFor(d.id).length, g = d[t.field];
     const meta = [el("span", { class: "tag", ...colorAttrs(g) }, g)];
     const votes = likesFor(d.id).length;
     if (state.tab === "doubts") {
       meta.push(el("span", { class: "pill " + (d.resolvedReplyId ? "done" : "open") }, d.resolvedReplyId ? "Resolved" : (n ? "Open" : "Unanswered")));
+      if (d.urgent && !d.resolvedReplyId) meta.unshift(el("span", { class: "pill urgent" }, "🔥 Urgent"));
       if (votes) meta.push(el("span", { class: "likes" }, "🙋 " + votes));
     } else meta.push(el("span", { class: "likes" }, "♥ " + votes));
     if (d.pages && d.pages.length) meta.push(el("span", {}, "📎 " + d.pages.length + (d.pages.length === 1 ? " page" : " pages")));
@@ -426,6 +436,71 @@ function renderList() {
       "aria-current": String(state.selected === d.id && state.mode === "view"), onclick: () => openItem(d.id),
     }, el("h3", {}, d.title), el("div", { class: "meta" }, meta));
   }));
+}
+
+// The open doubt most classmates share; otherwise the oldest unanswered one from the last week.
+function spotlight() {
+  if (state.tab !== "doubts" || state.group !== "All" || state.query || state.filter !== "all") return null;
+  const open = state.doubts.filter(d => !d.resolvedReplyId);
+  if (!open.length) return null;
+  const voted = open.map(d => ({ d, v: likesFor(d.id).length })).filter(x => x.v > 0).sort((a, b) => b.v - a.v)[0];
+  if (voted) return { d: voted.d, why: voted.v + (voted.v === 1 ? " classmate shares" : " classmates share") + " this doubt." };
+  const weekAgo = Date.now() - 7 * 86400000;
+  const unanswered = open.filter(d => d.createdAt > weekAgo && !repliesFor(d.id).length).sort((a, b) => a.createdAt - b.createdAt)[0];
+  return unanswered ? { d: unanswered, why: "Still waiting for its first answer." } : null;
+}
+
+// ---------- leaderboard ----------
+const plural = (n, w) => n + " " + w + (n === 1 ? "" : "s");
+const TITLES = [[50, "Legend"], [25, "Mentor"], [10, "Helper"], [0, "Rising star"]];
+function leaderboard() {
+  const people = new Map();
+  const add = (x, pts, key) => {
+    if (!x || x.anonymous || !x.authorId || x.authorName === ANON) return;
+    const p = people.get(x.authorId) || { name: x.authorName || "A student", points: 0, answers: 0, helpful: 0, ideas: 0, likes: 0, last: 0 };
+    if (x.createdAt >= p.last) { p.name = x.authorName || p.name; p.last = x.createdAt || 0; }
+    p.points += pts; if (key) p[key] += 1;
+    people.set(x.authorId, p);
+  };
+  const helpfulIds = new Set(state.doubts.map(d => d.resolvedReplyId).filter(Boolean));
+  for (const r of state.replies) {
+    if (r.parentColl !== "doubts") { add(r, 1); continue; }
+    const parent = state.doubts.find(d => d.id === r.parentId);
+    if (parent && parent.authorId === r.authorId) continue; // replying to your own doubt earns nothing
+    add(r, 2, "answers");
+    if (helpfulIds.has(r.id)) add(r, 5, "helpful");
+  }
+  for (const i of state.ideas) { add(i, 2, "ideas"); for (const l of likesFor(i.id)) if (l.uid !== i.authorId) add(i, 1, "likes"); }
+  for (const d of state.doubts) add(d, 1);
+  return [...people.entries()].map(([id, p]) => ({ id, ...p })).sort((a, b) => b.points - a.points).slice(0, 15);
+}
+function renderLeaders() {
+  const rows = leaderboard();
+  const medal = ["🥇", "🥈", "🥉"];
+  const list = rows.length
+    ? el("ol", { class: "board" }, rows.map((p, i) => el("li", { class: p.id === (store && store.uid) ? "me" : null },
+        el("span", { class: "rank" }, medal[i] || String(i + 1)),
+        el("span", { class: "who" }, el("strong", {}, p.id === (store && store.uid) ? p.name + " (you)" : p.name),
+          el("small", {}, TITLES.find(([min]) => p.points >= min)[1] + " · " + plural(p.answers, "answer") + " · " + p.helpful + " helpful · " + plural(p.ideas, "idea"))),
+        el("span", { class: "pts" }, p.points + " pts"))))
+    : el("p", { class: "hint" }, "No points yet. Answer a doubt to get on the board.");
+  return [
+    el("h2", {}, "🏆 Top Helpers"),
+    list,
+    el("p", { class: "hint" }, "Points: answer a classmate's doubt +2 · answer marked helpful +5 more · share an idea +2 · each like on your idea +1 · ask a doubt +1. Anonymous posts don't count. Titles: Rising star, Helper (10), Mentor (25), Legend (50)."),
+    el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")),
+  ];
+}
+
+// ---------- exam countdown ----------
+function renderExams() {
+  const box = $("exams");
+  if (!box) return;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const items = (CFG.exams || []).map(x => ({ name: x.name, days: Math.round((new Date(x.date + "T00:00:00") - today) / 86400000) }))
+    .filter(x => x.name && x.days >= 0).sort((a, b) => a.days - b.days).slice(0, 4);
+  box.hidden = !items.length;
+  box.replaceChildren(...items.map(x => el("span", { class: "exam" + (x.days <= 3 ? " soon" : "") }, "⏳ " + x.name + " " + (x.days === 0 ? "today" : x.days === 1 ? "tomorrow" : "in " + x.days + " days"))));
 }
 
 function renderIntro() {
@@ -468,6 +543,7 @@ function renderAsk(existing) {
   const form = el("form", { class: "form", onsubmit: async (e) => {
     e.preventDefault();
     const title = form.elements.title.value.trim(), body = form.elements.body.value.trim(), group = form.elements.group.value;
+    const anonymous = form.elements.anon.checked, urgent = !!(form.elements.urgent && form.elements.urgent.checked);
     if (title.length < 3) { err.textContent = "Write a title of at least 3 characters."; err.hidden = false; return; }
     const btn = form.querySelector("button[type=submit]"); btn.disabled = true; btn.textContent = "Saving…";
     try {
@@ -475,12 +551,12 @@ function renderAsk(existing) {
         const kept = existing.pages || [];
         const added = newPages.slice(0, Math.max(0, MAX_PAGES - kept.length));
         const addedIds = await trySavePages(added, existing.id);
-        await store.update(t.coll, existing.id, { title: title.slice(0, 200), body: body.slice(0, 5000), [t.field]: group, authorName: getName() || existing.authorName, pages: [...kept, ...addedIds] });
+        await store.update(t.coll, existing.id, { title: title.slice(0, 200), body: body.slice(0, 5000), [t.field]: group, authorName: anonymous ? ANON : (getName() || existing.authorName), anonymous, urgent, pages: [...kept, ...addedIds] });
         state.mode = "view"; render(); return;
       }
       const id = store.newId(t.coll);
       const pageIds = newPages.map(u => { const pid = store.newId("pages"); pageCache.set(pid, u); return pid; });
-      const doc = { title: title.slice(0, 200), body: body.slice(0, 5000), [t.field]: group, authorId: store.uid, authorName: getName(), createdAt: Date.now(), pages: pageIds };
+      const doc = { title: title.slice(0, 200), body: body.slice(0, 5000), [t.field]: group, authorId: store.uid, authorName: anonymous ? ANON : getName(), anonymous, urgent, createdAt: Date.now(), pages: pageIds };
       if (state.tab === "doubts") doc.resolvedReplyId = null;
       // Show the new post straight away; the live update replaces it with the saved copy.
       state[t.coll] = [{ id, ...doc }, ...state[t.coll].filter(x => x.id !== id)];
@@ -501,6 +577,9 @@ function renderAsk(existing) {
     el("label", {}, "Details", el("textarea", { id: "f-body", name: "body", maxlength: "5000", placeholder: t.bodyHint })),
     existing && existing.pages && existing.pages.length ? el("p", { class: "hint" }, "This post already has " + existing.pages.length + " page(s). You can add up to " + Math.max(0, MAX_PAGES - existing.pages.length) + " more.") : null,
     attachPicker(newPages, existing ? MAX_PAGES - ((existing.pages || []).length) : MAX_PAGES),
+    el("div", { class: "checks" },
+      el("label", { class: "check" }, el("input", { type: "checkbox", id: "f-anon", name: "anon", checked: !!(existing && existing.anonymous) }), "🙈 Post anonymously (classmates won't see your name)"),
+      state.tab === "doubts" && el("label", { class: "check" }, el("input", { type: "checkbox", id: "f-urgent", name: "urgent", checked: !!(existing && existing.urgent) }), "🔥 Urgent: exam or deadline soon")),
     err,
     el("div", { class: "rowbtns" },
       el("button", { class: "btn primary", type: "submit" }, label),
@@ -518,6 +597,7 @@ function renderView() {
   const out = [
     el("div", { class: "meta" },
       el("span", { class: "tag", ...colorAttrs(g) }, g),
+      state.tab === "doubts" && isUrgent(d) && el("span", { class: "pill urgent" }, "🔥 Urgent"),
       state.tab === "doubts" && el("span", { class: "pill " + (d.resolvedReplyId ? "done" : "open") }, d.resolvedReplyId ? "Resolved" : "Open"),
       el("span", {}, "By " + who(d) + " · " + ago(d.createdAt))),
     el("h2", {}, d.title),
@@ -568,7 +648,8 @@ function renderView() {
     if (!getName()) { state.afterName = "view"; state.mode = "name"; render(); return; }
     const id = store.newId("replies");
     const pageIds = pages.map(u => { const pid = store.newId("pages"); pageCache.set(pid, u); return pid; });
-    const doc = { parentId: d.id, parentColl: t.coll, body: (body || PAGE_ONLY).slice(0, 5000), authorId: store.uid, authorName: getName(), createdAt: Date.now(), pages: pageIds };
+    const anonymous = state.replyAnon;
+    const doc = { parentId: d.id, parentColl: t.coll, body: (body || PAGE_ONLY).slice(0, 5000), authorId: store.uid, authorName: anonymous ? ANON : getName(), anonymous, createdAt: Date.now(), pages: pageIds };
     state.replies = [...state.replies, { id, ...doc }];
     state.replyPages = [];
     form.reset(); render();
@@ -581,6 +662,7 @@ function renderView() {
     el("label", { for: "f-reply", class: "label" }, t.replyLabel),
     el("textarea", { id: "f-reply", name: "reply", maxlength: "5000", placeholder: state.tab === "doubts" ? "Explain step by step. Show the working, not only the result." : "Add a thought, an improvement, or offer to help build it." }),
     attachPicker(state.replyPages, MAX_PAGES),
+    el("label", { class: "check" }, el("input", { type: "checkbox", id: "f-reply-anon", checked: state.replyAnon, onchange: (e) => { state.replyAnon = e.target.checked; } }), "🙈 Answer anonymously"),
     el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "submit" }, t.replyBtn)));
   out.push(form);
   return out;
@@ -626,6 +708,7 @@ function render() {
   sheet.setAttribute("data-s", ca["data-s"]);
   if (ca.style) sheet.setAttribute("style", ca.style); else sheet.removeAttribute("style");
   sheet.replaceChildren(...(
+    state.mode === "leaders" ? renderLeaders() :
     state.mode === "name" ? renderName() :
     state.mode === "ask" ? renderAsk() :
     state.mode === "edit" && cur ? renderAsk(cur) :
@@ -642,11 +725,13 @@ document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click
   render();
 }));
 $("askBtn").addEventListener("click", openAsk);
+$("leadersBtn").addEventListener("click", () => { state.mode = "leaders"; render(); if (innerWidth <= 1000) $("sheet").scrollIntoView({ behavior: "smooth" }); });
 $("nameBtn").addEventListener("click", () => { state.afterName = null; state.mode = "name"; render(); if (innerWidth <= 1000) $("sheet").scrollIntoView({ behavior: "smooth" }); });
 $("search").addEventListener("input", (e) => { state.query = e.target.value; renderList(); });
 $("filter").addEventListener("change", (e) => { state.filter = e.target.value; renderList(); });
 
 // ---------- start ----------
+renderExams();
 const deep = /^#(doubts|ideas)(?:\/([\w-]+))?$/.exec(location.hash);
 if (deep) state.tab = deep[1];
 render();

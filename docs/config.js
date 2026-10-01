@@ -13,6 +13,11 @@ window.DOUBT_DESK_CONFIG = {
   // Subjects shown in the Doubts tab, in this order.
   subjects: ["DLD", "CS", "DSP", "PRV", "AEC", "CN", "CO & D", "CS-2", "RFME"],
 
+  // Exam countdown shown at the top. Add one line per exam, date as YYYY-MM-DD, e.g.
+  // { name: "DSP Mid-1", date: "2026-10-15" },
+  exams: [
+  ],
+
   // Categories shown in the Ideas tab.
   ideaCategories: ["Project", "Startup", "Research", "Campus life", "Social impact", "Other"],
 };

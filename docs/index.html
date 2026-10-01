@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@500&display=swap">
-<link rel="stylesheet" href="style.css?v=8">
+<link rel="stylesheet" href="style.css?v=9">
 </head>
 <body>
 <div class="wrap">
@@ -17,12 +17,14 @@
     <div class="brand">
       <h1>G Block Doubt <span>Desk</span></h1>
       <p id="tagline">Stuck on a problem? Post your doubt, and classmates can answer it.</p>
+      <div class="exams" id="exams" hidden></div>
       <div class="tabs" role="tablist" aria-label="Sections">
         <button type="button" role="tab" data-tab="doubts" aria-selected="true">Doubts</button>
         <button type="button" role="tab" data-tab="ideas" aria-selected="false">Ideas</button>
       </div>
     </div>
     <div class="hdr-actions">
+      <button class="chip" id="leadersBtn" type="button">🏆 Top Helpers</button>
       <button class="chip" id="nameBtn" type="button">Set your name</button>
       <button class="btn primary" id="askBtn" type="button">Ask a doubt</button>
     </div>
@@ -46,7 +48,7 @@
     <aside class="sheet" id="sheet" aria-live="polite"></aside>
   </div>
 </div>
-<script src="config.js?v=8"></script>
-<script type="module" src="app.js?v=8"></script>
+<script src="config.js?v=9"></script>
+<script type="module" src="app.js?v=9"></script>
 </body>
 </html>
