@@ -615,10 +615,10 @@ function openItem(id) {
 function renderList() {
   const t = TABS[state.tab], rows = visible(), all = state[t.coll];
   if (!rows.length) {
-    const noun = state.tab === “doubts” ? “subject” : state.tab === “clubs” ? “club” : “category”;
-    $(“list”).replaceChildren(all.length
-      ? el(“div”, { class: “empty” }, el(“strong”, {}, “Nothing matches”), “Try another “ + noun + “ or clear the search.”)
-      : el(“div”, { class: “empty” }, el(“strong”, {}, state.tab === “doubts” ? “No doubts yet” : state.tab === “clubs” ? “No club posts yet” : “No ideas yet”), “Press “” + t.ask + “” to post the first one.”));
+    const noun = state.tab === "doubts" ? "subject" : state.tab === "clubs" ? "club" : "category";
+    $("list").replaceChildren(all.length
+      ? el("div", { class: "empty" }, el("strong", {}, "Nothing matches"), "Try another " + noun + " or clear the search.")
+      : el("div", { class: "empty" }, el("strong", {}, state.tab === "doubts" ? "No doubts yet" : state.tab === "clubs" ? "No club posts yet" : "No ideas yet"), "Press “" + t.ask + "” to post the first one."));
     return;
   }
   const spot = spotlight();
@@ -1276,29 +1276,28 @@ function renderIntro() {
   const students = new Set([...state.doubts, ...state.ideas, ...state.clubs].filter(p => !p.anonymous).map(p => p.authorId)).size;
   const resolved = state.doubts.filter(d => d.resolvedReplyId).length;
   const open = state.doubts.length - resolved;
-  const statsRow = totalPosts > 0 ? el(“div”, { class: “intro-stats” },
-    el(“div”, { class: “intro-stat” }, el(“span”, { class: “intro-stat-n” }, totalPosts), el(“span”, { class: “intro-stat-l” }, “posts”)),
-    el(“div”, { class: “intro-stat” }, el(“span”, { class: “intro-stat-n” }, students), el(“span”, { class: “intro-stat-l” }, “students”)),
-    state.tab === “doubts” && el(“div”, { class: “intro-stat ok” }, el(“span”, { class: “intro-stat-n” }, resolved), el(“span”, { class: “intro-stat-l” }, “resolved”)),
-    state.tab === “doubts” && open > 0 && el(“div”, { class: “intro-stat warn” }, el(“span”, { class: “intro-stat-n” }, open), el(“span”, { class: “intro-stat-l” }, “need help”))
+  const statsRow = totalPosts > 0 ? el("div", { class: "intro-stats" },
+    el("div", { class: "intro-stat" }, el("span", { class: "intro-stat-n" }, totalPosts), el("span", { class: "intro-stat-l" }, "posts")),
+    el("div", { class: "intro-stat" }, el("span", { class: "intro-stat-n" }, students), el("span", { class: "intro-stat-l" }, "students")),
+    state.tab === "doubts" && el("div", { class: "intro-stat ok" }, el("span", { class: "intro-stat-n" }, resolved), el("span", { class: "intro-stat-l" }, "resolved")),
+    state.tab === "doubts" && open > 0 && el("div", { class: "intro-stat warn" }, el("span", { class: "intro-stat-n" }, open), el("span", { class: "intro-stat-l" }, "need help"))
   ) : null;
 
-  const steps = state.tab === “doubts”
-    ? “1. Ask: pick the subject and write the question. Add a photo of your notebook or write it on the notebook page.\n2. Answer: open any doubt and explain the steps. You can attach your handwritten working too.\n3. Resolve: the student who asked marks the answer that helped. Tap “I have this doubt too” on doubts you share.”
-    : “1. Share: post an idea for a project, startup or research. Sketch it on the notebook page if that helps.\n2. Like: tap ♥ on ideas you want to see happen.\n3. Build: reply with thoughts, improvements or an offer to join.”;
+  const steps = state.tab === "doubts"
+    ? "1. Ask: pick the subject and write the question. Add a photo of your notebook or write it on the notebook page.\n2. Answer: open any doubt and explain the steps. You can attach your handwritten working too.\n3. Resolve: the student who asked marks the answer that helped. Tap “I have this doubt too” on doubts you share."
+    : "1. Share: post an idea for a project, startup or research. Sketch it on the notebook page if that helps.\n2. Like: tap ♥ on ideas you want to see happen.\n3. Build: reply with thoughts, improvements or an offer to join.";
 
   // Keyboard shortcut hint (desktop)
-  const kbHint = window.matchMedia(“(pointer: fine)”).matches
-    ? el(“p”, { class: “hint kb-hint” }, “⌨️ Press / to search · N to ask · Esc to go back”)
+  const kbHint = window.matchMedia("(pointer: fine)").matches
+    ? el("p", { class: "hint kb-hint" }, "⌨️ Press / to search · N to ask · Esc to go back")
     : null;
 
   return [
-    el(“h2”, {}, “How it works”),
+    el("h2", {}, "How it works"),
     statsRow,
-    el(“p”, { class: “body” }, steps),
-    el(“div”, { class: “rowbtns” },
-      el(“button”, { class: “btn primary”, type: “button”, onclick: openAsk }, t.ask),
-      el(“button”, { class: “btn”, type: “button”, onclick: () => showPanel(“network”) }, “🌐 RGUKT Network”)),
+    el("p", { class: "body" }, steps),
+    el("div", { class: "rowbtns" },
+      el("button", { class: "btn primary", type: "button", onclick: openAsk }, t.ask)),
     kbHint,
   ].filter(Boolean);
 }
@@ -1533,7 +1532,6 @@ function render() {
     state.mode === "quiz" ? renderQuiz() :
     state.mode === "me" ? renderMe() :
     state.mode === "learn" ? renderLearn() :
-    state.mode === "network" ? renderNetwork() :
     state.mode === "tools" ? renderECETools() :
     state.mode === "gate" ? renderGATECorner() :
     state.mode === "name" ? renderName() :
@@ -1554,7 +1552,6 @@ document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click
 $("askBtn").addEventListener("click", openAsk);
 const showPanel = (mode) => { state.mode = mode; render(); if (innerWidth <= 1000) $("sheet").scrollIntoView({ behavior: "smooth" }); };
 $("leadersBtn").addEventListener("click", () => showPanel("leaders"));
-$("networkBtn") && $("networkBtn").addEventListener("click", () => showPanel("network"));
 $("quizBtn").addEventListener("click", () => showPanel("quiz"));
 $("learnBtn").addEventListener("click", () => showPanel("learn"));
 $("toolsBtn") && $("toolsBtn").addEventListener("click", () => showPanel("tools"));
