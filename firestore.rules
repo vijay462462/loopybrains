@@ -1,53 +1,49 @@
 rules_version = '2';
 // Security rules for Doubt Desk. Paste this into Firebase console > Firestore Database > Rules.
+// Students do not sign in. Each phone has a random device id (authorId), and the
+// rules check post shape and that edits keep the original author and time.
 service cloud.firestore {
   match /databases/{database}/documents {
-    function signedIn() { return request.auth != null; }
-    function isAuthor() { return signedIn() && resource.data.authorId == request.auth.uid; }
     function str(v, min, max) { return v is string && v.size() >= min && v.size() <= max; }
     function validPost(groupField) {
       let d = request.resource.data;
       return str(d.title, 3, 200) && str(d.body, 0, 5000) && str(d[groupField], 1, 60)
-        && str(d.authorName, 1, 40) && d.authorId == request.auth.uid && d.createdAt is number;
+        && str(d.authorName, 1, 40) && str(d.authorId, 8, 80) && d.createdAt is number;
     }
-    function unchangedOwner() {
+    function sameAuthor() {
       return request.resource.data.authorId == resource.data.authorId
         && request.resource.data.createdAt == resource.data.createdAt;
     }
 
     match /doubts/{id} {
       allow read: if true;
-      allow create: if signedIn() && validPost('subject');
-      allow update: if isAuthor() && validPost('subject') && unchangedOwner();
-      allow delete: if isAuthor();
+      allow create: if validPost('subject');
+      allow update: if validPost('subject') && sameAuthor();
+      allow delete: if true;
     }
 
     match /ideas/{id} {
       allow read: if true;
-      allow create: if signedIn() && validPost('category');
-      allow update: if isAuthor() && validPost('category') && unchangedOwner();
-      allow delete: if isAuthor();
+      allow create: if validPost('category');
+      allow update: if validPost('category') && sameAuthor();
+      allow delete: if true;
     }
 
     match /replies/{id} {
       allow read: if true;
-      allow create: if signedIn()
-        && request.resource.data.authorId == request.auth.uid
-        && str(request.resource.data.body, 1, 5000)
+      allow create: if str(request.resource.data.body, 1, 5000)
         && str(request.resource.data.authorName, 1, 40)
+        && str(request.resource.data.authorId, 8, 80)
         && request.resource.data.parentColl in ['doubts', 'ideas']
         && str(request.resource.data.parentId, 1, 100);
-      // The reply's author, or the author of the doubt or idea it belongs to, can delete it.
-      allow delete: if isAuthor() || (signedIn()
-        && get(/databases/$(database)/documents/$(resource.data.parentColl)/$(resource.data.parentId)).data.authorId == request.auth.uid);
+      allow delete: if true;
     }
 
     match /likes/{id} {
       allow read: if true;
-      allow create: if signedIn()
-        && request.resource.data.uid == request.auth.uid
-        && id == request.resource.data.ideaId + '_' + request.auth.uid;
-      allow delete: if signedIn() && resource.data.uid == request.auth.uid;
+      allow create: if str(request.resource.data.uid, 8, 80)
+        && id == request.resource.data.ideaId + '_' + request.resource.data.uid;
+      allow delete: if true;
     }
   }
 }

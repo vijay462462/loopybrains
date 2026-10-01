@@ -76,17 +76,21 @@ function errText(e) {
 }
 
 // ---------- stores ----------
+// Each phone or browser gets a random device id, kept in localStorage, so students can edit and delete their own posts.
+function deviceId() {
+  try {
+    let id = localStorage.getItem("dd-device-id");
+    if (!id) { id = "d-" + crypto.randomUUID(); localStorage.setItem("dd-device-id", id); }
+    return id;
+  } catch (_) { return "d-" + Math.random().toString(36).slice(2); }
+}
 async function firebaseStore(conf) {
   const base = "https://www.gstatic.com/firebasejs/" + FB_VERSION + "/";
-  const [{ initializeApp }, fs, au] = await Promise.all([
-    import(base + "firebase-app.js"), import(base + "firebase-firestore.js"), import(base + "firebase-auth.js"),
-  ]);
+  const [{ initializeApp }, fs] = await Promise.all([import(base + "firebase-app.js"), import(base + "firebase-firestore.js")]);
   const app = initializeApp(conf);
   const db = fs.getFirestore(app);
-  const auth = au.getAuth(app);
-  const cred = await au.signInAnonymously(auth);
   return {
-    uid: cred.user.uid, demo: false,
+    uid: deviceId(), demo: false,
     subscribe: (coll, cb, onErr) => fs.onSnapshot(fs.collection(db, coll), snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))), onErr),
     newId: (coll) => fs.doc(fs.collection(db, coll)).id,
     set: (coll, id, data) => fs.setDoc(fs.doc(db, coll, id), data),
