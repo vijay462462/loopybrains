@@ -603,6 +603,46 @@ h1 span {
 @media (max-width: 900px) { .fab { display: flex; align-items: center; justify-content: center; } }
 
 /* ============================================================
+   ECE Toolkit
+   ============================================================ */
+.tool-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.tool-tab { background: var(--bg2); border: 1.5px solid var(--brd); color: var(--fg); border-radius: 20px; padding: 5px 14px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background .15s, color .15s; }
+.tool-tab:hover { background: var(--bg3); }
+.tool-tab.active { background: var(--acc); color: #fff; border-color: var(--acc); }
+.tool-pane { background: var(--bg2); border-radius: 12px; padding: 16px; border: 1px solid var(--brd); margin-bottom: 12px; }
+.tool-field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+.tool-field label { font-size: 12px; font-weight: 700; color: var(--fg2); text-transform: uppercase; letter-spacing: .04em; }
+.tool-input { background: var(--bg); border: 1.5px solid var(--brd); border-radius: 8px; padding: 8px 10px; color: var(--fg); font-size: 15px; font-family: 'JetBrains Mono', monospace; width: 100%; box-sizing: border-box; }
+.tool-input:focus { outline: none; border-color: var(--acc); }
+.tool-select { background: var(--bg); border: 1.5px solid var(--brd); border-radius: 8px; padding: 8px 10px; color: var(--fg); font-size: 14px; }
+.tool-result { background: var(--bg); border: 1.5px solid var(--acc); border-radius: 10px; padding: 10px 14px; font-family: 'JetBrains Mono', monospace; font-size: 14px; color: var(--acc); white-space: pre-wrap; word-break: break-all; margin: 8px 0; min-height: 36px; }
+.tool-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+.tool-chip { background: var(--bg2); border: 1.5px solid var(--brd); border-radius: 16px; padding: 4px 12px; font-size: 13px; cursor: pointer; color: var(--fg); transition: background .12s; }
+.tool-chip.active { background: var(--acc); color: #fff; border-color: var(--acc); }
+.tool-info { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+.db-sec { margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--brd); }
+.db-sec:last-child { border-bottom: none; margin-bottom: 0; }
+.db-sec h4 { margin: 0 0 8px; font-size: 13px; color: var(--fg2); }
+/* K-map */
+.kmap-table { border-collapse: collapse; margin: 10px 0; }
+.kmap-table th, .kmap-table td { border: 1.5px solid var(--brd); min-width: 42px; height: 42px; text-align: center; vertical-align: middle; font-size: 13px; }
+.kmap-hdr { background: var(--bg3); font-size: 11px; font-weight: 700; color: var(--fg2); padding: 4px 6px; }
+.kmap-cell { cursor: pointer; user-select: none; font-size: 14px; font-weight: 700; transition: background .1s; }
+.kmap-0 { background: var(--bg); color: var(--fg2); }
+.kmap-1 { background: #22c55e22; color: #16a34a; }
+.kmap-x { background: #f59e0b22; color: #d97706; }
+.kmap-result { font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 700; color: var(--acc); padding: 8px 12px; background: var(--bg); border-radius: 8px; border: 1.5px solid var(--acc); display: inline-block; }
+/* Simulator cards */
+.sims-list { display: grid; gap: 10px; margin: 10px 0; }
+.sim-card { display: block; background: var(--bg2); border: 1.5px solid var(--brd); border-radius: 10px; padding: 12px 14px; text-decoration: none; color: var(--fg); transition: border-color .15s, box-shadow .15s; }
+.sim-card:hover { border-color: var(--acc); box-shadow: 0 2px 10px rgba(124,58,237,.12); }
+.sim-card strong { display: block; margin-bottom: 4px; color: var(--fg); }
+.sim-card p { margin: 0; font-size: 13px; color: var(--fg2); line-height: 1.45; }
+/* GATE pill */
+.pill.gate { background: #a21caf22; color: #a21caf; border: 1px solid #a21caf44; }
+[data-theme="dark"] .pill.gate { background: #e879f922; color: #e879f9; border-color: #e879f944; }
+
+/* ============================================================
    Bottom navigation (mobile only)
    ============================================================ */
 .bottom-nav {

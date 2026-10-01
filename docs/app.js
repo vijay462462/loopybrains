@@ -567,7 +567,7 @@ function renderHeader() {
   $("search").placeholder = state.tab === "doubts" ? "Search doubts" : "Search ideas";
   $("rail").setAttribute("aria-label", t.groupLabel);
   const opts = state.tab === "doubts"
-    ? [["all", "Newest"], ["asked", "Most asked"], ["open", "Unanswered"], ["mentor", "Needs a mentor"], ["done", "Resolved"]]
+    ? [["all", "Newest"], ["asked", "Most asked"], ["open", "Unanswered"], ["mentor", "Needs a mentor"], ["done", "Resolved"], ["gate", "🎯 GATE-level"]]
     : [["all", "Newest"], ["top", "Most liked"]];
   const f = $("filter");
   if (f.dataset.tab !== state.tab) {
@@ -595,6 +595,7 @@ function visible() {
     (!q || ((d.title || "") + " " + (d.body || "")).toLowerCase().includes(q)));
   if (state.tab === "doubts" && (state.filter === "open" || state.filter === "done")) rows = rows.filter(d => (state.filter === "done") === !!d.resolvedReplyId);
   if (state.tab === "doubts" && state.filter === "mentor") rows = rows.filter(needsMentor);
+  if (state.tab === "doubts" && state.filter === "gate") rows = rows.filter(d => d.gate);
   rows.sort((a, b) => b.createdAt - a.createdAt);
   if (state.filter === "top" || state.filter === "asked") rows.sort((a, b) => likesFor(b.id).length - likesFor(a.id).length);
   else if (state.tab === "doubts") rows.sort((a, b) => (isUrgent(b) - isUrgent(a)) || (b.createdAt - a.createdAt));
@@ -632,6 +633,7 @@ function renderList() {
     if (state.tab === "doubts") {
       meta.push(el("span", { class: "pill " + (d.resolvedReplyId ? "done" : "open") }, d.resolvedReplyId ? "Resolved" : (n ? "Open" : "Unanswered")));
       if (d.urgent && !d.resolvedReplyId) meta.unshift(el("span", { class: "pill urgent" }, "🔥 Urgent"));
+      if (d.gate) meta.push(el("span", { class: "pill gate" }, "🎯 GATE"));
       if (votes) meta.push(el("span", { class: "likes" }, "🙋 " + votes));
     } else meta.push(el("span", { class: "likes" }, "♥ " + votes));
     if (d.pages && d.pages.length) meta.push(el("span", {}, "📎 " + d.pages.length + (d.pages.length === 1 ? " page" : " pages")));
@@ -659,6 +661,259 @@ function spotlight() {
 
 // ---------- leaderboard ----------
 const plural = (n, w) => n + " " + w + (n === 1 ? "" : "s");
+
+// ============================================================
+// ECE TOOLKIT
+// ============================================================
+const toolState = { tab: 'numbers', kmapVars: 3, kmapGrid: new Array(16).fill(0) };
+
+function qmMinimize(numVars, mintermsArr, dontcaresArr) {
+  const mts = new Set(mintermsArr);
+  if (mts.size === 0) return '0';
+  if (mts.size === (1 << numVars)) return '1';
+  const all = [...new Set([...mintermsArr, ...dontcaresArr])];
+  const DASH = 2;
+  const varNames = ['A','B','C','D'].slice(0, numVars);
+  let terms = all.map(m => ({ bits: Array.from({length:numVars}, (_,i) => (m>>(numVars-1-i))&1), covered: new Set([m]) }));
+  const primes = [];
+  while (terms.length > 0) {
+    const used = new Set(), next = new Map();
+    for (let i = 0; i < terms.length; i++) for (let j = i+1; j < terms.length; j++) {
+      const a = terms[i].bits, b = terms[j].bits;
+      let diff = 0, diffAt = -1, ok = true;
+      for (let k = 0; k < numVars; k++) {
+        if ((a[k]===DASH) !== (b[k]===DASH)) { ok = false; break; }
+        if (a[k] !== b[k]) { diff++; diffAt = k; }
+      }
+      if (ok && diff === 1) {
+        used.add(i); used.add(j);
+        const nb = [...a]; nb[diffAt] = DASH; const key = nb.join('');
+        if (!next.has(key)) next.set(key, { bits: nb, covered: new Set([...terms[i].covered, ...terms[j].covered]) });
+        else { const ex = next.get(key); for (const m of [...terms[i].covered, ...terms[j].covered]) ex.covered.add(m); }
+      }
+    }
+    for (let i = 0; i < terms.length; i++) if (!used.has(i)) primes.push(terms[i]);
+    terms = [...next.values()];
+  }
+  const mustCover = [...mts];
+  const piFor = mustCover.map(m => primes.reduce((a,p,i) => { if (p.covered.has(m)) a.push(i); return a; }, []));
+  const chosen = new Set(), covered = new Set();
+  for (let i = 0; i < mustCover.length; i++) if (piFor[i].length === 1) { chosen.add(piFor[i][0]); for (const m of primes[piFor[i][0]].covered) covered.add(m); }
+  let uncov = mustCover.filter(m => !covered.has(m));
+  while (uncov.length > 0) {
+    let best = -1, bestCnt = 0;
+    for (let p = 0; p < primes.length; p++) { if (chosen.has(p)) continue; const cnt = uncov.filter(m => primes[p].covered.has(m)).length; if (cnt > bestCnt) { bestCnt = cnt; best = p; } }
+    if (best === -1) break;
+    chosen.add(best); for (const m of primes[best].covered) covered.add(m);
+    uncov = mustCover.filter(m => !covered.has(m));
+  }
+  const sop = [...chosen].map(p => { const lits = primes[p].bits.map((b,i) => b===DASH?'':b===1?varNames[i]:varNames[i]+"'").filter(Boolean); return lits.length===0?'1':lits.join('·'); });
+  return sop.join(' + ') || '0';
+}
+
+const KMAP = {
+  2: { cells: [[0,1],[2,3]], rows: ['A=0','A=1'], cols: ['B=0','B=1'] },
+  3: { cells: [[0,1,3,2],[4,5,7,6]], rows: ['A=0','A=1'], cols: ['BC=00','BC=01','BC=11','BC=10'] },
+  4: { cells: [[0,1,3,2],[4,5,7,6],[12,13,15,14],[8,9,11,10]], rows: ['AB=00','AB=01','AB=11','AB=10'], cols: ['CD=00','CD=01','CD=11','CD=10'] },
+};
+
+function kmapRefresh(n, grid) {
+  const mts = [], dcs = [];
+  for (let i = 0; i < (1<<n); i++) { if (grid[i]===1) mts.push(i); else if (grid[i]===2) dcs.push(i); }
+  const res = document.getElementById('kmap-result'), mt = document.getElementById('kmap-mt');
+  if (res) res.textContent = 'F = ' + qmMinimize(n, mts, dcs);
+  if (mt) mt.textContent = mts.length ? 'Minterms: ' + mts.join(', ') + (dcs.length ? '   Don\'t cares: ' + dcs.join(', ') : '') : 'Click cells to select minterms';
+}
+
+function renderKmapTool() {
+  const n = toolState.kmapVars, km = KMAP[n], grid = toolState.kmapGrid;
+  const labels = ['0','1','X'], clss = ['kmap-0','kmap-1','kmap-x'];
+  const mts = grid.slice(0, 1<<n).filter((v,i)=>v===1).map((_,j)=>grid.findIndex((v,k)=>k>=0&&v===1&&grid.slice(0,k).filter(x=>x===1).length===j));
+  const dcs = [];
+  for (let i=0;i<(1<<n);i++){if(grid[i]===2)dcs.push(i);}
+  const initMts=[];for(let i=0;i<(1<<n);i++){if(grid[i]===1)initMts.push(i);}
+  const rows = km.rows.map((rowLabel,ri) => {
+    const cells = km.cells[ri].map(idx => {
+      const td = el('td', { class:'kmap-cell '+clss[grid[idx]], title:'Minterm '+idx }, labels[grid[idx]]);
+      td.addEventListener('click', () => { grid[idx]=(grid[idx]+1)%3; td.className='kmap-cell '+clss[grid[idx]]; td.textContent=labels[grid[idx]]; kmapRefresh(n,grid); });
+      return td;
+    });
+    return el('tr', {}, el('th',{class:'kmap-hdr'},rowLabel), ...cells);
+  });
+  return el('div', {},
+    el('div',{class:'tool-row'},
+      el('label',{},'Variables: '),
+      ...[2,3,4].map(v => el('button',{type:'button',class:'tool-chip'+(n===v?' active':''),onclick:()=>{toolState.kmapVars=v;toolState.kmapGrid=new Array(16).fill(0);render();}},v+'-var'))
+    ),
+    el('p',{class:'hint'},'Click cell: 0 → 1 (minterm) → X (don\'t care) → 0'),
+    el('table',{class:'kmap-table'},
+      el('thead',{},el('tr',{},el('th',{}), ...km.cols.map(c=>el('th',{class:'kmap-hdr'},c)))),
+      el('tbody',{},...rows)
+    ),
+    el('p',{class:'hint',id:'kmap-mt'},initMts.length?'Minterms: '+initMts.join(', ')+(dcs.length?'   Don\'t cares: '+dcs.join(', '):''):'Click cells to select minterms'),
+    el('div',{class:'kmap-result',id:'kmap-result'},'F = '+qmMinimize(n,initMts,dcs)),
+    el('button',{type:'button',class:'btn sm',style:'margin-top:8px',onclick:()=>{toolState.kmapGrid=new Array(16).fill(0);render();}},'Clear')
+  );
+}
+
+function renderNumberTool() {
+  function decode(id, raw) {
+    const raw2 = raw.trim();
+    if (!raw2) return null;
+    if (id==='gray') { if(!/^[01]+$/.test(raw2))return null; let b=parseInt(raw2[0],2),bin=raw2[0]; for(let i=1;i<raw2.length;i++){b=b^parseInt(raw2[i],2);bin+=b;} return parseInt(bin,2); }
+    if (id==='twos') { if(!/^[01]+$/.test(raw2))return null; return parseInt(raw2,2); }
+    const bases={dec:10,bin:2,hex:16,oct:8}; const v=parseInt(raw2,bases[id]); return isNaN(v)?null:v;
+  }
+  function update(v, skipId) {
+    if (v===null||v===undefined){['dec','bin','hex','oct','gray','twos'].forEach(id=>{const e=document.getElementById('nt-'+id);if(e&&id!==skipId)e.value='';});const inf=document.getElementById('nt-info');if(inf)inf.textContent='';return;}
+    const n=Math.abs(v),binStr=n.toString(2),gray=(n^(n>>1)).toString(2).padStart(binStr.length,'0'),twos=v<0?((~n+1)>>>0).toString(2).slice(-8):n.toString(2);
+    const map={dec:v.toString(),bin:n.toString(2),hex:n.toString(16).toUpperCase(),oct:n.toString(8),gray,twos};
+    Object.entries(map).forEach(([id,val])=>{const e=document.getElementById('nt-'+id);if(e&&id!==skipId)e.value=val;});
+    const inf=document.getElementById('nt-info');if(inf)inf.textContent=v+' decimal · '+binStr.length+'-bit · Gray: '+gray+(v>=0&&v<=255?'':' (showing unsigned 8-bit 2s complement)');
+  }
+  const mkField=(id,label,ph)=>{
+    const inp=el('input',{id:'nt-'+id,type:'text',class:'tool-input',placeholder:ph,spellcheck:'false','aria-label':label});
+    inp.addEventListener('input',()=>update(decode(id,inp.value),id));
+    return el('div',{class:'tool-field'},el('label',{for:'nt-'+id},label),inp);
+  };
+  return el('div',{},
+    el('p',{class:'hint'},'Type any value — all formats update instantly'),
+    mkField('dec','Decimal','e.g. 255'),mkField('bin','Binary','e.g. 11111111'),
+    mkField('hex','Hexadecimal','e.g. FF'),mkField('oct','Octal','e.g. 377'),
+    mkField('gray','Gray Code','e.g. 10000000'),mkField('twos',"2's Complement",'e.g. 11111111'),
+    el('p',{class:'hint tool-info',id:'nt-info'},'')
+  );
+}
+
+function renderDbTool() {
+  const sec=(title,fields,calcFn,rid)=>{
+    const inps=fields.map(([id,label,ph])=>{
+      const inp=el('input',{id:'db-'+id,type:'number',class:'tool-input',placeholder:ph,step:'any'});
+      inp.addEventListener('input',()=>{const vals=fields.map(([fid])=>parseFloat(document.getElementById('db-'+fid)?.value));const r=document.getElementById(rid);if(r)r.textContent=calcFn(...vals);});
+      return el('div',{class:'tool-field'},el('label',{for:'db-'+id},label),inp);
+    });
+    return el('div',{class:'db-sec'},el('h4',{},title),...inps,el('div',{class:'tool-result',id:rid},'—'));
+  };
+  return el('div',{},
+    sec('Power ratio → dB',[['p1','P₁ (W)','1'],['p2','P₂ (W)','2']],(p1,p2)=>(!p1||!p2)?'—':(10*Math.log10(p2/p1)).toFixed(4)+' dB','db-pr'),
+    sec('Voltage ratio → dB',[['v1','V₁','1'],['v2','V₂','2']],(v1,v2)=>(!v1||!v2)?'—':(20*Math.log10(Math.abs(v2/v1))).toFixed(4)+' dB','db-vr'),
+    sec('dB → ratio',[['dbv','dB value','6']],(db)=>isNaN(db)?'—':`Power ratio: ${Math.pow(10,db/10).toFixed(5)}  |  Voltage ratio: ${Math.pow(10,db/20).toFixed(5)}`,'db-rev'),
+    sec('dBm → Watts',[['dbm','dBm','0']],(dbm)=>isNaN(dbm)?'—':`${Math.pow(10,(dbm-30)/10).toExponential(3)} W  (${(Math.pow(10,(dbm-30)/10)*1000).toFixed(4)} mW)`,'db-mw')
+  );
+}
+
+function renderOpAmpTool() {
+  function calc() {
+    const r1=parseFloat(document.getElementById('oa-r1')?.value),rf=parseFloat(document.getElementById('oa-rf')?.value),vin=parseFloat(document.getElementById('oa-vin')?.value);
+    const res=document.getElementById('oa-result'); if(!res)return;
+    if(isNaN(r1)||isNaN(rf)||r1===0){res.textContent='Enter R1 and Rf to calculate gain';return;}
+    const inv=-(rf/r1),noninv=1+rf/r1;
+    let txt=`Inverting:     Av = −Rf/R1 = ${inv.toFixed(4)}\nNon-inverting: Av = 1 + Rf/R1 = ${noninv.toFixed(4)}`;
+    if(!isNaN(vin)) txt+=`\n\nVout (inverting):     ${(vin*inv).toFixed(4)} V\nVout (non-inverting): ${(vin*noninv).toFixed(4)} V`;
+    res.textContent=txt;
+  }
+  const r1=el('input',{id:'oa-r1',type:'number',class:'tool-input',placeholder:'e.g. 1000',step:'any'});
+  const rf=el('input',{id:'oa-rf',type:'number',class:'tool-input',placeholder:'e.g. 10000',step:'any'});
+  const vin=el('input',{id:'oa-vin',type:'number',class:'tool-input',placeholder:'optional, e.g. 1',step:'any'});
+  r1.addEventListener('input',calc); rf.addEventListener('input',calc); vin.addEventListener('input',calc);
+  return el('div',{},
+    el('p',{class:'hint'},'Enter resistor values in the same unit (Ω or kΩ)'),
+    el('div',{class:'tool-field'},el('label',{for:'oa-r1'},'R1 (input resistor)'),r1),
+    el('div',{class:'tool-field'},el('label',{for:'oa-rf'},'Rf (feedback resistor)'),rf),
+    el('div',{class:'tool-field'},el('label',{for:'oa-vin'},'Vin (optional)'),vin),
+    el('div',{class:'tool-result',id:'oa-result'},'Enter R1 and Rf to calculate gain'),
+    el('p',{class:'hint'},'Bandwidth = GBW ÷ |Gain|  ·  Virtual ground: V⁻ ≈ V⁺ (for ideal op-amp)')
+  );
+}
+
+function renderNyquistTool() {
+  const unitOpts=()=>[['1','Hz'],['1000','kHz'],['1000000','MHz']].map(([v,l])=>el('option',{value:v},l));
+  function calcFromSig(){
+    const f=parseFloat(document.getElementById('ny-sig')?.value),u=parseFloat(document.getElementById('ny-us')?.value||'1000');
+    const res=document.getElementById('ny-res');if(!res)return;if(isNaN(f)){res.textContent='—';return;}
+    const hz=f*u,fs=2*hz;
+    res.textContent=`Min sampling rate: ${hz>=1e6?(hz/1e6).toFixed(3)+' MHz':hz>=1e3?(hz/1e3).toFixed(3)+' kHz':hz.toFixed(1)+' Hz'} signal  →  fs ≥ ${fs>=1e6?(fs/1e6).toFixed(3)+' MHz':fs>=1e3?(fs/1e3).toFixed(3)+' kHz':fs.toFixed(1)+' Hz'}`;
+  }
+  function calcFromFs(){
+    const fs=parseFloat(document.getElementById('ny-fs')?.value),u=parseFloat(document.getElementById('ny-ufs')?.value||'1000');
+    const res=document.getElementById('ny-res2');if(!res)return;if(isNaN(fs)){res.textContent='—';return;}
+    const hz=fs*u,fmax=hz/2;
+    res.textContent=`Max signal freq (no aliasing): ${fmax>=1e6?(fmax/1e6).toFixed(3)+' MHz':fmax>=1e3?(fmax/1e3).toFixed(3)+' kHz':fmax.toFixed(1)+' Hz'}`;
+  }
+  const sigIn=el('input',{id:'ny-sig',type:'number',class:'tool-input',placeholder:'4',step:'any'});
+  const sigU=el('select',{id:'ny-us',class:'tool-select'},...unitOpts()); sigU.value='1000';
+  const fsIn=el('input',{id:'ny-fs',type:'number',class:'tool-input',placeholder:'44.1',step:'any'});
+  const fsU=el('select',{id:'ny-ufs',class:'tool-select'},...unitOpts()); fsU.value='1000';
+  sigIn.addEventListener('input',calcFromSig); sigU.addEventListener('change',calcFromSig);
+  fsIn.addEventListener('input',calcFromFs); fsU.addEventListener('change',calcFromFs);
+  return el('div',{},
+    el('h4',{},'Signal frequency → minimum sampling rate'),
+    el('div',{class:'tool-row'},sigIn,sigU),
+    el('div',{class:'tool-result',id:'ny-res'},'—'),
+    el('h4',{},'Sampling rate → maximum signal frequency'),
+    el('div',{class:'tool-row'},fsIn,fsU),
+    el('div',{class:'tool-result',id:'ny-res2'},'—'),
+    el('p',{class:'hint'},'Nyquist: fs ≥ 2·fmax  ·  Aliasing occurs when signal freq > fs/2  ·  Anti-aliasing filter cuts off at fs/2 before ADC')
+  );
+}
+
+function renderSimsTool() {
+  const sims=[
+    ['🔌 Falstad','Analog & digital circuits — live SPICE in the browser. Op-amps, filters, logic gates.','https://www.falstad.com/circuit/'],
+    ['⚡ CircuitVerse','Digital logic — build combinational & sequential circuits, verify K-map minimisation.','https://circuitverse.org/simulator'],
+    ['📈 Desmos','Graph any equation — Bode plots, signal waveforms, Z-transform poles & zeros.','https://www.desmos.com/calculator'],
+    ['🧮 Wolfram Alpha','Step-by-step: integrals, Laplace, Z-transform, Boolean algebra, number theory.','https://www.wolframalpha.com/'],
+    ['🔬 LTspice (free)','Industry-standard SPICE — transistors, op-amps, power circuits. Download from Analog Devices.','https://www.analog.com/en/resources/design-tools-and-calculators/ltspice-simulator.html'],
+    ['📡 MATLAB Online','Run MATLAB free in browser (sign up with college email) — DSP, control, signals.','https://matlab.mathworks.com/'],
+  ];
+  return el('div',{class:'sims-list'},
+    el('p',{class:'hint'},'Free simulators — no installation needed (except LTspice)'),
+    ...sims.map(([name,desc,url])=>el('a',{href:url,target:'_blank',rel:'noopener',class:'sim-card'},el('strong',{},name),el('p',{},desc)))
+  );
+}
+
+function renderGATECorner() {
+  const gateSubjects = [
+    ['DLD / Digital Circuits','https://pyq.grasp.academy/GATE/EC?subject=Digital+Circuits'],
+    ['Analog Electronics (AEC)','https://pyq.grasp.academy/GATE/EC?subject=Analog+Circuits'],
+    ['Control Systems','https://pyq.grasp.academy/GATE/EC?subject=Control+Systems'],
+    ['Communications (CS-2)','https://pyq.grasp.academy/GATE/EC?subject=Communications'],
+    ['DSP / Signals','https://pyq.grasp.academy/GATE/EC?subject=Signals+and+Systems'],
+    ['Network Theory','https://pyq.grasp.academy/GATE/EC?subject=Network+Theory'],
+    ['Electromagnetics (RFME)','https://pyq.grasp.academy/GATE/EC?subject=Electromagnetics'],
+    ['Maths (Engineering)','https://pyq.grasp.academy/GATE/EC?subject=Engineering+Mathematics'],
+    ['Computer Organisation','https://pyq.grasp.academy/GATE/EC?subject=Computer+Organization'],
+    ['All GATE ECE PYQs (GoLearn)','https://gateoverflow.in/?tag=ECE'],
+  ];
+  const nptelLinks = [
+    ['🎓 Digital Circuits — NPTEL (IIT)','https://onlinecourses.nptel.ac.in/noc22_ee108/preview'],
+    ['🎓 Analog Circuits — NPTEL (IIT)','https://onlinecourses.nptel.ac.in/noc23_ec19/preview'],
+    ['🎓 Control Systems — NPTEL (IIT)','https://onlinecourses.nptel.ac.in/noc23_ee45/preview'],
+    ['🎓 Signals & Systems — NPTEL (IIT)','https://onlinecourses.nptel.ac.in/noc22_ee109/preview'],
+    ['🎓 Communications — NPTEL (IIT)','https://onlinecourses.nptel.ac.in/noc20_ec25/preview'],
+    ['📚 GATE ECE Official Syllabus','https://gate2025.iitr.ac.in/page.php?id=syllabus'],
+  ];
+  return [
+    el('h2',{},'🎯 GATE Corner'),
+    el('p',{class:'hint'},'Free GATE ECE resources from IITs and official sources'),
+    el('div',{class:'label'},'Previous Year Questions by Subject'),
+    el('div',{class:'sims-list'},...gateSubjects.map(([name,url])=>el('a',{href:url,target:'_blank',rel:'noopener',class:'sim-card'},el('strong',{},name)))),
+    el('div',{class:'label',style:'margin-top:14px'},'Free IIT NPTEL Courses'),
+    el('div',{class:'sims-list'},...nptelLinks.map(([name,url])=>el('a',{href:url,target:'_blank',rel:'noopener',class:'sim-card'},el('strong',{},name)))),
+    el('div',{class:'rowbtns'},el('button',{class:'btn',type:'button',onclick:()=>{state.mode=state.selected?'view':'intro';render();}},'Back')),
+  ];
+}
+
+function renderECETools() {
+  const tabs=[['numbers','🔢 Numbers'],['db','📡 dB'],['opamp','🔌 Op-Amp'],['nyquist','〰 Nyquist'],['kmap','🗺 K-Map'],['sims','🖥 Sims']];
+  const content={numbers:renderNumberTool,db:renderDbTool,opamp:renderOpAmpTool,nyquist:renderNyquistTool,kmap:renderKmapTool,sims:renderSimsTool}[toolState.tab]();
+  return [
+    el('h2',{},'🔧 ECE Toolkit'),
+    el('div',{class:'tool-tabs'},...tabs.map(([id,label])=>el('button',{type:'button',class:'tool-tab'+(toolState.tab===id?' active':''),onclick:()=>{toolState.tab=id;render();}},label))),
+    el('div',{class:'tool-pane'},content),
+    el('div',{class:'rowbtns'},el('button',{class:'btn',type:'button',onclick:()=>{state.mode=state.selected?'view':'intro';render();}},'Back')),
+  ];
+}
 
 // ---------- daily quiz ----------
 const QUIZ = window.DOUBT_DESK_QUIZ || [];
@@ -1077,7 +1332,7 @@ function renderAsk(existing) {
   const form = el("form", { class: "form", onsubmit: async (e) => {
     e.preventDefault();
     const title = form.elements.title.value.trim(), body = form.elements.body.value.trim(), group = form.elements.group.value;
-    const anonymous = form.elements.anon.checked, urgent = !!(form.elements.urgent && form.elements.urgent.checked);
+    const anonymous = form.elements.anon.checked, urgent = !!(form.elements.urgent && form.elements.urgent.checked), gate = !!(form.elements.gate && form.elements.gate.checked);
     if (title.length < 3) { err.textContent = "Write a title of at least 3 characters."; err.hidden = false; return; }
     if (hasBadWords(title + " " + body)) { err.textContent = LANGUAGE_MSG; err.hidden = false; return; }
     const wait = existing ? "" : spamCheck();
@@ -1088,13 +1343,15 @@ function renderAsk(existing) {
         const kept = existing.pages || [];
         const added = newPages.slice(0, Math.max(0, MAX_PAGES - kept.length));
         const addedIds = await trySavePages(added, existing.id);
-        await store.update(t.coll, existing.id, { title: title.slice(0, 200), body: body.slice(0, 5000), [t.field]: group, authorName: anonymous ? ANON : (getName() || existing.authorName), anonymous, urgent, pages: [...kept, ...addedIds] });
+        const upd = { title: title.slice(0, 200), body: body.slice(0, 5000), [t.field]: group, authorName: anonymous ? ANON : (getName() || existing.authorName), anonymous, urgent, pages: [...kept, ...addedIds] };
+        if (state.tab === "doubts") upd.gate = gate;
+        await store.update(t.coll, existing.id, upd);
         state.mode = "view"; render(); return;
       }
       const id = store.newId(t.coll);
       const pageIds = newPages.map(u => { const pid = store.newId("pages"); pageCache.set(pid, u); return pid; });
       const doc = { title: title.slice(0, 200), body: body.slice(0, 5000), [t.field]: group, authorId: store.uid, authorName: anonymous ? ANON : getName(), anonymous, urgent, createdAt: Date.now(), pages: pageIds };
-      if (state.tab === "doubts") doc.resolvedReplyId = null;
+      if (state.tab === "doubts") { doc.resolvedReplyId = null; doc.gate = gate; }
       // Show the new post straight away; the live update replaces it with the saved copy.
       state[t.coll] = [{ id, ...doc }, ...state[t.coll].filter(x => x.id !== id)];
       state.group = "All"; state.query = ""; $("search").value = "";
@@ -1117,7 +1374,8 @@ function renderAsk(existing) {
     attachPicker(newPages, existing ? MAX_PAGES - ((existing.pages || []).length) : MAX_PAGES),
     el("div", { class: "checks" },
       el("label", { class: "check" }, el("input", { type: "checkbox", id: "f-anon", name: "anon", checked: !!(existing && existing.anonymous) }), "🙈 Post anonymously (classmates won't see your name)"),
-      state.tab === "doubts" && el("label", { class: "check" }, el("input", { type: "checkbox", id: "f-urgent", name: "urgent", checked: !!(existing && existing.urgent) }), "🔥 Urgent: exam or deadline soon")),
+      state.tab === "doubts" && el("label", { class: "check" }, el("input", { type: "checkbox", id: "f-urgent", name: "urgent", checked: !!(existing && existing.urgent) }), "🔥 Urgent: exam or deadline soon"),
+      state.tab === "doubts" && el("label", { class: "check" }, el("input", { type: "checkbox", id: "f-gate", name: "gate", checked: !!(existing && existing.gate) }), "🎯 GATE-level: relevant for GATE preparation")),
     err,
     el("div", { class: "rowbtns" },
       el("button", { class: "btn primary", type: "submit" }, label),
@@ -1149,6 +1407,7 @@ function renderView() {
       el("span", { class: "tag", ...colorAttrs(g) }, g),
       state.tab === "doubts" && isUrgent(d) && el("span", { class: "pill urgent" }, "🔥 Urgent"),
       state.tab === "doubts" && el("span", { class: "pill " + (d.resolvedReplyId ? "done" : "open") }, d.resolvedReplyId ? "Resolved" : "Open"),
+      state.tab === "doubts" && d.gate && el("span", { class: "pill gate" }, "🎯 GATE-level"),
       el("span", { class: "author-row" }, d.anonymous ? avatarEl("👤") : avatarEl(mine(d) ? getAvatar() : avatarFor(d.authorName || "")), "By " + who(d) + " · " + ago(d.createdAt))),
     el("h2", {}, d.title),
   ];
@@ -1275,6 +1534,8 @@ function render() {
     state.mode === "me" ? renderMe() :
     state.mode === "learn" ? renderLearn() :
     state.mode === "network" ? renderNetwork() :
+    state.mode === "tools" ? renderECETools() :
+    state.mode === "gate" ? renderGATECorner() :
     state.mode === "name" ? renderName() :
     state.mode === "ask" ? renderAsk() :
     state.mode === "edit" && cur ? renderAsk(cur) :
@@ -1296,6 +1557,8 @@ $("leadersBtn").addEventListener("click", () => showPanel("leaders"));
 $("networkBtn") && $("networkBtn").addEventListener("click", () => showPanel("network"));
 $("quizBtn").addEventListener("click", () => showPanel("quiz"));
 $("learnBtn").addEventListener("click", () => showPanel("learn"));
+$("toolsBtn") && $("toolsBtn").addEventListener("click", () => showPanel("tools"));
+$("gateBtn") && $("gateBtn").addEventListener("click", () => showPanel("gate"));
 $("nameBtn").addEventListener("click", () => { state.afterName = null; showPanel(getName() ? "me" : "name"); });
 $("search").addEventListener("input", (e) => { state.query = e.target.value; renderList(); });
 $("filter").addEventListener("change", (e) => { state.filter = e.target.value; renderList(); });
@@ -1366,7 +1629,7 @@ render();
 
 // Service worker
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js?v=33').catch(() => {});
+  navigator.serviceWorker.register('./sw.js?v=34').catch(() => {});
 }
 
 // Keyboard shortcuts
