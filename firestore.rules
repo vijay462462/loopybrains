@@ -56,6 +56,13 @@ service cloud.firestore {
         allow delete: if false;
       }
 
+      match /clubs/{id} {
+        allow read: if member();
+        allow create: if member() && newPost('club');
+        allow update: if member() && validPost('club') && unchanged();
+        allow delete: if false;
+      }
+
       match /replies/{id} {
         allow read: if member();
         allow create: if member() && validReply() && recent(request.resource.data.createdAt)

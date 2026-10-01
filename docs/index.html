@@ -3,30 +3,32 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>G Block Mind Hub</title>
-<meta name="description" content="G Block ECE &amp; CSE class board where students ask doubts, answer each other, and share ideas.">
+<title>RGUKT AP — Student Network</title>
+<meta name="description" content="RGUKT Ongole, Nuzvudu, RK Valley &amp; Srikakulam students ask doubts, share ideas and run clubs together.">
 <meta name="theme-color" content="#7c3aed">
 <meta http-equiv="Cache-Control" content="no-cache">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com; connect-src 'self' https://*.googleapis.com https://www.gstatic.com; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@500&display=swap">
-<link rel="stylesheet" href="style.css?v=18">
+<link rel="stylesheet" href="style.css?v=19">
 </head>
 <body>
 <div class="wrap">
   <canvas id="particles" aria-hidden="true"></canvas>
   <header class="top">
     <div class="brand">
-      <h1>G Block Mind <span>Hub</span></h1>
+      <h1 id="siteTitle">RGUKT AP <span>Network</span></h1>
       <p id="tagline">One doubt. Many minds. Zero fear.</p>
       <div class="exams" id="exams" hidden></div>
       <div class="tabs" role="tablist" aria-label="Sections">
         <button type="button" role="tab" data-tab="doubts" aria-selected="true">Doubts</button>
         <button type="button" role="tab" data-tab="ideas" aria-selected="false">Ideas</button>
+        <button type="button" role="tab" data-tab="clubs" aria-selected="false">🏛 Clubs</button>
       </div>
     </div>
     <div class="hdr-actions">
+      <button class="chip" id="networkBtn" type="button">🌐 RGUKT Network</button>
       <button class="chip" id="quizBtn" type="button">🧠 Daily Quiz</button>
       <button class="chip" id="learnBtn" type="button">📚 Learn from IIT</button>
       <button class="chip" id="leadersBtn" type="button">🏆 Top Helpers</button>
@@ -36,6 +38,15 @@
   </header>
 
   <div class="notice" id="notice" hidden></div>
+
+  <!-- campus filter bar -->
+  <div class="campus-bar" id="campusBar" hidden>
+    <button class="campus-chip active" data-campus="All" type="button">🌐 All RGUKT</button>
+    <button class="campus-chip" data-campus="RGUKT Ongole" type="button">🏫 Ongole</button>
+    <button class="campus-chip" data-campus="RGUKT Nuzvudu" type="button">🏫 Nuzvudu</button>
+    <button class="campus-chip" data-campus="RGUKT RK Valley" type="button">🏫 RK Valley</button>
+    <button class="campus-chip" data-campus="RGUKT Srikakulam" type="button">🏫 Srikakulam</button>
+  </div>
 
   <div class="layout">
     <nav class="rail" id="rail" aria-label="Subjects"></nav>
@@ -53,8 +64,8 @@
     <aside class="sheet" id="sheet" aria-live="polite"></aside>
   </div>
 </div>
-<script src="config.js?v=18"></script>
-<script src="quiz.js?v=18"></script>
-<script type="module" src="app.js?v=18"></script>
+<script src="config.js?v=19"></script>
+<script src="quiz.js?v=19"></script>
+<script type="module" src="app.js?v=19"></script>
 </body>
 </html>

@@ -437,3 +437,73 @@ h1 span {
   .ripple { animation: none; }
   h1 span { animation: none; }
 }
+
+/* ============================================================
+   Campus filter bar
+   ============================================================ */
+.campus-bar {
+  display: flex; gap: 8px; padding: 8px 16px; overflow-x: auto;
+  scrollbar-width: none; -ms-overflow-style: none;
+  border-bottom: 1px solid var(--line); background: var(--paper);
+  position: sticky; top: 0; z-index: 10;
+  animation: slideUp .25s ease both;
+}
+.campus-bar::-webkit-scrollbar { display: none; }
+.campus-chip {
+  flex-shrink: 0; padding: 5px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;
+  border: 1.5px solid var(--line); background: var(--paper); cursor: pointer; white-space: nowrap;
+  transition: all .18s ease; color: var(--text);
+}
+.campus-chip:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,0,0,.12); }
+.campus-chip.active {
+  background: var(--accent); color: #fff; border-color: var(--accent);
+  box-shadow: 0 3px 12px color-mix(in oklab, var(--accent) 40%, transparent);
+}
+
+/* ============================================================
+   Campus badge (inline on posts)
+   ============================================================ */
+.campus-badge {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600;
+  border: 1px solid; vertical-align: middle; white-space: nowrap;
+}
+
+/* ============================================================
+   Campus picker in name form
+   ============================================================ */
+.campus-pick-row {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 4px;
+}
+.campus-pick-btn {
+  padding: 8px 14px; border-radius: 12px; font-size: 13px; font-weight: 600;
+  border: 2px solid var(--cbr, #d1d5db); background: var(--cbg, #f3f4f6); color: var(--cfg, #374151);
+  cursor: pointer; transition: all .18s ease;
+}
+.campus-pick-btn:hover { transform: translateY(-2px) scale(1.04); }
+.campus-pick-btn.selected {
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--cfg, #374151) 30%, transparent);
+  transform: scale(1.06);
+}
+
+/* ============================================================
+   Network panel
+   ============================================================ */
+.network-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px;
+  margin: 12px 0;
+}
+.network-card {
+  background: var(--ncbg, #f3f4f6); border: 2px solid var(--ncbr, #d1d5db);
+  border-radius: 16px; padding: 14px; display: grid; gap: 8px;
+  transition: transform .18s ease, box-shadow .18s ease;
+  animation: slideUp .3s ease both;
+}
+.network-card:hover { transform: translateY(-4px) scale(1.02); box-shadow: 0 8px 28px rgba(0,0,0,.12); }
+.network-card-name { font-size: 14px; font-weight: 700; color: var(--ncfg, #374151); }
+.network-card-stats { display: flex; gap: 10px; font-size: 12px; color: var(--ncfg, #374151); opacity: .8; flex-wrap: wrap; }
+.network-features { padding-left: 18px; display: grid; gap: 6px; margin: 6px 0 12px; font-size: 14px; }
+.network-features li { line-height: 1.5; }
+
+/* Leaderboard campus badge row */
+.board-name-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }

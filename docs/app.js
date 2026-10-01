@@ -4,6 +4,14 @@
 const CFG = window.DOUBT_DESK_CONFIG || {};
 const SUBJECTS = (CFG.subjects && CFG.subjects.length) ? CFG.subjects : ["Maths", "Physics", "Chemistry", "Other"];
 const CATS = (CFG.ideaCategories && CFG.ideaCategories.length) ? CFG.ideaCategories : ["Project", "Other"];
+const CAMPUSES = (CFG.campuses && CFG.campuses.length) ? CFG.campuses : [];
+const CLUBS = (CFG.clubs && CFG.clubs.length) ? CFG.clubs : ["Coding Club", "Other"];
+const CAMPUS_COLOURS = {
+  "RGUKT Ongole":     { bg: "#dbeafe", fg: "#1d4ed8", border: "#93c5fd" },
+  "RGUKT Nuzvudu":    { bg: "#d1fae5", fg: "#065f46", border: "#6ee7b7" },
+  "RGUKT RK Valley":  { bg: "#fce7f3", fg: "#9d174d", border: "#f9a8d4" },
+  "RGUKT Srikakulam": { bg: "#fef3c7", fg: "#92400e", border: "#fcd34d" },
+};
 const PALETTE = ["#6366f1", "#0ea5e9", "#10b981", "#f59e0b", "#a855f7", "#ec4899", "#ef4444", "#14b8a6", "#84cc16", "#f97316", "#64748b"];
 const FB_VERSION = "10.12.2";
 const MOTTO = CFG.tagline || "Ask boldly. Answer together. Innovate endlessly.";
@@ -37,12 +45,20 @@ const TABS = {
     placeholder: "e.g. A shared notes bank for every DSP chapter",
     bodyHint: "What is the idea, who it helps, and how we could start.",
   },
+  clubs: {
+    coll: "clubs", field: "club", groups: CLUBS, groupLabel: "Clubs", noun: "post",
+    ask: "Post to a club", tagline: "Connect with students across all 4 RGUKT campuses. Share projects, find team members, plan events.",
+    replyNoun: "reply", replyLabel: "Your reply", replyBtn: "Post reply",
+    placeholder: "e.g. Looking for teammates for a robotics project",
+    bodyHint: "Details, what help you need, which campuses can join.",
+  },
 };
 
 const state = {
   tab: "doubts", group: "All", query: "", filter: "all",
-  doubts: [], ideas: [], replies: [], likes: [], loaded: false,
-  selected: null, mode: "intro", // intro | view | ask | edit | name
+  campusFilter: "All",
+  doubts: [], ideas: [], clubs: [], replies: [], likes: [], loaded: false,
+  selected: null, mode: "intro", // intro | view | ask | edit | name | campus
   afterName: null,
   replyPages: [], // notebook pages attached to the reply being written
   replyAnon: false,
@@ -96,6 +112,15 @@ function avatarFor(name) {
 }
 // Render a small avatar circle element
 function avatarEl(icon, cls = "av") { return el("span", { class: cls, "aria-hidden": "true" }, icon); }
+// Campus helpers
+function getCampus() { try { return localStorage.getItem("dd-campus") || ""; } catch (_) { return ""; } }
+function setCampus(v) { try { localStorage.setItem("dd-campus", v); } catch (_) {} }
+function campusBadge(campus) {
+  if (!campus) return null;
+  const c = CAMPUS_COLOURS[campus] || { bg: "#f3f4f6", fg: "#374151", border: "#d1d5db" };
+  const short = campus.replace("RGUKT ", "");
+  return el("span", { class: "campus-badge", style: `background:${c.bg};color:${c.fg};border-color:${c.border}` }, "📍 " + short);
+}
 const mine = (x) => x && store && x.authorId === store.uid;
 const who = (x) => mine(x) ? "You" : (x.authorName || "A student");
 const repliesFor = (id) => state.replies.filter(r => r.parentId === id).sort((a, b) => (isMentor(b) - isMentor(a)) || (a.createdAt - b.createdAt));
@@ -231,7 +256,7 @@ function renderGate(err) {
   $("sheet").replaceChildren(el("h2", {}, "🔐 Enter your class code"), form);
   $("list").replaceChildren(el("div", { class: "empty" }, el("strong", {}, "This board is private"), "Only students with the class code can see and post doubts."));
   $("rail").replaceChildren();
-  ["askBtn", "quizBtn", "leadersBtn", "nameBtn"].forEach(id => { $(id).hidden = true; });
+  ["askBtn", "quizBtn", "leadersBtn", "nameBtn", "networkBtn"].forEach(id => { $(id).hidden = true; });
   setTimeout(() => form.elements.code.focus(), 0);
 }
 
@@ -464,6 +489,15 @@ async function copyLink(btn, link) {
 }
 
 // ---------- rendering ----------
+function renderCampusBar() {
+  const bar = document.getElementById("campusBar");
+  if (!bar) return;
+  if (!CAMPUSES.length) { bar.hidden = true; return; }
+  bar.hidden = false;
+  bar.querySelectorAll(".campus-chip").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.campus === state.campusFilter);
+  });
+}
 function renderHeader() {
   const t = TABS[state.tab];
   document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === state.tab)));
@@ -500,6 +534,7 @@ function visible() {
   const t = TABS[state.tab], q = state.query.trim().toLowerCase();
   let rows = state[t.coll].filter(d => !isHidden(d) &&
     (state.group === "All" || d[t.field] === state.group) &&
+    (state.campusFilter === "All" || !d.campus || d.campus === state.campusFilter) &&
     (!q || ((d.title || "") + " " + (d.body || "")).toLowerCase().includes(q)));
   if (state.tab === "doubts" && (state.filter === "open" || state.filter === "done")) rows = rows.filter(d => (state.filter === "done") === !!d.resolvedReplyId);
   if (state.tab === "doubts" && state.filter === "mentor") rows = rows.filter(needsMentor);
@@ -523,9 +558,10 @@ function renderList() {
   if (!state.loaded) return;
   const t = TABS[state.tab], rows = visible(), all = state[t.coll];
   if (!rows.length) {
-    $("list").replaceChildren(all.length
-      ? el("div", { class: "empty" }, el("strong", {}, "Nothing matches"), "Try another " + (state.tab === "doubts" ? "subject" : "category") + " or clear the search.")
-      : el("div", { class: "empty" }, el("strong", {}, state.tab === "doubts" ? "No doubts yet" : "No ideas yet"), "Press “" + t.ask + "” to post the first one."));
+    const noun = state.tab === “doubts” ? “subject” : state.tab === “clubs” ? “club” : “category”;
+    $(“list”).replaceChildren(all.length
+      ? el(“div”, { class: “empty” }, el(“strong”, {}, “Nothing matches”), “Try another “ + noun + “ or clear the search.”)
+      : el(“div”, { class: “empty” }, el(“strong”, {}, state.tab === “doubts” ? “No doubts yet” : state.tab === “clubs” ? “No club posts yet” : “No ideas yet”), “Press “” + t.ask + “” to post the first one.”));
     return;
   }
   const spot = spotlight();
@@ -544,6 +580,7 @@ function renderList() {
     } else meta.push(el("span", { class: "likes" }, "♥ " + votes));
     if (d.pages && d.pages.length) meta.push(el("span", {}, "📎 " + d.pages.length + (d.pages.length === 1 ? " page" : " pages")));
     const av = d.anonymous ? avatarEl("👤") : avatarEl(mine(d) ? getAvatar() : avatarFor(d.authorName || ""));
+    if (d.campus) meta.push(campusBadge(d.campus));
     meta.push(el("span", {}, n + " " + t.replyNoun + (n === 1 ? "" : "s")), el("span", { class: "author-row" }, av, who(d) + " · " + ago(d.createdAt)));
     return el("button", {
       type: "button", class: "item", ...colorAttrs(g),
@@ -650,15 +687,17 @@ function allStats() {
   const people = new Map();
   const get = (id, name, t) => {
     if (!id) return null;
-    const p = people.get(id) || { id, name: "", nameAt: -1, points: 0, answers: 0, helpful: 0, ideas: 0, asked: 0, likes: 0, reacts: 0, quizRight: 0, quizDone: 0, days: new Set() };
+    const p = people.get(id) || { id, name: "", nameAt: -1, campus: "", points: 0, answers: 0, helpful: 0, ideas: 0, asked: 0, likes: 0, reacts: 0, quizRight: 0, quizDone: 0, days: new Set() };
     if (name && name !== ANON && (t || 0) >= p.nameAt) { p.name = name; p.nameAt = t || 0; }
+    // pick the most-recently-seen campus for this author
+    if (id && store && id === store.uid && getCampus()) p.campus = getCampus();
     people.set(id, p);
     return p;
   };
   const active = (id, t) => { const p = get(id); if (p && t) p.days.add(dayNum(t)); };
   const helpfulIds = new Set(state.doubts.map(d => d.resolvedReplyId).filter(Boolean));
   const replyAuthor = new Map(state.replies.map(r => [r.id, r]));
-  for (const d of state.doubts) { active(d.authorId, d.createdAt); if (d.anonymous) continue; const p = get(d.authorId, d.authorName, d.createdAt); p.asked++; p.points += 1; }
+  for (const d of state.doubts) { active(d.authorId, d.createdAt); if (d.anonymous) continue; const p = get(d.authorId, d.authorName, d.createdAt); p.asked++; p.points += 1; if (d.campus && !p.campus) p.campus = d.campus; }
   for (const i of state.ideas) {
     active(i.authorId, i.createdAt); if (i.anonymous) continue;
     const p = get(i.authorId, i.authorName, i.createdAt); p.ideas++; p.points += 2;
@@ -711,6 +750,43 @@ const BADGES = [
 const TITLES = [[50, "Legend"], [25, "Mentor"], [10, "Helper"], [0, "Rising star"]];
 const titleOf = (pts) => TITLES.find(([min]) => pts >= min)[1];
 
+function renderNetwork() {
+  const allPosts = [...state.doubts, ...state.ideas, ...state.clubs];
+  const campusStats = CAMPUSES.map(c => {
+    const posts = allPosts.filter(p => p.campus === c).length;
+    const members = new Set(allPosts.filter(p => p.campus === c && !p.anonymous).map(p => p.authorId)).size;
+    const col = CAMPUS_COLOURS[c] || {};
+    return { c, posts, members, col };
+  });
+  const totalPosts = allPosts.length;
+  const totalMembers = new Set(allPosts.filter(p => !p.anonymous).map(p => p.authorId)).size;
+  const campusCards = campusStats.map(({ c, posts, members, col }) =>
+    el("div", { class: "network-card", style: `--ncbg:${col.bg||"#f3f4f6"};--ncfg:${col.fg||"#374151"};--ncbr:${col.border||"#d1d5db"}` },
+      el("div", { class: "network-card-name" }, "🏫 " + c.replace("RGUKT ", "")),
+      el("div", { class: "network-card-stats" },
+        el("span", {}, "📝 " + posts + " posts"),
+        el("span", {}, "👥 " + members + " members")),
+      el("button", { class: "btn sm", type: "button", onclick: () => {
+        state.campusFilter = c; state.mode = "intro"; render();
+        document.querySelector(".campus-chip[data-campus='" + c + "']") && document.querySelector(".campus-chip[data-campus='" + c + "']").click();
+      } }, "View posts →")));
+  return [
+    el("h2", {}, "🌐 RGUKT AP Network"),
+    el("p", { class: "hint" }, totalMembers + " students · " + totalPosts + " posts across 4 campuses"),
+    el("div", { class: "network-grid" }, ...campusCards),
+    el("div", { class: "label" }, "What you can do"),
+    el("ul", { class: "network-features" },
+      el("li", {}, "📚 Ask doubts that any RGUKT student can answer"),
+      el("li", {}, "💡 Share ideas for cross-campus projects"),
+      el("li", {}, "🏛 Join clubs and find teammates from all campuses"),
+      el("li", {}, "🏆 Compete on the all-RGUKT leaderboard"),
+      el("li", {}, "🎓 Learn from IIT mentors connected to any campus")),
+    el("div", { class: "rowbtns" },
+      el("button", { class: "btn primary", type: "button", onclick: () => { state.tab = "clubs"; state.group = "All"; state.mode = "intro"; render(); } }, "🏛 Browse Clubs"),
+      el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")),
+  ];
+}
+
 function renderLeaders() {
   const rows = [...allStats().values()].filter(p => p.points > 0).sort((a, b) => b.points - a.points).slice(0, 15);
   const medal = ["🥇", "🥈", "🥉"];
@@ -719,7 +795,10 @@ function renderLeaders() {
     ? el("ol", { class: "board" }, rows.map((p, i) => el("li", { class: p.id === meId ? "me" : null },
         el("span", { class: "rank" }, medal[i] || String(i + 1)),
         avatarEl(p.id === meId ? getAvatar() : avatarFor(p.name || ""), "av av-lg"),
-        el("span", { class: "who" }, el("strong", {}, (p.id === meId ? p.name + " (you)" : p.name) + " " + BADGES.filter(b => b[3](p)).map(b => b[0]).join("")),
+        el("span", { class: "who" },
+          el("span", { class: "board-name-row" },
+            el("strong", {}, (p.id === meId ? p.name + " (you)" : p.name) + " " + BADGES.filter(b => b[3](p)).map(b => b[0]).join("")),
+            p.campus && campusBadge(p.campus)),
           el("small", {}, "Lv " + p.level.n + " " + titleOf(p.points) + " · " + plural(p.answers, "answer") + " · " + p.helpful + " helpful · " + p.quizRight + " quiz" + (p.streak > 1 ? " · 🔥" + p.streak + "-day streak" : ""))),
         el("span", { class: "pts" }, p.points + " pts"))))
     : el("p", { class: "hint" }, "No points yet. Answer a doubt or today's quiz to get on the board.");
@@ -746,7 +825,8 @@ function renderMe() {
       avatarEl(getAvatar(), "av av-hero"),
       el("div", {},
         el("h2", {}, (getName() || "You") + " · Level " + lv.n),
-        el("p", { class: "hint" }, titleOf(p.points) + " · " + plural(p.points, "point")))),
+        el("p", { class: "hint" }, titleOf(p.points) + " · " + plural(p.points, "point")),
+        getCampus() && campusBadge(getCampus()))),
     el("p", { class: "hint" }, "Your icon:"),
     avatarPicker,
     el("div", { class: "xp", role: "progressbar", "aria-valuemin": "0", "aria-valuemax": "100", "aria-valuenow": String(pct), "aria-label": "Progress to next level" }, el("span", { style: "width:" + pct + "%" })),
@@ -878,6 +958,19 @@ function renderIntro() {
 
 function renderName() {
   const err = el("p", { class: "err", hidden: true });
+  // Campus picker
+  const campusBtns = CAMPUSES.map(c => {
+    const col = CAMPUS_COLOURS[c] || {};
+    const btn = el("button", { type: "button", class: "campus-pick-btn" + (getCampus() === c ? " selected" : ""),
+      style: `--cbg:${col.bg||"#f3f4f6"};--cfg:${col.fg||"#374151"};--cbr:${col.border||"#d1d5db"}` }, c.replace("RGUKT ", "🏫 ") );
+    btn.addEventListener("click", () => { setCampus(c); campusBtns.forEach(b => b.classList.toggle("selected", b === btn)); });
+    return btn;
+  });
+  const campusSel = CAMPUSES.length ? [
+    el("label", {}, "Your campus"),
+    el("div", { class: "campus-pick-row" }, ...campusBtns),
+    el("p", { class: "hint" }, "Shows your campus badge on your posts so cross-campus friends know where you're from."),
+  ] : [];
   const form = el("form", { class: "form", onsubmit: (e) => {
     e.preventDefault();
     const v = form.elements.name.value.trim().slice(0, 40);
@@ -887,6 +980,7 @@ function renderName() {
   } },
     el("label", {}, "Your name", el("input", { id: "f-name", name: "name", maxlength: "40", autocomplete: "name", placeholder: "e.g. Ravi K (CSE-B)", value: getName() })),
     el("p", { class: "hint" }, "Classmates see this name on your doubts, ideas and replies. It is saved on this phone or computer."),
+    ...campusSel,
     err,
     el("div", { class: "rowbtns" },
       el("button", { class: "btn primary", type: "submit" }, "Save name"),
@@ -921,7 +1015,8 @@ function renderAsk(existing) {
       }
       const id = store.newId(t.coll);
       const pageIds = newPages.map(u => { const pid = store.newId("pages"); pageCache.set(pid, u); return pid; });
-      const doc = { title: title.slice(0, 200), body: body.slice(0, 5000), [t.field]: group, authorId: store.uid, authorName: anonymous ? ANON : getName(), anonymous, urgent, createdAt: Date.now(), pages: pageIds };
+      const campus = getCampus() || null;
+      const doc = { title: title.slice(0, 200), body: body.slice(0, 5000), [t.field]: group, authorId: store.uid, authorName: anonymous ? ANON : getName(), anonymous, urgent, campus, createdAt: Date.now(), pages: pageIds };
       if (state.tab === "doubts") doc.resolvedReplyId = null;
       // Show the new post straight away; the live update replaces it with the saved copy.
       state[t.coll] = [{ id, ...doc }, ...state[t.coll].filter(x => x.id !== id)];
@@ -966,7 +1061,8 @@ function renderView() {
       el("span", { class: "tag", ...colorAttrs(g) }, g),
       state.tab === "doubts" && isUrgent(d) && el("span", { class: "pill urgent" }, "🔥 Urgent"),
       state.tab === "doubts" && el("span", { class: "pill " + (d.resolvedReplyId ? "done" : "open") }, d.resolvedReplyId ? "Resolved" : "Open"),
-      el("span", { class: "author-row" }, d.anonymous ? avatarEl("👤") : avatarEl(mine(d) ? getAvatar() : avatarFor(d.authorName || "")), "By " + who(d) + " · " + ago(d.createdAt))),
+      el("span", { class: "author-row" }, d.anonymous ? avatarEl("👤") : avatarEl(mine(d) ? getAvatar() : avatarFor(d.authorName || "")), "By " + who(d) + " · " + ago(d.createdAt)),
+      d.campus && campusBadge(d.campus)),
     el("h2", {}, d.title),
   ];
   if (d.body) out.push(el("p", { class: "body" }, d.body));
@@ -1022,7 +1118,7 @@ function renderView() {
     const id = store.newId("replies");
     const pageIds = pages.map(u => { const pid = store.newId("pages"); pageCache.set(pid, u); return pid; });
     const anonymous = state.replyAnon;
-    const doc = { parentId: d.id, parentColl: t.coll, body: (body || PAGE_ONLY).slice(0, 5000), authorId: store.uid, authorName: anonymous ? ANON : getName(), anonymous, createdAt: Date.now(), pages: pageIds };
+    const doc = { parentId: d.id, parentColl: t.coll, body: (body || PAGE_ONLY).slice(0, 5000), authorId: store.uid, authorName: anonymous ? ANON : getName(), anonymous, campus: getCampus() || null, createdAt: Date.now(), pages: pageIds };
     state.replies = [...state.replies, { id, ...doc }];
     state.replyPages = [];
     form.reset(); render();
@@ -1068,7 +1164,7 @@ function openAsk() {
 
 let sheetKey = "";
 function render() {
-  renderHeader(); renderRail(); renderList();
+  renderHeader(); renderCampusBar(); renderRail(); renderList();
   // Forms keep what the student is typing while live updates arrive.
   const key = ["ask", "edit", "name"].includes(state.mode) ? state.mode + state.tab : "";
   if (key && key === sheetKey) return;
@@ -1085,6 +1181,7 @@ function render() {
     state.mode === "quiz" ? renderQuiz() :
     state.mode === "me" ? renderMe() :
     state.mode === "learn" ? renderLearn() :
+    state.mode === "network" ? renderNetwork() :
     state.mode === "name" ? renderName() :
     state.mode === "ask" ? renderAsk() :
     state.mode === "edit" && cur ? renderAsk(cur) :
@@ -1103,16 +1200,28 @@ document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click
 $("askBtn").addEventListener("click", openAsk);
 const showPanel = (mode) => { state.mode = mode; render(); if (innerWidth <= 1000) $("sheet").scrollIntoView({ behavior: "smooth" }); };
 $("leadersBtn").addEventListener("click", () => showPanel("leaders"));
+$("networkBtn") && $("networkBtn").addEventListener("click", () => showPanel("network"));
 $("quizBtn").addEventListener("click", () => showPanel("quiz"));
 $("learnBtn").addEventListener("click", () => showPanel("learn"));
 $("nameBtn").addEventListener("click", () => { state.afterName = null; showPanel(getName() ? "me" : "name"); });
 $("search").addEventListener("input", (e) => { state.query = e.target.value; renderList(); });
 $("filter").addEventListener("change", (e) => { state.filter = e.target.value; renderList(); });
 
+// Campus bar chip clicks
+document.getElementById("campusBar") && document.getElementById("campusBar").addEventListener("click", (e) => {
+  const chip = e.target.closest(".campus-chip");
+  if (!chip) return;
+  state.campusFilter = chip.dataset.campus;
+  renderCampusBar(); renderList();
+});
+
+// Update page title from config
+if (CFG.title) { document.title = CFG.title; const h = document.getElementById("siteTitle"); if (h) { h.innerHTML = CFG.title.replace("—", "<br><span>") + "</span>"; } }
+
 // ---------- start ----------
 renderExams();
 startCaptions();
-const deep = /^#(doubts|ideas)(?:\/([\w-]+))?$/.exec(location.hash);
+const deep = /^#(doubts|ideas|clubs)(?:\/([\w-]+))?$/.exec(location.hash);
 if (deep) state.tab = deep[1];
 render();
 (async () => {
@@ -1133,7 +1242,7 @@ render();
     state.loaded = true; render(); showNotice("Lost connection to the board. Reload the page. (" + ((e && e.code) || "error") + ")");
   };
   const live = (rows) => rows.filter(x => !x.deleted);
-  let pending = 4;
+  let pending = 5;
   let opened = false;
   const ready = () => {
     if (--pending <= 0 || state.loaded) {
@@ -1144,6 +1253,7 @@ render();
   };
   store.subscribe("doubts", rows => { state.doubts = live(rows); ready(); }, onErr);
   store.subscribe("ideas", rows => { state.ideas = live(rows); ready(); }, onErr);
+  store.subscribe("clubs", rows => { state.clubs = live(rows); ready(); }, onErr);
   store.subscribe("replies", rows => { state.replies = live(rows); ready(); }, onErr);
   store.subscribe("likes", rows => { state.likes = rows; ready(); }, onErr);
 })();

@@ -1,5 +1,8 @@
 // Doubt Desk settings. Edit this file to change subjects or connect the database.
 window.DOUBT_DESK_CONFIG = {
+  // Site title shown in the header
+  title: "RGUKT AP — Student Network",
+
   // Paste your Firebase web app config here (Firebase console > Project settings > Your apps).
   firebase: {
     apiKey: "AIzaSyBulu10AZTsX2dWS7IWkMhpRrfyxoiyvyE",
@@ -17,6 +20,24 @@ window.DOUBT_DESK_CONFIG = {
   // Caption under the title. Add more lines to rotate between them every 5 seconds.
   captions: [
     "One doubt. Many minds. Zero fear.",
+    "4 campuses. One network. Infinite ideas.",
+    "Ask from Ongole. Answered from Srikakulam.",
+    "RGUKT students: build, connect, innovate.",
+  ],
+
+  // The 4 RGUKT AP campuses. Students pick theirs when they set their name.
+  campuses: [
+    "RGUKT Ongole",
+    "RGUKT Nuzvudu",
+    "RGUKT RK Valley",
+    "RGUKT Srikakulam",
+  ],
+
+  // Clubs shown in the Clubs tab. Add or rename clubs here.
+  clubs: [
+    "Coding Club", "Robotics", "AI/ML", "Electronics",
+    "Civil Designers", "Mech Makers", "Startup Cell",
+    "Research Society", "Cultural", "Sports", "Other",
   ],
 
   // Subjects shown in the Doubts tab, in this order.
