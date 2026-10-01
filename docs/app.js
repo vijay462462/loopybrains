@@ -1366,12 +1366,18 @@ render();
   }
   if (store.demo) showNotice("Demo mode: posts are saved only in this browser. Add your Firebase settings to config.js so the whole class shares one board.", "demo");
   const onErr = (e) => {
-    state.loaded = true; render(); showNotice("Lost connection to the board. Reload the page. (" + ((e && e.code) || "error") + ")");
+    clearTimeout(loadTimeout);
+    state.loaded = true; render(); showNotice("Firebase error: " + ((e && e.code) || (e && e.message) || "unknown") + " — reload or check internet.");
   };
   const live = (rows) => rows.filter(x => !x.deleted);
   let pending = 4; // clubs is optional — loaded separately
   let opened = false;
+  // Safety: force-render after 8 seconds so loading never hangs forever
+  const loadTimeout = setTimeout(() => {
+    if (!state.loaded) { state.loaded = true; render(); showNotice("Taking longer than usual. Check your internet.", "warn"); }
+  }, 8000);
   const ready = () => {
+    clearTimeout(loadTimeout);
     if (--pending <= 0 || state.loaded) {
       state.loaded = true;
       if (!opened && deep && deep[2] && state[TABS[state.tab].coll].some(x => x.id === deep[2])) { opened = true; openItem(deep[2]); return; }
