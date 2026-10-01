@@ -913,3 +913,26 @@ h1 span {
   display: flex; flex-direction: column; gap: 3px;
 }
 .syl-topics li { font-size: .8rem; line-height: 1.5; color: var(--text); }
+
+/* ============================================================
+   Syllabus — metadata, hours, resources (v41)
+   ============================================================ */
+.syl-meta {
+  display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+  margin-bottom: 10px; padding: 8px 12px;
+  background: color-mix(in oklab, var(--accent) 8%, var(--sheet));
+  border-radius: 10px; border: 1.5px solid color-mix(in oklab, var(--accent) 20%, var(--border));
+}
+.syl-code { font: 800 .82rem var(--f-body); color: var(--accent); }
+.syl-credits { font-size: .75rem; color: var(--muted); }
+.syl-hours {
+  margin-left: auto; font-size: .72rem; font-weight: 700;
+  color: var(--accent); opacity: .8; white-space: nowrap;
+}
+.syl-unit-title { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.syl-resources {
+  margin-top: 8px; padding: 10px 14px; border-radius: 10px;
+  background: var(--shade); border: 1.5px solid var(--border);
+}
+.syl-res-label { font: 700 .8rem var(--f-body); color: var(--accent); margin-bottom: 6px; }
+.syl-link { color: var(--accent); text-decoration: underline; word-break: break-all; }

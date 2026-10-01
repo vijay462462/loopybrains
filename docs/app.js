@@ -1314,12 +1314,67 @@ const SYLLABUS = {
   // ——— ECE ———
   "DLD": {
     branch: "ECE",
+    code: "23EC2102", credits: "4 Credits  |  3L: 1T: 0P  |  PCC",
     units: [
-      { title: "Unit 1 — Number Systems & Boolean Algebra", topics: ["Number systems: Binary, Octal, Hexadecimal", "Conversions between bases", "1's and 2's complement", "Boolean algebra: postulates and theorems", "De Morgan's theorems", "Canonical forms: SOP and POS"] },
-      { title: "Unit 2 — Minimization Techniques", topics: ["K-map simplification (up to 5 variables)", "Quine-McCluskey (tabular) method", "Don't-care conditions", "Prime implicants and essential prime implicants"] },
-      { title: "Unit 3 — Combinational Circuits", topics: ["Half adder, Full adder, Parallel adder", "Subtractors, BCD adder", "Encoders and decoders", "Multiplexers and demultiplexers", "Comparators, Parity generators"] },
-      { title: "Unit 4 — Sequential Circuits", topics: ["Latches: SR, D", "Flip-flops: SR, D, JK, T", "Master-slave flip-flops", "Registers (SISO, SIPO, PISO, PIPO)", "Ripple and synchronous counters", "MOD-N counter design"] },
-      { title: "Unit 5 — Memory & Programmable Logic", topics: ["ROM, PROM, EPROM, EEPROM", "RAM (SRAM vs DRAM)", "PLAs, PALs, CPLDs", "Introduction to FPGAs", "Hazards in combinational circuits"] },
+      { title: "Unit I — Number Systems & Boolean Algebra", hours: "6 hrs", topics: [
+        "Number systems: Representations and Conversions (Binary, Octal, Decimal, Hexadecimal)",
+        "Boolean constants and variables",
+        "Basic gates: operation and truth tables",
+        "Describing logic gates algebraically; evaluating logic circuit outputs",
+        "Implementing circuits from Boolean expressions; universality of gates",
+        "Boolean theorems, De Morgan's theorems",
+        "Alternate logic gate representations; IEEE/ANSI standard logic symbols",
+      ]},
+      { title: "Unit II — Combinational Circuit Design", hours: "12 hrs", topics: [
+        "Combinational circuit minimization using Boolean laws and Karnaugh maps",
+        "Multi-level synthesis, timing hazards, logic levels and noise margins; Fan-out, Fan-in",
+        "Single-bit adders and subtractors; multi-bit adders; BCD adder",
+        "Multi-bit subtraction using adders; signed and unsigned multipliers",
+        "Code converters; parity bit generators/checkers; magnitude comparator",
+        "Delay, Area and Power analysis in combinational circuit designs",
+        "Conversion of real-time statements into Boolean expressions; gate-level logic circuit design",
+      ]},
+      { title: "Unit III — Latches & Flip-Flops", hours: "10 hrs", topics: [
+        "Bistable elements; S-R latch, S'-R' latch, S̄ latch with enable, D latch",
+        "Race-around condition and elimination methods",
+        "Edge-triggered D flip-flop; edge-triggered D flip-flop with asynchronous inputs",
+        "Master-slave flip-flop; edge-triggered J-K flip-flop with asynchronous inputs; T flip-flop",
+        "Excitation tables and characteristic equations",
+        "Flip-flop timing: set-up time, hold-time (positive edge-triggered D flip-flop)",
+      ]},
+      { title: "Unit IV — Counters & Registers", hours: "14 hrs", topics: [
+        "Frequency division and counting",
+        "Design and analysis of asynchronous counters; delay and maximum clock frequency",
+        "Design and analysis of synchronous counters",
+        "BCD counter, Ring counter, Johnson counter",
+        "State diagram overview (Present States, Next States, Present Outputs, Present Inputs)",
+        "Serial/Parallel data transfer registers: PIPO, SISO, PISO, SIPO",
+      ]},
+      { title: "Unit V — Decoders, Multiplexers & PLDs", hours: "10 hrs", topics: [
+        "Decoders: Binary decoder; synthesis of logic functions using decoders; cascading binary decoders; seven-segment decoders and applications",
+        "Multiplexers: synthesis of logic functions using multiplexers",
+        "Demultiplexers: Realization; 1-4 and 1-8 line demultiplexers; demultiplexer tree",
+        "Encoders: Priority encoders",
+        "Implementation of functions using PLDs: PAL, PLA, PROM",
+      ]},
+      { title: "Unit VI — Memory & Digital System Design", hours: "8 hrs", topics: [
+        "Memory Structure and Timing: Static RAM (SRAM), Dynamic RAM (DRAM)",
+        "Architecture: CPLD, FPGA",
+        "Design and analysis of Digital circuits: Digital Clock",
+        "Digital Calendar; Traffic Light Controller",
+        "Mobile number sequence generators and other relevant topics",
+      ]},
+    ],
+    textbooks: [
+      "Ronald J. Tocci, Neal S. Widmer, Gregory L. Moss — 'Digital Systems', Pearson, 10th edition",
+      "John F. Wakerly — 'Digital Design', Pearson, 4th edition",
+    ],
+    refbooks: [
+      "Stephen Brown, Zvonko Vranesic — 'Fundamentals of Digital Logic with Verilog Design', TMH, 2nd edition",
+    ],
+    webres: [
+      { label: "NPTEL – Digital Circuits & Systems (Prof. Shankar Balachandran, IIT Madras)", url: "https://nptel.ac.in/courses/117106114/" },
+      { label: "NPTEL – Digital Circuits and Systems (Prof. S Srinivasan, IIT Madras)", url: "https://nptel.ac.in/courses/117106086/" },
     ],
   },
   "DSP": {
@@ -1834,12 +1889,27 @@ function renderResources() {
                   onclick: () => { syllabusSubj = isOpen ? null : s; render(); },
                 }, el("span", {}, s), el("span", { class: "formula-count" }, data.units.length + " units"), el("span", { class: "formula-arrow" }, isOpen ? "▲" : "▼")),
                 isOpen && el("div", { class: "syl-units" },
+                  data.code && el("div", { class: "syl-meta" },
+                    el("span", { class: "syl-code" }, data.code),
+                    el("span", { class: "syl-credits" }, data.credits)),
                   ...data.units.map(u => el("div", { class: "syl-unit" },
-                    el("div", { class: "syl-unit-title" }, u.title),
+                    el("div", { class: "syl-unit-title" },
+                      u.title, u.hours && el("span", { class: "syl-hours" }, u.hours)),
                     el("ul", { class: "syl-topics" },
                       ...u.topics.map(t => el("li", {}, t))
                     )
-                  ))
+                  )),
+                  data.textbooks && el("div", { class: "syl-resources" },
+                    el("div", { class: "syl-res-label" }, "📚 Text Books"),
+                    el("ol", { class: "syl-topics" }, ...data.textbooks.map(b => el("li", {}, b)))),
+                  data.refbooks && el("div", { class: "syl-resources" },
+                    el("div", { class: "syl-res-label" }, "📖 Reference Books"),
+                    el("ol", { class: "syl-topics" }, ...data.refbooks.map(b => el("li", {}, b)))),
+                  data.webres && el("div", { class: "syl-resources" },
+                    el("div", { class: "syl-res-label" }, "🌐 Web Resources"),
+                    el("ul", { class: "syl-topics" }, ...data.webres.map(w => el("li", {},
+                      el("a", { href: w.url, target: "_blank", rel: "noopener noreferrer", class: "syl-link" }, w.label)
+                    ))))
                 )
               );
             })
