@@ -163,6 +163,19 @@ async function savePages(urls, parentId, ids) {
   }
   return out;
 }
+// Saves pages; on failure shows why and returns null so the text can still be posted.
+async function trySavePages(urls, parentId, ids) {
+  if (!urls.length) return [];
+  try { return await savePages(urls, parentId, ids); }
+  catch (e) {
+    console.error(e);
+    const denied = String((e && e.code) || "").includes("permission");
+    showNotice(denied
+      ? "Your text was posted, but the photo or notebook page could not be saved. The board owner needs to update the Firebase rules to allow pages."
+      : "Your text was posted, but the photo or notebook page could not be saved. Check your internet and add it again with Edit.");
+    return null;
+  }
+}
 async function removePages(ids) {
   for (const id of ids || []) { try { await store.remove("pages", id); } catch (_) {} }
 }
@@ -449,7 +462,7 @@ function renderAsk(existing) {
       if (existing) {
         const kept = existing.pages || [];
         const added = newPages.slice(0, Math.max(0, MAX_PAGES - kept.length));
-        const addedIds = await savePages(added, existing.id);
+        const addedIds = (await trySavePages(added, existing.id)) || [];
         await store.update(t.coll, existing.id, { title: title.slice(0, 200), body: body.slice(0, 5000), [t.field]: group, authorName: getName() || existing.authorName, pages: [...kept, ...addedIds] });
         state.mode = "view"; render(); return;
       }
@@ -462,7 +475,7 @@ function renderAsk(existing) {
       state.group = "All"; state.query = ""; $("search").value = "";
       openItem(id);
       // Pages are saved first so classmates never see a post with missing pages.
-      await savePages(newPages, id, pageIds);
+      if (!(await trySavePages(newPages, id, pageIds))) { doc.pages = []; state[t.coll] = state[t.coll].map(x => x.id === id ? { ...x, pages: [] } : x); render(); }
       await store.set(t.coll, id, doc);
     } catch (e2) {
       state.mode = "ask"; render();
@@ -546,7 +559,10 @@ function renderView() {
     state.replies = [...state.replies, { id, ...doc }];
     state.replyPages = [];
     form.reset(); render();
-    try { await savePages(pages, id, pageIds); await store.set("replies", id, doc); }
+    try {
+      if (!(await trySavePages(pages, id, pageIds))) doc.pages = [];
+      await store.set("replies", id, doc);
+    }
     catch (e2) { state.replies = state.replies.filter(x => x.id !== id); render(); showNotice(errText(e2)); }
   } },
     el("label", { for: "f-reply", class: "label" }, t.replyLabel),
