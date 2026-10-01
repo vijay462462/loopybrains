@@ -578,7 +578,6 @@ function openItem(id) {
 }
 
 function renderList() {
-  if (!state.loaded) return;
   const t = TABS[state.tab], rows = visible(), all = state[t.coll];
   if (!rows.length) {
     const noun = state.tab === “doubts” ? “subject” : state.tab === “clubs” ? “club” : “category”;
