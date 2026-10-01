@@ -1369,7 +1369,7 @@ render();
     state.loaded = true; render(); showNotice("Lost connection to the board. Reload the page. (" + ((e && e.code) || "error") + ")");
   };
   const live = (rows) => rows.filter(x => !x.deleted);
-  let pending = 5;
+  let pending = 4; // clubs is optional — loaded separately
   let opened = false;
   const ready = () => {
     if (--pending <= 0 || state.loaded) {
@@ -1380,9 +1380,10 @@ render();
   };
   store.subscribe("doubts", rows => { state.doubts = live(rows); ready(); }, onErr);
   store.subscribe("ideas", rows => { state.ideas = live(rows); ready(); }, onErr);
-  store.subscribe("clubs", rows => { state.clubs = live(rows); ready(); }, onErr);
   store.subscribe("replies", rows => { state.replies = live(rows); ready(); }, onErr);
   store.subscribe("likes", rows => { state.likes = rows; ready(); }, onErr);
+  // clubs: fire ready() once on first load, then update silently
+  store.subscribe("clubs", rows => { const first = !state.loaded; state.clubs = live(rows); if (first) ready(); }, e => { ready(); });
 })();
 
 // ---------- smart subject detection ----------
