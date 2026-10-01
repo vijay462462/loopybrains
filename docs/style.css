@@ -592,7 +592,9 @@ h1 span {
 /* ============================================================
    Offline bar
    ============================================================ */
-.offline-bar {
+.offline-bar { display: none; }
+.offline-bar:not([hidden]) {
+  display: block;
   position: fixed; top: 0; left: 0; right: 0; z-index: 100;
   padding: 10px 20px; text-align: center; font-size: .85rem; font-weight: 700;
   background: var(--danger); color: #fff;
@@ -603,9 +605,10 @@ h1 span {
 /* ============================================================
    PWA install banner
    ============================================================ */
-.install-banner {
-  position: fixed; bottom: 80px; left: 12px; right: 12px; z-index: 50;
+.install-banner { display: none; }
+.install-banner:not([hidden]) {
   display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  position: fixed; bottom: 80px; left: 12px; right: 12px; z-index: 50;
   background: var(--sheet); border: 1px solid var(--accent); border-radius: 16px;
   padding: 14px 16px;
   box-shadow: 0 6px 32px color-mix(in oklab, var(--accent) 30%, transparent);
@@ -619,7 +622,9 @@ h1 span {
 /* ============================================================
    New-posts toast
    ============================================================ */
-.new-toast {
+.new-toast { display: none; }
+.new-toast:not([hidden]) {
+  display: block;
   position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 60;
   background: var(--accent); color: #fff;
   padding: 10px 20px; border-radius: 24px; font-weight: 700; font-size: .9rem;

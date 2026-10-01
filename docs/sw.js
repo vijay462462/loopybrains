@@ -1,12 +1,12 @@
 // RGUKT Spark service worker — v30
 // Cache app shell for instant load; let Firebase data always go to network.
-const CACHE = 'spark-v30';
+const CACHE = 'spark-v31';
 const SHELL = [
   './',
-  './style.css?v=30',
-  './config.js?v=30',
-  './quiz.js?v=30',
-  './app.js?v=30',
+  './style.css?v=31',
+  './config.js?v=31',
+  './quiz.js?v=31',
+  './app.js?v=31',
   './manifest.json',
   './icon.svg',
 ];
