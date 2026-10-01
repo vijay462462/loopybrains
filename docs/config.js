@@ -12,7 +12,7 @@ window.DOUBT_DESK_CONFIG = {
 
   // Private class: when true, students must enter the class code to read or post.
   // The code itself is set only in the Firebase rules, never in this public file.
-  privateClass: false,
+  privateClass: true,
 
   // Subjects shown in the Doubts tab, in this order.
   subjects: ["DLD", "CS", "DSP", "PRV", "AEC", "CN", "CO & D", "CS-2", "RFME"],
