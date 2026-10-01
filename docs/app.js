@@ -69,7 +69,10 @@ function getName() { try { return localStorage.getItem("dd-name") || ""; } catch
 function setName(v) { try { localStorage.setItem("dd-name", v); } catch (_) {} }
 const mine = (x) => x && store && x.authorId === store.uid;
 const who = (x) => mine(x) ? "You" : (x.authorName || "A student");
-const repliesFor = (id) => state.replies.filter(r => r.parentId === id).sort((a, b) => a.createdAt - b.createdAt);
+const repliesFor = (id) => state.replies.filter(r => r.parentId === id).sort((a, b) => (isMentor(b) - isMentor(a)) || (a.createdAt - b.createdAt));
+// Verified mentors are listed by device ID in config.js; their answers get a badge and go first.
+const MENTORS = new Map((CFG.mentors || []).filter(m => m && m.id).map(m => [m.id, m.name || "Mentor"]));
+const isMentor = (x) => (x && !x.anonymous && MENTORS.has(x.authorId)) ? 1 : 0;
 const likesFor = (id) => state.likes.filter(l => l.ideaId === id);
 const liked = (id) => store && state.likes.some(l => l.ideaId === id && l.uid === store.uid);
 function showNotice(text, cls) { const n = $("notice"); n.textContent = text; n.hidden = !text; n.className = "notice" + (cls ? " " + cls : ""); }
@@ -425,9 +428,10 @@ function openNotebook(onDone) {
 }
 
 async function copyLink(btn, link) {
-  try { await navigator.clipboard.writeText(link); btn.textContent = "Link copied"; }
+  const orig = btn.dataset.label || (btn.dataset.label = btn.textContent);
+  try { await navigator.clipboard.writeText(link); btn.textContent = "Copied"; }
   catch (_) { btn.textContent = link; }
-  setTimeout(() => { if (btn.isConnected) btn.textContent = "Copy link"; }, 2500);
+  setTimeout(() => { if (btn.isConnected) btn.textContent = orig; }, 2500);
 }
 
 // ---------- rendering ----------
@@ -442,7 +446,7 @@ function renderHeader() {
   $("search").placeholder = state.tab === "doubts" ? "Search doubts" : "Search ideas";
   $("rail").setAttribute("aria-label", t.groupLabel);
   const opts = state.tab === "doubts"
-    ? [["all", "Newest"], ["asked", "Most asked"], ["open", "Unanswered"], ["done", "Resolved"]]
+    ? [["all", "Newest"], ["asked", "Most asked"], ["open", "Unanswered"], ["mentor", "Needs a mentor"], ["done", "Resolved"]]
     : [["all", "Newest"], ["top", "Most liked"]];
   const f = $("filter");
   if (f.dataset.tab !== state.tab) {
@@ -469,6 +473,7 @@ function visible() {
     (state.group === "All" || d[t.field] === state.group) &&
     (!q || ((d.title || "") + " " + (d.body || "")).toLowerCase().includes(q)));
   if (state.tab === "doubts" && (state.filter === "open" || state.filter === "done")) rows = rows.filter(d => (state.filter === "done") === !!d.resolvedReplyId);
+  if (state.tab === "doubts" && state.filter === "mentor") rows = rows.filter(needsMentor);
   rows.sort((a, b) => b.createdAt - a.createdAt);
   if (state.filter === "top" || state.filter === "asked") rows.sort((a, b) => likesFor(b.id).length - likesFor(a.id).length);
   else if (state.tab === "doubts") rows.sort((a, b) => (isUrgent(b) - isUrgent(a)) || (b.createdAt - a.createdAt));
@@ -706,10 +711,14 @@ function renderMe() {
     el("div", { class: "stats" },
       [["🔥", p.streak + "-day", "streak"], ["🤝", p.answers, "answers"], ["✅", p.helpful, "helpful"], ["🧠", p.quizRight, "quiz right"], ["💡", p.ideas, "ideas"], ["❤️", p.reacts + p.likes, "reactions"]]
         .map(([i, v, l]) => el("div", { class: "stat" }, el("b", {}, i + " " + v), el("small", {}, l)))),
+    store && el("details", { class: "quiz-y" }, el("summary", {}, MENTORS.has(store.uid) ? "🎓 You are a verified mentor" : "🎓 Are you an IIT mentor?"),
+      el("p", { class: "hint" }, "Mentors: send this ID to the board's teacher so your answers show the mentor badge. It identifies this phone or computer."),
+      el("div", { class: "rowbtns" }, el("code", { class: "devid" }, store.uid), el("button", { class: "btn sm", type: "button", onclick: (e) => copyLink(e.currentTarget, store.uid) }, "Copy ID"))),
     el("div", { class: "label" }, "Badges"),
     el("div", { class: "badges" }, BADGES.map(([icon, name, how, test]) => el("div", { class: "badge" + (test(p) ? " got" : "") }, el("span", { class: "bicon" }, icon), el("b", {}, name), el("small", {}, how)))),
     el("div", { class: "rowbtns" },
       el("button", { class: "btn primary", type: "button", onclick: () => { state.mode = "quiz"; render(); } }, "🧠 Today's quiz"),
+      el("button", { class: "btn", type: "button", onclick: () => { state.mode = "learn"; render(); } }, "📚 Learn from IIT"),
       el("button", { class: "btn", type: "button", onclick: () => { state.afterName = "me"; state.mode = "name"; render(); } }, "Change name"),
       PRIVATE && el("button", { class: "btn", type: "button", onclick: () => { setCode(""); location.reload(); } }, "Change class code"),
       el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")),
@@ -729,6 +738,60 @@ function celebrate() {
     if (t - t0 < 1800) requestAnimationFrame(tick); else c.remove();
   };
   requestAnimationFrame(tick);
+}
+
+// ---------- learn from IIT: NPTEL, IIT lectures, Virtual Labs, mentors ----------
+// Search terms for each subject's IIT NPTEL course. Edit them in config.js under `learn`.
+const LEARN = Object.assign({
+  "DLD": "Digital Circuits", "DSP": "Digital Signal Processing", "CN": "Computer Networks",
+  "AEC": "Analog Electronic Circuits", "CS": "Control Systems", "CS-2": "Communication Systems",
+  "PRV": "Probability and Random Processes", "RFME": "Microwave Engineering", "CO & D": "Computer Organization and Architecture",
+}, CFG.learn || {});
+const learnTerm = (subject) => LEARN[subject] || subject;
+const nptelUrl = (subject) => "https://www.google.com/search?q=" + encodeURIComponent("site:onlinecourses.nptel.ac.in OR site:nptel.ac.in " + learnTerm(subject));
+const lectureUrl = (subject, topic) => "https://www.youtube.com/results?search_query=" + encodeURIComponent("NPTEL " + learnTerm(subject) + (topic ? " " + topic : ""));
+const VLAB_URL = "https://www.vlab.co.in/broad-area-electronics-and-communications";
+const outLink = (href, text, cls = "btn sm") => el("a", { class: cls, href, target: "_blank", rel: "noopener noreferrer" }, text);
+
+const MENTOR_AFTER = 2 * 86400000;
+const needsMentor = (d) => !d.resolvedReplyId && Date.now() - (d.createdAt || 0) > MENTOR_AFTER && !repliesFor(d.id).some(isMentor);
+
+function expertHelp(d) {
+  const g = d.subject;
+  const text = d.title + (d.body ? "\n\n" + d.body : "");
+  return el("div", { class: "expert" },
+    el("div", { class: "label" }, needsMentor(d) ? "⏳ Waiting 2+ days — get expert help" : "Get help from IIT experts"),
+    el("div", { class: "rowbtns" },
+      el("a", { class: "btn sm", href: nptelUrl(g), target: "_blank", rel: "noopener noreferrer", onclick: () => { try { navigator.clipboard.writeText(text); } catch (_) {} } }, "🎓 Ask on IIT NPTEL forum"),
+      outLink(lectureUrl(g, d.title), "▶ Watch IIT lecture")),
+    el("p", { class: "hint" }, "“Ask on IIT NPTEL forum” copies this doubt and opens the IIT course for " + g + ". Enrol free, open the course forum, and paste it there."));
+}
+
+function renderLearn() {
+  const pending = state.doubts.filter(needsMentor).sort((a, b) => a.createdAt - b.createdAt);
+  const msg = "Hi! Students of G Block need help with these doubts:\n" + pending.slice(0, 10).map((d, i) => (i + 1) + ". [" + d.subject + "] " + d.title + " " + location.origin + location.pathname + "#doubts/" + d.id).join("\n") + "\nThe class code is needed to open them. Thank you!";
+  return [
+    el("h2", {}, "📚 Learn from IIT"),
+    el("p", { class: "hint" }, "Free courses and lectures by IIT professors. NPTEL course forums are answered by IIT teaching assistants."),
+    el("div", { class: "rowbtns" },
+      outLink("https://onlinecourses.nptel.ac.in", "NPTEL courses"),
+      outLink(VLAB_URL, "🧪 IIT Virtual Labs (ECE)"),
+      outLink("https://swayam.gov.in", "SWAYAM")),
+    el("div", { class: "learn" }, SUBJECTS.map(s => el("div", { class: "learn-card", ...colorAttrs(s, "doubts") },
+      el("span", { class: "tag", ...colorAttrs(s, "doubts") }, s),
+      el("strong", {}, learnTerm(s)),
+      el("div", { class: "rowbtns" }, outLink(nptelUrl(s), "🎓 IIT course", "linkbtn"), outLink(lectureUrl(s), "▶ Lectures", "linkbtn"))))),
+    el("div", { class: "label" }, "🎓 Mentors"),
+    el("p", { class: "hint" }, MENTORS.size
+      ? "Verified mentors: " + [...MENTORS.values()].join(", ") + ". Their answers show a 🎓 badge and appear first."
+      : "No mentors added yet. Invite IIT students or alumni; each one opens this board, taps their name, and sends you the mentor ID shown there."),
+    pending.length
+      ? el("div", { class: "rowbtns" },
+          el("a", { class: "btn sm wa", href: "https://wa.me/?text=" + encodeURIComponent(msg), target: "_blank", rel: "noopener noreferrer" }, "Send " + plural(pending.length, "pending doubt") + " to mentors on WhatsApp"),
+          el("button", { class: "btn sm", type: "button", onclick: () => { state.filter = "mentor"; $("filter").value = "mentor"; state.mode = "intro"; render(); } }, "Show them"))
+      : el("p", { class: "hint" }, "No doubts are waiting for a mentor. Doubts unsolved for 2 days appear here."),
+    el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")),
+  ];
 }
 
 // ---------- exam countdown ----------
@@ -868,6 +931,7 @@ function renderView() {
   if (rep) actions.push(rep);
   if (actions.length) out.push(el("div", { class: "rowbtns" }, actions));
 
+  if (state.tab === "doubts") out.push(expertHelp(d));
   const list = el("div", { class: "answers" }, el("div", { class: "label" }, reps.length ? reps.length + " " + t.replyNoun + (reps.length === 1 ? "" : "s") : "No " + t.replyNoun + "s yet"));
   for (const r of reps) {
     if (isHidden(r)) { list.append(el("div", { class: "ans" }, el("p", { class: "hint" }, "🚩 This answer was hidden after reports from classmates."))); continue; }
@@ -878,8 +942,8 @@ function renderView() {
       if (best) await store.update("doubts", d.id, { resolvedReplyId: null });
       await softDelete("replies", r.id);
     }) }, "Delete"));
-    list.append(el("div", { class: "ans" + (best ? " best" : "") },
-      el("div", { class: "who" }, el("strong", {}, who(r)), el("span", {}, ago(r.createdAt)), best && el("span", { class: "pill done" }, "Helped"), ...tools, reportButton("replies", r)),
+    list.append(el("div", { class: "ans" + (best ? " best" : "") + (isMentor(r) ? " mentor" : "") },
+      el("div", { class: "who" }, el("strong", {}, who(r)), isMentor(r) && el("span", { class: "pill mentor" }, "🎓 " + MENTORS.get(r.authorId)), el("span", {}, ago(r.createdAt)), best && el("span", { class: "pill done" }, "Helped"), ...tools, reportButton("replies", r)),
       r.body && r.body !== PAGE_ONLY && el("p", { class: "body" }, r.body),
       r.pages && r.pages.length ? pagesView(r.pages) : null,
       reactionBar(r)));
@@ -961,6 +1025,7 @@ function render() {
     state.mode === "leaders" ? renderLeaders() :
     state.mode === "quiz" ? renderQuiz() :
     state.mode === "me" ? renderMe() :
+    state.mode === "learn" ? renderLearn() :
     state.mode === "name" ? renderName() :
     state.mode === "ask" ? renderAsk() :
     state.mode === "edit" && cur ? renderAsk(cur) :
@@ -980,6 +1045,7 @@ $("askBtn").addEventListener("click", openAsk);
 const showPanel = (mode) => { state.mode = mode; render(); if (innerWidth <= 1000) $("sheet").scrollIntoView({ behavior: "smooth" }); };
 $("leadersBtn").addEventListener("click", () => showPanel("leaders"));
 $("quizBtn").addEventListener("click", () => showPanel("quiz"));
+$("learnBtn").addEventListener("click", () => showPanel("learn"));
 $("nameBtn").addEventListener("click", () => { state.afterName = null; showPanel(getName() ? "me" : "name"); });
 $("search").addEventListener("input", (e) => { state.query = e.target.value; renderList(); });
 $("filter").addEventListener("change", (e) => { state.filter = e.target.value; renderList(); });

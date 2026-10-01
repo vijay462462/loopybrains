@@ -22,6 +22,19 @@ window.DOUBT_DESK_CONFIG = {
   exams: [
   ],
 
+  // Verified mentors (for example IIT students or alumni). Each mentor opens the board, taps their
+  // name, and sends you the mentor ID shown there. Add one line per mentor:
+  // { id: "d-1234abcd-....", name: "Priya, IIT Madras" },
+  mentors: [
+  ],
+
+  // Search words for each subject's IIT NPTEL course and lectures (Learn panel and "Ask IIT experts").
+  learn: {
+    "DLD": "Digital Circuits", "DSP": "Digital Signal Processing", "CN": "Computer Networks",
+    "AEC": "Analog Electronic Circuits", "CS": "Control Systems", "CS-2": "Communication Systems",
+    "PRV": "Probability and Random Processes", "RFME": "Microwave Engineering", "CO & D": "Computer Organization and Architecture",
+  },
+
   // Categories shown in the Ideas tab.
   ideaCategories: ["Project", "Startup", "Research", "Campus life", "Social impact", "Other"],
 };

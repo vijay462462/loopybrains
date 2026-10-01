@@ -258,3 +258,14 @@ button.quiz-opt:hover { border-color: var(--accent); background: var(--accent-so
 .badge.got { opacity: 1; filter: none; border-style: solid; border-color: var(--accent); background: var(--accent-soft); }
 .bicon { font-size: 26px; }
 .confetti { position: fixed; inset: 0; z-index: 60; pointer-events: none; }
+
+/* Learn from IIT, expert help, mentors */
+.expert { display: grid; gap: 8px; padding: 12px; border-radius: 12px; border: 1px solid color-mix(in oklab, var(--accent) 35%, var(--line)); background: color-mix(in oklab, var(--accent) 7%, var(--sheet)); }
+.learn { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.learn-card { display: grid; gap: 6px; align-content: start; padding: 10px 12px; border: 1px solid var(--line); border-left: 4px solid var(--c); border-radius: 12px; background: var(--paper); }
+.learn-card strong { font-size: 14px; }
+.learn-card .rowbtns { gap: 10px; }
+.pill.mentor { background: linear-gradient(90deg, #0ea5e9, #6366f1); color: #fff; }
+.ans.mentor { border-left-color: #0ea5e9; background: linear-gradient(90deg, color-mix(in oklab, #0ea5e9 10%, transparent), transparent); border-radius: 0 8px 8px 0; }
+.devid { font: 500 12px var(--f-mono); padding: 4px 8px; border-radius: 6px; background: var(--paper); border: 1px solid var(--line); overflow-wrap: anywhere; }
+a.linkbtn { text-decoration: none; }
