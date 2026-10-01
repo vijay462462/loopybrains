@@ -1104,6 +1104,238 @@ function renderLearn() {
   ];
 }
 
+// ---------- study tools: formula cards, PYQ, placement, study plan ----------
+const FORMULAS = {
+  "DLD": [
+    ["De Morgan's Laws", "NOT(A AND B) = NOT A OR NOT B\nNOT(A OR B)  = NOT A AND NOT B"],
+    ["Full Adder", "Sum  = A XOR B XOR Cin\nCout = AB + BCin + ACin"],
+    ["D Flip-Flop", "Q(n+1) = D\n(data stored on rising clock edge)"],
+    ["JK Flip-Flop", "Q(n+1) = J.Q' + K'.Q\nJ=K=1 --> toggle"],
+    ["K-map Groups", "Group sizes: 1, 2, 4, 8 (always power of 2)\nWrap-around corners are valid groups"],
+    ["Absorption", "A.(A+B) = A\nA + A.B  = A"],
+  ],
+  "DSP": [
+    ["Z-transform", "X(z) = sum x[n].z^(-n)\n(sum from n=-inf to +inf)"],
+    ["DFT", "X[k] = sum x[n].e^(-j2pi.nk/N)\nfor k = 0, 1, ..., N-1"],
+    ["Nyquist Theorem", "fs >= 2.fmax\n(sample at least twice the highest freq)"],
+    ["Convolution", "y[n] = x[n] * h[n]\n     = sum x[k].h[n-k]"],
+    ["BIBO Stable", "sum |h[n]| < infinity\n(finite sum of impulse response)"],
+    ["FFT vs DFT", "DFT: O(N^2)\nFFT: O(N.log N)  --> much faster!"],
+  ],
+  "AEC": [
+    ["CE Voltage Gain", "Av = -gm.RC\n(negative sign = signal inversion)"],
+    ["Transconductance", "gm = IC / VT\nVT = 26 mV at room temperature"],
+    ["Op-Amp Inverting", "Vo = -(Rf / Rin).Vi"],
+    ["Op-Amp Non-Inv", "Vo = (1 + Rf/Rin).Vi"],
+    ["BJT DC Bias", "IC = beta.IB\nIE = IC + IB\nVBE approx 0.7 V"],
+    ["MOSFET (Sat.)", "Id = (k/2).(VGS - Vth)^2\nwhen VDS >= VGS - Vth"],
+  ],
+  "CS": [
+    ["Closed-loop TF", "T(s) = G(s) / (1 + G(s).H(s))"],
+    ["Steady-state (step)", "ess = 1 / (1 + Kp)   [Type 0 system]"],
+    ["Steady-state (ramp)", "ess = 1 / Kv         [Type 1 system]"],
+    ["Bode Gain Margin", "GM = -20.log|G(jw)| at phase = -180 deg\n(+ve GM = stable)"],
+    ["Routh Criterion", "All elements in first column > 0\n--> system is stable"],
+    ["PID Controller", "u(t) = Kp.e + Ki.Integral(e) + Kd.de/dt"],
+  ],
+  "CN": [
+    ["Shannon Capacity", "C = B.log2(1 + SNR)\n(max error-free data rate)"],
+    ["Go-Back-N Window", "Window size <= 2^(n-1)\n(n = sequence number bits)"],
+    ["Selective Repeat", "Window size <= 2^(n-1) / 2"],
+    ["Usable Hosts", "Hosts = 2^n - 2\n(n = host bits in subnet)"],
+    ["CSMA/CD Efficiency", "efficiency = 1 / (1 + 2a)\na = propagation delay / transmission time"],
+  ],
+  "CO & D": [
+    ["CPI", "CPI = sum(CPI_i . IC_i) / Total instructions"],
+    ["MIPS", "MIPS = Clock freq / (CPI . 10^6)"],
+    ["Cache Hit Time", "T_avg = h.Tc + (1-h).Tm\nh=hit rate, Tc=cache time, Tm=mem time"],
+    ["Pipeline Speedup", "Speedup = n.k / (k + n - 1)\nn=instructions, k=stages"],
+    ["Addressing Modes", "Immediate, Direct, Indirect,\nRegister, Register-Indirect, Displacement"],
+  ],
+  "DS & A": [
+    ["Sorting Complexity", "Merge / Heap: O(n log n)\nQuick sort avg: O(n log n), worst O(n^2)\nBubble / Insert: O(n^2)"],
+    ["Binary Search", "O(log n)  -- array must be sorted"],
+    ["BFS / DFT", "Time: O(V + E)\nSpace: O(V)"],
+    ["DP Rule", "Overlapping subproblems\n+ Optimal substructure\n--> use memoization or tabulation"],
+    ["Hash Table", "Average O(1) insert / lookup\nO(n) worst case (all collisions)"],
+    ["BST Height", "Balanced: O(log n)\nSkewed: O(n)"],
+  ],
+  "OS": [
+    ["Deadlock (4 conditions)", "1. Mutual exclusion\n2. Hold and Wait\n3. No preemption\n4. Circular wait\n(all 4 must hold simultaneously)"],
+    ["CPU Utilisation", "1 - p^n\n(n processes, p = I/O wait fraction)"],
+    ["Page Fault EAT", "EAT = (1-p).Tmem + p.Tpage_fault"],
+    ["Banker's Algorithm", "Safe state means safe sequence exists\n(check before granting resources)"],
+    ["Semaphore", "wait(S): S--; if S<0 block\nsignal(S): S++; if S<=0 wake one"],
+  ],
+  "DBMS": [
+    ["1NF --> 2NF", "Remove partial dependencies\n(every non-key attr fully depends on PK)"],
+    ["2NF --> 3NF", "Remove transitive dependencies\n(non-key attrs depend ONLY on PK)"],
+    ["3NF --> BCNF", "Every determinant must be a candidate key"],
+    ["Relational Algebra", "sigma = select rows (WHERE)\npi = project columns (SELECT)\nbig-join = join tables\nunion, intersect, minus = set ops"],
+    ["ACID", "Atomicity: all or nothing\nConsistency: valid state always\nIsolation: transactions independent\nDurability: committed data persists"],
+  ],
+  "Circuits": [
+    ["KVL / KCL", "KVL: Sum of voltages in any loop = 0\nKCL: Sum of currents at any node = 0"],
+    ["Thevenin Theorem", "Vth = open-circuit voltage\nRth = Voc / Isc  (deactivate sources)"],
+    ["Impedance", "ZL = jwL\nZC = 1/(jwC)\nZR = R"],
+    ["AC Power", "P = VI.cos(phi)   [Watts, real]\nQ = VI.sin(phi)   [VAR, reactive]\nS = VI*           [VA, complex]"],
+    ["Series Resonance", "f0 = 1 / (2.pi.sqrt(LC))\nQ  = w0.L / R\nBW = R / L"],
+  ],
+  "Control": [
+    ["Closed-loop TF", "T(s) = G(s) / (1 + G(s).H(s))"],
+    ["Steady-state (Type 0)", "ess = 1 / (1 + Kp)  for step input"],
+    ["Gain Margin", "GM (dB) = -20.log|G(jw)| at phase -180 deg"],
+    ["Phase Margin", "PM = 180 deg + angle G(jwgc)\n(wgc = gain crossover frequency)"],
+    ["PID", "u(t) = Kp.e + Ki.integral(e) + Kd.de/dt"],
+  ],
+  "Maths": [
+    ["Euler's Formula", "e^(j.theta) = cos(theta) + j.sin(theta)"],
+    ["Bayes' Theorem", "P(A|B) = P(B|A).P(A) / P(B)"],
+    ["Pigeonhole", "n+1 objects in n boxes\n--> at least 1 box has 2 or more"],
+    ["Euler Circuit", "All vertices have even degree\n--> Eulerian circuit exists"],
+    ["Combinations", "C(n,r) = n! / (r! . (n-r)!)\nP(n,r) = n! / (n-r)!"],
+  ],
+  "Thermo": [
+    ["1st Law of Thermo", "dU = delta.Q - delta.W\n(energy is conserved)"],
+    ["Carnot Efficiency", "eta = 1 - TL / TH\n(max possible efficiency between TL and TH)"],
+    ["Ideal Gas Law", "PV = nRT\nPV^gamma = constant  [adiabatic]"],
+    ["COP (Refrigerator)", "COP = QL / W = QL / (QH - QL)"],
+  ],
+  "SOM": [
+    ["Normal Stress", "sigma = F / A"],
+    ["Bending Stress", "sigma = M.y / I\n(M=moment, y=dist from neutral axis)"],
+    ["Shear Stress", "tau = VQ / (I.b)\n(V=shear force, Q=first moment of area)"],
+    ["Euler Buckling", "Pcr = pi^2 . E . I / Le^2"],
+  ],
+  "EM": [
+    ["Synchronous Speed", "Ns = 120.f / P\n(P=poles, f=supply frequency Hz)"],
+    ["Slip", "s = (Ns - N) / Ns"],
+    ["Transformer EMF", "E = 4.44 . f . N . Phi_m"],
+    ["Transformer Efficiency", "eta = Pout / (Pout + Pcu + Pi)\n(Pcu=copper loss, Pi=iron loss)"],
+  ],
+};
+
+const PYQ_SEARCH = (s) => "https://www.google.com/search?q=" + encodeURIComponent("GATE " + learnTerm(s) + " previous year questions site:gateoverflow.in OR site:geeksforgeeks.org");
+const UNIV_SEARCH = (s) => "https://www.google.com/search?q=" + encodeURIComponent("JNTUK " + s + " previous year question papers PDF");
+const GFG_SEARCH  = (s) => "https://www.geeksforgeeks.org/search/?q=" + encodeURIComponent(learnTerm(s));
+
+const PLACEMENT_RES = [
+  { icon: "💻", name: "LeetCode Top 150", hint: "Coding interview patterns", url: "https://leetcode.com/studyplan/top-interview-150/" },
+  { icon: "🌐", name: "GFG DSA Sheet", hint: "450 must-do problems", url: "https://www.geeksforgeeks.org/dsa-sheet-by-love-babbar/" },
+  { icon: "⚡", name: "HackerRank", hint: "Skills & certifications", url: "https://www.hackerrank.com/dashboard" },
+  { icon: "📘", name: "GFG Core CS", hint: "OS, DBMS, CN, OOP notes", url: "https://www.geeksforgeeks.org/last-minute-notes-for-gate/" },
+  { icon: "🎯", name: "GATE Overflow", hint: "GATE-level discussions", url: "https://gateoverflow.in" },
+  { icon: "🔌", name: "ECE Interview Qs", hint: "Circuits, Signals, Analog", url: "https://www.electronicshub.org/interview-questions/" },
+  { icon: "📊", name: "IndiaBIX", hint: "Aptitude & reasoning", url: "https://www.indiabix.com" },
+  { icon: "🏅", name: "InterviewBit", hint: "Roadmap & mock tests", url: "https://www.interviewbit.com/courses/programming/" },
+  { icon: "📑", name: "PrepInsta", hint: "Company-specific papers", url: "https://prepinsta.com/placement-papers/" },
+  { icon: "🎓", name: "Swayam MOOCs", hint: "Free credit-eligible courses", url: "https://swayam.gov.in/explorer" },
+];
+
+let resourceTab = "formulas";
+let formulaOpen = null;
+
+function renderResources() {
+  const tabs = [["formulas","⚡ Formulas"],["pyq","📋 PYQ"],["placement","💼 Placement"],["plan","🗓 Study Plan"]];
+  const tabBar = el("div", { class: "resource-tabs" },
+    ...tabs.map(([id, label]) => el("button", {
+      type: "button", class: "resource-tab" + (resourceTab === id ? " active" : ""),
+      onclick: () => { resourceTab = id; formulaOpen = null; render(); },
+    }, label))
+  );
+  let content = [];
+
+  if (resourceTab === "formulas") {
+    const subjects = Object.keys(FORMULAS);
+    content = [
+      el("p", { class: "hint" }, "Tap any subject to see key formulas. Great for quick revision before exams."),
+      el("div", { class: "formula-subj-list" },
+        ...subjects.map(s => {
+          const fmls = FORMULAS[s];
+          const isOpen = formulaOpen === s;
+          return el("div", {},
+            el("button", { type: "button", class: "formula-subj-btn", ...colorAttrs(s, "doubts"),
+              onclick: () => { formulaOpen = isOpen ? null : s; render(); },
+            }, el("span", {}, s), el("span", { class: "formula-count" }, fmls.length + " formulas"), el("span", { class: "formula-arrow" }, isOpen ? "▲" : "▼")),
+            isOpen && el("div", { class: "formula-cards" },
+              ...fmls.map(([name, formula]) => el("div", { class: "formula-card" },
+                el("strong", { class: "formula-name" }, name),
+                el("pre", { class: "formula-body" }, formula)
+              ))
+            )
+          );
+        })
+      ),
+    ];
+  } else if (resourceTab === "pyq") {
+    content = [
+      el("p", { class: "hint" }, "Find previous year questions for GATE and university exams — subject by subject."),
+      el("div", { class: "learn" }, ...SUBJECTS.map(s => el("div", { class: "learn-card", ...colorAttrs(s, "doubts") },
+        el("span", { class: "tag", ...colorAttrs(s, "doubts") }, s),
+        el("strong", {}, learnTerm(s)),
+        el("div", { class: "rowbtns" },
+          outLink(PYQ_SEARCH(s), "GATE PYQ", "linkbtn"),
+          outLink(UNIV_SEARCH(s), "JNTUK", "linkbtn"),
+          outLink(GFG_SEARCH(s), "GFG", "linkbtn"))))),
+    ];
+  } else if (resourceTab === "placement") {
+    content = [
+      el("p", { class: "hint" }, "Curated resources for campus placements — coding practice, core subjects and aptitude."),
+      el("div", { class: "placement-grid" },
+        ...PLACEMENT_RES.map(p => el("a", { class: "placement-card", href: p.url, target: "_blank", rel: "noopener noreferrer" },
+          el("span", { class: "placement-icon" }, p.icon),
+          el("strong", {}, p.name),
+          el("small", {}, p.hint)
+        ))
+      ),
+    ];
+  } else if (resourceTab === "plan") {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const exams = (CFG.exams || []).map(x => {
+      const days = Math.round((new Date(x.date + "T00:00:00") - today) / 86400000);
+      return { ...x, days };
+    }).filter(x => x.days >= 0).sort((a, b) => a.days - b.days);
+    const subjCount = SUBJECTS.length;
+    const examItems = exams.length ? exams.map(exam => {
+      const perDay = exam.days > 0 ? Math.ceil(subjCount / exam.days) : subjCount;
+      const cls = "plan-item " + (exam.days <= 3 ? "plan-urgent" : exam.days <= 7 ? "plan-warn" : "plan-ok");
+      return el("div", { class: cls },
+        el("div", { class: "plan-name" }, "⏳ " + exam.name),
+        el("div", { class: "plan-days" }, exam.days === 0 ? "Today!" : exam.days + " days"),
+        el("div", { class: "plan-tip" }, exam.days > 0
+          ? "Cover ~" + perDay + " subject" + (perDay > 1 ? "s" : "") + " per day to finish in time"
+          : "Focus on revision + solve PYQs today")
+      );
+    }) : [el("p", { class: "hint" }, "No exam dates configured yet. Ask your teacher to add them in config.js — your personalised countdown and daily plan will appear here.")];
+
+    const tips = [
+      ["🍅","Pomodoro","25 min study + 5 min break. After 4 rounds take 20 min. Keeps focus sharp."],
+      ["📖","Active Recall","Close the book and write what you remember. Far better than re-reading."],
+      ["🔁","Spaced Repetition","Review: Day 1 → Day 3 → Day 7 → Day 14 for long-term memory."],
+      ["✍️","Solve PYQs","Past questions repeat in GATE and university exams. Start with 5-year papers."],
+      ["🤝","Teach Others","Post a doubt or answer one here. Teaching a concept locks in understanding."],
+      ["🎯","High-weightage First","In GATE: Engineering Maths, Networks, OS, DBMS carry the most marks."],
+    ];
+    content = [
+      el("div", { class: "label" }, "📅 Exam Countdown"),
+      ...examItems,
+      el("div", { class: "label" }, "💡 Study Tips"),
+      el("div", { class: "study-tips" }, ...tips.map(([icon, name, text]) =>
+        el("div", { class: "study-tip" }, el("span", { class: "tip-icon" }, icon),
+          el("div", {}, el("strong", {}, name), el("p", { class: "hint" }, text)))
+      )),
+    ];
+  }
+
+  return [
+    el("h2", {}, "📖 Study Tools"),
+    tabBar,
+    ...content,
+    el("div", { class: "rowbtns" },
+      el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")),
+  ];
+}
+
 // ---------- rotating captions ----------
 function startCaptions() {
   const box = $("tagline");
@@ -1411,6 +1643,7 @@ function render() {
     state.mode === "quiz" ? renderQuiz() :
     state.mode === "me" ? renderMe() :
     state.mode === "learn" ? renderLearn() :
+    state.mode === "resources" ? renderResources() :
     state.mode === "network" ? renderNetwork() :
     state.mode === "name" ? renderName() :
     state.mode === "campus" ? renderCampusPicker() :
@@ -1434,6 +1667,7 @@ $("leadersBtn").addEventListener("click", () => showPanel("leaders"));
 $("networkBtn") && $("networkBtn").addEventListener("click", () => showPanel("network"));
 $("quizBtn").addEventListener("click", () => showPanel("quiz"));
 $("learnBtn").addEventListener("click", () => showPanel("learn"));
+$("studyBtn").addEventListener("click", () => showPanel("resources"));
 $("nameBtn").addEventListener("click", () => { state.afterName = null; showPanel(getName() ? "me" : "name"); });
 $("search").addEventListener("input", (e) => { state.query = e.target.value; renderList(); });
 $("filter").addEventListener("change", (e) => { state.filter = e.target.value; renderList(); });
@@ -1506,7 +1740,7 @@ render();
 
 // Service worker
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js?v=37').catch(() => {});
+  navigator.serviceWorker.register('./sw.js?v=38').catch(() => {});
 }
 
 // Keyboard shortcuts
