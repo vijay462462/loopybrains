@@ -4,9 +4,9 @@ window.DOUBT_DESK_CONFIG = {
   // Until you do, the site runs in demo mode: posts are saved only in that one browser.
   firebase: {
     apiKey: "PASTE_API_KEY",
-    authDomain: "",
-    projectId: "",
-    storageBucket: "",
+    authDomain: "doubt-desk-e6f39.firebaseapp.com",
+    projectId: "doubt-desk-e6f39",
+    storageBucket: "doubt-desk-e6f39.firebasestorage.app",
     messagingSenderId: "",
     appId: "",
   },
