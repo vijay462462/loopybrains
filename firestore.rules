@@ -40,7 +40,7 @@ service cloud.firestore {
     }
 
     match /rooms/{room} {
-      function member() { return room == 'YOUR-CLASS-CODE'; }
+      function member() { return true; }
 
       match /doubts/{id} {
         allow read: if member();

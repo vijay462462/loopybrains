@@ -15,7 +15,7 @@ window.DOUBT_DESK_CONFIG = {
 
   // Private class: when true, students must enter the class code to read or post.
   // The code itself is set only in the Firebase rules, never in this public file.
-  privateClass: true,
+  privateClass: false,
 
   // Caption under the title. Add more lines to rotate between them every 5 seconds.
   captions: [

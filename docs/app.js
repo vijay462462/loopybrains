@@ -1357,10 +1357,8 @@ render();
 (async () => {
   const conf = CFG.firebase || {};
   const configured = conf.apiKey && !String(conf.apiKey).startsWith("PASTE") && conf.projectId;
-  const code = getCode();
-  if (configured && PRIVATE && !code) { renderGate(); return; }
   try {
-    store = configured ? await firebaseStore(conf, PRIVATE ? "rooms/" + code + "/" : "") : localStore();
+    store = configured ? await firebaseStore(conf, "rooms/GB-9FE9YR/") : localStore();
   } catch (e) {
     console.error(e);
     showNotice("Could not connect to the class board. Check your internet and reload. (" + ((e && e.code) || "error") + ")");
@@ -1368,7 +1366,6 @@ render();
   }
   if (store.demo) showNotice("Demo mode: posts are saved only in this browser. Add your Firebase settings to config.js so the whole class shares one board.", "demo");
   const onErr = (e) => {
-    if (PRIVATE && String((e && e.code) || "").includes("permission")) { setCode(""); renderGate("That class code is not right. Check it with your teacher and try again."); return; }
     state.loaded = true; render(); showNotice("Lost connection to the board. Reload the page. (" + ((e && e.code) || "error") + ")");
   };
   const live = (rows) => rows.filter(x => !x.deleted);
