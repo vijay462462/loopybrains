@@ -7,6 +7,19 @@ const CATS = (CFG.ideaCategories && CFG.ideaCategories.length) ? CFG.ideaCategor
 const PALETTE = ["#6366f1", "#0ea5e9", "#10b981", "#f59e0b", "#a855f7", "#ec4899", "#ef4444", "#14b8a6", "#84cc16", "#f97316", "#64748b"];
 const FB_VERSION = "10.12.2";
 const MOTTO = CFG.tagline || "Ask boldly. Answer together. Innovate endlessly.";
+// Captions that rotate under the title. Edit them in config.js under `captions`.
+const CAPTIONS = (CFG.captions && CFG.captions.length) ? CFG.captions : [
+  MOTTO,
+  "Every doubt you ask today is a concept you own tomorrow.",
+  "One doubt. Many minds. Zero fear.",
+  "From K-maps to microwaves, G Block solves it together.",
+  "Your question might be the one the whole class is stuck on.",
+  "Teach one, learn twice. Answer a doubt today.",
+  "Great engineers ask the questions others skip.",
+  "Signals, circuits, systems: decode them together.",
+  "Small doubts, big breakthroughs.",
+  "Share an idea today. Build it with your class tomorrow.",
+];
 const MAX_PAGES = 3;
 
 const TABS = {
@@ -438,7 +451,7 @@ async function copyLink(btn, link) {
 function renderHeader() {
   const t = TABS[state.tab];
   document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === state.tab)));
-  $("tagline").textContent = MOTTO;
+
   $("askBtn").textContent = t.ask;
   const me = store && state.loaded ? allStats().get(store.uid) : null;
   $("nameBtn").textContent = getName() ? "👤 " + getName() + (me ? " · Lv " + me.level.n + (me.streak ? " · 🔥" + me.streak : "") : "") : "Set your name";
@@ -794,6 +807,22 @@ function renderLearn() {
   ];
 }
 
+// ---------- rotating captions ----------
+function startCaptions() {
+  const box = $("tagline");
+  let i = 0;
+  box.textContent = CAPTIONS[0];
+  if (CAPTIONS.length < 2) return;
+  const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  setInterval(() => {
+    if (document.hidden) return;
+    i = (i + 1) % CAPTIONS.length;
+    if (still) { box.textContent = CAPTIONS[i]; return; }
+    box.classList.add("swap");
+    setTimeout(() => { box.textContent = CAPTIONS[i]; box.classList.remove("swap"); }, 350);
+  }, 5000);
+}
+
 // ---------- exam countdown ----------
 function renderExams() {
   const box = $("exams");
@@ -1052,6 +1081,7 @@ $("filter").addEventListener("change", (e) => { state.filter = e.target.value; r
 
 // ---------- start ----------
 renderExams();
+startCaptions();
 const deep = /^#(doubts|ideas)(?:\/([\w-]+))?$/.exec(location.hash);
 if (deep) state.tab = deep[1];
 render();

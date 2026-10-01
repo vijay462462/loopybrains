@@ -14,6 +14,20 @@ window.DOUBT_DESK_CONFIG = {
   // The code itself is set only in the Firebase rules, never in this public file.
   privateClass: true,
 
+  // Captions that rotate under the title every 5 seconds. Add, remove or reword freely.
+  captions: [
+    "Ask boldly. Answer together. Innovate endlessly.",
+    "Every doubt you ask today is a concept you own tomorrow.",
+    "One doubt. Many minds. Zero fear.",
+    "From K-maps to microwaves, G Block solves it together.",
+    "Your question might be the one the whole class is stuck on.",
+    "Teach one, learn twice. Answer a doubt today.",
+    "Great engineers ask the questions others skip.",
+    "Signals, circuits, systems: decode them together.",
+    "Small doubts, big breakthroughs.",
+    "Share an idea today. Build it with your class tomorrow.",
+  ],
+
   // Subjects shown in the Doubts tab, in this order.
   subjects: ["DLD", "CS", "DSP", "PRV", "AEC", "CN", "CO & D", "CS-2", "RFME"],
 

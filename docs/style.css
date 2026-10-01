@@ -269,3 +269,8 @@ button.quiz-opt:hover { border-color: var(--accent); background: var(--accent-so
 .ans.mentor { border-left-color: #0ea5e9; background: linear-gradient(90deg, color-mix(in oklab, #0ea5e9 10%, transparent), transparent); border-radius: 0 8px 8px 0; }
 .devid { font: 500 12px var(--f-mono); padding: 4px 8px; border-radius: 6px; background: var(--paper); border: 1px solid var(--line); overflow-wrap: anywhere; }
 a.linkbtn { text-decoration: none; }
+
+/* Rotating captions */
+#tagline { min-height: 3.1em; transition: opacity .35s ease, transform .35s ease; }
+#tagline.swap { opacity: 0; transform: translateY(6px); }
+@media (prefers-reduced-motion: reduce) { #tagline { transition: none; } }
