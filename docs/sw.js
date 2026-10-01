@@ -1,13 +1,11 @@
-// RGUKT Spark service worker — v34
+// RGUKT Spark service worker — v35
 // Cache versioned assets only. Never cache index.html so updates deploy instantly.
-const CACHE = 'spark-v34';
+const CACHE = 'spark-v35';
 const SHELL = [
-  // Note: './' (index.html) is intentionally NOT cached — always serve fresh so
-  // new versions reach users without needing a manual cache clear.
-  './style.css?v=34',
-  './config.js?v=34',
-  './quiz.js?v=34',
-  './app.js?v=34',
+  './style.css?v=35',
+  './config.js?v=35',
+  './quiz.js?v=35',
+  './app.js?v=35',
   './manifest.json',
   './icon.svg',
 ];
@@ -29,9 +27,7 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   const url = e.request.url;
-  // Never intercept Firebase / Google APIs — must always go to network.
   if (url.includes('firebase') || url.includes('gstatic.com') || url.includes('googleapis.com')) return;
-  // Never cache HTML documents — always fetch fresh so SW updates deploy instantly.
   if (e.request.destination === 'document' || e.request.mode === 'navigate') return;
   e.respondWith(
     fetch(e.request)
