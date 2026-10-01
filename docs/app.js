@@ -597,18 +597,19 @@ function renderHeader() {
   if (campusBar && CAMPUSES.length > 0) {
     campusBar.hidden = false;
     campusBar.replaceChildren(
-      el("span", { class: "campus-label" }, "Campus:"),
-      ...["all", ...CAMPUSES].map(c => {
-        const btn = el("button", { type: "button",
-          class: "campus-chip" + (state.campusFilter === c ? " active" : ""),
-          style: c !== "all" ? "--cc:" + campusColor(c) : "",
-          onclick: () => { state.campusFilter = c; render(); }
-        }, c === "all" ? "🌐 All campuses" : c);
-        return btn;
-      }),
-      myC && el("button", { type: "button", class: "campus-chip my",
-        onclick: () => { state.mode = "campus"; render(); }
-      }, "⚙ " + myC)
+      ...[
+        el("span", { class: "campus-label" }, "Campus:"),
+        ...["all", ...CAMPUSES].map(c =>
+          el("button", { type: "button",
+            class: "campus-chip" + (state.campusFilter === c ? " active" : ""),
+            style: c !== "all" ? "--cc:" + campusColor(c) : "",
+            onclick: () => { state.campusFilter = c; render(); }
+          }, c === "all" ? "🌐 All" : c)
+        ),
+        myC ? el("button", { type: "button", class: "campus-chip my",
+          onclick: () => { state.mode = "campus"; render(); }
+        }, "⚙ " + myC) : null,
+      ].filter(Boolean)
     );
     // Trending subject
     const tr = trendingSubject();
