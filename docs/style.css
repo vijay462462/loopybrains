@@ -259,6 +259,16 @@ button.quiz-opt:hover { border-color: var(--accent); background: var(--accent-so
 .bicon { font-size: 26px; }
 .confetti { position: fixed; inset: 0; z-index: 60; pointer-events: none; }
 
+/* CSE subject colours */
+[data-s="DS & A"] { --c: #f59e0b; }
+[data-s="OS"] { --c: #8b5cf6; }
+[data-s="DBMS"] { --c: #06b6d4; }
+[data-s="OOP"] { --c: #ec4899; }
+[data-s="TOC"] { --c: #84cc16; }
+[data-s="CD"] { --c: #f97316; }
+[data-s="SE"] { --c: #14b8a6; }
+[data-s="Python"] { --c: #3b82f6; }
+[data-s="Maths"] { --c: #a855f7; }
 /* Learn from IIT, expert help, mentors */
 .expert { display: grid; gap: 8px; padding: 12px; border-radius: 12px; border: 1px solid color-mix(in oklab, var(--accent) 35%, var(--line)); background: color-mix(in oklab, var(--accent) 7%, var(--sheet)); }
 .learn { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }

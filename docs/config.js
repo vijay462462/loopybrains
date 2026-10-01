@@ -20,7 +20,9 @@ window.DOUBT_DESK_CONFIG = {
   ],
 
   // Subjects shown in the Doubts tab, in this order.
-  subjects: ["DLD", "CS", "DSP", "PRV", "AEC", "CN", "CO & D", "CS-2", "RFME"],
+  // ECE subjects
+  subjects: ["DLD", "CS", "DSP", "PRV", "AEC", "CN", "CO & D", "CS-2", "RFME",
+             "DS & A", "OS", "DBMS", "OOP", "TOC", "CD", "SE", "Python", "Maths"],
 
   // Exam countdown shown at the top. Add one line per exam, date as YYYY-MM-DD, e.g.
   // { name: "DSP Mid-1", date: "2026-10-15" },
@@ -35,9 +37,16 @@ window.DOUBT_DESK_CONFIG = {
 
   // Search words for each subject's IIT NPTEL course and lectures (Learn panel and "Ask IIT experts").
   learn: {
+    // ECE
     "DLD": "Digital Circuits", "DSP": "Digital Signal Processing", "CN": "Computer Networks",
     "AEC": "Analog Electronic Circuits", "CS": "Control Systems", "CS-2": "Communication Systems",
     "PRV": "Probability and Random Processes", "RFME": "Microwave Engineering", "CO & D": "Computer Organization and Architecture",
+    // CSE
+    "DS & A": "Data Structures and Algorithms", "OS": "Operating Systems",
+    "DBMS": "Database Management Systems", "OOP": "Programming in Java Object Oriented Programming",
+    "TOC": "Theory of Computation Automata", "CD": "Compiler Design",
+    "SE": "Software Engineering", "Python": "Python for Data Science",
+    "Maths": "Discrete Mathematics Engineering",
   },
 
   // Categories shown in the Ideas tab.
