@@ -1307,6 +1307,306 @@ let resourceTab = "formulas";
 let formulaOpen = null;
 let mcqSubj = null;
 let mcqRevealed = {};
+let syllabusSubj = null;
+
+// RGUKT AP syllabus — unit-wise topics for every subject
+const SYLLABUS = {
+  // ——— ECE ———
+  "DLD": {
+    branch: "ECE",
+    units: [
+      { title: "Unit 1 — Number Systems & Boolean Algebra", topics: ["Number systems: Binary, Octal, Hexadecimal", "Conversions between bases", "1's and 2's complement", "Boolean algebra: postulates and theorems", "De Morgan's theorems", "Canonical forms: SOP and POS"] },
+      { title: "Unit 2 — Minimization Techniques", topics: ["K-map simplification (up to 5 variables)", "Quine-McCluskey (tabular) method", "Don't-care conditions", "Prime implicants and essential prime implicants"] },
+      { title: "Unit 3 — Combinational Circuits", topics: ["Half adder, Full adder, Parallel adder", "Subtractors, BCD adder", "Encoders and decoders", "Multiplexers and demultiplexers", "Comparators, Parity generators"] },
+      { title: "Unit 4 — Sequential Circuits", topics: ["Latches: SR, D", "Flip-flops: SR, D, JK, T", "Master-slave flip-flops", "Registers (SISO, SIPO, PISO, PIPO)", "Ripple and synchronous counters", "MOD-N counter design"] },
+      { title: "Unit 5 — Memory & Programmable Logic", topics: ["ROM, PROM, EPROM, EEPROM", "RAM (SRAM vs DRAM)", "PLAs, PALs, CPLDs", "Introduction to FPGAs", "Hazards in combinational circuits"] },
+    ],
+  },
+  "DSP": {
+    branch: "ECE",
+    units: [
+      { title: "Unit 1 — Discrete-Time Signals & Z-transform", topics: ["Classification of DT signals and systems", "LTI systems: convolution, properties", "Z-transform definition, properties, ROC", "Inverse Z-transform (partial fractions, power series)", "System function H(z), stability using poles"] },
+      { title: "Unit 2 — Frequency Analysis & DFT", topics: ["DTFT and its properties", "DFT: definition and properties", "Circular convolution", "Overlap-add and overlap-save methods", "Relationship between DTFT, DFT, and Z-transform"] },
+      { title: "Unit 3 — Fast Fourier Transform (FFT)", topics: ["Divide-and-conquer approach", "DIT-FFT algorithm (Cooley-Tukey)", "DIF-FFT algorithm", "Computational complexity: O(N log N)", "IFFT computation"] },
+      { title: "Unit 4 — IIR Filter Design", topics: ["Analog filter prototypes: Butterworth, Chebyshev", "Bilinear transformation", "Impulse invariant method", "Digital IIR filter design procedure", "Frequency transformations"] },
+      { title: "Unit 5 — FIR Filter Design", topics: ["Linear phase FIR filters", "Window functions: Rectangular, Hamming, Hanning, Kaiser", "Frequency sampling method", "FIR vs IIR comparison", "Introduction to multirate signal processing"] },
+    ],
+  },
+  "AEC": {
+    branch: "ECE",
+    units: [
+      { title: "Unit 1 — BJT Biasing & Small-Signal Amplifiers", topics: ["BJT operating regions", "DC bias circuits (fixed, self-bias, voltage divider)", "h-parameter model", "CE, CB, CC amplifier analysis", "Gain, input/output impedance"] },
+      { title: "Unit 2 — Multi-Stage & Feedback Amplifiers", topics: ["RC-coupled, transformer-coupled, direct-coupled amplifiers", "Cascade amplifier analysis", "Feedback types (voltage/current series/shunt)", "Effect of feedback on gain, bandwidth, distortion", "Barkhausen criterion for oscillation"] },
+      { title: "Unit 3 — Oscillators", topics: ["RC phase shift oscillator", "Wien bridge oscillator", "Hartley and Colpitts oscillators", "Crystal oscillators", "Frequency stability"] },
+      { title: "Unit 4 — Power Amplifiers", topics: ["Class A, B, AB, C amplifiers", "Push-pull amplifier", "Efficiency and power dissipation", "Thermal runaway", "Distortion in power amplifiers"] },
+      { title: "Unit 5 — Op-Amp Applications", topics: ["Ideal op-amp characteristics", "Inverting and non-inverting amplifiers", "Summing, Difference, Integrator, Differentiator", "Comparators and Schmitt trigger", "Active filters (LPF, HPF, BPF)", "Precision rectifiers"] },
+    ],
+  },
+  "CS": {
+    branch: "ECE",
+    units: [
+      { title: "Unit 1 — Introduction & Modeling", topics: ["Open-loop vs closed-loop systems", "Transfer function, Block diagram algebra", "Signal flow graphs, Mason's gain formula", "Modeling of electrical, mechanical systems"] },
+      { title: "Unit 2 — Time Domain Analysis", topics: ["Test signals: step, ramp, impulse", "Transient response of 1st and 2nd order systems", "Rise time, peak time, settling time, overshoot", "Steady-state error and error constants (Kp, Kv, Ka)", "System type and error"] },
+      { title: "Unit 3 — Stability Analysis", topics: ["Routh-Hurwitz stability criterion", "Root locus construction rules", "Effect of poles and zeros on root locus", "Gain and phase margin from root locus"] },
+      { title: "Unit 4 — Frequency Domain Analysis", topics: ["Frequency response, polar plots", "Bode magnitude and phase plots", "Gain margin and phase margin", "Nyquist stability criterion", "Closed-loop frequency response"] },
+      { title: "Unit 5 — Compensators & State Space", topics: ["Lead, lag, lead-lag compensators", "PID controller design", "State space representation", "State transition matrix", "Controllability and observability"] },
+    ],
+  },
+  "CN": {
+    branch: "ECE",
+    units: [
+      { title: "Unit 1 — Introduction & Physical Layer", topics: ["Network types: LAN, WAN, MAN", "OSI model (7 layers) and TCP/IP model", "Data transmission: bandwidth, throughput, latency", "Transmission media (guided and unguided)", "Encoding and modulation techniques"] },
+      { title: "Unit 2 — Data Link Layer", topics: ["Framing, error detection (CRC, checksum)", "Error correction (Hamming code)", "Flow control: stop-and-wait, sliding window", "MAC protocols: ALOHA, CSMA/CD, CSMA/CA", "IEEE 802.3 Ethernet, IEEE 802.11 Wi-Fi"] },
+      { title: "Unit 3 — Network Layer", topics: ["IPv4 addressing, subnetting, CIDR", "IPv6 overview", "Routing algorithms: Dijkstra (OSPF), Bellman-Ford (RIP)", "IP fragmentation, ICMP", "ARP, DHCP"] },
+      { title: "Unit 4 — Transport Layer", topics: ["Services: connection-oriented vs connectionless", "UDP: features and applications", "TCP: segments, three-way handshake", "TCP congestion control (slow start, AIMD)", "TCP flow control (sliding window)"] },
+      { title: "Unit 5 — Application Layer", topics: ["DNS: domain name resolution", "HTTP/HTTPS: request-response", "FTP, SMTP, POP3, IMAP", "Socket programming basics", "Introduction to network security (SSL/TLS)"] },
+    ],
+  },
+  "CO & D": {
+    branch: "ECE",
+    units: [
+      { title: "Unit 1 — Basic Computer Organization", topics: ["Register transfer language (RTL)", "Buses and memory transfers", "Arithmetic logic unit (ALU) design", "Instruction cycle: fetch-decode-execute", "Addressing modes"] },
+      { title: "Unit 2 — Instruction Set Architecture", topics: ["Instruction formats and types", "RISC vs CISC", "Assembly language overview", "Stacks, subroutine calls", "Interrupt handling"] },
+      { title: "Unit 3 — CPU Design & Control Unit", topics: ["Hardwired control", "Microprogrammed control", "Micro-operations", "Pipeline hazards: structural, data, control", "Hazard mitigation techniques"] },
+      { title: "Unit 4 — Memory Organization", topics: ["Cache memory: mapping (direct, associative, set-associative)", "Cache replacement policies (LRU, FIFO)", "Virtual memory, paging, TLB", "Memory hierarchy and performance", "DRAM, SRAM comparison"] },
+      { title: "Unit 5 — I/O & Advanced Topics", topics: ["I/O interfaces: programmed, interrupt-driven, DMA", "I/O buses (PCI, USB)", "Multiprocessors introduction", "Shared memory and message passing", "GPU architecture overview"] },
+    ],
+  },
+  "PRV": {
+    branch: "ECE",
+    units: [
+      { title: "Unit 1 — Probability Fundamentals", topics: ["Sample space, events", "Axioms of probability", "Conditional probability, Bayes' theorem", "Independence of events", "Combinatorial problems"] },
+      { title: "Unit 2 — Random Variables", topics: ["Discrete RV: PMF, CDF", "Continuous RV: PDF, CDF", "Common distributions: Bernoulli, Binomial, Poisson, Uniform, Gaussian, Exponential", "Functions of a random variable"] },
+      { title: "Unit 3 — Statistical Averages", topics: ["Mean, variance, standard deviation", "Moments and moment generating function", "Chebyshev's inequality", "Characteristic function", "Central limit theorem"] },
+      { title: "Unit 4 — Multiple Random Variables", topics: ["Joint PDF/PMF", "Marginal and conditional distributions", "Correlation and covariance", "Linear transformation of RVs", "Jointly Gaussian RVs"] },
+      { title: "Unit 5 — Random Processes", topics: ["Classification of random processes", "Stationary processes (SSS and WSS)", "Autocorrelation and power spectral density", "Wiener-Khinchin theorem", "Response of LTI systems to random inputs"] },
+    ],
+  },
+  "CS-2": {
+    branch: "ECE",
+    units: [
+      { title: "Unit 1 — Amplitude Modulation", topics: ["AM: generation, spectrum, power", "DSB-SC, SSB-SC, VSB", "AM demodulation (envelope detector)", "Superheterodyne receiver", "Figure of merit for AM"] },
+      { title: "Unit 2 — Angle Modulation", topics: ["FM and PM: instantaneous frequency", "WBFM and NBFM", "FM spectrum (Bessel functions)", "FM demodulation (limiter-discriminator, PLL)", "Comparison of AM vs FM"] },
+      { title: "Unit 3 — Pulse Modulation", topics: ["Sampling theorem", "PAM: natural and flat-top", "PWM and PPM", "PCM: quantization, encoding, companding (μ-law, A-law)", "Delta modulation and ADM"] },
+      { title: "Unit 4 — Digital Modulation", topics: ["ASK, FSK, PSK, BPSK, QPSK", "Differential PSK (DPSK)", "QAM", "Coherent vs non-coherent detection", "BER comparison of digital schemes"] },
+      { title: "Unit 5 — Information Theory & Noise", topics: ["Entropy, mutual information", "Channel capacity (Shannon)", "Source coding (Huffman, LZW)", "Noise in AM and FM receivers", "Threshold effect in FM"] },
+    ],
+  },
+  "RFME": {
+    branch: "ECE",
+    units: [
+      { title: "Unit 1 — Transmission Line Theory", topics: ["Distributed parameters: L, C, R, G", "Characteristic impedance Z₀", "Reflection coefficient, VSWR", "Smith chart applications", "Quarter-wave and half-wave transformers"] },
+      { title: "Unit 2 — Microwave Components", topics: ["Rectangular and circular waveguides", "TE and TM modes, cutoff frequency", "Microwave resonators", "Directional couplers, circulators, isolators", "Microwave filters"] },
+      { title: "Unit 3 — Microwave Tubes", topics: ["Limitations of conventional tubes at microwave frequencies", "Klystron (two-cavity, reflex)", "Magnetron", "Travelling wave tube (TWT)", "Backward wave oscillator (BWO)"] },
+      { title: "Unit 4 — Microwave Semiconductor Devices", topics: ["Gunn diode and transferred electron devices", "IMPATT and TRAPATT diodes", "PIN diodes and Schottky diodes", "MESFETs, HEMTs", "Microwave integrated circuits (MICs)"] },
+      { title: "Unit 5 — Antennas & Measurements", topics: ["Antenna parameters: gain, directivity, efficiency", "Dipole, monopole, loop antennas", "Antenna arrays and beam steering", "Microwave power, frequency, and VSWR measurement", "Noise figure measurement"] },
+    ],
+  },
+  // ——— CSE ———
+  "DS & A": {
+    branch: "CSE",
+    units: [
+      { title: "Unit 1 — Linear Data Structures", topics: ["Arrays: operations, 2D arrays", "Linked lists: singly, doubly, circular", "Stacks: operations, applications (expression evaluation, parenthesis matching)", "Queues: simple, circular, priority, deque"] },
+      { title: "Unit 2 — Trees", topics: ["Binary trees: traversals (inorder, preorder, postorder)", "Binary search trees: search, insert, delete", "AVL trees: rotations (LL, RR, LR, RL)", "Heaps (min-heap, max-heap), heapify", "B-trees overview"] },
+      { title: "Unit 3 — Graphs", topics: ["Representation: adjacency matrix, list", "BFS and DFS traversals", "Shortest paths: Dijkstra, Bellman-Ford", "Minimum spanning tree: Prim, Kruskal", "Topological sort"] },
+      { title: "Unit 4 — Sorting & Searching", topics: ["Bubble, Selection, Insertion sort: O(n²)", "Merge sort and Quick sort: O(n log n)", "Heap sort", "Binary search: O(log n)", "Hashing: hash functions, collision (chaining, open addressing)"] },
+      { title: "Unit 5 — Algorithm Design Techniques", topics: ["Greedy: activity selection, Huffman coding, fractional knapsack", "Dynamic programming: 0/1 knapsack, LCS, matrix chain", "Backtracking: N-queens, graph coloring", "Branch and bound", "Complexity: P, NP, NP-complete"] },
+    ],
+  },
+  "OS": {
+    branch: "CSE",
+    units: [
+      { title: "Unit 1 — Process Management", topics: ["Process states and PCB", "Process creation/termination (fork, exec)", "Threads: user-level vs kernel-level", "CPU scheduling: FCFS, SJF, Priority, Round Robin", "Multi-level queue scheduling"] },
+      { title: "Unit 2 — Process Synchronization", topics: ["Race condition, critical section problem", "Peterson's solution", "Semaphores (binary, counting)", "Monitors", "Classic problems: Producer-Consumer, Readers-Writers, Dining Philosophers"] },
+      { title: "Unit 3 — Deadlock", topics: ["Deadlock conditions (Coffman's 4 conditions)", "Resource allocation graph", "Deadlock prevention and avoidance (Banker's algorithm)", "Deadlock detection and recovery"] },
+      { title: "Unit 4 — Memory Management", topics: ["Contiguous allocation (fixed, variable partitions)", "Fragmentation, compaction", "Paging: page table, TLB", "Segmentation", "Virtual memory: demand paging, page fault handling"] },
+      { title: "Unit 5 — File Systems & I/O", topics: ["File attributes, operations, types", "Directory structure", "File allocation: contiguous, linked, indexed (inode)", "Disk scheduling: FCFS, SSTF, SCAN, C-SCAN", "I/O hardware and software layers"] },
+    ],
+  },
+  "DBMS": {
+    branch: "CSE",
+    units: [
+      { title: "Unit 1 — Database Concepts & ER Model", topics: ["Database vs file system", "Database architecture (3-tier)", "ER model: entities, attributes, relationships", "Weak entities and participation constraints", "ER-to-relational mapping"] },
+      { title: "Unit 2 — Relational Model & SQL", topics: ["Relational algebra: σ, π, ⋈, ∪, −", "Relational calculus", "SQL: DDL (CREATE, ALTER, DROP)", "SQL: DML (INSERT, UPDATE, DELETE, SELECT)", "Joins, subqueries, aggregate functions, GROUP BY, HAVING"] },
+      { title: "Unit 3 — Normalization", topics: ["Functional dependencies", "1NF, 2NF, 3NF, BCNF", "Multi-valued dependencies and 4NF", "Lossless decomposition and dependency preservation", "Denormalization"] },
+      { title: "Unit 4 — Transaction Management", topics: ["ACID properties", "Transaction states and schedules", "Serializability (conflict, view)", "Concurrency control: locking (2PL), timestamps", "Deadlock detection in databases"] },
+      { title: "Unit 5 — Storage & Query Optimization", topics: ["Storage hierarchy, buffer management", "File organization: heap, sorted, hashed", "Indexing: primary, secondary, B+ tree index", "Query processing steps", "Query optimization: cost estimation, join ordering"] },
+    ],
+  },
+  "OOP": {
+    branch: "CSE",
+    units: [
+      { title: "Unit 1 — OOP Fundamentals & Java Basics", topics: ["OOP concepts: encapsulation, abstraction, inheritance, polymorphism", "Java program structure, JVM, JDK", "Data types, operators, control statements", "Arrays, strings, StringBuffer", "Methods, constructors, 'this' keyword"] },
+      { title: "Unit 2 — Inheritance & Polymorphism", topics: ["Single, multilevel, hierarchical inheritance", "Method overriding and dynamic dispatch", "Abstract classes and methods", "Interfaces and multiple inheritance", "final keyword"] },
+      { title: "Unit 3 — Packages & Exception Handling", topics: ["Creating and using packages", "Access modifiers: public, private, protected", "try-catch-finally blocks", "Checked and unchecked exceptions", "User-defined exceptions, throw and throws"] },
+      { title: "Unit 4 — Multithreading & Generics", topics: ["Thread creation: Thread class and Runnable", "Thread lifecycle and scheduling", "Synchronization: synchronized methods and blocks", "Inter-thread communication (wait, notify)", "Generics: generic classes and methods, bounded types"] },
+      { title: "Unit 5 — Collections & I/O", topics: ["Collection framework: List, Set, Map, Queue", "ArrayList, LinkedList, HashSet, TreeSet, HashMap", "Iterators and for-each loop", "File I/O: FileInputStream, FileOutputStream, BufferedReader", "Serialization and deserialization"] },
+    ],
+  },
+  "TOC": {
+    branch: "CSE",
+    units: [
+      { title: "Unit 1 — Regular Languages & FA", topics: ["Alphabet, strings, languages", "Deterministic finite automaton (DFA)", "NFA and NFA-to-DFA conversion (subset construction)", "Regular expressions", "Regular expression to NFA (Thompson's construction)"] },
+      { title: "Unit 2 — Regular Language Properties", topics: ["Closure properties of regular languages", "Pumping lemma for regular languages", "Myhill-Nerode theorem", "Minimization of DFA", "Decision problems for regular languages"] },
+      { title: "Unit 3 — Context-Free Languages", topics: ["Context-free grammar (CFG)", "Derivations, parse trees, ambiguity", "Chomsky Normal Form (CNF) and Greibach Normal Form", "Pushdown automata (PDA)", "Pumping lemma for CFLs"] },
+      { title: "Unit 4 — Turing Machines", topics: ["Turing machine model and transitions", "Variants: multi-tape TM, non-deterministic TM", "Church-Turing thesis", "Recursive and recursively enumerable languages", "Universal Turing machine"] },
+      { title: "Unit 5 — Decidability & Complexity", topics: ["Decidable and undecidable problems", "Halting problem (undecidable, proof by diagonalization)", "Rice's theorem", "Complexity classes: P, NP", "NP-completeness: SAT, 3-SAT, Clique, Vertex Cover"] },
+    ],
+  },
+  "CD": {
+    branch: "CSE",
+    units: [
+      { title: "Unit 1 — Lexical Analysis", topics: ["Phases of compiler", "Role of lexical analyzer", "Tokens, patterns, lexemes", "Regular expressions for tokens", "LEX/FLEX tool overview"] },
+      { title: "Unit 2 — Syntax Analysis (Parsing)", topics: ["Context-free grammars for programming languages", "Top-down parsing: recursive descent, predictive LL(1)", "First and Follow sets, parsing table", "Bottom-up parsing: LR(0), SLR(1), LALR(1)", "YACC/Bison tool overview"] },
+      { title: "Unit 3 — Semantic Analysis", topics: ["Syntax-directed definitions (SDD)", "Synthesized and inherited attributes", "L-attributed and S-attributed grammars", "Type checking and type systems", "Symbol table structure and operations"] },
+      { title: "Unit 4 — Intermediate Code Generation", topics: ["Three-address code", "Quadruples, triples, indirect triples", "Syntax-directed translation for expressions", "Control flow statements (if, while)", "Backpatching"] },
+      { title: "Unit 5 — Code Optimization & Generation", topics: ["Basic blocks and flow graphs", "Local optimizations: constant folding, dead code elimination", "Global optimizations: loop invariant code motion, induction variable elimination", "Register allocation and assignment", "Code generation algorithms"] },
+    ],
+  },
+  "SE": {
+    branch: "CSE",
+    units: [
+      { title: "Unit 1 — Software Process Models", topics: ["Software development life cycle (SDLC)", "Waterfall model", "Prototyping, Spiral model", "Agile: Scrum, XP", "DevOps overview"] },
+      { title: "Unit 2 — Requirements Engineering", topics: ["Functional and non-functional requirements", "Requirements elicitation techniques", "Use case diagrams (UML)", "Software Requirements Specification (SRS)", "Requirements validation and traceability"] },
+      { title: "Unit 3 — Software Design", topics: ["Architectural design patterns (MVC, layered, microservices)", "UML diagrams: class, sequence, state, activity", "Design principles: SOLID", "Object-oriented design", "Modular design metrics: cohesion, coupling"] },
+      { title: "Unit 4 — Software Testing", topics: ["Testing levels: unit, integration, system, acceptance", "Black-box testing: equivalence partitioning, boundary value analysis", "White-box testing: statement, branch, path coverage", "Test-driven development (TDD)", "Regression testing, performance testing"] },
+      { title: "Unit 5 — Project Management & Quality", topics: ["Project planning: WBS, Gantt charts, PERT/CPM", "Effort estimation: COCOMO model, function points", "Risk management", "Software quality: ISO 9001, CMMI", "Configuration management and version control (Git)"] },
+    ],
+  },
+  "Python": {
+    branch: "CSE",
+    units: [
+      { title: "Unit 1 — Python Basics", topics: ["Variables, data types, operators", "Control flow: if/elif/else, for, while", "Functions: def, arguments, return, lambda", "Strings and string methods", "Lists, tuples, sets, dictionaries"] },
+      { title: "Unit 2 — OOP in Python", topics: ["Classes and objects", "Constructors (__init__), self", "Inheritance and method overriding", "Dunder methods (__str__, __len__, __add__)", "Decorators and properties"] },
+      { title: "Unit 3 — File Handling & Exceptions", topics: ["File open, read, write, close", "with statement and context managers", "try-except-finally, raise", "Custom exceptions", "JSON and CSV file handling"] },
+      { title: "Unit 4 — NumPy & Pandas", topics: ["NumPy arrays: creation, indexing, slicing", "Array operations and broadcasting", "Pandas Series and DataFrame", "Data loading (CSV, Excel)", "Data cleaning, filtering, groupby, merge"] },
+      { title: "Unit 5 — Data Visualization & Introduction to ML", topics: ["Matplotlib: line, bar, scatter, histogram plots", "Seaborn for statistical plots", "Scikit-learn: train-test split", "Linear regression, logistic regression", "Evaluation metrics: accuracy, confusion matrix"] },
+    ],
+  },
+  "Maths": {
+    branch: "CSE",
+    units: [
+      { title: "Unit 1 — Logic & Sets", topics: ["Propositional logic, truth tables", "Predicate logic, quantifiers", "Set theory: operations, power set, Cartesian product", "Functions: injective, surjective, bijective", "Relations: equivalence, partial order, Hasse diagram"] },
+      { title: "Unit 2 — Graph Theory", topics: ["Graph types: simple, directed, weighted", "Euler and Hamiltonian paths/circuits", "Trees and spanning trees", "Planar graphs, graph coloring", "Chromatic number"] },
+      { title: "Unit 3 — Combinatorics", topics: ["Counting: permutations, combinations", "Pigeonhole principle", "Inclusion-exclusion principle", "Recurrence relations", "Generating functions"] },
+      { title: "Unit 4 — Linear Algebra", topics: ["Matrices: operations, rank, determinant", "Systems of linear equations (Gaussian elimination)", "Eigenvalues and eigenvectors", "Cayley-Hamilton theorem", "Linear transformations"] },
+      { title: "Unit 5 — Probability & Statistics", topics: ["Probability: axioms, conditional, Bayes", "Discrete distributions: Binomial, Poisson", "Continuous distributions: Normal, Exponential", "Mean, variance, standard deviation", "Hypothesis testing overview"] },
+    ],
+  },
+  // ——— Civil ———
+  "SOM": {
+    branch: "Civil",
+    units: [
+      { title: "Unit 1 — Stress & Strain", topics: ["Normal and shear stress", "Hooke's law, elastic constants (E, G, ν, K)", "Relationship between elastic constants", "Thermal stresses", "Composite bars and tapering bars"] },
+      { title: "Unit 2 — Shear Force & Bending Moment", topics: ["Types of beams and loads", "SFD and BMD for cantilever, simply supported, overhanging beams", "Relation between load, SF, and BM", "Point of contraflexure"] },
+      { title: "Unit 3 — Bending & Shear Stresses", topics: ["Theory of simple bending", "Bending stress: σ = My/I", "Section modulus, moment of inertia of standard sections", "Shear stress distribution in beams", "Composite beams (flitched beams)"] },
+      { title: "Unit 4 — Deflection of Beams & Columns", topics: ["Differential equation of elastic curve", "Macaulay's method", "Moment-area method", "Columns: short vs long", "Euler's buckling load, effective length, slenderness ratio"] },
+      { title: "Unit 5 — Torsion & Pressure Vessels", topics: ["Torsion of circular shafts: τ = Tr/J", "Power transmitted by shaft", "Thin cylinders: hoop and longitudinal stress", "Thick cylinders (Lamé's equations)", "Principal stresses and Mohr's circle"] },
+    ],
+  },
+  "FM": {
+    branch: "Civil",
+    units: [
+      { title: "Unit 1 — Fluid Properties & Statics", topics: ["Density, viscosity, surface tension, capillarity", "Hydrostatic law", "Pressure measurement: manometers, gauges", "Force on submerged plane surfaces", "Buoyancy and metacentric height"] },
+      { title: "Unit 2 — Fluid Kinematics", topics: ["Types of flow: steady/unsteady, laminar/turbulent", "Streamlines, pathlines, streaklines", "Continuity equation (1D, 3D)", "Velocity potential and stream function", "Rotational vs irrotational flow"] },
+      { title: "Unit 3 — Fluid Dynamics", topics: ["Bernoulli's equation and applications", "Venturimeter, orifice, pitot tube", "Momentum equation", "Flow through pipes: Darcy-Weisbach equation", "Losses: major (friction) and minor (bends, valves)"] },
+      { title: "Unit 4 — Boundary Layer & Turbulence", topics: ["Boundary layer concept, displacement thickness", "Laminar and turbulent boundary layers", "Drag and lift on bodies", "Reynolds number, turbulence", "Flow separation"] },
+      { title: "Unit 5 — Open Channel & Hydraulic Machines", topics: ["Open channel flow: Manning's equation", "Specific energy, critical flow, Froude number", "Hydraulic jump", "Centrifugal pumps: characteristics, cavitation", "Francis and Kaplan turbines"] },
+    ],
+  },
+  "Struct": {
+    branch: "Civil",
+    units: [
+      { title: "Unit 1 — Statically Determinate Structures", topics: ["Beams: SFD, BMD", "Plane trusses: method of joints, sections", "Influence lines for beams", "Arches: three-hinged arch", "Cable structures"] },
+      { title: "Unit 2 — Energy Methods", topics: ["Castigliano's theorems", "Unit load method (virtual work)", "Deflection of trusses and beams", "Maxwell-Betti reciprocal theorem"] },
+      { title: "Unit 3 — Force and Displacement Methods", topics: ["Degree of indeterminacy", "Compatibility method (three-moment equation)", "Slope deflection method", "Moment distribution method (Hardy Cross)"] },
+      { title: "Unit 4 — Stiffness Matrix Method", topics: ["Stiffness matrix formulation", "Global vs local coordinates", "Member stiffness matrix", "Assembly and solution for beams and frames", "Introduction to finite element method"] },
+      { title: "Unit 5 — Dynamic Analysis & Plastic Analysis", topics: ["Free vibration of structures", "Natural frequency, mode shapes", "Plastic hinges, plastic moment", "Collapse mechanisms for beams and frames", "Load factor and shape factor"] },
+    ],
+  },
+  // ——— Mech ———
+  "Thermo": {
+    branch: "Mech",
+    units: [
+      { title: "Unit 1 — Basic Concepts", topics: ["Thermodynamic system, boundary, surroundings", "Properties: intensive vs extensive", "State, process, cycle", "Zeroth law and temperature", "Pure substance and phase diagrams (P-v-T surface)"] },
+      { title: "Unit 2 — First Law of Thermodynamics", topics: ["Heat and work (sign conventions)", "First law for closed and open systems", "Enthalpy, specific heats Cp and Cv", "Steady-flow energy equation (SFEE)", "Throttling and nozzle flow"] },
+      { title: "Unit 3 — Second Law & Entropy", topics: ["Kelvin-Planck and Clausius statements", "Carnot cycle and efficiency", "Clausius inequality", "Entropy: definition, T-s diagram", "Entropy generation and irreversibility"] },
+      { title: "Unit 4 — Gas Power Cycles", topics: ["Air standard analysis", "Otto cycle (petrol engine)", "Diesel cycle", "Brayton cycle (gas turbine)", "Comparison of cycles, compressor work"] },
+      { title: "Unit 5 — Vapour Cycles & Refrigeration", topics: ["Rankine cycle (steam power plant)", "Reheat and regenerative Rankine cycle", "Vapour compression refrigeration", "COP, refrigerants", "Psychrometrics: DBT, WBT, humidity, AHU"] },
+    ],
+  },
+  "FM-M": {
+    branch: "Mech",
+    units: [
+      { title: "Unit 1 — Fluid Properties & Statics", topics: ["Viscosity, surface tension, capillarity", "Hydrostatic forces on surfaces", "Buoyancy, metacentric height", "Pressure measurement"] },
+      { title: "Unit 2 — Fluid Kinematics & Dynamics", topics: ["Continuity equation", "Bernoulli's equation", "Flow measurement: venturimeter, orifice", "Momentum equation applications"] },
+      { title: "Unit 3 — Viscous Flow & Boundary Layer", topics: ["Laminar flow in pipes (Hagen-Poiseuille)", "Turbulent flow, friction factor (Moody chart)", "Boundary layer development", "Drag and lift"] },
+      { title: "Unit 4 — Turbomachinery — Pumps", topics: ["Centrifugal pump: components, velocity triangles", "Head, efficiency, power", "Cavitation and NPSH", "Pump characteristics and selection", "Reciprocating pumps"] },
+      { title: "Unit 5 — Turbomachinery — Turbines", topics: ["Impulse vs reaction turbines", "Pelton wheel", "Francis turbine", "Kaplan turbine", "Performance characteristics and specific speed"] },
+    ],
+  },
+  "MD": {
+    branch: "Mech",
+    units: [
+      { title: "Unit 1 — Design Philosophy & Stresses", topics: ["Factor of safety, design for static loads", "Principal stresses, Mohr's circle", "Theories of failure (Von Mises, Tresca, Rankine)", "Stress concentration factors"] },
+      { title: "Unit 2 — Fatigue & Impact", topics: ["S-N curve, endurance limit (Goodman, Soderberg)", "Stress concentration under fatigue", "Impact loading, Charpy and Izod tests", "Cumulative fatigue damage"] },
+      { title: "Unit 3 — Shafts, Keys & Couplings", topics: ["Shaft design for torsion and bending", "ASME code for shafts", "Keys: parallel, Woodruff", "Couplings: rigid, flexible, universal joints"] },
+      { title: "Unit 4 — Bearings & Lubrication", topics: ["Sliding contact (journal) bearings", "Hydrodynamic lubrication theory", "Rolling contact bearings: designation, load capacity, life (L10)", "Bearing selection from catalogue"] },
+      { title: "Unit 5 — Gears & Springs", topics: ["Spur gear design: Lewis equation, surface fatigue", "Helical, bevel, worm gear overview", "Spring types: helical, leaf, torsion", "Close-coiled helical spring design", "Spring combinations: series and parallel"] },
+    ],
+  },
+  // ——— EEE ———
+  "Circuits": {
+    branch: "EEE",
+    units: [
+      { title: "Unit 1 — Circuit Analysis Techniques", topics: ["KVL, KCL for DC circuits", "Nodal analysis (Node voltage method)", "Mesh analysis (Loop current method)", "Source transformation", "Star-Delta (Y-Δ) transformation"] },
+      { title: "Unit 2 — Network Theorems", topics: ["Superposition theorem", "Thevenin's theorem", "Norton's theorem", "Maximum power transfer theorem", "Millman's theorem, Reciprocity theorem"] },
+      { title: "Unit 3 — AC Analysis & Phasors", topics: ["Sinusoidal steady state", "Phasors and impedance (R, L, C)", "Series and parallel AC circuits", "Power: real (W), reactive (VAR), apparent (VA)", "Power factor and correction"] },
+      { title: "Unit 4 — Resonance & Coupled Circuits", topics: ["Series RLC resonance: f₀, Q, bandwidth", "Parallel resonance", "Magnetically coupled circuits, mutual inductance", "Dot convention", "Ideal transformer equivalent circuit"] },
+      { title: "Unit 5 — Laplace & Network Functions", topics: ["Laplace transform for circuit analysis", "Initial and final value theorems", "Network functions: driving-point, transfer", "Poles, zeros, frequency response from network function", "Two-port network parameters (Z, Y, ABCD, h)"] },
+    ],
+  },
+  "EM": {
+    branch: "EEE",
+    units: [
+      { title: "Unit 1 — DC Generators", topics: ["Construction: armature, field, commutator, brushes", "EMF equation", "Types of DC generators (series, shunt, compound)", "Characteristics: OCC, external, internal", "Voltage build-up and critical resistance"] },
+      { title: "Unit 2 — DC Motors", topics: ["Back EMF, torque equation", "Types: series, shunt, compound motors", "Speed-torque characteristics", "Speed control methods: armature, field control", "Starting: 3-point and 4-point starters, losses, efficiency"] },
+      { title: "Unit 3 — Transformers", topics: ["Construction and working principle", "EMF equation: E = 4.44fNΦm", "Equivalent circuit, phasor diagram", "OC and SC tests, efficiency, voltage regulation", "Auto-transformer, 3-phase transformer connections"] },
+      { title: "Unit 4 — Induction Motors", topics: ["Construction: squirrel cage vs slip ring", "Rotating magnetic field, synchronous speed", "Slip, equivalent circuit", "Torque-slip characteristics", "Starting methods (DOL, star-delta, auto-transformer), speed control"] },
+      { title: "Unit 5 — Synchronous Machines", topics: ["Construction and working of alternator", "EMF equation, winding factors", "Armature reaction, voltage regulation (EMF, MMF, ZPF methods)", "Synchronous motor: V-curves, hunting", "Parallel operation of alternators"] },
+    ],
+  },
+  "PS": {
+    branch: "EEE",
+    units: [
+      { title: "Unit 1 — Power System Structure", topics: ["Generation: thermal, hydro, nuclear, renewable", "Transmission system: EHV lines", "Distribution system", "Per-unit system", "Power system components modelling"] },
+      { title: "Unit 2 — Transmission Line Parameters", topics: ["Resistance, inductance (GMD, GMR)", "Capacitance of lines", "Short, medium, long line models", "ABCD parameters", "Ferranti effect"] },
+      { title: "Unit 3 — Load Flow Analysis", topics: ["Bus classification (slack, PV, PQ)", "Gauss-Seidel load flow", "Newton-Raphson load flow", "Fast decoupled load flow", "Power flow equations"] },
+      { title: "Unit 4 — Fault Analysis", topics: ["Symmetrical (3-phase) fault analysis", "Symmetrical components (positive, negative, zero sequence)", "Unsymmetrical faults: SLG, LL, DLG", "Sequence networks", "Fault current calculations"] },
+      { title: "Unit 5 — Power System Stability", topics: ["Steady-state and transient stability", "Swing equation", "Equal area criterion", "Methods to improve stability", "Power system protection: relays, circuit breakers, fuses"] },
+    ],
+  },
+  "PE": {
+    branch: "EEE",
+    units: [
+      { title: "Unit 1 — Power Semiconductor Devices", topics: ["Diode, SCR (thyristor) characteristics", "MOSFET and IGBT as switches", "Triggering and commutation of SCR", "Protection: snubber circuits, heat sinks"] },
+      { title: "Unit 2 — Rectifiers", topics: ["Half-wave and full-wave rectifiers", "Single-phase and 3-phase controlled rectifiers (R, RL, RLE loads)", "Dual converters", "Power factor and THD", "Freewheeling diode"] },
+      { title: "Unit 3 — DC-DC Converters (Choppers)", topics: ["Step-down (Buck) converter", "Step-up (Boost) converter", "Buck-Boost converter", "CCM and DCM operation", "Duty cycle control"] },
+      { title: "Unit 4 — Inverters", topics: ["Single-phase half-bridge and full-bridge inverters", "3-phase inverters (180° and 120° conduction)", "PWM techniques: sinusoidal PWM, SPWM", "Harmonic reduction", "Voltage source vs current source inverters"] },
+      { title: "Unit 5 — AC Voltage Controllers & Applications", topics: ["Single-phase and 3-phase AC controllers", "Cycloconverters", "Variable speed drives (VSD)", "UPS systems", "FACTS devices overview (SVC, STATCOM)"] },
+    ],
+  },
+  "Control": {
+    branch: "EEE",
+    units: [
+      { title: "Unit 1 — Mathematical Modelling", topics: ["Transfer function of electrical and mechanical systems", "Block diagram reduction", "Signal flow graphs, Mason's gain formula", "Analogies between electrical and mechanical systems"] },
+      { title: "Unit 2 — Time Response Analysis", topics: ["Standard test inputs", "First and second order system responses", "Time domain specifications: tr, tp, Mp, ts", "Steady-state error and error constants", "Effect of adding poles and zeros"] },
+      { title: "Unit 3 — Stability Analysis", topics: ["Characteristic equation, roots", "Routh-Hurwitz criterion and special cases", "Root locus: construction rules", "Root locus for gain and phase variations"] },
+      { title: "Unit 4 — Frequency Response", topics: ["Bode plots: magnitude and phase", "Gain margin, phase margin", "Polar plots, Nyquist criterion", "Closed-loop frequency response", "M and N circles, Nichols chart"] },
+      { title: "Unit 5 — Control System Design", topics: ["Lead, lag, lead-lag compensator design", "PID controller: tuning (Ziegler-Nichols)", "State variable analysis", "Controllability and observability (Kalman's tests)", "State feedback and pole placement"] },
+    ],
+  },
+};
 
 const GATE_MCQ = {
   "DLD": [
@@ -1503,16 +1803,51 @@ const GATE_MCQ = {
 
 
 function renderResources() {
-  const tabs = [["formulas","⚡ Formulas"],["mcq","🎯 GATE MCQs"],["pyq","📋 PYQ"],["placement","💼 Placement"],["plan","🗓 Study Plan"]];
+  const tabs = [["syllabus","📖 Syllabus"],["formulas","⚡ Formulas"],["mcq","🎯 GATE MCQs"],["pyq","📋 PYQ"],["placement","💼 Placement"],["plan","🗓 Study Plan"]];
   const tabBar = el("div", { class: "resource-tabs" },
     ...tabs.map(([id, label]) => el("button", {
       type: "button", class: "resource-tab" + (resourceTab === id ? " active" : ""),
-      onclick: () => { resourceTab = id; formulaOpen = null; render(); },
+      onclick: () => { resourceTab = id; formulaOpen = null; syllabusSubj = null; mcqSubj = null; render(); },
     }, label))
   );
   let content = [];
 
-  if (resourceTab === "formulas") {
+  if (resourceTab === "syllabus") {
+    const branches = ["ECE","CSE","Civil","Mech","EEE"];
+    const byBranch = {};
+    for (const [subj, data] of Object.entries(SYLLABUS)) {
+      (byBranch[data.branch] ||= []).push(subj);
+    }
+    content = [
+      el("p", { class: "hint" }, "Unit-wise RGUKT AP syllabus for every subject. Tap a subject to expand its units and topics."),
+      ...branches.map(branch => {
+        const subjects = byBranch[branch] || [];
+        if (!subjects.length) return null;
+        return el("div", { class: "syl-branch" },
+          el("div", { class: "label" }, branch + " Branch"),
+          el("div", { class: "formula-subj-list" },
+            ...subjects.map(s => {
+              const data = SYLLABUS[s];
+              const isOpen = syllabusSubj === s;
+              return el("div", {},
+                el("button", { type: "button", class: "formula-subj-btn", ...colorAttrs(s, "doubts"),
+                  onclick: () => { syllabusSubj = isOpen ? null : s; render(); },
+                }, el("span", {}, s), el("span", { class: "formula-count" }, data.units.length + " units"), el("span", { class: "formula-arrow" }, isOpen ? "▲" : "▼")),
+                isOpen && el("div", { class: "syl-units" },
+                  ...data.units.map(u => el("div", { class: "syl-unit" },
+                    el("div", { class: "syl-unit-title" }, u.title),
+                    el("ul", { class: "syl-topics" },
+                      ...u.topics.map(t => el("li", {}, t))
+                    )
+                  ))
+                )
+              );
+            })
+          )
+        );
+      }).filter(Boolean),
+    ];
+  } else if (resourceTab === "formulas") {
     const subjects = Object.keys(FORMULAS);
     content = [
       el("p", { class: "hint" }, "Tap any subject to see key formulas. Great for quick revision before exams."),
