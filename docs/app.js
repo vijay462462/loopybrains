@@ -48,13 +48,30 @@ const TABS = {
   },
 };
 
+// ---------- campus ----------
+const CAMPUSES = (CFG.campuses && CFG.campuses.length) ? CFG.campuses : [];
+const CAMPUS_COLORS = { NUZVID: "#7c3aed", ONGOLE: "#0d9488", BASAR: "#d97706", IDUPULAPAYA: "#dc2626" };
+const campusColor = (c) => CAMPUS_COLORS[c] || "#6366f1";
+const getCampus = () => { try { return localStorage.getItem("dd-campus") || null; } catch(_){return null;} };
+const setCampus = (c) => { try { localStorage.setItem("dd-campus", c); } catch(_){} };
+
+// ---------- department filter ----------
+const DEPT_MAP = {
+  ECE:   ["DLD","CS","DSP","PRV","AEC","CN","CO & D","CS-2","RFME"],
+  CSE:   ["DS & A","OS","DBMS","OOP","TOC","CD","SE","Python","Maths"],
+  Civil: ["SOM","FM","Struct","Geo","Trans","Env","Survey"],
+  Mech:  ["Thermo","FM-M","MD","MOM","Mfg","HT","IC Eng"],
+  EEE:   ["Circuits","EM","PS","PE","Control","EMS","PQ"],
+};
+
 const state = {
   tab: "doubts", group: "All", query: "", filter: "all",
   doubts: [], ideas: [], clubs: [], replies: [], likes: [], loaded: false,
-  selected: null, mode: "intro", // intro | view | ask | edit | name
+  selected: null, mode: "intro", // intro | view | ask | edit | name | campus
   afterName: null,
-  replyPages: [], // notebook pages attached to the reply being written
-  replyAnon: false,
+  replyPages: [], replyAnon: false,
+  campusFilter: "all", // "all" | campus name
+  dept: "All",         // "All" | "ECE" | "CSE" | "Civil" | "Mech" | "EEE"
 };
 const ANON = "Anonymous";
 let store = null;
@@ -243,7 +260,7 @@ function renderGate(err) {
     el("h2", {}, "🔐 Enter your class code"), form));
   $("sheet").replaceChildren();
   $("rail").replaceChildren();
-  ["askBtn", "quizBtn", "leadersBtn", "nameBtn", "networkBtn"].forEach(id => { $(id).hidden = true; });
+  ["askBtn", "quizBtn", "leadersBtn", "nameBtn"].forEach(id => { const el = $(id); if (el) el.hidden = true; });
   setTimeout(() => form.elements.code.focus(), 0);
 }
 
@@ -556,18 +573,53 @@ function renderTrendBar() {
 }
 
 
+function trendingSubject() {
+  const now = Date.now(), hour = 3600000;
+  const recent = state.doubts.filter(d => now - d.createdAt < hour * 6);
+  if (recent.length < 2) return null;
+  const counts = {};
+  for (const d of recent) counts[d.subject] = (counts[d.subject] || 0) + 1;
+  const top = Object.entries(counts).sort((a,b)=>b[1]-a[1])[0];
+  return top && top[1] >= 2 ? top[0] : null;
+}
+
 function renderHeader() {
   const t = TABS[state.tab];
   document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === state.tab)));
 
   $("askBtn").textContent = t.ask;
   const me = store && state.loaded ? allStats().get(store.uid) : null;
+  const myC = getCampus();
   $("nameBtn").textContent = getName() ? getAvatar() + " " + getName() + (me ? " · Lv " + me.level.n + (me.streak ? " · 🔥" + me.streak : "") : "") : "Set your name";
+
+  // Campus filter chips
+  const campusBar = $("campusBar");
+  if (campusBar && CAMPUSES.length > 0) {
+    campusBar.hidden = false;
+    campusBar.replaceChildren(
+      el("span", { class: "campus-label" }, "Campus:"),
+      ...["all", ...CAMPUSES].map(c => {
+        const btn = el("button", { type: "button",
+          class: "campus-chip" + (state.campusFilter === c ? " active" : ""),
+          style: c !== "all" ? "--cc:" + campusColor(c) : "",
+          onclick: () => { state.campusFilter = c; render(); }
+        }, c === "all" ? "🌐 All campuses" : c);
+        return btn;
+      }),
+      myC && el("button", { type: "button", class: "campus-chip my",
+        onclick: () => { state.mode = "campus"; render(); }
+      }, "⚙ " + myC)
+    );
+    // Trending subject
+    const tr = trendingSubject();
+    const trEl = $("trending");
+    if (trEl) { trEl.hidden = !tr; if (tr) trEl.textContent = "📈 Trending now: " + tr; }
+  }
   $("quizBtn").classList.toggle("dot", !!(store && state.loaded && QUIZ.length && !myQuizAnswer(dayNum())));
   $("search").placeholder = state.tab === "doubts" ? "Search doubts" : "Search ideas";
   $("rail").setAttribute("aria-label", t.groupLabel);
   const opts = state.tab === "doubts"
-    ? [["all", "Newest"], ["asked", "Most asked"], ["open", "Unanswered"], ["mentor", "Needs a mentor"], ["done", "Resolved"]]
+    ? [["all","Newest"],["asked","Most asked"],["open","Unanswered"],["mine","My posts"],["mentor","Needs mentor"],["done","Resolved"],["bounty","🎁 Bounty"]]
     : [["all", "Newest"], ["top", "Most liked"]];
   const f = $("filter");
   if (f.dataset.tab !== state.tab) {
@@ -581,11 +633,27 @@ function renderRail() {
   const counts = {};
   for (const d of rows) counts[d[t.field]] = (counts[d[t.field]] || 0) + 1;
   const extra = Object.keys(counts).filter(s => !t.groups.includes(s));
-  $("rail").replaceChildren(el("div", { class: "label" }, t.groupLabel),
-    ...["All", ...t.groups, ...extra].map(s => el("button", {
-      type: "button", ...colorAttrs(s), "aria-pressed": String(state.group === s),
-      onclick: () => { state.group = s; render(); },
-    }, el("span", {}, s), el("span", { class: "n" }, s === "All" ? rows.length : (counts[s] || 0)))));
+
+  const deptTabs = state.tab === "doubts" ? el("div", { class: "dept-tabs" },
+    ...["All", ...Object.keys(DEPT_MAP)].map(d => el("button", {
+      type: "button", class: "dept-tab" + (state.dept === d ? " active" : ""),
+      onclick: () => { state.dept = d; state.group = "All"; render(); },
+    }, d))
+  ) : null;
+
+  const visibleSubjects = state.tab === "doubts" && state.dept !== "All"
+    ? ["All", ...DEPT_MAP[state.dept].filter(s => t.groups.includes(s)), ...extra]
+    : ["All", ...t.groups, ...extra];
+
+  $("rail").replaceChildren(
+    ...(deptTabs ? [deptTabs] : []),
+    el("div", { class: "subj-grid" },
+      ...visibleSubjects.map(s => el("button", {
+        type: "button", class: "subj-chip" + (state.group === s ? " active" : ""), ...colorAttrs(s),
+        onclick: () => { state.group = s; render(); },
+      }, el("span", {}, s), el("span", { class: "n" }, s === "All" ? rows.length : (counts[s] || 0))))
+    )
+  );
 }
 
 function visible() {
@@ -593,11 +661,14 @@ function visible() {
   let rows = state[t.coll].filter(d => !isHidden(d) &&
     (state.group === "All" || d[t.field] === state.group) &&
     (!q || ((d.title || "") + " " + (d.body || "")).toLowerCase().includes(q)));
+  if (state.campusFilter !== "all") rows = rows.filter(d => d.campus === state.campusFilter);
   if (state.tab === "doubts" && (state.filter === "open" || state.filter === "done")) rows = rows.filter(d => (state.filter === "done") === !!d.resolvedReplyId);
   if (state.tab === "doubts" && state.filter === "mentor") rows = rows.filter(needsMentor);
+  if (state.tab === "doubts" && state.filter === "bounty") rows = rows.filter(d => d.bounty && !d.resolvedReplyId);
+  if (state.tab === "doubts" && state.filter === "mine") rows = rows.filter(d => store && d.authorId === store.uid);
   rows.sort((a, b) => b.createdAt - a.createdAt);
   if (state.filter === "top" || state.filter === "asked") rows.sort((a, b) => likesFor(b.id).length - likesFor(a.id).length);
-  else if (state.tab === "doubts") rows.sort((a, b) => (isUrgent(b) - isUrgent(a)) || (b.createdAt - a.createdAt));
+  else if (state.tab === "doubts") rows.sort((a, b) => (isUrgent(b) - isUrgent(a)) || (b.bounty ? 1 : 0) - (a.bounty ? 1 : 0) || (b.createdAt - a.createdAt));
   return rows;
 }
 
@@ -632,8 +703,10 @@ function renderList() {
     if (state.tab === "doubts") {
       meta.push(el("span", { class: "pill " + (d.resolvedReplyId ? "done" : "open") }, d.resolvedReplyId ? "Resolved" : (n ? "Open" : "Unanswered")));
       if (d.urgent && !d.resolvedReplyId) meta.unshift(el("span", { class: "pill urgent" }, "🔥 Urgent"));
+      if (d.bounty && !d.resolvedReplyId) meta.push(el("span", { class: "pill bounty" }, "🎁 Bounty"));
       if (votes) meta.push(el("span", { class: "likes" }, "🙋 " + votes));
     } else meta.push(el("span", { class: "likes" }, "♥ " + votes));
+    if (d.campus && CAMPUSES.length > 0) meta.push(el("span", { class: "campus-badge", style: "--cc:" + campusColor(d.campus) }, d.campus));
     if (d.pages && d.pages.length) meta.push(el("span", {}, "📎 " + d.pages.length + (d.pages.length === 1 ? " page" : " pages")));
     const av = d.anonymous ? avatarEl("👤") : avatarEl(mine(d) ? getAvatar() : avatarFor(d.authorName || ""));
 
@@ -1077,7 +1150,7 @@ function renderAsk(existing) {
   const form = el("form", { class: "form", onsubmit: async (e) => {
     e.preventDefault();
     const title = form.elements.title.value.trim(), body = form.elements.body.value.trim(), group = form.elements.group.value;
-    const anonymous = form.elements.anon.checked, urgent = !!(form.elements.urgent && form.elements.urgent.checked);
+    const anonymous = form.elements.anon.checked, urgent = !!(form.elements.urgent && form.elements.urgent.checked), bounty = !!(form.elements.bounty && form.elements.bounty.checked);
     if (title.length < 3) { err.textContent = "Write a title of at least 3 characters."; err.hidden = false; return; }
     if (hasBadWords(title + " " + body)) { err.textContent = LANGUAGE_MSG; err.hidden = false; return; }
     const wait = existing ? "" : spamCheck();
@@ -1094,7 +1167,8 @@ function renderAsk(existing) {
       const id = store.newId(t.coll);
       const pageIds = newPages.map(u => { const pid = store.newId("pages"); pageCache.set(pid, u); return pid; });
       const doc = { title: title.slice(0, 200), body: body.slice(0, 5000), [t.field]: group, authorId: store.uid, authorName: anonymous ? ANON : getName(), anonymous, urgent, createdAt: Date.now(), pages: pageIds };
-      if (state.tab === "doubts") doc.resolvedReplyId = null;
+      if (state.tab === "doubts") { doc.resolvedReplyId = null; doc.bounty = bounty; }
+      const myC = getCampus(); if (myC) doc.campus = myC;
       // Show the new post straight away; the live update replaces it with the saved copy.
       state[t.coll] = [{ id, ...doc }, ...state[t.coll].filter(x => x.id !== id)];
       state.group = "All"; state.query = ""; $("search").value = "";
@@ -1117,7 +1191,8 @@ function renderAsk(existing) {
     attachPicker(newPages, existing ? MAX_PAGES - ((existing.pages || []).length) : MAX_PAGES),
     el("div", { class: "checks" },
       el("label", { class: "check" }, el("input", { type: "checkbox", id: "f-anon", name: "anon", checked: !!(existing && existing.anonymous) }), "🙈 Post anonymously (classmates won't see your name)"),
-      state.tab === "doubts" && el("label", { class: "check" }, el("input", { type: "checkbox", id: "f-urgent", name: "urgent", checked: !!(existing && existing.urgent) }), "🔥 Urgent: exam or deadline soon")),
+      state.tab === "doubts" && el("label", { class: "check" }, el("input", { type: "checkbox", id: "f-urgent", name: "urgent", checked: !!(existing && existing.urgent) }), "🔥 Urgent: exam or deadline soon"),
+      state.tab === "doubts" && el("label", { class: "check" }, el("input", { type: "checkbox", id: "f-bounty", name: "bounty", checked: !!(existing && existing.bounty) }), "🎁 Bounty: whoever solves this gets +5 bonus points")),
     err,
     el("div", { class: "rowbtns" },
       el("button", { class: "btn primary", type: "submit" }, label),
@@ -1149,6 +1224,8 @@ function renderView() {
       el("span", { class: "tag", ...colorAttrs(g) }, g),
       state.tab === "doubts" && isUrgent(d) && el("span", { class: "pill urgent" }, "🔥 Urgent"),
       state.tab === "doubts" && el("span", { class: "pill " + (d.resolvedReplyId ? "done" : "open") }, d.resolvedReplyId ? "Resolved" : "Open"),
+      state.tab === "doubts" && d.bounty && !d.resolvedReplyId && el("span", { class: "pill bounty" }, "🎁 Bounty"),
+      d.campus && CAMPUSES.length > 0 && el("span", { class: "campus-badge", style: "--cc:" + campusColor(d.campus) }, d.campus),
       el("span", { class: "author-row" }, d.anonymous ? avatarEl("👤") : avatarEl(mine(d) ? getAvatar() : avatarFor(d.authorName || "")), "By " + who(d) + " · " + ago(d.createdAt))),
     el("h2", {}, d.title),
   ];
@@ -1256,6 +1333,22 @@ function openAsk() {
 }
 
 let sheetKey = "";
+function renderCampusPicker() {
+  return [
+    el("h2", {}, "🏫 Welcome to RGUKT Spark!"),
+    el("p", { class: "body" }, "Connect with students from all RGUKT campuses. Pick your campus to tag your posts — you'll still see doubts, ideas and clubs from everyone."),
+    el("div", { class: "campus-picker-grid" },
+      ...CAMPUSES.map(c => el("button", {
+        type: "button", class: "campus-pick-btn",
+        style: "--cc:" + campusColor(c),
+        onclick: () => { setCampus(c); state.mode = "intro"; render(); },
+      }, el("span", { class: "campus-pick-icon" }, c === "NUZVID" ? "🟣" : c === "ONGOLE" ? "🟢" : "🔵"), el("span", { class: "campus-pick-name" }, c), el("span", { class: "campus-pick-sub" }, "RGUKT " + c)))
+    ),
+    el("p", { class: "hint" }, "You can change campus later from your name button."),
+    el("button", { class: "btn", type: "button", onclick: () => { state.mode = "intro"; render(); } }, "Skip for now"),
+  ];
+}
+
 function render() {
   renderHeader(); renderTrendBar(); renderRail(); renderList(); renderBottomNav();
   // Forms keep what the student is typing while live updates arrive.
@@ -1276,6 +1369,7 @@ function render() {
     state.mode === "learn" ? renderLearn() :
     state.mode === "network" ? renderNetwork() :
     state.mode === "name" ? renderName() :
+    state.mode === "campus" ? renderCampusPicker() :
     state.mode === "ask" ? renderAsk() :
     state.mode === "edit" && cur ? renderAsk(cur) :
     state.mode === "view" || state.mode === "edit" ? renderView() : renderIntro()));
@@ -1334,6 +1428,8 @@ const deep = /^#(doubts|ideas|clubs)(?:\/([\w-]+))?$/.exec(location.hash);
 if (deep) state.tab = deep[1];
 // Show board immediately — Firebase will fill it in once connected
 state.loaded = true;
+// First-time campus pick
+if (CAMPUSES.length > 0 && !getCampus() && !deep) state.mode = "campus";
 render();
 (async () => {
   const conf = CFG.firebase || {};
@@ -1366,7 +1462,7 @@ render();
 
 // Service worker
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js?v=35').catch(() => {});
+  navigator.serviceWorker.register('./sw.js?v=36').catch(() => {});
 }
 
 // Keyboard shortcuts

@@ -661,3 +661,89 @@ h1 span {
 
 /* keyboard shortcut hint */
 .kb-hint { font-size: .78rem; color: var(--muted); margin-top: 8px; }
+
+/* ============================================================
+   Department tabs + compact subject grid (v36)
+   ============================================================ */
+.dept-tabs {
+  display: flex; gap: 4px; flex-wrap: wrap; padding: 4px 0 8px;
+  border-bottom: 1px solid var(--line); margin-bottom: 8px;
+}
+.dept-tab {
+  padding: 3px 10px; border-radius: 14px; font-size: 12px; font-weight: 700;
+  border: 1px solid var(--line); background: var(--paper); color: var(--muted);
+  cursor: pointer; transition: background .15s, color .15s;
+}
+.dept-tab.active, .dept-tab:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+.subj-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px;
+}
+.subj-chip {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 5px 8px; border-radius: 10px; font-size: 12px; font-weight: 600;
+  border: 1px solid var(--line); background: var(--paper); color: var(--ink);
+  cursor: pointer; transition: background .15s, box-shadow .15s; text-align: left;
+}
+.subj-chip.active { background: var(--c-soft, var(--accent-soft)); color: var(--c-ink, var(--accent)); border-color: var(--c, var(--accent)); box-shadow: 0 0 0 1px var(--c, var(--accent)); }
+.subj-chip:hover:not(.active) { background: var(--accent-soft); }
+.subj-chip .n { font-size: 11px; color: var(--muted); margin-left: 4px; flex-shrink: 0; }
+
+/* ============================================================
+   Campus bar + chips (v36)
+   ============================================================ */
+.campus-bar {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  padding: 6px 0 4px; border-bottom: 1px solid var(--line); margin-bottom: 4px;
+}
+.campus-bar:not([hidden]) { display: flex; }
+.campus-label { font-size: 12px; font-weight: 700; color: var(--muted); flex-shrink: 0; }
+.campus-chip {
+  padding: 3px 12px; border-radius: 16px; font-size: 12px; font-weight: 700;
+  border: 1px solid var(--line); background: var(--paper); color: var(--ink);
+  cursor: pointer; transition: background .15s, color .15s;
+}
+.campus-chip.active { background: var(--cc, var(--accent)); color: #fff; border-color: var(--cc, var(--accent)); }
+.campus-chip.my { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+.campus-chip:hover:not(.active) { background: var(--accent-soft); color: var(--accent); }
+
+.campus-badge {
+  display: inline-flex; align-items: center;
+  padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 800;
+  background: color-mix(in oklab, var(--cc, var(--accent)) 18%, var(--sheet));
+  color: var(--cc, var(--accent)); border: 1px solid color-mix(in oklab, var(--cc, var(--accent)) 35%, transparent);
+  letter-spacing: .03em;
+}
+
+/* ============================================================
+   Bounty pill (v36)
+   ============================================================ */
+.pill.bounty { background: linear-gradient(90deg, #f59e0b, #ef4444); color: #fff; }
+
+/* ============================================================
+   Trending inline (v36)
+   ============================================================ */
+.trending-inline {
+  font-size: 12px; font-weight: 700; color: var(--accent);
+  padding: 4px 0 2px; letter-spacing: .02em;
+}
+.trending-inline:not([hidden]) { display: block; }
+
+/* ============================================================
+   Campus picker screen (v36)
+   ============================================================ */
+.campus-picker-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px; margin: 16px 0;
+}
+.campus-pick-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 20px 12px; border-radius: 18px; border: 2px solid var(--cc, var(--accent));
+  background: color-mix(in oklab, var(--cc, var(--accent)) 10%, var(--sheet));
+  cursor: pointer; transition: transform .15s, box-shadow .15s;
+  font-family: var(--f-body);
+}
+.campus-pick-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 24px color-mix(in oklab, var(--cc, var(--accent)) 35%, transparent); }
+.campus-pick-icon { font-size: 28px; line-height: 1; }
+.campus-pick-name { font: 800 1.1rem/1 var(--f-display); color: var(--cc, var(--accent)); }
+.campus-pick-sub { font-size: 11px; color: var(--muted); }

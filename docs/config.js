@@ -26,7 +26,7 @@ window.DOUBT_DESK_CONFIG = {
     "Great engineers ask the questions others skip.",
   ],
 
-  campuses: [],
+  campuses: ["NUZVID", "ONGOLE"],
 
   // Clubs shown in the Clubs tab. Add or rename clubs here.
   clubs: [
