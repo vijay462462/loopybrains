@@ -577,3 +577,14 @@ h1 span {
   .heat-cell.hot { animation: none; }
   .rival-bar { transition: none; }
 }
+
+/* ============================================================
+   Class-code gate — centred in the list column
+   ============================================================ */
+.gate-card {
+  max-width: 400px; margin: 48px auto; padding: 32px 28px;
+  background: var(--paper); border: 1px solid var(--line); border-radius: 18px;
+  box-shadow: 0 4px 24px color-mix(in oklab, var(--accent) 12%, transparent);
+  animation: slideUp .3s ease both;
+}
+.gate-card h2 { margin: 0 0 20px; font-size: 1.3rem; }

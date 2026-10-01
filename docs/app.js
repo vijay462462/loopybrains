@@ -253,8 +253,10 @@ function renderGate(err) {
     msg,
     el("p", { class: "hint" }, "Ask your class representative or teacher for the code. It is saved on this phone, so you only enter it once."),
     el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "submit" }, "Join class")));
-  $("sheet").replaceChildren(el("h2", {}, "🔐 Enter your class code"), form);
-  $("list").replaceChildren(el("div", { class: "empty" }, el("strong", {}, "This board is private"), "Only students with the class code can see and post doubts."));
+  // Show gate in the centre list column so it is visible on all screen sizes
+  $("list").replaceChildren(el("div", { class: "gate-card" },
+    el("h2", {}, "🔐 Enter your class code"), form));
+  $("sheet").replaceChildren();
   $("rail").replaceChildren();
   ["askBtn", "quizBtn", "leadersBtn", "nameBtn", "networkBtn"].forEach(id => { $(id).hidden = true; });
   setTimeout(() => form.elements.code.focus(), 0);
