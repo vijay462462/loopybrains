@@ -97,5 +97,5 @@ window.DOUBT_DESK_CONFIG = {
   },
 
   // Categories shown in the Ideas tab.
-  ideaCategories: ["Project", "Startup", "Research", "Campus life", "Social impact", "Other"],
+  ideaCategories: ["Mini Project", "Major Project", "Startup", "Research", "Campus life", "Social impact", "Other"],
 };

@@ -896,6 +896,36 @@ h1 span {
 .file-dl-btn { font: 700 .75rem var(--f-body); color: var(--accent); white-space: nowrap; flex-shrink: 0; }
 
 /* ============================================================
+   YouTube auto-cards (v43)
+   ============================================================ */
+.yt-cards { display: flex; flex-wrap: wrap; gap: 10px; margin: 8px 0; }
+.yt-card {
+  display: flex; flex-direction: column;
+  border-radius: 12px; overflow: hidden;
+  border: 1.5px solid var(--border);
+  text-decoration: none; color: var(--text);
+  background: var(--sheet);
+  max-width: 280px; width: 100%;
+  transition: transform .15s, box-shadow .15s;
+}
+.yt-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.15); }
+.yt-thumb-wrap { position: relative; width: 100%; aspect-ratio: 16/9; background: #000; overflow: hidden; }
+.yt-thumb { width: 100%; height: 100%; object-fit: cover; display: block; }
+.yt-play-btn {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 2rem; color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,.7);
+  background: rgba(0,0,0,.25);
+  opacity: 0; transition: opacity .15s;
+}
+.yt-card:hover .yt-play-btn { opacity: 1; }
+.yt-label {
+  padding: 8px 10px; font: 600 .78rem var(--f-body);
+  color: #cc0000; background: color-mix(in oklab, #ff0000 8%, var(--sheet));
+  border-top: 1px solid var(--border);
+}
+.dark .yt-label, [data-theme="dark"] .yt-label { color: #ff6b6b; }
+
+/* ============================================================
    Syllabus panel (v40)
    ============================================================ */
 .syl-branch { margin-bottom: 16px; }

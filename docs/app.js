@@ -46,6 +46,13 @@ const TABS = {
     placeholder: "e.g. Looking for teammates for a robotics project",
     bodyHint: "Details, what help you need, who can join.",
   },
+  gate: {
+    coll: "gate", field: "subject", groups: SUBJECTS, groupLabel: "Subjects", noun: "discussion",
+    ask: "Post GATE discussion", tagline: "GATE PYQs, shortcuts, concepts and exam alerts — shared across all RGUKT campuses.",
+    replyNoun: "reply", replyLabel: "Your reply", replyBtn: "Post reply",
+    placeholder: "e.g. GATE EC 2023 — Z-transform question (Session 1, Q14)",
+    bodyHint: "Full question, approach, shortcut trick, or exam alert.",
+  },
 };
 
 // ---------- campus ----------
@@ -68,7 +75,7 @@ const DEPT_MAP = {
 
 const state = {
   tab: "doubts", group: "All", query: "", filter: "all",
-  doubts: [], ideas: [], clubs: [], replies: [], likes: [], loaded: false,
+  doubts: [], ideas: [], clubs: [], gate: [], replies: [], likes: [], loaded: false,
   selected: null, mode: "intro", // intro | view | ask | edit | name | campus
   afterName: null,
   replyPages: [], replyAnon: false,
@@ -456,6 +463,31 @@ function renderFileAttachments(files) {
   );
 }
 
+// YouTube auto-card: detect YouTube links in post/reply body and render thumbnail cards
+function extractYtIds(text) {
+  if (!text) return [];
+  const re = /(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:[^&\s]*&)*v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/g;
+  const ids = []; let m;
+  while ((m = re.exec(text)) !== null) ids.push(m[1]);
+  return [...new Set(ids)];
+}
+function renderYtCards(text) {
+  const ids = extractYtIds(text);
+  if (!ids.length) return null;
+  return el("div", { class: "yt-cards" },
+    ...ids.map(id => el("a", {
+      href: "https://www.youtube.com/watch?v=" + id,
+      target: "_blank", rel: "noopener noreferrer", class: "yt-card"
+    },
+      el("div", { class: "yt-thumb-wrap" },
+        el("img", { src: "https://img.youtube.com/vi/" + id + "/mqdefault.jpg", alt: "YouTube video", class: "yt-thumb", loading: "lazy" }),
+        el("div", { class: "yt-play-btn" }, "▶")
+      ),
+      el("span", { class: "yt-label" }, "▶ Watch on YouTube")
+    ))
+  );
+}
+
 function openViewer(ids, start) {
   let i = start;
   const img = el("img", { alt: "" });
@@ -599,10 +631,10 @@ function trackNew(coll, rows) {
 // ---------- bottom navigation ----------
 function renderBottomNav() {
   const nav = $('bottomNav'); if (!nav) return;
-  const icons = { doubts: '❓', ideas: '💡', clubs: '🏛' };
-  const labels = { doubts: 'Doubts', ideas: 'Ideas', clubs: 'Clubs' };
+  const icons = { doubts: '❓', ideas: '💡', clubs: '🏛', gate: '🎯' };
+  const labels = { doubts: 'Doubts', ideas: 'Ideas', clubs: 'Clubs', gate: 'GATE' };
   nav.replaceChildren(
-    ...['doubts', 'ideas', 'clubs'].map(tab => {
+    ...['doubts', 'ideas', 'clubs', 'gate'].map(tab => {
       const cnt = state[TABS[tab].coll].length;
       return el('button', { type: 'button', class: 'bnav-btn' + (state.tab === tab ? ' active' : ''), onclick: () => {
         if (state.tab === tab) return;
@@ -689,10 +721,12 @@ function renderHeader() {
     if (trEl) { trEl.hidden = !tr; if (tr) trEl.textContent = "📈 Trending now: " + tr; }
   }
   $("quizBtn").classList.toggle("dot", !!(store && state.loaded && QUIZ.length && !myQuizAnswer(dayNum())));
-  $("search").placeholder = state.tab === "doubts" ? "Search doubts" : "Search ideas";
+  $("search").placeholder = state.tab === "doubts" ? "Search doubts" : state.tab === "gate" ? "Search GATE discussions" : "Search ideas";
   $("rail").setAttribute("aria-label", t.groupLabel);
   const opts = state.tab === "doubts"
     ? [["all","Newest"],["asked","Most asked"],["open","Unanswered"],["mine","My posts"],["mentor","Needs mentor"],["done","Resolved"],["bounty","🎁 Bounty"]]
+    : state.tab === "gate"
+    ? [["all","Newest"],["mine","My posts"]]
     : [["all", "Newest"], ["top", "Most liked"]];
   const f = $("filter");
   if (f.dataset.tab !== state.tab) {
@@ -707,14 +741,14 @@ function renderRail() {
   for (const d of rows) counts[d[t.field]] = (counts[d[t.field]] || 0) + 1;
   const extra = Object.keys(counts).filter(s => !t.groups.includes(s));
 
-  const deptTabs = state.tab === "doubts" ? el("div", { class: "dept-tabs" },
+  const deptTabs = (state.tab === "doubts" || state.tab === "gate") ? el("div", { class: "dept-tabs" },
     ...["All", ...Object.keys(DEPT_MAP)].map(d => el("button", {
       type: "button", class: "dept-tab" + (state.dept === d ? " active" : ""),
       onclick: () => { state.dept = d; state.group = "All"; render(); },
     }, d))
   ) : null;
 
-  const visibleSubjects = state.tab === "doubts" && state.dept !== "All"
+  const visibleSubjects = (state.tab === "doubts" || state.tab === "gate") && state.dept !== "All"
     ? ["All", ...DEPT_MAP[state.dept].filter(s => t.groups.includes(s)), ...extra]
     : ["All", ...t.groups, ...extra];
 
@@ -738,7 +772,7 @@ function visible() {
   if (state.tab === "doubts" && (state.filter === "open" || state.filter === "done")) rows = rows.filter(d => (state.filter === "done") === !!d.resolvedReplyId);
   if (state.tab === "doubts" && state.filter === "mentor") rows = rows.filter(needsMentor);
   if (state.tab === "doubts" && state.filter === "bounty") rows = rows.filter(d => d.bounty && !d.resolvedReplyId);
-  if (state.tab === "doubts" && state.filter === "mine") rows = rows.filter(d => store && d.authorId === store.uid);
+  if ((state.tab === "doubts" || state.tab === "gate") && state.filter === "mine") rows = rows.filter(d => store && d.authorId === store.uid);
   rows.sort((a, b) => b.createdAt - a.createdAt);
   if (state.filter === "top" || state.filter === "asked") rows.sort((a, b) => likesFor(b.id).length - likesFor(a.id).length);
   else if (state.tab === "doubts") rows.sort((a, b) => (isUrgent(b) - isUrgent(a)) || (b.bounty ? 1 : 0) - (a.bounty ? 1 : 0) || (b.createdAt - a.createdAt));
@@ -758,10 +792,10 @@ function openItem(id) {
 function renderList() {
   const t = TABS[state.tab], rows = visible(), all = state[t.coll];
   if (!rows.length) {
-    const noun = state.tab === "doubts" ? "subject" : state.tab === "clubs" ? "club" : "category";
+    const noun = state.tab === "doubts" || state.tab === "gate" ? "subject" : state.tab === "clubs" ? "club" : "category";
     $("list").replaceChildren(all.length
       ? el("div", { class: "empty" }, el("strong", {}, "Nothing matches"), "Try another " + noun + " or clear the search.")
-      : el("div", { class: "empty" }, el("strong", {}, state.tab === "doubts" ? "No doubts yet" : state.tab === "clubs" ? "No club posts yet" : "No ideas yet"), "Press \u201c" + t.ask + "\u201d to post the first one."));
+      : el("div", { class: "empty" }, el("strong", {}, state.tab === "doubts" ? "No doubts yet" : state.tab === "clubs" ? "No club posts yet" : state.tab === "gate" ? "No GATE discussions yet" : "No ideas yet"), "Press \u201c" + t.ask + "\u201d to post the first one."));
     return;
   }
   const spot = spotlight();
@@ -927,7 +961,7 @@ function allStats() {
     }
   }
     // Night Owl: any post created between midnight and 5am
-  const allUserPosts = [...state.doubts, ...state.ideas, ...state.clubs, ...state.replies];
+  const allUserPosts = [...state.doubts, ...state.ideas, ...state.clubs, ...state.gate, ...state.replies];
   for (const x of allUserPosts) {
     if (!x.authorId || x.anonymous) continue;
     const h = new Date(x.createdAt || 0).getHours();
@@ -975,7 +1009,7 @@ const TITLES = [[50, "Legend"], [25, "Mentor"], [10, "Helper"], [0, "Rising star
 const titleOf = (pts) => TITLES.find(([min]) => pts >= min)[1];
 
 function renderNetwork() {
-  const allPosts = [...state.doubts, ...state.ideas, ...state.clubs];
+  const allPosts = [...state.doubts, ...state.ideas, ...state.clubs, ...state.gate];
   const totalPosts = allPosts.length;
   const totalMembers = new Set(allPosts.filter(p => !p.anonymous).map(p => p.authorId)).size;
   return [
@@ -2224,8 +2258,8 @@ function renderExams() {
 function renderIntro() {
   const t = TABS[state.tab];
   // Live stats
-  const totalPosts = state.doubts.length + state.ideas.length + state.clubs.length;
-  const students = new Set([...state.doubts, ...state.ideas, ...state.clubs].filter(p => !p.anonymous).map(p => p.authorId)).size;
+  const totalPosts = state.doubts.length + state.ideas.length + state.clubs.length + state.gate.length;
+  const students = new Set([...state.doubts, ...state.ideas, ...state.clubs, ...state.gate].filter(p => !p.anonymous).map(p => p.authorId)).size;
   const resolved = state.doubts.filter(d => d.resolvedReplyId).length;
   const open = state.doubts.length - resolved;
   const statsRow = totalPosts > 0 ? el("div", { class: "intro-stats" },
@@ -2368,7 +2402,7 @@ function renderView() {
       el("span", { class: "author-row" }, d.anonymous ? avatarEl("👤") : avatarEl(mine(d) ? getAvatar() : avatarFor(d.authorName || "")), "By " + who(d) + " · " + ago(d.createdAt))),
     el("h2", {}, d.title),
   ];
-  if (d.body) out.push(el("p", { class: "body" }, d.body));
+  if (d.body) { out.push(el("p", { class: "body" }, d.body)); const yc = renderYtCards(d.body); if (yc) out.push(yc); }
   if (d.pages && d.pages.length) out.push(pagesView(d.pages));
   if (d.fileAttachments && d.fileAttachments.length) out.push(renderFileAttachments(d.fileAttachments));
   const actions = [];
@@ -2410,6 +2444,7 @@ function renderView() {
     list.append(el("div", { class: "ans" + (best ? " best" : "") + (isMentor(r) ? " mentor" : "") },
       el("div", { class: "who" }, r.anonymous ? avatarEl("👤") : avatarEl(mine(r) ? getAvatar() : avatarFor(r.authorName || "")), el("strong", {}, who(r)), isMentor(r) && el("span", { class: "pill mentor" }, "🎓 " + MENTORS.get(r.authorId)), el("span", {}, ago(r.createdAt)), best && el("span", { class: "pill done" }, "Helped"), ...tools, reportButton("replies", r)),
       r.body && r.body !== PAGE_ONLY && el("p", { class: "body" }, r.body),
+      r.body && r.body !== PAGE_ONLY && renderYtCards(r.body),
       r.pages && r.pages.length ? pagesView(r.pages) : null,
       r.fileAttachments && r.fileAttachments.length ? renderFileAttachments(r.fileAttachments) : null,
       reactionBar(r)));
@@ -2602,6 +2637,7 @@ render();
   store.subscribe("replies", rows => { state.replies = live(rows); update(); }, onErr);
   store.subscribe("likes", rows => { state.likes = rows; update(); }, onErr);
   store.subscribe("clubs", rows => { const live_ = live(rows); trackNew("clubs", live_); state.clubs = live_; update(); }, e => {});
+  store.subscribe("gate", rows => { const live_ = live(rows); trackNew("gate", live_); state.gate = live_; update(); }, e => {});
 })();
 
 // ---------- PWA, keyboard shortcuts, offline, FAB ----------
