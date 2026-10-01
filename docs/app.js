@@ -359,7 +359,9 @@ function renderHeader() {
   document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === state.tab)));
   $("tagline").textContent = MOTTO;
   $("askBtn").textContent = t.ask;
-  $("nameBtn").textContent = getName() ? "You: " + getName() : "Set your name";
+  const me = store && state.loaded ? allStats().get(store.uid) : null;
+  $("nameBtn").textContent = getName() ? "👤 " + getName() + (me ? " · Lv " + me.level.n + (me.streak ? " · 🔥" + me.streak : "") : "") : "Set your name";
+  $("quizBtn").classList.toggle("dot", !!(store && state.loaded && QUIZ.length && !myQuizAnswer(dayNum())));
   $("search").placeholder = state.tab === "doubts" ? "Search doubts" : "Search ideas";
   $("rail").setAttribute("aria-label", t.groupLabel);
   const opts = state.tab === "doubts"
@@ -452,44 +454,203 @@ function spotlight() {
 
 // ---------- leaderboard ----------
 const plural = (n, w) => n + " " + w + (n === 1 ? "" : "s");
-const TITLES = [[50, "Legend"], [25, "Mentor"], [10, "Helper"], [0, "Rising star"]];
-function leaderboard() {
+
+// ---------- daily quiz ----------
+const QUIZ = window.DOUBT_DESK_QUIZ || [];
+const dayNum = (t = Date.now()) => { const d = new Date(t); return Math.floor((d.getTime() - d.getTimezoneOffset() * 60000) / 86400000); };
+const quizFor = (day) => QUIZ.length ? QUIZ[((day % QUIZ.length) + QUIZ.length) % QUIZ.length] : null;
+// Quiz answers are stored as likes with ideaId "quiz~<day>~<option>"; a student's first answer counts.
+function quizAnswers(day) {
+  const first = new Map();
+  for (const l of state.likes) {
+    const m = /^quiz~(\d+)~(\d)$/.exec(l.ideaId || "");
+    if (!m || +m[1] !== day) continue;
+    const prev = first.get(l.uid);
+    if (!prev || (l.createdAt || 0) < (prev.createdAt || 0)) first.set(l.uid, { ...l, opt: +m[2] });
+  }
+  return first;
+}
+const myQuizAnswer = (day) => store ? quizAnswers(day).get(store.uid) : null;
+async function answerQuiz(day, opt) {
+  if (!store || myQuizAnswer(day)) return;
+  const q = quizFor(day);
+  const id = "quiz~" + day + "~" + opt + "_" + store.uid;
+  const doc = { ideaId: "quiz~" + day + "~" + opt, uid: store.uid, name: getName() || "A student", createdAt: Date.now() };
+  state.likes = [...state.likes, { id, ...doc }];
+  render();
+  if (q && q.a === opt) celebrate();
+  try { await store.set("likes", id, doc); }
+  catch (e) { state.likes = state.likes.filter(l => l.id !== id); render(); showNotice(errText(e)); }
+}
+function renderQuiz() {
+  const day = dayNum(), q = quizFor(day);
+  if (!q) return [el("h2", {}, "🧠 Daily Quiz"), el("p", { class: "hint" }, "No quiz questions yet.")];
+  const answers = quizAnswers(day), mine = myQuizAnswer(day), total = answers.size;
+  const counts = q.o.map((_, i) => [...answers.values()].filter(a => a.opt === i).length);
+  const correctCount = counts[q.a];
+  const opts = el("div", { class: "quiz-opts" }, q.o.map((text, i) => {
+    if (!mine) return el("button", { type: "button", class: "quiz-opt", onclick: () => answerQuiz(day, i) }, el("b", {}, "ABCD"[i]), text);
+    const pct = total ? Math.round(counts[i] * 100 / total) : 0;
+    const cls = "quiz-opt done" + (i === q.a ? " right" : "") + (i === mine.opt && i !== q.a ? " wrong" : "");
+    return el("div", { class: cls, style: "--pct:" + pct + "%" }, el("b", {}, "ABCD"[i]), el("span", {}, text), el("span", { class: "pct" }, pct + "%"));
+  }));
+  const out = [
+    el("div", { class: "meta" }, el("span", { class: "tag", ...colorAttrs(q.s, "doubts") }, q.s), el("span", {}, "Question " + ((day % QUIZ.length) + 1) + " of " + QUIZ.length + " · new question every day")),
+    el("h2", {}, "🧠 " + q.q),
+    opts,
+  ];
+  if (mine) {
+    out.push(el("p", { class: "quiz-result " + (mine.opt === q.a ? "right" : "wrong") }, mine.opt === q.a ? "✅ Correct! +3 points." : "❌ Not quite. The answer is " + "ABCD"[q.a] + "."));
+    out.push(el("p", { class: "body" }, "💡 " + q.e));
+    out.push(el("p", { class: "hint" }, total + (total === 1 ? " classmate has" : " classmates have") + " answered today. " + (total ? Math.round(correctCount * 100 / total) + "% got it right." : "")));
+  } else out.push(el("p", { class: "hint" }, "Pick one answer. You get one try; a correct answer earns +3 points and keeps your streak going."));
+  const y = quizFor(day - 1), ya = myQuizAnswer(day - 1);
+  if (y) out.push(el("details", { class: "quiz-y" }, el("summary", {}, "Yesterday's question"),
+    el("p", { class: "body" }, y.q + "\nAnswer: " + "ABCD"[y.a] + ". " + y.o[y.a] + (ya ? (ya.opt === y.a ? "  ✅ you got it" : "  ❌ you picked " + "ABCD"[ya.opt]) : "") + "\n💡 " + y.e)));
+  out.push(el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")));
+  return out;
+}
+
+// ---------- reactions on answers ----------
+const REACTIONS = [["up", "👍", "Helpful"], ["idea", "💡", "Clever"], ["fire", "🔥", "Excellent"]];
+const reactKey = (replyId, k) => "r~" + replyId + "~" + k;
+async function toggleReaction(r, k) {
+  if (!store) return;
+  const key = reactKey(r.id, k), id = key + "_" + store.uid;
+  const on = state.likes.some(l => l.id === id);
+  const before = state.likes;
+  state.likes = on ? state.likes.filter(l => l.id !== id) : [...state.likes, { id, ideaId: key, uid: store.uid, createdAt: Date.now() }];
+  render();
+  try { on ? await store.remove("likes", id) : await store.set("likes", id, { ideaId: key, uid: store.uid, createdAt: Date.now() }); }
+  catch (e) { state.likes = before; render(); showNotice(errText(e)); }
+}
+function reactionBar(r) {
+  return el("div", { class: "reacts" }, REACTIONS.map(([k, icon, label]) => {
+    const list = likesFor(reactKey(r.id, k));
+    const on = store && list.some(l => l.uid === store.uid);
+    return el("button", { type: "button", class: "react", "aria-pressed": String(!!on), title: label, "aria-label": label + " (" + list.length + ")", onclick: () => toggleReaction(r, k) }, icon + (list.length ? " " + list.length : ""));
+  }));
+}
+
+// ---------- points, streaks, badges ----------
+// Everything is worked out from the shared posts, so it is the same for every student.
+function allStats() {
   const people = new Map();
-  const add = (x, pts, key) => {
-    if (!x || x.anonymous || !x.authorId || x.authorName === ANON) return;
-    const p = people.get(x.authorId) || { name: x.authorName || "A student", points: 0, answers: 0, helpful: 0, ideas: 0, likes: 0, last: 0 };
-    if (x.createdAt >= p.last) { p.name = x.authorName || p.name; p.last = x.createdAt || 0; }
-    p.points += pts; if (key) p[key] += 1;
-    people.set(x.authorId, p);
+  const get = (id, name, t) => {
+    if (!id) return null;
+    const p = people.get(id) || { id, name: "", nameAt: -1, points: 0, answers: 0, helpful: 0, ideas: 0, asked: 0, likes: 0, reacts: 0, quizRight: 0, quizDone: 0, days: new Set() };
+    if (name && name !== ANON && (t || 0) >= p.nameAt) { p.name = name; p.nameAt = t || 0; }
+    people.set(id, p);
+    return p;
   };
+  const active = (id, t) => { const p = get(id); if (p && t) p.days.add(dayNum(t)); };
   const helpfulIds = new Set(state.doubts.map(d => d.resolvedReplyId).filter(Boolean));
+  const replyAuthor = new Map(state.replies.map(r => [r.id, r]));
+  for (const d of state.doubts) { active(d.authorId, d.createdAt); if (d.anonymous) continue; const p = get(d.authorId, d.authorName, d.createdAt); p.asked++; p.points += 1; }
+  for (const i of state.ideas) {
+    active(i.authorId, i.createdAt); if (i.anonymous) continue;
+    const p = get(i.authorId, i.authorName, i.createdAt); p.ideas++; p.points += 2;
+    for (const l of likesFor(i.id)) if (l.uid !== i.authorId) { p.likes++; p.points += 1; }
+  }
   for (const r of state.replies) {
-    if (r.parentColl !== "doubts") { add(r, 1); continue; }
+    active(r.authorId, r.createdAt); if (r.anonymous) continue;
+    const p = get(r.authorId, r.authorName, r.createdAt);
+    if (r.parentColl !== "doubts") { p.points += 1; continue; }
     const parent = state.doubts.find(d => d.id === r.parentId);
     if (parent && parent.authorId === r.authorId) continue; // replying to your own doubt earns nothing
-    add(r, 2, "answers");
-    if (helpfulIds.has(r.id)) add(r, 5, "helpful");
+    p.answers++; p.points += 2;
+    if (helpfulIds.has(r.id)) { p.helpful++; p.points += 5; }
   }
-  for (const i of state.ideas) { add(i, 2, "ideas"); for (const l of likesFor(i.id)) if (l.uid !== i.authorId) add(i, 1, "likes"); }
-  for (const d of state.doubts) add(d, 1);
-  return [...people.entries()].map(([id, p]) => ({ id, ...p })).sort((a, b) => b.points - a.points).slice(0, 15);
+  for (const l of state.likes) {
+    active(l.uid, l.createdAt);
+    const m = /^r~(.+)~\w+$/.exec(l.ideaId || "");
+    if (m) { const r = replyAuthor.get(m[1]); if (r && !r.anonymous && r.authorId !== l.uid) { const p = get(r.authorId, r.authorName, r.createdAt); p.reacts++; p.points += 1; } }
+  }
+  const days = new Set(state.likes.map(l => /^quiz~(\d+)~/.exec(l.ideaId || "")).filter(Boolean).map(m => +m[1]));
+  for (const day of days) {
+    const q = quizFor(day);
+    for (const a of quizAnswers(day).values()) {
+      const p = get(a.uid, a.name, a.createdAt); p.quizDone++;
+      if (q && a.opt === q.a) { p.quizRight++; p.points += 3; }
+    }
+  }
+  for (const p of people.values()) { p.streak = streakOf(p.days); p.level = levelOf(p.points); if (!p.name) p.name = "A student"; }
+  return people;
 }
+function streakOf(days) {
+  let d = dayNum();
+  if (!days.has(d)) d -= 1; // the streak is still alive until today ends
+  let n = 0;
+  while (days.has(d)) { n++; d--; }
+  return n;
+}
+// Level n needs 5·n·(n−1)/2 points: 0, 5, 15, 30, 50, 75 …
+function levelOf(points) { let n = 1; while (points >= 5 * n * (n + 1) / 2) n++; return { n, from: 5 * n * (n - 1) / 2, to: 5 * n * (n + 1) / 2 }; }
+const BADGES = [
+  ["🌱", "First Step", "Post anything", p => p.asked + p.answers + p.ideas + p.quizDone > 0],
+  ["🤝", "First Answer", "Answer a classmate's doubt", p => p.answers >= 1],
+  ["🧩", "Problem Solver", "3 answers marked helpful", p => p.helpful >= 3],
+  ["💡", "Idea Machine", "Share 3 ideas", p => p.ideas >= 3],
+  ["🧠", "Quiz Whiz", "5 quiz answers right", p => p.quizRight >= 5],
+  ["❤️", "Crowd Favourite", "10 reactions or likes received", p => p.reacts + p.likes >= 10],
+  ["🔥", "On Fire", "3-day streak", p => p.streak >= 3],
+  ["🏆", "Legend", "Reach 50 points", p => p.points >= 50],
+];
+const TITLES = [[50, "Legend"], [25, "Mentor"], [10, "Helper"], [0, "Rising star"]];
+const titleOf = (pts) => TITLES.find(([min]) => pts >= min)[1];
+
 function renderLeaders() {
-  const rows = leaderboard();
+  const rows = [...allStats().values()].filter(p => p.points > 0).sort((a, b) => b.points - a.points).slice(0, 15);
   const medal = ["🥇", "🥈", "🥉"];
+  const meId = store && store.uid;
   const list = rows.length
-    ? el("ol", { class: "board" }, rows.map((p, i) => el("li", { class: p.id === (store && store.uid) ? "me" : null },
+    ? el("ol", { class: "board" }, rows.map((p, i) => el("li", { class: p.id === meId ? "me" : null },
         el("span", { class: "rank" }, medal[i] || String(i + 1)),
-        el("span", { class: "who" }, el("strong", {}, p.id === (store && store.uid) ? p.name + " (you)" : p.name),
-          el("small", {}, TITLES.find(([min]) => p.points >= min)[1] + " · " + plural(p.answers, "answer") + " · " + p.helpful + " helpful · " + plural(p.ideas, "idea"))),
+        el("span", { class: "who" }, el("strong", {}, (p.id === meId ? p.name + " (you)" : p.name) + " " + BADGES.filter(b => b[3](p)).map(b => b[0]).join("")),
+          el("small", {}, "Lv " + p.level.n + " " + titleOf(p.points) + " · " + plural(p.answers, "answer") + " · " + p.helpful + " helpful · " + p.quizRight + " quiz" + (p.streak > 1 ? " · 🔥" + p.streak + "-day streak" : ""))),
         el("span", { class: "pts" }, p.points + " pts"))))
-    : el("p", { class: "hint" }, "No points yet. Answer a doubt to get on the board.");
+    : el("p", { class: "hint" }, "No points yet. Answer a doubt or today's quiz to get on the board.");
   return [
     el("h2", {}, "🏆 Top Helpers"),
     list,
-    el("p", { class: "hint" }, "Points: answer a classmate's doubt +2 · answer marked helpful +5 more · share an idea +2 · each like on your idea +1 · ask a doubt +1. Anonymous posts don't count. Titles: Rising star, Helper (10), Mentor (25), Legend (50)."),
+    el("p", { class: "hint" }, "Points: answer a classmate's doubt +2 · answer marked helpful +5 more · each 👍💡🔥 on your answer +1 · daily quiz right +3 · share an idea +2 · each like on your idea +1 · ask a doubt +1. Anonymous posts don't count."),
     el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")),
   ];
+}
+
+function renderMe() {
+  const p = (store && allStats().get(store.uid)) || { name: getName(), points: 0, answers: 0, helpful: 0, ideas: 0, quizRight: 0, streak: 0, reacts: 0, likes: 0, asked: 0, quizDone: 0, level: levelOf(0) };
+  const lv = p.level, pct = Math.round((p.points - lv.from) * 100 / (lv.to - lv.from));
+  return [
+    el("h2", {}, (getName() || "You") + " · Level " + lv.n),
+    el("p", { class: "hint" }, titleOf(p.points) + " · " + plural(p.points, "point")),
+    el("div", { class: "xp", role: "progressbar", "aria-valuemin": "0", "aria-valuemax": "100", "aria-valuenow": String(pct), "aria-label": "Progress to next level" }, el("span", { style: "width:" + pct + "%" })),
+    el("p", { class: "hint" }, (lv.to - p.points) + (lv.to - p.points === 1 ? " more point" : " more points") + " to reach level " + (lv.n + 1) + "."),
+    el("div", { class: "stats" },
+      [["🔥", p.streak + "-day", "streak"], ["🤝", p.answers, "answers"], ["✅", p.helpful, "helpful"], ["🧠", p.quizRight, "quiz right"], ["💡", p.ideas, "ideas"], ["❤️", p.reacts + p.likes, "reactions"]]
+        .map(([i, v, l]) => el("div", { class: "stat" }, el("b", {}, i + " " + v), el("small", {}, l)))),
+    el("div", { class: "label" }, "Badges"),
+    el("div", { class: "badges" }, BADGES.map(([icon, name, how, test]) => el("div", { class: "badge" + (test(p) ? " got" : "") }, el("span", { class: "bicon" }, icon), el("b", {}, name), el("small", {}, how)))),
+    el("div", { class: "rowbtns" },
+      el("button", { class: "btn primary", type: "button", onclick: () => { state.mode = "quiz"; render(); } }, "🧠 Today's quiz"),
+      el("button", { class: "btn", type: "button", onclick: () => { state.afterName = "me"; state.mode = "name"; render(); } }, "Change name"),
+      el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")),
+  ];
+}
+
+// ---------- confetti ----------
+function celebrate() {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const c = el("canvas", { class: "confetti" }); document.body.append(c);
+  const W = c.width = innerWidth, H = c.height = innerHeight, x = c.getContext("2d");
+  const parts = Array.from({ length: 140 }, () => ({ x: W / 2, y: H * 0.35, vx: (Math.random() - 0.5) * 16, vy: Math.random() * -14 - 4, s: 5 + Math.random() * 6, r: Math.random() * 6, c: PALETTE[Math.floor(Math.random() * PALETTE.length)] }));
+  const t0 = performance.now();
+  const tick = (t) => {
+    x.clearRect(0, 0, W, H);
+    for (const p of parts) { p.vy += 0.45; p.x += p.vx; p.y += p.vy; p.r += 0.2; x.save(); x.translate(p.x, p.y); x.rotate(p.r); x.fillStyle = p.c; x.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); x.restore(); }
+    if (t - t0 < 1800) requestAnimationFrame(tick); else c.remove();
+  };
+  requestAnimationFrame(tick);
 }
 
 // ---------- exam countdown ----------
@@ -627,7 +788,7 @@ function renderView() {
   for (const r of reps) {
     const best = state.tab === "doubts" && d.resolvedReplyId === r.id;
     const tools = [];
-    if (own && state.tab === "doubts") tools.push(el("button", { class: "linkbtn", type: "button", onclick: () => store.update("doubts", d.id, { resolvedReplyId: best ? null : r.id }).catch(e => showNotice(errText(e))) }, best ? "Unmark" : "Mark as helpful"));
+    if (own && state.tab === "doubts") tools.push(el("button", { class: "linkbtn", type: "button", onclick: () => { if (!best) celebrate(); store.update("doubts", d.id, { resolvedReplyId: best ? null : r.id }).catch(e => showNotice(errText(e))); } }, best ? "Unmark" : "Mark as helpful"));
     if (mine(r) || own) tools.push(el("button", { class: "linkbtn danger", type: "button", onclick: (e) => confirmDelete(e.currentTarget, async () => {
       if (best) await store.update("doubts", d.id, { resolvedReplyId: null });
       await removePages(r.pages);
@@ -636,7 +797,8 @@ function renderView() {
     list.append(el("div", { class: "ans" + (best ? " best" : "") },
       el("div", { class: "who" }, el("strong", {}, who(r)), el("span", {}, ago(r.createdAt)), best && el("span", { class: "pill done" }, "Helped"), ...tools),
       r.body && r.body !== PAGE_ONLY && el("p", { class: "body" }, r.body),
-      r.pages && r.pages.length ? pagesView(r.pages) : null));
+      r.pages && r.pages.length ? pagesView(r.pages) : null,
+      reactionBar(r)));
   }
   out.push(list);
 
@@ -709,6 +871,8 @@ function render() {
   if (ca.style) sheet.setAttribute("style", ca.style); else sheet.removeAttribute("style");
   sheet.replaceChildren(...(
     state.mode === "leaders" ? renderLeaders() :
+    state.mode === "quiz" ? renderQuiz() :
+    state.mode === "me" ? renderMe() :
     state.mode === "name" ? renderName() :
     state.mode === "ask" ? renderAsk() :
     state.mode === "edit" && cur ? renderAsk(cur) :
@@ -725,8 +889,10 @@ document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click
   render();
 }));
 $("askBtn").addEventListener("click", openAsk);
-$("leadersBtn").addEventListener("click", () => { state.mode = "leaders"; render(); if (innerWidth <= 1000) $("sheet").scrollIntoView({ behavior: "smooth" }); });
-$("nameBtn").addEventListener("click", () => { state.afterName = null; state.mode = "name"; render(); if (innerWidth <= 1000) $("sheet").scrollIntoView({ behavior: "smooth" }); });
+const showPanel = (mode) => { state.mode = mode; render(); if (innerWidth <= 1000) $("sheet").scrollIntoView({ behavior: "smooth" }); };
+$("leadersBtn").addEventListener("click", () => showPanel("leaders"));
+$("quizBtn").addEventListener("click", () => showPanel("quiz"));
+$("nameBtn").addEventListener("click", () => { state.afterName = null; showPanel(getName() ? "me" : "name"); });
 $("search").addEventListener("input", (e) => { state.query = e.target.value; renderList(); });
 $("filter").addEventListener("change", (e) => { state.filter = e.target.value; renderList(); });
 

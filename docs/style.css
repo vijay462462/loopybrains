@@ -226,3 +226,35 @@ html.nb-open, html.nb-open body { overflow: hidden; }
 .checks { display: grid; gap: 6px; }
 .check { display: flex !important; align-items: center; gap: 8px; font-weight: 400 !important; font-size: 14px; }
 .form .check input { width: auto; }
+
+/* Daily quiz, reactions, profile, badges, confetti */
+.chip.dot { position: relative; }
+.chip.dot::after { content: ""; position: absolute; top: 2px; right: 2px; width: 10px; height: 10px; border-radius: 50%; background: #fde047; box-shadow: 0 0 0 2px var(--g2); }
+.quiz-opts { display: grid; gap: 8px; }
+.quiz-opt { position: relative; overflow: hidden; display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; align-items: center; gap: 10px; text-align: left; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); font-size: 15px; }
+button.quiz-opt:hover { border-color: var(--accent); background: var(--accent-soft); }
+.quiz-opt b { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-size: 13px; }
+.quiz-opt.done::before { content: ""; position: absolute; inset: 0 auto 0 0; width: var(--pct); background: color-mix(in oklab, var(--accent) 14%, transparent); z-index: 0; }
+.quiz-opt.done > * { position: relative; z-index: 1; }
+.quiz-opt.right { border-color: var(--ok); }
+.quiz-opt.right b { background: var(--ok); color: #fff; }
+.quiz-opt.wrong { border-color: var(--danger); }
+.quiz-opt.wrong b { background: var(--danger); color: #fff; }
+.quiz-opt .pct { font: 500 13px var(--f-mono); color: var(--muted); }
+.quiz-result { margin: 0; font-weight: 700; font-size: 1.05rem; }
+.quiz-result.right { color: var(--ok); }
+.quiz-result.wrong { color: var(--danger); }
+.quiz-y summary { cursor: pointer; color: var(--accent); font-weight: 700; }
+.reacts { display: flex; gap: 6px; flex-wrap: wrap; }
+.react { border: 1px solid var(--line); background: var(--sheet); border-radius: 999px; padding: 2px 10px; font-size: 14px; color: var(--muted); }
+.react[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 700; }
+.xp { height: 12px; border-radius: 999px; background: var(--accent-soft); overflow: hidden; }
+.xp span { display: block; height: 100%; background: var(--grad); border-radius: inherit; }
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.stat { display: grid; padding: 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); text-align: center; }
+.stat small, .badge small { color: var(--muted); font-size: 12px; }
+.badges { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+.badge { display: grid; justify-items: center; gap: 2px; padding: 10px 8px; border: 1px dashed var(--line); border-radius: 12px; text-align: center; opacity: .45; filter: grayscale(1); }
+.badge.got { opacity: 1; filter: none; border-style: solid; border-color: var(--accent); background: var(--accent-soft); }
+.bicon { font-size: 26px; }
+.confetti { position: fixed; inset: 0; z-index: 60; pointer-events: none; }
