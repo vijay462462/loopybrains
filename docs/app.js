@@ -81,6 +81,8 @@ const state = {
   replyPages: [], replyAnon: false,
   campusFilter: "all", // "all" | campus name
   dept: "All",         // "All" | "ECE" | "CSE" | "Civil" | "Mech" | "EEE"
+  yearFilter: "All",   // "All" | "E1" | "E2" | "E3" | "E4"
+  aiPanel: null,       // post id that has AI panel open
 };
 const ANON = "Anonymous";
 let store = null;
@@ -715,6 +717,20 @@ function renderHeader() {
         }, "⚙ " + myC) : null,
       ].filter(Boolean)
     );
+    // Year filter chips (only in doubts/gate)
+    const yearBar = $("yearBar");
+    if (yearBar) {
+      const showYear = state.tab === "doubts" || state.tab === "gate";
+      yearBar.hidden = !showYear;
+      if (showYear) yearBar.replaceChildren(
+        el("span", { class: "campus-label" }, "Batch:"),
+        ...["All", "E1", "E2", "E3", "E4"].map(y =>
+          el("button", { type: "button", class: "campus-chip" + (state.yearFilter === y ? " active" : ""),
+            onclick: () => { state.yearFilter = y; render(); }
+          }, y === "All" ? "All Years" : y)
+        )
+      );
+    }
     // Trending subject
     const tr = trendingSubject();
     const trEl = $("trending");
@@ -769,6 +785,7 @@ function visible() {
     (state.group === "All" || d[t.field] === state.group) &&
     (!q || ((d.title || "") + " " + (d.body || "")).toLowerCase().includes(q)));
   if (state.campusFilter !== "all") rows = rows.filter(d => d.campus === state.campusFilter);
+  if (state.yearFilter !== "All" && (state.tab === "doubts" || state.tab === "gate")) rows = rows.filter(d => d.year === state.yearFilter);
   if (state.tab === "doubts" && (state.filter === "open" || state.filter === "done")) rows = rows.filter(d => (state.filter === "done") === !!d.resolvedReplyId);
   if (state.tab === "doubts" && state.filter === "mentor") rows = rows.filter(needsMentor);
   if (state.tab === "doubts" && state.filter === "bounty") rows = rows.filter(d => d.bounty && !d.resolvedReplyId);
@@ -813,6 +830,7 @@ function renderList() {
       if (d.bounty && !d.resolvedReplyId) meta.push(el("span", { class: "pill bounty" }, "🎁 Bounty"));
       if (votes) meta.push(el("span", { class: "likes" }, "🙋 " + votes));
     } else meta.push(el("span", { class: "likes" }, "♥ " + votes));
+    if (d.year) meta.push(el("span", { class: "pill year-pill" }, d.year));
     if (d.campus && CAMPUSES.length > 0) meta.push(el("span", { class: "campus-badge", style: "--cc:" + campusColor(d.campus) }, d.campus));
     if (d.pages && d.pages.length) meta.push(el("span", {}, "📎 " + d.pages.length + (d.pages.length === 1 ? " page" : " pages")));
     if (d.fileAttachments && d.fileAttachments.length) meta.push(el("span", {}, "📁 " + d.fileAttachments.length + (d.fileAttachments.length === 1 ? " file" : " files")));
@@ -2338,7 +2356,11 @@ function renderAsk(existing) {
       }
       const id = store.newId(t.coll);
       const pageIds = newPages.map(u => { const pid = store.newId("pages"); pageCache.set(pid, u); return pid; });
+      const yearVal = form.elements.year ? form.elements.year.value : "";
+      const tagsVal = form.elements.tags ? form.elements.tags.value.trim().slice(0, 100) : "";
       const doc = { title: title.slice(0, 200), body: body.slice(0, 5000), [t.field]: group, authorId: store.uid, authorName: anonymous ? ANON : getName(), anonymous, urgent, createdAt: Date.now(), pages: pageIds, fileAttachments: readyFiles };
+      if (yearVal) doc.year = yearVal;
+      if (tagsVal) doc.tags = tagsVal;
       if (state.tab === "doubts") { doc.resolvedReplyId = null; doc.bounty = bounty; }
       const myC = getCampus(); if (myC) doc.campus = myC;
       // Show the new post straight away; the live update replaces it with the saved copy.
@@ -2358,6 +2380,13 @@ function renderAsk(existing) {
     el("div", { class: "two" },
       el("label", {}, state.tab === "doubts" ? "Your question" : "Your idea", el("input", { id: "f-title", name: "title", maxlength: "200", required: true, placeholder: t.placeholder })),
       el("label", {}, state.tab === "doubts" ? "Subject" : "Category", el("select", { id: "f-group", name: "group" }, groups.map(s => el("option", { selected: s === current }, s))))),
+    (state.tab === "doubts" || state.tab === "gate") && el("div", { class: "two" },
+      el("label", {}, "Your Batch Year",
+        el("select", { id: "f-year", name: "year" },
+          ["(Select year)", "E1", "E2", "E3", "E4"].map(y => el("option", { value: y === "(Select year)" ? "" : y, selected: !!(existing && existing.year === y) }, y))
+        )
+      ),
+      el("label", {}, "Tags (optional)", el("input", { id: "f-tags", name: "tags", maxlength: "100", placeholder: "e.g. mid-1, unit-2, tricky" }))),
     el("label", {}, "Details", el("textarea", { id: "f-body", name: "body", maxlength: "5000", placeholder: t.bodyHint })),
     existing && existing.pages && existing.pages.length ? el("p", { class: "hint" }, "This post already has " + existing.pages.length + " page(s). You can add up to " + Math.max(0, MAX_PAGES - existing.pages.length) + " more.") : null,
     attachPicker(newPages, existing ? MAX_PAGES - ((existing.pages || []).length) : MAX_PAGES),
@@ -2395,14 +2424,56 @@ function renderView() {
   const out = [
     el("div", { class: "meta" },
       el("span", { class: "tag", ...colorAttrs(g) }, g),
+      d.year && el("span", { class: "pill year-pill" }, d.year),
       state.tab === "doubts" && isUrgent(d) && el("span", { class: "pill urgent" }, "🔥 Urgent"),
       state.tab === "doubts" && el("span", { class: "pill " + (d.resolvedReplyId ? "done" : "open") }, d.resolvedReplyId ? "Resolved" : "Open"),
       state.tab === "doubts" && d.bounty && !d.resolvedReplyId && el("span", { class: "pill bounty" }, "🎁 Bounty"),
       d.campus && CAMPUSES.length > 0 && el("span", { class: "campus-badge", style: "--cc:" + campusColor(d.campus) }, d.campus),
       el("span", { class: "author-row" }, d.anonymous ? avatarEl("👤") : avatarEl(mine(d) ? getAvatar() : avatarFor(d.authorName || "")), "By " + who(d) + " · " + ago(d.createdAt))),
     el("h2", {}, d.title),
+    d.tags && el("div", { class: "post-tags" }, ...d.tags.split(",").map(tag => tag.trim()).filter(Boolean).map(tag => el("span", { class: "post-tag" }, "#" + tag))),
   ];
   if (d.body) { out.push(el("p", { class: "body" }, d.body)); const yc = renderYtCards(d.body); if (yc) out.push(yc); }
+  // AI Help panel
+  if (state.tab === "doubts" || state.tab === "gate") {
+    const aiOpen = state.aiPanel === d.id;
+    const q = encodeURIComponent((d.title || "") + (d.body ? "\n" + d.body : ""));
+    const subj = encodeURIComponent(learnTerm(d.subject || d[t.field] || ""));
+    const aiTools = [
+      { name: "Perplexity AI", icon: "🔍", desc: "Best for explanations", color: "#20b2aa",
+        url: "https://www.perplexity.ai/search?q=" + q },
+      { name: "Wolfram Alpha", icon: "∑", desc: "Math & engineering", color: "#e07b39",
+        url: "https://www.wolframalpha.com/input?i=" + q },
+      { name: "YouTube", icon: "▶", desc: "Video explanations", color: "#cc0000",
+        url: "https://www.youtube.com/results?search_query=" + encodeURIComponent((d.subject || "") + " " + (d.title || "")) },
+      { name: "NPTEL", icon: "🎓", desc: "IIT lecture notes", color: "#7c3aed",
+        url: "https://nptel.ac.in/courses/search?q=" + subj },
+      { name: "GeeksforGeeks", icon: "📄", desc: "Notes & code", color: "#2f8d46",
+        url: "https://www.geeksforgeeks.org/search/?q=" + encodeURIComponent(d.title || "") },
+      { name: "Google", icon: "G", desc: "Web search", color: "#4285f4",
+        url: "https://www.google.com/search?q=" + q },
+    ];
+    out.push(
+      el("div", { class: "ai-bar" },
+        el("button", { type: "button", class: "ai-toggle" + (aiOpen ? " open" : ""),
+          onclick: () => { state.aiPanel = aiOpen ? null : d.id; render(); }
+        }, "🤖 Ask AI", el("span", { class: "ai-arr" }, aiOpen ? "▲" : "▼")),
+        aiOpen && el("div", { class: "ai-panel" },
+          el("p", { class: "ai-hint" }, "Your question is pre-loaded. Tap any tool to get an instant explanation:"),
+          el("div", { class: "ai-tools" },
+            ...aiTools.map(tool => el("a", {
+              href: tool.url, target: "_blank", rel: "noopener noreferrer",
+              class: "ai-tool", style: "--tc:" + tool.color
+            },
+              el("span", { class: "ai-tool-icon" }, tool.icon),
+              el("span", { class: "ai-tool-name" }, tool.name),
+              el("span", { class: "ai-tool-desc" }, tool.desc)
+            ))
+          )
+        )
+      )
+    );
+  }
   if (d.pages && d.pages.length) out.push(pagesView(d.pages));
   if (d.fileAttachments && d.fileAttachments.length) out.push(renderFileAttachments(d.fileAttachments));
   const actions = [];
