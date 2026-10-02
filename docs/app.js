@@ -1151,7 +1151,7 @@ function renderLeaders() {
     el("p", { class: "hint" }, "Answer a classmate's doubt +2 · answer marked helpful +5 more · each 👍💡🔥 on your answer +1 · daily quiz right +3 · share an idea +2 · each like on your idea +1 · ask a doubt +1. Anonymous posts don't count."),
     rivalBoard && el("div", { class: "label" }, "🏫 Campus Rivalry — all 4 RGUKT campuses"),
     rivalBoard,
-    rivalBoard && el("p", { class: "hint" }, "Campus points — ask a doubt +1 · share an idea +2 · helpful answer +5 · post in clubs +1. Compete with other campuses!"),
+    rivalBoard && el("p", { class: "hint" }, "Campus points — ask a doubt +1 · share an idea +2 · helpful answer +5 · post in clubs +1. Compete with other campuses."),
     el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")),
   ].filter(Boolean);
 }
@@ -2274,7 +2274,7 @@ function renderResources() {
       const cls = "plan-item " + (exam.days <= 3 ? "plan-urgent" : exam.days <= 7 ? "plan-warn" : "plan-ok");
       return el("div", { class: cls },
         el("div", { class: "plan-name" }, "⏳ " + exam.name),
-        el("div", { class: "plan-days" }, exam.days === 0 ? "Today!" : exam.days + " days"),
+        el("div", { class: "plan-days" }, exam.days === 0 ? "Today" : exam.days + " days"),
         el("div", { class: "plan-tip" }, exam.days > 0
           ? "Cover ~" + perDay + " subject" + (perDay > 1 ? "s" : "") + " per day to finish in time"
           : "Focus on revision + solve PYQs today")
@@ -2648,7 +2648,7 @@ function openAsk() {
 let sheetKey = "";
 function renderCampusPicker() {
   return [
-    el("h2", {}, "🏫 Welcome to RGUKT Spark!"),
+    el("h2", {}, "🏫 Welcome to RGUKT Spark"),
     el("p", { class: "body" }, "Connect with students from all RGUKT campuses. Pick your campus to tag your posts — you'll still see doubts, ideas and clubs from everyone."),
     el("div", { class: "campus-picker-grid" },
       ...CAMPUSES.map(c => el("button", {
