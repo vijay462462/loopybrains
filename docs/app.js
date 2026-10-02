@@ -4,7 +4,8 @@
 const CFG = window.DOUBT_DESK_CONFIG || {};
 const SUBJECTS = (CFG.subjects && CFG.subjects.length) ? CFG.subjects : ["Maths", "Physics", "Chemistry", "Other"];
 const CATS = (CFG.ideaCategories && CFG.ideaCategories.length) ? CFG.ideaCategories : ["Project", "Other"];
-const CLUBS = (CFG.clubs && CFG.clubs.length) ? CFG.clubs : ["Coding Club", "Other"];
+const CLUBS = [...((CFG.clubs && CFG.clubs.length) ? CFG.clubs : ["Coding Club", "Other"])];
+if (!CLUBS.includes("Alumni")) CLUBS.push("Alumni");
 
 const PALETTE = ["#6366f1", "#0ea5e9", "#10b981", "#f59e0b", "#a855f7", "#ec4899", "#ef4444", "#14b8a6", "#84cc16", "#f97316", "#64748b"];
 const FB_VERSION = "10.12.2";
@@ -1865,6 +1866,170 @@ function renderLearn() {
   ];
 }
 
+
+// ---------- alumni connect ----------
+let alumniView = "dir", alumniBranch = "All", alumniQuery = "";
+const ALUMNI_GROUP = "Alumni";
+const ALUMNI_HELP = ["Career guidance", "Referrals", "Resume review", "Mock interviews", "GATE / M.Tech", "Study abroad", "Startups"];
+const LINKEDIN_RE = /^https:\/\/([a-z]{2,3}\.)?linkedin\.com\/[A-Za-z0-9_\-\/%.?=&]+$/i;
+const SAFE_URL_RE = /^https:\/\/[A-Za-z0-9.\-]+\.[A-Za-z]{2,}(\/[^\s<>"]*)?$/;
+function alumniKV(body) {
+  const m = {};
+  for (const line of String(body || "").split("\n")) { const i = line.indexOf(":"); if (i > 0) m[line.slice(0, i).trim().toLowerCase()] = line.slice(i + 1).trim(); }
+  return m;
+}
+function alumniPosts() { return state.clubs.filter(d => d.club === ALUMNI_GROUP && !d.deleted && !isHidden(d)); }
+const isAlumniProfile = (d) => (d.title || "").startsWith("🎓 ");
+const isAlumniJob = (d) => (d.title || "").startsWith("💼 ");
+function openAlumniPost(id) { state.tab = "clubs"; state.group = "All"; openItem(id); }
+function alumniGo(mode) { state.mode = mode; render(); if (innerWidth <= 1000) $("sheet").scrollIntoView({ behavior: "smooth" }); }
+
+function alumniProfileCard(d) {
+  const kv = alumniKV(d.body);
+  const name = d.title.replace(/^🎓\s*/, "").split(" — ")[0];
+  const pills = [kv.branch, kv.batch && "Batch " + kv.batch].filter(Boolean);
+  return el("div", { class: "learn-card" },
+    el("strong", {}, "🎓 " + name),
+    el("div", { class: "meta" }, ...pills.map(x => el("span", { class: "pill year-pill" }, x))),
+    kv.working && el("p", {}, "🏢 " + kv.working),
+    kv.location && el("p", { class: "hint" }, "📍 " + kv.location),
+    kv.help && el("p", { class: "hint" }, "🤝 Can help with: " + kv.help),
+    kv.about && el("p", { class: "hint" }, kv.about),
+    el("div", { class: "rowbtns" },
+      kv.linkedin && LINKEDIN_RE.test(kv.linkedin) && outLink(kv.linkedin, "🔗 LinkedIn", "linkbtn"),
+      el("button", { class: "btn sm primary", type: "button", onclick: () => openAlumniPost(d.id) }, mine(d) ? "Manage my profile" : "💬 View & message")));
+}
+function alumniJobCard(d) {
+  const kv = alumniKV(d.body);
+  return el("div", { class: "learn-card" },
+    el("strong", {}, d.title),
+    el("div", { class: "meta" }, kv.company && el("span", { class: "pill year-pill" }, kv.company), kv.location && el("span", { class: "pill year-pill" }, "📍 " + kv.location), kv.experience && el("span", { class: "pill year-pill" }, kv.experience)),
+    kv.details && el("p", { class: "hint" }, kv.details),
+    el("p", { class: "hint" }, "Posted by " + who(d) + " · " + ago(d.createdAt)),
+    el("div", { class: "rowbtns" },
+      kv.apply && SAFE_URL_RE.test(kv.apply) && outLink(kv.apply, "🔗 Apply / details", "linkbtn"),
+      el("button", { class: "btn sm", type: "button", onclick: () => openAlumniPost(d.id) }, mine(d) ? "Manage" : "💬 Ask about this")));
+}
+function renderAlumni() {
+  const leave = () => { state.mode = state.selected ? "view" : "intro"; render(); };
+  const all = alumniPosts();
+  const q = alumniQuery.trim().toLowerCase();
+  const profiles = all.filter(isAlumniProfile).filter(d => {
+    const kv = alumniKV(d.body);
+    return (alumniBranch === "All" || kv.branch === alumniBranch) && (!q || (d.title + " " + d.body).toLowerCase().includes(q));
+  });
+  const jobs = all.filter(isAlumniJob).filter(d => !q || (d.title + " " + d.body).toLowerCase().includes(q));
+  const questions = all.filter(d => !isAlumniProfile(d) && !isAlumniJob(d));
+  const tabBtn = (id, label) => el("button", { class: "btn sm" + (alumniView === id ? " primary" : ""), type: "button", onclick: () => { alumniView = id; render(); } }, label);
+  const out = [
+    el("h2", {}, "🎓 Alumni Connect"),
+    el("p", { class: "hint" }, "Meet RGUKT seniors who graduated and are now working, studying or building startups. Ask for guidance, referrals and advice. Profiles are shared by the alumni themselves, so check their LinkedIn before trusting any offer, and never pay anyone for a job."),
+    el("div", { class: "rowbtns" },
+      el("button", { class: "btn primary", type: "button", onclick: () => alumniGo(getName() ? "alumniJoin" : "name") }, "🎓 I'm an alumnus: join"),
+      el("button", { class: "btn", type: "button", onclick: () => alumniGo(getName() ? "alumniJob" : "name") }, "💼 Post a job / referral"),
+      el("button", { class: "btn", type: "button", onclick: () => { state.tab = "clubs"; state.group = ALUMNI_GROUP; openAsk(); } }, "❓ Ask alumni")),
+    el("div", { class: "rowbtns" }, tabBtn("dir", "👥 Directory (" + all.filter(isAlumniProfile).length + ")"), tabBtn("jobs", "💼 Jobs (" + all.filter(isAlumniJob).length + ")"), tabBtn("qa", "❓ Questions (" + questions.length + ")")),
+  ];
+  if (alumniView !== "qa") {
+    out.push(el("input", { type: "search", class: "alumni-search", placeholder: alumniView === "dir" ? "Search name, company, city…" : "Search jobs…", value: alumniQuery, "aria-label": "Search alumni",
+      oninput: (e) => { alumniQuery = e.target.value; const pos = e.target.selectionStart; render(); const n = document.querySelector(".alumni-search"); if (n) { n.focus(); n.setSelectionRange(pos, pos); } } }));
+  }
+  if (alumniView === "dir") {
+    out.push(el("div", { class: "rowbtns" }, ["All", ...Object.keys(CAREER)].map(b => el("button", { class: "btn sm" + (alumniBranch === b ? " primary" : ""), type: "button", onclick: () => { alumniBranch = b; render(); } }, b))));
+    out.push(...(profiles.length ? profiles.map(alumniProfileCard) : [el("div", { class: "empty" }, el("strong", {}, "No alumni profiles here yet"), "Are you an RGUKT alumnus? Tap “I'm an alumnus: join” and help your juniors.")]));
+  } else if (alumniView === "jobs") {
+    out.push(...(jobs.length ? jobs.map(alumniJobCard) : [el("div", { class: "empty" }, el("strong", {}, "No jobs or referrals yet"), "Alumni can post openings and referrals here for RGUKT students.")]));
+  } else {
+    out.push(...(questions.length ? questions.map(d => el("div", { class: "learn-card" }, el("strong", {}, d.title), el("p", { class: "hint" }, "By " + who(d) + " · " + ago(d.createdAt) + " · " + repliesFor(d.id).length + " replies"), el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: () => openAlumniPost(d.id) }, "Open")))) : [el("div", { class: "empty" }, el("strong", {}, "No questions yet"), "Tap “Ask alumni” to ask the first one.")]));
+  }
+  out.push(
+    el("div", { class: "label" }, "💬 How to message an alumnus"),
+    el("p", { class: "hint" }, "“Hello sir/madam, I'm [name], E[year] [branch] at RGUKT [campus]. I'm interested in [role/field] and saw you work at [company]. Could you spare 10 minutes to guide me on [specific question]? Thank you!” Keep it short, specific and polite."),
+    el("div", { class: "label" }, "🔎 Find more RGUKT alumni (free)"),
+    el("div", { class: "rowbtns" },
+      outLink("https://www.linkedin.com/search/results/people/?keywords=RGUKT", "LinkedIn: search RGUKT", "linkbtn"),
+      outLink("https://www.linkedin.com/search/results/groups/?keywords=RGUKT", "LinkedIn groups", "linkbtn"),
+      outLink("https://adplist.org", "ADPList free mentors", "linkbtn"),
+      outLink("https://www.rguktn.ac.in", "RGUKT Nuzvid", "linkbtn"),
+      outLink("https://www.rguktong.ac.in", "Ongole", "linkbtn"),
+      outLink("https://www.rguktrkv.ac.in", "RK Valley", "linkbtn"),
+      outLink("https://www.rguktsklm.ac.in", "Srikakulam", "linkbtn")),
+    el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: leave }, "Back")));
+  return out;
+}
+function alumniForm(kind) {
+  const isJob = kind === "job";
+  const err = el("p", { class: "err", hidden: true });
+  const cancel = () => { state.mode = "alumni"; render(); };
+  const branches = Object.keys(CAREER), thisYear = new Date().getFullYear();
+  const years = []; for (let y = thisYear + 1; y >= 2012; y--) years.push(String(y));
+  const form = el("form", { class: "form", onsubmit: async (e) => {
+    e.preventDefault();
+    const f = form.elements, val = (n) => (f[n] ? f[n].value.trim() : "");
+    const bad = (m) => { err.textContent = m; err.hidden = false; };
+    if (!store) return bad("Not connected yet. Check your internet and try again.");
+    let title, lines;
+    if (isJob) {
+      const role = val("role"), company = val("company"), apply = val("apply");
+      if (role.length < 3 || company.length < 2) return bad("Add the role and company name.");
+      if (apply && !SAFE_URL_RE.test(apply)) return bad("The apply link must start with https://");
+      title = ("💼 " + role + " — " + company).slice(0, 200);
+      lines = ["Company: " + company, val("location") && "Location: " + val("location"), val("experience") && "Experience: " + val("experience"), apply && "Apply: " + apply, val("details") && "Details: " + val("details").replace(/\n+/g, " ")].filter(Boolean);
+    } else {
+      const name = val("name"), working = val("working"), linkedin = val("linkedin");
+      if (name.length < 2) return bad("Enter your name.");
+      if (working.length < 2) return bad("Tell us where you work or study.");
+      if (linkedin && !LINKEDIN_RE.test(linkedin)) return bad("LinkedIn link must look like https://www.linkedin.com/in/your-name");
+      if (!f.consent.checked) return bad("Please tick the box to confirm you agree to show these details.");
+      const help = ALUMNI_HELP.filter((h, i) => f["help" + i] && f["help" + i].checked).join(", ");
+      title = ("🎓 " + name + " — " + val("branch") + " · Batch " + val("batch")).slice(0, 200);
+      lines = ["Branch: " + val("branch"), "Batch: " + val("batch"), "Working: " + working, val("location") && "Location: " + val("location"), linkedin && "LinkedIn: " + linkedin, help && "Help: " + help, val("about") && "About: " + val("about").replace(/\n+/g, " ")].filter(Boolean);
+    }
+    const body = lines.join("\n").slice(0, 4800);
+    if (hasBadWords(title + " " + body)) return bad(LANGUAGE_MSG);
+    const wait = spamCheck(); if (wait) return bad(wait);
+    const btn = form.querySelector("button[type=submit]"); btn.disabled = true; btn.textContent = "Saving…";
+    try {
+      const id = store.newId("clubs");
+      const doc = { title, body, club: ALUMNI_GROUP, authorId: store.uid, authorName: isJob ? (getName() || "Alumnus") : val("name").slice(0, 40), anonymous: false, urgent: false, createdAt: Date.now(), pages: [], fileAttachments: [] };
+      const myC = getCampus(); if (myC) doc.campus = myC;
+      state.clubs = [{ id, ...doc }, ...state.clubs.filter(x => x.id !== id)];
+      notePosted();
+      await store.set("clubs", id, doc);
+      alumniView = isJob ? "jobs" : "dir"; state.mode = "alumni"; render();
+      showNotice(isJob ? "Job posted. Thank you for helping your juniors!" : "Welcome to Alumni Connect! Your profile is live.", "ok");
+    } catch (e2) { btn.disabled = false; btn.textContent = isJob ? "Post job" : "Join Alumni Connect"; bad(errText(e2)); }
+  } },
+    ...(isJob ? [
+      el("div", { class: "two" },
+        el("label", {}, "Role", el("input", { name: "role", maxlength: "80", required: true, placeholder: "e.g. Software Engineer (Fresher)" })),
+        el("label", {}, "Company", el("input", { name: "company", maxlength: "60", required: true, placeholder: "e.g. Infosys" }))),
+      el("div", { class: "two" },
+        el("label", {}, "Location", el("input", { name: "location", maxlength: "60", placeholder: "e.g. Hyderabad / Remote" })),
+        el("label", {}, "Experience", el("input", { name: "experience", maxlength: "40", placeholder: "e.g. Freshers / 0-2 years" }))),
+      el("label", {}, "Apply link (optional, https://)", el("input", { name: "apply", maxlength: "300", placeholder: "https://careers.example.com/job/123" })),
+      el("label", {}, "Details", el("textarea", { name: "details", maxlength: "1000", placeholder: "Skills needed, how to get a referral, deadline…" })),
+    ] : [
+      el("label", {}, "Your name", el("input", { name: "name", maxlength: "40", required: true, value: getName() || "", placeholder: "Full name" })),
+      el("div", { class: "two" },
+        el("label", {}, "Branch", el("select", { name: "branch" }, branches.map(b => el("option", {}, b)))),
+        el("label", {}, "Passing-out batch", el("select", { name: "batch" }, years.map(y => el("option", { selected: y === String(thisYear - 1) }, y))))),
+      el("label", {}, "Where do you work or study?", el("input", { name: "working", maxlength: "100", required: true, placeholder: "e.g. Software Engineer at TCS / MS at TU Munich" })),
+      el("label", {}, "City and country", el("input", { name: "location", maxlength: "60", placeholder: "e.g. Bengaluru, India" })),
+      el("label", {}, "LinkedIn (optional)", el("input", { name: "linkedin", maxlength: "200", placeholder: "https://www.linkedin.com/in/your-name" })),
+      el("div", { class: "label" }, "I can help with"),
+      el("div", { class: "checks" }, ALUMNI_HELP.map((h, i) => el("label", { class: "check" }, el("input", { type: "checkbox", name: "help" + i }), h))),
+      el("label", {}, "About you (optional)", el("textarea", { name: "about", maxlength: "400", placeholder: "A line or two for juniors: your journey, advice, how to reach you." })),
+      el("div", { class: "checks" }, el("label", { class: "check" }, el("input", { type: "checkbox", name: "consent" }), "I agree to show my name, work details and LinkedIn to RGUKT Spark students. I will not share my phone number publicly.")),
+    ]),
+    err,
+    el("div", { class: "rowbtns" },
+      el("button", { class: "btn primary", type: "submit" }, isJob ? "Post job" : "Join Alumni Connect"),
+      el("button", { class: "btn", type: "button", onclick: cancel }, "Cancel")));
+  return [el("h2", {}, isJob ? "💼 Post a job or referral" : "🎓 Join Alumni Connect"),
+    el("p", { class: "hint" }, isJob ? "Share an opening or offer a referral for juniors. Only post real opportunities, and never ask students for money." : "Your profile helps juniors find guidance. You can delete it any time by opening it and tapping Delete."),
+    form];
+}
 
 // ---------- about us ----------
 function renderAbout() {
@@ -4319,7 +4484,7 @@ function render() {
   try {
     renderHeader(); renderTrendBar(); renderRail(); renderList(); renderBottomNav();
     // Forms keep what the student is typing while live updates arrive.
-    const key = ["ask", "edit", "name"].includes(state.mode) ? state.mode + state.tab : "";
+    const key = ["ask", "edit", "name", "alumniJoin", "alumniJob"].includes(state.mode) ? state.mode + state.tab : "";
     if (key && key === sheetKey) return;
     sheetKey = key;
     const draft = $("f-reply") ? $("f-reply").value : "";
@@ -4337,6 +4502,9 @@ function render() {
       state.mode === "resources" ? renderResources() :
       state.mode === "career" ? renderCareer() :
       state.mode === "about" ? renderAbout() :
+      state.mode === "alumni" ? renderAlumni() :
+      state.mode === "alumniJoin" ? alumniForm("profile") :
+      state.mode === "alumniJob" ? alumniForm("job") :
       state.mode === "network" ? renderNetwork() :
       state.mode === "name" ? renderName() :
       state.mode === "campus" ? renderCampusPicker() :
@@ -4382,6 +4550,7 @@ $("learnBtn").addEventListener("click", () => showPanel("learn"));
 $("studyBtn").addEventListener("click", () => showPanel("resources"));
 $("filterToggle").addEventListener("click", () => { document.querySelector("header.top").classList.toggle("filters-open"); renderHeader(); });
 $("botBtn").addEventListener("click", () => { if (window.sparkBotToggle) window.sparkBotToggle(); });
+$("alumniBtn").addEventListener("click", () => { alumniView = "dir"; showPanel("alumni"); });
 $("aboutBtn").addEventListener("click", () => showPanel("about"));
 $("careerBtn").addEventListener("click", () => { careerBranch = null; showPanel("career"); });
 $("nameBtn").addEventListener("click", () => { state.afterName = null; showPanel(getName() ? "me" : "name"); });
