@@ -2770,13 +2770,25 @@ function renderExams() {
 
 function renderGateIntro() {
   const PYQ_YEARS = ["2025","2024","2023","2022","2021","2020","2019","2018","2017","2016"];
-  const GATE_RESOURCES = [
-    { name: "NPTEL", tag: "nptel.ac.in", emoji: "🎓" },
-    { name: "MADE Easy", tag: "madeeasypublications.org", emoji: "📘" },
-    { name: "ACE Academy", tag: "aceenggacademy.com", emoji: "📗" },
-    { name: "GATE Academy", tag: "thegateacademy.com", emoji: "📙" },
-    { name: "PW GATE", tag: "pw.live", emoji: "🔥" },
-    { name: "Gradeup", tag: "gradeup.co", emoji: "📊" },
+  const GATE_VIDEOS = [
+    { name: "Gate Smashers", sub: "CSE — Full GATE playlist", emoji: "💻", url: "https://www.youtube.com/@GateSmashersFull" },
+    { name: "Neso Academy", sub: "ECE & CSE — HD lectures", emoji: "📡", url: "https://www.youtube.com/@NesoAcademy" },
+    { name: "NPTEL Official", sub: "All branches — IIT faculty", emoji: "🎓", url: "https://www.youtube.com/@nptel" },
+    { name: "Knowledge Gate", sub: "CSE — Concepts + PYQs", emoji: "🧠", url: "https://www.youtube.com/@KnowledgeGate9" },
+    { name: "EE Academy", sub: "EEE / ECE — Circuit theory", emoji: "⚡", url: "https://www.youtube.com/@EEAcademy1" },
+    { name: "Civil Guruji", sub: "Civil — Full GATE civil", emoji: "🏗️", url: "https://www.youtube.com/@CivilGuruji" },
+  ];
+  const GATE_PAPERS = [
+    { name: "Official GATE Papers", sub: "All years — IIT Kanpur archive", emoji: "📄", url: "https://gate.iitk.ac.in/GATE_past_papers.html" },
+    { name: "NPTEL Notes (PDF)", sub: "Subject-wise lecture notes", emoji: "📚", url: "https://nptel.ac.in/courses" },
+    { name: "MADE Easy Books", sub: "Handbooks & workbooks", emoji: "📘", url: "https://madeeasypublications.org" },
+    { name: "ACE Academy", sub: "Study material & test series", emoji: "📗", url: "https://aceenggacademy.com" },
+  ];
+  const GATE_PRACTICE = [
+    { name: "NPTEL Swayam", sub: "Free online courses + exams", emoji: "🎯", url: "https://swayam.gov.in" },
+    { name: "PW GATE App", sub: "Mock tests & video lectures", emoji: "🔥", url: "https://pw.live" },
+    { name: "GATE Academy", sub: "Practice tests + live classes", emoji: "📙", url: "https://thegateacademy.com" },
+    { name: "Testbook GATE", sub: "Full mock test series", emoji: "📝", url: "https://testbook.com/gate" },
   ];
   const pyqPosts = state.gate.filter(d => !d.deleted && d.pyqYear);
   const yearCounts = {};
@@ -2844,17 +2856,51 @@ function renderGateIntro() {
         ),
       ),
 
-      // Free resources
+      // Free video lectures
       el("div", { class: "gate-section" },
-        el("div", { class: "gate-section-title" }, "🌐 Free Resources"),
-        el("div", { class: "gate-section-sub" }, "Search these on Google for free GATE materials"),
+        el("div", { class: "gate-section-title" }, "🎥 Free Video Lectures"),
+        el("div", { class: "gate-section-sub" }, "Tap to open YouTube — HD lectures by subject experts"),
         el("div", { class: "gate-res-grid" },
-          ...GATE_RESOURCES.map(r =>
-            el("div", { class: "gate-res-chip" },
+          ...GATE_VIDEOS.map(r =>
+            el("a", { class: "gate-res-chip", href: r.url, target: "_blank", rel: "noopener noreferrer" },
               el("span", { class: "gate-res-emoji" }, r.emoji),
               el("div", {},
                 el("div", { class: "gate-res-name" }, r.name),
-                el("div", { class: "gate-res-tag" }, r.tag),
+                el("div", { class: "gate-res-tag" }, r.sub),
+              )
+            )
+          )
+        ),
+      ),
+
+      // Official papers + PDFs
+      el("div", { class: "gate-section" },
+        el("div", { class: "gate-section-title" }, "📄 Papers & Study Material"),
+        el("div", { class: "gate-section-sub" }, "Download official PYQ papers and notes for free"),
+        el("div", { class: "gate-res-grid gate-res-grid-2" },
+          ...GATE_PAPERS.map(r =>
+            el("a", { class: "gate-res-chip", href: r.url, target: "_blank", rel: "noopener noreferrer" },
+              el("span", { class: "gate-res-emoji" }, r.emoji),
+              el("div", {},
+                el("div", { class: "gate-res-name" }, r.name),
+                el("div", { class: "gate-res-tag" }, r.sub),
+              )
+            )
+          )
+        ),
+      ),
+
+      // Practice & mock tests
+      el("div", { class: "gate-section" },
+        el("div", { class: "gate-section-title" }, "📝 Practice & Mock Tests"),
+        el("div", { class: "gate-section-sub" }, "Full mock tests and online practice"),
+        el("div", { class: "gate-res-grid gate-res-grid-2" },
+          ...GATE_PRACTICE.map(r =>
+            el("a", { class: "gate-res-chip", href: r.url, target: "_blank", rel: "noopener noreferrer" },
+              el("span", { class: "gate-res-emoji" }, r.emoji),
+              el("div", {},
+                el("div", { class: "gate-res-name" }, r.name),
+                el("div", { class: "gate-res-tag" }, r.sub),
               )
             )
           )
