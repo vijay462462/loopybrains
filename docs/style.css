@@ -1232,6 +1232,10 @@ div.chal-opt.wrong b { background: #ef4444; color: #fff; }
 .mkt-price-big { font: 700 2rem var(--f-head); color: var(--accent); margin: 4px 0 10px; }
 .mkt-price-big.free { font-size: 1.2rem; color: var(--muted); }
 .mkt-sold-banner { background: color-mix(in oklab,#10b981 15%,var(--sheet)); color: #10b981; font: 700 .9rem var(--f-body); padding: 8px 14px; border-radius: 10px; margin-bottom: 10px; text-align: center; }
+/* sell button — green accent */
+.btn.sell { background: linear-gradient(135deg, #10b981, #059669); color: #fff; border-color: transparent; font-weight: 700; }
+.btn.sell:hover { background: linear-gradient(135deg, #059669, #047857); }
+
 /* market top banner */
 .mkt-banner { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--sheet); border: 1.5px solid var(--border); border-radius: 14px; padding: 12px 16px; margin-bottom: 14px; flex-wrap: wrap; }
 .mkt-banner-side { display: flex; align-items: center; gap: 10px; }

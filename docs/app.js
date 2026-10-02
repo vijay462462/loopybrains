@@ -932,7 +932,7 @@ function renderMarketList() {
       el("button", { class: "btn primary sm", type: "button", onclick: () => {
         state.filter = "available"; $("filter").value = "available"; render();
       }}, "🛍 Buy an item"),
-      el("button", { class: "btn sm", type: "button", onclick: openAsk }, "📦 Sell an item"),
+      el("button", { class: "btn sell sm", type: "button", onclick: openAsk }, "📦 Sell an item"),
     )
   );
   if (!rows.length) {
