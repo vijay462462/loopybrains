@@ -15,6 +15,19 @@ const KB = [
       "🎉 **Namaste!** I'm **Spark Bot v5** — smarter, faster, and more powerful than ever!\nWhat topic shall we explore today? 🧠💡",
     ]},
 
+
+  // ── Company links ────────────────────────────────────────
+  { p: /\b(tcs|infosys|wipro|hcl|capgemini|cognizant|tech ?mahindra|accenture|amazon|flipkart|google|microsoft|zoho|deloitte|ibm|oracle|bhel|isro|ntpc|l ?& ?t|siemens|abb|jio|airtel|companies|company links?|company career|top companies|which companies)\b/i,
+    r: [
+      "🏢 **Company Career Pages — Apply Direct (Free)!**\n\n**IT & Software:**\n• [TCS NextStep](https://nextstep.tcs.com) · [Infosys](https://www.infosys.com/careers/) · [Wipro](https://careers.wipro.com) · [HCLTech](https://www.hcltech.com/careers)\n• [Capgemini](https://www.capgemini.com/careers/) · [Cognizant](https://careers.cognizant.com) · [Tech Mahindra](https://careers.techmahindra.com)\n• [Accenture](https://www.accenture.com/in-en/careers) · [IBM](https://www.ibm.com/careers) · [Oracle](https://careers.oracle.com) · [Deloitte](https://www2.deloitte.com/in/en/careers.html)\n• [Zoho](https://www.zoho.com/careers/) · [Microsoft](https://careers.microsoft.com) · [Google](https://www.google.com/about/careers/applications/) · [Amazon](https://www.amazon.jobs) · [Flipkart](https://www.flipkartcareers.com)\n\n**Core / PSU (ECE · EEE · Mech · Civil):**\n• [BHEL](https://www.bhel.com/careers) · [ISRO](https://www.isro.gov.in/Careers.html) · [NTPC](https://www.ntpc.co.in/careers)\n• [L&T](https://www.larsentoubro.com/corporate/careers/) · [Siemens](https://jobs.siemens.com) · [ABB](https://careers.abb)\n• [Jio](https://careers.jio.com) · [Airtel](https://www.airtel.in/careers)\n\n🆓 **Free job portals:** [National Career Service](https://www.ncs.gov.in) · [AICTE Internship Portal](https://internship.aicte-india.org/)\n\n💡 *Always apply on the official career page — never pay anyone for a job!* 🛡️",
+    ]},
+
+  // ── Course links ─────────────────────────────────────────
+  { p: /\bcourses?\b|certificat(e|ion)|where (can|to|do) (i )?learn|learn (python|java|c\b|c\+\+|dsa|web|ml|ai|sql|git)|online learning|tutorial/i,
+    r: [
+      "🎓 **Free Courses — 100% Free, No Subscription!**\n\n**Core CS:**\n• [CS50 (Harvard)](https://cs50.harvard.edu/x/) — best intro to CS\n• [CSES Problem Set](https://cses.fi/problemset/) · [GeeksforGeeks](https://www.geeksforgeeks.org) — DSA practice\n• [freeCodeCamp](https://www.freecodecamp.org) — web dev, Python, data, certificates\n• [The Odin Project](https://www.theodinproject.com) — full-stack web\n\n**AI / ML:**\n• [Andrew Ng ML (YouTube)](https://www.youtube.com/@Deeplearningai) · [Kaggle Learn](https://www.kaggle.com/learn) — free micro-courses + certificates\n• [fast.ai](https://www.fast.ai) — practical deep learning\n\n**Engineering (all branches):**\n• [NPTEL](https://nptel.ac.in) — IIT courses + exam certificates\n• [SWAYAM](https://swayam.gov.in) — UGC-credited Indian courses\n• [MIT OpenCourseWare](https://ocw.mit.edu) · [Khan Academy](https://www.khanacademy.org)\n\n**GATE:**\n• [GATE Wallah (YouTube)](https://www.youtube.com/@GATEWallah) · [GATE Overflow](https://gateoverflow.in/)\n\n🏅 *Finish a course + build a project = resume gold!* 🚀",
+    ]},
+
   // ── What is the app ──────────────────────────────────────
   { p: /what (is|are|about|this)|about (this|app|site|rgukt spark|spark)|explain (this|app|site|platform)/i,
     r: [
