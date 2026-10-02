@@ -1838,6 +1838,10 @@ function renderAbout() {
   return [
     el("h2", {}, "ℹ️ About RGUKT Spark"),
     el("p", { class: "hint" }, "Designed for RGUKTians. One free place to ask doubts, share ideas, prepare for GATE, plan your career and help your juniors."),
+    el("div", { class: "learn-card" },
+      el("strong", {}, "🔥 Built by RGUKTians"),
+      el("p", {}, "Spark is built by RGUKTians, for RGUKTians."),
+      el("p", {}, "💙 Dedicated to our students: advanced, disciplined and obedient learners who work hard, respect their teachers and lift each other up. You are the reason Spark exists.")),
     el("div", { class: "label" }, "🎯 Our mission"),
     el("p", {}, "Every RGUKT student should have a senior to ask, a clear path after graduation, and quality study material, without paying for any of it. Spark brings these together so no doubt stays unanswered and no student feels lost after E4."),
     el("div", { class: "label" }, "✨ What you get"),
