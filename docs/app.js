@@ -97,7 +97,7 @@ const DEPT_VISUAL = {
 
 const state = {
   tab: "doubts", group: "All", query: "", filter: "all",
-  doubts: [], ideas: [], clubs: [], gate: [], challenges: [], chalScores: [], market: [], marketReports: [], marketRatings: [], replies: [], likes: [], loaded: false,
+  doubts: [], ideas: [], clubs: [], gate: [], challenges: [], chalScores: [], market: [], marketReports: [], marketRatings: [], marketInterests: [], replies: [], likes: [], loaded: false,
   selected: null, mode: "intro", // intro | view | ask | edit | name | campus
   afterName: null,
   replyPages: [], replyAnon: false,
@@ -898,6 +898,9 @@ function avgRating(listingId) {
   return rs.length ? (rs.reduce((s, r) => s + r.score, 0) / rs.length) : null;
 }
 function alreadyReported(listingId) { return state.marketReports.some(r => r.listingId === listingId && r.reporterId === (store && store.uid)); }
+function interestCount(listingId) { return state.marketInterests.filter(r => r.listingId === listingId).length; }
+function myInterest(listingId) { return state.marketInterests.find(r => r.listingId === listingId && r.buyerId === (store && store.uid)); }
+function interestsFor(listingId) { return state.marketInterests.filter(r => r.listingId === listingId); }
 
 function visibleMarket() {
   const myCampus = getCampus();
@@ -944,13 +947,19 @@ function renderMarketList() {
             el("div", { class: "mkt-price-row" },
               d.price ? el("span", { class: "mkt-price" }, "₹" + d.price) : el("span", { class: "mkt-price free" }, "Free / Negotiable"),
               d.condition && el("span", { class: "mkt-condition", style: "--cc:" + condColor }, d.condition),
-              reportCount(d.id) >= 3 && el("span", { class: "mkt-flag", title: reportCount(d.id) + " students reported this listing" }, "⚠️"),
+              reportCount(d.id) >= 3 && el("span", { class: "mkt-flag", title: reportCount(d.id) + " students reported" }, "⚠️"),
             ),
             (() => { const avg = avgRating(d.id); return avg ? el("div", { class: "mkt-stars-row" }, starsDisplay(avg), el("span", { class: "hint" }, avg.toFixed(1))) : null; })(),
-            el("div", { class: "meta" },
-              d.campus && el("span", { class: "campus-badge", style: "--cc:" + campusColor(d.campus) }, d.campus),
-              !CROSS_CAMPUS_CATEGORIES.has(d.category) && d.campus && el("span", { class: "hint" }, "· campus only"),
-              el("span", { class: "author-row" }, avatarEl(avatarFor(d.authorName || "")), (d.authorName || "Student") + " · " + ago(d.createdAt))
+            el("div", { class: "mkt-card-footer" },
+              el("div", { class: "mkt-card-author" },
+                avatarEl(avatarFor(d.authorName || ""), "av-nb"),
+                el("span", { class: "mkt-author-name" }, d.authorName || "Student"),
+              ),
+              el("div", { class: "mkt-card-meta" },
+                interestCount(d.id) > 0 && el("span", { class: "mkt-interest-badge" }, "👥 " + interestCount(d.id)),
+                d.campus && el("span", { class: "campus-badge sm", style: "--cc:" + campusColor(d.campus) }, d.campus),
+                el("span", { class: "hint" }, ago(d.createdAt)),
+              )
             )
           ),
           mine(d) ? el("button", {
@@ -1032,6 +1041,72 @@ function renderRatingPanel(d) {
   return wrap;
 }
 
+function renderBuyPanel(d) {
+  const already = myInterest(d.id);
+  const count = interestCount(d.id);
+  const waNum = (d.whatsapp || "").replace(/\D/g, "");
+  const waLink = waNum.length >= 10 ? "https://wa.me/91" + waNum.slice(-10) + "?text=" + encodeURIComponent("Hi! I'm interested in your listing on RGUKT Spark: " + d.title + " (₹" + (d.price || "Negotiable") + ")") : null;
+
+  if (already) {
+    return el("div", { class: "mkt-buy-panel expressed" },
+      el("div", { class: "mkt-buy-top" },
+        el("span", { class: "mkt-buy-check" }, "✅"),
+        el("div", {},
+          el("strong", {}, "You've expressed interest"),
+          el("div", { class: "hint" }, count + " student" + (count !== 1 ? "s" : "") + " interested · " + ago(already.createdAt)),
+        )
+      ),
+      waLink && el("a", { class: "btn primary", href: waLink, target: "_blank", rel: "noopener noreferrer" }, "💬 Contact seller on WhatsApp"),
+      !waLink && el("p", { class: "hint" }, "Seller hasn't shared a WhatsApp number. They can see you're interested."),
+      el("button", { type: "button", class: "btn sm", onclick: async () => {
+        state.marketInterests = state.marketInterests.filter(r => r.id !== already.id);
+        await store.update("marketInterests", already.id, { deleted: true });
+        render();
+      }}, "↩ Remove interest")
+    );
+  }
+
+  return el("div", { class: "mkt-buy-panel" },
+    el("div", { class: "mkt-buy-top" },
+      el("span", { class: "mkt-buy-icon" }, "🛒"),
+      el("div", {},
+        el("strong", {}, "Want to buy this?"),
+        el("div", { class: "hint" }, count > 0 ? count + " student" + (count !== 1 ? "s" : "") + " already interested" : "Be the first to show interest"),
+      )
+    ),
+    el("button", { type: "button", class: "btn primary", onclick: async () => {
+      const id = store.newId("marketInterests");
+      const myC = getCampus();
+      const doc = { listingId: d.id, sellerId: d.authorId, buyerId: store.uid, buyerName: getName() || "Student", buyerCampus: myC || "", createdAt: Date.now() };
+      state.marketInterests = [...state.marketInterests, { id, ...doc }];
+      await store.set("marketInterests", id, doc);
+      render();
+    }}, "🛒 I want this item"),
+    el("p", { class: "hint" }, "Clicking this notifies the seller and reveals their WhatsApp contact.")
+  );
+}
+
+function renderInterestedBuyers(d) {
+  const buyers = interestsFor(d.id).filter(r => !r.deleted);
+  if (!buyers.length) return el("div", { class: "mkt-buyers-empty" }, el("span", {}, "No buyers yet. Share your listing to get offers!"));
+  return el("div", { class: "mkt-buyers-panel" },
+    el("h4", {}, "👥 " + buyers.length + " interested buyer" + (buyers.length !== 1 ? "s" : "")),
+    el("div", { class: "mkt-buyers-list" },
+      ...buyers.map(b => {
+        const waNum = (b.buyerWhatsapp || "").replace(/\D/g, "");
+        return el("div", { class: "mkt-buyer-row" },
+          avatarEl(avatarFor(b.buyerName || ""), "av-nb"),
+          el("div", { class: "mkt-buyer-info" },
+            el("strong", {}, b.buyerName || "Student"),
+            b.buyerCampus && el("span", { class: "campus-badge sm", style: "--cc:" + campusColor(b.buyerCampus) }, b.buyerCampus),
+          ),
+          el("span", { class: "hint" }, ago(b.createdAt))
+        );
+      })
+    )
+  );
+}
+
 function renderMarketView() {
   const d = state.market.find(x => x.id === state.selected);
   if (!d) return [el("p", { class: "hint" }, "This listing was deleted or is still loading.")];
@@ -1041,7 +1116,6 @@ function renderMarketView() {
   const waLink = waNum.length >= 10 ? "https://wa.me/91" + waNum.slice(-10) + "?text=" + encodeURIComponent("Hi! I saw your listing on RGUKT Spark: " + d.title) : null;
 
   const actions = [
-    waLink && !d.sold && !own && el("a", { class: "btn primary", href: waLink, target: "_blank", rel: "noopener noreferrer" }, "💬 Contact on WhatsApp"),
     own && !d.sold && el("button", { class: "btn primary", type: "button", onclick: async () => {
       await store.update("market", d.id, { sold: true });
       const idx = state.market.findIndex(x => x.id === d.id);
@@ -1082,8 +1156,9 @@ function renderMarketView() {
         el("div", { class: "hint" }, "Listed " + ago(d.createdAt)),
       )
     ),
-    !own && renderRatingPanel(d),
-    !waLink && !own && el("p", { class: "hint" }, "Seller didn't share a WhatsApp number."),
+    !own && !d.sold && renderBuyPanel(d),
+    own && renderInterestedBuyers(d),
+    !own && !d.sold && renderRatingPanel(d),
     el("div", { class: "rowbtns" }, ...actions),
     !own && renderReportPanel(d),
   ].filter(Boolean);
@@ -3385,6 +3460,7 @@ render();
   store.subscribe("market", rows => { state.market = live(rows); update(); }, e => {});
   store.subscribe("marketReports", rows => { state.marketReports = rows; update(); }, e => {});
   store.subscribe("marketRatings", rows => { state.marketRatings = rows; update(); }, e => {});
+  store.subscribe("marketInterests", rows => { state.marketInterests = rows.filter(r => !r.deleted); update(); }, e => {});
 })();
 
 // ---------- PWA, keyboard shortcuts, offline, FAB ----------

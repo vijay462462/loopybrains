@@ -1232,11 +1232,26 @@ div.chal-opt.wrong b { background: #ef4444; color: #fff; }
 .mkt-price-big { font: 700 2rem var(--f-head); color: var(--accent); margin: 4px 0 10px; }
 .mkt-price-big.free { font-size: 1.2rem; color: var(--muted); }
 .mkt-sold-banner { background: color-mix(in oklab,#10b981 15%,var(--sheet)); color: #10b981; font: 700 .9rem var(--f-body); padding: 8px 14px; border-radius: 10px; margin-bottom: 10px; text-align: center; }
+/* card footer */
+.mkt-card-footer { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+.mkt-card-author { display: flex; align-items: center; gap: 5px; min-width: 0; }
+.mkt-author-name { font: 500 .78rem var(--f-body); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px; }
+.mkt-card-meta { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+.mkt-interest-badge { font: 600 .75rem var(--f-body); color: var(--accent); }
+.campus-badge.sm { font-size: .68rem !important; padding: 1px 6px !important; }
+/* constrain card avatar */
+.mkt-card img.av-nb, .mkt-card .av-nb { width: 20px !important; height: 20px !important; min-width: 20px; max-width: 20px; border-radius: 50%; object-fit: cover; }
+
+/* seller row in view */
 .mkt-seller { display: flex; align-items: center; gap: 10px; padding: 10px 0; margin: 8px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-.mkt-seller .av, .mkt-seller .av-img { width: 44px !important; height: 44px !important; min-width: 44px; border-radius: 50%; object-fit: cover; }
+.mkt-seller .av, .mkt-seller img.av-nb { width: 44px !important; height: 44px !important; min-width: 44px; max-width: 44px; border-radius: 50%; object-fit: cover; }
+
+/* flags */
 .mkt-flag { font-size: .8rem; }
 .mkt-flag-banner { background: color-mix(in oklab,#f59e0b 15%,var(--sheet)); color: #92400e; font: 600 .88rem var(--f-body); padding: 8px 14px; border-radius: 10px; margin-bottom: 10px; border: 1px solid color-mix(in oklab,#f59e0b 40%,transparent); }
 @media (prefers-color-scheme: dark) { .mkt-flag-banner { color: #fbbf24; } }
+
+/* stars */
 .mkt-stars-row { display: flex; align-items: center; gap: 6px; margin: 2px 0; }
 .mkt-stars { display: inline-flex; gap: 1px; }
 .star { color: var(--border); font-size: 1rem; }
@@ -1246,7 +1261,23 @@ div.chal-opt.wrong b { background: #ef4444; color: #fff; }
 .mkt-star-picker { display: flex; gap: 4px; }
 .star-btn { background: none; border: none; cursor: pointer; font-size: 1.6rem; color: var(--border); padding: 0; line-height: 1; transition: color .1s,transform .1s; }
 .star-btn:hover, .star-btn.on { color: #f59e0b; transform: scale(1.15); }
-.mkt-report-wrap { margin-top: 12px; }
+
+/* buy panel */
+.mkt-buy-panel { background: color-mix(in oklab,var(--accent) 8%,var(--sheet)); border: 1.5px solid color-mix(in oklab,var(--accent) 30%,transparent); border-radius: 14px; padding: 14px; margin: 10px 0; display: flex; flex-direction: column; gap: 10px; }
+.mkt-buy-panel.expressed { background: color-mix(in oklab,#10b981 8%,var(--sheet)); border-color: color-mix(in oklab,#10b981 30%,transparent); }
+.mkt-buy-top { display: flex; align-items: center; gap: 12px; }
+.mkt-buy-icon, .mkt-buy-check { font-size: 2rem; flex-shrink: 0; }
+
+/* interested buyers list */
+.mkt-buyers-panel { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin: 10px 0; }
+.mkt-buyers-panel h4 { font: 700 .95rem var(--f-head); margin: 0 0 10px; }
+.mkt-buyers-list { display: flex; flex-direction: column; gap: 8px; }
+.mkt-buyer-row { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: var(--sheet); border-radius: 10px; }
+.mkt-buyer-info { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
+.mkt-buyers-empty { color: var(--muted); font-size: .9rem; padding: 12px 0; }
+
+/* report */
+.mkt-report-wrap { margin-top: 4px; }
 .mkt-report-form { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-top: 8px; display: flex; flex-direction: column; gap: 10px; }
 .mkt-reported { color: #10b981; margin-top: 6px; }
 
