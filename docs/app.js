@@ -1339,13 +1339,28 @@ const plural = (n, w) => n + " " + w + (n === 1 ? "" : "s");
 // ---------- daily quiz ----------
 const QUIZ = window.DOUBT_DESK_QUIZ || [];
 const dayNum = (t = Date.now()) => { const d = new Date(t); return Math.floor((d.getTime() - d.getTimezoneOffset() * 60000) / 86400000); };
-const quizFor = (day) => QUIZ.length ? QUIZ[((day % QUIZ.length) + QUIZ.length) % QUIZ.length] : null;
-// Quiz answers are stored as likes with ideaId "quiz~<day>~<option>"; a student's first answer counts.
+// Each student sees a different question each day based on their device ID.
+function deviceSeed() {
+  const id = localStorage.getItem('dd-device-id') || '';
+  let h = 0; for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+  return h;
+}
+const quizIdxFor = (day) => QUIZ.length ? ((day + deviceSeed()) % QUIZ.length + QUIZ.length) % QUIZ.length : -1;
+const quizFor = (day) => { const i = quizIdxFor(day); return i >= 0 ? QUIZ[i] : null; };
+// Quiz answers stored as "quiz~<day>~<qidx>~<opt>"; a student's first answer counts.
 function quizAnswers(day) {
+  const qidx = quizIdxFor(day);
   const first = new Map();
   for (const l of state.likes) {
-    const m = /^quiz~(\d+)~(\d)$/.exec(l.ideaId || "");
-    if (!m || +m[1] !== day) continue;
+    // support old format quiz~day~opt and new format quiz~day~qidx~opt
+    const mNew = /^quiz~(\d+)~(\d+)~(\d)$/.exec(l.ideaId || "");
+    const mOld = /^quiz~(\d+)~(\d)$/.exec(l.ideaId || "");
+    let lDay, lQidx, lOpt;
+    if (mNew) { lDay = +mNew[1]; lQidx = +mNew[2]; lOpt = +mNew[3]; }
+    else if (mOld) { lDay = +mOld[1]; lQidx = -1; lOpt = +mOld[2]; }
+    else continue;
+    if (lDay !== day) continue;
+    if (lQidx >= 0 && lQidx !== qidx) continue; // different question, skip
     const prev = first.get(l.uid);
     if (!prev || (l.createdAt || 0) < (prev.createdAt || 0)) first.set(l.uid, { ...l, opt: +m[2] });
   }
@@ -1354,9 +1369,9 @@ function quizAnswers(day) {
 const myQuizAnswer = (day) => store ? quizAnswers(day).get(store.uid) : null;
 async function answerQuiz(day, opt) {
   if (!store || myQuizAnswer(day)) return;
-  const q = quizFor(day);
-  const id = "quiz~" + day + "~" + opt + "_" + store.uid;
-  const doc = { ideaId: "quiz~" + day + "~" + opt, uid: store.uid, name: getName() || "A student", createdAt: Date.now() };
+  const qidx = quizIdxFor(day);
+  const id = "quiz~" + day + "~" + qidx + "~" + opt + "_" + store.uid;
+  const doc = { ideaId: "quiz~" + day + "~" + qidx + "~" + opt, uid: store.uid, name: getName() || "A student", createdAt: Date.now() };
   state.likes = [...state.likes, { id, ...doc }];
   render();
   if (q && q.a === opt) celebrate();
@@ -1384,7 +1399,7 @@ function renderQuiz() {
     out.push(el("p", { class: "quiz-result " + (mine.opt === q.a ? "right" : "wrong") }, mine.opt === q.a ? "✅ Correct! +3 points." : "❌ Not quite. The answer is " + "ABCD"[q.a] + "."));
     out.push(el("p", { class: "body" }, "💡 " + q.e));
     out.push(el("p", { class: "hint" }, total + (total === 1 ? " classmate has" : " classmates have") + " answered today. " + (total ? Math.round(correctCount * 100 / total) + "% got it right." : "")));
-  } else out.push(el("p", { class: "hint" }, "Pick one answer. You get one try. A correct answer earns +3 points and keeps your streak going."));
+  } else out.push(el("p", { class: "hint" }, "Pick one answer — one try only. Each student gets a different question today. Correct answer earns +3 points."));
   const y = quizFor(day - 1), ya = myQuizAnswer(day - 1);
   if (y) out.push(el("details", { class: "quiz-y" }, el("summary", {}, "Yesterday's question"),
     el("p", { class: "body" }, y.q + "\nAnswer: " + "ABCD"[y.a] + ". " + y.o[y.a] + (ya ? (ya.opt === y.a ? "  ✅ you got it" : "  ❌ you picked " + "ABCD"[ya.opt]) : "") + "\n💡 " + y.e)));
@@ -1449,10 +1464,14 @@ function allStats() {
   }
   const days = new Set(state.likes.map(l => /^quiz~(\d+)~/.exec(l.ideaId || "")).filter(Boolean).map(m => +m[1]));
   for (const day of days) {
-    const q = quizFor(day);
     for (const a of quizAnswers(day).values()) {
       const p = get(a.uid, a.name, a.createdAt); p.quizDone++;
-      if (q && a.opt === q.a) { p.quizRight++; p.points += 3; }
+      // Each student's correct answer is stored against their own question index
+      const mNew = /^quiz~\d+~(\d+)~(\d)$/.exec(a.ideaId || "");
+      const mOld = /^quiz~\d+~(\d)$/.exec(a.ideaId || "");
+      let qidx = mNew ? +mNew[1] : -1, opt = mNew ? +mNew[2] : (mOld ? +mOld[1] : -1);
+      const q = qidx >= 0 ? QUIZ[qidx] : quizFor(day);
+      if (q && opt >= 0 && opt === q.a) { p.quizRight++; p.points += 3; }
     }
   }
     // Night Owl: any post created between midnight and 5am
