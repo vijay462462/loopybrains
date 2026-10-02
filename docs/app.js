@@ -3027,7 +3027,7 @@ function renderGateResourceDetail(res) {
             ),
           )
         : el("div", { class: "gate-course-empty" },
-            el("div", {}, "Tap "" + btnLabel + "" above to browse all available courses and content."),
+            el("div", {}, 'Tap "' + btnLabel + '" above to browse all available courses and content.'),
           ),
     ),
   ];
