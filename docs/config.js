@@ -13,6 +13,14 @@ window.DOUBT_DESK_CONFIG = {
     appId: "1:530725630149:web:02a51823f13de09ebdc0ac",
   },
 
+  // Supabase (optional). Fill BOTH to switch the whole app from Firebase to Supabase.
+  // Project URL and the "anon public" key: Supabase dashboard > Project Settings > API.
+  // The anon key is meant to be public; security comes from the Row Level Security in supabase/schema.sql.
+  supabase: {
+    url: "",
+    anonKey: "",
+  },
+
   // Private class: when true, students must enter the class code to read or post.
   // The code itself is set only in the Firebase rules, never in this public file.
   privateClass: false,

@@ -213,7 +213,11 @@ const likesFor = (id) => state.likes.filter(l => l.ideaId === id);
 const liked = (id) => store && state.likes.some(l => l.ideaId === id && l.uid === store.uid);
 function showNotice(text, cls) { const n = $("notice"); n.textContent = text; n.hidden = !text; n.className = "notice" + (cls ? " " + cls : ""); }
 function errText(e) {
-  const code = (e && e.code) || "";
+  const code = String((e && e.code) || "");
+  const msg = String((e && e.message) || "");
+  if (/Slow down|Too many posts|Not allowed|You can only write|cannot be changed/i.test(msg)) return msg;
+  if (code === "42501" || /row-level security/i.test(msg)) return "The board refused this post. Check that the title is at least 3 characters and try again.";
+  if (/Failed to fetch|NetworkError|network/i.test(msg)) return "No internet connection. Check it and try again.";
   if (code.includes("permission-denied")) return "The board refused this post. Check that the title is at least 3 characters and try again.";
   if (code.includes("unavailable") || code.includes("network")) return "No internet connection. Check it and try again.";
   return "Could not save" + (code ? " (" + code + ")" : "") + ". Try again.";
@@ -245,7 +249,9 @@ function allMyIds() {
   let hist = [];
   try { hist = JSON.parse(localStorage.getItem(HIST) || "[]"); } catch (_) {}
   if (!hist.includes(cur)) { hist.unshift(cur); hist = hist.slice(0, 8); try { localStorage.setItem(HIST, JSON.stringify(hist)); } catch (_) {} }
-  return new Set(hist);
+  const ids = new Set(hist);
+  if (typeof store !== "undefined" && store && store.uid) ids.add(store.uid);
+  return ids;
 }
 async function firebaseStore(conf, prefix = "") {
   const base = "https://www.gstatic.com/firebasejs/" + FB_VERSION + "/";
@@ -271,6 +277,71 @@ async function firebaseStore(conf, prefix = "") {
         task.on("state_changed", snap => onProgress && onProgress(Math.round(snap.bytesTransferred / snap.totalBytes * 100)), rej, res);
       });
       return await st.getDownloadURL(fileRef);
+    },
+  };
+}
+// Supabase backend. Same interface as firebaseStore. Used when supabase.url and supabase.anonKey are set in config.js.
+// Each visitor signs in anonymously; Row Level Security (supabase/schema.sql) does the access control.
+async function supabaseStore(conf) {
+  await new Promise((res, rej) => {
+    if (window.supabase && window.supabase.createClient) return res();
+    const sc = document.createElement("script");
+    sc.src = new URL("vendor/supabase.js", import.meta.url).href;
+    sc.onload = res; sc.onerror = () => rej(new Error("Could not load the Supabase library"));
+    document.head.appendChild(sc);
+  });
+  const sb = window.supabase.createClient(conf.url, conf.anonKey, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } });
+  let { data: { session } } = await sb.auth.getSession();
+  if (!session) {
+    const r = await sb.auth.signInAnonymously();
+    if (r.error) throw r.error;
+    session = r.data.session;
+  }
+  const rowToDoc = (r) => ({ id: r.id, ...r.data });
+  const handlers = {};
+  sb.channel("spark-docs").on("postgres_changes", { event: "*", schema: "public", table: "spark_docs" }, (p) => {
+    const row = p.eventType === "DELETE" ? p.old : p.new;
+    const h = row && handlers[row.coll];
+    if (h) h(p.eventType, row);
+  }).subscribe();
+  const check = (r) => { if (r && r.error) throw r.error; return r; };
+  return {
+    uid: session.user.id, demo: false,
+    subscribe: (coll, cb, onErr) => {
+      const cache = new Map(); let ready = false;
+      const emit = () => { if (ready) cb([...cache.values()]); };
+      handlers[coll] = (type, row) => { if (type === "DELETE") cache.delete(row.id); else cache.set(row.id, rowToDoc(row)); emit(); };
+      (async () => {
+        try {
+          for (let from = 0; from < 20000; from += 1000) {
+            const { data, error } = await sb.from("spark_docs").select("id,data").eq("coll", coll).order("created_at", { ascending: false }).range(from, from + 999);
+            if (error) throw error;
+            for (const r of data) if (!cache.has(r.id)) cache.set(r.id, rowToDoc(r));
+            if (data.length < 1000) break;
+          }
+          ready = true; emit();
+        } catch (e) { if (onErr) onErr(e); }
+      })();
+      return () => { delete handlers[coll]; };
+    },
+    newId: () => (crypto.randomUUID ? crypto.randomUUID().replace(/-/g, "").slice(0, 20) : Math.random().toString(36).slice(2, 12) + Math.random().toString(36).slice(2, 12)),
+    set: async (coll, id, data) => { check(await sb.from("spark_docs").upsert({ coll, id, data: cleanDoc(data) }, { onConflict: "coll,id" })); },
+    update: async (coll, id, patch) => {
+      patch = cleanDoc(patch);
+      const keys = Object.keys(patch);
+      if (keys.length === 1 && keys[0] === "reports") check(await sb.rpc("spark_report", { p_coll: coll, p_id: id }));
+      else check(await sb.rpc("spark_patch", { p_coll: coll, p_id: id, p_patch: patch }));
+    },
+    remove: async (coll, id) => { check(await sb.from("spark_docs").delete().eq("coll", coll).eq("id", id)); },
+    get: async (coll, id) => { const r = check(await sb.from("spark_docs").select("data").eq("coll", coll).eq("id", id).maybeSingle()); return r.data ? r.data.data : null; },
+    uploadFile: async (file, onProgress) => {
+      const ext = fileExt(file.name).replace(/[^a-z0-9]/g, "");
+      if (!UPLOAD_EXT.has(ext)) throw new Error("This file type is not allowed. Use PDF, image, Office document or text files.");
+      const path = session.user.id + "/" + Date.now() + "_" + Math.random().toString(36).slice(2, 8) + "." + ext;
+      if (onProgress) onProgress(30);
+      check(await sb.storage.from("uploads").upload(path, file, { contentType: file.type || undefined, upsert: false }));
+      if (onProgress) onProgress(100);
+      return sb.storage.from("uploads").getPublicUrl(path).data.publicUrl;
     },
   };
 }
@@ -4707,7 +4778,9 @@ render();
   const conf = CFG.firebase || {};
   const configured = conf.apiKey && !String(conf.apiKey).startsWith("PASTE") && conf.projectId;
   try {
-    store = configured ? await firebaseStore(conf, "rooms/GB-9FE9YR/") : localStore();
+    const sbConf = CFG.supabase || {};
+    const useSupabase = sbConf.url && sbConf.anonKey && !String(sbConf.url).startsWith("PASTE");
+    store = useSupabase ? await supabaseStore(sbConf) : configured ? await firebaseStore(conf, "rooms/GB-9FE9YR/") : localStore();
   } catch (e) {
     console.error(e);
     showNotice("Could not connect to the class board. Check your internet and reload. (" + ((e && e.code) || "error") + ")");
@@ -4717,7 +4790,7 @@ render();
   const live = (rows) => rows.filter(x => !x.deleted);
   let opened = false;
   const onErr = (e) => {
-    showNotice("Firebase error: " + ((e && e.code) || (e && e.message) || "unknown") + " — reload or check internet.");
+    showNotice("Database error: " + ((e && e.code) || (e && e.message) || "unknown") + " — reload or check internet.");
   };
   const update = () => {
     if (!opened && deep && deep[2] && state[TABS[state.tab].coll].some(x => x.id === deep[2])) { opened = true; openItem(deep[2]); return; }
