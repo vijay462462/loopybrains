@@ -1296,6 +1296,58 @@ div.chal-opt.wrong b { background: #ef4444; color: #fff; }
 .mkt-reported { color: #10b981; margin-top: 6px; }
 
 /* ============================================================
+   GATE Hub intro
+   ============================================================ */
+.gate-hub { display: flex; flex-direction: column; gap: 18px; }
+.gate-hub-header { background: linear-gradient(135deg,#6366f1,#8b5cf6,#a855f7); border-radius: 16px; padding: 18px 20px; color: #fff; }
+.gate-hub-title { font-size: 18px; font-weight: 800; }
+.gate-hub-sub { font-size: 13px; opacity: .85; margin-top: 4px; }
+
+.gate-section { display: flex; flex-direction: column; gap: 10px; }
+.gate-section-title { font-size: 14px; font-weight: 700; }
+.gate-section-sub { font-size: 12px; color: var(--muted); margin-top: -6px; }
+
+.gate-year-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 8px; }
+@media (max-width: 420px) { .gate-year-grid { grid-template-columns: repeat(4,1fr); } }
+.gate-year-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  border: 1.5px solid var(--line); border-radius: 12px; padding: 10px 4px;
+  background: var(--sheet); cursor: pointer; transition: background .15s, border-color .15s;
+}
+.gate-year-btn:hover, .gate-year-btn.active { background: #6366f1; border-color: #6366f1; color: #fff; }
+.gate-year-label { font-size: 9px; font-weight: 600; opacity: .7; text-transform: uppercase; }
+.gate-year-num { font-size: 15px; font-weight: 800; }
+.gate-year-cnt { font-size: 9px; color: #10b981; font-weight: 700; }
+.gate-year-btn.active .gate-year-cnt { color: #a7f3d0; }
+
+.btn.sm { padding: 5px 12px; font-size: 13px; }
+.gate-add-pyq { align-self: flex-start; }
+
+.gate-branch-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.gate-branch-btn {
+  padding: 5px 14px; border-radius: 20px; font-size: 13px; font-weight: 700;
+  border: 1.5px solid var(--line); background: var(--sheet); cursor: pointer;
+  transition: background .15s;
+}
+.gate-branch-btn:hover, .gate-branch-btn.active { background: #6366f1; border-color: #6366f1; color: #fff; }
+
+.gate-stats-row { display: flex; gap: 12px; }
+.gate-stat { flex: 1; background: var(--sheet); border-radius: 12px; padding: 12px; text-align: center; }
+.gate-stat-n { display: block; font-size: 22px; font-weight: 800; }
+.gate-stat-l { display: block; font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+.gate-res-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+@media (max-width: 420px) { .gate-res-grid { grid-template-columns: repeat(2,1fr); } }
+.gate-res-chip {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--sheet); border: 1px solid var(--line); border-radius: 12px;
+  padding: 10px 10px;
+}
+.gate-res-emoji { font-size: 22px; }
+.gate-res-name { font-size: 12px; font-weight: 700; }
+.gate-res-tag { font-size: 10px; color: var(--muted); }
+
+/* ============================================================
    GATE badges (PYQ / Marks / Difficulty)
    ============================================================ */
 .gate-badge {

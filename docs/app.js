@@ -105,6 +105,7 @@ const state = {
   mktSort: "newest",   // "newest" | "price_asc" | "price_desc" | "popular"
   dept: "All",         // "All" | "ECE" | "CSE" | "Civil" | "Mech" | "EEE"
   yearFilter: "All",   // "All" | "E1" | "E2" | "E3" | "E4"
+  gateYearPick: null,  // null | "2024" | "2023" …
   aiPanel: null,       // post id that has AI panel open
 };
 const ANON = "Anonymous";
@@ -703,7 +704,7 @@ function renderBottomNav() {
       return el('button', { type: 'button', class: 'bnav-btn' + (state.tab === tab ? ' active' : ''), onclick: () => {
         if (state.tab === tab) return;
         state.tab = tab; state.group = 'All'; state.filter = 'all'; state.query = '';
-        state.selected = null; state.mode = 'intro'; $('search').value = '';
+        state.selected = null; state.mode = 'intro'; state.gateYearPick = null; $('search').value = '';
         try { history.replaceState(null, '', '#' + tab); } catch (_) {} render();
       } },
         el('span', { class: 'bnav-icon' }, icons[tab]),
@@ -859,6 +860,7 @@ function visible() {
   if (state.tab === "doubts" && state.filter === "bounty") rows = rows.filter(d => d.bounty && !d.resolvedReplyId);
   if ((state.tab === "doubts" || state.tab === "gate") && state.filter === "mine") rows = rows.filter(d => store && d.authorId === store.uid);
   if (state.tab === "gate" && state.filter === "pyq") rows = rows.filter(d => !!d.pyqYear);
+  if (state.tab === "gate" && state.gateYearPick) rows = rows.filter(d => d.pyqYear === state.gateYearPick);
   if (state.tab === "gate" && state.filter === "1m") rows = rows.filter(d => d.marks === "1M");
   if (state.tab === "gate" && state.filter === "2m") rows = rows.filter(d => d.marks === "2M");
   if (state.tab === "gate" && state.filter === "easy") rows = rows.filter(d => d.difficulty === "Easy");
@@ -2766,7 +2768,109 @@ function renderExams() {
   box.replaceChildren(...items.map(x => el("span", { class: "exam" + (x.days <= 3 ? " soon" : "") }, "⏳ " + x.name + " " + (x.days === 0 ? "today" : x.days === 1 ? "tomorrow" : "in " + x.days + " days"))));
 }
 
+function renderGateIntro() {
+  const PYQ_YEARS = ["2025","2024","2023","2022","2021","2020","2019","2018","2017","2016"];
+  const GATE_RESOURCES = [
+    { name: "NPTEL", tag: "nptel.ac.in", emoji: "🎓" },
+    { name: "MADE Easy", tag: "madeeasypublications.org", emoji: "📘" },
+    { name: "ACE Academy", tag: "aceenggacademy.com", emoji: "📗" },
+    { name: "GATE Academy", tag: "thegateacademy.com", emoji: "📙" },
+    { name: "PW GATE", tag: "pw.live", emoji: "🔥" },
+    { name: "Gradeup", tag: "gradeup.co", emoji: "📊" },
+  ];
+  const pyqPosts = state.gate.filter(d => !d.deleted && d.pyqYear);
+  const yearCounts = {};
+  for (const d of pyqPosts) yearCounts[d.pyqYear] = (yearCounts[d.pyqYear] || 0) + 1;
+
+  const setYearFilter = (y) => {
+    state.filter = "pyq"; $("filter").value = "pyq";
+    state.group = "All";
+    // also set dept-based subject filter if branch known
+    if (y) {
+      // pre-filter by pyqYear via query trick — store in state
+      state.gateYearPick = y;
+    } else {
+      state.gateYearPick = null;
+    }
+    render();
+  };
+
+  return [
+    el("div", { class: "gate-hub" },
+      el("div", { class: "gate-hub-header" },
+        el("div", { class: "gate-hub-title" }, "🎯 GATE 2027 Prep Hub"),
+        el("div", { class: "gate-hub-sub" }, "PYQs · Solutions · Shortcuts · Community Discussions"),
+      ),
+
+      // PYQ Year section
+      el("div", { class: "gate-section" },
+        el("div", { class: "gate-section-title" }, "📄 Previous Year Papers"),
+        el("div", { class: "gate-section-sub" }, "Tap a year to see community discussions & solutions"),
+        el("div", { class: "gate-year-grid" },
+          ...PYQ_YEARS.map(y => {
+            const cnt = yearCounts[y] || 0;
+            return el("button", { type: "button", class: "gate-year-btn" + (state.gateYearPick === y ? " active" : ""),
+              onclick: () => setYearFilter(y)
+            },
+              el("span", { class: "gate-year-label" }, "GATE"),
+              el("span", { class: "gate-year-num" }, y),
+              cnt > 0 && el("span", { class: "gate-year-cnt" }, cnt + " posts"),
+            );
+          })
+        ),
+        el("button", { type: "button", class: "btn primary sm gate-add-pyq", onclick: () => { openAsk(); } },
+          "➕ Add PYQ with Solution"),
+      ),
+
+      // Branch quick-filter
+      el("div", { class: "gate-section" },
+        el("div", { class: "gate-section-title" }, "🔬 Browse by Branch"),
+        el("div", { class: "gate-branch-row" },
+          ...Object.keys(DEPT_MAP).map(d =>
+            el("button", { type: "button", class: "gate-branch-btn" + (state.dept === d ? " active" : ""),
+              onclick: () => { state.dept = state.dept === d ? "All" : d; state.group = "All"; render(); }
+            }, d)
+          )
+        ),
+      ),
+
+      // Quick stats
+      pyqPosts.length > 0 && el("div", { class: "gate-section" },
+        el("div", { class: "gate-section-title" }, "📊 PYQ Stats"),
+        el("div", { class: "gate-stats-row" },
+          el("div", { class: "gate-stat" }, el("span", { class: "gate-stat-n" }, pyqPosts.length), el("span", { class: "gate-stat-l" }, "PYQs posted")),
+          el("div", { class: "gate-stat" }, el("span", { class: "gate-stat-n" }, pyqPosts.filter(d => d.difficulty === "Hard").length), el("span", { class: "gate-stat-l" }, "Hard")),
+          el("div", { class: "gate-stat" }, el("span", { class: "gate-stat-n" }, pyqPosts.filter(d => d.marks === "2M").length), el("span", { class: "gate-stat-l" }, "2 Marks")),
+        ),
+      ),
+
+      // Free resources
+      el("div", { class: "gate-section" },
+        el("div", { class: "gate-section-title" }, "🌐 Free Resources"),
+        el("div", { class: "gate-section-sub" }, "Search these on Google for free GATE materials"),
+        el("div", { class: "gate-res-grid" },
+          ...GATE_RESOURCES.map(r =>
+            el("div", { class: "gate-res-chip" },
+              el("span", { class: "gate-res-emoji" }, r.emoji),
+              el("div", {},
+                el("div", { class: "gate-res-name" }, r.name),
+                el("div", { class: "gate-res-tag" }, r.tag),
+              )
+            )
+          )
+        ),
+      ),
+
+      el("div", { class: "rowbtns" },
+        el("button", { class: "btn primary", type: "button", onclick: openAsk }, "Post GATE Discussion"),
+        el("button", { class: "btn", type: "button", onclick: () => { state.filter = "all"; $("filter").value = "all"; state.gateYearPick = null; render(); } }, "📋 All Discussions"),
+      ),
+    )
+  ];
+}
+
 function renderIntro() {
+  if (state.tab === "gate") return renderGateIntro();
   const t = TABS[state.tab];
   // Live stats
   const totalPosts = state.doubts.length + state.ideas.length + state.clubs.length + state.gate.length + state.challenges.length;
