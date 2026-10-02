@@ -106,6 +106,7 @@ const state = {
   dept: "All",         // "All" | "ECE" | "CSE" | "Civil" | "Mech" | "EEE"
   yearFilter: "All",   // "All" | "E1" | "E2" | "E3" | "E4"
   gateYearPick: null,  // null | "2024" | "2023" …
+  gateResView: null,   // null | resource obj — content browser
   aiPanel: null,       // post id that has AI panel open
 };
 const ANON = "Anonymous";
@@ -704,7 +705,7 @@ function renderBottomNav() {
       return el('button', { type: 'button', class: 'bnav-btn' + (state.tab === tab ? ' active' : ''), onclick: () => {
         if (state.tab === tab) return;
         state.tab = tab; state.group = 'All'; state.filter = 'all'; state.query = '';
-        state.selected = null; state.mode = 'intro'; state.gateYearPick = null; $('search').value = '';
+        state.selected = null; state.mode = 'intro'; state.gateYearPick = null; state.gateResView = null; $('search').value = '';
         try { history.replaceState(null, '', '#' + tab); } catch (_) {} render();
       } },
         el('span', { class: 'bnav-icon' }, icons[tab]),
@@ -2768,6 +2769,270 @@ function renderExams() {
   box.replaceChildren(...items.map(x => el("span", { class: "exam" + (x.days <= 3 ? " soon" : "") }, "⏳ " + x.name + " " + (x.days === 0 ? "today" : x.days === 1 ? "tomorrow" : "in " + x.days + " days"))));
 }
 
+function renderGateResourceDetail(res) {
+  // 100% FREE course catalog — no subscription, no payment
+  const C = {
+    "IIT Bombay": [
+      { name:"Engineering Mathematics",   branch:"All",       icon:"📐", yt:"https://www.youtube.com/results?search_query=IIT+Bombay+Engineering+Mathematics+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=engineering+mathematics" },
+      { name:"Data Structures & Algorithms", branch:"CSE",   icon:"🌳", yt:"https://www.youtube.com/results?search_query=IIT+Bombay+Data+Structures+Algorithms+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=data+structures+algorithms" },
+      { name:"Operating Systems",         branch:"CSE",       icon:"💻", yt:"https://www.youtube.com/results?search_query=IIT+Bombay+Operating+Systems+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=operating+systems" },
+      { name:"Computer Networks",         branch:"CSE",       icon:"🌐", yt:"https://www.youtube.com/results?search_query=IIT+Bombay+Computer+Networks+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=computer+networks" },
+      { name:"Digital Circuits",          branch:"ECE",       icon:"⚡", yt:"https://www.youtube.com/results?search_query=IIT+Bombay+Digital+Circuits+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=digital+circuits" },
+      { name:"Signals & Systems",         branch:"ECE",       icon:"📡", yt:"https://www.youtube.com/results?search_query=IIT+Bombay+Signals+Systems+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=signals+systems" },
+      { name:"Control Systems",           branch:"ECE/EEE",   icon:"🔄", yt:"https://www.youtube.com/results?search_query=IIT+Bombay+Control+Systems+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=control+systems" },
+      { name:"Fluid Mechanics",           branch:"Civil/Mech",icon:"💧", yt:"https://www.youtube.com/results?search_query=IIT+Bombay+Fluid+Mechanics+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=fluid+mechanics" },
+    ],
+    "IIT Delhi": [
+      { name:"Engineering Mathematics",   branch:"All",       icon:"📐", yt:"https://www.youtube.com/results?search_query=IIT+Delhi+Engineering+Mathematics+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=engineering+mathematics" },
+      { name:"Algorithms",                branch:"CSE",       icon:"🧮", yt:"https://www.youtube.com/results?search_query=IIT+Delhi+Algorithms+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=algorithms" },
+      { name:"Theory of Computation",     branch:"CSE",       icon:"🤖", yt:"https://www.youtube.com/results?search_query=IIT+Delhi+Theory+Computation+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=theory+of+computation" },
+      { name:"Digital Electronics",       branch:"ECE",       icon:"⚡", yt:"https://www.youtube.com/results?search_query=IIT+Delhi+Digital+Electronics+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=digital+electronics" },
+      { name:"Power Systems",             branch:"EEE",       icon:"🔌", yt:"https://www.youtube.com/results?search_query=IIT+Delhi+Power+Systems+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=power+systems" },
+      { name:"Structural Analysis",       branch:"Civil",     icon:"🏗️", yt:"https://www.youtube.com/results?search_query=IIT+Delhi+Structural+Analysis+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=structural+analysis" },
+    ],
+    "IIT Madras": [
+      { name:"Engineering Mathematics",   branch:"All",       icon:"📐", yt:"https://www.youtube.com/results?search_query=IIT+Madras+Engineering+Mathematics+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=engineering+mathematics" },
+      { name:"Operating Systems",         branch:"CSE",       icon:"💻", yt:"https://www.youtube.com/results?search_query=IIT+Madras+Operating+Systems+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=operating+systems" },
+      { name:"Computer Architecture",     branch:"CSE",       icon:"🏛", yt:"https://www.youtube.com/results?search_query=IIT+Madras+Computer+Architecture+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=computer+architecture" },
+      { name:"Signals & Systems",         branch:"ECE",       icon:"📡", yt:"https://www.youtube.com/results?search_query=IIT+Madras+Signals+Systems+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=signals+systems" },
+      { name:"VLSI Design",               branch:"ECE",       icon:"🔬", yt:"https://www.youtube.com/results?search_query=IIT+Madras+VLSI+Design+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=VLSI+design" },
+      { name:"Thermodynamics",            branch:"Mech",      icon:"🌡️", yt:"https://www.youtube.com/results?search_query=IIT+Madras+Thermodynamics+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=thermodynamics" },
+      { name:"Soil Mechanics",            branch:"Civil",     icon:"🪨", yt:"https://www.youtube.com/results?search_query=IIT+Madras+Soil+Mechanics+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=soil+mechanics" },
+    ],
+    "IIT Kanpur": [
+      { name:"Engineering Mathematics",   branch:"All",       icon:"📐", yt:"https://www.youtube.com/results?search_query=IIT+Kanpur+Engineering+Mathematics+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=engineering+mathematics" },
+      { name:"Algorithms",                branch:"CSE",       icon:"🧮", yt:"https://www.youtube.com/results?search_query=IIT+Kanpur+Algorithms+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=algorithms" },
+      { name:"Compilers",                 branch:"CSE",       icon:"⚙️", yt:"https://www.youtube.com/results?search_query=IIT+Kanpur+Compiler+Design+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=compiler+design" },
+      { name:"Electromagnetics",          branch:"ECE",       icon:"🧲", yt:"https://www.youtube.com/results?search_query=IIT+Kanpur+Electromagnetics+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=electromagnetic+theory" },
+      { name:"Heat Transfer",             branch:"Mech",      icon:"🔥", yt:"https://www.youtube.com/results?search_query=IIT+Kanpur+Heat+Transfer+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=heat+transfer" },
+      { name:"RCC Structures",            branch:"Civil",     icon:"🏗️", yt:"https://www.youtube.com/results?search_query=IIT+Kanpur+RCC+Structures+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=RCC+design" },
+    ],
+    "IIT Kharagpur": [
+      { name:"Engineering Mathematics",   branch:"All",       icon:"📐", yt:"https://www.youtube.com/results?search_query=IIT+Kharagpur+Engineering+Mathematics+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=engineering+mathematics" },
+      { name:"Database Management",       branch:"CSE",       icon:"🗄️", yt:"https://www.youtube.com/results?search_query=IIT+Kharagpur+Database+Management+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=database+management" },
+      { name:"Computer Networks",         branch:"CSE",       icon:"🌐", yt:"https://www.youtube.com/results?search_query=IIT+Kharagpur+Computer+Networks+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=computer+networks" },
+      { name:"Network Theory",            branch:"EEE/ECE",   icon:"🔌", yt:"https://www.youtube.com/results?search_query=IIT+Kharagpur+Network+Theory+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=network+theory" },
+      { name:"Power Electronics",         branch:"EEE",       icon:"⚡", yt:"https://www.youtube.com/results?search_query=IIT+Kharagpur+Power+Electronics+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=power+electronics" },
+      { name:"Strength of Materials",     branch:"Civil/Mech",icon:"🔩", yt:"https://www.youtube.com/results?search_query=IIT+Kharagpur+Strength+Materials+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=strength+of+materials" },
+    ],
+    "IIT Roorkee": [
+      { name:"Discrete Mathematics",      branch:"CSE",       icon:"🔢", yt:"https://www.youtube.com/results?search_query=IIT+Roorkee+Discrete+Mathematics+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=discrete+mathematics" },
+      { name:"Computer Networks",         branch:"CSE",       icon:"🌐", yt:"https://www.youtube.com/results?search_query=IIT+Roorkee+Computer+Networks+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=computer+networks" },
+      { name:"Digital Signal Processing", branch:"ECE",       icon:"📊", yt:"https://www.youtube.com/results?search_query=IIT+Roorkee+Digital+Signal+Processing+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=digital+signal+processing" },
+      { name:"Electrical Machines",       branch:"EEE",       icon:"⚙️", yt:"https://www.youtube.com/results?search_query=IIT+Roorkee+Electrical+Machines+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=electrical+machines" },
+      { name:"Water Resources",           branch:"Civil",     icon:"💧", yt:"https://www.youtube.com/results?search_query=IIT+Roorkee+Water+Resources+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=water+resources+engineering" },
+      { name:"Fluid Mechanics",           branch:"Civil/Mech",icon:"🌊", yt:"https://www.youtube.com/results?search_query=IIT+Roorkee+Fluid+Mechanics+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=fluid+mechanics" },
+    ],
+    "IIT Hyderabad": [
+      { name:"Machine Learning",          branch:"CSE",       icon:"🤖", yt:"https://www.youtube.com/results?search_query=IIT+Hyderabad+Machine+Learning+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=machine+learning" },
+      { name:"Operating Systems",         branch:"CSE",       icon:"💻", yt:"https://www.youtube.com/results?search_query=IIT+Hyderabad+Operating+Systems+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=operating+systems" },
+      { name:"Digital Communications",    branch:"ECE",       icon:"📡", yt:"https://www.youtube.com/results?search_query=IIT+Hyderabad+Digital+Communications+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=digital+communications" },
+      { name:"VLSI Design",               branch:"ECE",       icon:"🔬", yt:"https://www.youtube.com/results?search_query=IIT+Hyderabad+VLSI+NPTEL", pdf:"https://nptel.ac.in/courses?search=VLSI+design" },
+      { name:"Microprocessors",           branch:"ECE/EEE",   icon:"🖥️", yt:"https://www.youtube.com/results?search_query=IIT+Hyderabad+Microprocessors+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=microprocessors" },
+    ],
+    "NIT Warangal": [
+      { name:"Database Management",       branch:"CSE",       icon:"🗄️", yt:"https://www.youtube.com/results?search_query=NIT+Warangal+Database+Management+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=database+management" },
+      { name:"Engineering Mathematics",   branch:"All",       icon:"📐", yt:"https://www.youtube.com/results?search_query=NIT+Warangal+Engineering+Mathematics+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=engineering+mathematics" },
+      { name:"Electrical Machines",       branch:"EEE",       icon:"⚙️", yt:"https://www.youtube.com/results?search_query=NIT+Warangal+Electrical+Machines+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=electrical+machines" },
+      { name:"Fluid Mechanics",           branch:"Civil/Mech",icon:"💧", yt:"https://www.youtube.com/results?search_query=NIT+Warangal+Fluid+Mechanics+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=fluid+mechanics" },
+      { name:"Structural Analysis",       branch:"Civil",     icon:"🏗️", yt:"https://www.youtube.com/results?search_query=NIT+Warangal+Structural+Analysis+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=structural+analysis" },
+    ],
+    "NIT Trichy": [
+      { name:"Analog Circuits",           branch:"ECE",       icon:"🔌", yt:"https://www.youtube.com/results?search_query=NIT+Trichy+Analog+Circuits+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=analog+circuits" },
+      { name:"Heat & Mass Transfer",      branch:"Mech",      icon:"🌡️", yt:"https://www.youtube.com/results?search_query=NIT+Trichy+Heat+Mass+Transfer+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=heat+mass+transfer" },
+      { name:"Engineering Mechanics",     branch:"Civil/Mech",icon:"🔩", yt:"https://www.youtube.com/results?search_query=NIT+Trichy+Engineering+Mechanics+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=engineering+mechanics" },
+      { name:"Digital Electronics",       branch:"ECE",       icon:"⚡", yt:"https://www.youtube.com/results?search_query=NIT+Trichy+Digital+Electronics+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=digital+electronics" },
+      { name:"Fluid Mechanics",           branch:"Civil",     icon:"💧", yt:"https://www.youtube.com/results?search_query=NIT+Trichy+Fluid+Mechanics+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=fluid+mechanics" },
+    ],
+    "IISc Bangalore": [
+      { name:"Advanced Algorithms",       branch:"CSE",       icon:"🧮", yt:"https://www.youtube.com/results?search_query=IISc+Bangalore+Algorithms+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=advanced+algorithms" },
+      { name:"RF & Microwave Engineering",branch:"ECE",       icon:"📻", yt:"https://www.youtube.com/results?search_query=IISc+RF+Microwave+Engineering+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=RF+microwave" },
+      { name:"Advanced Structural Analysis",branch:"Civil",   icon:"🏗️", yt:"https://www.youtube.com/results?search_query=IISc+Structural+Analysis+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=structural+analysis" },
+      { name:"Power Electronics",         branch:"EEE",       icon:"⚡", yt:"https://www.youtube.com/results?search_query=IISc+Power+Electronics+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=power+electronics" },
+      { name:"Probability & Statistics",  branch:"All",       icon:"📊", yt:"https://www.youtube.com/results?search_query=IISc+Probability+Statistics+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=probability+statistics" },
+    ],
+    "MIT OpenCourseWare": [
+      { name:"6.006 — Algorithms",        branch:"CSE",       icon:"🧮", yt:"https://www.youtube.com/results?search_query=MIT+6.006+Introduction+to+Algorithms", pdf:"https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-fall-2011/" },
+      { name:"6.002 — Circuits",          branch:"ECE/EEE",   icon:"🔌", yt:"https://www.youtube.com/results?search_query=MIT+6.002+Circuits+Electronics", pdf:"https://ocw.mit.edu/courses/6-002-circuits-and-electronics-spring-2007/" },
+      { name:"6.003 — Signals & Systems", branch:"ECE",       icon:"📡", yt:"https://www.youtube.com/results?search_query=MIT+6.003+Signals+Systems", pdf:"https://ocw.mit.edu/courses/6-003-signals-and-systems-fall-2011/" },
+      { name:"18.06 — Linear Algebra",    branch:"All",       icon:"📐", yt:"https://www.youtube.com/results?search_query=MIT+18.06+Linear+Algebra+Gilbert+Strang", pdf:"https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/" },
+      { name:"1.050 — Solid Mechanics",   branch:"Civil/Mech",icon:"🔩", yt:"https://www.youtube.com/results?search_query=MIT+Solid+Mechanics+1.050", pdf:"https://ocw.mit.edu/courses/1-050-solid-mechanics-fall-2004/" },
+      { name:"2.005 — Thermodynamics",    branch:"Mech",      icon:"🌡️", yt:"https://www.youtube.com/results?search_query=MIT+Thermodynamics+2.005", pdf:"https://ocw.mit.edu/courses/2-005-thermal-fluids-engineering-i-fall-2003/" },
+    ],
+    "MIT YouTube": [
+      { name:"Linear Algebra (Gilbert Strang)",branch:"All",  icon:"📐", yt:"https://www.youtube.com/playlist?list=PLE7DDD91010BC51F8", pdf:"https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/" },
+      { name:"Algorithms (Erik Demaine)",  branch:"CSE",      icon:"🧮", yt:"https://www.youtube.com/results?search_query=MIT+6.006+algorithms+lectures+2011", pdf:"https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-fall-2011/" },
+      { name:"Circuits & Electronics",     branch:"ECE",      icon:"🔌", yt:"https://www.youtube.com/results?search_query=MIT+6.002+circuits+electronics+lectures", pdf:"https://ocw.mit.edu/courses/6-002-circuits-and-electronics-spring-2007/" },
+      { name:"Probability (John Tsitsiklis)",branch:"All",    icon:"📊", yt:"https://www.youtube.com/results?search_query=MIT+6.041+probability+Tsitsiklis", pdf:"https://ocw.mit.edu/courses/6-041-probabilistic-systems-analysis-fall-2010/" },
+      { name:"Fluid Dynamics",             branch:"Civil/Mech",icon:"💧", yt:"https://www.youtube.com/results?search_query=MIT+fluid+dynamics+lecture", pdf:"https://ocw.mit.edu/courses/2-20-marine-hydrodynamics-13-021-spring-2005/" },
+    ],
+    "Stanford Online": [
+      { name:"Algorithms (Roughgarden)",   branch:"CSE",      icon:"🧮", yt:"https://www.youtube.com/results?search_query=Stanford+Tim+Roughgarden+Algorithms", pdf:"https://online.stanford.edu/courses/soe-ycsalgorithms1-algorithms-design-and-analysis-part-1" },
+      { name:"Machine Learning (Ng)",      branch:"CSE",      icon:"🤖", yt:"https://www.youtube.com/results?search_query=Andrew+Ng+Machine+Learning+Stanford+CS229", pdf:"https://cs229.stanford.edu/materials.html" },
+      { name:"CS101 — Intro to CS",        branch:"CSE",      icon:"💻", yt:"https://www.youtube.com/results?search_query=Stanford+CS101+Introduction+Computer+Science", pdf:"https://online.stanford.edu/free-courses" },
+      { name:"Compilers (Aiken)",          branch:"CSE",      icon:"⚙️", yt:"https://www.youtube.com/results?search_query=Stanford+CS143+Compilers+Alex+Aiken", pdf:"https://web.stanford.edu/class/cs143/" },
+    ],
+    "Coursera (Audit)": [
+      { name:"Algorithms (Stanford) — FREE",branch:"CSE",     icon:"🧮", yt:"https://www.youtube.com/results?search_query=Stanford+Algorithms+Specialization+Tim+Roughgarden", pdf:"https://www.coursera.org/specializations/algorithms" },
+      { name:"Data Structures (UCSD) — FREE",branch:"CSE",    icon:"🌳", yt:"https://www.youtube.com/results?search_query=UCSD+Data+Structures+Coursera", pdf:"https://www.coursera.org/specializations/data-structures-algorithms" },
+      { name:"Digital Systems (UCSD) — FREE",branch:"ECE",    icon:"⚡", yt:"https://www.youtube.com/results?search_query=UCSD+digital+systems+Coursera", pdf:"https://www.coursera.org/learn/digital-systems" },
+      { name:"Linear Algebra (Imperial) — FREE",branch:"All", icon:"📐", yt:"https://www.youtube.com/results?search_query=Imperial+College+Linear+Algebra+Coursera", pdf:"https://www.coursera.org/specializations/mathematics-machine-learning" },
+    ],
+    "edX Free Courses": [
+      { name:"CS50 — Harvard Intro CS (FREE)",branch:"CSE",   icon:"💻", yt:"https://www.youtube.com/results?search_query=CS50+Harvard+Introduction+Computer+Science+2023", pdf:"https://cs50.harvard.edu/x/" },
+      { name:"Circuits & Electronics (MIT) — FREE",branch:"ECE",icon:"🔌",yt:"https://www.youtube.com/results?search_query=MIT+6.002+circuits+electronics+edX", pdf:"https://www.edx.org/course/circuits-and-electronics-1-basic-circuit-analysis" },
+      { name:"Engineering Maths (IITR) — FREE",branch:"All", icon:"📐", yt:"https://www.youtube.com/results?search_query=IIT+Roorkee+Engineering+Mathematics+SWAYAM", pdf:"https://www.edx.org/search?q=engineering+mathematics" },
+      { name:"Thermodynamics (UT Austin) — FREE",branch:"Mech",icon:"🌡️",yt:"https://www.youtube.com/results?search_query=UT+Austin+Thermodynamics+edX", pdf:"https://www.edx.org/search?q=thermodynamics" },
+    ],
+    "Khan Academy": [
+      { name:"Linear Algebra",             branch:"All",      icon:"📐", yt:"https://www.youtube.com/@khanacademy/search?query=linear+algebra", pdf:"https://www.khanacademy.org/math/linear-algebra" },
+      { name:"Calculus 1, 2 & 3",          branch:"All",      icon:"∫",  yt:"https://www.youtube.com/@khanacademy/search?query=calculus", pdf:"https://www.khanacademy.org/math/calculus-1" },
+      { name:"Differential Equations",     branch:"All",      icon:"📊", yt:"https://www.youtube.com/@khanacademy/search?query=differential+equations", pdf:"https://www.khanacademy.org/math/differential-equations" },
+      { name:"Electric Circuits",          branch:"ECE/EEE",  icon:"🔌", yt:"https://www.youtube.com/@khanacademy/search?query=electrical+engineering+circuits", pdf:"https://www.khanacademy.org/science/electrical-engineering" },
+      { name:"Physics — Mechanics",        branch:"All",      icon:"⚙️", yt:"https://www.youtube.com/@khanacademy/search?query=mechanics+physics", pdf:"https://www.khanacademy.org/science/physics" },
+      { name:"Statistics & Probability",   branch:"All",      icon:"📊", yt:"https://www.youtube.com/@khanacademy/search?query=probability+statistics", pdf:"https://www.khanacademy.org/math/statistics-probability" },
+    ],
+    "Gate Smashers": [
+      { name:"Operating Systems (Full)",   branch:"CSE",      icon:"💻", yt:"https://www.youtube.com/@GateSmashersFull/search?query=operating+systems", pdf:"https://nptel.ac.in/courses?searchQuery=operating+systems" },
+      { name:"DBMS (Full)",                branch:"CSE",      icon:"🗄️", yt:"https://www.youtube.com/@GateSmashersFull/search?query=DBMS", pdf:"https://nptel.ac.in/courses?searchQuery=database+management" },
+      { name:"Computer Networks (Full)",   branch:"CSE",      icon:"🌐", yt:"https://www.youtube.com/@GateSmashersFull/search?query=computer+networks", pdf:"https://nptel.ac.in/courses?searchQuery=computer+networks" },
+      { name:"Theory of Computation",      branch:"CSE",      icon:"🤖", yt:"https://www.youtube.com/@GateSmashersFull/search?query=theory+of+computation", pdf:"https://nptel.ac.in/courses?searchQuery=theory+of+computation" },
+      { name:"Algorithms & Data Structures",branch:"CSE",     icon:"🌳", yt:"https://www.youtube.com/@GateSmashersFull/search?query=data+structures+algorithms", pdf:"https://nptel.ac.in/courses?searchQuery=data+structures+algorithms" },
+      { name:"Computer Organisation (CO)", branch:"CSE",      icon:"🏛", yt:"https://www.youtube.com/@GateSmashersFull/search?query=computer+organisation", pdf:"https://nptel.ac.in/courses?searchQuery=computer+organisation" },
+      { name:"Discrete Mathematics",       branch:"CSE",      icon:"🔢", yt:"https://www.youtube.com/@GateSmashersFull/search?query=discrete+mathematics", pdf:"https://nptel.ac.in/courses?searchQuery=discrete+mathematics" },
+      { name:"Digital Electronics",        branch:"ECE/CSE",  icon:"⚡", yt:"https://www.youtube.com/@GateSmashersFull/search?query=digital+electronics", pdf:"https://nptel.ac.in/courses?searchQuery=digital+electronics" },
+    ],
+    "Neso Academy": [
+      { name:"Digital Electronics",        branch:"ECE/CSE",  icon:"⚡", yt:"https://www.youtube.com/@NesoAcademy/search?query=digital+electronics", pdf:"https://nptel.ac.in/courses?searchQuery=digital+electronics" },
+      { name:"Signals & Systems",          branch:"ECE",      icon:"📡", yt:"https://www.youtube.com/@NesoAcademy/search?query=signals+and+systems", pdf:"https://nptel.ac.in/courses?searchQuery=signals+systems" },
+      { name:"Computer Networks",          branch:"CSE",      icon:"🌐", yt:"https://www.youtube.com/@NesoAcademy/search?query=computer+networks", pdf:"https://nptel.ac.in/courses?searchQuery=computer+networks" },
+      { name:"Analog Circuits",            branch:"ECE",      icon:"🔌", yt:"https://www.youtube.com/@NesoAcademy/search?query=analog+circuits", pdf:"https://nptel.ac.in/courses?searchQuery=analog+circuits" },
+      { name:"C Programming",              branch:"CSE",      icon:"💻", yt:"https://www.youtube.com/@NesoAcademy/search?query=C+programming", pdf:"https://nptel.ac.in/courses?searchQuery=programming+in+C" },
+      { name:"Communication Systems",      branch:"ECE",      icon:"📻", yt:"https://www.youtube.com/@NesoAcademy/search?query=communication+systems", pdf:"https://nptel.ac.in/courses?searchQuery=communication+systems" },
+    ],
+    "NPTEL Official": [
+      { name:"All CSE Courses",            branch:"CSE",      icon:"💻", yt:"https://www.youtube.com/@nptel/search?query=computer+science", pdf:"https://nptel.ac.in/courses?disciplineId=106" },
+      { name:"All ECE Courses",            branch:"ECE",      icon:"📡", yt:"https://www.youtube.com/@nptel/search?query=electronics+communication", pdf:"https://nptel.ac.in/courses?disciplineId=117" },
+      { name:"All EEE Courses",            branch:"EEE",      icon:"⚡", yt:"https://www.youtube.com/@nptel/search?query=electrical+engineering", pdf:"https://nptel.ac.in/courses?disciplineId=108" },
+      { name:"All Civil Courses",          branch:"Civil",    icon:"🏗️", yt:"https://www.youtube.com/@nptel/search?query=civil+engineering", pdf:"https://nptel.ac.in/courses?disciplineId=105" },
+      { name:"All Mech Courses",           branch:"Mech",     icon:"⚙️", yt:"https://www.youtube.com/@nptel/search?query=mechanical+engineering", pdf:"https://nptel.ac.in/courses?disciplineId=112" },
+      { name:"Engineering Mathematics",    branch:"All",      icon:"📐", yt:"https://www.youtube.com/@nptel/search?query=engineering+mathematics", pdf:"https://nptel.ac.in/courses?searchQuery=engineering+mathematics" },
+    ],
+    "Knowledge Gate": [
+      { name:"DBMS — Full Course",          branch:"CSE",     icon:"🗄️", yt:"https://www.youtube.com/@KnowledgeGate9/search?query=DBMS", pdf:"https://nptel.ac.in/courses?searchQuery=database+management" },
+      { name:"Operating Systems — Full",    branch:"CSE",     icon:"💻", yt:"https://www.youtube.com/@KnowledgeGate9/search?query=operating+systems", pdf:"https://nptel.ac.in/courses?searchQuery=operating+systems" },
+      { name:"Computer Networks — Full",    branch:"CSE",     icon:"🌐", yt:"https://www.youtube.com/@KnowledgeGate9/search?query=computer+networks", pdf:"https://nptel.ac.in/courses?searchQuery=computer+networks" },
+      { name:"Theory of Computation",       branch:"CSE",     icon:"🤖", yt:"https://www.youtube.com/@KnowledgeGate9/search?query=theory+of+computation", pdf:"https://nptel.ac.in/courses?searchQuery=theory+of+computation" },
+      { name:"Algorithms",                  branch:"CSE",     icon:"🧮", yt:"https://www.youtube.com/@KnowledgeGate9/search?query=algorithms", pdf:"https://nptel.ac.in/courses?searchQuery=algorithms" },
+      { name:"Digital Electronics",         branch:"ECE/CSE", icon:"⚡", yt:"https://www.youtube.com/@KnowledgeGate9/search?query=digital+electronics", pdf:"https://nptel.ac.in/courses?searchQuery=digital+electronics" },
+    ],
+    "EE Academy": [
+      { name:"Circuit Theory",             branch:"EEE/ECE",  icon:"🔌", yt:"https://www.youtube.com/@EEAcademy1/search?query=circuit+theory", pdf:"https://nptel.ac.in/courses?searchQuery=circuit+theory" },
+      { name:"Network Analysis",           branch:"EEE/ECE",  icon:"🌐", yt:"https://www.youtube.com/@EEAcademy1/search?query=network+analysis", pdf:"https://nptel.ac.in/courses?searchQuery=network+analysis" },
+      { name:"EM Field Theory",            branch:"ECE",      icon:"🧲", yt:"https://www.youtube.com/@EEAcademy1/search?query=electromagnetic+field+theory", pdf:"https://nptel.ac.in/courses?searchQuery=electromagnetic+theory" },
+      { name:"Power Systems",              branch:"EEE",      icon:"💡", yt:"https://www.youtube.com/@EEAcademy1/search?query=power+systems", pdf:"https://nptel.ac.in/courses?searchQuery=power+systems" },
+      { name:"Control Systems",            branch:"EEE/ECE",  icon:"🔄", yt:"https://www.youtube.com/@EEAcademy1/search?query=control+systems", pdf:"https://nptel.ac.in/courses?searchQuery=control+systems" },
+      { name:"Electrical Machines",        branch:"EEE",      icon:"⚙️", yt:"https://www.youtube.com/@EEAcademy1/search?query=electrical+machines", pdf:"https://nptel.ac.in/courses?searchQuery=electrical+machines" },
+    ],
+    "Civil Guruji": [
+      { name:"Structural Analysis",        branch:"Civil",    icon:"🏗️", yt:"https://www.youtube.com/@CivilGuruji/search?query=structural+analysis", pdf:"https://nptel.ac.in/courses?searchQuery=structural+analysis" },
+      { name:"Fluid Mechanics",            branch:"Civil",    icon:"💧", yt:"https://www.youtube.com/@CivilGuruji/search?query=fluid+mechanics", pdf:"https://nptel.ac.in/courses?searchQuery=fluid+mechanics" },
+      { name:"Geotechnical Engineering",   branch:"Civil",    icon:"🪨", yt:"https://www.youtube.com/@CivilGuruji/search?query=geotechnical+engineering", pdf:"https://nptel.ac.in/courses?searchQuery=geotechnical+engineering" },
+      { name:"Transportation Engineering", branch:"Civil",    icon:"🛣️", yt:"https://www.youtube.com/@CivilGuruji/search?query=transportation+engineering", pdf:"https://nptel.ac.in/courses?searchQuery=transportation+engineering" },
+      { name:"Environmental Engineering",  branch:"Civil",    icon:"🌿", yt:"https://www.youtube.com/@CivilGuruji/search?query=environmental+engineering", pdf:"https://nptel.ac.in/courses?searchQuery=environmental+engineering" },
+      { name:"Surveying",                  branch:"Civil",    icon:"📏", yt:"https://www.youtube.com/@CivilGuruji/search?query=surveying", pdf:"https://nptel.ac.in/courses?searchQuery=surveying" },
+    ],
+    "IIT Madras Online": [
+      { name:"Operating Systems",          branch:"CSE",      icon:"💻", yt:"https://www.youtube.com/@iitmadrasonline/search?query=operating+systems", pdf:"https://nptel.ac.in/courses?searchQuery=operating+systems" },
+      { name:"Computer Architecture",      branch:"CSE",      icon:"🏛", yt:"https://www.youtube.com/@iitmadrasonline/search?query=computer+architecture", pdf:"https://nptel.ac.in/courses?searchQuery=computer+architecture" },
+      { name:"Signals & Systems",          branch:"ECE",      icon:"📡", yt:"https://www.youtube.com/@iitmadrasonline/search?query=signals+systems", pdf:"https://nptel.ac.in/courses?searchQuery=signals+systems" },
+      { name:"Thermodynamics",             branch:"Mech",     icon:"🌡️", yt:"https://www.youtube.com/@iitmadrasonline/search?query=thermodynamics", pdf:"https://nptel.ac.in/courses?searchQuery=thermodynamics" },
+    ],
+    "IIT Delhi Official": [
+      { name:"Algorithms",                 branch:"CSE",      icon:"🧮", yt:"https://www.youtube.com/@IITDelhiOfficial/search?query=algorithms", pdf:"https://nptel.ac.in/courses?searchQuery=algorithms" },
+      { name:"Theory of Computation",      branch:"CSE",      icon:"🤖", yt:"https://www.youtube.com/@IITDelhiOfficial/search?query=theory+of+computation", pdf:"https://nptel.ac.in/courses?searchQuery=theory+of+computation" },
+      { name:"Digital Systems",            branch:"ECE",      icon:"⚡", yt:"https://www.youtube.com/@IITDelhiOfficial/search?query=digital+systems", pdf:"https://nptel.ac.in/courses?searchQuery=digital+systems" },
+      { name:"Mathematics",                branch:"All",      icon:"📐", yt:"https://www.youtube.com/@IITDelhiOfficial/search?query=mathematics", pdf:"https://nptel.ac.in/courses?searchQuery=engineering+mathematics" },
+    ],
+    "Unacademy GATE": [
+      { name:"GATE CSE — Free Lectures",   branch:"CSE",      icon:"💻", yt:"https://www.youtube.com/@UnacademyGATE/search?query=CSE", pdf:"https://nptel.ac.in/courses?disciplineId=106" },
+      { name:"GATE ECE — Free Lectures",   branch:"ECE",      icon:"📡", yt:"https://www.youtube.com/@UnacademyGATE/search?query=ECE", pdf:"https://nptel.ac.in/courses?disciplineId=117" },
+      { name:"GATE EEE — Free Lectures",   branch:"EEE",      icon:"⚡", yt:"https://www.youtube.com/@UnacademyGATE/search?query=EE", pdf:"https://nptel.ac.in/courses?disciplineId=108" },
+      { name:"GATE Civil — Free Lectures", branch:"Civil",    icon:"🏗️", yt:"https://www.youtube.com/@UnacademyGATE/search?query=civil", pdf:"https://nptel.ac.in/courses?disciplineId=105" },
+      { name:"GATE Mech — Free Lectures",  branch:"Mech",     icon:"⚙️", yt:"https://www.youtube.com/@UnacademyGATE/search?query=mechanical", pdf:"https://nptel.ac.in/courses?disciplineId=112" },
+    ],
+    "MADE Easy": [
+      { name:"GATE Topper Discussions",    branch:"All",      icon:"🏆", yt:"https://www.youtube.com/@madeeasygroupofficial/search?query=GATE+topper", pdf:"https://madeeasypublications.org" },
+      { name:"Shortcuts & Tricks",         branch:"All",      icon:"💡", yt:"https://www.youtube.com/@madeeasygroupofficial/search?query=shortcuts+tricks", pdf:"https://madeeasypublications.org" },
+      { name:"Previous Year Solutions",    branch:"All",      icon:"📄", yt:"https://www.youtube.com/@madeeasygroupofficial/search?query=previous+year+questions", pdf:"https://madeeasypublications.org/gate-books.php" },
+    ],
+    "Ravindrababu Ravula": [
+      { name:"Theory of Computation",      branch:"CSE",      icon:"🤖", yt:"https://www.youtube.com/@ravindrababuravula/search?query=theory+of+computation", pdf:"https://nptel.ac.in/courses?searchQuery=theory+of+computation" },
+      { name:"Operating Systems",          branch:"CSE",      icon:"💻", yt:"https://www.youtube.com/@ravindrababuravula/search?query=operating+systems", pdf:"https://nptel.ac.in/courses?searchQuery=operating+systems" },
+      { name:"DBMS",                       branch:"CSE",      icon:"🗄️", yt:"https://www.youtube.com/@ravindrababuravula/search?query=DBMS", pdf:"https://nptel.ac.in/courses?searchQuery=database+management" },
+      { name:"Computer Networks",          branch:"CSE",      icon:"🌐", yt:"https://www.youtube.com/@ravindrababuravula/search?query=computer+networks", pdf:"https://nptel.ac.in/courses?searchQuery=computer+networks" },
+      { name:"Algorithms",                 branch:"CSE",      icon:"🧮", yt:"https://www.youtube.com/@ravindrababuravula/search?query=algorithms", pdf:"https://nptel.ac.in/courses?searchQuery=algorithms" },
+    ],
+    "5 Minutes Engineering": [
+      { name:"Quick Concepts — CSE",       branch:"CSE",      icon:"💻", yt:"https://www.youtube.com/@5MinutesEngineering/search?query=computer+science", pdf:"https://nptel.ac.in/courses?disciplineId=106" },
+      { name:"Quick Concepts — ECE",       branch:"ECE",      icon:"📡", yt:"https://www.youtube.com/@5MinutesEngineering/search?query=electronics", pdf:"https://nptel.ac.in/courses?disciplineId=117" },
+      { name:"Quick Concepts — Mech",      branch:"Mech",     icon:"⚙️", yt:"https://www.youtube.com/@5MinutesEngineering/search?query=mechanical", pdf:"https://nptel.ac.in/courses?disciplineId=112" },
+      { name:"Quick Concepts — Civil",     branch:"Civil",    icon:"🏗️", yt:"https://www.youtube.com/@5MinutesEngineering/search?query=civil", pdf:"https://nptel.ac.in/courses?disciplineId=105" },
+    ],
+  };
+
+  const courses = C[res.name] || [];
+  const isYT = res.url && res.url.includes("youtube.com");
+  const btnLabel = isYT ? "▶ Open Channel" : "🌐 Open Site";
+
+  return [
+    el("div", { class: "gate-res-detail" },
+      el("div", { class: "gate-res-detail-hdr" },
+        el("button", { type: "button", class: "gate-back-btn",
+          onclick: () => { state.gateResView = null; render(); }
+        }, "← Back to Resources"),
+        el("div", { class: "gate-res-det-title" },
+          el("span", { class: "gate-res-det-emoji" }, res.emoji),
+          el("div", {},
+            el("div", { class: "gate-res-det-name" }, res.name),
+            el("div", { class: "gate-res-det-sub" }, res.sub || "Free content — no payment needed"),
+          ),
+        ),
+        el("a", { class: "btn sm", href: res.url, target: "_blank", rel: "noopener noreferrer" }, btnLabel),
+      ),
+      el("div", { class: "gate-free-badge" }, "✅ 100% FREE — No subscription, no payment, no login required"),
+      courses.length > 0
+        ? el("div", { class: "gate-course-list" },
+            el("div", { class: "gate-course-hint" },
+              "Tap ",
+              el("span", { class: "gate-course-hint-yt" }, "▶ Watch"),
+              " to play video in YouTube (HD) · Tap ",
+              el("span", { class: "gate-course-hint-pdf" }, "📄 PDF"),
+              " for free lecture notes"
+            ),
+            ...courses.map(c =>
+              el("div", { class: "gate-course-card" },
+                el("div", { class: "gate-course-left" },
+                  el("span", { class: "gate-course-icon" }, c.icon),
+                  el("div", {},
+                    el("div", { class: "gate-course-name" }, c.name),
+                    el("span", { class: "gate-course-branch" }, c.branch),
+                  ),
+                ),
+                el("div", { class: "gate-course-btns" },
+                  el("a", { class: "btn primary sm", href: c.yt, target: "_blank", rel: "noopener noreferrer" }, "▶ Watch"),
+                  el("a", { class: "btn sm", href: c.pdf, target: "_blank", rel: "noopener noreferrer" }, "📄 PDF"),
+                ),
+              )
+            ),
+          )
+        : el("div", { class: "gate-course-empty" },
+            el("div", {}, "Tap "" + btnLabel + "" above to browse all available courses and content."),
+          ),
+    ),
+  ];
+}
+
 function renderGateIntro() {
   const PYQ_YEARS = ["2025","2024","2023","2022","2021","2020","2019","2018","2017","2016"];
   const GATE_IITS = [
@@ -2818,9 +3083,13 @@ function renderGateIntro() {
     { name: "Unacademy GATE", sub: "Live tests + quizzes", emoji: "🎯", url: "https://unacademy.com/goal/gate" },
     { name: "GATE Overflow", sub: "CSE PYQ solutions community", emoji: "💬", url: "https://gateoverflow.in" },
   ];
+  if (state.gateResView) return renderGateResourceDetail(state.gateResView);
+
   const pyqPosts = state.gate.filter(d => !d.deleted && d.pyqYear);
   const yearCounts = {};
   for (const d of pyqPosts) yearCounts[d.pyqYear] = (yearCounts[d.pyqYear] || 0) + 1;
+
+  const openRes = (r) => { state.gateResView = r; render(); };
 
   const setYearFilter = (y) => {
     state.filter = "pyq"; $("filter").value = "pyq";
@@ -2887,15 +3156,16 @@ function renderGateIntro() {
       // Top IITs & NITs
       el("div", { class: "gate-section" },
         el("div", { class: "gate-section-title" }, "🏛 Top IITs & NITs — Free Courses"),
-        el("div", { class: "gate-section-sub" }, "NPTEL courses by IIT/NIT professors — free, no login needed"),
+        el("div", { class: "gate-section-sub" }, "Tap any institute → see subjects → ▶ watch video in HD · 📄 download PDF — all 100% free"),
         el("div", { class: "gate-res-grid gate-res-grid-2" },
           ...GATE_IITS.map(r =>
-            el("a", { class: "gate-res-chip", href: r.url, target: "_blank", rel: "noopener noreferrer" },
+            el("button", { type: "button", class: "gate-res-chip", onclick: () => openRes(r) },
               el("span", { class: "gate-res-emoji" }, r.emoji),
               el("div", {},
                 el("div", { class: "gate-res-name" }, r.name),
                 el("div", { class: "gate-res-tag" }, r.sub),
-              )
+              ),
+              el("span", { class: "gate-res-arrow" }, "›"),
             )
           )
         ),
@@ -2904,15 +3174,16 @@ function renderGateIntro() {
       // World class universities
       el("div", { class: "gate-section" },
         el("div", { class: "gate-section-title" }, "🌍 World Class Universities"),
-        el("div", { class: "gate-section-sub" }, "MIT, Stanford — free audit courses for deep understanding"),
+        el("div", { class: "gate-section-sub" }, "MIT, Stanford, Khan Academy — tap to see free courses"),
         el("div", { class: "gate-res-grid gate-res-grid-2" },
           ...GATE_WORLD.map(r =>
-            el("a", { class: "gate-res-chip", href: r.url, target: "_blank", rel: "noopener noreferrer" },
+            el("button", { type: "button", class: "gate-res-chip", onclick: () => openRes(r) },
               el("span", { class: "gate-res-emoji" }, r.emoji),
               el("div", {},
                 el("div", { class: "gate-res-name" }, r.name),
                 el("div", { class: "gate-res-tag" }, r.sub),
-              )
+              ),
+              el("span", { class: "gate-res-arrow" }, "›"),
             )
           )
         ),
@@ -2921,15 +3192,16 @@ function renderGateIntro() {
       // Free video lectures
       el("div", { class: "gate-section" },
         el("div", { class: "gate-section-title" }, "🎥 Free YouTube Lectures (HD)"),
-        el("div", { class: "gate-section-sub" }, "Best GATE YouTube channels — all branches, HD quality"),
+        el("div", { class: "gate-section-sub" }, "Tap a channel → see subjects → ▶ opens YouTube — plays in HD immediately"),
         el("div", { class: "gate-res-grid" },
           ...GATE_VIDEOS.map(r =>
-            el("a", { class: "gate-res-chip", href: r.url, target: "_blank", rel: "noopener noreferrer" },
+            el("button", { type: "button", class: "gate-res-chip", onclick: () => openRes(r) },
               el("span", { class: "gate-res-emoji" }, r.emoji),
               el("div", {},
                 el("div", { class: "gate-res-name" }, r.name),
                 el("div", { class: "gate-res-tag" }, r.sub),
-              )
+              ),
+              el("span", { class: "gate-res-arrow" }, "›"),
             )
           )
         ),
