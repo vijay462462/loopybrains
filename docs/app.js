@@ -60,6 +60,14 @@ const TABS = {
     placeholder: "e.g. What is the output of this C program? / Arrange 8 queens on a chessboard",
     bodyHint: "Full question or challenge description. For quizzes, reveal the answer in your first reply.",
   },
+  market: {
+    coll: "market", field: "category", groups: ["Books", "Electronics", "Hostel", "Notes", "Lab Equipment", "Clothing", "Other"], groupLabel: "Category", noun: "listing",
+    ask: "Sell an item", tagline: "Buy and sell textbooks, electronics, hostel items and more — with fellow RGUKT students.",
+    replyNoun: "inquiry", replyLabel: "Your message", replyBtn: "Send",
+    placeholder: "e.g. Data Structures book by Cormen — 2nd year, good condition",
+    bodyHint: "Describe the item, its condition, why you're selling, and any extra details.",
+    market: true,
+  },
 };
 
 // ---------- campus ----------
@@ -89,7 +97,7 @@ const DEPT_VISUAL = {
 
 const state = {
   tab: "doubts", group: "All", query: "", filter: "all",
-  doubts: [], ideas: [], clubs: [], gate: [], challenges: [], chalScores: [], replies: [], likes: [], loaded: false,
+  doubts: [], ideas: [], clubs: [], gate: [], challenges: [], chalScores: [], market: [], replies: [], likes: [], loaded: false,
   selected: null, mode: "intro", // intro | view | ask | edit | name | campus
   afterName: null,
   replyPages: [], replyAnon: false,
@@ -686,10 +694,10 @@ function trackNew(coll, rows) {
 // ---------- bottom navigation ----------
 function renderBottomNav() {
   const nav = $('bottomNav'); if (!nav) return;
-  const icons = { doubts: '❓', ideas: '💡', clubs: '🏛', gate: '🎯', challenges: '🎮' };
-  const labels = { doubts: 'Doubts', ideas: 'Ideas', clubs: 'Clubs', gate: 'GATE', challenges: 'Challenges' };
+  const icons = { doubts: '❓', ideas: '💡', clubs: '🏛', gate: '🎯', challenges: '🎮', market: '🛒' };
+  const labels = { doubts: 'Doubts', ideas: 'Ideas', clubs: 'Clubs', gate: 'GATE', challenges: 'Challenges', market: 'Market' };
   nav.replaceChildren(
-    ...['doubts', 'ideas', 'clubs', 'challenges', 'gate'].map(tab => {
+    ...['doubts', 'ideas', 'clubs', 'market', 'gate'].map(tab => {
       const cnt = state[TABS[tab].coll].length;
       return el('button', { type: 'button', class: 'bnav-btn' + (state.tab === tab ? ' active' : ''), onclick: () => {
         if (state.tab === tab) return;
@@ -793,12 +801,14 @@ function renderHeader() {
     if (trEl) { trEl.hidden = !tr; if (tr) trEl.textContent = "📈 Trending now: " + tr; }
   }
   $("quizBtn").classList.toggle("dot", !!(store && state.loaded && QUIZ.length && !myQuizAnswer(dayNum())));
-  $("search").placeholder = state.tab === "doubts" ? "Search doubts" : state.tab === "gate" ? "Search GATE discussions" : "Search ideas";
+  $("search").placeholder = state.tab === "doubts" ? "Search doubts" : state.tab === "gate" ? "Search GATE discussions" : state.tab === "market" ? "Search listings" : "Search ideas";
   $("rail").setAttribute("aria-label", t.groupLabel);
   const opts = state.tab === "doubts"
     ? [["all","Newest"],["asked","Most asked"],["open","Unanswered"],["mine","My posts"],["mentor","Needs mentor"],["done","Resolved"],["bounty","🎁 Bounty"]]
     : state.tab === "gate"
     ? [["all","Newest"],["mine","My posts"]]
+    : state.tab === "market"
+    ? [["all","All listings"],["available","Available"],["sold","Sold"]]
     : [["all", "Newest"], ["top", "Most liked"]];
   const f = $("filter");
   if (f.dataset.tab !== state.tab) {
@@ -874,7 +884,181 @@ function deptBanner() {
   );
 }
 
+// ===================== CAMPUS MARKET =====================
+const MARKET_CONDITIONS = ["New", "Good", "Fair", "Worn"];
+const CONDITION_COLOR = { New: "#10b981", Good: "#3b82f6", Fair: "#f59e0b", Worn: "#6b7280" };
+
+function visibleMarket() {
+  let rows = state.market.filter(r => !r.deleted);
+  const q = state.query.trim().toLowerCase();
+  if (q) rows = rows.filter(r => (r.title + " " + r.body + " " + r.category).toLowerCase().includes(q));
+  if (state.group !== "All") rows = rows.filter(r => r.category === state.group);
+  if (state.campusFilter && state.campusFilter !== "all") rows = rows.filter(r => r.campus === state.campusFilter);
+  if (state.filter === "available") rows = rows.filter(r => !r.sold);
+  if (state.filter === "sold") rows = rows.filter(r => r.sold);
+  rows.sort((a, b) => b.createdAt - a.createdAt);
+  return rows;
+}
+
+function renderMarketList() {
+  const rows = visibleMarket();
+  if (!rows.length) {
+    $("list").replaceChildren(
+      el("div", { class: "mkt-hero" },
+        el("div", { class: "mkt-hero-icon" }, "🛒"),
+        el("h3", {}, "Campus Market"),
+        el("p", {}, "Buy and sell textbooks, electronics, hostel items and more with fellow RGUKT students."),
+        el("button", { class: "btn primary", type: "button", onclick: openAsk }, "Sell an item")
+      ),
+      state.market.length
+        ? el("div", { class: "empty" }, el("strong", {}, "Nothing matches"), "Try another category or clear the search.")
+        : el("div", { class: "empty" }, el("strong", {}, "No listings yet"), "Be the first to sell something!")
+    );
+    return;
+  }
+  $("list").replaceChildren(
+    el("div", { class: "mkt-grid" },
+      ...rows.map(d => {
+        const condColor = CONDITION_COLOR[d.condition] || "#6b7280";
+        return el("div", { class: "item-wrap" },
+          el("button", { type: "button", class: "mkt-card" + (d.sold ? " mkt-sold" : ""), onclick: () => openItem(d.id) },
+            el("div", { class: "mkt-card-top" },
+              el("span", { class: "tag", ...colorAttrs(d.category) }, d.category),
+              d.sold ? el("span", { class: "pill done" }, "✅ Sold") : el("span", { class: "pill open" }, "Available"),
+            ),
+            el("h3", { class: "mkt-title" }, d.title),
+            el("div", { class: "mkt-price-row" },
+              d.price ? el("span", { class: "mkt-price" }, "₹" + d.price) : el("span", { class: "mkt-price free" }, "Free / Negotiable"),
+              d.condition && el("span", { class: "mkt-condition", style: "--cc:" + condColor }, d.condition),
+            ),
+            el("div", { class: "meta" },
+              d.campus && el("span", { class: "campus-badge", style: "--cc:" + campusColor(d.campus) }, d.campus),
+              el("span", { class: "author-row" }, avatarEl(avatarFor(d.authorName || "")), (d.authorName || "Student") + " · " + ago(d.createdAt))
+            )
+          ),
+          mine(d) ? el("button", {
+            type: "button", class: "item-del", title: "Delete", "aria-label": "Delete",
+            onclick: (e) => { e.stopPropagation(); confirmDelete(e.currentTarget, async () => { await softDelete("market", d.id); if (state.selected === d.id) { state.selected = null; state.mode = "intro"; } render(); }); }
+          }, "🗑") : null
+        );
+      })
+    )
+  );
+}
+
+function renderMarketView() {
+  const d = state.market.find(x => x.id === state.selected);
+  if (!d) return [el("p", { class: "hint" }, "This listing was deleted or is still loading.")];
+  const own = mine(d);
+  const condColor = CONDITION_COLOR[d.condition] || "#6b7280";
+  const waNum = (d.whatsapp || "").replace(/\D/g, "");
+  const waLink = waNum.length >= 10 ? "https://wa.me/91" + waNum.slice(-10) + "?text=" + encodeURIComponent("Hi! I saw your listing on RGUKT Spark: " + d.title) : null;
+
+  const actions = [
+    waLink && !d.sold && !own && el("a", { class: "btn primary", href: waLink, target: "_blank", rel: "noopener noreferrer" }, "💬 Contact on WhatsApp"),
+    own && !d.sold && el("button", { class: "btn primary", type: "button", onclick: async () => {
+      await store.update("market", d.id, { sold: true });
+      const idx = state.market.findIndex(x => x.id === d.id);
+      if (idx >= 0) state.market[idx] = { ...state.market[idx], sold: true };
+      render();
+    }}, "✅ Mark as Sold"),
+    own && d.sold && el("button", { class: "btn", type: "button", onclick: async () => {
+      await store.update("market", d.id, { sold: false });
+      const idx = state.market.findIndex(x => x.id === d.id);
+      if (idx >= 0) state.market[idx] = { ...state.market[idx], sold: false };
+      render();
+    }}, "↩ Mark as Available"),
+    own && el("button", { class: "btn", type: "button", onclick: () => { state.mode = "edit"; render(); }}, "✏️ Edit"),
+    own && el("button", { class: "btn danger", type: "button", onclick: (e) => confirmDelete(e.currentTarget, async () => { await softDelete("market", d.id); state.selected = null; state.mode = "intro"; render(); })}, "🗑 Delete"),
+    el("button", { class: "btn", type: "button", onclick: () => { state.selected = null; state.mode = "intro"; render(); }}, "← Back")
+  ].filter(Boolean);
+
+  return [
+    d.sold && el("div", { class: "mkt-sold-banner" }, "✅ This item has been sold"),
+    el("div", { class: "meta" },
+      el("span", { class: "tag", ...colorAttrs(d.category) }, d.category),
+      d.condition && el("span", { class: "mkt-condition", style: "--cc:" + condColor }, d.condition),
+      d.campus && el("span", { class: "campus-badge", style: "--cc:" + campusColor(d.campus) }, d.campus),
+    ),
+    el("h2", {}, d.title),
+    d.price ? el("div", { class: "mkt-price-big" }, "₹" + d.price) : el("div", { class: "mkt-price-big free" }, "Free / Negotiable"),
+    d.body && el("p", { class: "body-text" }, d.body),
+    el("div", { class: "mkt-seller" },
+      avatarEl(avatarFor(d.authorName || ""), "av"),
+      el("div", {},
+        el("strong", {}, d.authorName || "Student"),
+        el("div", { class: "hint" }, "Listed " + ago(d.createdAt)),
+      )
+    ),
+    !waLink && !own && el("p", { class: "hint" }, "Seller didn't share a WhatsApp number. Comment to contact them."),
+    el("div", { class: "rowbtns" }, ...actions),
+  ];
+}
+
+function renderMarketAsk(existing) {
+  const t = TABS.market;
+  const err = el("p", { class: "err", hidden: true });
+  const current = existing ? existing.category : (state.group !== "All" ? state.group : t.groups[0]);
+  const form = el("form", { class: "form", onsubmit: async (e) => {
+    e.preventDefault();
+    const title = form.elements.title.value.trim();
+    const body = form.elements.body.value.trim();
+    const category = form.elements.category.value;
+    const price = form.elements.price.value.trim().replace(/[^0-9]/g, "");
+    const condition = form.elements.condition.value;
+    const whatsapp = form.elements.whatsapp.value.trim().replace(/[^0-9]/g, "");
+    if (title.length < 3) { err.textContent = "Write a title of at least 3 characters."; err.hidden = false; return; }
+    if (hasBadWords(title + " " + body)) { err.textContent = LANGUAGE_MSG; err.hidden = false; return; }
+    if (whatsapp && whatsapp.length < 10) { err.textContent = "Enter a valid 10-digit WhatsApp number."; err.hidden = false; return; }
+    const wait = existing ? "" : spamCheck();
+    if (wait) { err.textContent = wait; err.hidden = false; return; }
+    const btn = form.querySelector("button[type=submit]"); btn.disabled = true; btn.textContent = "Saving…";
+    try {
+      const myC = getCampus();
+      if (existing) {
+        await store.update("market", existing.id, { title: title.slice(0, 200), body: body.slice(0, 2000), category, price: price ? Number(price) : null, condition, whatsapp: whatsapp.slice(-10) });
+        state.mode = "view"; render(); return;
+      }
+      const id = store.newId("market");
+      const doc = { title: title.slice(0, 200), body: body.slice(0, 2000), category, price: price ? Number(price) : null, condition, whatsapp: whatsapp.slice(-10), authorId: store.uid, authorName: getName() || "Student", sold: false, createdAt: Date.now() };
+      if (myC) doc.campus = myC;
+      state.market = [{ id, ...doc }, ...state.market];
+      state.group = "All"; state.query = ""; $("search").value = "";
+      openItem(id);
+      notePosted();
+      await store.set("market", id, doc);
+    } catch (e2) { state.mode = "ask"; render(); showNotice(errText(e2)); }
+  }},
+    el("h2", {}, existing ? "Edit listing" : "📦 List an item for sale"),
+    el("div", { class: "two" },
+      el("label", {}, "Item name *", el("input", { name: "title", maxlength: "200", required: true, placeholder: t.placeholder, value: existing ? existing.title : "" })),
+      el("label", {}, "Category", el("select", { name: "category" }, t.groups.map(g => el("option", { selected: g === current }, g))))
+    ),
+    el("div", { class: "two" },
+      el("label", {}, "Price (₹)",
+        el("input", { name: "price", type: "number", min: "0", max: "99999", placeholder: "Leave blank = Free / Negotiable", value: existing && existing.price ? existing.price : "" })
+      ),
+      el("label", {}, "Condition",
+        el("select", { name: "condition" }, MARKET_CONDITIONS.map(c => el("option", { selected: existing && existing.condition === c }, c)))
+      )
+    ),
+    el("label", {}, "Description", el("textarea", { name: "body", maxlength: "2000", placeholder: t.bodyHint, value: existing ? existing.body : "" })),
+    el("label", {}, "Your WhatsApp number (optional — buyers will contact you)",
+      el("input", { name: "whatsapp", type: "tel", maxlength: "15", placeholder: "e.g. 9876543210 — not shown publicly except to buyers" })
+    ),
+    el("p", { class: "hint" }, "⚠️ Your WhatsApp number is only shared with students who open this listing."),
+    err,
+    el("div", { class: "rowbtns" },
+      el("button", { class: "btn primary", type: "submit" }, existing ? "Save changes" : "Post listing"),
+      el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); }}, "Cancel")
+    )
+  );
+  return [form];
+}
+// ===================== END CAMPUS MARKET =====================
+
 function renderList() {
+  if (state.tab === "market") { renderMarketList(); return; }
   const t = TABS[state.tab], rows = visible(), all = state[t.coll];
   if (!rows.length) {
     const noun = state.tab === "doubts" || state.tab === "gate" ? "subject" : state.tab === "clubs" ? "club" : state.tab === "challenges" ? "type" : "category";
@@ -2383,6 +2567,8 @@ function renderIntro() {
 
   const steps = state.tab === "doubts"
     ? "1. Ask — pick the subject and write the question. Add a photo of your notebook or write it on the notebook page.\n2. Answer — open any doubt and explain the steps. You can attach your handwritten working too.\n3. Resolve — the student who asked marks the answer that helped. Tap \u201cI have this doubt too\u201d on doubts you share."
+    : state.tab === "market"
+    ? "1. List — post an item with price, condition and WhatsApp number.\n2. Browse — search by category or filter available items.\n3. Contact — buyer taps WhatsApp button to reach seller directly.\n4. Sold — mark your listing as Sold once done."
     : "1. Share — post an idea for a project, startup or research. Sketch it on the notebook page if that helps.\n2. Like — tap ♥ on ideas you want to see happen.\n3. Build — reply with thoughts, improvements or an offer to join.";
 
   // Keyboard shortcut hint (desktop)
@@ -2610,6 +2796,7 @@ function renderChalQuizBuilder(onUpdate) {
 }
 
 function renderAsk(existing) {
+  if (state.tab === "market") return renderMarketAsk(existing);
   const t = TABS[state.tab];
   const err = el("p", { class: "err", hidden: true });
   const label = existing ? "Save changes" : (state.tab === "doubts" ? "Post doubt" : state.tab === "challenges" ? "Post challenge" : "Post idea");
@@ -2752,6 +2939,7 @@ function renderAsk(existing) {
 }
 
 function renderView() {
+  if (state.tab === "market") return renderMarketView();
   const t = TABS[state.tab];
   const d = state[t.coll].find(x => x.id === state.selected);
   if (!d) return [el("p", { class: "hint" }, "This post was deleted or is still loading.")];
@@ -3061,7 +3249,7 @@ if (CFG.title) { document.title = CFG.title; }
 // ---------- start ----------
 renderExams();
 startCaptions();
-const deep = /^#(doubts|ideas|clubs)(?:\/([\w-]+))?$/.exec(location.hash);
+const deep = /^#(doubts|ideas|clubs|gate|challenges|market)(?:\/([\w-]+))?$/.exec(location.hash);
 if (deep) state.tab = deep[1];
 // Show board immediately — Firebase will fill it in once connected
 state.loaded = true;
@@ -3096,6 +3284,7 @@ render();
   store.subscribe("gate", rows => { const live_ = live(rows); trackNew("gate", live_); state.gate = live_; update(); }, e => {});
   store.subscribe("challenges", rows => { const live_ = live(rows); trackNew("challenges", live_); state.challenges = live_; update(); }, e => {});
   store.subscribe("chal_scores", rows => { state.chalScores = rows.filter(r => !r.deleted); update(); }, e => {});
+  store.subscribe("market", rows => { state.market = live(rows); update(); }, e => {});
 })();
 
 // ---------- PWA, keyboard shortcuts, offline, FAB ----------

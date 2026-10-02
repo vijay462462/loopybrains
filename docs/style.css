@@ -1209,3 +1209,31 @@ div.chal-opt.wrong b { background: #ef4444; color: #fff; }
 .ai-gen-label { font: 600 .8rem var(--f-body); color: var(--muted); }
 .chal-builder-label-row { display: flex; flex-direction: column; gap: 2px; }
 .chal-builder-label-text { font: 700 .82rem var(--f-body); color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+
+/* ============================================================
+   Campus Market (v62)
+   ============================================================ */
+.mkt-hero { text-align: center; padding: 40px 20px; }
+.mkt-hero-icon { font-size: 3rem; margin-bottom: 12px; }
+.mkt-hero h3 { font: 700 1.4rem var(--f-head); color: var(--ink); margin-bottom: 8px; }
+.mkt-hero p { color: var(--muted); margin-bottom: 20px; }
+
+.mkt-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(260px,1fr)); gap: 14px; padding: 4px 0; }
+
+.mkt-card { display: flex; flex-direction: column; gap: 8px; padding: 14px; border-radius: 14px; background: var(--sheet); border: 1.5px solid var(--border); text-align: left; cursor: pointer; transition: border-color .15s,transform .1s; width: 100%; }
+.mkt-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+.mkt-card.mkt-sold { opacity: .65; }
+.mkt-card-top { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.mkt-title { font: 600 .95rem var(--f-body); color: var(--ink); margin: 0; line-height: 1.3; }
+.mkt-price-row { display: flex; align-items: center; gap: 8px; }
+.mkt-price { font: 700 1.2rem var(--f-head); color: var(--accent); }
+.mkt-price.free { font-size: 0.9rem; color: var(--muted); font-weight: 600; }
+.mkt-condition { font: 600 .75rem var(--f-body); padding: 2px 9px; border-radius: 20px; background: color-mix(in oklab,var(--cc,#6b7280) 15%,var(--sheet)); color: var(--cc,#6b7280); border: 1px solid color-mix(in oklab,var(--cc,#6b7280) 30%,transparent); }
+.mkt-price-big { font: 700 2rem var(--f-head); color: var(--accent); margin: 4px 0 10px; }
+.mkt-price-big.free { font-size: 1.2rem; color: var(--muted); }
+.mkt-sold-banner { background: color-mix(in oklab,#10b981 15%,var(--sheet)); color: #10b981; font: 700 .9rem var(--f-body); padding: 8px 14px; border-radius: 10px; margin-bottom: 10px; text-align: center; }
+.mkt-seller { display: flex; align-items: center; gap: 10px; padding: 10px 0; margin: 8px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+
+@media (max-width: 500px) {
+  .mkt-grid { grid-template-columns: 1fr; }
+}
