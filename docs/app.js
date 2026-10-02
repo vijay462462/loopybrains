@@ -1371,15 +1371,38 @@ function renderMarketAsk(existing) {
 }
 // ===================== END CAMPUS MARKET =====================
 
+function subjectHub(count) {
+  if (!(state.tab === "doubts" || state.tab === "gate") || state.group === "All") return null;
+  const g = state.group;
+  const toSheet = () => { render(); if (innerWidth <= 1000) $("sheet").scrollIntoView({ behavior: "smooth" }); };
+  const study = (tab, set) => () => { state.mode = "resources"; resourceTab = tab; formulaOpen = null; syllabusSubj = null; syllabusUnit = null; mcqSubj = null; set(); toSheet(); };
+  const acts = [
+    el("button", { class: "btn primary sm", type: "button", onclick: openAsk }, "❓ Ask in " + g),
+    typeof SYLLABUS !== "undefined" && SYLLABUS[g] && el("button", { class: "btn sm", type: "button", onclick: study("syllabus", () => { syllabusSubj = g; }) }, "📖 Syllabus"),
+    typeof FORMULAS !== "undefined" && FORMULAS[g] && el("button", { class: "btn sm", type: "button", onclick: study("formulas", () => { formulaOpen = g; }) }, "⚡ Formulas"),
+    outLink(nptelUrl(g), "🎓 IIT course", "linkbtn"),
+    outLink(lectureUrl(g), "▶ Free lectures", "linkbtn"),
+    state.tab === "doubts" && TABS.gate.groups.includes(g) && el("button", { class: "btn sm", type: "button", onclick: () => { state.tab = "gate"; state.mode = "intro"; state.selected = null; render(); } }, "🎯 GATE PYQs"),
+  ].filter(Boolean);
+  return el("div", { class: "learn-card", ...colorAttrs(g) },
+    el("strong", {}, "📘 " + g),
+    el("p", { class: "hint" }, count
+      ? count + (count === 1 ? " post" : " posts") + " here. Tap one to read or answer it, or use the buttons below."
+      : "No " + g + " posts yet. Be the first! Ask your question, or study the topic using the buttons below."),
+    el("div", { class: "rowbtns" }, acts),
+    el("p", { class: "hint" }, "What next? ① Ask your doubt  ② Study the topic  ③ Come back and help others — answering earns you points 🏆"));
+}
+
 function renderList() {
   if (state.tab === "market") { renderMarketList(); return; }
   const t = TABS[state.tab], rows = visible(), all = state[t.coll];
   if (!rows.length) {
     const noun = state.tab === "doubts" || state.tab === "gate" ? "subject" : state.tab === "clubs" ? "club" : state.tab === "challenges" ? "type" : "category";
     const emptyMsg = state.tab === "doubts" ? "No doubts yet" : state.tab === "clubs" ? "No club posts yet" : state.tab === "gate" ? "No GATE discussions yet" : state.tab === "challenges" ? "No challenges yet" : "No ideas yet";
-    $("list").replaceChildren(...[deptBanner()].filter(Boolean), all.length
+    const hubEl = state.query.trim() ? null : subjectHub(0);
+    $("list").replaceChildren(...[deptBanner(), hubEl].filter(Boolean), ...(hubEl ? [] : [all.length
       ? el("div", { class: "empty" }, el("strong", {}, "Nothing matches"), "Try another " + noun + " or clear the search.")
-      : el("div", { class: "empty" }, el("strong", {}, emptyMsg), "Press \u201c" + t.ask + "\u201d to post the first one."));
+      : el("div", { class: "empty" }, el("strong", {}, emptyMsg), "Press \u201c" + t.ask + "\u201d to post the first one.")]));
     return;
   }
   const spot = spotlight();
@@ -1387,7 +1410,7 @@ function renderList() {
     el("span", { class: "spot-k" }, "⭐ Doubt of the Day"),
     el("strong", {}, spot.d.title),
     el("span", { class: "spot-why" }, spot.why + " Can you solve it?"));
-  $("list").replaceChildren(...[deptBanner(), spotCard].filter(Boolean), ...rows.map(d => {
+  $("list").replaceChildren(...[deptBanner(), subjectHub(rows.length), spotCard].filter(Boolean), ...rows.map(d => {
     const n = repliesFor(d.id).length, g = d[t.field];
     const meta = [el("span", { class: "tag", ...colorAttrs(g) }, g)];
     const votes = likesFor(d.id).length;
