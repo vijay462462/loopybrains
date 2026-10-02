@@ -1554,3 +1554,14 @@ header.top { background: linear-gradient(120deg, var(--ta), var(--tb) 50%, var(-
 .fun-det .rowbtns { margin-top: 8px; }
 .juke-filter, .juke-any { width: 100%; }
 .juke-any { flex: 1; min-width: 160px; }
+
+/* ---- market upgrades ---- */
+.mkt-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.mkt-chip { border: 1px solid var(--line); background: var(--sheet); color: var(--ink); border-radius: 999px; padding: 6px 12px; font-weight: 700; font-size: 13px; cursor: pointer; }
+.mkt-chip.on { background: linear-gradient(135deg, var(--ta), var(--tb)); color: #fff; border-color: transparent; }
+.mkt-save { position: absolute; right: 8px; bottom: 8px; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: var(--sheet); cursor: pointer; font-size: 1rem; padding: 0; z-index: 2; }
+.mkt-save.on { background: color-mix(in oklab, #ef4444 14%, var(--sheet)); border-color: #ef4444; }
+.mkt-safe { border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; margin: 8px 0; background: color-mix(in oklab, var(--ta) 5%, var(--sheet)); }
+.mkt-safe summary { font-weight: 800; cursor: pointer; padding: 4px 0; }
+.mkt-safe ul { margin: 6px 0 4px; padding-left: 18px; color: var(--muted); font-size: 13px; display: grid; gap: 4px; }
+.mkt-safe .rowbtns { margin: 8px 0 4px; }

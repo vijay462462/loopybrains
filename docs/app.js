@@ -62,7 +62,7 @@ const TABS = {
     bodyHint: "Full question or challenge description. For quizzes, reveal the answer in your first reply.",
   },
   market: {
-    coll: "market", field: "category", groups: ["Books", "Notes", "Electronics", "Hostel", "Clothing", "Other"], groupLabel: "Category", noun: "listing",
+    coll: "market", field: "category", groups: ["Books", "Notes", "Electronics", "Hostel", "Clothing", "Cycles & Bikes", "Sports", "Lab & Stationery", "Furniture", "Services", "Lost & Found", "Other"], groupLabel: "Category", noun: "listing",
     ask: "Sell an item", tagline: "Buy and sell textbooks, electronics, hostel items and more — with fellow RGUKT students.",
     replyNoun: "inquiry", replyLabel: "Your message", replyBtn: "Send",
     placeholder: "e.g. Data Structures book by Cormen — 2nd year, good condition",
@@ -119,6 +119,7 @@ const state = {
   afterName: null,
   replyPages: [], replyAnon: false,
   campusFilter: "all", // "all" | campus name
+  mktChip: "all",     // quick filter chip in the market
   mktSort: "newest",   // "newest" | "price_asc" | "price_desc" | "popular"
   dept: "All",         // "All" | "ECE" | "CSE" | "Civil" | "Mech" | "EEE"
   yearFilter: "All",   // "All" | "E1" | "E2" | "E3" | "E4"
@@ -1110,6 +1111,46 @@ function interestCount(listingId) { return state.marketInterests.filter(r => r.l
 function myInterest(listingId) { return state.marketInterests.find(r => r.listingId === listingId && r.buyerId === (store && store.uid)); }
 function interestsFor(listingId) { return state.marketInterests.filter(r => r.listingId === listingId); }
 
+// ---------- market upgrades: quick filters, saved items, badges, wanted ads ----------
+const MKT_DAY = 86400000;
+const MKT_CHIPS = [["all", "All"], ["new", "🆕 New today"], ["free", "🆓 Free"], ["u500", "Under ₹500"], ["m2000", "₹500 to 2000"], ["o2000", "Above ₹2000"], ["wanted", "🔎 Wanted"], ["saved", "❤️ Saved"]];
+const savedMkt = () => { try { return new Set(JSON.parse(localStorage.getItem("dd-mkt-saved") || "[]")); } catch (_) { return new Set(); } };
+function toggleSavedMkt(id) { const set = savedMkt(); if (set.has(id)) set.delete(id); else set.add(id); try { localStorage.setItem("dd-mkt-saved", JSON.stringify([...set].slice(-300))); } catch (_) {} }
+const isWantedAd = (d) => /^🔎\s*WANTED/i.test(d.title || "");
+const isFreeItem = (d) => d.price === 0;
+const isNewItem = (d) => !d.sold && Date.now() - d.createdAt < MKT_DAY;
+const isHotItem = (d) => !d.sold && interestCount(d.id) >= 3;
+const isStaleItem = (d) => !d.sold && Date.now() - d.createdAt > 30 * MKT_DAY;
+function mktPrice(d) {
+  if (isWantedAd(d)) return d.price ? "Budget ₹" + d.price : "Budget open";
+  if (d.price === 0) return "🆓 FREE";
+  return d.price ? "₹" + d.price : "Negotiable";
+}
+function mktSafetyTips() {
+  return el("details", { class: "mkt-safe" }, el("summary", {}, "🛡️ Safe buying and selling tips"),
+    el("ul", {},
+      el("li", {}, "Meet in a public place on campus (library, canteen, main gate) in daylight, with a friend."),
+      el("li", {}, "Check the item properly before you pay. Pay only after you are happy."),
+      el("li", {}, "Never pay in advance, share an OTP, or accept a UPI “collect request” to receive money."),
+      el("li", {}, "Be careful with prices that look too good to be true. Report suspicious listings."),
+      el("li", {}, "College-issued laptops cannot be sold (RGUKT policy).")));
+}
+// Rough resale estimate: condition factor, then about 2% less for every month of use.
+function priceHelper(getForm) {
+  const out = el("p", { class: "hint" }), useBtn = el("button", { type: "button", class: "btn sm", hidden: true });
+  const orig = el("input", { type: "number", min: "1", max: "999999", placeholder: "Original price ₹", "aria-label": "Original price" });
+  const age = el("input", { type: "number", min: "0", max: "120", placeholder: "Months used", "aria-label": "Months used" });
+  const calc = () => {
+    const o = +orig.value, m = +age.value || 0; if (!(o > 0)) { out.textContent = "Enter what you paid when it was new."; useBtn.hidden = true; return; }
+    const form = getForm(), cond = form.elements.condition ? form.elements.condition.value : "Good";
+    const f = { New: 0.85, Good: 0.65, Fair: 0.45, Worn: 0.25 }[cond] || 0.5;
+    const est = Math.max(10, Math.round((o * f * Math.pow(0.98, m)) / 10) * 10);
+    out.textContent = "Fair price: about ₹" + Math.round(est * 0.9 / 10) * 10 + " to ₹" + Math.round(est * 1.1 / 10) * 10 + " (estimate). Suggested: ₹" + est + ".";
+    useBtn.hidden = false; useBtn.textContent = "Use ₹" + est; useBtn.onclick = () => { const fm = getForm(); if (fm.elements.price) fm.elements.price.value = est; };
+  };
+  return el("details", { class: "mkt-safe" }, el("summary", {}, "💡 Fair price helper"), el("div", { class: "rowbtns" }, orig, age, el("button", { type: "button", class: "btn sm primary", onclick: calc }, "Suggest")), out, useBtn);
+}
+
 function visibleMarket() {
   const myCampus = getCampus();
   let rows = state.market.filter(r => !r.deleted);
@@ -1122,6 +1163,14 @@ function visibleMarket() {
   if (state.filter === "available") rows = rows.filter(r => !r.sold);
   if (state.filter === "sold") rows = rows.filter(r => r.sold);
   if (state.filter === "mine") rows = rows.filter(r => store && r.authorId === store.uid);
+  const chip = state.mktChip || "all";
+  if (chip === "new") rows = rows.filter(isNewItem);
+  else if (chip === "free") rows = rows.filter(r => isFreeItem(r) && !isWantedAd(r));
+  else if (chip === "u500") rows = rows.filter(r => r.price > 0 && r.price < 500 && !isWantedAd(r));
+  else if (chip === "m2000") rows = rows.filter(r => r.price >= 500 && r.price <= 2000 && !isWantedAd(r));
+  else if (chip === "o2000") rows = rows.filter(r => r.price > 2000 && !isWantedAd(r));
+  else if (chip === "wanted") rows = rows.filter(isWantedAd);
+  else if (chip === "saved") { const sv = savedMkt(); rows = rows.filter(r => sv.has(r.id)); }
   // sort
   if (state.mktSort === "price_asc") rows.sort((a, b) => (a.price || 0) - (b.price || 0));
   else if (state.mktSort === "price_desc") rows.sort((a, b) => (b.price || 0) - (a.price || 0));
@@ -1144,7 +1193,7 @@ function renderMarketList() {
       el("div", { class: "mkt-banner-icon" }, "🛒"),
       el("div", {},
         el("strong", {}, "Campus Market"),
-        el("div", { class: "hint" }, availCount + " item" + (availCount !== 1 ? "s" : "") + " available"),
+        el("div", { class: "hint" }, availCount + " available · " + state.market.filter(r => !r.deleted && isWantedAd(r)).length + " wanted · " + state.market.filter(r => !r.deleted && r.sold).length + " sold"),
       )
     ),
     el("div", { class: "mkt-banner-btns" },
@@ -1155,9 +1204,11 @@ function renderMarketList() {
       sortSel,
     )
   );
+  const mktChips = el("div", { class: "mkt-chips" }, MKT_CHIPS.map(([id, label]) => el("button", { type: "button", class: "mkt-chip" + ((state.mktChip || "all") === id ? " on" : ""), onclick: () => { state.mktChip = id; render(); } }, label)));
+  const savedSet = savedMkt();
   if (!rows.length) {
     $("list").replaceChildren(
-      mktBanner,
+      mktBanner, mktChips, mktSafetyTips(),
       state.market.length
         ? el("div", { class: "empty" }, el("strong", {}, "Nothing matches"), " Try another category or clear the search.")
         : el("div", { class: "empty" }, el("strong", {}, "No listings yet"), " Be the first to sell something!")
@@ -1165,7 +1216,7 @@ function renderMarketList() {
     return;
   }
   $("list").replaceChildren(
-    mktBanner,
+    mktBanner, mktChips, mktSafetyTips(),
     el("div", { class: "mkt-grid" },
       ...rows.map(d => {
         const condColor = CONDITION_COLOR[d.condition] || "#6b7280";
@@ -1173,11 +1224,14 @@ function renderMarketList() {
           el("button", { type: "button", class: "mkt-card" + (d.sold ? " mkt-sold" : ""), onclick: () => openItem(d.id) },
             el("div", { class: "mkt-card-top" },
               el("span", { class: "tag", ...colorAttrs(d.category) }, d.category),
-              d.sold ? el("span", { class: "pill done" }, "✅ Sold") : el("span", { class: "pill open" }, "Available"),
+              d.sold ? el("span", { class: "pill done" }, "✅ Sold") : el("span", { class: "pill open" }, isWantedAd(d) ? "🔎 Wanted" : "Available"),
+              isNewItem(d) && el("span", { class: "pill bounty" }, "🆕 New"),
+              isHotItem(d) && el("span", { class: "pill urgent" }, "🔥 Hot"),
+              mine(d) && isStaleItem(d) && el("span", { class: "pill open" }, "⏳ Still available?"),
             ),
             el("h3", { class: "mkt-title" }, d.title),
             el("div", { class: "mkt-price-row" },
-              d.price ? el("span", { class: "mkt-price" }, "₹" + d.price) : el("span", { class: "mkt-price free" }, "Free / Negotiable"),
+              el("span", { class: "mkt-price" + (d.price ? "" : " free") }, mktPrice(d)),
               d.condition && el("span", { class: "mkt-condition", style: "--cc:" + condColor }, d.condition),
               reportCount(d.id) >= 3 && el("span", { class: "mkt-flag", title: reportCount(d.id) + " students reported" }, "⚠️"),
             ),
@@ -1194,6 +1248,7 @@ function renderMarketList() {
               )
             )
           ),
+          el("button", { type: "button", class: "mkt-save" + (savedSet.has(d.id) ? " on" : ""), "aria-label": savedSet.has(d.id) ? "Remove from saved" : "Save listing", onclick: (e) => { e.stopPropagation(); toggleSavedMkt(d.id); render(); } }, savedSet.has(d.id) ? "❤️" : "🤍"),
           mine(d) ? el("button", {
             type: "button", class: "item-del", title: "Delete", "aria-label": "Delete",
             onclick: (e) => { e.stopPropagation(); confirmDelete(e.currentTarget, async () => { await softDelete("market", d.id); if (state.selected === d.id) { state.selected = null; state.mode = "intro"; } render(); }); }
@@ -1384,7 +1439,7 @@ function renderMarketView() {
                     : d.campus && el("span", { class: "pill", title: "This item is available within " + d.campus + " only" }, "🏫 Campus only"),
     ),
     el("h2", {}, d.title),
-    d.price ? el("div", { class: "mkt-price-big" }, "₹" + d.price) : el("div", { class: "mkt-price-big free" }, "Free / Negotiable"),
+    el("div", { class: "mkt-price-big" + (d.price ? "" : " free") }, mktPrice(d)),
     d.body && el("p", { class: "body-text" }, d.body),
     el("div", { class: "mkt-seller" },
       avatarEl(avatarFor(d.authorName || ""), "av"),
@@ -1407,7 +1462,9 @@ function renderMarketAsk(existing) {
   const current = existing ? existing.category : (state.group !== "All" ? state.group : t.groups[0]);
   const form = el("form", { class: "form", onsubmit: async (e) => {
     e.preventDefault();
-    const title = form.elements.title.value.trim();
+    const wantedAd = form.elements.wanted.checked, giveaway = form.elements.giveaway.checked && !wantedAd;
+    const rawTitle = form.elements.title.value.trim().replace(/^🔎\s*WANTED:?\s*/i, "");
+    const title = wantedAd ? "🔎 WANTED: " + rawTitle : rawTitle;
     const body = form.elements.body.value.trim();
     const category = form.elements.category.value;
     const price = form.elements.price.value.trim().replace(/[^0-9]/g, "");
@@ -1425,11 +1482,11 @@ function renderMarketAsk(existing) {
     try {
       const myC = getCampus();
       if (existing) {
-        await store.update("market", existing.id, { title: title.slice(0, 200), body: body.slice(0, 2000), category, price: price ? Number(price) : null, condition, whatsapp: whatsapp.slice(-10) });
+        await store.update("market", existing.id, { title: title.slice(0, 200), body: body.slice(0, 2000), category, price: giveaway ? 0 : (price ? Number(price) : null), condition, whatsapp: whatsapp.slice(-10) });
         state.mode = "view"; render(); return;
       }
       const id = store.newId("market");
-      const doc = { title: title.slice(0, 200), body: body.slice(0, 2000), category, price: price ? Number(price) : null, condition, whatsapp: whatsapp.slice(-10), authorId: store.uid, authorName: getName() || "Student", sold: false, createdAt: Date.now() };
+      const doc = { title: title.slice(0, 200), body: body.slice(0, 2000), category, price: giveaway ? 0 : (price ? Number(price) : null), condition, whatsapp: whatsapp.slice(-10), authorId: store.uid, authorName: getName() || "Student", sold: false, createdAt: Date.now() };
       if (myC) doc.campus = myC;
       state.market = [{ id, ...doc }, ...state.market];
       state.group = "All"; state.query = ""; $("search").value = "";
@@ -1440,7 +1497,7 @@ function renderMarketAsk(existing) {
   }},
     el("h2", {}, existing ? "Edit listing" : "📦 List an item for sale"),
     el("div", { class: "two" },
-      el("label", {}, "Item name *", el("input", { name: "title", maxlength: "200", required: true, placeholder: t.placeholder, value: existing ? existing.title : "" })),
+      el("label", {}, "Item name *", el("input", { name: "title", maxlength: "200", required: true, placeholder: t.placeholder, value: existing ? existing.title.replace(/^🔎\s*WANTED:?\s*/i, "") : "" })),
       el("label", {}, "Category", el("select", { name: "category" }, t.groups.map(g => el("option", { selected: g === current }, g))))
     ),
     el("div", { class: "two" },
@@ -1451,12 +1508,17 @@ function renderMarketAsk(existing) {
         el("select", { name: "condition" }, MARKET_CONDITIONS.map(c => el("option", { selected: existing && existing.condition === c }, c)))
       )
     ),
+    priceHelper(() => form),
+    el("div", { class: "checks" },
+      el("label", { class: "check" }, el("input", { type: "checkbox", name: "giveaway", checked: !!(existing && existing.price === 0) }), "🆓 I'm giving this away for free"),
+      el("label", { class: "check" }, el("input", { type: "checkbox", name: "wanted", checked: !!(existing && isWantedAd(existing)) }), "🔎 I want to BUY this (wanted ad). The price above is my budget")),
     el("label", {}, "Description", el("textarea", { name: "body", maxlength: "2000", placeholder: t.bodyHint, value: existing ? existing.body : "" })),
     el("label", {}, "Your WhatsApp number (optional — buyers will contact you)",
       el("input", { name: "whatsapp", type: "tel", maxlength: "15", placeholder: "e.g. 9876543210 — not shown publicly except to buyers" })
     ),
     el("p", { class: "hint" }, "⚠️ Your WhatsApp number is only shared with students who open this listing."),
     el("p", { class: "hint" }, "🚫 College-issued laptops cannot be sold — RGUKT policy. Books & Notes are visible to all campuses; other items are campus-local."),
+    mktSafetyTips(),
     err,
     el("div", { class: "rowbtns" },
       el("button", { class: "btn primary", type: "submit" }, existing ? "Save changes" : "Post listing"),
