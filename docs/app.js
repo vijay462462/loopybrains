@@ -1902,6 +1902,18 @@ const CAREER = {
     { icon: "🛠️", title: "Skills to build now (all free)", note: "DSA, one backend or web stack, SQL, Git, cloud basics, one ML or security specialisation, and 3+ real projects on GitHub.",
       links: [["roadmap.sh", "https://roadmap.sh"], ["CSES Problem Set", "https://cses.fi/problemset/"], ["freeCodeCamp", "https://www.freecodecamp.org"], ["CS50", "https://cs50.harvard.edu/x/"], ["Kaggle Learn", "https://www.kaggle.com/learn"], ["AWS Skill Builder", "https://skillbuilder.aws"]] },
   ]},
+  "AI & ML": { tag: "Artificial Intelligence & Machine Learning", sections: [
+    { icon: "🤖", title: "Private sector jobs", note: "Machine Learning Engineer, Data Scientist, Data Analyst, Generative AI / LLM Engineer, MLOps Engineer, Computer Vision Engineer, NLP Engineer, Data Engineer, AI Product Manager and AI consultant. Startups and global companies hire for these roles in every sector.",
+      links: [["Google Careers", "https://www.google.com/about/careers/applications/"], ["Microsoft", "https://careers.microsoft.com"], ["Amazon", "https://www.amazon.jobs"], ["TCS NextStep", "https://nextstep.tcs.com"], ["Infosys", "https://www.infosys.com/careers/"], ["Zoho", "https://www.zoho.com/careers/"], ["National Career Service", "https://www.ncs.gov.in"]] },
+    CAREER_COMMON.higher("DA paper (Data Science & AI) or CS paper", [["IISc Bangalore", "https://iisc.ac.in"], ["IIIT Hyderabad", "https://www.iiit.ac.in"]]),
+    { icon: "🔬", title: "AI research and national AI missions", note: "Research roles in India's AI ecosystem: research assistant, PhD, or scientist positions. A strong GitHub, a paper or a thesis project helps a lot.",
+      links: [["IndiaAI", "https://indiaai.gov.in"], ["AI4Bharat (IIT Madras)", "https://ai4bharat.iitm.ac.in"], ["Microsoft Research India", "https://www.microsoft.com/en-us/research/lab/microsoft-research-india/"], ["C-DAC", "https://www.cdac.in"], ["DRDO RAC", "https://rac.gov.in"], ["ISRO", "https://www.isro.gov.in/Careers.html"]] },
+    { icon: "🏆", title: "Competitions and open source", note: "Kaggle medals, Hugging Face contributions and Google Summer of Code give visible proof of skill and often lead directly to interviews.",
+      links: [["Kaggle Competitions", "https://www.kaggle.com/competitions"], ["Hugging Face", "https://huggingface.co"], ["Google Summer of Code", "https://summerofcode.withgoogle.com"], ["Smart India Hackathon", "https://www.sih.gov.in"], ["Codeforces", "https://codeforces.com"]] },
+    CAREER_COMMON.abroad(), CAREER_COMMON.mba(), CAREER_COMMON.startup(),
+    { icon: "🛠️", title: "Skills to build now (all free)", note: "Python, statistics and linear algebra, scikit-learn, deep learning with PyTorch, one specialisation (vision, NLP or LLMs), SQL, Git, deploying a model (API plus cloud), and 3+ end-to-end projects with a clear write-up.",
+      links: [["Google ML Crash Course", "https://developers.google.com/machine-learning/crash-course"], ["Kaggle Learn", "https://www.kaggle.com/learn"], ["fast.ai", "https://www.fast.ai"], ["Hugging Face Learn", "https://huggingface.co/learn"], ["Stanford CS231n", "https://cs231n.stanford.edu"], ["Google Colab (free GPU)", "https://colab.research.google.com"], ["roadmap.sh AI", "https://roadmap.sh/ai-data-scientist"]] },
+  ]},
   ECE: { tag: "Electronics & Communication Engineering", sections: [
     { icon: "📡", title: "Private sector jobs", note: "VLSI / Semiconductor design and verification, Embedded and IoT engineer, Telecom / 5G network engineer, Signal processing, Hardware / PCB design, plus software roles (ECE students are eligible for IT hiring too).",
       links: [["Jio", "https://careers.jio.com"], ["Airtel", "https://www.airtel.in/careers"], ["Siemens", "https://jobs.siemens.com"], ["Qualcomm", "https://www.qualcomm.com/company/careers"], ["Texas Instruments", "https://careers.ti.com"], ["National Career Service", "https://www.ncs.gov.in"]] },
@@ -1955,6 +1967,12 @@ const CAREER_EXTRA = {
       links: [["Google Summer of Code", "https://summerofcode.withgoogle.com"], ["Outreachy", "https://www.outreachy.org"], ["MLH Fellowship", "https://fellowship.mlh.io"], ["Codeforces", "https://codeforces.com"], ["CodeChef", "https://www.codechef.com"], ["Kaggle Competitions", "https://www.kaggle.com/competitions"]] },
     { icon: "🧠", title: "AI / research labs", note: "Research assistant roles and fellowships at top labs. A strong GitHub, a paper or a thesis project helps a lot.",
       links: [["IISc Bangalore", "https://iisc.ac.in"], ["IIIT Hyderabad Research", "https://www.iiit.ac.in/research/"], ["Microsoft Research India", "https://www.microsoft.com/en-us/research/lab/microsoft-research-india/"], ["arXiv", "https://arxiv.org"]] },
+  ],
+  "AI & ML": [
+    { icon: "✨", title: "Generative AI and LLM careers", note: "Prompt engineering, fine-tuning, retrieval-augmented generation (RAG) and AI agents are among the fastest-growing skills. Build and publish a small LLM app to stand out.",
+      links: [["Hugging Face Learn", "https://huggingface.co/learn"], ["Google AI for Developers", "https://ai.google.dev"], ["Anthropic Docs", "https://docs.anthropic.com"], ["LangChain Docs", "https://python.langchain.com"]] },
+    { icon: "🏥", title: "AI for good: health, agriculture and governance", note: "India needs AI in healthcare, farming, education and public services. Join national hackathons and AI4Bharat-style open projects for impact and visibility.",
+      links: [["IndiaAI", "https://indiaai.gov.in"], ["AI4Bharat", "https://ai4bharat.iitm.ac.in"], ["Smart India Hackathon", "https://www.sih.gov.in"], ["Startup India", "https://www.startupindia.gov.in"]] },
   ],
   ECE: [
     { icon: "🛰️", title: "Space, defence and semiconductor careers", note: "India is investing heavily in chip design, fabrication and space. These are high-value, long-term careers for ECE students.",
