@@ -1362,7 +1362,7 @@ function quizAnswers(day) {
     if (lDay !== day) continue;
     if (lQidx >= 0 && lQidx !== qidx) continue; // different question, skip
     const prev = first.get(l.uid);
-    if (!prev || (l.createdAt || 0) < (prev.createdAt || 0)) first.set(l.uid, { ...l, opt: +m[2] });
+    if (!prev || (l.createdAt || 0) < (prev.createdAt || 0)) first.set(l.uid, { ...l, opt: lOpt });
   }
   return first;
 }
