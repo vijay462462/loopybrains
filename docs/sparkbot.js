@@ -60,7 +60,7 @@ const KB = [
   // ── GATE general ─────────────────────────────────────────
   { p: /gate( tab| section| prep| exam)?|previous year|pyq|paper(s)?|gate 202/i,
     r: [
-      "🎯 **GATE Tab — Your Competitive Exam HQ!**\n\n📂 **PYQ Papers** 2016–2025 (all 5 branches)\n✅ [GeeksforGeeks GATE Solutions](https://www.geeksforgeeks.org/gate-previous-years-questions/) per paper\n📄 [Official GATE Archive (IITD)](https://gate.iitd.ac.in/GATE2024/downloads.php) — free PDFs\n🎥 **Free YouTube Lectures** — [NPTEL Official](https://www.youtube.com/@nptel), IIT channels\n🏛️ **Top IIT & NIT** free courses on [nptel.ac.in](https://nptel.ac.in/)\n📚 Practice: [GATE Overflow](https://gateoverflow.in/) · [Testbook GATE](https://testbook.com/gate) · [GFG GATE](https://www.geeksforgeeks.org/gate-cs-notes-gq/)\n\n→ Tap **🎯 GATE** tab → pick your branch → expand papers! 🔥\n\n*💡 Pro tip: Solve 3 PYQs daily = massive score boost!*",
+      "🎯 **GATE Tab — Your Competitive Exam HQ!**\n\n📂 **PYQ Papers** 2016–2025 (all 5 branches)\n✅ [GeeksforGeeks GATE Solutions](https://www.geeksforgeeks.org/gate-previous-years-questions/) per paper\n📄 [Official GATE Archive (IITD)](https://gate.iitd.ac.in/GATE2024/downloads.php) — free PDFs\n🎥 **Free YouTube Lectures** — [NPTEL Official](https://www.youtube.com/@nptel), IIT channels\n🏛️ **Top IIT & NIT** free courses on [nptel.ac.in](https://nptel.ac.in/)\n📚 Practice: [GATE Overflow](https://gateoverflow.in/) · [GFG GATE](https://www.geeksforgeeks.org/gate-cs-notes-gq/) · [GATE 2025 Official](https://gate2025.iisc.ac.in/)\n\n→ Tap **🎯 GATE** tab → pick your branch → expand papers! 🔥\n\n*💡 Pro tip: Solve 3 PYQs daily = massive score boost!*",
     ]},
 
   // ── Branch PYQ ───────────────────────────────────────────
@@ -132,7 +132,7 @@ const KB = [
   // ── NPTEL/IIT ────────────────────────────────────────────
   { p: /nptel|free course|iit|lecture|youtube course|mooc/i,
     r: [
-      "🎥 **Free IIT & World-Class Lectures!**\n\n📡 [NPTEL YouTube Channel](https://www.youtube.com/@nptel) — IIT Bombay, Madras, Kharagpur\n🌐 [NPTEL Website](https://nptel.ac.in/) — 1000+ free courses + certificates\n🌍 [MIT OpenCourseWare](https://ocw.mit.edu/) — free, world-class\n📚 [Khan Academy](https://www.khanacademy.org/) — basics of any subject\n🎯 [SWAYAM Portal](https://swayam.gov.in/) — Indian free courses, UGC-credited\n📺 [Unacademy GATE](https://www.youtube.com/@UnacademyGATE) — GATE-focused free lectures\n\n**Also in GATE tab** → 🏛️ Top IITs & NITs section with direct links!\n\n*All 100% free. No subscription. Bookmark them!* 🔖",
+      "🎥 **Free IIT & World-Class Lectures!**\n\n📡 [NPTEL YouTube Channel](https://www.youtube.com/@nptel) — IIT Bombay, Madras, Kharagpur\n🌐 [NPTEL Website](https://nptel.ac.in/) — 1000+ free courses + certificates\n🌍 [MIT OpenCourseWare](https://ocw.mit.edu/) — free, world-class\n📚 [Khan Academy](https://www.khanacademy.org/) — basics of any subject\n🎯 [SWAYAM Portal](https://swayam.gov.in/) — Indian free courses, UGC-credited\n📺 [GATE Wallah YouTube](https://www.youtube.com/@GATEWallah) — GATE free lectures\n\n**Also in GATE tab** → 🏛️ Top IITs & NITs section with direct links!\n\n*All 100% free. No subscription. Bookmark them!* 🔖",
     ]},
 
   // ── Who is Spark Bot ─────────────────────────────────────
@@ -180,7 +180,7 @@ const KB = [
   // ── Internship / project ─────────────────────────────────
   { p: /project|mini project|final year project|internship|research paper|ieee paper/i,
     r: [
-      "🔬 **Projects & Internships — Start Early, Win Big!**\n\n**Find project ideas:**\n💡 Ideas tab on Spark · [GitHub Trending](https://github.com/trending) · [DevPost](https://devpost.com/)\n\n**Internship platforms:**\n🌐 [Internshala](https://internshala.com/) — best for Indian students\n💼 [LinkedIn Jobs](https://www.linkedin.com/jobs/) — network + apply\n🎯 [Unstop](https://unstop.com/) — competitions + internships\n🚀 [AngelList](https://wellfound.com/) — startup internships\n\n**Research papers:**\n📄 [IEEE Xplore](https://ieeexplore.ieee.org/) — free via NPTEL account\n📚 [ResearchGate](https://www.researchgate.net/) — free papers\n🔬 [arXiv](https://arxiv.org/) — preprints, all free\n\n🏆 *[GitHub](https://github.com/) profile with 3+ projects = interview superpower!*",
+      "🔬 **Projects & Internships — Start Early, Win Big!**\n\n**Find project ideas:**\n💡 Ideas tab on Spark · [GitHub Trending](https://github.com/trending) · [DevPost](https://devpost.com/)\n\n**Internship platforms (free to apply):**\n💼 [LinkedIn Jobs](https://www.linkedin.com/jobs/) — network + apply free\n🏛️ [National Career Service](https://www.ncs.gov.in/) — govt portal, free\n🎓 [AICTE Internship Portal](https://internship.aicte-india.org/) — free for students\n🔬 [IIT Research Internships](https://www.iitism.ac.in/index.php/Research/summer_internship) — apply directly to IITs\n\n**Research papers:**\n📄 [IEEE Xplore](https://ieeexplore.ieee.org/) — free via NPTEL account\n📚 [ResearchGate](https://www.researchgate.net/) — free papers\n🔬 [arXiv](https://arxiv.org/) — preprints, all free\n\n🏆 *[GitHub](https://github.com/) profile with 3+ projects = interview superpower!*",
     ]},
 
   // ── Resume / Interview ───────────────────────────────────
@@ -235,7 +235,7 @@ const KB = [
   // ── Programming ──────────────────────────────────────────
   { p: /program(ming)?|code|coding|c\+\+|python|java\b|dsa|data structure|algorithm|leetcode/i,
     r: [
-      "💻 **Programming & DSA Help on Spark!**\n\n**Post coding doubts:**\n→ Doubts tab → Subject: **C Programming / DSA / Java**\n\n**Essential roadmap (CS/ECE):**\n```\nC Basics → OOP (Java/C++) → DSA\n→ Trees → Graphs → DP → System Design\n```\n\n**Free resources:**\n🌿 [GeeksforGeeks](https://www.geeksforgeeks.org/) — best for DSA + GATE\n🟧 [LeetCode](https://leetcode.com/) — interview prep (free tier)\n📺 [CS50 Harvard](https://cs50.harvard.edu/x/) — free on edX\n🎓 [NPTEL Programming](https://nptel.ac.in/courses/106/105/106105151/) — free\n🐍 [Python.org Tutorials](https://docs.python.org/3/tutorial/) — official\n🏆 [Coding Ninjas](https://www.codingninjas.com/codestudio) — structured DSA\n\n**GATE CSE topics:** Algorithms · DS · TOC · Compiler · OS · DBMS · CN\n\n🔥 *Solve 1 problem daily = interview-ready in 6 months!*",
+      "💻 **Programming & DSA Help on Spark!**\n\n**Post coding doubts:**\n→ Doubts tab → Subject: **C Programming / DSA / Java**\n\n**Essential roadmap (CS/ECE):**\n```\nC Basics → OOP (Java/C++) → DSA\n→ Trees → Graphs → DP → System Design\n```\n\n**Free resources:**\n🌿 [GeeksforGeeks](https://www.geeksforgeeks.org/) — best for DSA + GATE\n🟧 [LeetCode](https://leetcode.com/) — interview prep (free problems available)\n📺 [CS50 Harvard](https://cs50.harvard.edu/x/) — 100% free (no edX account needed)\n🎓 [NPTEL Programming](https://nptel.ac.in/courses/106/105/106105151/) — free\n🐍 [Python.org Tutorials](https://docs.python.org/3/tutorial/) — official\n🏆 [CSES Problem Set](https://cses.fi/problemset/) — best free DSA practice\n\n**GATE CSE topics:** Algorithms · DS · TOC · Compiler · OS · DBMS · CN\n\n🔥 *Solve 1 problem daily = interview-ready in 6 months!*",
     ]},
 
   // ── Maths ────────────────────────────────────────────────
@@ -313,13 +313,13 @@ const KB = [
   // ── Python ───────────────────────────────────────────────
   { p: /python|numpy|pandas|matplotlib|machine learning|ml|ai|deep learning|tensorflow/i,
     r: [
-      "🐍 **Python & Machine Learning — The Future is Here!**\n\n**ML roadmap:**\n① Python basics → NumPy → Pandas → Matplotlib\n② Scikit-learn → Regression/Classification\n③ Neural Networks → TensorFlow / PyTorch\n④ Build projects → GitHub → get hired!\n\n**Free resources:**\n🐍 [Python Tutorials](https://docs.python.org/3/tutorial/) — official docs\n📺 [Andrew Ng's ML Course](https://www.coursera.org/learn/machine-learning) — audit free!\n📺 [NPTEL AI/ML](https://www.youtube.com/watch?v=7O72EMbSoHs&list=PLyqSpQzTE6M_G5CJRpP0f7r5-kH9xb0VE) — free lectures\n🤗 [Hugging Face](https://huggingface.co/learn) — NLP + transformers, free\n🌐 [Kaggle](https://www.kaggle.com/) — free datasets, notebooks, competitions\n\n💡 *1 [Kaggle](https://www.kaggle.com/) competition project on resume = interview magnet!* 🚀",
+      "🐍 **Python & Machine Learning — The Future is Here!**\n\n**ML roadmap:**\n① Python basics → NumPy → Pandas → Matplotlib\n② Scikit-learn → Regression/Classification\n③ Neural Networks → TensorFlow / PyTorch\n④ Build projects → GitHub → get hired!\n\n**Free resources:**\n🐍 [Python Tutorials](https://docs.python.org/3/tutorial/) — official docs\n📺 [Andrew Ng ML — YouTube](https://www.youtube.com/playlist?list=PLkDaE6sCZn6FNC6YRfRQc_FbeQrF8BwGI) — 100% free\n📺 [NPTEL AI/ML](https://www.youtube.com/watch?v=7O72EMbSoHs&list=PLyqSpQzTE6M_G5CJRpP0f7r5-kH9xb0VE) — free lectures\n🤗 [Hugging Face](https://huggingface.co/learn) — NLP + transformers, free\n🌐 [Kaggle](https://www.kaggle.com/) — free datasets, notebooks, competitions\n\n💡 *1 [Kaggle](https://www.kaggle.com/) competition project on resume = interview magnet!* 🚀",
     ]},
 
   // ── Web dev ──────────────────────────────────────────────
   { p: /web|html|css|javascript|react|nodejs|frontend|backend|fullstack|api/i,
     r: [
-      "🌐 **Web Development — Build Real Things!**\n\n**Frontend roadmap:**\n```\nHTML5 → CSS3 → JavaScript → React.js\n```\n\n**Free resources:**\n🌐 [MDN Web Docs](https://developer.mozilla.org/) — best reference, free\n📺 [The Odin Project](https://www.theodinproject.com/) — full curriculum, free\n🎓 [freeCodeCamp](https://www.freecodecamp.org/) — free certification\n📺 [CS50 Web (Harvard)](https://cs50.harvard.edu/web/) — free on edX\n🎨 [Frontend Mentor](https://www.frontendmentor.io/) — real project challenges\n\n**Tools:**\n🔵 [VS Code](https://code.visualstudio.com/) · 🐙 [GitHub](https://github.com/) · 🚀 [Vercel](https://vercel.com/) (free deploy)\n\n*Post web dev doubts on Spark → very fast replies!* ⚡",
+      "🌐 **Web Development — Build Real Things!**\n\n**Frontend roadmap:**\n```\nHTML5 → CSS3 → JavaScript → React.js\n```\n\n**Free resources:**\n🌐 [MDN Web Docs](https://developer.mozilla.org/) — best reference, free\n📺 [The Odin Project](https://www.theodinproject.com/) — full curriculum, free\n🎓 [freeCodeCamp](https://www.freecodecamp.org/) — free certification\n📺 [CS50 Web (Harvard)](https://cs50.harvard.edu/web/) — 100% free\n🎨 [Frontend Mentor](https://www.frontendmentor.io/) — real project challenges\n\n**Tools:**\n🔵 [VS Code](https://code.visualstudio.com/) · 🐙 [GitHub](https://github.com/) · 🚀 [Vercel](https://vercel.com/) (free deploy)\n\n*Post web dev doubts on Spark → very fast replies!* ⚡",
     ]},
 
   // ── Git / GitHub ─────────────────────────────────────────
@@ -635,8 +635,8 @@ function scroll() { const m=document.getElementById('sb-msgs'); if(m) setTimeout
 // ════════════════════════════════════════════════════════════
 function injectCSS() {
   ['sb-css93','sb-css94','sb-css95'].forEach(id=>document.getElementById(id)?.remove());
-  if (document.getElementById('sb-css97')) return;
-  const s=document.createElement('style'); s.id='sb-css97';
+  if (document.getElementById('sb-css98')) return;
+  const s=document.createElement('style'); s.id='sb-css98';
   s.textContent=`
 /* ══════════════════════════════════════
    SPARK BOT v5 — Premium Interactive
