@@ -709,7 +709,7 @@ function renderTrendBar() {
   if (!hot.length) { bar.hidden = true; return; }
   bar.hidden = false;
   bar.replaceChildren(
-    el("span", { class: "trend-label" }, "🔥 Trending now:"),
+    el("span", { class: "trend-label" }, "🔥 Trending now"),
     ...hot.map(([s, n]) => el("button", { class: "trend-chip", type: "button",
       onclick: () => { state.tab = "doubts"; state.group = s; state.selected = null; state.mode = "intro"; state.filter = "all"; state.query = ""; render(); }
     }, el("span", { ...colorAttrs(s, "doubts") }, s), el("span", { class: "trend-n" }, "+" + n)))
@@ -745,7 +745,7 @@ function renderHeader() {
     campusBar.hidden = false;
     campusBar.replaceChildren(
       ...[
-        el("span", { class: "campus-label" }, "Campus:"),
+        el("span", { class: "campus-label" }, "Campus"),
         ...["all", ...CAMPUSES].map(c =>
           el("button", { type: "button",
             class: "campus-chip" + (state.campusFilter === c ? " active" : ""),
@@ -764,7 +764,7 @@ function renderHeader() {
       const showYear = state.tab === "doubts" || state.tab === "gate";
       yearBar.hidden = !showYear;
       if (showYear) yearBar.replaceChildren(
-        el("span", { class: "campus-label" }, "Batch:"),
+        el("span", { class: "campus-label" }, "Batch"),
         ...["All", "E1", "E2", "E3", "E4"].map(y =>
           el("button", { type: "button", class: "campus-chip" + (state.yearFilter === y ? " active" : ""),
             onclick: () => { state.yearFilter = y; render(); }
@@ -1196,9 +1196,9 @@ function renderMe() {
       el("div", {},
         el("h2", {}, (getName() || "You") + " · Level " + lv.n),
         el("p", { class: "hint" }, titleOf(p.points) + " · " + plural(p.points, "point")))),
-    el("p", { class: "hint" }, "🎨 3D Portraits:"),
+    el("p", { class: "hint" }, "🎨 3D Portraits"),
     dbPicker,
-    el("p", { class: "hint" }, "Emoji icons:"),
+    el("p", { class: "hint" }, "Emoji icons"),
     emojiPicker,
     el("div", { class: "xp", role: "progressbar", "aria-valuemin": "0", "aria-valuemax": "100", "aria-valuenow": String(pct), "aria-label": "Progress to next level" }, el("span", { style: "width:" + pct + "%" })),
     el("p", { class: "hint" }, (lv.to - p.points) + (lv.to - p.points === 1 ? " more point" : " more points") + " to reach level " + (lv.n + 1) + "."),
@@ -2522,7 +2522,7 @@ function renderView() {
           onclick: () => { state.aiPanel = aiOpen ? null : d.id; render(); }
         }, "🤖 Ask AI", el("span", { class: "ai-arr" }, aiOpen ? "▲" : "▼")),
         aiOpen && el("div", { class: "ai-panel" },
-          el("p", { class: "ai-hint" }, "Your question is pre-loaded. Tap any tool to get an instant explanation:"),
+          el("p", { class: "ai-hint" }, "Your question is pre-loaded. Tap any tool to get an instant explanation."),
           el("div", { class: "ai-tools" },
             ...aiTools.map(tool => el("a", {
               href: tool.url, target: "_blank", rel: "noopener noreferrer",
