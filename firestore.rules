@@ -17,15 +17,16 @@ rules_version = '2';
 //    the challenge questions can not be changed after posting).
 //  - Nothing can be permanently deleted except your own like or reaction (website uses soft delete).
 //
-// PHASE 2 (stronger, needs an app change): enable Authentication > Anonymous, then change member()
-// below to `return signedIn();`. Ask me to switch the app to Firebase anonymous sign-in first,
-// otherwise the website will stop working.
+// ANONYMOUS SIGN-IN IS NOW ON: the app signs every browser in anonymously (no account, no password)
+// and member() requires that session. ORDER MATTERS: 1) deploy the app (v154+), 2) Firebase console >
+// Authentication > Sign-in method > enable Anonymous, 3) only then publish these rules. Publishing
+// them earlier locks out everyone. To roll back, change member() to `return true;`.
 service cloud.firestore {
   match /databases/{database}/documents {
 
     // ---------- helpers ----------
     function signedIn() { return request.auth != null; }
-    function member() { return true; }
+    function member() { return signedIn(); }
 
     function str(v, min, max) { return v is string && v.size() >= min && v.size() <= max; }
     function optStr(d, k, max) { return !(k in d) || (d[k] is string && d[k].size() <= max); }

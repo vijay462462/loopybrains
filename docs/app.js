@@ -256,12 +256,21 @@ function allMyIds() {
 }
 async function firebaseStore(conf, prefix = "") {
   const base = "https://www.gstatic.com/firebasejs/" + FB_VERSION + "/";
-  const [{ initializeApp }, fs, st] = await Promise.all([import(base + "firebase-app.js"), import(base + "firebase-firestore.js"), import(base + "firebase-storage.js")]);
+  const [{ initializeApp }, fs, st, au] = await Promise.all([import(base + "firebase-app.js"), import(base + "firebase-firestore.js"), import(base + "firebase-storage.js"), import(base + "firebase-auth.js")]);
   const app = initializeApp(conf);
   const db = fs.getFirestore(app);
   const storage = st.getStorage(app);
+  // Anonymous sign-in: no account, no password. It gives every browser a verified session so the
+  // security rules can refuse requests that do not come from this app. If it fails (for example
+  // the provider is not enabled yet) the app keeps working while the rules still allow it.
+  let signedIn = false;
+  try {
+    const auth = au.getAuth(app);
+    if (!auth.currentUser) await Promise.race([au.signInAnonymously(auth), new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 8000))]);
+    signedIn = !!auth.currentUser;
+  } catch (e) { console.warn("Anonymous sign-in unavailable:", e && e.code || e && e.message); }
   return {
-    uid: deviceId(), demo: false,
+    uid: deviceId(), demo: false, authed: signedIn,
     subscribe: (coll, cb, onErr) => fs.onSnapshot(fs.collection(db, prefix + coll), snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))), onErr),
     newId: (coll) => fs.doc(fs.collection(db, prefix + coll)).id,
     set: (coll, id, data) => fs.setDoc(fs.doc(db, prefix + coll, id), cleanDoc(data)),
