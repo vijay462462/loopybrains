@@ -694,6 +694,17 @@ h1 span {
 /* ============================================================
    Department tabs + compact subject grid (v36)
    ============================================================ */
+.dept-banner {
+  border-radius: 16px; padding: 16px 18px; margin-bottom: 12px;
+  display: flex; align-items: center; gap: 14px;
+  box-shadow: 0 8px 24px -8px rgba(0,0,0,.22);
+  color: #fff;
+}
+.dept-banner-art { font-size: 26px; letter-spacing: 2px; flex-shrink: 0; filter: drop-shadow(0 2px 4px rgba(0,0,0,.3)); }
+.dept-banner-info { display: flex; flex-direction: column; gap: 2px; }
+.dept-banner-name { font-size: 15px; font-weight: 800; line-height: 1.2; }
+.dept-banner-sub { font-size: 11px; opacity: .88; font-weight: 500; }
+
 .dept-tabs {
   display: flex; gap: 4px; flex-wrap: wrap; padding: 4px 0 8px;
   border-bottom: 1px solid var(--line); margin-bottom: 8px;

@@ -53,6 +53,13 @@ const TABS = {
     placeholder: "e.g. GATE EC 2023 — Z-transform question (Session 1, Q14)",
     bodyHint: "Full question, approach, shortcut trick, or exam alert.",
   },
+  challenges: {
+    coll: "challenges", field: "type", groups: ["Quiz", "Puzzle", "Innovation", "Event"], groupLabel: "Type", noun: "challenge",
+    ask: "Post a challenge", tagline: "Post a quiz, puzzle or innovation challenge. Classmates solve it, discuss it and share ideas.",
+    replyNoun: "attempt", replyLabel: "Your answer or idea", replyBtn: "Submit",
+    placeholder: "e.g. What is the output of this C program? / Arrange 8 queens on a chessboard",
+    bodyHint: "Full question or challenge description. For quizzes, reveal the answer in your first reply.",
+  },
 };
 
 // ---------- campus ----------
@@ -72,10 +79,17 @@ const DEPT_MAP = {
   Mech:  ["Thermo","FM-M","MD","MOM","Mfg","HT","IC Eng"],
   EEE:   ["Circuits","EM","PS","PE","Control","EMS","PQ"],
 };
+const DEPT_VISUAL = {
+  ECE:   { bg: "linear-gradient(135deg,#0ea5e9 0%,#6366f1 100%)", art: "📡⚡🔌🎛️📻", label: "Electronics & Communication", sub: "Signals · Circuits · Systems · Communication" },
+  CSE:   { bg: "linear-gradient(135deg,#8b5cf6 0%,#06b6d4 100%)", art: "💻🖥️🧠⌨️🔧", label: "Computer Science & Engineering", sub: "Algorithms · OS · DBMS · Networks · AI" },
+  Civil: { bg: "linear-gradient(135deg,#f59e0b 0%,#10b981 100%)", art: "🏗️🏛️📐🔩🌉", label: "Civil Engineering", sub: "Structures · Fluid · Geo · Transport · Env" },
+  Mech:  { bg: "linear-gradient(135deg,#ef4444 0%,#f97316 100%)", art: "⚙️🔩🔧🛠️💨", label: "Mechanical Engineering", sub: "Thermo · Fluid · Design · Manufacturing · HT" },
+  EEE:   { bg: "linear-gradient(135deg,#f59e0b 0%,#ef4444 100%)", art: "⚡💡🔋🔌🌡️", label: "Electrical & Electronics", sub: "Machines · Power Systems · Control · Electronics" },
+};
 
 const state = {
   tab: "doubts", group: "All", query: "", filter: "all",
-  doubts: [], ideas: [], clubs: [], gate: [], replies: [], likes: [], loaded: false,
+  doubts: [], ideas: [], clubs: [], gate: [], challenges: [], replies: [], likes: [], loaded: false,
   selected: null, mode: "intro", // intro | view | ask | edit | name | campus
   afterName: null,
   replyPages: [], replyAnon: false,
@@ -671,10 +685,10 @@ function trackNew(coll, rows) {
 // ---------- bottom navigation ----------
 function renderBottomNav() {
   const nav = $('bottomNav'); if (!nav) return;
-  const icons = { doubts: '❓', ideas: '💡', clubs: '🏛', gate: '🎯' };
-  const labels = { doubts: 'Doubts', ideas: 'Ideas', clubs: 'Clubs', gate: 'GATE' };
+  const icons = { doubts: '❓', ideas: '💡', clubs: '🏛', gate: '🎯', challenges: '🎮' };
+  const labels = { doubts: 'Doubts', ideas: 'Ideas', clubs: 'Clubs', gate: 'GATE', challenges: 'Challenges' };
   nav.replaceChildren(
-    ...['doubts', 'ideas', 'clubs', 'gate'].map(tab => {
+    ...['doubts', 'ideas', 'clubs', 'challenges', 'gate'].map(tab => {
       const cnt = state[TABS[tab].coll].length;
       return el('button', { type: 'button', class: 'bnav-btn' + (state.tab === tab ? ' active' : ''), onclick: () => {
         if (state.tab === tab) return;
@@ -847,13 +861,26 @@ function openItem(id) {
   if (innerWidth <= 1000) $("sheet").scrollIntoView({ behavior: "smooth" });
 }
 
+function deptBanner() {
+  if ((state.tab !== "doubts" && state.tab !== "gate") || state.dept === "All") return null;
+  const v = DEPT_VISUAL[state.dept]; if (!v) return null;
+  return el("div", { class: "dept-banner", style: "background:" + v.bg },
+    el("div", { class: "dept-banner-art" }, v.art),
+    el("div", { class: "dept-banner-info" },
+      el("strong", { class: "dept-banner-name" }, v.label),
+      el("span", { class: "dept-banner-sub" }, v.sub)
+    )
+  );
+}
+
 function renderList() {
   const t = TABS[state.tab], rows = visible(), all = state[t.coll];
   if (!rows.length) {
-    const noun = state.tab === "doubts" || state.tab === "gate" ? "subject" : state.tab === "clubs" ? "club" : "category";
-    $("list").replaceChildren(all.length
+    const noun = state.tab === "doubts" || state.tab === "gate" ? "subject" : state.tab === "clubs" ? "club" : state.tab === "challenges" ? "type" : "category";
+    const emptyMsg = state.tab === "doubts" ? "No doubts yet" : state.tab === "clubs" ? "No club posts yet" : state.tab === "gate" ? "No GATE discussions yet" : state.tab === "challenges" ? "No challenges yet" : "No ideas yet";
+    $("list").replaceChildren(...[deptBanner()].filter(Boolean), all.length
       ? el("div", { class: "empty" }, el("strong", {}, "Nothing matches"), "Try another " + noun + " or clear the search.")
-      : el("div", { class: "empty" }, el("strong", {}, state.tab === "doubts" ? "No doubts yet" : state.tab === "clubs" ? "No club posts yet" : state.tab === "gate" ? "No GATE discussions yet" : "No ideas yet"), "Press \u201c" + t.ask + "\u201d to post the first one."));
+      : el("div", { class: "empty" }, el("strong", {}, emptyMsg), "Press \u201c" + t.ask + "\u201d to post the first one."));
     return;
   }
   const spot = spotlight();
@@ -861,7 +888,7 @@ function renderList() {
     el("span", { class: "spot-k" }, "⭐ Doubt of the Day"),
     el("strong", {}, spot.d.title),
     el("span", { class: "spot-why" }, spot.why + " Can you solve it?"));
-  $("list").replaceChildren(...(spotCard ? [spotCard] : []), ...rows.map(d => {
+  $("list").replaceChildren(...[deptBanner(), spotCard].filter(Boolean), ...rows.map(d => {
     const n = repliesFor(d.id).length, g = d[t.field];
     const meta = [el("span", { class: "tag", ...colorAttrs(g) }, g)];
     const votes = likesFor(d.id).length;
@@ -1026,7 +1053,7 @@ function allStats() {
     }
   }
     // Night Owl: any post created between midnight and 5am
-  const allUserPosts = [...state.doubts, ...state.ideas, ...state.clubs, ...state.gate, ...state.replies];
+  const allUserPosts = [...state.doubts, ...state.ideas, ...state.clubs, ...state.gate, ...state.challenges, ...state.replies];
   for (const x of allUserPosts) {
     if (!x.authorId || x.anonymous) continue;
     const h = new Date(x.createdAt || 0).getHours();
@@ -1074,7 +1101,7 @@ const TITLES = [[50, "Legend"], [25, "Mentor"], [10, "Helper"], [0, "Rising star
 const titleOf = (pts) => TITLES.find(([min]) => pts >= min)[1];
 
 function renderNetwork() {
-  const allPosts = [...state.doubts, ...state.ideas, ...state.clubs, ...state.gate];
+  const allPosts = [...state.doubts, ...state.ideas, ...state.clubs, ...state.gate, ...state.challenges];
   const totalPosts = allPosts.length;
   const totalMembers = new Set(allPosts.filter(p => !p.anonymous).map(p => p.authorId)).size;
   return [
@@ -2339,8 +2366,8 @@ function renderExams() {
 function renderIntro() {
   const t = TABS[state.tab];
   // Live stats
-  const totalPosts = state.doubts.length + state.ideas.length + state.clubs.length + state.gate.length;
-  const students = new Set([...state.doubts, ...state.ideas, ...state.clubs, ...state.gate].filter(p => !p.anonymous).map(p => p.authorId)).size;
+  const totalPosts = state.doubts.length + state.ideas.length + state.clubs.length + state.gate.length + state.challenges.length;
+  const students = new Set([...state.doubts, ...state.ideas, ...state.clubs, ...state.gate, ...state.challenges].filter(p => !p.anonymous).map(p => p.authorId)).size;
   const resolved = state.doubts.filter(d => d.resolvedReplyId).length;
   const open = state.doubts.length - resolved;
   const statsRow = totalPosts > 0 ? el("div", { class: "intro-stats" },
@@ -2772,6 +2799,7 @@ render();
   store.subscribe("likes", rows => { state.likes = rows; update(); }, onErr);
   store.subscribe("clubs", rows => { const live_ = live(rows); trackNew("clubs", live_); state.clubs = live_; update(); }, e => {});
   store.subscribe("gate", rows => { const live_ = live(rows); trackNew("gate", live_); state.gate = live_; update(); }, e => {});
+  store.subscribe("challenges", rows => { const live_ = live(rows); trackNew("challenges", live_); state.challenges = live_; update(); }, e => {});
 })();
 
 // ---------- PWA, keyboard shortcuts, offline, FAB ----------

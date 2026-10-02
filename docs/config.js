@@ -31,7 +31,7 @@ window.DOUBT_DESK_CONFIG = {
 
   // Clubs shown in the Clubs tab. Add or rename clubs here.
   clubs: [
-    "Coding Club", "Robotics", "AI/ML", "Electronics",
+    "Coding Club", "Computer Science", "AI/ML", "Robotics", "Electronics",
     "Civil Designers", "Mech Makers", "Startup Cell",
     "Research Society", "Cultural", "Sports", "Other",
   ],
