@@ -1514,3 +1514,24 @@ div.chal-opt.wrong b { background: #ef4444; color: #fff; }
 }
 
 .alumni-search { width: 100%; margin: 6px 0; }
+
+/* ---- per-section color themes ---- */
+body { --ta: #6366f1; --tb: #a855f7; }
+body[data-tab="doubts"]     { --ta: #6366f1; --tb: #a855f7; }
+body[data-tab="ideas"]      { --ta: #f59e0b; --tb: #f97316; }
+body[data-tab="clubs"]      { --ta: #0d9488; --tb: #06b6d4; }
+body[data-tab="challenges"] { --ta: #f43f5e; --tb: #fb923c; }
+body[data-tab="market"]     { --ta: #16a34a; --tb: #14b8a6; }
+body[data-tab="gate"]       { --ta: #2563eb; --tb: #6366f1; }
+
+header.top { background: linear-gradient(120deg, var(--ta), var(--tb) 50%, var(--g3) 85%, var(--g4)); }
+.sheet[data-s="all"] {
+  background-image: linear-gradient(var(--sheet), var(--sheet)), linear-gradient(90deg, var(--ta), var(--tb));
+}
+.sheet h2 { background: linear-gradient(90deg, var(--ta), var(--tb)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.form label { color: color-mix(in oklab, var(--ta) 65%, var(--ink)); }
+.form input, .form select, .form textarea { background: color-mix(in oklab, var(--ta) 6%, var(--sheet)); border-color: color-mix(in oklab, var(--ta) 30%, var(--line)); }
+.form input:focus, .form select:focus, .form textarea:focus { border-color: var(--ta); box-shadow: 0 0 0 3px color-mix(in oklab, var(--ta) 25%, transparent); outline: none; }
+.sheet .btn.primary { background: linear-gradient(120deg, var(--ta), var(--tb)); box-shadow: 0 6px 16px -8px var(--ta); }
+.bnav-btn.active { color: var(--ta); }
+.tabs button[aria-selected="true"] { color: var(--ta); }

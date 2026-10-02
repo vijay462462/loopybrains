@@ -912,7 +912,7 @@ function renderHeader() {
     ft.setAttribute("aria-expanded", String(open));
   }
   $("quizBtn").classList.toggle("dot", !!(store && state.loaded && QUIZ.length && !myQuizAnswer(dayNum())));
-  $("search").placeholder = state.tab === "doubts" ? "Search doubts" : state.tab === "gate" ? "Search GATE discussions" : state.tab === "market" ? "Search listings" : "Search ideas";
+  $("search").placeholder = state.tab === "doubts" ? "Search doubts" : state.tab === "gate" ? "Search GATE discussions" : state.tab === "market" ? "Search listings" : state.tab === "clubs" ? "Search club posts" : state.tab === "challenges" ? "Search challenges" : "Search ideas";
   $("rail").setAttribute("aria-label", t.groupLabel);
   const opts = state.tab === "doubts"
     ? [["all","Newest"],["asked","Most asked"],["open","Unanswered"],["mine","My posts"],["mentor","Needs mentor"],["done","Resolved"],["bounty","🎁 Bounty"]]
@@ -4150,7 +4150,7 @@ function renderAsk(existing) {
     }
   } },
     el("div", { class: "two" },
-      el("label", {}, state.tab === "doubts" ? "Your question" : "Your idea", el("input", { id: "f-title", name: "title", maxlength: "200", required: true, placeholder: t.placeholder })),
+      el("label", {}, ({ doubts: "Your question", ideas: "Your idea", clubs: "Post title", gate: "Discussion title", challenges: "Challenge title", market: "Item title" })[state.tab] || "Title", el("input", { id: "f-title", name: "title", maxlength: "200", required: true, placeholder: t.placeholder })),
       el("label", {}, state.tab === "doubts" ? "Subject" : "Category", el("select", { id: "f-group", name: "group" }, groups.map(s => el("option", { selected: s === current }, s))))),
     (state.tab === "doubts" || state.tab === "gate") && el("div", { class: "two" },
       el("label", {}, "Your Batch Year",
@@ -4486,6 +4486,7 @@ function renderCampusPicker() {
 
 function render() {
   try {
+    document.body.dataset.tab = state.tab;
     renderHeader(); renderTrendBar(); renderRail(); renderList(); renderBottomNav();
     // Forms keep what the student is typing while live updates arrive.
     const key = ["ask", "edit", "name", "alumniJoin", "alumniJob"].includes(state.mode) ? state.mode + state.tab : "";
