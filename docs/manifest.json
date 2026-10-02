@@ -1,7 +1,7 @@
 {
   "name": "RGUKT Spark",
   "short_name": "Spark",
-  "description": "Ask doubts, share ideas and run clubs — RGUKT Spark.",
+  "description": "Ask doubts, share ideas and run clubs — RGUKT Spark for RGUKT AP students.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
@@ -10,13 +10,24 @@
   "theme_color": "#7c3aed",
   "categories": ["education", "social"],
   "lang": "en-IN",
+  "dir": "ltr",
+  "prefer_related_applications": false,
   "icons": [
     { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
-    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" },
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "screenshots": [
+    { "src": "icon.svg", "sizes": "512x512", "type": "image/svg+xml", "form_factor": "narrow" }
   ],
   "shortcuts": [
-    { "name": "Ask a doubt", "url": "./#doubts", "description": "Post a new doubt" },
-    { "name": "Share an idea", "url": "./#ideas", "description": "Share an idea" },
-    { "name": "Clubs", "url": "./#clubs", "description": "Browse clubs" }
-  ]
+    { "name": "Ask a doubt", "short_name": "Ask", "url": "./#doubts", "description": "Post a new doubt", "icons": [{ "src": "icon.svg", "sizes": "any" }] },
+    { "name": "Share an idea", "short_name": "Idea", "url": "./#ideas", "description": "Share an idea", "icons": [{ "src": "icon.svg", "sizes": "any" }] },
+    { "name": "Clubs", "short_name": "Clubs", "url": "./#clubs", "description": "Browse clubs", "icons": [{ "src": "icon.svg", "sizes": "any" }] },
+    { "name": "Challenges", "short_name": "Quiz", "url": "./#challenges", "description": "Quizzes and puzzles", "icons": [{ "src": "icon.svg", "sizes": "any" }] }
+  ],
+  "display_override": ["standalone", "minimal-ui"],
+  "id": "/vijay/docs/"
 }
