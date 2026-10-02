@@ -134,7 +134,13 @@ function avatarFor(name) {
 // Render a small avatar circle element
 function avatarEl(icon, cls = "av") { return el("span", { class: cls, "aria-hidden": "true" }, icon); }
 
-const mine = (x) => x && store && x.authorId === store.uid;
+const mine = (x) => {
+  if (!x || !store) return false;
+  if (allMyIds().has(x.authorId)) return true;
+  // Fallback: name match for posts made before a device-ID reset (non-anonymous only)
+  const n = getName();
+  return !x.anonymous && !!n && x.authorName === n;
+};
 const who = (x) => mine(x) ? "You" : (x.authorName || "A student");
 const repliesFor = (id) => state.replies.filter(r => r.parentId === id).sort((a, b) => (isMentor(b) - isMentor(a)) || (a.createdAt - b.createdAt));
 // Verified mentors are listed by device ID in config.js; their answers get a badge and go first.
@@ -151,13 +157,32 @@ function errText(e) {
 }
 
 // ---------- stores ----------
-// Each phone or browser gets a random device id, kept in localStorage, so students can edit and delete their own posts.
+// Each phone or browser gets a random device id kept in localStorage, sessionStorage, and a cookie
+// so clearing just one storage doesn't orphan old posts.
 function deviceId() {
-  try {
-    let id = localStorage.getItem("dd-device-id");
-    if (!id) { id = "d-" + crypto.randomUUID(); localStorage.setItem("dd-device-id", id); }
-    return id;
-  } catch (_) { return "d-" + Math.random().toString(36).slice(2); }
+  const KEY = "dd-device-id", HIST = "dd-old-ids";
+  const readCookie = () => { try { const m = document.cookie.match(/(?:^|; )dd-did=([^;]+)/); return m ? m[1] : null; } catch (_) { return null; } };
+  const writeCookie = (id) => { try { document.cookie = "dd-did=" + id + "; max-age=31536000; SameSite=Strict"; } catch (_) {} };
+  let id = null;
+  try { id = localStorage.getItem(KEY); } catch (_) {}
+  if (!id) { try { id = sessionStorage.getItem(KEY); } catch (_) {} }
+  if (!id) { id = readCookie(); }
+  if (!id) {
+    id = "d-" + (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2));
+  }
+  try { localStorage.setItem(KEY, id); } catch (_) {}
+  try { sessionStorage.setItem(KEY, id); } catch (_) {}
+  writeCookie(id);
+  return id;
+}
+// All device IDs this browser has ever used — lets mine() recognise old posts after a localStorage reset.
+function allMyIds() {
+  const KEY = "dd-device-id", HIST = "dd-old-ids";
+  const cur = deviceId();
+  let hist = [];
+  try { hist = JSON.parse(localStorage.getItem(HIST) || "[]"); } catch (_) {}
+  if (!hist.includes(cur)) { hist.unshift(cur); hist = hist.slice(0, 8); try { localStorage.setItem(HIST, JSON.stringify(hist)); } catch (_) {} }
+  return new Set(hist);
 }
 async function firebaseStore(conf, prefix = "") {
   const base = "https://www.gstatic.com/firebasejs/" + FB_VERSION + "/";
