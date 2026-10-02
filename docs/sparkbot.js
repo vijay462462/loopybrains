@@ -501,6 +501,11 @@ function build() {
               <div class="sb-top-name">Spark Bot</div>
               <div class="sb-top-stat"><span class="sb-live-dot"></span>Premium AI · Online · v5</div>
             </div>
+            <select class="sb-lang" id="sb-lang" aria-label="Voice language" title="Voice language">
+              <option value="en-IN">EN</option><option value="te-IN">తెలుగు</option><option value="hi-IN">हिन्दी</option>
+              <option value="ta-IN">தமிழ்</option><option value="kn-IN">ಕನ್ನಡ</option><option value="ml-IN">മലയാളം</option>
+            </select>
+            <button class="sb-act" id="sb-spk" type="button" title="Read answers aloud" aria-pressed="false">🔇</button>
             <button class="sb-act" id="sb-clr" type="button" title="Clear chat">🗑️</button>
             <button class="sb-cls" id="sb-cls" type="button" aria-label="Close">
               <svg width="12" height="12" viewBox="0 0 12 12"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
@@ -511,6 +516,7 @@ function build() {
         <div class="sb-chips" id="sb-chips"></div>
         <div class="sb-bar">
           <input id="sb-in" type="text" name="spark-bot-q" placeholder="Ask me anything about RGUKT Spark… 🌟" autocomplete="off" autocorrect="off" autocapitalize="sentences" spellcheck="false" enterkeyhint="send" aria-label="Ask Spark Bot" maxlength="400">
+          <button id="sb-mic" type="button" aria-label="Speak your question" title="Speak your question">🎤</button>
           <button id="sb-go" type="button" aria-label="Send">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
               <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
@@ -526,6 +532,7 @@ function build() {
   document.getElementById('sb-cls').onclick = toggle;
   document.getElementById('sb-go').onclick   = send;
   document.getElementById('sb-clr').onclick  = clearChat;
+  initVoice();
 
   // ── Inline styles ─────────────────────────────────────
   const inp = document.getElementById('sb-in');
@@ -576,7 +583,7 @@ function build() {
 }
 
 function toggle() {
-  isOpen=!isOpen;
+  isOpen=!isOpen; if (!isOpen) { stopSpeaking(); try { recog && listening && recog.stop(); } catch (_) {} }
   const win=document.getElementById('sb-win'), btn=document.getElementById('sb-btn');
   win.classList.toggle('sb-show',isOpen);
   win.setAttribute('aria-hidden',String(!isOpen));
@@ -622,6 +629,52 @@ function showDots() {
 }
 function hideDots() { document.getElementById('sb-dots')?.remove(); }
 
+// ════════════════════════════════════════════════════════════
+//  VOICE: speak your question, hear the answer
+// ════════════════════════════════════════════════════════════
+let speakOn = false, listening = false, recog = null, voiceLang = 'en-IN';
+function initVoice() {
+  try { speakOn = localStorage.getItem('sb-speak') === '1'; voiceLang = localStorage.getItem('sb-lang') || 'en-IN'; } catch (_) {}
+  const mic = document.getElementById('sb-mic'), spk = document.getElementById('sb-spk'), lang = document.getElementById('sb-lang');
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) mic.hidden = true;
+  if (!('speechSynthesis' in window)) spk.hidden = true;
+  lang.value = voiceLang;
+  const paint = () => { spk.textContent = speakOn ? '🔊' : '🔇'; spk.setAttribute('aria-pressed', String(speakOn)); spk.classList.toggle('sb-on', speakOn); };
+  paint();
+  lang.onchange = () => { voiceLang = lang.value; try { localStorage.setItem('sb-lang', voiceLang); } catch (_) {} };
+  spk.onclick = () => { speakOn = !speakOn; try { localStorage.setItem('sb-speak', speakOn ? '1' : '0'); } catch (_) {} if (!speakOn) stopSpeaking(); paint(); };
+  mic.onclick = () => {
+    if (!SR) return;
+    if (listening && recog) { recog.stop(); return; }
+    stopSpeaking();
+    recog = new SR(); recog.lang = voiceLang; recog.interimResults = true; recog.continuous = false; recog.maxAlternatives = 1;
+    const inp = document.getElementById('sb-in');
+    recog.onstart = () => { listening = true; mic.classList.add('sb-rec'); inp.placeholder = 'Listening… speak now 🎙️'; };
+    recog.onresult = (e) => {
+      let txt = ''; for (const r of e.results) txt += r[0].transcript;
+      inp.value = txt.slice(0, 400);
+      if (e.results[e.results.length - 1].isFinal) setTimeout(send, 250);
+    };
+    recog.onerror = (e) => { if (e.error === 'not-allowed' || e.error === 'service-not-allowed') addMsg('bot', '🎤 Microphone permission is blocked. Allow the microphone for this site in your browser settings, then try again.'); };
+    recog.onend = () => { listening = false; mic.classList.remove('sb-rec'); inp.placeholder = 'Ask me anything about RGUKT Spark… 🌟'; };
+    try { recog.start(); } catch (_) {}
+  };
+}
+function stopSpeaking() { try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (_) {} }
+function speakText(markdown) {
+  if (!speakOn || !('speechSynthesis' in window)) return;
+  const plain = markdown
+    .replace(/```[\s\S]*?```/g, ' ').replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/[*_`#>•▸→↳①②③④⑤]/g, ' ')
+    .replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]/gu, ' ').replace(/https?:\/\/\S+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 700);
+  if (!plain) return;
+  stopSpeaking();
+  const u = new SpeechSynthesisUtterance(plain); u.lang = voiceLang; u.rate = 1; u.pitch = 1;
+  const v = (window.speechSynthesis.getVoices() || []).find((x) => x.lang === voiceLang) || (window.speechSynthesis.getVoices() || []).find((x) => x.lang && x.lang.startsWith(voiceLang.slice(0, 2)));
+  if (v) u.voice = v;
+  window.speechSynthesis.speak(u);
+}
+
 function send() {
   const inp=document.getElementById('sb-in'); if (!inp||busy) return;
   const t=inp.value.trim(); if (!t) return;
@@ -630,7 +683,7 @@ function send() {
   btn?.classList.add('sb-pop'); setTimeout(()=>btn?.classList.remove('sb-pop'),350);
   busy=true; showDots();
   const delay=650+Math.min(t.length*7,800)+Math.random()*300;
-  setTimeout(()=>{ hideDots(); addMsg('bot',respond(t)); busy=false; setChips(ctxChips(t)); },delay);
+  setTimeout(()=>{ hideDots(); { const reply=respond(t); addMsg('bot',reply); speakText(reply); } busy=false; setChips(ctxChips(t)); },delay);
 }
 
 // ════════════════════════════════════════════════════════════

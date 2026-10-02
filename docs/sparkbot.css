@@ -109,3 +109,11 @@
 /* Launcher is opened from the header "Spark Bot" button; hide the floating circle */
 #sb-btn{display:none!important;}
 #sb-win{bottom:0;}
+
+/* voice */
+#sb-mic{width:42px;height:42px;min-width:42px;border-radius:50%;border:1px solid rgba(167,139,250,.5);background:rgba(109,40,217,.25);color:#fff;font-size:18px;cursor:pointer;flex-shrink:0;}
+#sb-mic.sb-rec{background:#dc2626;border-color:#fecaca;animation:sb-rec 1s ease-in-out infinite;}
+@keyframes sb-rec{50%{box-shadow:0 0 0 8px rgba(220,38,38,.25);}}
+.sb-lang{height:26px;border-radius:13px;border:1px solid rgba(168,85,247,.3);background:rgba(168,85,247,.12);color:#e9d5ff;font-size:11px;padding:0 4px;max-width:76px;}
+.sb-lang option{color:#111;}
+.sb-act.sb-on{background:rgba(34,211,238,.25);border-color:#22d3ee;}
