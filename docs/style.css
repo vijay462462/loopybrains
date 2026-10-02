@@ -210,27 +210,20 @@ header.top .btn.primary { background: #fff; color: var(--g2); border-color: #fff
   .tabs button { padding: 8px 6px; font-size: 12.5px; white-space: nowrap; background: rgb(255 255 255 / .16); }
   .tabs button[aria-selected="true"] { background: #fff; }
 
-  /* action buttons: full width, wrap into ~2 compact rows */
+  /* action buttons: tidy 3-column tile grid (same width as the tabs above) */
   .hdr-actions {
     width: 100%;
-    display: flex; flex-wrap: wrap;
-    gap: 5px;
-    /* same edge-bleed trick so buttons line up with content */
-    margin-left: 0;
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 6px; margin-left: 0;
   }
-  .hdr-actions .chip {
-    padding: 4px 9px;
-    font-size: 11px;
-    white-space: nowrap;
-    line-height: 1.4;
+  .hdr-actions .chip.tool {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    padding: 8px 4px; border-radius: 14px; font-size: 11px; line-height: 1.2; text-align: center;
   }
-  header.top .btn.primary {
-    padding: 5px 11px;
-    font-size: 11px;
-    white-space: nowrap;
-    line-height: 1.4;
-  }
-  #themeBtn { padding: 4px 7px; }
+  .hdr-actions .chip.tool .ci { font-size: 19px; line-height: 1; }
+  #nameBtn { grid-column: span 2; padding: 8px 10px; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  header.top .btn.primary#askBtn { grid-column: span 1; padding: 8px 6px; font-size: 12px; white-space: nowrap; border-radius: 999px; }
+  #themeBtn { position: absolute; top: 12px; right: 12px; padding: 5px 9px; font-size: 14px; border-radius: 999px; }
 
   /* campus / year bars inside header */
   .campus-bar { width: 100%; }
