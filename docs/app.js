@@ -2770,25 +2770,53 @@ function renderExams() {
 
 function renderGateIntro() {
   const PYQ_YEARS = ["2025","2024","2023","2022","2021","2020","2019","2018","2017","2016"];
+  const GATE_IITS = [
+    { name: "IIT Bombay", sub: "NPTEL courses — ECE, CS, Civil, Mech", emoji: "🏛", url: "https://nptel.ac.in/institutes/106101010" },
+    { name: "IIT Delhi", sub: "NPTEL courses — All engineering", emoji: "🏛", url: "https://nptel.ac.in/institutes/110101002" },
+    { name: "IIT Madras", sub: "NPTEL courses — ECE, CS, Mech", emoji: "🏛", url: "https://nptel.ac.in/institutes/106106047" },
+    { name: "IIT Kanpur", sub: "NPTEL + GATE papers archive", emoji: "🏛", url: "https://nptel.ac.in/institutes/101104025" },
+    { name: "IIT Kharagpur", sub: "NPTEL courses — Civil, EEE, ECE", emoji: "🏛", url: "https://nptel.ac.in/institutes/105105127" },
+    { name: "IIT Roorkee", sub: "NPTEL courses — Civil, ECE, CS", emoji: "🏛", url: "https://nptel.ac.in/institutes/107107145" },
+    { name: "IIT Hyderabad", sub: "NPTEL courses — CS, ECE, EEE", emoji: "🏛", url: "https://nptel.ac.in/institutes/102107086" },
+    { name: "NIT Warangal", sub: "NPTEL courses — All branches", emoji: "🏫", url: "https://nptel.ac.in/institutes/105109055" },
+    { name: "NIT Trichy", sub: "NPTEL courses — Civil, Mech, ECE", emoji: "🏫", url: "https://nptel.ac.in/institutes/106106085" },
+    { name: "IISc Bangalore", sub: "NPTEL — Advanced research courses", emoji: "🔬", url: "https://nptel.ac.in/institutes/106101003" },
+  ];
+  const GATE_WORLD = [
+    { name: "MIT OpenCourseWare", sub: "Free MIT courses — CS, EEE, Civil", emoji: "🇺🇸", url: "https://ocw.mit.edu" },
+    { name: "MIT YouTube", sub: "Full lecture videos — HD", emoji: "▶️", url: "https://www.youtube.com/@mitocw" },
+    { name: "Stanford Online", sub: "Free courses — CS, AI, Mech", emoji: "🏫", url: "https://online.stanford.edu/free-courses" },
+    { name: "Coursera (Audit)", sub: "Top university courses — free audit", emoji: "🌐", url: "https://www.coursera.org" },
+    { name: "edX Free Courses", sub: "MIT, Harvard, IIT — free audit", emoji: "📖", url: "https://www.edx.org/search?q=engineering" },
+    { name: "Khan Academy", sub: "Maths, Physics — concept building", emoji: "🧮", url: "https://www.khanacademy.org" },
+  ];
   const GATE_VIDEOS = [
-    { name: "Gate Smashers", sub: "CSE — Full GATE playlist", emoji: "💻", url: "https://www.youtube.com/@GateSmashersFull" },
+    { name: "Gate Smashers", sub: "CSE — Full GATE playlist HD", emoji: "💻", url: "https://www.youtube.com/@GateSmashersFull" },
     { name: "Neso Academy", sub: "ECE & CSE — HD lectures", emoji: "📡", url: "https://www.youtube.com/@NesoAcademy" },
-    { name: "NPTEL Official", sub: "All branches — IIT faculty", emoji: "🎓", url: "https://www.youtube.com/@nptel" },
+    { name: "NPTEL Official", sub: "All branches — IIT faculty HD", emoji: "🎓", url: "https://www.youtube.com/@nptel" },
     { name: "Knowledge Gate", sub: "CSE — Concepts + PYQs", emoji: "🧠", url: "https://www.youtube.com/@KnowledgeGate9" },
     { name: "EE Academy", sub: "EEE / ECE — Circuit theory", emoji: "⚡", url: "https://www.youtube.com/@EEAcademy1" },
-    { name: "Civil Guruji", sub: "Civil — Full GATE civil", emoji: "🏗️", url: "https://www.youtube.com/@CivilGuruji" },
+    { name: "Civil Guruji", sub: "Civil — Full GATE HD", emoji: "🏗️", url: "https://www.youtube.com/@CivilGuruji" },
+    { name: "IIT Madras Online", sub: "IIT Madras official lectures", emoji: "🏛", url: "https://www.youtube.com/@iitmadrasonline" },
+    { name: "IIT Delhi Official", sub: "IIT Delhi lecture series", emoji: "🏛", url: "https://www.youtube.com/@IITDelhiOfficial" },
+    { name: "Unacademy GATE", sub: "Live + recorded free content", emoji: "🎯", url: "https://www.youtube.com/@UnacademyGATE" },
+    { name: "MADE Easy", sub: "Toppers & expert discussions", emoji: "📘", url: "https://www.youtube.com/@madeeasygroupofficial" },
+    { name: "Ravindrababu Ravula", sub: "CSE — Theory of Computation, OS", emoji: "💡", url: "https://www.youtube.com/@ravindrababuravula" },
+    { name: "5 Minutes Engineering", sub: "Quick concept videos all branches", emoji: "⏱", url: "https://www.youtube.com/@5MinutesEngineering" },
   ];
   const GATE_PAPERS = [
     { name: "Official GATE Papers", sub: "All years — IIT Kanpur archive", emoji: "📄", url: "https://gate.iitk.ac.in/GATE_past_papers.html" },
-    { name: "NPTEL Notes (PDF)", sub: "Subject-wise lecture notes", emoji: "📚", url: "https://nptel.ac.in/courses" },
+    { name: "NPTEL Notes (PDF)", sub: "Subject-wise free lecture notes", emoji: "📚", url: "https://nptel.ac.in/courses" },
+    { name: "SWAYAM Free Courses", sub: "Govt platform — IIT/NIT faculty", emoji: "🇮🇳", url: "https://swayam.gov.in" },
     { name: "MADE Easy Books", sub: "Handbooks & workbooks", emoji: "📘", url: "https://madeeasypublications.org" },
     { name: "ACE Academy", sub: "Study material & test series", emoji: "📗", url: "https://aceenggacademy.com" },
+    { name: "GATE Academy", sub: "Notes, books & video classes", emoji: "📙", url: "https://thegateacademy.com" },
   ];
   const GATE_PRACTICE = [
-    { name: "NPTEL Swayam", sub: "Free online courses + exams", emoji: "🎯", url: "https://swayam.gov.in" },
     { name: "PW GATE App", sub: "Mock tests & video lectures", emoji: "🔥", url: "https://pw.live" },
-    { name: "GATE Academy", sub: "Practice tests + live classes", emoji: "📙", url: "https://thegateacademy.com" },
     { name: "Testbook GATE", sub: "Full mock test series", emoji: "📝", url: "https://testbook.com/gate" },
+    { name: "Unacademy GATE", sub: "Live tests + quizzes", emoji: "🎯", url: "https://unacademy.com/goal/gate" },
+    { name: "GATE Overflow", sub: "CSE PYQ solutions community", emoji: "💬", url: "https://gateoverflow.in" },
   ];
   const pyqPosts = state.gate.filter(d => !d.deleted && d.pyqYear);
   const yearCounts = {};
@@ -2856,10 +2884,44 @@ function renderGateIntro() {
         ),
       ),
 
+      // Top IITs & NITs
+      el("div", { class: "gate-section" },
+        el("div", { class: "gate-section-title" }, "🏛 Top IITs & NITs — Free Courses"),
+        el("div", { class: "gate-section-sub" }, "NPTEL courses by IIT/NIT professors — free, no login needed"),
+        el("div", { class: "gate-res-grid gate-res-grid-2" },
+          ...GATE_IITS.map(r =>
+            el("a", { class: "gate-res-chip", href: r.url, target: "_blank", rel: "noopener noreferrer" },
+              el("span", { class: "gate-res-emoji" }, r.emoji),
+              el("div", {},
+                el("div", { class: "gate-res-name" }, r.name),
+                el("div", { class: "gate-res-tag" }, r.sub),
+              )
+            )
+          )
+        ),
+      ),
+
+      // World class universities
+      el("div", { class: "gate-section" },
+        el("div", { class: "gate-section-title" }, "🌍 World Class Universities"),
+        el("div", { class: "gate-section-sub" }, "MIT, Stanford — free audit courses for deep understanding"),
+        el("div", { class: "gate-res-grid gate-res-grid-2" },
+          ...GATE_WORLD.map(r =>
+            el("a", { class: "gate-res-chip", href: r.url, target: "_blank", rel: "noopener noreferrer" },
+              el("span", { class: "gate-res-emoji" }, r.emoji),
+              el("div", {},
+                el("div", { class: "gate-res-name" }, r.name),
+                el("div", { class: "gate-res-tag" }, r.sub),
+              )
+            )
+          )
+        ),
+      ),
+
       // Free video lectures
       el("div", { class: "gate-section" },
-        el("div", { class: "gate-section-title" }, "🎥 Free Video Lectures"),
-        el("div", { class: "gate-section-sub" }, "Tap to open YouTube — HD lectures by subject experts"),
+        el("div", { class: "gate-section-title" }, "🎥 Free YouTube Lectures (HD)"),
+        el("div", { class: "gate-section-sub" }, "Best GATE YouTube channels — all branches, HD quality"),
         el("div", { class: "gate-res-grid" },
           ...GATE_VIDEOS.map(r =>
             el("a", { class: "gate-res-chip", href: r.url, target: "_blank", rel: "noopener noreferrer" },
