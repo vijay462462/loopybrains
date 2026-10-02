@@ -121,6 +121,7 @@ function el(tag, attrs = {}, ...kids) {
     if (v == null || v === false) continue;
     if (k === "class") n.className = v;
     else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
+    else if (k === "style" && typeof v === "string") { for (const d of v.split(";")) { const i = d.indexOf(":"); if (i > 0) n.style.setProperty(d.slice(0, i).trim(), d.slice(i + 1).trim()); } }
     else n.setAttribute(k, v === true ? "" : v);
   }
   for (const k of kids.flat()) if (k != null && k !== false) n.append(k instanceof Node ? k : String(k));
