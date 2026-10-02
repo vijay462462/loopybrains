@@ -102,6 +102,7 @@ const state = {
   afterName: null,
   replyPages: [], replyAnon: false,
   campusFilter: "all", // "all" | campus name
+  mktSort: "newest",   // "newest" | "price_asc" | "price_desc" | "popular"
   dept: "All",         // "All" | "ECE" | "CSE" | "Civil" | "Mech" | "EEE"
   yearFilter: "All",   // "All" | "E1" | "E2" | "E3" | "E4"
   aiPanel: null,       // post id that has AI panel open
@@ -808,7 +809,7 @@ function renderHeader() {
     : state.tab === "gate"
     ? [["all","Newest"],["mine","My posts"]]
     : state.tab === "market"
-    ? [["all","All listings"],["available","Available"],["sold","Sold"]]
+    ? [["all","All listings"],["available","Available"],["sold","Sold"],["mine","My listings"]]
     : [["all", "Newest"], ["top", "Most liked"]];
   const f = $("filter");
   if (f.dataset.tab !== state.tab) {
@@ -913,13 +914,24 @@ function visibleMarket() {
   if (myCampus) rows = rows.filter(r => CROSS_CAMPUS_CATEGORIES.has(r.category) || !r.campus || r.campus === myCampus);
   if (state.filter === "available") rows = rows.filter(r => !r.sold);
   if (state.filter === "sold") rows = rows.filter(r => r.sold);
-  rows.sort((a, b) => b.createdAt - a.createdAt);
+  if (state.filter === "mine") rows = rows.filter(r => store && r.authorId === store.uid);
+  // sort
+  if (state.mktSort === "price_asc") rows.sort((a, b) => (a.price || 0) - (b.price || 0));
+  else if (state.mktSort === "price_desc") rows.sort((a, b) => (b.price || 0) - (a.price || 0));
+  else if (state.mktSort === "popular") rows.sort((a, b) => interestCount(b.id) - interestCount(a.id));
+  else rows.sort((a, b) => b.createdAt - a.createdAt);
   return rows;
 }
 
 function renderMarketList() {
   const rows = visibleMarket();
   const availCount = state.market.filter(r => !r.deleted && !r.sold).length;
+  const sortSel = el("select", { class: "mkt-sort-sel", "aria-label": "Sort listings", onchange: (e) => { state.mktSort = e.target.value; render(); } },
+    el("option", { value: "newest", selected: state.mktSort === "newest" }, "🕐 Newest"),
+    el("option", { value: "price_asc", selected: state.mktSort === "price_asc" }, "💰 Price: Low→High"),
+    el("option", { value: "price_desc", selected: state.mktSort === "price_desc" }, "💎 Price: High→Low"),
+    el("option", { value: "popular", selected: state.mktSort === "popular" }, "🔥 Most Wanted"),
+  );
   const mktBanner = el("div", { class: "mkt-banner" },
     el("div", { class: "mkt-banner-side" },
       el("div", { class: "mkt-banner-icon" }, "🛒"),
@@ -931,8 +943,9 @@ function renderMarketList() {
     el("div", { class: "mkt-banner-btns" },
       el("button", { class: "btn primary sm", type: "button", onclick: () => {
         state.filter = "available"; $("filter").value = "available"; render();
-      }}, "🛍 Buy an item"),
-      el("button", { class: "btn sell sm", type: "button", onclick: openAsk }, "📦 Sell an item"),
+      }}, "🛍 Buy"),
+      el("button", { class: "btn sell sm", type: "button", onclick: openAsk }, "📦 Sell"),
+      sortSel,
     )
   );
   if (!rows.length) {
@@ -1142,6 +1155,11 @@ function renderMarketView() {
     }}, "↩ Mark as Available"),
     own && el("button", { class: "btn", type: "button", onclick: () => { state.mode = "edit"; render(); }}, "✏️ Edit"),
     own && el("button", { class: "btn danger", type: "button", onclick: (e) => confirmDelete(e.currentTarget, async () => { await softDelete("market", d.id); state.selected = null; state.mode = "intro"; render(); })}, "🗑 Delete"),
+    el("button", { class: "btn", type: "button", onclick: () => {
+      const url = location.origin + location.pathname + "#market/" + d.id;
+      if (navigator.share) navigator.share({ title: d.title, text: "Check this listing on RGUKT Spark: " + d.title + (d.price ? " — ₹" + d.price : ""), url });
+      else { navigator.clipboard && navigator.clipboard.writeText(url); showNotice("Link copied!", "ok"); }
+    }}, "🔗 Share"),
     el("button", { class: "btn", type: "button", onclick: () => { state.selected = null; state.mode = "intro"; render(); }}, "← Back")
   ].filter(Boolean);
 
@@ -3359,6 +3377,7 @@ function renderCampusPicker() {
 
 function render() {
   renderHeader(); renderTrendBar(); renderRail(); renderList(); renderBottomNav();
+  const fab = $('fabAsk'); if (fab) fab.textContent = state.tab === "market" ? "📦" : "+";
   // Forms keep what the student is typing while live updates arrive.
   const key = ["ask", "edit", "name"].includes(state.mode) ? state.mode + state.tab : "";
   if (key && key === sheetKey) return;
