@@ -119,20 +119,33 @@ function getName() { try { return localStorage.getItem("dd-name") || ""; } catch
 function setName(v) { try { localStorage.setItem("dd-name", v); } catch (_) {} }
 // Avatar icons for profile display
 const AVATARS = [
-  "🧑‍💻","👨‍🎓","👩‍🎓","🧑‍🏫","👨‍🔬","👩‍🔬","🧑‍🚀","👨‍💼","👩‍💼","🧑‍🎨",
-  "🦊","🐯","🦁","🐼","🐸","🦋","🦅","🐬","🦊","🌟",
-  "⚡","🎯","🔥","🌙","🎮","🎵","📐","🏆","💡","🚀"
+  // Characters & students
+  "🧑‍💻","👨‍🎓","👩‍🎓","🧑‍🔬","👩‍🔬","🧑‍🚀","🦸","🧙","🥷","🧑‍🎨",
+  // Animals
+  "🦊","🐯","🦁","🐼","🦅","🐬","🦋","🐺","🦉","🐉",
+  // Icons
+  "⚡","🎯","🔥","🌙","🚀","💫","💎","🏆","🌊","❄️"
 ];
+// DiceBear 3D portrait seeds shown in the avatar picker
+const DB_SEEDS = ["apex","cipher","echo","flash","ghost","hawk","jade","luna","nova","orbit","pixel","vega","storm","blaze","frost","zion"];
+const dbUrl = (seed) => "https://api.dicebear.com/9.x/notionists/svg?seed=" + encodeURIComponent(seed) + "&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf&backgroundType=gradientLinear";
 function getAvatar() { try { return localStorage.getItem("dd-avatar") || AVATARS[0]; } catch (_) { return AVATARS[0]; } }
 function setAvatar(v) { try { localStorage.setItem("dd-avatar", v); } catch (_) {} }
-// Avatar for any user by their initials-based index (consistent per name)
+// Avatar for any user by name — returns DiceBear URL for a consistent illustrated portrait
 function avatarFor(name) {
   if (!name || name === ANON) return "👤";
-  let h = 0; for (const ch of name) h = (h * 31 + ch.codePointAt(0)) % AVATARS.length;
-  return AVATARS[h];
+  return dbUrl(name);
 }
-// Render a small avatar circle element
-function avatarEl(icon, cls = "av") { return el("span", { class: cls, "aria-hidden": "true" }, icon); }
+// Render a small avatar circle element; accepts emoji string or a URL (renders <img>)
+function avatarEl(icon, cls = "av") {
+  if (icon && (icon.startsWith("http") || icon.startsWith("data:"))) {
+    const img = document.createElement("img");
+    img.className = cls + " av-img";
+    img.src = icon; img.alt = "avatar"; img.loading = "lazy";
+    return img;
+  }
+  return el("span", { class: cls, "aria-hidden": "true" }, icon);
+}
 
 const mine = (x) => {
   if (!x || !store) return false;
@@ -1153,21 +1166,37 @@ function renderHeatmap(p) {
 function renderMe() {
   const p = (store && allStats().get(store.uid)) || { name: getName(), points: 0, answers: 0, helpful: 0, ideas: 0, quizRight: 0, streak: 0, reacts: 0, likes: 0, asked: 0, quizDone: 0, level: levelOf(0) };
   const lv = p.level, pct = Math.round((p.points - lv.from) * 100 / (lv.to - lv.from));
-  // Avatar picker row
-  const avatarPicker = el("div", { class: "avatar-picker" },
+  // Avatar picker — 3D portraits + emoji
+  const cur = getAvatar();
+  const dbPicker = el("div", { class: "avatar-picker" },
+    DB_SEEDS.map(seed => {
+      const url = dbUrl(seed);
+      const btn = document.createElement("button");
+      btn.type = "button"; btn.className = "av-opt av-opt-img" + (cur === url ? " selected" : "");
+      btn.title = seed;
+      const img = document.createElement("img");
+      img.src = url; img.alt = seed; img.loading = "lazy"; img.width = 32; img.height = 32;
+      btn.appendChild(img);
+      btn.addEventListener("click", () => { setAvatar(url); render(); });
+      return btn;
+    })
+  );
+  const emojiPicker = el("div", { class: "avatar-picker" },
     AVATARS.map(icon => {
-      const btn = el("button", { type: "button", class: "av-opt" + (getAvatar() === icon ? " selected" : ""), title: icon }, icon);
+      const btn = el("button", { type: "button", class: "av-opt" + (cur === icon ? " selected" : ""), title: icon }, icon);
       btn.addEventListener("click", () => { setAvatar(icon); render(); });
       return btn;
     }));
   return [
     el("div", { class: "profile-hero" },
-      avatarEl(getAvatar(), "av av-hero"),
+      avatarEl(cur, "av av-hero"),
       el("div", {},
         el("h2", {}, (getName() || "You") + " · Level " + lv.n),
         el("p", { class: "hint" }, titleOf(p.points) + " · " + plural(p.points, "point")))),
-    el("p", { class: "hint" }, "Your icon:"),
-    avatarPicker,
+    el("p", { class: "hint" }, "🎨 3D Portraits:"),
+    dbPicker,
+    el("p", { class: "hint" }, "Emoji icons:"),
+    emojiPicker,
     el("div", { class: "xp", role: "progressbar", "aria-valuemin": "0", "aria-valuemax": "100", "aria-valuenow": String(pct), "aria-label": "Progress to next level" }, el("span", { style: "width:" + pct + "%" })),
     el("p", { class: "hint" }, (lv.to - p.points) + (lv.to - p.points === 1 ? " more point" : " more points") + " to reach level " + (lv.n + 1) + "."),
     el("div", { class: "stats" },
