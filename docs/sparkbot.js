@@ -557,17 +557,10 @@ function addMsg(role, text, instant=false) {
   d.className=`sb-msg sb-${role}`; d.style.setProperty('--n',msgCount++);
   if (role==='bot') {
     const cid=`sbc-${Date.now()}-${msgCount}`;
-    const reactionBtns = REACTIONS.map((r,i)=>
-      `<button class="sb-react" style="background:rgba(109,40,217,.22);border:1px solid rgba(167,139,250,.3);border-radius:12px;padding:2px 7px;cursor:pointer;font-size:12px;line-height:1.4;color:#c4b5fd;font-family:inherit;" type="button" title="${r}" onclick="this.classList.toggle('sb-react-on');this.textContent=this.classList.contains('sb-react-on')?'${r}✓':'${r}';">${r}</button>`
-    ).join('');
     d.innerHTML=`<div class="sb-av">${orb(26)}</div>
       <div class="sb-bub sb-bub-bot">
         <span class="sb-bub-shine"></span>
         <div class="sb-bub-txt" id="${cid}">${md(text)}</div>
-        <div class="sb-bub-actions" style="display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap;margin-top:8px;">
-          <div class="sb-reactions" style="display:flex;gap:4px;flex-wrap:wrap;">${reactionBtns}</div>
-          <button class="sb-copy" style="background:rgba(109,40,217,.22);border:1px solid rgba(167,139,250,.3);color:#c4b5fd;border-radius:10px;cursor:pointer;font-size:11px;padding:2px 9px;white-space:nowrap;line-height:1.4;font-family:inherit;" type="button" title="Copy answer" onclick="(function(el,btn){const t=el.innerText||el.textContent;navigator.clipboard?.writeText(t).then(()=>{btn.textContent='✅ Copied!';setTimeout(()=>btn.textContent='⎘ Copy',1500);}).catch(()=>{});return false;})(document.getElementById('${cid}'),this)">⎘ Copy</button>
-        </div>
       </div>`;
   } else {
     d.innerHTML=`<div class="sb-bub sb-bub-usr"><div class="sb-bub-txt">${esc(text)}</div></div>`;
@@ -723,14 +716,6 @@ function injectCSS() {
 .sb-code{background:rgba(15,10,40,.7);border:1px solid rgba(196,181,253,.2);border-radius:8px;padding:8px 10px;font-size:11.5px;font-family:'JetBrains Mono',monospace;color:#c4b5fd;overflow-x:auto;margin:4px 0;white-space:pre;}
 .sb-inline{background:rgba(109,40,217,.3);border:1px solid rgba(167,139,250,.35);border-radius:4px;padding:1px 5px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#c4b5fd;}
 
-/* Actions row under bot bubble */
-.sb-bub-actions{display:flex;align-items:center;justify-content:space-between;padding:0 2px 6px;gap:6px;margin-top:-18px;}
-.sb-reactions{display:flex;gap:3px;flex-wrap:wrap;}
-.sb-react{background:rgba(109,40,217,.18);border:1px solid rgba(167,139,250,.25);border-radius:12px;padding:2px 6px;cursor:pointer;font-size:12px;transition:all .15s;color:rgba(196,181,253,.7);}
-.sb-react:hover{background:rgba(109,40,217,.4);border-color:rgba(196,181,253,.5);transform:scale(1.2);}
-.sb-react.sb-react-on{background:rgba(109,40,217,.55);border-color:#c4b5fd;color:#fff;transform:scale(1.1);}
-.sb-copy{background:rgba(109,40,217,.2);border:1px solid rgba(167,139,250,.28);color:rgba(196,181,253,.75);border-radius:8px;cursor:pointer;font-size:10.5px;padding:2px 7px;white-space:nowrap;transition:all .15s;}
-.sb-copy:hover{background:rgba(109,40,217,.45);color:#e9d5ff;}
 
 /* Typing dots */
 .sb-think-row{display:flex;align-items:center;gap:8px;padding:6px 4px;}
