@@ -1340,10 +1340,11 @@ div.chal-opt.wrong b { background: #ef4444; color: #fff; }
 .gate-res-grid-2 { grid-template-columns: repeat(2,1fr); }
 @media (max-width: 420px) { .gate-res-grid { grid-template-columns: repeat(2,1fr); } }
 .gate-res-chip {
-  display: flex; align-items: center; gap: 8px;
+  display: flex; align-items: center; gap: 8px; width: 100%;
   background: var(--sheet); border: 1px solid var(--line); border-radius: 12px;
   padding: 10px 10px; text-decoration: none; color: inherit; cursor: pointer;
   transition: border-color .15s, background .15s; text-align: left;
+  appearance: none; -webkit-appearance: none; font: inherit; box-sizing: border-box;
 }
 .gate-res-chip:hover { border-color: #6366f1; background: var(--accent-soft); }
 .gate-res-emoji { font-size: 22px; flex-shrink: 0; }
