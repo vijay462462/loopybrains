@@ -194,7 +194,7 @@
           ...[["Decimal", v.toString()], ["Binary", group4(toBase(v, 2))], ["Octal", toBase(v, 8)], ["Hexadecimal", toBase(v, 16)], ["Base 32", toBase(v, 32)], ["Base 36", toBase(v, 36)]].map(([k, x]) => h("div", { class: "tl-trow" }, h("span", {}, k), h("strong", {}, x))),
           h("div", { class: "tl-trow" }, h("span", {}, "Two's complement (" + w + "-bit)"), h("strong", {}, group4(twos(v, w)))),
           h("div", { class: "tl-trow" }, h("span", {}, "Gray code"), h("strong", {}, group4(toBase(v >= 0n ? v ^ (v >> 1n) : 0n, 2)))),
-          v >= 32n && v < 127n ? h("div", { class: "tl-trow" }, h("span", {}, "ASCII character"), h("strong", {}, String.fromCharCode(Number(v)))) : null);
+          ...(v >= 32n && v < 127n ? [h("div", { class: "tl-trow" }, h("span", {}, "ASCII character"), h("strong", {}, String.fromCharCode(Number(v))))] : []));
       } catch (e) { out.replaceChildren(h("small", {}, e.message)); }
     };
     const bitop = () => {

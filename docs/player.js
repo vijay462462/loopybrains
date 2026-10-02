@@ -31,6 +31,7 @@
       if (v == null || v === false) continue;
       if (k === "class") n.className = v;
       else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
+      else if (k === "style" && typeof v === "string") { for (const d of v.split(";")) { const i = d.indexOf(":"); if (i > 0) n.style.setProperty(d.slice(0, i).trim(), d.slice(i + 1).trim()); } }
       else if (k === "value") n.value = v;
       else if (k === "checked") n.checked = !!v;
       else if (k === "disabled") n.disabled = !!v;

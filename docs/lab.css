@@ -33,3 +33,33 @@
     background: linear-gradient(135deg, rgb(255 255 255 / .3), rgb(255 255 255 / .12)); border-color: #fff; }
   .hdr-actions .chip.tool#labBtn .ci { font-size: 20px; }
 }
+
+/* power tools */
+.tl-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 8px; }
+.tl-tile { display: grid; gap: 2px; text-align: left; padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: color-mix(in oklab, var(--ta) 6%, var(--sheet)); color: inherit; cursor: pointer; }
+.tl-tile:active { background: color-mix(in oklab, var(--ta) 18%, var(--sheet)); }
+.tl-ic { font-size: 1.6rem; }
+.tl-tile small { color: var(--muted); }
+.tl-expr { width: 100%; font: 600 1.15rem var(--f-mono); }
+.tl-preview { min-height: 1.6em; font: 800 1.3rem var(--f-mono); color: var(--ta); overflow-wrap: anywhere; }
+.tl-preview.err { color: #dc2626; font-size: .9rem; }
+.tl-keys { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+.tl-key { padding: 12px 0; border-radius: 10px; border: 1px solid var(--line); background: var(--sheet); color: var(--ink); font-weight: 800; cursor: pointer; }
+.tl-key.op { background: color-mix(in oklab, var(--ta) 16%, var(--sheet)); }
+.tl-key:active { background: color-mix(in oklab, var(--ta) 30%, var(--sheet)); }
+.tl-hist { display: grid; gap: 4px; }
+.tl-h { text-align: left; border: 0; background: transparent; color: var(--muted); font: 500 12px var(--f-mono); cursor: pointer; padding: 3px 0; }
+.tl-canvas { width: 100%; height: auto; border-radius: 12px; background: var(--sheet); border: 1px solid var(--line); touch-action: none; }
+.tl-fnrow { display: flex; align-items: center; gap: 8px; }
+.tl-fn { flex: 1; font: 600 1rem var(--f-mono); }
+.tl-trow { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 5px 0; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+.tl-trow span { color: var(--muted); font-size: 13px; }
+.tl-trow strong { font-family: var(--f-mono); text-align: right; }
+.tl-table { display: grid; }
+.tl-mat { display: grid; gap: 4px; }
+.tl-mat input { width: 100%; min-width: 0; padding: 6px 4px; text-align: center; }
+.tl-mat.out span { text-align: center; font: 600 .95rem var(--f-mono); padding: 6px 2px; background: var(--sheet); border-radius: 8px; overflow-wrap: anywhere; }
+.tl-float { display: grid; gap: 4px; margin-bottom: 6px; }
+.tl-bits { font: 700 .9rem var(--f-mono); overflow-wrap: anywhere; letter-spacing: .04em; }
+.tl-bits .s { color: #dc2626; } .tl-bits .e { color: #2563eb; } .tl-bits .m { color: #16a34a; }
+.lab-card input[type=text], .lab-card input[type=number], .lab-card select, .lab-card textarea { min-width: 0; max-width: 100%; }

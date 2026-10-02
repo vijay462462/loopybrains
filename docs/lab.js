@@ -9,6 +9,7 @@
       if (v == null || v === false) continue;
       if (k === "class") n.className = v;
       else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
+      else if (k === "style" && typeof v === "string") { for (const d of v.split(";")) { const i = d.indexOf(":"); if (i > 0) n.style.setProperty(d.slice(0, i).trim(), d.slice(i + 1).trim()); } }
       else if (k === "value") n.value = v;
       else if (k === "checked") n.checked = !!v;
       else if (k === "disabled") n.disabled = !!v;
@@ -269,16 +270,38 @@
   }
 
   // =====================================================================
+  //  POWER TOOLS launcher (tools are registered by tools-*.js)
+  // =====================================================================
+  function toolsView() {
+    const list = (window.SparkTools || []).filter((t) => t && typeof t.mount === "function");
+    let open = load("tool-open", "");
+    const wrap = h("div", { class: "lab-body" });
+    const draw = () => {
+      const t = list.find((x) => x.id === open);
+      if (t) {
+        save("tool-open", open);
+        let node; try { node = t.mount(); } catch (e) { node = h("p", { class: "lab-hint" }, "This tool could not load: " + e.message); }
+        wrap.replaceChildren(h("div", { class: "lab-row" }, h("button", { type: "button", class: "btn sm", onclick: () => { open = ""; save("tool-open", ""); draw(); } }, "← All tools"), h("strong", {}, t.icon + " " + t.name)), node);
+      } else {
+        wrap.replaceChildren(h("p", { class: "lab-hint" }, "Advanced tools for engineering students. They work offline and keep your data only on this phone."),
+          h("div", { class: "tl-grid" }, list.map((x) => h("button", { type: "button", class: "tl-tile", onclick: () => { open = x.id; draw(); } }, h("span", { class: "tl-ic" }, x.icon), h("strong", {}, x.name), h("small", {}, x.desc)))));
+      }
+    };
+    draw();
+    return wrap;
+  }
+
+  // =====================================================================
   //  PANEL
   // =====================================================================
   function mount() {
-    const tabs = [["focus", "🍅 Focus"], ["cards", "🃏 Flashcards"], ["cgpa", "🎓 CGPA"], ["att", "📅 Attendance"]];
+    const tabs = [["focus", "🍅 Focus"], ["cards", "🃏 Flashcards"], ["tools", "🛠️ Power Tools"], ["cgpa", "🎓 CGPA"], ["att", "📅 Attendance"]];
     let view = load("view", "focus");
     const body = h("div", { class: "lab-body" }), bar = h("div", { class: "lab-row" });
     const draw = () => {
       save("view", view);
       bar.replaceChildren(...tabs.map(([id, label]) => h("button", { type: "button", class: "btn sm" + (view === id ? " primary" : ""), onclick: () => { view = id; draw(); } }, label)));
-      body.replaceChildren(view === "focus" ? focusView() : view === "cards" ? flashView() : view === "cgpa" ? cgpaView() : attendanceView());
+      body.replaceChildren(view === "focus" ? focusView() : view === "cards" ? flashView() : view === "tools" ? toolsView() : view === "cgpa" ? cgpaView() : attendanceView());
     };
     draw();
     queueMicrotask(drawFocus);
