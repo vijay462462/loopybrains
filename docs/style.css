@@ -1295,6 +1295,24 @@ div.chal-opt.wrong b { background: #ef4444; color: #fff; }
 .mkt-report-form { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-top: 8px; display: flex; flex-direction: column; gap: 10px; }
 .mkt-reported { color: #10b981; margin-top: 6px; }
 
+/* ============================================================
+   GATE badges (PYQ / Marks / Difficulty)
+   ============================================================ */
+.gate-badge {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 2px 7px; border-radius: 10px; font-size: 11px; font-weight: 700;
+  white-space: nowrap;
+}
+.gate-badge.pyq { background: linear-gradient(90deg,#f59e0b,#fbbf24); color: #1a1a1a; }
+.gate-badge.marks { background: #6366f1; color: #fff; }
+.gate-badge.diff-easy   { background: #10b981; color: #fff; }
+.gate-badge.diff-medium { background: #f59e0b; color: #fff; }
+.gate-badge.diff-hard   { background: #ef4444; color: #fff; }
+
+/* GATE post form: PYQ/Marks/Difficulty row */
+.gate-fields { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+@media (max-width: 520px) { .gate-fields { grid-template-columns: 1fr; } }
+
 @media (max-width: 500px) {
   .mkt-grid { grid-template-columns: 1fr; }
 }

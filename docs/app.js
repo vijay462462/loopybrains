@@ -807,7 +807,7 @@ function renderHeader() {
   const opts = state.tab === "doubts"
     ? [["all","Newest"],["asked","Most asked"],["open","Unanswered"],["mine","My posts"],["mentor","Needs mentor"],["done","Resolved"],["bounty","🎁 Bounty"]]
     : state.tab === "gate"
-    ? [["all","Newest"],["mine","My posts"]]
+    ? [["all","Newest"],["mine","My posts"],["pyq","⭐ PYQ Only"],["1m","1️⃣ 1 Mark"],["2m","2️⃣ 2 Marks"],["easy","🟢 Easy"],["medium","🟡 Medium"],["hard","🔴 Hard"]]
     : state.tab === "market"
     ? [["all","All listings"],["available","Available"],["sold","Sold"],["mine","My listings"]]
     : [["all", "Newest"], ["top", "Most liked"]];
@@ -858,6 +858,12 @@ function visible() {
   if (state.tab === "doubts" && state.filter === "mentor") rows = rows.filter(needsMentor);
   if (state.tab === "doubts" && state.filter === "bounty") rows = rows.filter(d => d.bounty && !d.resolvedReplyId);
   if ((state.tab === "doubts" || state.tab === "gate") && state.filter === "mine") rows = rows.filter(d => store && d.authorId === store.uid);
+  if (state.tab === "gate" && state.filter === "pyq") rows = rows.filter(d => !!d.pyqYear);
+  if (state.tab === "gate" && state.filter === "1m") rows = rows.filter(d => d.marks === "1M");
+  if (state.tab === "gate" && state.filter === "2m") rows = rows.filter(d => d.marks === "2M");
+  if (state.tab === "gate" && state.filter === "easy") rows = rows.filter(d => d.difficulty === "Easy");
+  if (state.tab === "gate" && state.filter === "medium") rows = rows.filter(d => d.difficulty === "Medium");
+  if (state.tab === "gate" && state.filter === "hard") rows = rows.filter(d => d.difficulty === "Hard");
   rows.sort((a, b) => b.createdAt - a.createdAt);
   if (state.filter === "top" || state.filter === "asked") rows.sort((a, b) => likesFor(b.id).length - likesFor(a.id).length);
   else if (state.tab === "doubts") rows.sort((a, b) => (isUrgent(b) - isUrgent(a)) || (b.bounty ? 1 : 0) - (a.bounty ? 1 : 0) || (b.createdAt - a.createdAt));
@@ -1286,6 +1292,11 @@ function renderList() {
       if (d.urgent && !d.resolvedReplyId) meta.unshift(el("span", { class: "pill urgent" }, "🔥 Urgent"));
       if (d.bounty && !d.resolvedReplyId) meta.push(el("span", { class: "pill bounty" }, "🎁 Bounty"));
       if (votes) meta.push(el("span", { class: "likes" }, "🙋 " + votes));
+    } else if (state.tab === "gate") {
+      if (d.pyqYear) meta.push(el("span", { class: "gate-badge pyq" }, "⭐ " + d.pyqYear));
+      if (d.marks) meta.push(el("span", { class: "gate-badge marks" }, d.marks));
+      if (d.difficulty) meta.push(el("span", { class: "gate-badge diff-" + d.difficulty.toLowerCase() }, d.difficulty));
+      if (votes) meta.push(el("span", { class: "likes" }, "♥ " + votes));
     } else meta.push(el("span", { class: "likes" }, "♥ " + votes));
     if (d.year) meta.push(el("span", { class: "pill year-pill" }, d.year));
     if (d.campus && CAMPUSES.length > 0) meta.push(el("span", { class: "campus-badge", style: "--cc:" + campusColor(d.campus) }, d.campus));
@@ -3032,9 +3043,15 @@ function renderAsk(existing) {
       const pageIds = newPages.map(u => { const pid = store.newId("pages"); pageCache.set(pid, u); return pid; });
       const yearVal = form.elements.year ? form.elements.year.value : "";
       const tagsVal = form.elements.tags ? form.elements.tags.value.trim().slice(0, 100) : "";
+      const pyqYear = form.elements.pyqYear ? form.elements.pyqYear.value : "";
+      const marks = form.elements.marks ? form.elements.marks.value : "";
+      const difficulty = form.elements.difficulty ? form.elements.difficulty.value : "";
       const doc = { title: title.slice(0, 200), body: body.slice(0, 5000), [t.field]: group, authorId: store.uid, authorName: anonymous ? ANON : getName(), anonymous, urgent, createdAt: Date.now(), pages: pageIds, fileAttachments: readyFiles };
       if (yearVal) doc.year = yearVal;
       if (tagsVal) doc.tags = tagsVal;
+      if (pyqYear) doc.pyqYear = pyqYear;
+      if (marks) doc.marks = marks;
+      if (difficulty) doc.difficulty = difficulty;
       if (state.tab === "doubts") { doc.resolvedReplyId = null; doc.bounty = bounty; }
       if (state.tab === "challenges") {
         doc.chalType = form.elements.chalType ? form.elements.chalType.value : "Quiz";
@@ -3071,6 +3088,26 @@ function renderAsk(existing) {
         )
       ),
       el("label", {}, "Tags (optional)", el("input", { id: "f-tags", name: "tags", maxlength: "100", placeholder: "e.g. mid-1, unit-2, tricky" }))),
+    state.tab === "gate" && el("div", { class: "gate-fields" },
+      el("label", {}, "PYQ Year",
+        el("select", { name: "pyqYear" },
+          ["Not PYQ", "GATE 2025", "GATE 2024", "GATE 2023", "GATE 2022", "GATE 2021", "GATE 2020", "GATE 2019", "GATE 2018", "GATE 2017"].map(y =>
+            el("option", { value: y === "Not PYQ" ? "" : y, selected: !!(existing && existing.pyqYear === y) }, y))
+        )
+      ),
+      el("label", {}, "Marks",
+        el("select", { name: "marks" },
+          [["", "Not specified"], ["1M", "1 Mark"], ["2M", "2 Marks"]].map(([v, l]) =>
+            el("option", { value: v, selected: !!(existing && existing.marks === v) }, l))
+        )
+      ),
+      el("label", {}, "Difficulty",
+        el("select", { name: "difficulty" },
+          [["", "Not specified"], ["Easy", "🟢 Easy"], ["Medium", "🟡 Medium"], ["Hard", "🔴 Hard"]].map(([v, l]) =>
+            el("option", { value: v, selected: !!(existing && existing.difficulty === v) }, l))
+        )
+      ),
+    ),
     el("label", {}, "Details", el("textarea", { id: "f-body", name: "body", maxlength: "5000", placeholder: t.bodyHint })),
     existing && existing.pages && existing.pages.length ? el("p", { class: "hint" }, "This post already has " + existing.pages.length + " page(s). You can add up to " + Math.max(0, MAX_PAGES - existing.pages.length) + " more.") : null,
     attachPicker(newPages, existing ? MAX_PAGES - ((existing.pages || []).length) : MAX_PAGES),
