@@ -708,6 +708,7 @@ h1 span {
 .dept-tabs {
   display: flex; gap: 4px; flex-wrap: wrap; padding: 4px 0 8px;
   border-bottom: 1px solid var(--line); margin-bottom: 8px;
+  width: 100%; align-self: flex-start;
 }
 .dept-tab {
   padding: 3px 10px; border-radius: 14px; font-size: 12px; font-weight: 700;
