@@ -951,7 +951,7 @@ function renderRail() {
   const subjGrid = visibleSubjects.length > 0 ? el("div", { class: "subj-grid" },
     ...visibleSubjects.map(s => el("button", {
       type: "button", class: "subj-chip" + (state.group === s ? " active" : ""), ...colorAttrs(s),
-      onclick: () => { state.group = state.group === s ? "All" : s; render(); },
+      onclick: () => { state.group = state.group === s ? "All" : s; render(); if (innerWidth <= 1000 && state.group !== "All") setTimeout(() => { const l = $("list"); if (l) l.scrollIntoView({ behavior: "smooth", block: "start" }); }, 60); },
     }, el("span", {}, s), el("span", { class: "n" }, counts[s] || 0)))
   ) : null;
   $("rail").replaceChildren(...[deptTabs, subjGrid].filter(Boolean));
@@ -1378,7 +1378,45 @@ function renderMarketAsk(existing) {
 }
 // ===================== END CAMPUS MARKET =====================
 
+const HUB_RES = {
+  "Mini Project": [["GitHub Trending", "https://github.com/trending"], ["Project-based learning ideas", "https://github.com/practical-tutorials/project-based-learning"], ["DevPost projects", "https://devpost.com/software"]],
+  "Major Project": [["Smart India Hackathon", "https://www.sih.gov.in"], ["Kaggle", "https://www.kaggle.com/competitions"], ["IEEE Xplore", "https://ieeexplore.ieee.org"], ["GitHub Trending", "https://github.com/trending"]],
+  "Startup": [["Startup India", "https://www.startupindia.gov.in"], ["Atal Innovation Mission", "https://aim.gov.in"], ["Startup School (free)", "https://www.startupschool.org"]],
+  "Research": [["arXiv", "https://arxiv.org"], ["Google Scholar", "https://scholar.google.com"], ["IEEE Xplore", "https://ieeexplore.ieee.org"], ["Summer research fellowships", "https://www.ias.ac.in"]],
+  "Social impact": [["Smart India Hackathon", "https://www.sih.gov.in"], ["Startup India", "https://www.startupindia.gov.in"], ["IndiaAI", "https://indiaai.gov.in"]],
+  "Coding Club": [["CSES Problem Set", "https://cses.fi/problemset/"], ["Codeforces", "https://codeforces.com"], ["freeCodeCamp", "https://www.freecodecamp.org"]],
+  "Computer Science": [["roadmap.sh", "https://roadmap.sh"], ["CS50", "https://cs50.harvard.edu/x/"], ["GeeksforGeeks", "https://www.geeksforgeeks.org"]],
+  "AI/ML": [["Kaggle Learn", "https://www.kaggle.com/learn"], ["Hugging Face", "https://huggingface.co/learn"], ["fast.ai", "https://www.fast.ai"]],
+  "Robotics": [["Instructables Robots", "https://www.instructables.com/robots/"], ["ROS docs", "https://docs.ros.org"], ["Smart India Hackathon", "https://www.sih.gov.in"]],
+  "Electronics": [["Falstad Circuit Simulator", "https://www.falstad.com/circuit/"], ["All About Circuits", "https://www.allaboutcircuits.com"], ["Instructables Circuits", "https://www.instructables.com/circuits/"]],
+  "Civil Designers": [["NPTEL Civil", "https://nptel.ac.in"], ["QGIS (free GIS)", "https://qgis.org"], ["Engineering Toolbox", "https://www.engineeringtoolbox.com"]],
+  "Mech Makers": [["FreeCAD", "https://www.freecad.org"], ["Instructables", "https://www.instructables.com"], ["SAE India", "https://www.saeindia.org"]],
+  "Startup Cell": [["Startup India", "https://www.startupindia.gov.in"], ["Atal Innovation Mission", "https://aim.gov.in"]],
+  "Research Society": [["arXiv", "https://arxiv.org"], ["Google Scholar", "https://scholar.google.com"], ["IEEE Xplore", "https://ieeexplore.ieee.org"]],
+  "Innovation": [["Smart India Hackathon", "https://www.sih.gov.in"], ["DevPost", "https://devpost.com"]],
+  "Quiz": [["Kaggle Learn", "https://www.kaggle.com/learn"], ["GeeksforGeeks quizzes", "https://www.geeksforgeeks.org/quizzes/"]],
+  "Puzzle": [["CSES Problem Set", "https://cses.fi/problemset/"], ["Codeforces", "https://codeforces.com"]],
+};
+function otherHub(count) {
+  const t = TABS[state.tab], g = state.group;
+  const askLabel = ({ ideas: "💡 Share a " + g + " idea", clubs: "📝 Post in " + g, challenges: "🎮 Post a " + g + " challenge" })[state.tab] || "➕ " + t.ask;
+  const res = HUB_RES[g] || [["Smart India Hackathon", "https://www.sih.gov.in"], ["Startup India", "https://www.startupindia.gov.in"]];
+  const acts = [
+    el("button", { class: "btn primary sm", type: "button", onclick: openAsk }, askLabel),
+    ...res.map(([label, url]) => outLink(url, label, "linkbtn")),
+    state.tab === "clubs" && g === "Alumni" && el("button", { class: "btn sm", type: "button", onclick: () => { alumniView = "dir"; showPanel("alumni"); } }, "🎓 Open Alumni Connect"),
+  ].filter(Boolean);
+  const noun = state.tab === "ideas" ? "ideas" : state.tab === "clubs" ? "posts" : "challenges";
+  return el("div", { class: "learn-card", ...colorAttrs(g) },
+    el("strong", {}, "📌 " + g),
+    el("p", { class: "hint" }, count
+      ? count + " " + (count === 1 ? noun.replace(/s$/, "") : noun) + " here. Tap one to read it and reply, or add your own."
+      : "No " + noun + " in " + g + " yet. Be the first! Tap the button below to post, or get inspired with the free links."),
+    el("div", { class: "rowbtns" }, acts),
+    el("p", { class: "hint" }, "What next? ① Share yours  ② Like and reply to others  ③ Team up and build it together 🚀"));
+}
 function subjectHub(count) {
+  if (["ideas", "clubs", "challenges"].includes(state.tab) && state.group !== "All") return otherHub(count);
   if (!(state.tab === "doubts" || state.tab === "gate") || state.group === "All") return null;
   const g = state.group;
   const toSheet = () => { render(); if (innerWidth <= 1000) $("sheet").scrollIntoView({ behavior: "smooth" }); };
