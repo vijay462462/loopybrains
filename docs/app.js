@@ -2211,6 +2211,201 @@ function alumniForm(kind) {
     form];
 }
 
+// ---------- entertainment: small games, riddles, fun facts and free links ----------
+const FUN_RIDDLES = [
+  ["I have keys but open no locks, and space but no room. What am I?", "A keyboard."],
+  ["What has a head and a tail but no body?", "A coin."],
+  ["What gets wetter the more it dries?", "A towel."],
+  ["I speak without a mouth and hear without ears. What am I?", "An echo."],
+  ["What has hands but cannot clap?", "A clock."],
+  ["What comes once in a minute, twice in a moment, but never in a thousand years?", "The letter M."],
+  ["What is full of holes but still holds water?", "A sponge."],
+  ["What has a bug but is not an insect?", "A computer program."],
+  ["In binary, what is 1 + 1?", "10."],
+  ["How many bits are in a byte?", "Eight."],
+  ["Which loop never ends and can freeze your program?", "An infinite loop."],
+  ["What can you catch but never throw?", "A cold."],
+  ["Which month has 28 days?", "All of them."],
+  ["How many times can you subtract 5 from 25?", "Once. After that, it is 20."],
+  ["A father has 4 daughters and each daughter has one brother. How many children does he have?", "Five."],
+  ["What is always coming but never arrives?", "Tomorrow."],
+  ["What 5-letter word becomes shorter when you add two letters to it?", "Short."],
+  ["What has to be broken before you can use it?", "An egg."],
+  ["What travels around the world but stays in one corner?", "A stamp."],
+  ["What word is spelled wrong in every dictionary?", "“Wrong.”"],
+];
+const FUN_FACTS = [
+  "The first computer “bug” was a real moth found stuck in a Harvard Mark II relay in 1947.",
+  "India's Chandrayaan-3 landed near the Moon's south pole in August 2023.",
+  "The number zero as we use it today was developed in ancient India.",
+  "ISRO's Mars Orbiter Mission reached Mars orbit on its very first attempt in 2014.",
+  "The first email was sent in 1971 by Ray Tomlinson.",
+  "The word “robot” comes from the Czech word “robota”, meaning forced labour.",
+  "Python is named after the comedy group Monty Python, not the snake.",
+  "Honey almost never spoils. Edible honey has been found in ancient Egyptian tombs.",
+  "Octopuses have three hearts.",
+  "The QWERTY keyboard layout was designed to reduce typewriter jams.",
+  "A single bolt of lightning can be several times hotter than the surface of the Sun.",
+  "The first 1 GB hard drive, made in 1980, weighed about 250 kg.",
+];
+const FUN_SENTENCES = [
+  "Practice makes a programmer perfect.",
+  "Every great engineer started as a curious student.",
+  "Debugging is like being a detective in a crime you committed.",
+  "Small steps every day build big results.",
+  "Ask boldly, answer together, innovate endlessly.",
+];
+const FUN_LINKS = [
+  ["♟️ Chess (free)", "https://lichess.org"],
+  ["🧮 Project Euler puzzles", "https://projecteuler.net"],
+  ["🎄 Advent of Code", "https://adventofcode.com"],
+  ["📖 Free books: Project Gutenberg", "https://www.gutenberg.org"],
+  ["📚 Standard Ebooks", "https://standardebooks.org"],
+  ["🌌 NASA picture of the day", "https://apod.nasa.gov/apod/astropix.html"],
+  ["🎬 Internet Archive (films, music, books)", "https://archive.org"],
+  ["🎵 Free Music Archive", "https://freemusicarchive.org"],
+  ["▶ Veritasium", "https://www.youtube.com/@veritasium"],
+  ["▶ 3Blue1Brown", "https://www.youtube.com/@3blue1brown"],
+  ["▶ Kurzgesagt", "https://www.youtube.com/@kurzgesagt"],
+  ["▶ TED-Ed", "https://www.youtube.com/@TEDEd"],
+  ["▶ Numberphile", "https://www.youtube.com/@numberphile"],
+];
+const funShuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const funBest = (k, v) => { try { const o = JSON.parse(localStorage.getItem("dd-fun-best") || "{}"); if (v === undefined) return o[k]; o[k] = v; localStorage.setItem("dd-fun-best", JSON.stringify(o)); } catch (_) {} return undefined; };
+
+const yt = (q) => "https://www.youtube.com/results?search_query=" + encodeURIComponent(q);
+const FUN_SONGS = [
+  ["🎤 Telugu hits", yt("latest telugu hit songs official")],
+  ["🎶 Telugu melodies", yt("telugu melody songs jukebox")],
+  ["🕰️ Telugu old classics", yt("telugu old evergreen songs")],
+  ["🎧 Hindi hits", yt("latest hindi songs official")],
+  ["🎸 English pop", yt("english pop songs official")],
+  ["📚 Lofi study beats", yt("lofi study music 1 hour")],
+  ["🧠 Instrumental focus", yt("instrumental focus music for studying")],
+  ["💪 Motivational songs", yt("motivational songs for students")],
+  ["🎻 Carnatic and Hindustani classical", yt("indian classical instrumental music")],
+  ["🙏 Devotional", yt("devotional songs telugu")],
+  ["😂 Stand-up comedy (clean)", yt("clean stand up comedy india")],
+  ["🎙️ Free podcasts", yt("best podcasts for engineering students")],
+  ["📻 Radio Garden (live radio worldwide)", "https://radio.garden"],
+  ["🎵 Free Music Archive", "https://freemusicarchive.org"],
+  ["🎼 Internet Archive audio", "https://archive.org/details/audio"],
+];
+function miniPiano() {
+  const NOTES = [["C", 261.63], ["D", 293.66], ["E", 329.63], ["F", 349.23], ["G", 392.0], ["A", 440.0], ["B", 493.88], ["C", 523.25]];
+  let ctx = null;
+  const play = (f) => {
+    try {
+      ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+      const o = ctx.createOscillator(), g = ctx.createGain(), t = ctx.currentTime;
+      o.type = "triangle"; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.4, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
+      o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t + 0.65);
+    } catch (_) {}
+  };
+  return el("div", { class: "learn-card" },
+    el("strong", {}, "🎹 Mini piano"),
+    el("p", { class: "hint" }, "Tap the keys to play. Try Ode to Joy: E E F G, G F E D, C C D E, E D D."),
+    el("div", { class: "fun-keys" }, NOTES.map(([n, f], i) => el("button", { type: "button", class: "fun-key", "aria-label": "Note " + n, onclick: () => play(f) }, n + (i === 7 ? "²" : "")))));
+}
+
+function memoryGame() {
+  const EMOJI = ["🚀", "🧠", "💡", "🎯", "📚", "⚡", "🔬", "🎓"];
+  let cards = [], open = [], matched = 0, moves = 0, lock = false;
+  const grid = el("div", { class: "fun-mem" });
+  const info = el("p", { class: "hint" });
+  const draw = () => {
+    grid.replaceChildren(...cards.map(c => el("button", { type: "button", class: "fun-card" + (c.up || c.done ? " up" : "") + (c.done ? " done" : ""),
+      "aria-label": c.up || c.done ? c.e : "Hidden card", onclick: () => flip(c) }, c.up || c.done ? c.e : "❔")));
+    const best = funBest("memory");
+    info.textContent = matched === 8 ? "🎉 You won in " + moves + " moves!" + (best ? " Best: " + best : "") : "Moves: " + moves + (best ? " · Best: " + best : "");
+  };
+  const flip = (c) => {
+    if (lock || c.up || c.done) return;
+    c.up = true; open.push(c);
+    if (open.length === 2) {
+      moves++;
+      if (open[0].e === open[1].e) { open.forEach(x => { x.done = true; x.up = false; }); matched++; open = []; if (matched === 8) { const b = funBest("memory"); if (!b || moves < b) funBest("memory", moves); } }
+      else { lock = true; setTimeout(() => { open.forEach(x => { x.up = false; }); open = []; lock = false; draw(); }, 700); }
+    }
+    draw();
+  };
+  const start = () => { cards = funShuffle([...EMOJI, ...EMOJI]).map(e => ({ e, up: false, done: false })); open = []; matched = 0; moves = 0; lock = false; draw(); };
+  start();
+  return el("div", {}, el("p", { class: "hint" }, "Find all 8 matching pairs in as few moves as you can."), grid, info,
+    el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: start }, "🔄 New game")));
+}
+
+function typingTest() {
+  let target = "", started = 0, finished = false;
+  const text = el("p", { class: "fun-type-text", "aria-live": "off" });
+  const result = el("p", { class: "hint" });
+  const input = el("input", { type: "text", class: "fun-type-input", autocomplete: "off", autocapitalize: "off", spellcheck: "false", placeholder: "Start typing here…", "aria-label": "Type the sentence" });
+  const paint = (typed) => {
+    text.replaceChildren(...[...target].map((ch, i) => el("span", { class: i < typed.length ? (typed[i] === ch ? "ok" : "bad") : "" }, ch)));
+  };
+  const next = () => {
+    target = FUN_SENTENCES[Math.floor(Math.random() * FUN_SENTENCES.length)];
+    started = 0; finished = false; input.value = ""; input.disabled = false; paint("");
+    const b = funBest("wpm"); result.textContent = b ? "Best speed: " + b + " WPM" : "Type the sentence exactly. The clock starts when you press the first key.";
+  };
+  input.addEventListener("paste", (e) => e.preventDefault());
+  input.addEventListener("input", () => {
+    if (finished) return;
+    if (!started) started = Date.now();
+    paint(input.value);
+    if (input.value === target) {
+      finished = true; input.disabled = true;
+      const mins = (Date.now() - started) / 60000, wpm = Math.min(250, Math.round((target.length / 5) / Math.max(mins, 1 / 600)));
+      const b = funBest("wpm"); if (!b || wpm > b) funBest("wpm", wpm);
+      result.textContent = "🎉 " + wpm + " WPM" + (!b || wpm > b ? " (new best!)" : " (best " + b + ")");
+    }
+  });
+  next();
+  return el("div", {}, text, input, result, el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: () => { next(); input.focus(); } }, "🔄 New sentence")));
+}
+
+function renderFun() {
+  const tabs = [["music", "🎵 Songs"], ["mem", "🎮 Memory"], ["type", "⌨️ Typing"], ["riddle", "🧩 Riddles"], ["fact", "💡 Fun facts"], ["free", "🌐 Free fun"]];
+  let view = "music", riddles = funShuffle(FUN_RIDDLES), ri = 0, showAns = false, fi = Math.floor(Math.random() * FUN_FACTS.length);
+  const body = el("div", { class: "fun-body" });
+  const bar = el("div", { class: "rowbtns" });
+  const draw = () => {
+    bar.replaceChildren(...tabs.map(([id, label]) => el("button", { class: "btn sm" + (view === id ? " primary" : ""), type: "button", onclick: () => { view = id; draw(); } }, label)));
+    if (view === "music") {
+      body.replaceChildren(
+        el("p", { class: "hint" }, "Tap a mood to open free official songs on YouTube in a new tab. Pick instrumental or lofi when you need to focus."),
+        el("div", { class: "rowbtns" }, FUN_SONGS.map(([label, url]) => outLink(url, label, "linkbtn"))),
+        miniPiano(),
+        el("p", { class: "hint" }, "Tip: keep the volume low, use earphones in the hostel, and respect quiet hours."));
+    } else if (view === "mem") body.replaceChildren(memoryGame());
+    else if (view === "type") body.replaceChildren(typingTest());
+    else if (view === "riddle") {
+      const [q, a] = riddles[ri % riddles.length];
+      body.replaceChildren(el("div", { class: "learn-card" }, el("strong", {}, "🧩 Riddle " + ((ri % riddles.length) + 1) + " of " + riddles.length),
+        el("p", {}, q), showAns ? el("p", { class: "fun-ans" }, "✅ " + a) : null,
+        el("div", { class: "rowbtns" },
+          el("button", { class: "btn sm", type: "button", onclick: () => { showAns = !showAns; draw(); } }, showAns ? "Hide answer" : "Show answer"),
+          el("button", { class: "btn sm primary", type: "button", onclick: () => { ri++; showAns = false; draw(); } }, "Next riddle ▶"))));
+    } else if (view === "fact") {
+      body.replaceChildren(el("div", { class: "learn-card" }, el("strong", {}, "💡 Did you know?"), el("p", {}, FUN_FACTS[fi % FUN_FACTS.length]),
+        el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => { fi = (fi + 1) % FUN_FACTS.length; draw(); } }, "Another fact ▶"))));
+    } else {
+      body.replaceChildren(
+        el("p", { class: "hint" }, "Free and legal ways to relax, learn something fun and recharge. Nothing here costs money."),
+        el("div", { class: "rowbtns" }, FUN_LINKS.map(([label, url]) => outLink(url, label, "linkbtn"))),
+        el("div", { class: "learn-card" }, el("strong", {}, "👀 Quick break tip"), el("p", { class: "hint" }, "Every 20 minutes of screen time, look at something 20 feet away for 20 seconds. Drink water, stretch your neck and shoulders, and sleep 7 to 8 hours before exams.")));
+    }
+  };
+  draw();
+  return [
+    el("h2", {}, "🎉 Entertainment"),
+    el("p", { class: "hint" }, "Take a smart break. Play a quick game, solve a riddle or learn a fun fact, then get back to studying refreshed."),
+    bar, body,
+    el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")),
+  ];
+}
+
 // ---------- about us ----------
 function renderAbout() {
   const feature = (icon, title, text) => el("div", { class: "learn-card" }, el("strong", {}, icon + " " + title), el("p", { class: "hint" }, text));
@@ -4665,7 +4860,7 @@ function render() {
     document.body.dataset.tab = state.tab;
     renderHeader(); renderTrendBar(); renderRail(); renderList(); renderBottomNav();
     // Forms keep what the student is typing while live updates arrive.
-    const key = ["ask", "edit", "name", "alumniJoin", "alumniJob"].includes(state.mode) ? state.mode + state.tab : "";
+    const key = ["ask", "edit", "name", "alumniJoin", "alumniJob", "fun"].includes(state.mode) ? state.mode + state.tab : "";
     if (key && key === sheetKey) return;
     sheetKey = key;
     const draft = $("f-reply") ? $("f-reply").value : "";
@@ -4683,6 +4878,7 @@ function render() {
       state.mode === "resources" ? renderResources() :
       state.mode === "career" ? renderCareer() :
       state.mode === "about" ? renderAbout() :
+      state.mode === "fun" ? renderFun() :
       state.mode === "alumni" ? renderAlumni() :
       state.mode === "alumniJoin" ? alumniForm("profile") :
       state.mode === "alumniJob" ? alumniForm("job") :
@@ -4731,6 +4927,7 @@ $("studyBtn").addEventListener("click", () => showPanel("resources"));
 $("filterToggle").addEventListener("click", () => { document.querySelector("header.top").classList.toggle("filters-open"); renderHeader(); });
 $("botBtn").addEventListener("click", () => { if (window.sparkBotToggle) window.sparkBotToggle(); });
 $("alumniBtn").addEventListener("click", () => { alumniView = "dir"; showPanel("alumni"); });
+$("funBtn").addEventListener("click", () => showPanel("fun"));
 $("aboutBtn").addEventListener("click", () => showPanel("about"));
 $("careerBtn").addEventListener("click", () => { careerBranch = null; showPanel("career"); });
 $("nameBtn").addEventListener("click", () => { state.afterName = null; showPanel(getName() ? "me" : "name"); });

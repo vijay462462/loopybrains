@@ -27,6 +27,12 @@ const KB = [
     r: [
       "🚀 **After B.Tech — What Next?**\n\nTap the **🚀 Career Guide** button at the top of the app, pick your branch (CSE · AI & ML · ECE · EEE · Civil · Mech) and see every path with free links. It also has **🌍 Abroad Explorer** and **💎 Premium Paths**.\n\n**Main paths for every branch:**\n① 💼 **Private jobs** — apply on company pages → [National Career Service](https://www.ncs.gov.in)\n② 🎓 **M.Tech via GATE** → [GATE official](https://gate2025.iisc.ac.in/) · [COAP](https://coap.iitb.ac.in) · [CCMT](https://ccmt.admissions.nic.in)\n③ 🏛️ **Govt / PSU jobs** → [UPSC ESE](https://upsc.gov.in) · [SSC](https://ssc.gov.in) · PSUs via GATE\n④ 🌍 **MS / PhD abroad** → [EducationUSA](https://www.educationusa.in) · [DAAD Germany](https://www.daad.in)\n⑤ 📈 **MBA** → [CAT](https://iimcat.ac.in)\n⑥ 💡 **Startup** → [Startup India](https://www.startupindia.gov.in)\n\n*Tell me your branch and I'll suggest the best path!* 🎯",
     ]},
+  // ── Entertainment ────────────────────────────────────────
+  { p: /entertain|\bbored\b|boring|\bfun\b|joke|riddle|time ?pass|relax|take a break|memory game|typing (test|speed)|\bsongs?\b|\bmusic\b|lofi|podcast|comedy|\bradio\b/i,
+    r: [
+      "🎉 **Need a smart break?**\n\nTap the **🎉 Entertainment** tile at the top of the app:\n🎮 **Memory match** — beat your best moves\n⌨️ **Typing test** — check your WPM\n🎵 **Songs** — Telugu, Hindi, English, lofi study music, radio and a mini piano\n🧩 **Riddles** — 20 brain teasers with answers\n💡 **Fun facts** — space, tech and India\n\n🆓 **Free fun:** [Lichess chess](https://lichess.org) · [Project Euler](https://projecteuler.net) · [NASA picture of the day](https://apod.nasa.gov/apod/astropix.html) · [Veritasium](https://www.youtube.com/@veritasium) · [3Blue1Brown](https://www.youtube.com/@3blue1brown)\n\n💡 *20 minutes of study, 5 minutes of fun. Then back to it!* 🚀",
+    ]},
+
 
   // ── Company links ────────────────────────────────────────
   { p: /\b(tcs|infosys|wipro|hcl|capgemini|cognizant|tech ?mahindra|accenture|amazon|flipkart|google|microsoft|zoho|deloitte|ibm|oracle|bhel|isro|ntpc|l ?& ?t|siemens|abb|jio|airtel|companies|company links?|company career|top companies|which companies)\b/i,
