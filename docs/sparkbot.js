@@ -542,6 +542,8 @@ function toggle() {
   win.classList.toggle('sb-show',isOpen);
   win.setAttribute('aria-hidden',String(!isOpen));
   btn.classList.toggle('sb-open',isOpen);
+  const fab=document.getElementById('fabAsk');
+  if (fab) fab.style.visibility=isOpen?'hidden':'visible';
   if (isOpen) setTimeout(()=>document.getElementById('sb-in')?.focus(),320);
 }
 
