@@ -19,6 +19,7 @@ window.DOUBT_DESK_CONFIG = {
 
   // Caption under the title. Add more lines to rotate between them every 5 seconds.
   captions: [
+    "Designed for RGUKTians.",
     "Ask boldly. Answer together. Innovate endlessly.",
     "Doubt today. Discover tomorrow.",
     "RGUKT students: think, build, ignite.",
