@@ -144,7 +144,7 @@ const KB = [
   // ── GATE strategy ────────────────────────────────────────
   { p: /tip|prepare|study|crack gate|gate strategy|how to prepare|gate score improvement/i,
     r: [
-      "🎯 **Crack GATE — Ultimate Strategy!**\n\n**Phase 1 — Foundation (E1–E2):**\n📚 Focus on college subjects deeply\n🔢 Maths: Calculus, Linear Algebra, Probability\n\n**Phase 2 — GATE-mode (E3):**\n📂 Start PYQ papers (Spark GATE tab)\n🎥 NPTEL lectures for weak subjects\n🧠 Spark Daily Quiz — build the habit\n\n**Phase 3 — Full prep (E4):**\n⏰ 10 previous papers per subject\n🔁 Revision cycles every 2 weeks\n💬 Post doubts on Spark — explain answers to others\n\n**Daily routine:**\n• Morning 1hr: PYQ practice\n• Evening 1hr: Concept revision\n• Night 30min: Daily Quiz + Spark discussion\n\n🔥 *Score 600+ = PSU eligibility. Score 750+ = IIT M.Tech!*",
+      "🎯 **Crack GATE — Ultimate Strategy!**\n\n**Phase 1 — Foundation (E1–E2):**\n📚 Focus on college subjects deeply\n🔢 Maths: Calculus, Linear Algebra, Probability → [NPTEL Maths](https://nptel.ac.in/course.html)\n\n**Phase 2 — GATE-mode (E3):**\n📂 Start PYQ papers (Spark GATE tab) → [GATE Overflow](https://gateoverflow.in/)\n🎥 [NPTEL](https://nptel.ac.in) lectures for weak subjects\n🧠 Spark Daily Quiz — build the habit\n\n**Phase 3 — Full prep (E4):**\n⏰ 10 previous papers per subject → [Official GATE site](https://gate2025.iisc.ac.in/)\n📖 Notes: [GFG GATE CS Notes](https://www.geeksforgeeks.org/gate-cs-notes-gq/)\n🔁 Revision cycles every 2 weeks\n💬 Post doubts on Spark — explain answers to others\n\n**Daily routine:**\n• Morning 1hr: PYQ practice\n• Evening 1hr: Concept revision\n• Night 30min: Daily Quiz + Spark discussion\n\n🔥 *Score 600+ = PSU eligibility. Score 750+ = IIT M.Tech!*",
     ]},
 
   // ── Hostel life ──────────────────────────────────────────
@@ -172,7 +172,7 @@ const KB = [
     ]},
 
   // ── Placement / career ───────────────────────────────────
-  { p: /placement|job|intern(ship)?|career|company|recruit|campus drive|ctc/i,
+  { p: /placement|job|career|company|recruit|campus drive|ctc/i,
     r: [
       "💼 **Placements at RGUKT — Full Guide!**\n\n**Top recruiters (CSE):**\n• [TCS](https://nextstep.tcs.com), [Infosys](https://www.infosys.com/careers/), [Wipro](https://careers.wipro.com), [HCL](https://www.hcltech.com/careers) — Mass hiring\n• [Capgemini](https://www.capgemini.com/careers/), [Cognizant](https://careers.cognizant.com), [Tech Mahindra](https://careers.techmahindra.com)\n• [Amazon](https://www.amazon.jobs), [Flipkart](https://www.flipkartcareers.com) — for top rankers\n\n**Top recruiters (ECE/EEE):**\n• [BHEL](https://www.bhel.com/careers), [ISRO](https://www.isro.gov.in/Careers.html), [NTPC](https://www.ntpc.co.in/careers) — via GATE\n• [L&T](https://www.larsentoubro.com/corporate/careers/), [Siemens](https://jobs.siemens.com), [ABB](https://careers.abb)\n• [Jio](https://careers.jio.com), [Airtel](https://www.airtel.in/careers) — Telecom\n\n**Timeline:**\n📅 Internship drives — E3 (3rd year)\n📅 Campus placements — E4 (final year)\n\n**What companies want:**\n🔑 DSA + Problem solving (CS/ECE) → [CSES Problem Set](https://cses.fi/problemset/), [GeeksforGeeks](https://www.geeksforgeeks.org)\n🔑 Core subject knowledge → [NPTEL](https://nptel.ac.in)\n🔑 Communication & teamwork\n🔑 CGPA ≥ 6.5 (some companies)\n\n🆓 **Free job portal:** [National Career Service](https://www.ncs.gov.in)\n\n💡 *Post placement tips on Spark — help your juniors too!* 🤝",
     ]},
@@ -192,7 +192,7 @@ const KB = [
   // ── GATE score / PSU ─────────────────────────────────────
   { p: /gate score|psu|bhel|isro|ntpc|barc|drdo|gate rank|cutoff|m.?tech/i,
     r: [
-      "🏛️ **GATE Score — PSU Jobs & M.Tech!**\n\n**PSU recruitment via GATE:**\n🔵 BHEL → All branches (score 600+)\n🔴 ISRO → ECE, CSE, Mech (score 750+)\n🟡 NTPC → EEE, Mech (score 600+)\n🟠 BARC → All (score 700+)\n🟢 DRDO → All branches (score 650+)\n🔵 ONGC/GAIL → Civil, Mech, EEE\n\n**M.Tech admission:**\n• IITs → top 1000–2000 rank\n• NITs → top 5000–10000 rank\n• GATE scholarship → ₹12,400/month stipend!\n\n**Timeline:** GATE exam → February each year\n\n💡 *Use Spark's GATE tab PYQs daily for 3 months = massive rank improvement!* 📈",
+      "🏛️ **GATE Score — PSU Jobs & M.Tech!**\n\n**PSU recruitment via GATE:**\n🔵 [BHEL](https://www.bhel.com/careers) → All branches (score 600+)\n🔴 [ISRO](https://www.isro.gov.in/Careers.html) → ECE, CSE, Mech (score 750+)\n🟡 [NTPC](https://www.ntpc.co.in/careers) → EEE, Mech (score 600+)\n🟠 [BARC](https://barc.gov.in) → All (score 700+)\n🟢 [DRDO](https://www.drdo.gov.in) → All branches (score 650+)\n🔵 [ONGC](https://ongcindia.com/web/eng/careers), [GAIL](https://gailonline.com) → Civil, Mech, EEE\n\n**M.Tech admission:**\n• IITs → top 1000–2000 rank\n• NITs → top 5000–10000 rank\n• GATE scholarship → ₹12,400/month stipend!\n\n**Timeline:** GATE exam → February each year\n📣 Register & notifications: [Official GATE site](https://gate2025.iisc.ac.in/)\n🎓 M.Tech counselling: [COAP](https://coap.iitb.ac.in) · [CCMT](https://ccmt.admissions.nic.in)\n\n💡 *Use Spark's GATE tab PYQs daily for 3 months = massive rank improvement!* 📈",
     ]},
 
   // ── Study schedule ───────────────────────────────────────
