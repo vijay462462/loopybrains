@@ -895,6 +895,15 @@ function renderHeader() {
     const trEl = $("trending");
     if (trEl) { trEl.hidden = !tr; if (tr) trEl.textContent = "📈 Trending now: " + tr; }
   }
+  const ft = $("filterToggle");
+  if (ft) {
+    const open = document.querySelector("header.top").classList.contains("filters-open");
+    const yr = (state.tab === "doubts" || state.tab === "gate") ? (state.yearFilter === "All" ? "All years" : state.yearFilter) : null;
+    const camp = state.campusFilter === "all" ? "All campuses" : state.campusFilter;
+    ft.replaceChildren(el("span", {}, "🎚️ Filters · " + camp + (yr ? " · " + yr : "")), el("span", {}, open ? "▲" : "▼"));
+    ft.classList.toggle("on", state.campusFilter !== "all" || (yr && state.yearFilter !== "All"));
+    ft.setAttribute("aria-expanded", String(open));
+  }
   $("quizBtn").classList.toggle("dot", !!(store && state.loaded && QUIZ.length && !myQuizAnswer(dayNum())));
   $("search").placeholder = state.tab === "doubts" ? "Search doubts" : state.tab === "gate" ? "Search GATE discussions" : state.tab === "market" ? "Search listings" : "Search ideas";
   $("rail").setAttribute("aria-label", t.groupLabel);
@@ -4345,6 +4354,7 @@ $("networkBtn") && $("networkBtn").addEventListener("click", () => showPanel("ne
 $("quizBtn").addEventListener("click", () => showPanel("quiz"));
 $("learnBtn").addEventListener("click", () => showPanel("learn"));
 $("studyBtn").addEventListener("click", () => showPanel("resources"));
+$("filterToggle").addEventListener("click", () => { document.querySelector("header.top").classList.toggle("filters-open"); renderHeader(); });
 $("aboutBtn").addEventListener("click", () => showPanel("about"));
 $("careerBtn").addEventListener("click", () => { careerBranch = null; showPanel("career"); });
 $("nameBtn").addEventListener("click", () => { state.afterName = null; showPanel(getName() ? "me" : "name"); });

@@ -225,6 +225,15 @@ header.top .btn.primary { background: #fff; color: var(--g2); border-color: #fff
   header.top .btn.primary#askBtn { grid-column: span 1; padding: 8px 6px; font-size: 12px; white-space: nowrap; border-radius: 999px; }
   #themeBtn { position: absolute; top: 12px; right: 12px; padding: 5px 9px; font-size: 14px; border-radius: 999px; }
 
+  /* campus + batch filters collapse behind a Filters button on phones */
+  .hdr-actions .filter-toggle {
+    display: flex; grid-column: 1 / -1; align-items: center; justify-content: space-between;
+    padding: 8px 14px; border-radius: 14px; font-size: 12px; font-weight: 700;
+  }
+  .hdr-actions .filter-toggle.on { background: rgb(255 255 255 / .28); border-color: #fff; }
+  header.top:not(.filters-open) #campusBar,
+  header.top:not(.filters-open) #yearBar { display: none !important; }
+
   /* campus / year bars inside header */
   .campus-bar { width: 100%; }
 }
@@ -788,6 +797,7 @@ h1 span {
   padding: 6px 0 4px; border-bottom: 1px solid var(--line); margin-bottom: 4px;
 }
 .campus-bar:not([hidden]) { display: flex; }
+.filter-toggle { display: none; }
 .campus-label { font-size: 12px; font-weight: 700; color: var(--muted); flex-shrink: 0; }
 .campus-chip {
   padding: 3px 12px; border-radius: 16px; font-size: 12px; font-weight: 700;
