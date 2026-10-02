@@ -18,7 +18,7 @@ const CAPTIONS = (CFG.captions && CFG.captions.length) ? CFG.captions : [
   "Your question might be the one the whole class is stuck on.",
   "Teach one, learn twice. Answer a doubt today.",
   "Great engineers ask the questions others skip.",
-  "Signals, circuits, systems: decode them together.",
+  "Signals, circuits, systems — decode them together.",
   "Small doubts, big breakthroughs.",
   "Share an idea today. Build it with your class tomorrow.",
 ];
@@ -268,7 +268,7 @@ function spamCheck() {
   let times = [];
   try { times = JSON.parse(localStorage.getItem("dd-post-times") || "[]"); } catch (_) {}
   const now = Date.now(), recent = times.filter(t => now - t < 3600000);
-  if (recent.length && now - recent[recent.length - 1] < 15000) return "Slow down a little: wait " + Math.ceil((15000 - (now - recent[recent.length - 1])) / 1000) + " seconds before posting again.";
+  if (recent.length && now - recent[recent.length - 1] < 15000) return "Slow down a little, wait " + Math.ceil((15000 - (now - recent[recent.length - 1])) / 1000) + " more seconds before posting again.";
   if (recent.length >= 15) return "You have posted 15 times in the last hour. Take a short break and try again later.";
   return "";
 }
@@ -954,7 +954,7 @@ function renderQuiz() {
     out.push(el("p", { class: "quiz-result " + (mine.opt === q.a ? "right" : "wrong") }, mine.opt === q.a ? "✅ Correct! +3 points." : "❌ Not quite. The answer is " + "ABCD"[q.a] + "."));
     out.push(el("p", { class: "body" }, "💡 " + q.e));
     out.push(el("p", { class: "hint" }, total + (total === 1 ? " classmate has" : " classmates have") + " answered today. " + (total ? Math.round(correctCount * 100 / total) + "% got it right." : "")));
-  } else out.push(el("p", { class: "hint" }, "Pick one answer. You get one try; a correct answer earns +3 points and keeps your streak going."));
+  } else out.push(el("p", { class: "hint" }, "Pick one answer. You get one try. A correct answer earns +3 points and keeps your streak going."));
   const y = quizFor(day - 1), ya = myQuizAnswer(day - 1);
   if (y) out.push(el("details", { class: "quiz-y" }, el("summary", {}, "Yesterday's question"),
     el("p", { class: "body" }, y.q + "\nAnswer: " + "ABCD"[y.a] + ". " + y.o[y.a] + (ya ? (ya.opt === y.a ? "  ✅ you got it" : "  ❌ you picked " + "ABCD"[ya.opt]) : "") + "\n💡 " + y.e)));
@@ -1148,10 +1148,10 @@ function renderLeaders() {
   return [
     el("h2", {}, "🏆 Top Helpers"),
     list,
-    el("p", { class: "hint" }, "Points: answer a classmate's doubt +2 · answer marked helpful +5 more · each 👍💡🔥 on your answer +1 · daily quiz right +3 · share an idea +2 · each like on your idea +1 · ask a doubt +1. Anonymous posts don't count."),
+    el("p", { class: "hint" }, "Answer a classmate's doubt +2 · answer marked helpful +5 more · each 👍💡🔥 on your answer +1 · daily quiz right +3 · share an idea +2 · each like on your idea +1 · ask a doubt +1. Anonymous posts don't count."),
     rivalBoard && el("div", { class: "label" }, "🏫 Campus Rivalry — all 4 RGUKT campuses"),
     rivalBoard,
-    rivalBoard && el("p", { class: "hint" }, "Campus score: ask a doubt +1 · share an idea +2 · helpful answer +5 · post in clubs +1. Compete with other campuses!"),
+    rivalBoard && el("p", { class: "hint" }, "Campus points — ask a doubt +1 · share an idea +2 · helpful answer +5 · post in clubs +1. Compete with other campuses!"),
     el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")),
   ].filter(Boolean);
 }
@@ -1206,7 +1206,7 @@ function renderMe() {
       [["🔥", p.streak + "-day", "streak"], ["🤝", p.answers, "answers"], ["✅", p.helpful, "helpful"], ["🧠", p.quizRight, "quiz right"], ["💡", p.ideas, "ideas"], ["❤️", p.reacts + p.likes, "reactions"]]
         .map(([i, v, l]) => el("div", { class: "stat" }, el("b", {}, i + " " + v), el("small", {}, l)))),
     store && el("details", { class: "quiz-y" }, el("summary", {}, MENTORS.has(store.uid) ? "🎓 You are a verified mentor" : "🎓 Are you an IIT mentor?"),
-      el("p", { class: "hint" }, "Mentors: send this ID to the board's teacher so your answers show the mentor badge. It identifies this phone or computer."),
+      el("p", { class: "hint" }, "Mentors — send this ID to the board's teacher so your answers show the mentor badge. It identifies this phone or computer."),
       el("div", { class: "rowbtns" }, el("code", { class: "devid" }, store.uid), el("button", { class: "btn sm", type: "button", onclick: (e) => copyLink(e.currentTarget, store.uid) }, "Copy ID"))),
     el("div", { class: "label" }, "📅 Activity — last 30 days"),
     renderHeatmap(p),

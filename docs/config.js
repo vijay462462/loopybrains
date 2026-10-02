@@ -22,7 +22,7 @@ window.DOUBT_DESK_CONFIG = {
     "Designed for RGUKTians.",
     "Ask boldly. Answer together. Innovate endlessly.",
     "Doubt today. Discover tomorrow.",
-    "RGUKT students: think, build, ignite.",
+    "RGUKT students, think, build, ignite.",
     "Every doubt you ask today is a concept you own tomorrow.",
     "Great engineers ask the questions others skip.",
   ],
