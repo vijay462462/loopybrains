@@ -183,18 +183,62 @@ header.top .btn.primary { background: #fff; color: var(--g2); border-color: #fff
 .hdr-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .chip { border: 1px solid rgb(255 255 255 / .5); background: rgb(255 255 255 / .14); color: #fff; border-radius: 999px; padding: 7px 14px; font-weight: 700; }
 
-@media (max-width: 600px) {
-  header.top { padding: 14px 14px 12px; gap: 6px; overflow: clip; }
-  .brand { width: 100%; }
-  .brand h1 { font-size: 1.6rem; }
-  .brand p { font-size: 12px; margin-top: 3px; }
-  .tabs { margin-top: 8px; overflow-x: auto; max-width: 100%; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+/* ── Mobile: full-width compact header, everything fits on screen ── */
+@media (max-width: 700px) {
+  body { padding: 0 8px; padding-block: 10px 70px; }
+  .wrap { gap: 12px; }
+
+  header.top {
+    padding: 12px 12px 10px;
+    gap: 6px;
+    border-radius: 14px;
+    /* clip decorative blobs without hiding child content */
+    overflow: hidden;
+  }
+
+  /* brand takes full width */
+  .brand { width: 100%; min-width: 0; }
+  .brand h1 { font-size: 1.45rem; line-height: 1.1; }
+  .brand p  { font-size: 11.5px; margin-top: 2px; }
+
+  /* tabs row: scrollable, no wrapping */
+  .tabs {
+    display: flex; flex-wrap: nowrap;
+    overflow-x: auto; scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    margin-top: 8px; gap: 3px;
+    /* extend past header padding so scroll reaches the edge */
+    margin-left: -12px; margin-right: -12px;
+    padding-left: 12px; padding-right: 12px;
+    background: transparent;
+  }
   .tabs::-webkit-scrollbar { display: none; }
-  .tabs button { padding: 5px 11px; font-size: 12px; white-space: nowrap; }
-  .hdr-actions { width: 100%; flex-wrap: wrap; gap: 6px; }
-  .hdr-actions .chip { padding: 5px 9px; font-size: 11.5px; white-space: nowrap; }
-  header.top .btn.primary { padding: 6px 14px; font-size: 12px; white-space: nowrap; }
-  #themeBtn { padding: 5px 9px; font-size: 14px; }
+  .tabs button { padding: 5px 10px; font-size: 12px; white-space: nowrap; flex-shrink: 0; }
+
+  /* action buttons: full width, wrap into ~2 compact rows */
+  .hdr-actions {
+    width: 100%;
+    display: flex; flex-wrap: wrap;
+    gap: 5px;
+    /* same edge-bleed trick so buttons line up with content */
+    margin-left: 0;
+  }
+  .hdr-actions .chip {
+    padding: 4px 9px;
+    font-size: 11px;
+    white-space: nowrap;
+    line-height: 1.4;
+  }
+  header.top .btn.primary {
+    padding: 5px 11px;
+    font-size: 11px;
+    white-space: nowrap;
+    line-height: 1.4;
+  }
+  #themeBtn { padding: 4px 7px; }
+
+  /* campus / year bars inside header */
+  .campus-bar { width: 100%; }
 }
 .like { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--sheet); border-radius: 999px; padding: 4px 12px; font-weight: 700; color: var(--muted); }
 .like[aria-pressed="true"] { border-color: transparent; background: linear-gradient(90deg, #f43f5e, #f97316); color: #fff; }
