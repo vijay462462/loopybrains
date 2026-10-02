@@ -33,6 +33,12 @@ const KB = [
       "🎉 **Need a smart break?**\n\nTap the **🎉 Entertainment** tile at the top of the app:\n🎮 **Memory match** — beat your best moves\n⌨️ **Typing test** — check your WPM\n🎵 **Songs** — 🆕 latest released songs (this week and this month), jukeboxes of top music directors and singers (YouTube), original copyright-free chill music, free Creative Commons songs in 20 languages, and a mini piano\n🧩 **Riddles** — 20 brain teasers with answers\n💡 **Fun facts** — space, tech and India\n\n🆓 **Free fun:** [Lichess chess](https://lichess.org) · [Project Euler](https://projecteuler.net) · [NASA picture of the day](https://apod.nasa.gov/apod/astropix.html) · [Veritasium](https://www.youtube.com/@veritasium) · [3Blue1Brown](https://www.youtube.com/@3blue1brown)\n\n💡 *20 minutes of study, 5 minutes of fun. Then back to it!* 🚀",
     ]},
 
+  // ── Movies ───────────────────────────────────────────────
+  { p: /\bmovies?\b|\bfilms?\b|cinema|\bott\b|new release|box office|trailer|web ?series|netflix|prime video|hotstar|tollywood|bollywood|kollywood|mollywood|sandalwood|hollywood/i,
+    r: [
+      "🎬 **Latest Movies — Every Language!**\n\nTap **🎉 Entertainment → 🎬 Movies** for live links in 20 languages (Telugu, Tamil, Hindi, Malayalam, Kannada, Bengali, Marathi, Punjabi, English, Korean, Japanese and more): this year's release list, newest trailers, this week's OTT and theatre releases, and reviews.\n\n🌟 **Live hubs:** [IMDb release calendar](https://www.imdb.com/calendar/?region=IN&type=MOVIE) · [New on OTT](https://www.justwatch.com/in/new) · [Upcoming (TMDB)](https://www.themoviedb.org/movie/upcoming) · [Popular this week](https://letterboxd.com/films/popular/this/week/)\n\n📝 There's also a **watchlist** with a \"pick one for me\" button.\n\n⚠️ *Watch only in theatres or on official OTT apps. Piracy sites are illegal and unsafe.*",
+    ]},
+
 
   // ── Company links ────────────────────────────────────────
   { p: /\b(tcs|infosys|wipro|hcl|capgemini|cognizant|tech ?mahindra|accenture|amazon|flipkart|google|microsoft|zoho|deloitte|ibm|oracle|bhel|isro|ntpc|l ?& ?t|siemens|abb|jio|airtel|companies|company links?|company career|top companies|which companies)\b/i,

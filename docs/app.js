@@ -2401,6 +2401,62 @@ function jukeFinder() {
     el("div", { class: "rowbtns" }, any, el("button", { class: "btn sm primary", type: "button", onclick: go }, "Jukebox ▶"), el("button", { class: "btn sm", type: "button", onclick: goNew }, "🆕 Latest songs ▶")));
 }
 
+// Movie information. Nothing here is stored copy: every link opens a page that is updated by its owner,
+// so the lists always show the current year's releases.
+const FUN_MOVIE_LANGS = [
+  ["Telugu", "Telugu"], ["Tamil", "Tamil"], ["Hindi", "Hindi"], ["Malayalam", "Malayalam"], ["Kannada", "Kannada"],
+  ["Bengali", "Bengali"], ["Marathi", "Marathi"], ["Punjabi", "Punjabi"], ["Gujarati", "Gujarati"], ["Bhojpuri", "Bhojpuri"], ["Odia", "Odia"],
+  ["English (Hollywood)", "American"], ["British", "British"], ["Korean", "South Korean"], ["Japanese", "Japanese"], ["Chinese", "Chinese"],
+  ["French", "French"], ["Spanish", "Spanish"], ["German", "German"], ["Indonesian", "Indonesian"],
+];
+const wikiGo = (title) => "https://en.wikipedia.org/wiki/Special:Search?search=" + encodeURIComponent(title) + "&go=Go";
+const FUN_MOVIE_HUBS = [
+  ["📅 IMDb release calendar (India)", "https://www.imdb.com/calendar/?region=IN&type=MOVIE"],
+  ["🔥 IMDb most popular movies", "https://www.imdb.com/chart/moviemeter/"],
+  ["📺 New on OTT in India (JustWatch)", "https://www.justwatch.com/in/new"],
+  ["🎟️ Now playing and upcoming (TMDB)", "https://www.themoviedb.org/movie/now-playing"],
+  ["🗓️ Upcoming movies (TMDB)", "https://www.themoviedb.org/movie/upcoming"],
+  ["⭐ Popular this week (Letterboxd)", "https://letterboxd.com/films/popular/this/week/"],
+  ["🍅 In theatres (Rotten Tomatoes)", "https://www.rottentomatoes.com/browse/movies_in_theaters/"],
+  ["💰 Box office (Sacnilk)", "https://www.sacnilk.com"],
+  ["📈 Box Office India", "https://www.boxofficeindia.com"],
+  ["🏆 Highest-grossing Indian films", "https://en.wikipedia.org/wiki/List_of_highest-grossing_Indian_films"],
+  ["🏆 Highest-grossing Telugu films", "https://en.wikipedia.org/wiki/List_of_highest-grossing_Telugu_films"],
+  ["🎖️ National Film Awards", "https://en.wikipedia.org/wiki/National_Film_Awards"],
+  ["🎞️ Free public-domain films (Internet Archive)", "https://archive.org/details/movies"],
+];
+const watchLoad = () => { try { return JSON.parse(localStorage.getItem("dd-watchlist") || "[]"); } catch (_) { return []; } };
+const watchSave = (a) => { try { localStorage.setItem("dd-watchlist", JSON.stringify(a.slice(0, 200))); } catch (_) {} };
+function moviesView() {
+  const yr = new Date().getFullYear();
+  const watch = el("div", { class: "learn-card" });
+  const pick = el("p", { class: "fun-ans" });
+  const inp = el("input", { type: "text", maxlength: "80", placeholder: "Add a movie or series to watch…", "aria-label": "Movie name", autocomplete: "off" });
+  const drawWatch = () => {
+    const list = watchLoad();
+    watch.replaceChildren(el("strong", {}, "📝 My watchlist (" + list.filter(x => !x.done).length + " to watch)"),
+      el("div", { class: "rowbtns" }, inp, el("button", { class: "btn sm primary", type: "button", onclick: () => { const v = cleanText(inp.value).trim(); if (v.length < 2) return; const a = watchLoad(); a.unshift({ id: Date.now() + "", name: v.slice(0, 80), done: false }); watchSave(a); inp.value = ""; drawWatch(); } }, "Add")),
+      ...list.map(m => el("div", { class: "fun-lang" },
+        el("button", { type: "button", class: "btn sm" + (m.done ? "" : " primary"), onclick: () => { const a = watchLoad(); const x = a.find(y => y.id === m.id); if (x) x.done = !x.done; watchSave(a); drawWatch(); } }, m.done ? "✅ Watched" : "▶ To watch"),
+        el("span", { style: m.done ? "text-decoration:line-through;opacity:.6" : "" }, m.name),
+        el("button", { type: "button", class: "linkbtn danger", "aria-label": "Remove", onclick: () => { watchSave(watchLoad().filter(y => y.id !== m.id)); drawWatch(); } }, "✕"))),
+      el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: () => { const a = watchLoad().filter(x => !x.done); pick.textContent = a.length ? "🎲 Tonight: " + a[Math.floor(Math.random() * a.length)].name : "Add something to your watchlist first."; } }, "🎲 Pick one for me")), pick);
+  };
+  drawWatch();
+  return el("div", {},
+    el("p", { class: "hint" }, "Latest release information for every language. These links open live pages that their owners update, so they always show the current year (" + yr + ") and this week's releases."),
+    el("div", { class: "label" }, "🌟 Live movie hubs"),
+    el("div", { class: "rowbtns" }, FUN_MOVIE_HUBS.map(([label, url]) => outLink(url, label, "linkbtn"))),
+    el("div", { class: "label" }, "🎬 Latest releases by language"),
+    el("div", { class: "fun-langs" }, FUN_MOVIE_LANGS.map(([label, adj]) => el("div", { class: "fun-lang" }, el("strong", {}, label),
+      outLink(wikiGo("List of " + adj + " films of " + yr), "📋 " + yr + " list", "linkbtn"),
+      outLink(ytNew(label + " movie official trailer " + yr, "month"), "🎞️ Trailers", "linkbtn"),
+      outLink("https://www.google.com/search?q=" + encodeURIComponent("new " + label + " movies releasing this week OTT and theatres"), "🗓️ This week", "linkbtn"),
+      outLink("https://www.google.com/search?q=" + encodeURIComponent(label + " movie reviews and ratings " + yr), "⭐ Reviews", "linkbtn")))),
+    watch,
+    el("p", { class: "hint" }, "Watch movies only in theatres or on official OTT apps. Piracy sites are illegal and often carry viruses and scams. Spark does not host any movie."));
+}
+
 function memoryGame() {
   const EMOJI = ["🚀", "🧠", "💡", "🎯", "📚", "⚡", "🔬", "🎓"];
   let cards = [], open = [], matched = 0, moves = 0, lock = false;
@@ -2458,7 +2514,7 @@ function typingTest() {
 }
 
 function renderFun() {
-  const tabs = [["player", "🎧 Player"], ["music", "🎵 Songs"], ["mem", "🎮 Memory"], ["type", "⌨️ Typing"], ["riddle", "🧩 Riddles"], ["fact", "💡 Fun facts"], ["free", "🌐 Free fun"]];
+  const tabs = [["player", "🎧 Player"], ["music", "🎵 Songs"], ["movies", "🎬 Movies"], ["mem", "🎮 Memory"], ["type", "⌨️ Typing"], ["riddle", "🧩 Riddles"], ["fact", "💡 Fun facts"], ["free", "🌐 Free fun"]];
   let view = window.__funStart || "player", riddles = funShuffle(FUN_RIDDLES), ri = 0, showAns = false, fi = Math.floor(Math.random() * FUN_FACTS.length);
   const body = el("div", { class: "fun-body", id: "funMusicBody" });
   const bar = el("div", { class: "rowbtns" });
@@ -2466,6 +2522,7 @@ function renderFun() {
     bar.replaceChildren(...tabs.map(([id, label]) => el("button", { class: "btn sm" + (view === id ? " primary" : ""), type: "button", onclick: () => { view = id; draw(); } }, label)));
     window.__funStart = null;
     if (view === "player") body.replaceChildren(window.SparkPlayer ? window.SparkPlayer.mount() : el("p", { class: "hint" }, "The music player could not load. Reload the page and try again."));
+    else if (view === "movies") body.replaceChildren(moviesView());
     else if (view === "music") {
       body.replaceChildren(
         chillPlayer(),
