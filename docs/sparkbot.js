@@ -641,9 +641,9 @@ function scroll() { const m=document.getElementById('sb-msgs'); if(m) setTimeout
 //  CSS
 // ════════════════════════════════════════════════════════════
 function injectCSS() {
-  ['sb-css93','sb-css94','sb-css95','sb-css98','sb-css99'].forEach(id=>document.getElementById(id)?.remove());
-  if (document.getElementById('sb-css100')) return;
-  const s=document.createElement('style'); s.id='sb-css100';
+  ['sb-css93','sb-css94','sb-css95','sb-css98','sb-css99','sb-css100'].forEach(id=>document.getElementById(id)?.remove());
+  if (document.getElementById('sb-css101')) return;
+  const s=document.createElement('style'); s.id='sb-css101';
   s.textContent=`
 /* ══════════════════════════════════════
    SPARK BOT v5 — Premium Interactive
@@ -719,8 +719,9 @@ function injectCSS() {
 .sb-link{color:#67e8f9;text-decoration:none;border-bottom:1px solid rgba(103,232,249,.4);font-weight:600;transition:color .15s,border-color .15s;}
 .sb-link:hover{color:#a5f3fc;border-color:rgba(165,243,252,.7);}
 
-/* Hide app FAB when bot panel is open */
-body.sb-active .fab{display:none!important;visibility:hidden!important;pointer-events:none!important;}
+/* Move app FAB above the bot input bar so they never overlap */
+.fab{bottom:calc(env(safe-area-inset-bottom,0px) + 160px)!important;left:18px!important;right:auto!important;}
+body.sb-active .fab{opacity:0!important;pointer-events:none!important;transition:opacity .2s!important;}
 
 /* Code blocks */
 .sb-code{background:rgba(15,10,40,.7);border:1px solid rgba(196,181,253,.2);border-radius:8px;padding:8px 10px;font-size:11.5px;font-family:'JetBrains Mono',monospace;color:#c4b5fd;overflow-x:auto;margin:4px 0;white-space:pre;}
