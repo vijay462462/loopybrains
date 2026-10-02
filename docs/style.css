@@ -1196,3 +1196,16 @@ div.chal-opt.wrong b { background: #ef4444; color: #fff; }
 /* Dark mode overrides */
 .dark .chal-qb-q, [data-theme="dark"] .chal-qb-q { background: var(--paper); }
 .dark .chal-time-sel, [data-theme="dark"] .chal-time-sel { background: var(--sheet); color: var(--ink); }
+
+/* ============================================================
+   AI features: explain row, hint row, quiz generator (v59)
+   ============================================================ */
+.ai-explain-row, .ai-hint-row { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; padding: 10px 14px; border-radius: 10px; background: linear-gradient(135deg,color-mix(in oklab,#1a73e8 8%,var(--sheet)),color-mix(in oklab,#10a37f 8%,var(--sheet))); border: 1.5px solid color-mix(in oklab,#1a73e8 20%,var(--border)); margin-bottom: 10px; }
+.ai-explain-label, .ai-hint-label { font: 700 .82rem var(--f-body); color: var(--ink); flex: 1 0 100%; margin-bottom: 2px; }
+.ai-explain-btn { display: inline-flex; align-items: center; padding: 5px 13px; border-radius: 20px; font: 600 .8rem var(--f-body); background: var(--sheet); border: 1.5px solid var(--border); color: var(--ink); text-decoration: none; cursor: pointer; transition: background .12s,border-color .12s; }
+.ai-explain-btn:hover { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+
+.ai-gen-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 6px 0 4px; }
+.ai-gen-label { font: 600 .8rem var(--f-body); color: var(--muted); }
+.chal-builder-label-row { display: flex; flex-direction: column; gap: 2px; }
+.chal-builder-label-text { font: 700 .82rem var(--f-body); color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
