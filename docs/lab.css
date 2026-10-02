@@ -63,3 +63,19 @@
 .tl-bits { font: 700 .9rem var(--f-mono); overflow-wrap: anywhere; letter-spacing: .04em; }
 .tl-bits .s { color: #dc2626; } .tl-bits .e { color: #2563eb; } .tl-bits .m { color: #16a34a; }
 .lab-card input[type=text], .lab-card input[type=number], .lab-card select, .lab-card textarea { min-width: 0; max-width: 100%; }
+
+/* logic lab and electronics */
+.tl-tt { border-collapse: collapse; margin: 6px 0; font: 600 .9rem var(--f-mono); }
+.tl-tt th, .tl-tt td { border: 1px solid var(--line); padding: 3px 9px; text-align: center; }
+.tl-tt th { background: color-mix(in oklab, var(--ta) 12%, var(--sheet)); }
+.tl-tt tr.one td.out { background: color-mix(in oklab, #22c55e 25%, var(--sheet)); font-weight: 800; }
+.tl-km { border-collapse: collapse; margin: 6px 0; }
+.tl-km th, .tl-km td { border: 1px solid var(--line); text-align: center; min-width: 52px; padding: 5px 2px; }
+.tl-km th { background: color-mix(in oklab, var(--ta) 12%, var(--sheet)); font: 600 .8rem var(--f-mono); }
+.tl-km td b { display: block; font-size: 1.1rem; }
+.tl-km td small { color: var(--muted); font-size: 9px; }
+.tl-km td.one { background: color-mix(in oklab, #22c55e 28%, var(--sheet)); }
+.tl-km td.dc { background: color-mix(in oklab, #f59e0b 28%, var(--sheet)); }
+.tl-resistor { display: flex; gap: 10px; justify-content: center; align-items: center; height: 46px; padding: 0 22px; margin: 6px auto; width: max-content; max-width: 100%; border-radius: 23px; background: #d6b88a; box-shadow: inset 0 0 0 2px rgb(0 0 0 / .15); }
+.tl-band { width: 14px; height: 100%; border-radius: 2px; box-shadow: inset 0 0 0 1px rgb(0 0 0 / .25); }
+.lab-body { overflow-x: auto; }
