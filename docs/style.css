@@ -1549,3 +1549,6 @@ header.top { background: linear-gradient(120deg, var(--ta), var(--tb) 50%, var(-
 .fun-lang strong { min-width: 84px; }
 .fun-vol { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 140px; }
 .fun-vol input { width: 100%; }
+.fun-det { border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; margin: 6px 0; background: color-mix(in oklab, var(--ta) 5%, var(--sheet)); }
+.fun-det summary { font-weight: 800; cursor: pointer; padding: 4px 0; }
+.fun-det .rowbtns { margin-top: 8px; }
