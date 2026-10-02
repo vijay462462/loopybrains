@@ -115,6 +115,17 @@ header.top .btn.primary { background: #fff; color: var(--g2); border-color: #fff
 .tools input { flex: 1 1 180px; min-width: 0; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--sheet); }
 .tools select { padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--sheet); }
 .list { display: grid; gap: 8px; }
+.item-wrap { position: relative; }
+.item-del {
+  position: absolute; top: 8px; right: 8px; z-index: 2;
+  width: 28px; height: 28px; border-radius: 50%; border: none;
+  background: color-mix(in oklab, #ef4444 12%, var(--sheet));
+  color: #ef4444; font-size: .85rem; cursor: pointer;
+  display: none; align-items: center; justify-content: center;
+  transition: background .15s;
+}
+.item-wrap:hover .item-del, .item-wrap:focus-within .item-del { display: flex; }
+.item-del:hover { background: color-mix(in oklab, #ef4444 25%, var(--sheet)); }
 .item {
   display: grid; gap: 6px; text-align: left; width: 100%;
   background: linear-gradient(90deg, var(--c-soft), var(--sheet) 45%); border: 1px solid var(--line);

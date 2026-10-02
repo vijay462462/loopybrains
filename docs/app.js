@@ -837,10 +837,16 @@ function renderList() {
     const av = d.anonymous ? avatarEl("👤") : avatarEl(mine(d) ? getAvatar() : avatarFor(d.authorName || ""));
 
     meta.push(el("span", {}, n + " " + t.replyNoun + (n === 1 ? "" : "s")), el("span", { class: "author-row" }, av, who(d) + " · " + ago(d.createdAt)));
-    return el("button", {
-      type: "button", class: "item", ...colorAttrs(g),
-      "aria-current": String(state.selected === d.id && state.mode === "view"), onclick: () => openItem(d.id),
-    }, el("h3", {}, d.title), el("div", { class: "meta" }, meta));
+    const delBtn = mine(d) ? el("button", {
+      type: "button", class: "item-del", title: "Delete", "aria-label": "Delete post",
+      onclick: (e) => { e.stopPropagation(); confirmDelete(e.currentTarget, async () => { await softDelete(t.coll, d.id); if (state.selected === d.id) { state.selected = null; state.mode = "intro"; } render(); }); }
+    }, "🗑") : null;
+    return el("div", { class: "item-wrap" },
+      el("button", {
+        type: "button", class: "item", ...colorAttrs(g),
+        "aria-current": String(state.selected === d.id && state.mode === "view"), onclick: () => openItem(d.id),
+      }, el("h3", {}, d.title), el("div", { class: "meta" }, meta)),
+      delBtn);
   }));
 }
 
