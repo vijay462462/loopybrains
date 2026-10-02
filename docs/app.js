@@ -919,21 +919,33 @@ function visibleMarket() {
 
 function renderMarketList() {
   const rows = visibleMarket();
+  const availCount = state.market.filter(r => !r.deleted && !r.sold).length;
+  const mktBanner = el("div", { class: "mkt-banner" },
+    el("div", { class: "mkt-banner-side" },
+      el("div", { class: "mkt-banner-icon" }, "🛒"),
+      el("div", {},
+        el("strong", {}, "Campus Market"),
+        el("div", { class: "hint" }, availCount + " item" + (availCount !== 1 ? "s" : "") + " available"),
+      )
+    ),
+    el("div", { class: "mkt-banner-btns" },
+      el("button", { class: "btn primary sm", type: "button", onclick: () => {
+        state.filter = "available"; $("filter").value = "available"; render();
+      }}, "🛍 Buy an item"),
+      el("button", { class: "btn sm", type: "button", onclick: openAsk }, "📦 Sell an item"),
+    )
+  );
   if (!rows.length) {
     $("list").replaceChildren(
-      el("div", { class: "mkt-hero" },
-        el("div", { class: "mkt-hero-icon" }, "🛒"),
-        el("h3", {}, "Campus Market"),
-        el("p", {}, "Buy and sell textbooks, electronics, hostel items and more with fellow RGUKT students."),
-        el("button", { class: "btn primary", type: "button", onclick: openAsk }, "Sell an item")
-      ),
+      mktBanner,
       state.market.length
-        ? el("div", { class: "empty" }, el("strong", {}, "Nothing matches"), "Try another category or clear the search.")
-        : el("div", { class: "empty" }, el("strong", {}, "No listings yet"), "Be the first to sell something!")
+        ? el("div", { class: "empty" }, el("strong", {}, "Nothing matches"), " Try another category or clear the search.")
+        : el("div", { class: "empty" }, el("strong", {}, "No listings yet"), " Be the first to sell something!")
     );
     return;
   }
   $("list").replaceChildren(
+    mktBanner,
     el("div", { class: "mkt-grid" },
       ...rows.map(d => {
         const condColor = CONDITION_COLOR[d.condition] || "#6b7280";
