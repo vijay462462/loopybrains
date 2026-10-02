@@ -2458,13 +2458,15 @@ function typingTest() {
 }
 
 function renderFun() {
-  const tabs = [["music", "🎵 Songs"], ["mem", "🎮 Memory"], ["type", "⌨️ Typing"], ["riddle", "🧩 Riddles"], ["fact", "💡 Fun facts"], ["free", "🌐 Free fun"]];
-  let view = "music", riddles = funShuffle(FUN_RIDDLES), ri = 0, showAns = false, fi = Math.floor(Math.random() * FUN_FACTS.length);
+  const tabs = [["player", "🎧 Player"], ["music", "🎵 Songs"], ["mem", "🎮 Memory"], ["type", "⌨️ Typing"], ["riddle", "🧩 Riddles"], ["fact", "💡 Fun facts"], ["free", "🌐 Free fun"]];
+  let view = window.__funStart || "player", riddles = funShuffle(FUN_RIDDLES), ri = 0, showAns = false, fi = Math.floor(Math.random() * FUN_FACTS.length);
   const body = el("div", { class: "fun-body", id: "funMusicBody" });
   const bar = el("div", { class: "rowbtns" });
   const draw = () => {
     bar.replaceChildren(...tabs.map(([id, label]) => el("button", { class: "btn sm" + (view === id ? " primary" : ""), type: "button", onclick: () => { view = id; draw(); } }, label)));
-    if (view === "music") {
+    window.__funStart = null;
+    if (view === "player") body.replaceChildren(window.SparkPlayer ? window.SparkPlayer.mount() : el("p", { class: "hint" }, "The music player could not load. Reload the page and try again."));
+    else if (view === "music") {
       body.replaceChildren(
         chillPlayer(),
         el("div", { class: "label" }, "🎬 Music director and singer jukeboxes"),
@@ -5039,6 +5041,7 @@ $("filterToggle").addEventListener("click", () => { document.querySelector("head
 $("botBtn").addEventListener("click", () => { if (window.sparkBotToggle) window.sparkBotToggle(); });
 $("alumniBtn").addEventListener("click", () => { alumniView = "dir"; showPanel("alumni"); });
 $("funBtn").addEventListener("click", () => showPanel("fun"));
+window.sparkOpenPlayer = () => { window.__funStart = "player"; sheetKey = ""; showPanel("fun"); };
 $("aboutBtn").addEventListener("click", () => showPanel("about"));
 $("careerBtn").addEventListener("click", () => { careerBranch = null; showPanel("career"); });
 $("nameBtn").addEventListener("click", () => { state.afterName = null; showPanel(getName() ? "me" : "name"); });
