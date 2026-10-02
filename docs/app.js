@@ -1831,6 +1831,111 @@ function renderLearn() {
   ];
 }
 
+
+// ---------- career guide: what to do after graduation, by branch ----------
+let careerBranch = null;
+const GATE_URL = "https://gate2025.iisc.ac.in/";
+const CAREER_COMMON = {
+  higher: (gatePaper, extra = []) => ({ icon: "🎓", title: "Higher studies in India",
+    note: "M.Tech / MS by research via GATE (" + gatePaper + "). IITs, NITs, IIITs and IISc admit through GATE scores. A GATE scholarship pays a monthly stipend.",
+    links: [["GATE official", GATE_URL], ["COAP (IIT M.Tech)", "https://coap.iitb.ac.in"], ["CCMT (NIT/IIIT M.Tech)", "https://ccmt.admissions.nic.in"], ["GATE Overflow", "https://gateoverflow.in/"], ...extra] }),
+  abroad: () => ({ icon: "🌍", title: "Study abroad (MS / PhD)",
+    note: "Start in E3. Needs a strong CGPA, 2-3 projects or a research paper, recommendation letters and GRE/IELTS where required. Germany has no tuition at public universities.",
+    links: [["EducationUSA (free advising)", "https://www.educationusa.in"], ["DAAD Germany", "https://www.daad.in"], ["Chevening UK scholarship", "https://www.chevening.org"], ["Study in Australia", "https://www.studyaustralia.gov.au"]] }),
+  mba: () => ({ icon: "📈", title: "MBA / Management",
+    note: "Good after 1-2 years of work experience. Entrance exams: CAT (IIMs), XAT, GMAT.",
+    links: [["CAT official", "https://iimcat.ac.in"], ["IIM Bangalore", "https://www.iimb.ac.in"]] }),
+  startup: () => ({ icon: "💡", title: "Startup, freelancing and entrepreneurship",
+    note: "Build a product or offer freelance services while still in college. Government support and free mentoring is available.",
+    links: [["Startup India", "https://www.startupindia.gov.in"], ["Skill India Digital", "https://www.skillindiadigital.gov.in"], ["Apprenticeship India", "https://apprenticeshipindia.gov.in"]] }),
+};
+const CAREER = {
+  CSE: { tag: "Computer Science & Engineering", sections: [
+    { icon: "💻", title: "Private sector jobs", note: "Software Developer, Full-stack / Backend / Frontend, Data Analyst, Data Scientist, ML Engineer, DevOps / Cloud Engineer, QA / Test Engineer, Cybersecurity Analyst, Product Manager.",
+      links: [["TCS NextStep", "https://nextstep.tcs.com"], ["Infosys", "https://www.infosys.com/careers/"], ["Wipro", "https://careers.wipro.com"], ["Amazon", "https://www.amazon.jobs"], ["Zoho", "https://www.zoho.com/careers/"], ["National Career Service", "https://www.ncs.gov.in"]] },
+    CAREER_COMMON.higher("CS paper", [["IIIT Hyderabad", "https://www.iiit.ac.in"]]),
+    { icon: "🏛️", title: "Government and PSU", note: "PSUs hiring through GATE CS (ISRO, DRDO, BARC, NIC, BEL, ECIL), plus SSC, banking IT officer and state PSC technical posts.",
+      links: [["ISRO", "https://www.isro.gov.in/Careers.html"], ["DRDO RAC", "https://rac.gov.in"], ["NIC", "https://www.nic.in"], ["BEL", "https://bel-india.in"], ["SSC", "https://ssc.gov.in"]] },
+    CAREER_COMMON.abroad(), CAREER_COMMON.mba(), CAREER_COMMON.startup(),
+    { icon: "🛠️", title: "Skills to build now (all free)", note: "DSA, one backend or web stack, SQL, Git, cloud basics, one ML or security specialisation, and 3+ real projects on GitHub.",
+      links: [["roadmap.sh", "https://roadmap.sh"], ["CSES Problem Set", "https://cses.fi/problemset/"], ["freeCodeCamp", "https://www.freecodecamp.org"], ["CS50", "https://cs50.harvard.edu/x/"], ["Kaggle Learn", "https://www.kaggle.com/learn"], ["AWS Skill Builder", "https://skillbuilder.aws"]] },
+  ]},
+  ECE: { tag: "Electronics & Communication Engineering", sections: [
+    { icon: "📡", title: "Private sector jobs", note: "VLSI / Semiconductor design and verification, Embedded and IoT engineer, Telecom / 5G network engineer, Signal processing, Hardware / PCB design, plus software roles (ECE students are eligible for IT hiring too).",
+      links: [["Jio", "https://careers.jio.com"], ["Airtel", "https://www.airtel.in/careers"], ["Siemens", "https://jobs.siemens.com"], ["Qualcomm", "https://www.qualcomm.com/company/careers"], ["Texas Instruments", "https://careers.ti.com"], ["National Career Service", "https://www.ncs.gov.in"]] },
+    CAREER_COMMON.higher("EC paper", [["India Semiconductor Mission", "https://www.ism.gov.in"]]),
+    { icon: "🏛️", title: "Government and PSU", note: "ISRO scientist/engineer, DRDO, BEL, BSNL, ECIL, HAL, Indian Navy / Air Force technical entries, Railways (RRB JE/ALP signalling), SSC JE, and ESE (UPSC Engineering Services).",
+      links: [["ISRO", "https://www.isro.gov.in/Careers.html"], ["DRDO RAC", "https://rac.gov.in"], ["BEL", "https://bel-india.in"], ["UPSC ESE", "https://upsc.gov.in"], ["RRB", "https://indianrailways.gov.in"], ["SSC", "https://ssc.gov.in"]] },
+    CAREER_COMMON.abroad(), CAREER_COMMON.mba(), CAREER_COMMON.startup(),
+    { icon: "🛠️", title: "Skills to build now (all free)", note: "Digital design + Verilog, embedded C, microcontrollers (Arduino / STM32), MATLAB or Python for signals, PCB basics and a few hardware projects.",
+      links: [["EDA Playground (Verilog)", "https://www.edaplayground.com"], ["NPTEL ECE", "https://nptel.ac.in"], ["Falstad Circuit Simulator", "https://www.falstad.com/circuit/"], ["All About Circuits", "https://www.allaboutcircuits.com"], ["IIT Virtual Labs", "https://www.vlab.co.in"]] },
+  ]},
+  EEE: { tag: "Electrical & Electronics Engineering", sections: [
+    { icon: "⚡", title: "Private sector jobs", note: "Power systems engineer, Substation and transmission design, Renewable energy (solar / wind), EV and battery systems, Automation / PLC / SCADA, Electrical design consultant, plus software roles.",
+      links: [["L&T", "https://www.larsentoubro.com/corporate/careers/"], ["Siemens", "https://jobs.siemens.com"], ["ABB", "https://careers.abb"], ["Tata Power", "https://www.tatapower.com/careers"], ["National Career Service", "https://www.ncs.gov.in"]] },
+    CAREER_COMMON.higher("EE paper"),
+    { icon: "🏛️", title: "Government and PSU", note: "NTPC, Power Grid, BHEL, NHPC, SJVN, state transcos and discoms, Railways (RRB JE electrical), SSC JE, and ESE (UPSC Engineering Services). Most PSUs recruit through GATE EE.",
+      links: [["NTPC", "https://www.ntpc.co.in/careers"], ["Power Grid", "https://www.powergrid.in/en/careers"], ["BHEL", "https://www.bhel.com/careers"], ["NHPC", "https://www.nhpcindia.com"], ["UPSC ESE", "https://upsc.gov.in"], ["RRB", "https://indianrailways.gov.in"]] },
+    { icon: "🔋", title: "Renewable energy and EV", note: "India is expanding solar, wind and EV manufacturing fast. Look at central agencies and national missions for jobs and training.",
+      links: [["MNRE", "https://mnre.gov.in"], ["SECI", "https://www.seci.co.in"], ["Bureau of Energy Efficiency", "https://beeindia.gov.in"]] },
+    CAREER_COMMON.abroad(), CAREER_COMMON.mba(), CAREER_COMMON.startup(),
+    { icon: "🛠️", title: "Skills to build now (all free)", note: "MATLAB / Simulink, power system analysis software, PLC basics, AutoCAD Electrical, electrical codes and safety standards.",
+      links: [["NPTEL Electrical", "https://nptel.ac.in"], ["Electrical4U", "https://www.electrical4u.com"], ["MIT OCW", "https://ocw.mit.edu"]] },
+  ]},
+  Civil: { tag: "Civil Engineering", sections: [
+    { icon: "🏗️", title: "Private sector jobs", note: "Site / Project engineer, Structural design engineer, Quantity surveyor and estimator, Highway and transportation planner, Water and environmental engineer, Real estate and infrastructure companies.",
+      links: [["L&T Construction", "https://www.larsentoubro.com/corporate/careers/"], ["Tata Projects", "https://www.tataprojects.com/careers"], ["National Career Service", "https://www.ncs.gov.in"]] },
+    CAREER_COMMON.higher("CE paper"),
+    { icon: "🏛️", title: "Government jobs (largest opportunity for Civil)", note: "State PWD, Irrigation, R&B and Panchayat Raj engineering posts, SSC JE, Railways RRB JE, NHAI, CPWD, MES, PSUs through GATE CE, and ESE (UPSC Engineering Services).",
+      links: [["APPSC", "https://psc.ap.gov.in"], ["TSPSC", "https://www.tspsc.gov.in"], ["SSC JE", "https://ssc.gov.in"], ["RRB", "https://indianrailways.gov.in"], ["NHAI", "https://nhai.gov.in"], ["CPWD", "https://cpwd.gov.in"], ["UPSC ESE", "https://upsc.gov.in"]] },
+    { icon: "🌆", title: "Urban planning, GIS and environment", note: "Specialise through M.Tech or M.Plan. GIS and remote sensing skills are in demand in smart-city, water and disaster-management projects.",
+      links: [["QGIS (free GIS)", "https://qgis.org"], ["ISRO Bhuvan", "https://bhuvan.nrsc.gov.in"], ["Smart Cities Mission", "https://smartcities.gov.in"]] },
+    CAREER_COMMON.abroad(), CAREER_COMMON.mba(), CAREER_COMMON.startup(),
+    { icon: "🛠️", title: "Skills to build now (all free)", note: "AutoCAD, STAAD / ETABS basics, Revit / BIM, estimation and costing, IS codes, site practice during internships.",
+      links: [["NPTEL Civil", "https://nptel.ac.in"], ["BIS (IS codes)", "https://www.bis.gov.in"], ["Engineering Toolbox", "https://www.engineeringtoolbox.com"]] },
+  ]},
+  Mech: { tag: "Mechanical Engineering", sections: [
+    { icon: "⚙️", title: "Private sector jobs", note: "Design engineer (CAD/CAE), Manufacturing and production engineer, Automotive / EV engineer, HVAC and thermal engineer, Quality and maintenance engineer, Robotics and automation.",
+      links: [["Tata Motors", "https://www.tatamotors.com/careers/"], ["Mahindra", "https://www.mahindra.com/careers"], ["L&T", "https://www.larsentoubro.com/corporate/careers/"], ["Siemens", "https://jobs.siemens.com"], ["National Career Service", "https://www.ncs.gov.in"]] },
+    CAREER_COMMON.higher("ME paper"),
+    { icon: "🏛️", title: "Government and PSU", note: "BHEL, NTPC, HAL, ONGC, IOCL, HPCL, BPCL, GAIL, SAIL, ISRO, DRDO, Railways (RRB JE, workshops), SSC JE, and ESE (UPSC Engineering Services). Most PSUs recruit through GATE ME.",
+      links: [["BHEL", "https://www.bhel.com/careers"], ["HAL", "https://hal-india.co.in"], ["IOCL", "https://iocl.com/people-career"], ["ONGC", "https://ongcindia.com/web/eng/careers"], ["ISRO", "https://www.isro.gov.in/Careers.html"], ["UPSC ESE", "https://upsc.gov.in"]] },
+    { icon: "🤖", title: "Robotics, EV and advanced manufacturing", note: "Mechatronics, 3D printing, drones and EV design are growing quickly. Build projects and enter student design competitions.",
+      links: [["FreeCAD (free CAD)", "https://www.freecad.org"], ["NPTEL Mechanical", "https://nptel.ac.in"], ["SAE India", "https://www.saeindia.org"]] },
+    CAREER_COMMON.abroad(), CAREER_COMMON.mba(), CAREER_COMMON.startup(),
+    { icon: "🛠️", title: "Skills to build now (all free)", note: "SolidWorks / CATIA / FreeCAD, ANSYS basics, manufacturing processes, thermodynamics for GATE, Python for automation, one end-to-end project.",
+      links: [["Engineering Toolbox", "https://www.engineeringtoolbox.com"], ["MIT OCW", "https://ocw.mit.edu"], ["NPTEL", "https://nptel.ac.in"]] },
+  ]},
+};
+function renderCareer() {
+  const back = el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back"));
+  if (!careerBranch) {
+    return [
+      el("h2", {}, "🚀 Career Guide"),
+      el("p", { class: "hint" }, "Finished (or about to finish) your degree and unsure what next? Pick your branch to see every career path with free links."),
+      el("div", { class: "label" }, "Select your branch"),
+      el("div", { class: "rowbtns" }, Object.keys(CAREER).map(b =>
+        el("button", { class: "btn primary", type: "button", onclick: () => { careerBranch = b; render(); } }, b))),
+      el("p", { class: "hint" }, "Tip: ECE, EEE, Civil and Mech students can also apply to software roles. Core and PSU jobs mostly need a good GATE score."),
+      back,
+    ];
+  }
+  const c = CAREER[careerBranch];
+  return [
+    el("h2", {}, "🚀 " + careerBranch + " — after graduation"),
+    el("p", { class: "hint" }, c.tag + ". Options you can choose after B.Tech. Tap any link; all are free to use."),
+    el("div", { class: "rowbtns" }, Object.keys(CAREER).map(b =>
+      el("button", { class: "btn sm" + (b === careerBranch ? " primary" : ""), type: "button", onclick: () => { careerBranch = b; render(); } }, b))),
+    ...c.sections.map(sec => el("div", { class: "learn-card" },
+      el("strong", {}, sec.icon + " " + sec.title),
+      el("p", { class: "hint" }, sec.note),
+      el("div", { class: "rowbtns" }, sec.links.map(([label, url]) => outLink(url, label, "linkbtn"))))),
+    el("div", { class: "rowbtns" },
+      el("button", { class: "btn", type: "button", onclick: () => { careerBranch = null; render(); } }, "Change branch"),
+      el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")),
+  ];
+}
+
 // ---------- study tools: formula cards, PYQ, placement, study plan ----------
 const FORMULAS = {
   "DLD": [
@@ -4030,6 +4135,7 @@ function render() {
       state.mode === "me" ? renderMe() :
       state.mode === "learn" ? renderLearn() :
       state.mode === "resources" ? renderResources() :
+      state.mode === "career" ? renderCareer() :
       state.mode === "network" ? renderNetwork() :
       state.mode === "name" ? renderName() :
       state.mode === "campus" ? renderCampusPicker() :
@@ -4072,6 +4178,7 @@ $("networkBtn") && $("networkBtn").addEventListener("click", () => showPanel("ne
 $("quizBtn").addEventListener("click", () => showPanel("quiz"));
 $("learnBtn").addEventListener("click", () => showPanel("learn"));
 $("studyBtn").addEventListener("click", () => showPanel("resources"));
+$("careerBtn").addEventListener("click", () => { careerBranch = null; showPanel("career"); });
 $("nameBtn").addEventListener("click", () => { state.afterName = null; showPanel(getName() ? "me" : "name"); });
 $("search").addEventListener("input", (e) => { state.query = e.target.value; renderList(); });
 $("filter").addEventListener("change", (e) => { state.filter = e.target.value; renderList(); });

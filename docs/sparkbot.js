@@ -16,6 +16,12 @@ const KB = [
     ]},
 
 
+  // ── After graduation ─────────────────────────────────────
+  { p: /after (b\.?tech|graduation|engineering|degree|college)|what next|further (step|stud)|career (option|path|guide)|next step|future plan|higher stud|after (e4|4th year|final year)/i,
+    r: [
+      "🚀 **After B.Tech — What Next?**\n\nTap the **🚀 Career Guide** button at the top of the app, pick your branch (CSE · ECE · EEE · Civil · Mech) and see every path with free links.\n\n**Main paths for every branch:**\n① 💼 **Private jobs** — apply on company pages → [National Career Service](https://www.ncs.gov.in)\n② 🎓 **M.Tech via GATE** → [GATE official](https://gate2025.iisc.ac.in/) · [COAP](https://coap.iitb.ac.in) · [CCMT](https://ccmt.admissions.nic.in)\n③ 🏛️ **Govt / PSU jobs** → [UPSC ESE](https://upsc.gov.in) · [SSC](https://ssc.gov.in) · PSUs via GATE\n④ 🌍 **MS / PhD abroad** → [EducationUSA](https://www.educationusa.in) · [DAAD Germany](https://www.daad.in)\n⑤ 📈 **MBA** → [CAT](https://iimcat.ac.in)\n⑥ 💡 **Startup** → [Startup India](https://www.startupindia.gov.in)\n\n*Tell me your branch and I'll suggest the best path!* 🎯",
+    ]},
+
   // ── Company links ────────────────────────────────────────
   { p: /\b(tcs|infosys|wipro|hcl|capgemini|cognizant|tech ?mahindra|accenture|amazon|flipkart|google|microsoft|zoho|deloitte|ibm|oracle|bhel|isro|ntpc|l ?& ?t|siemens|abb|jio|airtel|companies|company links?|company career|top companies|which companies)\b/i,
     r: [
