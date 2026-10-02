@@ -673,7 +673,7 @@ function renderTrendBar() {
   bar.replaceChildren(
     el("span", { class: "trend-label" }, "🔥 Trending now:"),
     ...hot.map(([s, n]) => el("button", { class: "trend-chip", type: "button",
-      onclick: () => { state.tab = "doubts"; state.group = s; render(); }
+      onclick: () => { state.tab = "doubts"; state.group = s; state.selected = null; state.mode = "intro"; state.filter = "all"; state.query = ""; render(); }
     }, el("span", { ...colorAttrs(s, "doubts") }, s), el("span", { class: "trend-n" }, "+" + n)))
   );
 }
