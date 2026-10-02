@@ -89,7 +89,7 @@ const DEPT_VISUAL = {
 
 const state = {
   tab: "doubts", group: "All", query: "", filter: "all",
-  doubts: [], ideas: [], clubs: [], gate: [], challenges: [], replies: [], likes: [], loaded: false,
+  doubts: [], ideas: [], clubs: [], gate: [], challenges: [], chalScores: [], replies: [], likes: [], loaded: false,
   selected: null, mode: "intro", // intro | view | ask | edit | name | campus
   afterName: null,
   replyPages: [], replyAnon: false,
@@ -1446,6 +1446,9 @@ const PLACEMENT_RES = [
 ];
 
 let resourceTab = "formulas";
+// ---------- challenge quiz in-progress state ----------
+let chalQuiz = null; // {challengeId, startTime, answers:[], timer:null}
+
 let formulaOpen = null;
 let mcqSubj = null;
 let mcqRevealed = {};
@@ -2416,10 +2419,187 @@ function renderName() {
   return [el("h2", {}, "What should classmates call you?"), form];
 }
 
+// ---------- challenge helpers ----------
+const CHAL_TYPES = ["Quiz","Puzzle Hunt","Riddle","Code Challenge","Event"];
+const CHAL_ICONS = { "Quiz":"🎯","Puzzle Hunt":"🧩","Riddle":"🤔","Code Challenge":"💻","Event":"🏆" };
+const CHAL_LIMITS = [0,5,10,20,30,60]; // 0 = no limit
+
+function chalScoresFor(challengeId) {
+  return state.chalScores.filter(s => s.challengeId === challengeId);
+}
+function myChalScore(challengeId) {
+  return store ? chalScoresFor(challengeId).find(s => s.userId === store.uid) : null;
+}
+
+function renderChalQuiz(d) {
+  const questions = d.questions || [];
+  if (!questions.length) return null;
+  const timeLimit = d.timeLimit || 0;
+  const myScore = myChalScore(d.id);
+  const isClosed = d.status === "closed";
+
+  // Already submitted
+  if (myScore) {
+    const max = questions.length * 10;
+    return el("div", { class: "chal-quiz-done" },
+      el("div", { class: "chal-result-banner" },
+        el("span", { class: "chal-result-score" }, myScore.score + "/" + max),
+        el("span", { class: "chal-result-sub" }, "Your score · " + Math.round(myScore.timeTaken) + "s taken")
+      ),
+      el("div", { class: "chal-answers-review" },
+        ...questions.map((q, qi) => {
+          const chosen = myScore.answers ? myScore.answers[qi] : undefined;
+          return el("div", { class: "chal-q" },
+            el("p", { class: "chal-q-text" }, (qi+1) + ". " + q.q),
+            el("div", { class: "chal-opts" }, q.opts.map((opt, oi) => {
+              let cls = "chal-opt reviewed";
+              if (oi === q.ans) cls += " correct";
+              else if (oi === chosen) cls += " wrong";
+              return el("div", { class: cls }, el("b", {}, "ABCD"[oi]), opt);
+            }))
+          );
+        })
+      )
+    );
+  }
+
+  if (isClosed) return el("p", { class: "hint" }, "This challenge is closed. No more submissions.");
+
+  // Quiz in progress for THIS challenge
+  if (chalQuiz && chalQuiz.challengeId === d.id) {
+    const elapsed = Math.floor((Date.now() - chalQuiz.startTime) / 1000);
+    const limitSecs = timeLimit * 60;
+    const remaining = timeLimit > 0 ? Math.max(0, limitSecs - elapsed) : null;
+    const mins = remaining !== null ? Math.floor(remaining / 60) : null;
+    const secs = remaining !== null ? remaining % 60 : null;
+    const timedOut = remaining !== null && remaining <= 0;
+
+    const submitQuiz = async () => {
+      const answers = chalQuiz.answers.slice();
+      const timeTaken = Math.floor((Date.now() - chalQuiz.startTime) / 1000);
+      let score = 0;
+      questions.forEach((q, qi) => { if (answers[qi] === q.ans) score += 10; });
+      if (chalQuiz.timer) clearInterval(chalQuiz.timer);
+      chalQuiz = null;
+      if (!store) return;
+      const docId = d.id + "_" + store.uid;
+      const doc = { challengeId: d.id, userId: store.uid, userName: getName() || "A student", score, timeTaken, answers, submittedAt: Date.now() };
+      state.chalScores = [...state.chalScores.filter(s => s.challengeId + "_" + s.userId !== docId), { id: docId, ...doc }];
+      render();
+      await store.set("chal_scores", docId, doc).catch(e => showNotice(errText(e)));
+    };
+
+    if (timedOut) { submitQuiz(); return null; }
+
+    return el("div", { class: "chal-quiz-active" },
+      remaining !== null && el("div", { class: "chal-timer" + (remaining < 30 ? " chal-timer-red" : "") },
+        "⏱ " + String(mins).padStart(2,"0") + ":" + String(secs).padStart(2,"0")
+      ),
+      ...questions.map((q, qi) => {
+        const chosen = chalQuiz.answers[qi];
+        return el("div", { class: "chal-q" },
+          el("p", { class: "chal-q-text" }, (qi+1) + ". " + q.q),
+          el("div", { class: "chal-opts" }, q.opts.map((opt, oi) =>
+            el("button", { type: "button", class: "chal-opt" + (chosen === oi ? " selected" : ""),
+              onclick: () => { chalQuiz.answers[qi] = oi; render(); }
+            }, el("b", {}, "ABCD"[oi]), opt)
+          ))
+        );
+      }),
+      el("div", { class: "rowbtns" },
+        el("button", { type: "button", class: "btn primary", onclick: submitQuiz }, "Submit Quiz"),
+        el("button", { type: "button", class: "btn", onclick: () => { if (chalQuiz && chalQuiz.timer) clearInterval(chalQuiz.timer); chalQuiz = null; render(); } }, "Abandon")
+      )
+    );
+  }
+
+  // Start button
+  if (!getName()) return el("p", { class: "hint" }, "Set your name first to take this quiz.");
+  return el("div", { class: "chal-start-wrap" },
+    el("div", { class: "chal-start-info" },
+      el("span", { class: "pill" }, questions.length + " questions"),
+      timeLimit > 0 && el("span", { class: "pill" }, "⏱ " + timeLimit + " min limit")
+    ),
+    el("button", { type: "button", class: "btn primary chal-start-btn",
+      onclick: () => {
+        chalQuiz = { challengeId: d.id, startTime: Date.now(), answers: new Array(questions.length).fill(undefined), timer: null };
+        if (timeLimit > 0) {
+          chalQuiz.timer = setInterval(() => {
+            const elapsed = Math.floor((Date.now() - chalQuiz.startTime) / 1000);
+            if (elapsed >= timeLimit * 60) { clearInterval(chalQuiz.timer); }
+            render();
+          }, 1000);
+        }
+        render();
+      }
+    }, "🚀 Start Quiz")
+  );
+}
+
+function renderChalLeaderboard(d) {
+  const scores = chalScoresFor(d.id).sort((a, b) => b.score - a.score || a.timeTaken - b.timeTaken);
+  const own = mine(d);
+  if (!scores.length) return el("p", { class: "hint" }, "No one has submitted yet. Be the first.");
+  return el("div", { class: "chal-board" },
+    el("div", { class: "chal-board-hdr" }, "🏆 Leaderboard"),
+    ...scores.map((s, i) => {
+      const isWinner = d.winner === s.userId;
+      const isRunner = d.runnerUp === s.userId;
+      const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : (i+1) + ".";
+      return el("div", { class: "chal-board-row" + (isWinner ? " chal-winner" : isRunner ? " chal-runner" : "") },
+        el("span", { class: "chal-rank" }, medal),
+        el("span", { class: "chal-board-name" }, s.userName + (isWinner ? " 🏆 Winner" : isRunner ? " 🥈 Runner-up" : "")),
+        el("span", { class: "chal-board-score" }, s.score + " pts · " + s.timeTaken + "s"),
+        own && !d.winner && el("button", { type: "button", class: "linkbtn", onclick: () => store.update("challenges", d.id, { winner: s.userId, winnerName: s.userName }).catch(e => showNotice(errText(e))) }, "Award 🏆"),
+        own && d.winner && !d.runnerUp && s.userId !== d.winner && el("button", { type: "button", class: "linkbtn", onclick: () => store.update("challenges", d.id, { runnerUp: s.userId, runnerUpName: s.userName }).catch(e => showNotice(errText(e))) }, "Award 🥈")
+      );
+    })
+  );
+}
+
+function renderChalQuizBuilder(onUpdate) {
+  let questions = [];
+  const wrap = el("div", { class: "chal-builder" });
+  const draw = () => {
+    wrap.replaceChildren(
+      el("div", { class: "chal-q-list" }, ...questions.map((q, qi) =>
+        el("div", { class: "chal-qb-item" },
+          el("div", { class: "chal-qb-hdr" },
+            el("strong", {}, "Q" + (qi+1)),
+            el("button", { type: "button", class: "linkbtn danger", onclick: () => { questions.splice(qi,1); draw(); onUpdate(questions); } }, "Remove")
+          ),
+          el("input", { type: "text", class: "chal-qb-q", placeholder: "Question text", maxlength: "300", value: q.q,
+            oninput: (e) => { q.q = e.target.value; onUpdate(questions); }
+          }),
+          el("div", { class: "chal-qb-opts" },
+            ...q.opts.map((opt, oi) =>
+              el("label", { class: "chal-qb-opt" + (q.ans === oi ? " chal-qb-correct" : "") },
+                el("input", { type: "radio", name: "ans-" + qi, checked: q.ans === oi,
+                  onchange: () => { q.ans = oi; draw(); onUpdate(questions); }
+                }),
+                el("input", { type: "text", placeholder: "ABCD"[oi] + " option", maxlength: "150", value: opt,
+                  oninput: (e) => { q.opts[oi] = e.target.value; onUpdate(questions); }
+                }),
+                q.ans === oi && el("span", { class: "chal-correct-tag" }, "✔ Correct")
+              )
+            )
+          )
+        )
+      )),
+      questions.length < 10 && el("button", { type: "button", class: "btn sm", onclick: () => {
+        questions.push({ q: "", opts: ["","","",""], ans: 0 });
+        draw(); onUpdate(questions);
+      } }, "+ Add Question")
+    );
+  };
+  draw();
+  return wrap;
+}
+
 function renderAsk(existing) {
   const t = TABS[state.tab];
   const err = el("p", { class: "err", hidden: true });
-  const label = existing ? "Save changes" : (state.tab === "doubts" ? "Post doubt" : "Post idea");
+  const label = existing ? "Save changes" : (state.tab === "doubts" ? "Post doubt" : state.tab === "challenges" ? "Post challenge" : "Post idea");
   const current = existing ? existing[t.field] : (state.group !== "All" ? state.group : t.groups[0]);
   const groups = t.groups.includes(current) ? t.groups : [...t.groups, current];
   const newPages = []; // data URLs added in this form
@@ -2452,6 +2632,13 @@ function renderAsk(existing) {
       if (yearVal) doc.year = yearVal;
       if (tagsVal) doc.tags = tagsVal;
       if (state.tab === "doubts") { doc.resolvedReplyId = null; doc.bounty = bounty; }
+      if (state.tab === "challenges") {
+        doc.chalType = form.elements.chalType ? form.elements.chalType.value : "Quiz";
+        doc.timeLimit = Number(form.elements.chalTimeLimit ? form.elements.chalTimeLimit.value : 0);
+        const chalSec = form.querySelector(".chal-ask-section");
+        doc.questions = chalSec && chalSec._getQuestions ? chalSec._getQuestions().filter(q => q.q.trim()) : [];
+        doc.status = "open";
+      }
       const myC = getCampus(); if (myC) doc.campus = myC;
       // Show the new post straight away; the live update replaces it with the saved copy.
       state[t.coll] = [{ id, ...doc }, ...state[t.coll].filter(x => x.id !== id)];
@@ -2485,6 +2672,49 @@ function renderAsk(existing) {
       el("label", { class: "check" }, el("input", { type: "checkbox", id: "f-anon", name: "anon", checked: !!(existing && existing.anonymous) }), "🙈 Post anonymously (classmates won't see your name)"),
       state.tab === "doubts" && el("label", { class: "check" }, el("input", { type: "checkbox", id: "f-urgent", name: "urgent", checked: !!(existing && existing.urgent) }), "🔥 Urgent: exam or deadline soon"),
       state.tab === "doubts" && el("label", { class: "check" }, el("input", { type: "checkbox", id: "f-bounty", name: "bounty", checked: !!(existing && existing.bounty) }), "🎁 Bounty: whoever solves this gets +5 bonus points")),
+    state.tab === "challenges" && (() => {
+      const chalSection = el("div", { class: "chal-ask-section" });
+      const timeSel = el("select", { id: "f-chal-time", name: "chalTimeLimit", class: "chal-time-sel" },
+        ...CHAL_LIMITS.map(v => el("option", { value: String(v), selected: !!(existing && existing.timeLimit === v) }, v === 0 ? "No time limit" : v + " minutes"))
+      );
+      const builderWrap = el("div", { id: "chal-builder-wrap" });
+      let _questions = (existing && existing.questions) ? JSON.parse(JSON.stringify(existing.questions)) : [];
+      const builder = renderChalQuizBuilder(q => { _questions = q; });
+      builderWrap.append(builder);
+      const typeSection = el("div", { class: "chal-type-row" },
+        el("label", {}, "Challenge Type",
+          el("div", { class: "chal-type-btns" },
+            ...CHAL_TYPES.map(ct => {
+              const cur2 = existing ? existing.chalType : CHAL_TYPES[0];
+              return el("button", { type: "button", class: "chal-type-btn" + (ct === cur2 ? " selected" : ""),
+                onclick: (e) => {
+                  chalSection.querySelectorAll(".chal-type-btn").forEach(b => b.classList.remove("selected"));
+                  e.currentTarget.classList.add("selected");
+                  const hidden = chalSection.querySelector("[name=chalType]");
+                  if (hidden) hidden.value = ct;
+                  builderWrap.hidden = (ct !== "Quiz" && ct !== "Code Challenge");
+                }
+              }, CHAL_ICONS[ct] || "🎯", " ", ct);
+            })
+          ),
+          el("input", { type: "hidden", name: "chalType", value: existing ? (existing.chalType || CHAL_TYPES[0]) : CHAL_TYPES[0] })
+        )
+      );
+      builderWrap.hidden = !(!existing || existing.chalType === "Quiz" || existing.chalType === "Code Challenge");
+      chalSection.append(
+        typeSection,
+        el("label", { class: "chal-time-label" }, "Time limit for participants",
+          timeSel
+        ),
+        el("label", { class: "chal-builder-label" }, "MCQ Questions (optional for quiz/code challenges)",
+          el("p", { class: "hint" }, "Add questions with 4 options each. Mark the correct answer. Participants get scored automatically.")
+        ),
+        builderWrap
+      );
+      // Store questions on submit via data attribute
+      chalSection._getQuestions = () => _questions;
+      return chalSection;
+    })(),
     err,
     el("div", { class: "rowbtns" },
       el("button", { class: "btn primary", type: "submit" }, label),
@@ -2566,6 +2796,51 @@ function renderView() {
   }
   if (d.pages && d.pages.length) out.push(pagesView(d.pages));
   if (d.fileAttachments && d.fileAttachments.length) out.push(renderFileAttachments(d.fileAttachments));
+
+  // Challenge-specific UI
+  if (state.tab === "challenges") {
+    const chalType = d.chalType || "Quiz";
+    const timeLimit = d.timeLimit || 0;
+    const isClosed = d.status === "closed";
+    const own = mine(d);
+    out.push(
+      el("div", { class: "chal-meta-row" },
+        el("span", { class: "chal-type-badge" }, (CHAL_ICONS[chalType] || "🎯") + " " + chalType),
+        timeLimit > 0 && el("span", { class: "pill" }, "⏱ " + timeLimit + " min"),
+        isClosed && el("span", { class: "pill chal-closed" }, "🔒 Closed"),
+        d.winner && el("span", { class: "pill chal-winner-pill" }, "🏆 " + (d.winnerName || "Winner chosen")),
+        d.runnerUp && el("span", { class: "pill chal-runner-pill" }, "🥈 " + (d.runnerUpName || "Runner-up chosen"))
+      )
+    );
+    if (d.questions && d.questions.length) {
+      const quizEl = renderChalQuiz(d);
+      if (quizEl) out.push(quizEl);
+    } else {
+      out.push(el("p", { class: "hint" }, "No MCQ questions — reply with your answer or idea below."));
+    }
+    out.push(renderChalLeaderboard(d));
+    if (own) {
+      out.push(
+        el("div", { class: "rowbtns chal-host-btns" },
+          !isClosed && el("button", { type: "button", class: "btn sm danger",
+            onclick: (e) => {
+              const b = e.currentTarget;
+              if (b.dataset.armed) {
+                store.update("challenges", d.id, { status: "closed" }).catch(ev => showNotice(errText(ev)));
+                return;
+              }
+              b.dataset.armed = "1"; b.textContent = "Tap again to close";
+              setTimeout(() => { if (b.isConnected) { delete b.dataset.armed; b.textContent = "🔒 Close challenge"; } }, 3000);
+            }
+          }, "🔒 Close challenge"),
+          isClosed && el("button", { type: "button", class: "btn sm",
+            onclick: () => store.update("challenges", d.id, { status: "open" }).catch(ev => showNotice(errText(ev)))
+          }, "🔓 Re-open challenge")
+        )
+      );
+    }
+  }
+
   const actions = [];
   const on = liked(d.id), votes = likesFor(d.id).length;
   if (state.tab === "ideas") actions.push(el("button", { class: "like", type: "button", "aria-pressed": String(on), onclick: () => toggleLike(d) }, "♥ " + (on ? "Liked" : "Like") + " · " + votes));
@@ -2800,6 +3075,7 @@ render();
   store.subscribe("clubs", rows => { const live_ = live(rows); trackNew("clubs", live_); state.clubs = live_; update(); }, e => {});
   store.subscribe("gate", rows => { const live_ = live(rows); trackNew("gate", live_); state.gate = live_; update(); }, e => {});
   store.subscribe("challenges", rows => { const live_ = live(rows); trackNew("challenges", live_); state.challenges = live_; update(); }, e => {});
+  store.subscribe("chal_scores", rows => { state.chalScores = rows.filter(r => !r.deleted); update(); }, e => {});
 })();
 
 // ---------- PWA, keyboard shortcuts, offline, FAB ----------
