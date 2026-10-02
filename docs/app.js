@@ -150,15 +150,16 @@ function avatarFor(name) {
   if (!name || name === ANON) return "👤";
   return dbUrl(name);
 }
-// Render a small avatar circle element; accepts emoji string or a URL (renders <img>)
+const AVATAR_ALLOWED = /^https:\/\/api\.dicebear\.com\//;
+// Render a small avatar circle element; accepts emoji string or a safe DiceBear URL (renders <img>)
 function avatarEl(icon, cls = "av") {
-  if (icon && (icon.startsWith("http") || icon.startsWith("data:"))) {
+  if (icon && AVATAR_ALLOWED.test(icon)) {
     const img = document.createElement("img");
     img.className = cls + " av-img";
     img.src = icon; img.alt = "avatar"; img.loading = "lazy";
     return img;
   }
-  return el("span", { class: cls, "aria-hidden": "true" }, icon);
+  return el("span", { class: cls, "aria-hidden": "true" }, icon && icon.startsWith("http") ? "👤" : (icon || "👤"));
 }
 
 const mine = (x) => {
@@ -2424,6 +2425,17 @@ const CHAL_TYPES = ["Quiz","Puzzle Hunt","Riddle","Code Challenge","Event"];
 const CHAL_ICONS = { "Quiz":"🎯","Puzzle Hunt":"🧩","Riddle":"🤔","Code Challenge":"💻","Event":"🏆" };
 const CHAL_LIMITS = [0,5,10,20,30,60]; // 0 = no limit
 
+// Simple answer obfuscation: XOR answer index with a hash of challenge ID + question index
+// This prevents casual DevTools inspection of correct answers before the quiz is submitted
+function chalHash(challengeId, qi) {
+  let h = 0;
+  const s = (challengeId || "") + qi;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+  return ((h >>> 0) % 4); // 0..3, same range as ans
+}
+function encodeAns(ans, challengeId, qi) { return ans ^ chalHash(challengeId, qi); }
+function decodeAns(encoded, challengeId, qi) { return encoded ^ chalHash(challengeId, qi); }
+
 function chalScoresFor(challengeId) {
   return state.chalScores.filter(s => s.challengeId === challengeId);
 }
@@ -2449,11 +2461,12 @@ function renderChalQuiz(d) {
       el("div", { class: "chal-answers-review" },
         ...questions.map((q, qi) => {
           const chosen = myScore.answers ? myScore.answers[qi] : undefined;
+          const correctAns = decodeAns(q.ans, d.id, qi);
           return el("div", { class: "chal-q" },
             el("p", { class: "chal-q-text" }, (qi+1) + ". " + q.q),
             el("div", { class: "chal-opts" }, q.opts.map((opt, oi) => {
               let cls = "chal-opt reviewed";
-              if (oi === q.ans) cls += " correct";
+              if (oi === correctAns) cls += " correct";
               else if (oi === chosen) cls += " wrong";
               return el("div", { class: cls }, el("b", {}, "ABCD"[oi]), opt);
             }))
@@ -2478,7 +2491,7 @@ function renderChalQuiz(d) {
       const answers = chalQuiz.answers.slice();
       const timeTaken = Math.floor((Date.now() - chalQuiz.startTime) / 1000);
       let score = 0;
-      questions.forEach((q, qi) => { if (answers[qi] === q.ans) score += 10; });
+      questions.forEach((q, qi) => { if (answers[qi] === decodeAns(q.ans, d.id, qi)) score += 10; });
       if (chalQuiz.timer) clearInterval(chalQuiz.timer);
       chalQuiz = null;
       if (!store) return;
@@ -2639,7 +2652,7 @@ function renderAsk(existing) {
         doc.questions = (chalSec && chalSec._getQuestions ? chalSec._getQuestions() : [])
           .filter(q => q.q.trim())
           .slice(0, 10)
-          .map(q => ({ q: q.q.slice(0, 300), opts: (q.opts || []).map(o => String(o).slice(0, 150)), ans: Number(q.ans) || 0 }));
+          .map((q, qi) => ({ q: q.q.slice(0, 300), opts: (q.opts || []).map(o => String(o).slice(0, 150)), ans: encodeAns(Number(q.ans) || 0, id, qi) }));
         doc.status = "open";
       }
       const myC = getCampus(); if (myC) doc.campus = myC;
