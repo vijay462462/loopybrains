@@ -2576,6 +2576,16 @@ function renderFun() {
   ];
 }
 
+// ---------- study lab (focus timer, flashcards, CGPA and attendance) ----------
+function renderLab() {
+  return [
+    el("h2", {}, "🧪 Study Lab"),
+    el("p", { class: "hint" }, "Power tools for students. Everything is saved only on this phone, and the focus timer keeps running while you use other parts of Spark."),
+    window.SparkLab ? window.SparkLab.mount() : el("p", { class: "hint" }, "The Study Lab could not load. Reload the page and try again."),
+    el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")),
+  ];
+}
+
 // ---------- about us ----------
 function renderAbout() {
   const feature = (icon, title, text) => el("div", { class: "learn-card" }, el("strong", {}, icon + " " + title), el("p", { class: "hint" }, text));
@@ -5030,7 +5040,7 @@ function render() {
     document.body.dataset.tab = state.tab;
     renderHeader(); renderTrendBar(); renderRail(); renderList(); renderBottomNav();
     // Forms keep what the student is typing while live updates arrive.
-    const key = ["ask", "edit", "name", "alumniJoin", "alumniJob", "fun"].includes(state.mode) ? state.mode + state.tab : "";
+    const key = ["ask", "edit", "name", "alumniJoin", "alumniJob", "fun", "lab"].includes(state.mode) ? state.mode + state.tab : "";
     if (key && key === sheetKey) return;
     sheetKey = key;
     const draft = $("f-reply") ? $("f-reply").value : "";
@@ -5048,6 +5058,7 @@ function render() {
       state.mode === "resources" ? renderResources() :
       state.mode === "career" ? renderCareer() :
       state.mode === "about" ? renderAbout() :
+      state.mode === "lab" ? renderLab() :
       state.mode === "fun" ? renderFun() :
       state.mode === "alumni" ? renderAlumni() :
       state.mode === "alumniJoin" ? alumniForm("profile") :
@@ -5098,6 +5109,7 @@ $("filterToggle").addEventListener("click", () => { document.querySelector("head
 $("botBtn").addEventListener("click", () => { if (window.sparkBotToggle) window.sparkBotToggle(); });
 $("alumniBtn").addEventListener("click", () => { alumniView = "dir"; showPanel("alumni"); });
 $("funBtn").addEventListener("click", () => showPanel("fun"));
+$("labBtn").addEventListener("click", () => showPanel("lab"));
 window.sparkOpenPlayer = () => { window.__funStart = "player"; sheetKey = ""; showPanel("fun"); };
 $("aboutBtn").addEventListener("click", () => showPanel("about"));
 $("careerBtn").addEventListener("click", () => { careerBranch = null; showPanel("career"); });

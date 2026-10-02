@@ -1,0 +1,35 @@
+/* Spark Study Lab */
+.lab-card { display: grid; gap: 10px; border: 1px solid var(--line); border-radius: 16px; padding: 14px; background: color-mix(in oklab, var(--ta) 5%, var(--sheet)); margin-top: 8px; }
+.lab-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.lab-row label { display: grid; gap: 2px; font-size: 12px; font-weight: 700; }
+.lab-row input[type=number] { width: 92px; }
+.lab-mode { font-size: 1rem; text-align: center; }
+.lab-time { font: 800 3.2rem var(--f-mono); text-align: center; letter-spacing: .04em; line-height: 1.1; }
+.lab-track { height: 10px; border-radius: 999px; background: color-mix(in oklab, var(--ta) 14%, var(--sheet)); overflow: hidden; }
+.lab-track.small { height: 6px; }
+.lab-fill { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--ta), var(--tb)); transition: width .4s linear; }
+.lab-fill.goal { background: linear-gradient(90deg, #22c55e, #14b8a6); }
+.lab-hint { color: var(--muted); font-size: 13px; margin: 0; }
+.lab-chip { padding: 7px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--sheet); color: var(--ink); font-weight: 700; cursor: pointer; }
+.lab-chip.on { background: color-mix(in oklab, var(--ta) 24%, var(--sheet)); border-color: var(--ta); color: var(--ta); }
+.lab-flash { border: 2px solid var(--ta); border-radius: 16px; padding: 16px; background: var(--sheet); display: grid; gap: 6px; min-height: 120px; }
+.lab-flash p { margin: 0; font-size: 1.1rem; font-weight: 700; overflow-wrap: anywhere; }
+.lab-flash small { color: var(--muted); text-transform: uppercase; letter-spacing: .08em; font-size: 10px; }
+.lab-ans { color: #16a34a; }
+.lab-study { display: grid; gap: 8px; }
+.lab-det { border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; background: var(--sheet); }
+.lab-det summary { font-weight: 800; cursor: pointer; padding: 4px 0; }
+.lab-cardrow { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.lab-cardrow span { display: grid; min-width: 0; overflow-wrap: anywhere; }
+.lab-cardrow small { color: var(--muted); }
+.lab-x { border: 0; background: transparent; color: #dc2626; font-weight: 800; cursor: pointer; padding: 6px; }
+.lab-result { border-radius: 14px; padding: 12px; background: color-mix(in oklab, var(--ta) 10%, var(--sheet)); display: grid; gap: 4px; }
+.lab-result .ok { color: #16a34a; font-size: 1.2rem; }
+.lab-result .bad { color: #dc2626; font-size: 1.2rem; }
+.lab-result small { color: var(--muted); }
+.lab-body textarea { width: 100%; }
+@media (max-width: 900px) {
+  .hdr-actions .chip.tool#labBtn { grid-column: 1 / -1; flex-direction: row; gap: 10px; padding: 10px 14px; font-size: 13.5px; font-weight: 800;
+    background: linear-gradient(135deg, rgb(255 255 255 / .3), rgb(255 255 255 / .12)); border-color: #fff; }
+  .hdr-actions .chip.tool#labBtn .ci { font-size: 20px; }
+}
