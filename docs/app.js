@@ -3898,32 +3898,51 @@ function renderCampusPicker() {
 }
 
 function render() {
-  renderHeader(); renderTrendBar(); renderRail(); renderList(); renderBottomNav();
-  const fab = $('fabAsk'); if (fab) fab.textContent = state.tab === "market" ? "📦" : "+";
-  // Forms keep what the student is typing while live updates arrive.
-  const key = ["ask", "edit", "name"].includes(state.mode) ? state.mode + state.tab : "";
-  if (key && key === sheetKey) return;
-  sheetKey = key;
-  const draft = $("f-reply") ? $("f-reply").value : "";
-  const t = TABS[state.tab];
-  const cur = ["view", "edit"].includes(state.mode) && state[t.coll].find(x => x.id === state.selected);
-  const ca = colorAttrs(cur ? cur[t.field] : "All");
-  const sheet = $("sheet");
-  sheet.setAttribute("data-s", ca["data-s"]);
-  if (ca.style) sheet.setAttribute("style", ca.style); else sheet.removeAttribute("style");
-  sheet.replaceChildren(...(
-    state.mode === "leaders" ? renderLeaders() :
-    state.mode === "quiz" ? renderQuiz() :
-    state.mode === "me" ? renderMe() :
-    state.mode === "learn" ? renderLearn() :
-    state.mode === "resources" ? renderResources() :
-    state.mode === "network" ? renderNetwork() :
-    state.mode === "name" ? renderName() :
-    state.mode === "campus" ? renderCampusPicker() :
-    state.mode === "ask" ? renderAsk() :
-    state.mode === "edit" && cur ? renderAsk(cur) :
-    state.mode === "view" || state.mode === "edit" ? renderView() : renderIntro()));
-  if (draft && $("f-reply")) $("f-reply").value = draft;
+  try {
+    renderHeader(); renderTrendBar(); renderRail(); renderList(); renderBottomNav();
+    const fab = $('fabAsk'); if (fab) fab.textContent = state.tab === "market" ? "📦" : "+";
+    // Forms keep what the student is typing while live updates arrive.
+    const key = ["ask", "edit", "name"].includes(state.mode) ? state.mode + state.tab : "";
+    if (key && key === sheetKey) return;
+    sheetKey = key;
+    const draft = $("f-reply") ? $("f-reply").value : "";
+    const t = TABS[state.tab];
+    const cur = ["view", "edit"].includes(state.mode) && state[t.coll].find(x => x.id === state.selected);
+    const ca = colorAttrs(cur ? cur[t.field] : "All");
+    const sheet = $("sheet");
+    sheet.setAttribute("data-s", ca["data-s"]);
+    if (ca.style) sheet.setAttribute("style", ca.style); else sheet.removeAttribute("style");
+    sheet.replaceChildren(...(
+      state.mode === "leaders" ? renderLeaders() :
+      state.mode === "quiz" ? renderQuiz() :
+      state.mode === "me" ? renderMe() :
+      state.mode === "learn" ? renderLearn() :
+      state.mode === "resources" ? renderResources() :
+      state.mode === "network" ? renderNetwork() :
+      state.mode === "name" ? renderName() :
+      state.mode === "campus" ? renderCampusPicker() :
+      state.mode === "ask" ? renderAsk() :
+      state.mode === "edit" && cur ? renderAsk(cur) :
+      state.mode === "view" || state.mode === "edit" ? renderView() : renderIntro()));
+    if (draft && $("f-reply")) $("f-reply").value = draft;
+  } catch(err) {
+    console.error("render error:", err);
+    const sheet = $("sheet");
+    if (sheet) sheet.replaceChildren(
+      el("div", { class: "render-err" },
+        el("div", { class: "render-err-icon" }, "⚠️"),
+        el("div", { class: "render-err-msg" }, "Something went wrong loading the page."),
+        el("button", { type: "button", class: "btn primary", onclick: () => {
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(regs => {
+              Promise.all(regs.map(r => r.unregister())).then(() => location.reload(true));
+            }).catch(() => location.reload(true));
+          } else { location.reload(true); }
+        }}, "🔄 Tap here to reload the app"),
+        el("div", { class: "render-err-hint" }, "This clears old cache and loads the latest version."),
+      )
+    );
+  }
 }
 
 // ---------- events ----------

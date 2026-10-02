@@ -81,7 +81,7 @@ header.top .btn.primary { background: #fff; color: var(--g2); border-color: #fff
 .notice { background: var(--sheet); border: 1px dashed var(--line); border-radius: 10px; padding: 12px 16px; color: var(--muted); }
 
 .layout { display: grid; grid-template-columns: 200px minmax(0, 1fr) minmax(0, 1.15fr); gap: 20px; align-items: start; }
-@media (max-width: 1000px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 1100px) { .layout { grid-template-columns: minmax(0, 1fr); } }
 
 .rail { display: grid; gap: 4px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); }
 .rail .label { font: 500 11px var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px 10px; }
@@ -104,7 +104,7 @@ header.top .btn.primary { background: #fff; color: var(--g2); border-color: #fff
 .subjrow input { flex: 1; min-width: 0; }
 .subjrow .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--c); flex: none; }
 .rail .n { font: 500 12px var(--f-mono); font-variant-numeric: tabular-nums; opacity: .75; }
-@media (max-width: 1000px) {
+@media (max-width: 1100px) {
   .rail { position: static; display: flex; flex-wrap: wrap; gap: 6px; }
   .rail .label { width: 100%; margin-left: 0; }
   .rail button { border: 1px solid var(--line); background: var(--sheet); }
@@ -151,7 +151,7 @@ header.top .btn.primary { background: #fff; color: var(--g2); border-color: #fff
   position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px);
   max-height: calc(100vh - 24px); overflow: auto;
 }
-@media (max-width: 1000px) { .sheet { position: static; max-height: none; } }
+@media (max-width: 1100px) { .sheet { position: static; max-height: none; } }
 .sheet h2 { font-size: 1.5rem; font-weight: 800; overflow-wrap: anywhere; }
 .body { white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; }
 .rowbtns { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -1400,6 +1400,11 @@ div.chal-opt.wrong b { background: #ef4444; color: #fff; }
   .gate-course-branch { background: #1e1b4b; color: #a5b4fc; }
 }
 .gate-course-btns { display: flex; gap: 6px; flex-shrink: 0; }
+.render-err { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 32px 20px; text-align: center; }
+.render-err-icon { font-size: 40px; }
+.render-err-msg { font-size: 15px; font-weight: 600; color: var(--text); }
+.render-err-hint { font-size: 12px; color: var(--muted); max-width: 280px; line-height: 1.5; }
+
 .gate-course-empty {
   text-align: center; color: var(--muted); padding: 24px;
   background: var(--sheet); border-radius: 12px; font-size: 13px;
