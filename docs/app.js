@@ -4013,12 +4013,6 @@ function renderCampusPicker() {
 function render() {
   try {
     renderHeader(); renderTrendBar(); renderRail(); renderList(); renderBottomNav();
-    const fab = $('fabAsk');
-    if (fab) {
-      fab.textContent = state.tab === "market" ? "📦" : "+";
-      const showFab = ['doubts','ideas','market'].includes(state.tab);
-      fab.style.setProperty('display', showFab ? 'flex' : 'none', 'important');
-    }
     // Forms keep what the student is typing while live updates arrive.
     const key = ["ask", "edit", "name"].includes(state.mode) ? state.mode + state.tab : "";
     if (key && key === sheetKey) return;

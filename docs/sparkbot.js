@@ -488,14 +488,6 @@ function build() {
   document.getElementById('sb-go').onclick   = send;
   document.getElementById('sb-clr').onclick  = clearChat;
 
-  // ── Force FAB above bot input bar ─────────────────────
-  const fabEl = document.getElementById('fabAsk');
-  if (fabEl) {
-    fabEl.style.setProperty('bottom','175px','important');
-    fabEl.style.setProperty('left','18px','important');
-    fabEl.style.setProperty('right','auto','important');
-  }
-
   // ── Inline styles ─────────────────────────────────────
   const inp = document.getElementById('sb-in');
   Object.assign(inp.style,{
@@ -550,7 +542,6 @@ function toggle() {
   win.classList.toggle('sb-show',isOpen);
   win.setAttribute('aria-hidden',String(!isOpen));
   btn.classList.toggle('sb-open',isOpen);
-  document.body.classList.toggle('sb-active', isOpen);
   if (isOpen) setTimeout(()=>document.getElementById('sb-in')?.focus(),320);
 }
 
@@ -727,9 +718,6 @@ function injectCSS() {
 .sb-link{color:#67e8f9;text-decoration:none;border-bottom:1px solid rgba(103,232,249,.4);font-weight:600;transition:color .15s,border-color .15s;}
 .sb-link:hover{color:#a5f3fc;border-color:rgba(165,243,252,.7);}
 
-/* Move app FAB above the bot input bar so they never overlap */
-.fab{bottom:calc(env(safe-area-inset-bottom,0px) + 160px)!important;left:18px!important;right:auto!important;}
-body.sb-active .fab{opacity:0!important;pointer-events:none!important;transition:opacity .2s!important;}
 
 /* Code blocks */
 .sb-code{background:rgba(15,10,40,.7);border:1px solid rgba(196,181,253,.2);border-radius:8px;padding:8px 10px;font-size:11.5px;font-family:'JetBrains Mono',monospace;color:#c4b5fd;overflow-x:auto;margin:4px 0;white-space:pre;}
