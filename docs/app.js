@@ -797,10 +797,10 @@ function renderBottomNav() {
     ...['doubts', 'ideas', 'clubs', 'market', 'gate'].map(tab => {
       const cnt = state[TABS[tab].coll].length;
       return el('button', { type: 'button', class: 'bnav-btn' + (state.tab === tab ? ' active' : ''), onclick: () => {
-        if (state.tab === tab) return;
+        if (state.tab === tab) { jumpToContent(); return; }
         state.tab = tab; state.group = 'All'; state.filter = 'all'; state.query = '';
         state.selected = null; state.mode = 'intro'; state.gateYearPick = null; state.gateResView = null; $('search').value = '';
-        try { history.replaceState(null, '', '#' + tab); } catch (_) {} render();
+        try { history.replaceState(null, '', '#' + tab); } catch (_) {} render(); jumpToContent();
       } },
         el('span', { class: 'bnav-icon' }, icons[tab]),
         el('span', { class: 'bnav-label' }, labels[tab]),
@@ -4366,13 +4366,14 @@ function render() {
 
 // ---------- events ----------
 document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => {
-  if (state.tab === b.dataset.tab) return;
+  if (state.tab === b.dataset.tab) { jumpToContent(); return; }
   state.tab = b.dataset.tab; state.group = "All"; state.filter = "all"; state.query = "";
   state.selected = null; state.mode = "intro"; $("search").value = "";
   try { history.replaceState(null, "", "#" + state.tab); } catch (_) {}
-  render();
+  render(); jumpToContent();
 }));
 $("askBtn").addEventListener("click", openAsk);
+const jumpToContent = () => { if (innerWidth <= 1000) setTimeout(() => { const t = $("rail") && $("rail").children.length ? $("rail") : $("list"); if (t) t.scrollIntoView({ behavior: "smooth", block: "start" }); }, 60); };
 const showPanel = (mode) => { state.mode = mode; render(); if (innerWidth <= 1000) $("sheet").scrollIntoView({ behavior: "smooth" }); };
 $("leadersBtn").addEventListener("click", () => showPanel("leaders"));
 $("networkBtn") && $("networkBtn").addEventListener("click", () => showPanel("network"));
