@@ -61,7 +61,7 @@ const TABS = {
     bodyHint: "Full question or challenge description. For quizzes, reveal the answer in your first reply.",
   },
   market: {
-    coll: "market", field: "category", groups: ["Books", "Electronics", "Hostel", "Notes", "Lab Equipment", "Clothing", "Other"], groupLabel: "Category", noun: "listing",
+    coll: "market", field: "category", groups: ["Books", "Notes", "Electronics", "Hostel", "Clothing", "Other"], groupLabel: "Category", noun: "listing",
     ask: "Sell an item", tagline: "Buy and sell textbooks, electronics, hostel items and more — with fellow RGUKT students.",
     replyNoun: "inquiry", replyLabel: "Your message", replyBtn: "Send",
     placeholder: "e.g. Data Structures book by Cormen — 2nd year, good condition",
@@ -97,7 +97,7 @@ const DEPT_VISUAL = {
 
 const state = {
   tab: "doubts", group: "All", query: "", filter: "all",
-  doubts: [], ideas: [], clubs: [], gate: [], challenges: [], chalScores: [], market: [], replies: [], likes: [], loaded: false,
+  doubts: [], ideas: [], clubs: [], gate: [], challenges: [], chalScores: [], market: [], marketReports: [], marketRatings: [], replies: [], likes: [], loaded: false,
   selected: null, mode: "intro", // intro | view | ask | edit | name | campus
   afterName: null,
   replyPages: [], replyAnon: false,
@@ -887,13 +887,27 @@ function deptBanner() {
 // ===================== CAMPUS MARKET =====================
 const MARKET_CONDITIONS = ["New", "Good", "Fair", "Worn"];
 const CONDITION_COLOR = { New: "#10b981", Good: "#3b82f6", Fair: "#f59e0b", Worn: "#6b7280" };
+// Books & Notes travel across campuses; everything else is campus-local
+const CROSS_CAMPUS_CATEGORIES = new Set(["Books", "Notes"]);
+
+function reportCount(listingId) { return state.marketReports.filter(r => r.listingId === listingId).length; }
+function sellerFlagged(authorId) { return state.marketReports.filter(r => r.sellerId === authorId).length >= 5; }
+function myRating(listingId) { return state.marketRatings.find(r => r.listingId === listingId && r.raterId === (store && store.uid)); }
+function avgRating(listingId) {
+  const rs = state.marketRatings.filter(r => r.listingId === listingId);
+  return rs.length ? (rs.reduce((s, r) => s + r.score, 0) / rs.length) : null;
+}
+function alreadyReported(listingId) { return state.marketReports.some(r => r.listingId === listingId && r.reporterId === (store && store.uid)); }
 
 function visibleMarket() {
+  const myCampus = getCampus();
   let rows = state.market.filter(r => !r.deleted);
   const q = state.query.trim().toLowerCase();
   if (q) rows = rows.filter(r => (r.title + " " + r.body + " " + r.category).toLowerCase().includes(q));
   if (state.group !== "All") rows = rows.filter(r => r.category === state.group);
   if (state.campusFilter && state.campusFilter !== "all") rows = rows.filter(r => r.campus === state.campusFilter);
+  // Campus restriction: non-cross-campus items only visible within same campus
+  if (myCampus) rows = rows.filter(r => CROSS_CAMPUS_CATEGORIES.has(r.category) || !r.campus || r.campus === myCampus);
   if (state.filter === "available") rows = rows.filter(r => !r.sold);
   if (state.filter === "sold") rows = rows.filter(r => r.sold);
   rows.sort((a, b) => b.createdAt - a.createdAt);
@@ -930,9 +944,12 @@ function renderMarketList() {
             el("div", { class: "mkt-price-row" },
               d.price ? el("span", { class: "mkt-price" }, "₹" + d.price) : el("span", { class: "mkt-price free" }, "Free / Negotiable"),
               d.condition && el("span", { class: "mkt-condition", style: "--cc:" + condColor }, d.condition),
+              reportCount(d.id) >= 3 && el("span", { class: "mkt-flag", title: reportCount(d.id) + " students reported this listing" }, "⚠️"),
             ),
+            (() => { const avg = avgRating(d.id); return avg ? el("div", { class: "mkt-stars-row" }, starsDisplay(avg), el("span", { class: "hint" }, avg.toFixed(1))) : null; })(),
             el("div", { class: "meta" },
               d.campus && el("span", { class: "campus-badge", style: "--cc:" + campusColor(d.campus) }, d.campus),
+              !CROSS_CAMPUS_CATEGORIES.has(d.category) && d.campus && el("span", { class: "hint" }, "· campus only"),
               el("span", { class: "author-row" }, avatarEl(avatarFor(d.authorName || "")), (d.authorName || "Student") + " · " + ago(d.createdAt))
             )
           ),
@@ -944,6 +961,75 @@ function renderMarketList() {
       })
     )
   );
+}
+
+function starsDisplay(avg) {
+  const full = Math.round(avg);
+  return el("span", { class: "mkt-stars", "aria-label": avg.toFixed(1) + " stars" },
+    ...([1,2,3,4,5].map(i => el("span", { class: i <= full ? "star on" : "star" }, "★")))
+  );
+}
+
+function renderReportPanel(d) {
+  if (alreadyReported(d.id)) return el("p", { class: "hint mkt-reported" }, "✅ You've already reported this listing.");
+  const REASONS = ["Wrong description", "Item already sold", "Fake / misleading price", "Spam or irrelevant"];
+  let open = false;
+  const panel = el("div", { class: "mkt-report-wrap" });
+  const btn = el("button", { type: "button", class: "btn sm", onclick: () => {
+    open = !open;
+    panel.replaceChildren(btn, open ? form : null);
+  }}, "🚩 Report listing");
+  const sel = el("select", { name: "reason" }, REASONS.map(r => el("option", {}, r)));
+  const form = el("div", { class: "mkt-report-form" },
+    el("p", { class: "hint" }, "Help us keep the market trustworthy. This report is anonymous."),
+    sel,
+    el("div", { class: "rowbtns" },
+      el("button", { type: "button", class: "btn danger sm", onclick: async () => {
+        const reason = sel.value;
+        const id = store.newId("marketReports");
+        const doc = { listingId: d.id, sellerId: d.authorId, reporterId: store.uid, reason, createdAt: Date.now() };
+        state.marketReports = [...state.marketReports, { id, ...doc }];
+        await store.set("marketReports", id, doc);
+        render();
+      }}, "Submit report"),
+      el("button", { type: "button", class: "btn sm", onclick: () => { open = false; panel.replaceChildren(btn); }}, "Cancel")
+    )
+  );
+  panel.replaceChildren(btn);
+  return panel;
+}
+
+function renderRatingPanel(d) {
+  const existing = myRating(d.id);
+  const avg = avgRating(d.id);
+  const ratingCount = state.marketRatings.filter(r => r.listingId === d.id).length;
+  const wrap = el("div", { class: "mkt-rating-wrap" });
+
+  const header = el("div", { class: "mkt-rating-header" },
+    el("strong", {}, "Rate this seller"),
+    avg ? el("span", {}, " · ", starsDisplay(avg), " ", avg.toFixed(1), " (", String(ratingCount), " rating", ratingCount !== 1 ? "s" : "", ")") : el("span", { class: "hint" }, " · No ratings yet")
+  );
+
+  const stars = [1,2,3,4,5].map(i => {
+    const s = el("button", { type: "button", class: "star-btn" + (existing && i <= existing.score ? " on" : ""), "aria-label": i + " star" + (i > 1 ? "s" : "") }, "★");
+    s.addEventListener("mouseover", () => stars.forEach((b, j) => b.classList.toggle("on", j < i)));
+    s.addEventListener("mouseout", () => stars.forEach((b, j) => b.classList.toggle("on", !!(existing && j < existing.score))));
+    s.addEventListener("click", async () => {
+      const id = existing ? existing.id : store.newId("marketRatings");
+      const doc = { listingId: d.id, sellerId: d.authorId, raterId: store.uid, score: i, createdAt: Date.now() };
+      if (existing) {
+        state.marketRatings = state.marketRatings.map(r => r.id === id ? { ...r, score: i } : r);
+        await store.update("marketRatings", id, { score: i });
+      } else {
+        state.marketRatings = [...state.marketRatings, { id, ...doc }];
+        await store.set("marketRatings", id, doc);
+      }
+      render();
+    });
+    return s;
+  });
+  wrap.replaceChildren(header, el("div", { class: "mkt-star-picker" }, ...stars));
+  return wrap;
 }
 
 function renderMarketView() {
@@ -973,12 +1059,18 @@ function renderMarketView() {
     el("button", { class: "btn", type: "button", onclick: () => { state.selected = null; state.mode = "intro"; render(); }}, "← Back")
   ].filter(Boolean);
 
+  const rc = reportCount(d.id);
+  const isCrossCampus = CROSS_CAMPUS_CATEGORIES.has(d.category);
+
   return [
     d.sold && el("div", { class: "mkt-sold-banner" }, "✅ This item has been sold"),
+    rc >= 3 && el("div", { class: "mkt-flag-banner" }, "⚠️ " + rc + " students have reported this listing. Proceed with caution."),
     el("div", { class: "meta" },
       el("span", { class: "tag", ...colorAttrs(d.category) }, d.category),
       d.condition && el("span", { class: "mkt-condition", style: "--cc:" + condColor }, d.condition),
       d.campus && el("span", { class: "campus-badge", style: "--cc:" + campusColor(d.campus) }, d.campus),
+      isCrossCampus ? el("span", { class: "pill open", title: "Books & Notes are visible to all campuses" }, "🌐 All campuses")
+                    : d.campus && el("span", { class: "pill", title: "This item is available within " + d.campus + " only" }, "🏫 Campus only"),
     ),
     el("h2", {}, d.title),
     d.price ? el("div", { class: "mkt-price-big" }, "₹" + d.price) : el("div", { class: "mkt-price-big free" }, "Free / Negotiable"),
@@ -990,8 +1082,10 @@ function renderMarketView() {
         el("div", { class: "hint" }, "Listed " + ago(d.createdAt)),
       )
     ),
-    !waLink && !own && el("p", { class: "hint" }, "Seller didn't share a WhatsApp number. Comment to contact them."),
+    !own && renderRatingPanel(d),
+    !waLink && !own && el("p", { class: "hint" }, "Seller didn't share a WhatsApp number."),
     el("div", { class: "rowbtns" }, ...actions),
+    !own && renderReportPanel(d),
   ].filter(Boolean);
 }
 
@@ -1010,6 +1104,7 @@ function renderMarketAsk(existing) {
     if (title.length < 3) { err.textContent = "Write a title of at least 3 characters."; err.hidden = false; return; }
     if (hasBadWords(title + " " + body)) { err.textContent = LANGUAGE_MSG; err.hidden = false; return; }
     if (whatsapp && whatsapp.length < 10) { err.textContent = "Enter a valid 10-digit WhatsApp number."; err.hidden = false; return; }
+    if (!existing && store && sellerFlagged(store.uid)) { err.textContent = "Your account has been restricted from posting due to multiple reports. Contact an admin to appeal."; err.hidden = false; return; }
     const wait = existing ? "" : spamCheck();
     if (wait) { err.textContent = wait; err.hidden = false; return; }
     const btn = form.querySelector("button[type=submit]"); btn.disabled = true; btn.textContent = "Saving…";
@@ -3285,6 +3380,8 @@ render();
   store.subscribe("challenges", rows => { const live_ = live(rows); trackNew("challenges", live_); state.challenges = live_; update(); }, e => {});
   store.subscribe("chal_scores", rows => { state.chalScores = rows.filter(r => !r.deleted); update(); }, e => {});
   store.subscribe("market", rows => { state.market = live(rows); update(); }, e => {});
+  store.subscribe("marketReports", rows => { state.marketReports = rows; update(); }, e => {});
+  store.subscribe("marketRatings", rows => { state.marketRatings = rows; update(); }, e => {});
 })();
 
 // ---------- PWA, keyboard shortcuts, offline, FAB ----------
