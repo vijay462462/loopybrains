@@ -124,6 +124,7 @@ function el(tag, attrs = {}, ...kids) {
     else if (k === "style" && typeof v === "string") { for (const d of v.split(";")) { const i = d.indexOf(":"); if (i > 0) n.style.setProperty(d.slice(0, i).trim(), d.slice(i + 1).trim()); } }
     else n.setAttribute(k, v === true ? "" : v);
   }
+  if ((tag === "input" && !["checkbox", "radio", "file", "submit", "button"].includes(attrs.type)) || tag === "textarea") if (!n.hasAttribute("autocomplete")) n.setAttribute("autocomplete", "off");
   for (const k of kids.flat()) if (k != null && k !== false) n.append(k instanceof Node ? k : String(k));
   return n;
 }

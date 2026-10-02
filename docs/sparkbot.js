@@ -497,7 +497,7 @@ function build() {
         <div class="sb-msgs" id="sb-msgs"></div>
         <div class="sb-chips" id="sb-chips"></div>
         <div class="sb-bar">
-          <input id="sb-in" type="text" placeholder="Ask me anything about RGUKT Spark… 🌟" autocomplete="off" maxlength="400">
+          <input id="sb-in" type="text" name="spark-bot-q" placeholder="Ask me anything about RGUKT Spark… 🌟" autocomplete="off" autocorrect="off" autocapitalize="sentences" spellcheck="false" enterkeyhint="send" aria-label="Ask Spark Bot" maxlength="400">
           <button id="sb-go" type="button" aria-label="Send">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
               <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
