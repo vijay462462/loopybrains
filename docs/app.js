@@ -1882,7 +1882,49 @@ function alumniKV(body) {
   for (const line of String(body || "").split("\n")) { const i = line.indexOf(":"); if (i > 0) m[line.slice(0, i).trim().toLowerCase()] = line.slice(i + 1).trim(); }
   return m;
 }
+const ADMINS = new Set((CFG.admins || []).filter(a => a && a.id).map(a => a.id));
+const isAdmin = () => !!(store && ADMINS.has(store.uid));
+const ALUMNI_APPROVAL = ADMINS.size > 0;
+const approvalKey = (id) => "alumni~ok~" + id;
+const approvals = (id) => state.likes.filter(l => l.ideaId === approvalKey(id) && ADMINS.has(l.uid));
 function alumniPosts() { return state.clubs.filter(d => d.club === ALUMNI_GROUP && !d.deleted && !isHidden(d)); }
+// A profile is approved when an admin approved it. A job is approved when an admin approved it
+// or its author already has an approved profile.
+function alumniApproved(d) {
+  if (!ALUMNI_APPROVAL || ADMINS.has(d.authorId) || approvals(d.id).length) return true;
+  if (isAlumniJob(d)) return alumniPosts().some(x => isAlumniProfile(x) && x.authorId === d.authorId && approvals(x.id).length);
+  return false;
+}
+const alumniVisible = (d) => alumniApproved(d) || mine(d) || isAdmin();
+async function alumniApprove(d) {
+  if (!isAdmin()) return;
+  const key = approvalKey(d.id), id = key + "_" + store.uid, before = state.likes;
+  state.likes = [...state.likes, { id, ideaId: key, uid: store.uid, createdAt: Date.now() }]; render();
+  try { await store.set("likes", id, { ideaId: key, uid: store.uid, createdAt: Date.now() }); }
+  catch (e) { state.likes = before; render(); showNotice(errText(e)); }
+}
+async function alumniRevoke(d) {
+  if (!isAdmin()) return;
+  const key = approvalKey(d.id), before = state.likes;
+  const mineAndOthers = approvals(d.id);
+  state.likes = state.likes.filter(l => l.ideaId !== key); render();
+  try { await Promise.all(mineAndOthers.map(l => store.remove("likes", l.id || (key + "_" + l.uid)))); }
+  catch (e) { state.likes = before; render(); showNotice(errText(e)); }
+}
+function alumniStatus(d) {
+  if (!ALUMNI_APPROVAL) return null;
+  return alumniApproved(d)
+    ? el("span", { class: "pill done" }, "✅ Verified")
+    : el("span", { class: "pill open" }, mine(d) ? "⏳ Waiting for admin approval (only you see this)" : "⏳ Pending approval");
+}
+function alumniAdminRow(d) {
+  if (!isAdmin()) return null;
+  return el("div", { class: "rowbtns" },
+    alumniApproved(d) && approvals(d.id).length
+      ? el("button", { class: "btn sm", type: "button", onclick: () => alumniRevoke(d) }, "↩️ Revoke approval")
+      : !alumniApproved(d) ? el("button", { class: "btn sm primary", type: "button", onclick: () => alumniApprove(d) }, "✅ Approve") : null,
+    el("button", { class: "btn sm", type: "button", onclick: (e) => confirmDelete(e.currentTarget, async () => { await softDelete("clubs", d.id); render(); }) }, "🗑️ Remove"));
+}
 const isAlumniProfile = (d) => (d.title || "").startsWith("🎓 ");
 const isAlumniJob = (d) => (d.title || "").startsWith("💼 ");
 function openAlumniPost(id) { state.tab = "clubs"; state.group = "All"; openItem(id); }
@@ -1894,29 +1936,33 @@ function alumniProfileCard(d) {
   const pills = [kv.branch, kv.batch && "Batch " + kv.batch].filter(Boolean);
   return el("div", { class: "learn-card" },
     el("strong", {}, "🎓 " + name),
-    el("div", { class: "meta" }, ...pills.map(x => el("span", { class: "pill year-pill" }, x))),
+    el("div", { class: "meta" }, ...pills.map(x => el("span", { class: "pill year-pill" }, x)), alumniStatus(d)),
     kv.working && el("p", {}, "🏢 " + kv.working),
     kv.location && el("p", { class: "hint" }, "📍 " + kv.location),
     kv.help && el("p", { class: "hint" }, "🤝 Can help with: " + kv.help),
     kv.about && el("p", { class: "hint" }, kv.about),
     el("div", { class: "rowbtns" },
       kv.linkedin && LINKEDIN_RE.test(kv.linkedin) && outLink(kv.linkedin, "🔗 LinkedIn", "linkbtn"),
-      el("button", { class: "btn sm primary", type: "button", onclick: () => openAlumniPost(d.id) }, mine(d) ? "Manage my profile" : "💬 View & message")));
+      el("button", { class: "btn sm primary", type: "button", onclick: () => openAlumniPost(d.id) }, mine(d) ? "Manage my profile" : "💬 View & message")),
+    alumniAdminRow(d));
 }
 function alumniJobCard(d) {
   const kv = alumniKV(d.body);
   return el("div", { class: "learn-card" },
     el("strong", {}, d.title),
-    el("div", { class: "meta" }, kv.company && el("span", { class: "pill year-pill" }, kv.company), kv.location && el("span", { class: "pill year-pill" }, "📍 " + kv.location), kv.experience && el("span", { class: "pill year-pill" }, kv.experience)),
+    el("div", { class: "meta" }, alumniStatus(d), kv.company && el("span", { class: "pill year-pill" }, kv.company), kv.location && el("span", { class: "pill year-pill" }, "📍 " + kv.location), kv.experience && el("span", { class: "pill year-pill" }, kv.experience)),
     kv.details && el("p", { class: "hint" }, kv.details),
     el("p", { class: "hint" }, "Posted by " + who(d) + " · " + ago(d.createdAt)),
     el("div", { class: "rowbtns" },
       kv.apply && SAFE_URL_RE.test(kv.apply) && outLink(kv.apply, "🔗 Apply / details", "linkbtn"),
-      el("button", { class: "btn sm", type: "button", onclick: () => openAlumniPost(d.id) }, mine(d) ? "Manage" : "💬 Ask about this")));
+      el("button", { class: "btn sm", type: "button", onclick: () => openAlumniPost(d.id) }, mine(d) ? "Manage" : "💬 Ask about this")),
+    alumniAdminRow(d));
 }
 function renderAlumni() {
   const leave = () => { state.mode = state.selected ? "view" : "intro"; render(); };
-  const all = alumniPosts();
+  const everything = alumniPosts();
+  const all = everything.filter(d => !(isAlumniProfile(d) || isAlumniJob(d)) || alumniVisible(d));
+  const pending = isAdmin() ? everything.filter(d => (isAlumniProfile(d) || isAlumniJob(d)) && !alumniApproved(d)) : [];
   const q = alumniQuery.trim().toLowerCase();
   const profiles = all.filter(isAlumniProfile).filter(d => {
     const kv = alumniKV(d.body);
@@ -1932,9 +1978,9 @@ function renderAlumni() {
       el("button", { class: "btn primary", type: "button", onclick: () => alumniGo(getName() ? "alumniJoin" : "name") }, "🎓 I'm an alumnus: join"),
       el("button", { class: "btn", type: "button", onclick: () => alumniGo(getName() ? "alumniJob" : "name") }, "💼 Post a job / referral"),
       el("button", { class: "btn", type: "button", onclick: () => { state.tab = "clubs"; state.group = ALUMNI_GROUP; openAsk(); } }, "❓ Ask alumni")),
-    el("div", { class: "rowbtns" }, tabBtn("dir", "👥 Directory (" + all.filter(isAlumniProfile).length + ")"), tabBtn("jobs", "💼 Jobs (" + all.filter(isAlumniJob).length + ")"), tabBtn("qa", "❓ Questions (" + questions.length + ")")),
+    el("div", { class: "rowbtns" }, tabBtn("dir", "👥 Directory (" + all.filter(isAlumniProfile).length + ")"), tabBtn("jobs", "💼 Jobs (" + all.filter(isAlumniJob).length + ")"), tabBtn("qa", "❓ Questions (" + questions.length + ")"), isAdmin() && tabBtn("admin", "🛡️ Pending (" + pending.length + ")")),
   ];
-  if (alumniView !== "qa") {
+  if (alumniView !== "qa" && alumniView !== "admin") {
     out.push(el("input", { type: "search", class: "alumni-search", placeholder: alumniView === "dir" ? "Search name, company, city…" : "Search jobs…", value: alumniQuery, "aria-label": "Search alumni",
       oninput: (e) => { alumniQuery = e.target.value; const pos = e.target.selectionStart; render(); const n = document.querySelector(".alumni-search"); if (n) { n.focus(); n.setSelectionRange(pos, pos); } } }));
   }
@@ -1943,6 +1989,9 @@ function renderAlumni() {
     out.push(...(profiles.length ? profiles.map(alumniProfileCard) : [el("div", { class: "empty" }, el("strong", {}, "No alumni profiles here yet"), "Are you an RGUKT alumnus? Tap “I'm an alumnus: join” and help your juniors.")]));
   } else if (alumniView === "jobs") {
     out.push(...(jobs.length ? jobs.map(alumniJobCard) : [el("div", { class: "empty" }, el("strong", {}, "No jobs or referrals yet"), "Alumni can post openings and referrals here for RGUKT students.")]));
+  } else if (alumniView === "admin" && isAdmin()) {
+    out.push(el("p", { class: "hint" }, "Review each profile or job before approving. Check the LinkedIn link and make sure the person is really an RGUKT alumnus. Approved profiles are shown to all students."));
+    out.push(...(pending.length ? pending.map(d => isAlumniProfile(d) ? alumniProfileCard(d) : alumniJobCard(d)) : [el("div", { class: "empty" }, el("strong", {}, "Nothing waiting"), "All alumni profiles and jobs are reviewed.")]));
   } else {
     out.push(...(questions.length ? questions.map(d => el("div", { class: "learn-card" }, el("strong", {}, d.title), el("p", { class: "hint" }, "By " + who(d) + " · " + ago(d.createdAt) + " · " + repliesFor(d.id).length + " replies"), el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: () => openAlumniPost(d.id) }, "Open")))) : [el("div", { class: "empty" }, el("strong", {}, "No questions yet"), "Tap “Ask alumni” to ask the first one.")]));
   }
@@ -2001,7 +2050,7 @@ function alumniForm(kind) {
       notePosted();
       await store.set("clubs", id, doc);
       alumniView = isJob ? "jobs" : "dir"; state.mode = "alumni"; render();
-      showNotice(isJob ? "Job posted. Thank you for helping your juniors!" : "Welcome to Alumni Connect! Your profile is live.", "ok");
+      showNotice(ALUMNI_APPROVAL && !isAdmin() ? "Submitted! It will appear for everyone after an admin approves it. You can already see it." : (isJob ? "Job posted. Thank you for helping your juniors!" : "Welcome to Alumni Connect! Your profile is live."), "ok");
     } catch (e2) { btn.disabled = false; btn.textContent = isJob ? "Post job" : "Join Alumni Connect"; bad(errText(e2)); }
   } },
     ...(isJob ? [
@@ -2031,7 +2080,7 @@ function alumniForm(kind) {
       el("button", { class: "btn primary", type: "submit" }, isJob ? "Post job" : "Join Alumni Connect"),
       el("button", { class: "btn", type: "button", onclick: cancel }, "Cancel")));
   return [el("h2", {}, isJob ? "💼 Post a job or referral" : "🎓 Join Alumni Connect"),
-    el("p", { class: "hint" }, isJob ? "Share an opening or offer a referral for juniors. Only post real opportunities, and never ask students for money." : "Your profile helps juniors find guidance. You can delete it any time by opening it and tapping Delete."),
+    el("p", { class: "hint" }, isJob ? "Share an opening or offer a referral for juniors. Only post real opportunities, and never ask students for money." : "Your profile helps juniors find guidance." + (ALUMNI_APPROVAL ? " An admin reviews each profile before it is shown to students." : "") + " You can delete it any time by opening it and tapping Delete."),
     form];
 }
 

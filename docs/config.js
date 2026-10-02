@@ -59,6 +59,13 @@ window.DOUBT_DESK_CONFIG = {
   mentors: [
   ],
 
+  // Alumni admins: phones or computers allowed to approve Alumni Connect profiles and jobs.
+  // Each admin opens Profile (Me), taps "Are you an IIT mentor?", copies the ID and sends it to you.
+  // Add one line per admin: { id: "d-1234abcd-....", name: "Admin name" },
+  // While this list is empty, approval is switched off and every alumni profile is shown.
+  admins: [
+  ],
+
   // Search words for each subject's IIT NPTEL course and lectures (Learn panel and "Ask IIT experts").
   learn: {
     // ECE
