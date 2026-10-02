@@ -507,7 +507,7 @@ function filePicker(list) {
 function renderFileAttachments(files) {
   if (!files || !files.length) return null;
   return el("div", { class: "file-attachments" },
-    ...files.map(f => el("a", { class: "file-dl", href: f.url, target: "_blank", rel: "noopener noreferrer" },
+    ...files.map(f => el("a", { class: "file-dl", href: /^https?:\/\//i.test(f.url || "") ? f.url : "#", target: "_blank", rel: "noopener noreferrer" },
       el("span", { class: "file-ico" }, fileIcon(f.name)),
       el("div", { class: "file-meta" },
         el("span", { class: "file-dl-name" }, f.name),
@@ -2636,7 +2636,10 @@ function renderAsk(existing) {
         doc.chalType = form.elements.chalType ? form.elements.chalType.value : "Quiz";
         doc.timeLimit = Number(form.elements.chalTimeLimit ? form.elements.chalTimeLimit.value : 0);
         const chalSec = form.querySelector(".chal-ask-section");
-        doc.questions = chalSec && chalSec._getQuestions ? chalSec._getQuestions().filter(q => q.q.trim()) : [];
+        doc.questions = (chalSec && chalSec._getQuestions ? chalSec._getQuestions() : [])
+          .filter(q => q.q.trim())
+          .slice(0, 10)
+          .map(q => ({ q: q.q.slice(0, 300), opts: (q.opts || []).map(o => String(o).slice(0, 150)), ans: Number(q.ans) || 0 }));
         doc.status = "open";
       }
       const myC = getCampus(); if (myC) doc.campus = myC;
