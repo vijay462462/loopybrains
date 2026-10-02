@@ -558,15 +558,15 @@ function addMsg(role, text, instant=false) {
   if (role==='bot') {
     const cid=`sbc-${Date.now()}-${msgCount}`;
     const reactionBtns = REACTIONS.map((r,i)=>
-      `<button class="sb-react" type="button" title="${r}" onclick="this.classList.toggle('sb-react-on');this.textContent=this.classList.contains('sb-react-on')?'${r}✓':'${r}';">${r}</button>`
+      `<button class="sb-react" style="background:rgba(109,40,217,.22);border:1px solid rgba(167,139,250,.3);border-radius:12px;padding:2px 7px;cursor:pointer;font-size:12px;line-height:1.4;color:#c4b5fd;font-family:inherit;" type="button" title="${r}" onclick="this.classList.toggle('sb-react-on');this.textContent=this.classList.contains('sb-react-on')?'${r}✓':'${r}';">${r}</button>`
     ).join('');
     d.innerHTML=`<div class="sb-av">${orb(26)}</div>
       <div class="sb-bub sb-bub-bot">
         <span class="sb-bub-shine"></span>
         <div class="sb-bub-txt" id="${cid}">${md(text)}</div>
-        <div class="sb-bub-actions">
-          <div class="sb-reactions">${reactionBtns}</div>
-          <button class="sb-copy" type="button" title="Copy answer" onclick="(function(el,btn){const t=el.innerText||el.textContent;navigator.clipboard?.writeText(t).then(()=>{btn.textContent='✅ Copied!';setTimeout(()=>btn.textContent='⎘ Copy',1500);}).catch(()=>{});return false;})(document.getElementById('${cid}'),this)">⎘ Copy</button>
+        <div class="sb-bub-actions" style="display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap;margin-top:8px;">
+          <div class="sb-reactions" style="display:flex;gap:4px;flex-wrap:wrap;">${reactionBtns}</div>
+          <button class="sb-copy" style="background:rgba(109,40,217,.22);border:1px solid rgba(167,139,250,.3);color:#c4b5fd;border-radius:10px;cursor:pointer;font-size:11px;padding:2px 9px;white-space:nowrap;line-height:1.4;font-family:inherit;" type="button" title="Copy answer" onclick="(function(el,btn){const t=el.innerText||el.textContent;navigator.clipboard?.writeText(t).then(()=>{btn.textContent='✅ Copied!';setTimeout(()=>btn.textContent='⎘ Copy',1500);}).catch(()=>{});return false;})(document.getElementById('${cid}'),this)">⎘ Copy</button>
         </div>
       </div>`;
   } else {
