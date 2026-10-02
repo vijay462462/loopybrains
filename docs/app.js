@@ -2277,37 +2277,23 @@ const yt = (q) => "https://www.youtube.com/results?search_query=" + encodeURICom
 // Official YouTube jukeboxes. These are copyrighted songs streamed by the rights holders on YouTube; Spark only links out.
 const FUN_JUKE = [
   ["🎤 Telugu directors", [
-    ["M. M. Keeravani", "M M Keeravani Telugu hits jukebox"], ["Devi Sri Prasad", "Devi Sri Prasad hits jukebox"],
-    ["S. Thaman", "Thaman S hits jukebox"], ["Mani Sharma", "Mani Sharma hits jukebox"],
-    ["Ilaiyaraaja (Telugu)", "Ilaiyaraaja Telugu hits jukebox"], ["A. R. Rahman (Telugu)", "A R Rahman Telugu hits jukebox"],
-    ["Koti", "Koti Telugu hits jukebox"], ["Chakri", "Chakri Telugu hits jukebox"], ["Anup Rubens", "Anup Rubens hits jukebox"],
-    ["Mickey J Meyer", "Mickey J Meyer hits jukebox"], ["K. V. Mahadevan", "K V Mahadevan Telugu golden hits jukebox"],
-    ["Ghantasala", "Ghantasala Telugu golden songs jukebox"]]],
+    ["M. M. Keeravani", "M M Keeravani hits jukebox"], ["Devi Sri Prasad", "Devi Sri Prasad hits jukebox"], ["S. Thaman", "S Thaman hits jukebox"], ["Mani Sharma", "Mani Sharma hits jukebox"], ["Ilaiyaraaja (Telugu)", "Ilaiyaraaja (Telugu) hits jukebox"], ["A. R. Rahman (Telugu)", "A R Rahman (Telugu) hits jukebox"], ["Koti", "Koti hits jukebox"], ["Raj-Koti", "Raj Koti hits jukebox"], ["Chakri", "Chakri hits jukebox"], ["Anup Rubens", "Anup Rubens hits jukebox"], ["Mickey J Meyer", "Mickey J Meyer hits jukebox"], ["Kalyani Malik", "Kalyani Malik hits jukebox"], ["R. P. Patnaik", "R P Patnaik hits jukebox"], ["Gopi Sundar", "Gopi Sundar hits jukebox"], ["Ghibran", "Ghibran hits jukebox"], ["Bheems Ceciroleo", "Bheems Ceciroleo hits jukebox"], ["Radhan", "Radhan hits jukebox"], ["Vishal Chandrashekhar", "Vishal Chandrashekhar hits jukebox"], ["Sai Kartheek", "Sai Kartheek hits jukebox"], ["Harris Jayaraj (Telugu)", "Harris Jayaraj (Telugu) hits jukebox"], ["Vidyasagar (Telugu)", "Vidyasagar (Telugu) hits jukebox"], ["Ramesh Naidu", "Ramesh Naidu hits jukebox"], ["K. Chakravarthy", "K Chakravarthy hits jukebox"], ["Satyam", "Satyam hits jukebox"], ["K. V. Mahadevan", "K V Mahadevan hits jukebox"], ["Ghantasala", "Ghantasala hits jukebox"]]],
   ["🎙️ Telugu playlists", [
-    ["Telugu melodies", "Telugu melody songs video jukebox"], ["Telugu love songs", "Telugu love songs jukebox"],
-    ["Telugu mass beats", "Telugu mass songs jukebox"], ["Telugu 90s hits", "90s Telugu hit songs jukebox"],
-    ["Telugu folk (Janapada)", "Telugu folk songs jukebox"], ["Telugu devotional", "Telugu devotional songs jukebox"]]],
+    ["Telugu melodies", "Telugu melody songs video jukebox"], ["Telugu love songs", "Telugu love songs jukebox"], ["Telugu mass beats", "Telugu mass songs jukebox"], ["Telugu 90s hits", "90s Telugu hit songs jukebox"], ["Telugu 2000s hits", "2000s Telugu hit songs jukebox"], ["Telugu folk (Janapada)", "Telugu folk songs jukebox"], ["Telugu devotional", "Telugu devotional songs jukebox"], ["Telugu friendship songs", "Telugu friendship songs jukebox"], ["Telugu old golden hits", "Telugu old golden hits jukebox"]]],
   ["🎻 Tamil directors", [
-    ["Ilaiyaraaja", "Ilaiyaraaja hits jukebox"], ["A. R. Rahman", "A R Rahman Tamil hits jukebox"],
-    ["Anirudh Ravichander", "Anirudh Ravichander hits jukebox"], ["Yuvan Shankar Raja", "Yuvan Shankar Raja hits jukebox"],
-    ["Harris Jayaraj", "Harris Jayaraj hits jukebox"], ["Vidyasagar", "Vidyasagar Tamil hits jukebox"],
-    ["G. V. Prakash Kumar", "G V Prakash Kumar hits jukebox"], ["Santhosh Narayanan", "Santhosh Narayanan hits jukebox"], ["Deva", "Deva Tamil hits jukebox"]]],
+    ["Ilaiyaraaja", "Ilaiyaraaja hits jukebox"], ["A. R. Rahman", "A R Rahman hits jukebox"], ["Anirudh Ravichander", "Anirudh Ravichander hits jukebox"], ["Yuvan Shankar Raja", "Yuvan Shankar Raja hits jukebox"], ["Harris Jayaraj", "Harris Jayaraj hits jukebox"], ["Vidyasagar", "Vidyasagar hits jukebox"], ["G. V. Prakash Kumar", "G V Prakash Kumar hits jukebox"], ["Santhosh Narayanan", "Santhosh Narayanan hits jukebox"], ["Deva", "Deva hits jukebox"], ["D. Imman", "D Imman hits jukebox"], ["Sam C. S.", "Sam C S hits jukebox"], ["Hiphop Tamizha", "Hiphop Tamizha hits jukebox"], ["M. S. Viswanathan", "M S Viswanathan hits jukebox"], ["Gangai Amaran", "Gangai Amaran hits jukebox"], ["Dhina", "Dhina hits jukebox"], ["S. A. Rajkumar", "S A Rajkumar hits jukebox"], ["Bharadwaj", "Bharadwaj hits jukebox"]]],
   ["🎹 Hindi directors", [
-    ["A. R. Rahman", "A R Rahman Hindi hits jukebox"], ["Pritam", "Pritam hits jukebox"],
-    ["Shankar-Ehsaan-Loy", "Shankar Ehsaan Loy hits jukebox"], ["Vishal-Shekhar", "Vishal Shekhar hits jukebox"],
-    ["Amit Trivedi", "Amit Trivedi hits jukebox"], ["R. D. Burman", "R D Burman hits jukebox"], ["S. D. Burman", "S D Burman hits jukebox"],
-    ["Laxmikant-Pyarelal", "Laxmikant Pyarelal hits jukebox"], ["Nadeem-Shravan", "Nadeem Shravan hits jukebox"], ["Anu Malik", "Anu Malik hits jukebox"]]],
-  ["🌴 Malayalam and Kannada", [
-    ["M. Jayachandran", "M Jayachandran hits jukebox"], ["Shaan Rahman", "Shaan Rahman hits jukebox"],
-    ["Ouseppachan", "Ouseppachan hits jukebox"], ["Hamsalekha", "Hamsalekha hits jukebox"],
-    ["V. Harikrishna", "V Harikrishna hits jukebox"], ["Arjun Janya", "Arjun Janya hits jukebox"], ["Anup Bhandari", "Anup Bhandari hits jukebox"]]],
+    ["A. R. Rahman (Hindi)", "A R Rahman (Hindi) hits jukebox"], ["Pritam", "Pritam hits jukebox"], ["Shankar-Ehsaan-Loy", "Shankar Ehsaan Loy hits jukebox"], ["Vishal-Shekhar", "Vishal Shekhar hits jukebox"], ["Amit Trivedi", "Amit Trivedi hits jukebox"], ["Tanishk Bagchi", "Tanishk Bagchi hits jukebox"], ["Mithoon", "Mithoon hits jukebox"], ["Sachin-Jigar", "Sachin Jigar hits jukebox"], ["Salim-Sulaiman", "Salim Sulaiman hits jukebox"], ["Himesh Reshammiya", "Himesh Reshammiya hits jukebox"], ["Jatin-Lalit", "Jatin Lalit hits jukebox"], ["Anand-Milind", "Anand Milind hits jukebox"], ["Nadeem-Shravan", "Nadeem Shravan hits jukebox"], ["Anu Malik", "Anu Malik hits jukebox"], ["Rajesh Roshan", "Rajesh Roshan hits jukebox"], ["Bappi Lahiri", "Bappi Lahiri hits jukebox"], ["Sajid-Wajid", "Sajid Wajid hits jukebox"], ["R. D. Burman", "R D Burman hits jukebox"], ["S. D. Burman", "S D Burman hits jukebox"], ["Laxmikant-Pyarelal", "Laxmikant Pyarelal hits jukebox"], ["Kalyanji-Anandji", "Kalyanji Anandji hits jukebox"], ["Naushad", "Naushad hits jukebox"], ["Madan Mohan", "Madan Mohan hits jukebox"], ["Khayyam", "Khayyam hits jukebox"], ["O. P. Nayyar", "O P Nayyar hits jukebox"], ["Roshan", "Roshan hits jukebox"]]],
+  ["🌴 Malayalam", [
+    ["M. Jayachandran", "M Jayachandran hits jukebox"], ["Shaan Rahman", "Shaan Rahman hits jukebox"], ["Ouseppachan", "Ouseppachan hits jukebox"], ["Bijibal", "Bijibal hits jukebox"], ["Sushin Shyam", "Sushin Shyam hits jukebox"], ["Raveendran", "Raveendran hits jukebox"], ["Johnson", "Johnson hits jukebox"], ["Rex Vijayan", "Rex Vijayan hits jukebox"], ["Gopi Sundar (Malayalam)", "Gopi Sundar (Malayalam) hits jukebox"], ["Vidyasagar (Malayalam)", "Vidyasagar (Malayalam) hits jukebox"]]],
+  ["🏔️ Kannada", [
+    ["Hamsalekha", "Hamsalekha hits jukebox"], ["V. Harikrishna", "V Harikrishna hits jukebox"], ["Arjun Janya", "Arjun Janya hits jukebox"], ["Anup Bhandari", "Anup Bhandari hits jukebox"], ["Ravi Basrur", "Ravi Basrur hits jukebox"], ["B. Ajaneesh Loknath", "B Ajaneesh Loknath hits jukebox"], ["Gurukiran", "Gurukiran hits jukebox"], ["Mano Murthy", "Mano Murthy hits jukebox"], ["Sadhu Kokila", "Sadhu Kokila hits jukebox"], ["Rajan-Nagendra", "Rajan Nagendra hits jukebox"]]],
+  ["🌸 Marathi, Bengali and Punjabi", [
+    ["Ajay-Atul", "Ajay Atul hits jukebox"], ["Anupam Roy", "Anupam Roy hits jukebox"], ["Salil Chowdhury", "Salil Chowdhury hits jukebox"], ["Hemanta Mukherjee", "Hemanta Mukherjee hits jukebox"], ["Jatinder Shah", "Jatinder Shah hits jukebox"], ["Sachin Pilgaonkar", "Sachin Pilgaonkar hits jukebox"]]],
   ["🎼 Singers", [
-    ["S. P. Balasubrahmanyam", "S P Balasubrahmanyam hits jukebox"], ["Sid Sriram", "Sid Sriram hits jukebox"],
-    ["Shreya Ghoshal", "Shreya Ghoshal hits jukebox"], ["Arijit Singh", "Arijit Singh hits jukebox"],
-    ["Chinmayi", "Chinmayi hits jukebox"], ["K. S. Chithra", "K S Chithra hits jukebox"], ["P. Susheela", "P Susheela golden hits jukebox"],
-    ["Kishore Kumar", "Kishore Kumar hits jukebox"], ["Lata Mangeshkar", "Lata Mangeshkar hits jukebox"], ["Mohammed Rafi", "Mohammed Rafi hits jukebox"]]],
+    ["S. P. Balasubrahmanyam", "S P Balasubrahmanyam hits jukebox"], ["S. Janaki", "S Janaki hits jukebox"], ["P. Susheela", "P Susheela hits jukebox"], ["K. S. Chithra", "K S Chithra hits jukebox"], ["Sid Sriram", "Sid Sriram hits jukebox"], ["Karthik", "Karthik hits jukebox"], ["Haricharan", "Haricharan hits jukebox"], ["Hariharan", "Hariharan hits jukebox"], ["Mano", "Mano hits jukebox"], ["Chinmayi", "Chinmayi hits jukebox"], ["Shreya Ghoshal", "Shreya Ghoshal hits jukebox"], ["Arijit Singh", "Arijit Singh hits jukebox"], ["Sonu Nigam", "Sonu Nigam hits jukebox"], ["Udit Narayan", "Udit Narayan hits jukebox"], ["Alka Yagnik", "Alka Yagnik hits jukebox"], ["Kumar Sanu", "Kumar Sanu hits jukebox"], ["Asha Bhosle", "Asha Bhosle hits jukebox"], ["Lata Mangeshkar", "Lata Mangeshkar hits jukebox"], ["Kishore Kumar", "Kishore Kumar hits jukebox"], ["Mohammed Rafi", "Mohammed Rafi hits jukebox"], ["K. J. Yesudas", "K J Yesudas hits jukebox"]]],
   ["🌍 World film music", [
-    ["Hans Zimmer", "Hans Zimmer best of jukebox"], ["John Williams", "John Williams best of jukebox"], ["Joe Hisaishi", "Joe Hisaishi best of jukebox"]]],
+    ["Hans Zimmer", "Hans Zimmer best of jukebox"], ["John Williams", "John Williams best of jukebox"], ["Joe Hisaishi", "Joe Hisaishi best of jukebox"], ["Ennio Morricone", "Ennio Morricone best of jukebox"], ["Ludwig Goransson", "Ludwig Goransson best of jukebox"]]],
 ];
 // Only searches filtered to Creative Commons / public-domain music. Always check the license shown on the track.
 const FUN_LANGS = ["Telugu", "Hindi", "Tamil", "Kannada", "Malayalam", "Bengali", "Marathi", "Gujarati", "Punjabi", "Urdu",
@@ -2395,6 +2381,25 @@ function chillPlayer() {
   return el("div", { class: "learn-card", id: "funMusicRoot" }, el("strong", {}, "🎧 Original chill music (copyright-free)"), modes, el("div", { class: "rowbtns" }, btn, el("label", { class: "fun-vol" }, "🔈", slider)), status);
 }
 
+function jukeFinder() {
+  const filter = el("input", { type: "search", class: "juke-filter", placeholder: "Filter the list: type a name…", "aria-label": "Filter music directors and singers",
+    oninput: (e) => {
+      const q = e.target.value.trim().toLowerCase();
+      document.querySelectorAll("#funMusicBody .fun-det").forEach(d => {
+        let hits = 0;
+        d.querySelectorAll("a").forEach(a => { const show = !q || a.textContent.toLowerCase().includes(q); a.hidden = !show; if (show) hits++; });
+        d.hidden = !!q && hits === 0; if (q && hits) d.open = true;
+      });
+    } });
+  const any = el("input", { type: "text", class: "juke-any", maxlength: "60", placeholder: "Any music director or singer…", "aria-label": "Search any music director or singer",
+    onkeydown: (e) => { if (e.key === "Enter") { e.preventDefault(); go(); } } });
+  const go = () => { const q = any.value.trim(); if (q.length < 2) return; window.open(yt(q + " jukebox"), "_blank", "noopener,noreferrer"); };
+  return el("div", { class: "learn-card" },
+    el("strong", {}, "🔎 Find a jukebox"),
+    filter,
+    el("div", { class: "rowbtns" }, any, el("button", { class: "btn sm primary", type: "button", onclick: go }, "Open on YouTube ▶")));
+}
+
 function memoryGame() {
   const EMOJI = ["🚀", "🧠", "💡", "🎯", "📚", "⚡", "🔬", "🎓"];
   let cards = [], open = [], matched = 0, moves = 0, lock = false;
@@ -2454,7 +2459,7 @@ function typingTest() {
 function renderFun() {
   const tabs = [["music", "🎵 Songs"], ["mem", "🎮 Memory"], ["type", "⌨️ Typing"], ["riddle", "🧩 Riddles"], ["fact", "💡 Fun facts"], ["free", "🌐 Free fun"]];
   let view = "music", riddles = funShuffle(FUN_RIDDLES), ri = 0, showAns = false, fi = Math.floor(Math.random() * FUN_FACTS.length);
-  const body = el("div", { class: "fun-body" });
+  const body = el("div", { class: "fun-body", id: "funMusicBody" });
   const bar = el("div", { class: "rowbtns" });
   const draw = () => {
     bar.replaceChildren(...tabs.map(([id, label]) => el("button", { class: "btn sm" + (view === id ? " primary" : ""), type: "button", onclick: () => { view = id; draw(); } }, label)));
@@ -2463,6 +2468,7 @@ function renderFun() {
         chillPlayer(),
         el("div", { class: "label" }, "🎬 Music director and singer jukeboxes"),
         el("p", { class: "hint" }, "Tap a name to open official jukeboxes on YouTube. These are copyrighted songs streamed by the rights holders, so Spark only links to them. Listen on YouTube with low volume and earphones."),
+        jukeFinder(),
         ...FUN_JUKE.map(([title, items], gi) => el("details", { class: "fun-det", open: gi === 0 },
           el("summary", {}, title + " (" + items.length + ")"),
           el("div", { class: "rowbtns" }, items.map(([label, q]) => outLink(yt(q), label, "linkbtn"))))),

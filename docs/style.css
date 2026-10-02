@@ -1552,3 +1552,5 @@ header.top { background: linear-gradient(120deg, var(--ta), var(--tb) 50%, var(-
 .fun-det { border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; margin: 6px 0; background: color-mix(in oklab, var(--ta) 5%, var(--sheet)); }
 .fun-det summary { font-weight: 800; cursor: pointer; padding: 4px 0; }
 .fun-det .rowbtns { margin-top: 8px; }
+.juke-filter, .juke-any { width: 100%; }
+.juke-any { flex: 1; min-width: 160px; }
