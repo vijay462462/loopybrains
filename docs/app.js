@@ -116,13 +116,17 @@ let store = null;
 const $ = (id) => document.getElementById(id);
 
 // ---------- small helpers ----------
+// The page CSP blocks style attributes, so styles are applied through the CSSOM.
+function applyStyle(n, str) {
+  for (const d of String(str || "").split(";")) { const i = d.indexOf(":"); if (i > 0) n.style.setProperty(d.slice(0, i).trim(), d.slice(i + 1).trim()); }
+}
 function el(tag, attrs = {}, ...kids) {
   const n = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs)) {
     if (v == null || v === false) continue;
     if (k === "class") n.className = v;
     else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
-    else if (k === "style" && typeof v === "string") { for (const d of v.split(";")) { const i = d.indexOf(":"); if (i > 0) n.style.setProperty(d.slice(0, i).trim(), d.slice(i + 1).trim()); } }
+    else if (k === "style" && typeof v === "string") applyStyle(n, v);
     else n.setAttribute(k, v === true ? "" : v);
   }
   if ((tag === "input" && !["checkbox", "radio", "file", "submit", "button"].includes(attrs.type)) || tag === "textarea") if (!n.hasAttribute("autocomplete")) n.setAttribute("autocomplete", "off");
@@ -4493,7 +4497,7 @@ function render() {
     const ca = colorAttrs(cur ? cur[t.field] : "All");
     const sheet = $("sheet");
     sheet.setAttribute("data-s", ca["data-s"]);
-    if (ca.style) sheet.setAttribute("style", ca.style); else sheet.removeAttribute("style");
+    sheet.style.cssText = ""; if (ca.style) applyStyle(sheet, ca.style);
     sheet.replaceChildren(...(
       state.mode === "leaders" ? renderLeaders() :
       state.mode === "quiz" ? renderQuiz() :
