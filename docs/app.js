@@ -2274,23 +2274,25 @@ const funShuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--
 const funBest = (k, v) => { try { const o = JSON.parse(localStorage.getItem("dd-fun-best") || "{}"); if (v === undefined) return o[k]; o[k] = v; localStorage.setItem("dd-fun-best", JSON.stringify(o)); } catch (_) {} return undefined; };
 
 const yt = (q) => "https://www.youtube.com/results?search_query=" + encodeURIComponent(q);
-const FUN_SONGS = [
-  ["🎤 Telugu hits", yt("latest telugu hit songs official")],
-  ["🎶 Telugu melodies", yt("telugu melody songs jukebox")],
-  ["🕰️ Telugu old classics", yt("telugu old evergreen songs")],
-  ["🎧 Hindi hits", yt("latest hindi songs official")],
-  ["🎸 English pop", yt("english pop songs official")],
-  ["📚 Lofi study beats", yt("lofi study music 1 hour")],
-  ["🧠 Instrumental focus", yt("instrumental focus music for studying")],
-  ["💪 Motivational songs", yt("motivational songs for students")],
-  ["🎻 Carnatic and Hindustani classical", yt("indian classical instrumental music")],
-  ["🙏 Devotional", yt("devotional songs telugu")],
-  ["😂 Stand-up comedy (clean)", yt("clean stand up comedy india")],
-  ["🎙️ Free podcasts", yt("best podcasts for engineering students")],
-  ["📻 Radio Garden (live radio worldwide)", "https://radio.garden"],
-  ["🎵 Free Music Archive", "https://freemusicarchive.org"],
-  ["🎼 Internet Archive audio", "https://archive.org/details/audio"],
+// Only searches filtered to Creative Commons / public-domain music. Always check the license shown on the track.
+const FUN_LANGS = ["Telugu", "Hindi", "Tamil", "Kannada", "Malayalam", "Bengali", "Marathi", "Gujarati", "Punjabi", "Urdu",
+  "Sanskrit", "English", "Spanish", "French", "German", "Japanese", "Korean", "Arabic", "Chinese", "Russian"];
+const ytCC = (q) => "https://www.youtube.com/results?search_query=" + encodeURIComponent(q) + "&sp=EgIwAQ%3D%3D";
+const jamendo = (q) => "https://www.jamendo.com/search?q=" + encodeURIComponent(q);
+const commonsAudio = (q) => "https://commons.wikimedia.org/w/index.php?search=" + encodeURIComponent(q + " filetype:audio") + "&ns6=1";
+const archiveAudio = (q) => "https://archive.org/search?query=" + encodeURIComponent(q) + "&and%5B%5D=mediatype%3A%22audio%22";
+const FUN_LIBS = [
+  ["🎵 Jamendo (free CC music)", "https://www.jamendo.com"],
+  ["🎶 Free Music Archive", "https://freemusicarchive.org"],
+  ["🎼 Musopen (public-domain classical)", "https://musopen.org"],
+  ["🎛️ ccMixter (CC remixes)", "https://dig.ccmixter.org"],
+  ["🎹 Incompetech (CC music)", "https://incompetech.com/music/royalty-free/"],
+  ["🔊 Pixabay Music (royalty-free)", "https://pixabay.com/music/"],
+  ["📼 Internet Archive audio", "https://archive.org/details/audio"],
+  ["🌍 Wikimedia Commons audio", "https://commons.wikimedia.org/wiki/Category:Audio_files"],
+  ["📻 Radio Garden (live radio)", "https://radio.garden"],
 ];
+
 function miniPiano() {
   const NOTES = [["C", 261.63], ["D", 293.66], ["E", 329.63], ["F", 349.23], ["G", 392.0], ["A", 440.0], ["B", 493.88], ["C", 523.25]];
   let ctx = null;
@@ -2307,6 +2309,55 @@ function miniPiano() {
     el("strong", {}, "🎹 Mini piano"),
     el("p", { class: "hint" }, "Tap the keys to play. Try Ode to Joy: E E F G, G F E D, C C D E, E D D."),
     el("div", { class: "fun-keys" }, NOTES.map(([n, f], i) => el("button", { type: "button", class: "fun-key", "aria-label": "Note " + n, onclick: () => play(f) }, n + (i === 7 ? "²" : "")))));
+}
+
+
+// Original music generated in the browser with Web Audio. Nothing is copied from any song, so it is copyright-free.
+function chillPlayer() {
+  const MODES = {
+    lofi:  { name: "🌙 Lofi chill",   bpm: 74, chords: [[220.0, 261.63, 329.63, 392.0], [174.61, 220.0, 261.63, 329.63], [196.0, 246.94, 293.66, 349.23], [164.81, 207.65, 246.94, 311.13]], drums: true },
+    calm:  { name: "🌿 Calm ambient", bpm: 54, chords: [[196.0, 293.66, 392.0], [174.61, 261.63, 349.23], [220.0, 329.63, 440.0], [196.0, 246.94, 392.0]], drums: false },
+    focus: { name: "🎯 Focus pulse",  bpm: 96, chords: [[261.63, 329.63, 392.0], [293.66, 349.23, 440.0], [246.94, 311.13, 392.0], [261.63, 329.63, 392.0]], drums: true },
+  };
+  let ctx = null, master = null, timer = null, step = 0, mode = "lofi", vol = 0.5, playing = false;
+  const status = el("p", { class: "hint" }, "Press play. Music is created live in your phone, so it is always free to use.");
+  const tone = (f, t, dur, type, gain, lp) => {
+    const o = ctx.createOscillator(), g = ctx.createGain(), fl = ctx.createBiquadFilter();
+    o.type = type; o.frequency.value = f; fl.type = "lowpass"; fl.frequency.value = lp;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(gain, t + 0.05); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(fl); fl.connect(g); g.connect(master); o.start(t); o.stop(t + dur + 0.05);
+  };
+  const kick = (t) => { const o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.setValueAtTime(140, t); o.frequency.exponentialRampToValueAtTime(40, t + 0.15);
+    g.gain.setValueAtTime(0.6, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2); o.connect(g); g.connect(master); o.start(t); o.stop(t + 0.22); };
+  const hat = (t) => { const len = ctx.sampleRate * 0.05, buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+    const src = ctx.createBufferSource(), hp = ctx.createBiquadFilter(), g = ctx.createGain(); src.buffer = buf; hp.type = "highpass"; hp.frequency.value = 7000; g.gain.value = 0.12;
+    src.connect(hp); hp.connect(g); g.connect(master); src.start(t); };
+  const tick = () => {
+    if (state.mode !== "fun" || !document.getElementById("funMusicRoot")) { stop(); return; }
+    const m = MODES[mode], beat = 60 / m.bpm / 2, t = ctx.currentTime + 0.05, bar = Math.floor(step / 8) % m.chords.length, chord = m.chords[bar], pos = step % 8;
+    if (pos === 0) chord.forEach((f, i) => tone(f / 2, t, beat * 8, "triangle", 0.10, 900 + i * 150));
+    if (pos % 2 === 0) tone(chord[(pos / 2) % chord.length] * 2, t, beat * 1.6, "sine", 0.10, 3000);
+    if (m.drums) { if (pos === 0 || pos === 4) kick(t); if (pos % 2 === 1) hat(t); }
+    step++;
+  };
+  function stop() { if (timer) { clearInterval(timer); timer = null; } playing = false; if (ctx && ctx.state === "running") ctx.suspend().catch(() => {}); btn.textContent = "▶ Play"; }
+  const start = () => {
+    try {
+      ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+      if (!master) { master = ctx.createGain(); master.connect(ctx.destination); }
+      master.gain.value = vol; ctx.resume();
+      step = 0; playing = true; btn.textContent = "⏸ Pause";
+      clearInterval(timer); timer = setInterval(tick, (60 / MODES[mode].bpm / 2) * 1000);
+      tick();
+    } catch (_) { status.textContent = "Your browser could not start audio."; }
+  };
+  const btn = el("button", { class: "btn primary", type: "button", onclick: () => (playing ? stop() : start()) }, "▶ Play");
+  const modes = el("div", { class: "rowbtns" });
+  const drawModes = () => modes.replaceChildren(...Object.entries(MODES).map(([k, m]) => el("button", { class: "btn sm" + (mode === k ? " primary" : ""), type: "button", onclick: () => { mode = k; drawModes(); if (playing) start(); } }, m.name)));
+  drawModes();
+  const slider = el("input", { type: "range", min: "0", max: "100", value: "50", "aria-label": "Volume", oninput: (e) => { vol = e.target.value / 100; if (master) master.gain.value = vol; } });
+  return el("div", { class: "learn-card", id: "funMusicRoot" }, el("strong", {}, "🎧 Original chill music (copyright-free)"), modes, el("div", { class: "rowbtns" }, btn, el("label", { class: "fun-vol" }, "🔈", slider)), status);
 }
 
 function memoryGame() {
@@ -2374,8 +2425,15 @@ function renderFun() {
     bar.replaceChildren(...tabs.map(([id, label]) => el("button", { class: "btn sm" + (view === id ? " primary" : ""), type: "button", onclick: () => { view = id; draw(); } }, label)));
     if (view === "music") {
       body.replaceChildren(
-        el("p", { class: "hint" }, "Tap a mood to open free official songs on YouTube in a new tab. Pick instrumental or lofi when you need to focus."),
-        el("div", { class: "rowbtns" }, FUN_SONGS.map(([label, url]) => outLink(url, label, "linkbtn"))),
+        chillPlayer(),
+        el("div", { class: "label" }, "🌐 Free songs by language"),
+        el("p", { class: "hint" }, "Each language opens only Creative Commons or public-domain music. Check the license shown on every track, and credit the artist when the license asks for it."),
+        el("div", { class: "fun-langs" }, FUN_LANGS.map(l => el("div", { class: "fun-lang" },
+          el("strong", {}, l),
+          outLink(ytCC(l + " song"), "YouTube CC", "linkbtn"), outLink(jamendo(l), "Jamendo", "linkbtn"),
+          outLink(commonsAudio(l + " song"), "Wikimedia", "linkbtn"), outLink(archiveAudio(l + " songs"), "Archive", "linkbtn")))),
+        el("div", { class: "label" }, "📚 Free music libraries"),
+        el("div", { class: "rowbtns" }, FUN_LIBS.map(([label, url]) => outLink(url, label, "linkbtn"))),
         miniPiano(),
         el("p", { class: "hint" }, "Tip: keep the volume low, use earphones in the hostel, and respect quiet hours."));
     } else if (view === "mem") body.replaceChildren(memoryGame());
