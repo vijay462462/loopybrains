@@ -182,6 +182,19 @@ header.top .btn.primary { background: #fff; color: var(--g2); border-color: #fff
 .tabs button[aria-selected="true"] { background: #fff; color: var(--g2); box-shadow: 0 4px 12px -4px rgb(0 0 0 / .3); }
 .hdr-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .chip { border: 1px solid rgb(255 255 255 / .5); background: rgb(255 255 255 / .14); color: #fff; border-radius: 999px; padding: 7px 14px; font-weight: 700; }
+
+@media (max-width: 600px) {
+  header.top { padding: 16px 14px 14px; gap: 8px; }
+  .brand h1 { font-size: 1.7rem; }
+  .brand p { font-size: 12px; margin-top: 3px; }
+  .tabs { margin-top: 8px; overflow-x: auto; max-width: 100%; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tabs button { padding: 5px 11px; font-size: 12.5px; white-space: nowrap; }
+  .hdr-actions { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; gap: 6px; padding-bottom: 2px; max-width: 100%; }
+  .hdr-actions::-webkit-scrollbar { display: none; }
+  .hdr-actions .chip { padding: 5px 10px; font-size: 12px; white-space: nowrap; flex-shrink: 0; }
+  header.top .btn.primary { padding: 6px 13px; font-size: 12.5px; flex-shrink: 0; white-space: nowrap; }
+}
 .like { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--sheet); border-radius: 999px; padding: 4px 12px; font-weight: 700; color: var(--muted); }
 .like[aria-pressed="true"] { border-color: transparent; background: linear-gradient(90deg, #f43f5e, #f97316); color: #fff; }
 .likes { font: 500 12px var(--f-mono); color: #e11d48; }
