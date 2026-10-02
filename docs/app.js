@@ -831,13 +831,16 @@ function renderRail() {
     }, d))
   ) : null;
 
-  const visibleSubjects = (state.tab === "doubts" || state.tab === "gate") && state.dept !== "All"
-    ? [...DEPT_MAP[state.dept].filter(s => t.groups.includes(s)), ...extra]
-    : [...t.groups, ...extra];
+  const showSubjects = !(state.tab === "doubts" || state.tab === "gate") || state.dept !== "All";
+  const visibleSubjects = showSubjects
+    ? ((state.tab === "doubts" || state.tab === "gate") && state.dept !== "All"
+        ? [...DEPT_MAP[state.dept].filter(s => t.groups.includes(s)), ...extra]
+        : [...t.groups, ...extra])
+    : [];
 
   $("rail").replaceChildren(
     ...(deptTabs ? [deptTabs] : []),
-    el("div", { class: "subj-grid" },
+    visibleSubjects.length > 0 && el("div", { class: "subj-grid" },
       ...visibleSubjects.map(s => el("button", {
         type: "button", class: "subj-chip" + (state.group === s ? " active" : ""), ...colorAttrs(s),
         onclick: () => { state.group = state.group === s ? "All" : s; render(); },
