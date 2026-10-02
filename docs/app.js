@@ -1105,6 +1105,8 @@ function renderMarketAsk(existing) {
     if (hasBadWords(title + " " + body)) { err.textContent = LANGUAGE_MSG; err.hidden = false; return; }
     if (whatsapp && whatsapp.length < 10) { err.textContent = "Enter a valid 10-digit WhatsApp number."; err.hidden = false; return; }
     if (!existing && store && sellerFlagged(store.uid)) { err.textContent = "Your account has been restricted from posting due to multiple reports. Contact an admin to appeal."; err.hidden = false; return; }
+    // College-issued laptops cannot be sold — RGUKT policy
+    if (category === "Electronics" && /\blaptop\b|\bhp\s*laptop\b|\bdell\s*laptop\b|\brgukt\s*laptop\b|\bcollege\s*laptop\b/i.test(title + " " + body)) { err.textContent = "College-issued laptops cannot be sold on this platform (RGUKT policy). Remove this item."; err.hidden = false; return; }
     const wait = existing ? "" : spamCheck();
     if (wait) { err.textContent = wait; err.hidden = false; return; }
     const btn = form.querySelector("button[type=submit]"); btn.disabled = true; btn.textContent = "Saving…";
@@ -1142,6 +1144,7 @@ function renderMarketAsk(existing) {
       el("input", { name: "whatsapp", type: "tel", maxlength: "15", placeholder: "e.g. 9876543210 — not shown publicly except to buyers" })
     ),
     el("p", { class: "hint" }, "⚠️ Your WhatsApp number is only shared with students who open this listing."),
+    el("p", { class: "hint" }, "🚫 College-issued laptops cannot be sold — RGUKT policy. Books & Notes are visible to all campuses; other items are campus-local."),
     err,
     el("div", { class: "rowbtns" },
       el("button", { class: "btn primary", type: "submit" }, existing ? "Save changes" : "Post listing"),
