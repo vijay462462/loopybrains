@@ -2351,8 +2351,8 @@ function renderIntro() {
   ) : null;
 
   const steps = state.tab === "doubts"
-    ? "1. Ask: pick the subject and write the question. Add a photo of your notebook or write it on the notebook page.\n2. Answer: open any doubt and explain the steps. You can attach your handwritten working too.\n3. Resolve: the student who asked marks the answer that helped. Tap \u201cI have this doubt too\u201d on doubts you share."
-    : "1. Share: post an idea for a project, startup or research. Sketch it on the notebook page if that helps.\n2. Like: tap ♥ on ideas you want to see happen.\n3. Build: reply with thoughts, improvements or an offer to join.";
+    ? "1. Ask — pick the subject and write the question. Add a photo of your notebook or write it on the notebook page.\n2. Answer — open any doubt and explain the steps. You can attach your handwritten working too.\n3. Resolve — the student who asked marks the answer that helped. Tap \u201cI have this doubt too\u201d on doubts you share."
+    : "1. Share — post an idea for a project, startup or research. Sketch it on the notebook page if that helps.\n2. Like — tap ♥ on ideas you want to see happen.\n3. Build — reply with thoughts, improvements or an offer to join.";
 
   // Keyboard shortcut hint (desktop)
   const kbHint = window.matchMedia("(pointer: fine)").matches
