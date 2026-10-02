@@ -390,7 +390,8 @@ function respond(text) {
   }
   // Smart fallback
   const fn = FALLBACK_SMART[Math.floor(Math.random() * FALLBACK_SMART.length)];
-  return fn(t);
+  // The typed text is echoed back, so strip markup and markdown characters first.
+  return fn(t.replace(/[<>\[\]()*`_"'&]/g, ' ').replace(/\s+/g, ' ').trim());
 }
 
 // ════════════════════════════════════════════════════════════
@@ -418,11 +419,11 @@ function ctxChips(t) {
 //  MARKDOWN
 // ════════════════════════════════════════════════════════════
 function md(s) {
-  return s
+  return esc(s)
     .replace(/```([\s\S]*?)```/g, '<pre class="sb-code">$1</pre>')
     .replace(/`([^`]+)`/g, '<code class="sb-inline">$1</code>')
     // Markdown links [text](url) → clickable anchor
-    .replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g,
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s"'<>]+)\)/g,
       '<a href="$2" target="_blank" rel="noopener noreferrer" class="sb-link">$1 ↗</a>')
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.+?)\*/g, '<em>$1</em>')

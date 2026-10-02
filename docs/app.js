@@ -96,6 +96,22 @@ const DEPT_VISUAL = {
   EEE:   { bg: "linear-gradient(135deg,#f59e0b 0%,#ef4444 100%)", art: "⚡💡🔋🔌🌡️", label: "Electrical & Electronics", sub: "Machines · Power Systems · Control · Electronics" },
 };
 
+// ---------- security helpers ----------
+// Anti-clickjacking: hide the app if another site loads it inside a frame.
+if (window.top !== window.self) { document.documentElement.style.display = "none"; try { window.top.location = window.self.location.href; } catch (_) {} }
+// Removes control, zero-width and bidi-override characters used for spoofing and invisible spam.
+const BAD_CHARS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\u200B\u200E\u200F\u202A-\u202E\u2060-\u2064\u2066-\u2069\uFEFF]/g;
+const cleanText = (s) => String(s).normalize("NFC").replace(BAD_CHARS, "").replace(/\n{4,}/g, "\n\n\n");
+function cleanDoc(v, key) {
+  if (typeof v === "string") return (key === "data" || key === "url") ? v : cleanText(v);
+  if (Array.isArray(v)) return v.map(x => cleanDoc(x, key));
+  if (v && typeof v === "object") return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, cleanDoc(x, k)]));
+  return v;
+}
+// Only these file types may be uploaded (no scripts, web pages, SVG, archives or programs).
+const UPLOAD_EXT = new Set(["pdf", "png", "jpg", "jpeg", "gif", "webp", "doc", "docx", "ppt", "pptx", "xls", "xlsx", "txt", "csv"]);
+const fileExt = (name) => (String(name || "").split(".").pop() || "").toLowerCase();
+
 const state = {
   tab: "doubts", group: "All", query: "", filter: "all",
   doubts: [], ideas: [], clubs: [], gate: [], challenges: [], chalScores: [], market: [], marketReports: [], marketRatings: [], marketInterests: [], replies: [], likes: [], loaded: false,
@@ -241,12 +257,13 @@ async function firebaseStore(conf, prefix = "") {
     uid: deviceId(), demo: false,
     subscribe: (coll, cb, onErr) => fs.onSnapshot(fs.collection(db, prefix + coll), snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))), onErr),
     newId: (coll) => fs.doc(fs.collection(db, prefix + coll)).id,
-    set: (coll, id, data) => fs.setDoc(fs.doc(db, prefix + coll, id), data),
-    update: (coll, id, data) => fs.updateDoc(fs.doc(db, prefix + coll, id), data),
+    set: (coll, id, data) => fs.setDoc(fs.doc(db, prefix + coll, id), cleanDoc(data)),
+    update: (coll, id, data) => fs.updateDoc(fs.doc(db, prefix + coll, id), cleanDoc(data)),
     remove: (coll, id) => fs.deleteDoc(fs.doc(db, prefix + coll, id)),
     get: async (coll, id) => { const snap = await fs.getDoc(fs.doc(db, prefix + coll, id)); return snap.exists() ? snap.data() : null; },
     uploadFile: async (file, onProgress) => {
-      const ext = (file.name.split(".").pop() || "bin").toLowerCase().replace(/[^a-z0-9]/g, "");
+      const ext = fileExt(file.name).replace(/[^a-z0-9]/g, "");
+      if (!UPLOAD_EXT.has(ext)) throw new Error("This file type is not allowed. Use PDF, image, Office document or text files.");
       const path = "uploads/" + Date.now() + "_" + Math.random().toString(36).slice(2, 8) + "." + ext;
       const fileRef = st.ref(storage, path);
       const task = st.uploadBytesResumable(fileRef, file);
@@ -591,6 +608,7 @@ function filePicker(list) {
     for (const f of files) {
       if (list.length >= 5) { say("You can attach up to 5 files."); break; }
       if (f.size > MAX_FILE_SIZE) { say(f.name + " is too large (max 20 MB)."); continue; }
+      if (!UPLOAD_EXT.has(fileExt(f.name))) { say(f.name + " is not allowed. Use PDF, image, Office document or text files."); continue; }
       const entry = { name: f.name, size: f.size, url: null, pct: 0 };
       list.push(entry);
       if (rows.isConnected) draw();
