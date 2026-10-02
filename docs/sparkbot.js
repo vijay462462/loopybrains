@@ -658,6 +658,7 @@ function scroll() { const m=document.getElementById('sb-msgs'); if(m) setTimeout
 // ════════════════════════════════════════════════════════════
 //  CSS
 // ════════════════════════════════════════════════════════════
+window.sparkBotToggle = () => toggle();
 function init() { build(); }
 if (document.readyState==='loading') document.addEventListener('DOMContentLoaded',init);
 else init();
