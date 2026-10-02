@@ -2453,22 +2453,10 @@ function renderChalQuiz(d) {
   // Already submitted
   if (myScore) {
     const max = questions.length * 10;
-    // Build AI explanation prompt
-    const aiExplainPrompt = "I just took a quiz. Please explain why each correct answer is right, in simple terms for an engineering student.\n\n" +
-      questions.map((q, qi) => {
-        const ans = decodeAns(q.ans, d.id, qi);
-        return "Q" + (qi+1) + ": " + q.q + "\nCorrect answer: " + "ABCD"[ans] + ") " + (q.opts[ans] || "");
-      }).join("\n\n");
     return el("div", { class: "chal-quiz-done" },
       el("div", { class: "chal-result-banner" },
         el("span", { class: "chal-result-score" }, myScore.score + "/" + max),
         el("span", { class: "chal-result-sub" }, "Your score · " + Math.round(myScore.timeTaken) + "s taken")
-      ),
-      el("div", { class: "ai-explain-row" },
-        el("span", { class: "ai-explain-label" }, "🤖 Understand the answers"),
-        el("a", { class: "ai-explain-btn", href: "https://gemini.google.com/app?q=" + encodeURIComponent(aiExplainPrompt), target: "_blank", rel: "noopener noreferrer" }, "Gemini"),
-        el("a", { class: "ai-explain-btn", href: "https://chat.openai.com/?q=" + encodeURIComponent(aiExplainPrompt), target: "_blank", rel: "noopener noreferrer" }, "ChatGPT"),
-        el("a", { class: "ai-explain-btn", href: "https://www.perplexity.ai/search?q=" + encodeURIComponent(aiExplainPrompt), target: "_blank", rel: "noopener noreferrer" }, "Perplexity")
       ),
       el("div", { class: "chal-answers-review" },
         ...questions.map((q, qi) => {
@@ -2540,18 +2528,10 @@ function renderChalQuiz(d) {
 
   // Start button
   if (!getName()) return el("p", { class: "hint" }, "Set your name first to take this quiz.");
-  const chalType = d.chalType || "Quiz";
-  const isHintType = chalType === "Puzzle Hunt" || chalType === "Riddle";
-  const hintPrompt = "I'm stuck on this challenge. Give me a small hint to think in the right direction — do NOT reveal the answer.\n\nChallenge: " + d.title + (d.body ? "\n\n" + d.body : "");
   return el("div", { class: "chal-start-wrap" },
     el("div", { class: "chal-start-info" },
       el("span", { class: "pill" }, questions.length + " questions"),
       timeLimit > 0 && el("span", { class: "pill" }, "⏱ " + timeLimit + " min limit")
-    ),
-    isHintType && el("div", { class: "ai-hint-row" },
-      el("span", { class: "ai-hint-label" }, "💡 Need a hint"),
-      el("a", { class: "ai-explain-btn", href: "https://gemini.google.com/app?q=" + encodeURIComponent(hintPrompt), target: "_blank", rel: "noopener noreferrer" }, "Ask Gemini"),
-      el("a", { class: "ai-explain-btn", href: "https://www.perplexity.ai/search?q=" + encodeURIComponent(hintPrompt), target: "_blank", rel: "noopener noreferrer" }, "Ask Perplexity")
     ),
     el("button", { type: "button", class: "btn primary chal-start-btn",
       onclick: () => {
@@ -2742,24 +2722,8 @@ function renderAsk(existing) {
         el("label", { class: "chal-time-label" }, "Time limit for participants",
           timeSel
         ),
-        el("div", { class: "chal-builder-label-row" },
-          el("span", { class: "chal-builder-label-text" }, "MCQ Questions (optional for quiz/code challenges)"),
-          el("div", { class: "ai-gen-row" },
-            el("span", { class: "ai-gen-label" }, "🤖 Generate with AI"),
-            el("button", { type: "button", class: "ai-explain-btn", onclick: () => {
-              const titleEl = chalSection.closest("form") && chalSection.closest("form").elements.title;
-              const topic = (titleEl && titleEl.value.trim()) || "engineering";
-              const prompt = "Generate 5 multiple choice questions about: " + topic + "\n\nFor each question use this exact format:\nQ: [question text]\nA) [option]\nB) [option]\nC) [option]\nD) [option]\nAnswer: [A/B/C/D]\n\nMake questions appropriate for an engineering student.";
-              window.open("https://gemini.google.com/app?q=" + encodeURIComponent(prompt), "_blank", "noopener,noreferrer");
-            } }, "Gemini"),
-            el("button", { type: "button", class: "ai-explain-btn", onclick: () => {
-              const titleEl = chalSection.closest("form") && chalSection.closest("form").elements.title;
-              const topic = (titleEl && titleEl.value.trim()) || "engineering";
-              const prompt = "Generate 5 multiple choice questions about: " + topic + "\n\nFor each question use this exact format:\nQ: [question text]\nA) [option]\nB) [option]\nC) [option]\nD) [option]\nAnswer: [A/B/C/D]\n\nMake questions appropriate for an engineering student.";
-              window.open("https://chat.openai.com/?q=" + encodeURIComponent(prompt), "_blank", "noopener,noreferrer");
-            } }, "ChatGPT")
-          ),
-          el("p", { class: "hint" }, "Add questions with 4 options each. Mark the correct answer. Or tap an AI button above to generate questions, then type them in.")
+        el("label", { class: "chal-builder-label" }, "MCQ Questions (optional for quiz/code challenges)",
+          el("p", { class: "hint" }, "Add questions with 4 options each. Mark the correct answer. Participants get scored automatically.")
         ),
         builderWrap
       );
