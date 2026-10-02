@@ -682,10 +682,10 @@ h1 span {
    ============================================================ */
 .fab {
   display: none;
-  position: fixed; bottom: calc(env(safe-area-inset-bottom, 0px) + 72px); right: 18px; z-index: 30;
-  width: 58px; height: 58px; border-radius: 50%;
+  position: fixed; bottom: calc(env(safe-area-inset-bottom, 0px) + 72px); left: 18px; z-index: 30;
+  width: 54px; height: 54px; border-radius: 50%;
   background: var(--grad); border: none; cursor: pointer;
-  color: #fff; font-size: 28px; font-weight: 700; line-height: 1;
+  color: #fff; font-size: 26px; font-weight: 700; line-height: 1;
   box-shadow: 0 6px 24px color-mix(in oklab, var(--g2) 55%, transparent);
   transition: transform .15s ease, box-shadow .15s ease;
 }
