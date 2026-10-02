@@ -992,7 +992,7 @@ function renderMarketView() {
     ),
     !waLink && !own && el("p", { class: "hint" }, "Seller didn't share a WhatsApp number. Comment to contact them."),
     el("div", { class: "rowbtns" }, ...actions),
-  ];
+  ].filter(Boolean);
 }
 
 function renderMarketAsk(existing) {
