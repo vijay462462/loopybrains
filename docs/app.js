@@ -1665,14 +1665,15 @@ function yearHub() {
   const saveDone = () => { try { localStorage.setItem("dd-yr-" + y, JSON.stringify(done)); } catch (_) {} };
   const maxN = Math.max(...["E1", "E2", "E3", "E4"].map(yearPostCount), 1);
   const tile = (n, label) => el("div", { class: "intro-stat" }, el("span", { class: "intro-stat-n" }, n), el("span", { class: "intro-stat-l" }, label));
+  const pillEl = el("span", { class: "pill open" }, pct + "% of goals done"), fillEl = el("span", { class: "lab-fill goal", style: "width:" + pct + "%" });
   return el("div", { class: "learn-card year-hub" },
-    el("div", { class: "campus-hub-head" }, el("strong", {}, "🎓 " + y + " · " + g.name), el("span", { class: "pill open" }, pct + "% of goals done")),
+    el("div", { class: "campus-hub-head" }, el("strong", {}, "🎓 " + y + " · " + g.name), pillEl),
     el("p", { class: "hint" }, g.tag),
     el("p", { class: fresh ? "campus-live" : "hint" }, fresh ? "🟢 " + fresh + " new " + y + " post" + (fresh > 1 ? "s" : "") + " in the last 24 hours" : "⚪ No new " + y + " posts today. Ask one!"),
     el("div", { class: "intro-stats" }, tile(posts.length, "posts"), tile(students, "students"), tile(solved + "/" + doubts.length, "doubts solved")),
-    el("div", { class: "lab-track small" }, el("span", { class: "lab-fill goal", style: "width:" + pct + "%" })),
+    el("div", { class: "lab-track small" }, fillEl),
     el("small", { class: "hint" }, "✅ Your " + y + " goals (tap to tick)"),
-    ...g.goals.map((t, i) => el("label", { class: "check yr-goal" }, el("input", { type: "checkbox", checked: done.includes(i), onchange: (e) => { done = e.target.checked ? [...new Set([...done, i])] : done.filter(x => x !== i); saveDone(); render(); } }), t)),
+    ...g.goals.map((t, i) => el("label", { class: "check yr-goal" }, el("input", { type: "checkbox", checked: done.includes(i), onchange: (e) => { done = e.target.checked ? [...new Set([...done, i])] : done.filter(x => x !== i); saveDone(); const p = Math.round((done.length / g.goals.length) * 100); pillEl.textContent = p + "% of goals done"; fillEl.style.setProperty("width", p + "%"); } }), t)),
     el("small", { class: "hint" }, "📅 Key dates"),
     el("ul", { class: "yr-dates" }, ...g.dates.map(d => el("li", {}, d))),
     seniors.length ? el("div", {}, el("small", { class: "hint" }, "🧑‍🏫 Seniors helping " + y), ...seniors.map(t => el("div", { class: "tl-trow" }, el("span", {}, t.name + " (" + t.year + ")"), el("strong", {}, t.n + (t.n === 1 ? " reply" : " replies"))))) : null,
