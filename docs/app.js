@@ -690,7 +690,7 @@ function renderBottomNav() {
     el('button', { type: 'button', class: 'bnav-btn', onclick: () => showPanel('leaders') },
       el('span', { class: 'bnav-icon' }, '🏆'), el('span', { class: 'bnav-label' }, 'Board')),
     el('button', { type: 'button', class: 'bnav-btn' + (!getName() ? ' bnav-pulse' : ''), onclick: () => { state.afterName = null; showPanel(getName() ? 'me' : 'name'); } },
-      el('span', { class: 'bnav-icon' }, getName() ? getAvatar() : '👤'), el('span', { class: 'bnav-label' }, getName() ? 'Me' : 'Profile'))
+      avatarEl(getName() ? getAvatar() : '👤', 'av bnav-av'), el('span', { class: 'bnav-label' }, getName() ? 'Me' : 'Profile'))
   );
 }
 
@@ -734,7 +734,10 @@ function renderHeader() {
   $("askBtn").textContent = t.ask;
   const me = store && state.loaded ? allStats().get(store.uid) : null;
   const myC = getCampus();
-  $("nameBtn").textContent = getName() ? getAvatar() + " " + getName() + (me ? " · Lv " + me.level.n + (me.streak ? " · 🔥" + me.streak : "") : "") : "Set your name";
+  const nb = $("nameBtn");
+  if (getName()) {
+    nb.replaceChildren(avatarEl(getAvatar(), "av av-nb"), document.createTextNode(" " + getName() + (me ? " · Lv " + me.level.n + (me.streak ? " · 🔥" + me.streak : "") : "")));
+  } else { nb.textContent = "Set your name"; }
 
   // Campus filter chips
   const campusBar = $("campusBar");
