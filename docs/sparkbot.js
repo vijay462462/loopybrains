@@ -165,8 +165,43 @@ function build() {
   document.getElementById('sb-btn').onclick = toggle;
   document.getElementById('sb-cls').onclick = toggle;
   document.getElementById('sb-go').onclick  = send;
-  document.getElementById('sb-in').addEventListener('keydown', e => { if (e.key==='Enter') send(); });
 
+  // Force inline styles on input + send so cached CSS can't make them gray
+  const inp = document.getElementById('sb-in');
+  Object.assign(inp.style, {
+    flex:'1', background:'linear-gradient(135deg,rgba(109,40,217,.45),rgba(30,64,175,.4))',
+    border:'1.5px solid rgba(167,139,250,.5)', borderRadius:'24px',
+    padding:'10px 16px', fontSize:'13px', fontWeight:'500',
+    color:'#ede9fe', outline:'none', boxSizing:'border-box',
+    boxShadow:'inset 0 1px 0 rgba(167,139,250,.2), 0 2px 10px rgba(109,40,217,.2)',
+  });
+  inp.addEventListener('focus',()=>{
+    inp.style.borderColor='rgba(196,181,253,.8)';
+    inp.style.boxShadow='0 0 0 3px rgba(109,40,217,.22), 0 0 24px rgba(167,139,250,.16), inset 0 1px 0 rgba(196,181,253,.25)';
+  });
+  inp.addEventListener('blur',()=>{
+    inp.style.borderColor='rgba(167,139,250,.5)';
+    inp.style.boxShadow='inset 0 1px 0 rgba(167,139,250,.2), 0 2px 10px rgba(109,40,217,.2)';
+  });
+
+  const go = document.getElementById('sb-go');
+  Object.assign(go.style, {
+    width:'40px', height:'40px', borderRadius:'50%', border:'none', cursor:'pointer', flexShrink:'0',
+    background:'linear-gradient(135deg,#9333ea,#ec4899,#06b6d4)',
+    color:'#fff', display:'flex', alignItems:'center', justifyContent:'center',
+    boxShadow:'0 4px 18px rgba(147,51,234,.55), 0 0 14px rgba(236,72,153,.3)',
+  });
+  go.onmouseenter=()=>{ go.style.transform='scale(1.14) translateY(-2px)'; go.style.filter='brightness(1.15)'; };
+  go.onmouseleave=()=>{ go.style.transform=''; go.style.filter=''; };
+
+  // Style the bar itself
+  const bar = document.querySelector('.sb-bar');
+  if (bar) Object.assign(bar.style,{
+    background:'linear-gradient(90deg,rgba(76,29,149,.55),rgba(23,37,84,.6),rgba(4,47,82,.55))',
+    borderTop:'1px solid rgba(196,181,253,.18)',
+  });
+
+  inp.addEventListener('keydown', e => { if (e.key==='Enter') send(); });
   setChips(QUICK_DEFAULT);
   addMsg('bot', "👋 Hey! I'm **Spark Bot** — your cyberpunk AI guide to RGUKT Spark.\n\nAsk me about **doubts**, **GATE papers**, **daily quiz**, **clubs**, **market**, or any feature! ✨", true);
 }
@@ -225,15 +260,38 @@ function send() {
   }, 750+Math.random()*500);
 }
 
+// Chip color themes — vivid, never gray
+const CHIP_THEMES = [
+  { bg:'linear-gradient(135deg,#6d28d9,#a21caf)', border:'#e879f9', color:'#fdf4ff', glow:'rgba(162,28,175,.55)' },
+  { bg:'linear-gradient(135deg,#0369a1,#0e7490)', border:'#22d3ee', color:'#ecfeff', glow:'rgba(14,116,144,.55)' },
+  { bg:'linear-gradient(135deg,#b45309,#d97706)', border:'#fbbf24', color:'#fffbeb', glow:'rgba(217,119,6,.5)'  },
+  { bg:'linear-gradient(135deg,#be123c,#e11d48)', border:'#fb7185', color:'#fff1f2', glow:'rgba(225,29,72,.5)'  },
+];
 function setChips(list) {
   const bar=document.getElementById('sb-chips'); if (!bar) return;
   bar.innerHTML='';
   list.forEach((q,i)=>{
+    const th = CHIP_THEMES[i % CHIP_THEMES.length];
     const b=document.createElement('button');
-    b.className='sb-chip'; b.type='button'; b.textContent=q;
-    b.style.setProperty('--ci',i);
+    b.type='button'; b.textContent=q;
+    Object.assign(b.style,{
+      padding:'6px 14px', borderRadius:'22px', cursor:'pointer', whiteSpace:'nowrap',
+      fontSize:'12px', fontWeight:'700', letterSpacing:'.2px',
+      background: th.bg,
+      border: '1.5px solid ' + th.border,
+      color: th.color,
+      boxShadow: '0 3px 14px ' + th.glow + ', inset 0 1px 0 rgba(255,255,255,.15)',
+      backdropFilter: 'blur(8px)',
+      transition: 'transform .18s cubic-bezier(.34,1.56,.64,1), box-shadow .18s',
+      opacity:'0', transform:'translateY(8px) scale(.88)',
+    });
+    b.onmouseenter=()=>{ b.style.transform='translateY(-3px) scale(1.07)'; b.style.filter='brightness(1.2)'; };
+    b.onmouseleave=()=>{ b.style.transform='translateY(0) scale(1)'; b.style.filter=''; };
     b.onclick=()=>{ document.getElementById('sb-in').value=q; send(); };
     bar.appendChild(b);
+    // animate in
+    const delay = i * 70;
+    setTimeout(()=>{ b.style.opacity='1'; b.style.transform='translateY(0) scale(1)'; }, delay + 20);
   });
 }
 
@@ -253,8 +311,8 @@ function scroll() {
 // ─── CSS ─────────────────────────────────────────────────────────────────────
 function injectCSS() {
   document.getElementById('sb-css92')?.remove();
-  if (document.getElementById('sb-css93')) return;
-  const s=document.createElement('style'); s.id='sb-css93';
+  if (document.getElementById('sb-css94')) return;
+  const s=document.createElement('style'); s.id='sb-css94';
   s.textContent=`
 /* ══════════════════════════════════════
    SPARK BOT v3 — Cyberpunk Glass
