@@ -1596,6 +1596,33 @@ const CAMPUS_INFO = {
   RKVALLEY: { place: "Idupulapaya, YSR Kadapa district, Andhra Pradesh", site: "https://www.rguktrkv.ac.in", q: "RGUKT RK Valley Idupulapaya" },
   SRIKAKULAM: { place: "Etcherla, Srikakulam district, Andhra Pradesh", site: "https://www.rguktsklm.ac.in", q: "RGUKT Srikakulam Etcherla" },
 };
+function goTab(tab, group) { state.tab = tab; state.group = group || "All"; state.filter = "all"; state.query = ""; state.selected = null; state.mode = "intro"; if ($("search")) $("search").value = ""; render(); }
+function openPost(tab, id) { state.tab = tab; state.group = "All"; state.filter = "all"; state.query = ""; openItem(id); }
+const postLikes = (d) => likesFor(d.id).length + repliesFor(d.id).length;
+function campusClubsBlock(c) {
+  const clubs = state.clubs.filter(x => x.campus === c && !x.deleted);
+  const counts = new Map(); for (const x of clubs) counts.set(x.club, (counts.get(x.club) || 0) + 1);
+  const recent = clubs.slice().sort((a, b) => b.createdAt - a.createdAt).slice(0, 3);
+  return el("div", { class: "campus-sec" },
+    el("small", { class: "hint" }, "🏛 Clubs at " + c + " (" + clubs.length + " post" + (clubs.length === 1 ? "" : "s") + ")"),
+    counts.size
+      ? el("div", { class: "rowbtns" }, [...counts].sort((a, b) => b[1] - a[1]).map(([name, n]) => el("button", { class: "btn sm", type: "button", onclick: () => goTab("clubs", name) }, name + " · " + n)))
+      : el("p", { class: "hint" }, "No club activity yet. Start a club post for " + c + "!"),
+    ...recent.map(x => el("button", { type: "button", class: "campus-link", onclick: () => openPost("clubs", x.id) }, el("strong", {}, x.title), el("small", {}, x.club + " · " + ago(x.createdAt)))),
+    el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: () => goTab("clubs") }, "Open all clubs ▶")));
+}
+function campusInnovationBlock(c) {
+  const ideas = state.ideas.filter(x => x.campus === c && !x.deleted).sort((a, b) => postLikes(b) - postLikes(a) || b.createdAt - a.createdAt).slice(0, 3);
+  const chals = state.challenges.filter(x => x.campus === c && !x.deleted).sort((a, b) => b.createdAt - a.createdAt).slice(0, 2);
+  return el("div", { class: "campus-sec" },
+    el("small", { class: "hint" }, "💡 Innovations and ideas from " + c),
+    ideas.length ? ideas.map(x => el("button", { type: "button", class: "campus-link", onclick: () => openPost("ideas", x.id) }, el("strong", {}, x.title), el("small", {}, x.category + " · ♥ " + likesFor(x.id).length + " · " + repliesFor(x.id).length + " thoughts"))) : el("p", { class: "hint" }, "No ideas yet. Share the first innovation from " + c + "."),
+    chals.length ? el("small", { class: "hint" }, "🎮 Innovation challenges") : null,
+    ...chals.map(x => el("button", { type: "button", class: "campus-link", onclick: () => openPost("challenges", x.id) }, el("strong", {}, x.title), el("small", {}, (x.type || "Challenge") + " · " + (x.status === "closed" ? "closed" : "open") + " · " + ago(x.createdAt)))),
+    el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: () => goTab("ideas") }, "All ideas ▶"), el("button", { class: "btn sm", type: "button", onclick: () => goTab("challenges") }, "All challenges ▶"),
+      el("button", { class: "btn sm primary", type: "button", onclick: () => { state.tab = "ideas"; state.group = "All"; openAsk(); } }, "💡 Share an idea")));
+}
+
 const CAMPUS_COLLS = ["doubts", "ideas", "clubs", "gate", "challenges", "market"];
 const campusPostCount = (c) => CAMPUS_COLLS.reduce((n, k) => n + state[k].filter(x => x.campus === c && !x.deleted).length, 0);
 function campusHub() {
@@ -1629,6 +1656,8 @@ function campusHub() {
     el("p", { class: fresh ? "campus-live" : "hint" }, fresh ? "🟢 " + fresh + " new post" + (fresh > 1 ? "s" : "") + " in the last 24 hours" : "⚪ Quiet today. Be the first to post!"),
     el("div", { class: "intro-stats" }, tile(posts.length, "posts"), tile(week, "this week"), tile(students, "students"), tile(solved + "/" + doubts.length, "doubts solved")),
     top.length ? el("div", {}, el("small", { class: "hint" }, "Top responders from " + c), ...top.map((t, i) => el("div", { class: "tl-trow" }, el("span", {}, ["🥇", "🥈", "🥉"][i] + " " + t.name), el("strong", {}, t.n + (t.n === 1 ? " reply" : " replies"))))) : null,
+    campusClubsBlock(c),
+    campusInnovationBlock(c),
     el("small", { class: "hint" }, "Campus ranking"),
     ...ranks.map(r => el("div", { class: "rival-row" },
       el("span", { class: "rival-rank" }, CAMPUS_ICON[r.campus] || "🏫"),
