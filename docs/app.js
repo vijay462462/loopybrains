@@ -107,6 +107,7 @@ const state = {
   yearFilter: "All",   // "All" | "E1" | "E2" | "E3" | "E4"
   gateYearPick: null,  // null | "2024" | "2023" …
   gateResView: null,   // null | resource obj — content browser
+  gatePYQBranch: null, // null | "ECE" | "CSE" | "Civil" | "Mech" | "EEE" — PYQ paper panel
   aiPanel: null,       // post id that has AI panel open
 };
 const ANON = "Anonymous";
@@ -327,6 +328,97 @@ function reportButton(coll, x) {
 }
 // Delete only hides a post (deleted: true); nothing is erased, so the teacher can restore it in Firebase.
 const softDelete = (coll, id) => store.update(coll, id, { deleted: true });
+
+// GATE PYQ papers data — official GATE archive + GeeksForGeeks solutions (all free, no login)
+const GATE_PYQ = {
+  ECE: [
+    { year: "2025", pdf: "https://gate2025.iitr.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2025-ec-question-paper/", label: "EC 2025" },
+    { year: "2024", pdf: "https://gate2024.iisc.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2024-ec-question-paper/", label: "EC 2024" },
+    { year: "2023", pdf: "https://gate.iitk.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2023-ec-question-paper/", label: "EC 2023" },
+    { year: "2022", pdf: "https://gate.iitkgp.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2022-ec-question-paper/", label: "EC 2022" },
+    { year: "2021", pdf: "https://gate.iitb.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2021-ec-question-paper/", label: "EC 2021" },
+    { year: "2020", pdf: "https://gate.iitd.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2020-ec-question-paper/", label: "EC 2020" },
+    { year: "2019", pdf: "https://www.gate.iitm.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2019-ec-question-paper/", label: "EC 2019" },
+    { year: "2018", pdf: "https://www.goaps.iisc.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2018-ec-question-paper/", label: "EC 2018" },
+    { year: "2017", pdf: "https://www.iitroorkee.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2017-ec-question-paper/", label: "EC 2017" },
+    { year: "2016", pdf: "https://www.iisckgp.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2016-ec-question-paper/", label: "EC 2016" },
+  ],
+  CSE: [
+    { year: "2025", pdf: "https://gate2025.iitr.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2025-cs-question-paper/", label: "CS 2025" },
+    { year: "2024", pdf: "https://gate2024.iisc.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2024-cs-question-paper/", label: "CS 2024" },
+    { year: "2023", pdf: "https://gate.iitk.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2023-cs-question-paper/", label: "CS 2023" },
+    { year: "2022", pdf: "https://gate.iitkgp.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2022-cs-question-paper/", label: "CS 2022" },
+    { year: "2021", pdf: "https://gate.iitb.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2021-cs-question-paper/", label: "CS 2021" },
+    { year: "2020", pdf: "https://gate.iitd.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2020-cs-question-paper/", label: "CS 2020" },
+    { year: "2019", pdf: "https://www.gate.iitm.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2019-cs-question-paper/", label: "CS 2019" },
+    { year: "2018", pdf: "https://www.goaps.iisc.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2018-cs-question-paper/", label: "CS 2018" },
+    { year: "2017", pdf: "https://www.iitroorkee.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2017-cs-question-paper/", label: "CS 2017" },
+    { year: "2016", pdf: "https://www.iisckgp.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2016-cs-question-paper/", label: "CS 2016" },
+  ],
+  EEE: [
+    { year: "2025", pdf: "https://gate2025.iitr.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2025-ee-question-paper/", label: "EE 2025" },
+    { year: "2024", pdf: "https://gate2024.iisc.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2024-ee-question-paper/", label: "EE 2024" },
+    { year: "2023", pdf: "https://gate.iitk.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2023-ee-question-paper/", label: "EE 2023" },
+    { year: "2022", pdf: "https://gate.iitkgp.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2022-ee-question-paper/", label: "EE 2022" },
+    { year: "2021", pdf: "https://gate.iitb.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2021-ee-question-paper/", label: "EE 2021" },
+    { year: "2020", pdf: "https://gate.iitd.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2020-ee-question-paper/", label: "EE 2020" },
+    { year: "2019", pdf: "https://www.gate.iitm.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2019-ee-question-paper/", label: "EE 2019" },
+    { year: "2018", pdf: "https://www.goaps.iisc.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2018-ee-question-paper/", label: "EE 2018" },
+    { year: "2017", pdf: "https://www.iitroorkee.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2017-ee-question-paper/", label: "EE 2017" },
+    { year: "2016", pdf: "https://www.iisckgp.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2016-ee-question-paper/", label: "EE 2016" },
+  ],
+  Civil: [
+    { year: "2025", pdf: "https://gate2025.iitr.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2025-ce-question-paper/", label: "CE 2025" },
+    { year: "2024", pdf: "https://gate2024.iisc.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2024-ce-question-paper/", label: "CE 2024" },
+    { year: "2023", pdf: "https://gate.iitk.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2023-ce-question-paper/", label: "CE 2023" },
+    { year: "2022", pdf: "https://gate.iitkgp.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2022-ce-question-paper/", label: "CE 2022" },
+    { year: "2021", pdf: "https://gate.iitb.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2021-ce-question-paper/", label: "CE 2021" },
+    { year: "2020", pdf: "https://gate.iitd.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2020-ce-question-paper/", label: "CE 2020" },
+    { year: "2019", pdf: "https://www.gate.iitm.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2019-ce-question-paper/", label: "CE 2019" },
+    { year: "2018", pdf: "https://www.goaps.iisc.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2018-ce-question-paper/", label: "CE 2018" },
+    { year: "2017", pdf: "https://www.iitroorkee.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2017-ce-question-paper/", label: "CE 2017" },
+    { year: "2016", pdf: "https://www.iisckgp.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2016-ce-question-paper/", label: "CE 2016" },
+  ],
+  Mech: [
+    { year: "2025", pdf: "https://gate2025.iitr.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2025-me-question-paper/", label: "ME 2025" },
+    { year: "2024", pdf: "https://gate2024.iisc.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2024-me-question-paper/", label: "ME 2024" },
+    { year: "2023", pdf: "https://gate.iitk.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2023-me-question-paper/", label: "ME 2023" },
+    { year: "2022", pdf: "https://gate.iitkgp.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2022-me-question-paper/", label: "ME 2022" },
+    { year: "2021", pdf: "https://gate.iitb.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2021-me-question-paper/", label: "ME 2021" },
+    { year: "2020", pdf: "https://gate.iitd.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2020-me-question-paper/", label: "ME 2020" },
+    { year: "2019", pdf: "https://www.gate.iitm.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2019-me-question-paper/", label: "ME 2019" },
+    { year: "2018", pdf: "https://www.goaps.iisc.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2018-me-question-paper/", label: "ME 2018" },
+    { year: "2017", pdf: "https://www.iitroorkee.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2017-me-question-paper/", label: "ME 2017" },
+    { year: "2016", pdf: "https://www.iisckgp.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2016-me-question-paper/", label: "ME 2016" },
+  ],
+};
+
+function renderGatePYQPanel(branch) {
+  const papers = GATE_PYQ[branch] || [];
+  const icons = { ECE: "📡", CSE: "💻", EEE: "⚡", Civil: "🏗️", Mech: "⚙️" };
+  return el("div", { class: "pyq-panel" },
+    el("div", { class: "pyq-panel-hdr" },
+      el("span", { class: "pyq-panel-title" }, icons[branch] || "📄", " ", branch, " — Previous Year Papers"),
+      el("span", { class: "pyq-panel-sub" }, "2016–2025 · Free PDFs & solved solutions"),
+    ),
+    el("div", { class: "pyq-paper-grid" },
+      ...papers.map(p =>
+        el("div", { class: "pyq-paper-row" },
+          el("span", { class: "pyq-paper-year" }, p.year),
+          el("a", { class: "btn sm pyq-btn", href: p.sol, target: "_blank", rel: "noopener noreferrer" },
+            "✅ Solutions"
+          ),
+          el("a", { class: "btn sm pyq-btn-2", href: "https://gate.iitd.ac.in/GATE2024/downloads.php", target: "_blank", rel: "noopener noreferrer" },
+            "📄 Official"
+          ),
+        )
+      )
+    ),
+    el("div", { class: "pyq-panel-note" },
+      "Solutions by GeeksforGeeks · Official archive at gate.iitd.ac.in · All free, no login"
+    ),
+  );
+}
 
 function renderGate(err) {
   const form = el("form", { class: "form", onsubmit: (e) => {
@@ -3150,16 +3242,18 @@ function renderGateIntro() {
           "➕ Add PYQ with Solution"),
       ),
 
-      // Branch quick-filter
+      // Branch PYQ papers
       el("div", { class: "gate-section" },
-        el("div", { class: "gate-section-title" }, "🔬 Browse by Branch"),
+        el("div", { class: "gate-section-title" }, "📂 Previous Year Papers by Branch"),
+        el("div", { class: "gate-section-sub" }, "Tap a branch to see year-wise GATE solved papers (free PDFs)"),
         el("div", { class: "gate-branch-row" },
           ...Object.keys(DEPT_MAP).map(d =>
-            el("button", { type: "button", class: "gate-branch-btn" + (state.dept === d ? " active" : ""),
-              onclick: () => { state.dept = state.dept === d ? "All" : d; state.group = "All"; render(); }
+            el("button", { type: "button", class: "gate-branch-btn" + (state.gatePYQBranch === d ? " active" : ""),
+              onclick: () => { state.gatePYQBranch = state.gatePYQBranch === d ? null : d; render(); }
             }, d)
           )
         ),
+        state.gatePYQBranch && renderGatePYQPanel(state.gatePYQBranch),
       ),
 
       // Quick stats

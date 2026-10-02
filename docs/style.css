@@ -399,6 +399,10 @@ a.linkbtn { text-decoration: none; }
 /* Portrait image avatars */
 .av.av-img { background: none; box-shadow: 0 2px 8px rgba(0,0,0,.22), 0 0 0 2px color-mix(in oklab,var(--accent) 35%,transparent); overflow: hidden; padding: 0; }
 .av.av-img img, img.av-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; }
+/* When the <img> itself carries .av, lock it to the avatar size so it can't grow to 100% of its container */
+img.av { width: 28px !important; height: 28px !important; flex-shrink: 0; object-fit: cover; border-radius: 50%; display: inline-block; vertical-align: middle; }
+img.av.av-lg { width: 48px !important; height: 48px !important; }
+img.av.av-hero { width: 72px !important; height: 72px !important; }
 img.av-img { display: inline-block; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,.22), 0 0 0 2px color-mix(in oklab,var(--accent) 35%,transparent); flex-shrink: 0; vertical-align: middle; margin-right: 4px; transition: transform .2s ease; }
 img.av-img:hover { transform: scale(1.22); }
 .av-lg, img.av-lg { width: 34px; height: 34px; font-size: 20px; }
@@ -1388,6 +1392,21 @@ div.chal-opt.wrong b { background: #ef4444; color: #fff; }
   transition: background .15s;
 }
 .gate-branch-btn:hover, .gate-branch-btn.active { background: #6366f1; border-color: #6366f1; color: #fff; }
+
+/* PYQ panel (expands below branch buttons) */
+.pyq-panel { margin-top: 12px; background: var(--bg); border: 1.5px solid var(--line); border-radius: 14px; overflow: hidden; }
+.pyq-panel-hdr { padding: 10px 14px 6px; border-bottom: 1px solid var(--line); }
+.pyq-panel-title { font-size: 14px; font-weight: 700; display: block; }
+.pyq-panel-sub { font-size: 11px; color: var(--muted); }
+.pyq-paper-grid { display: flex; flex-direction: column; }
+.pyq-paper-row { display: flex; align-items: center; gap: 8px; padding: 7px 14px; border-bottom: 1px solid var(--line); }
+.pyq-paper-row:last-child { border-bottom: none; }
+.pyq-paper-year { font-size: 13px; font-weight: 700; min-width: 38px; }
+.pyq-btn { background: #059669; border-color: #059669; color: #fff; font-size: 11px; padding: 4px 10px; }
+.pyq-btn:hover { background: #047857; }
+.pyq-btn-2 { background: var(--sheet); border-color: var(--line); font-size: 11px; padding: 4px 10px; }
+.pyq-btn-2:hover { background: var(--line); }
+.pyq-panel-note { padding: 7px 14px; font-size: 10.5px; color: var(--muted); background: color-mix(in oklab, var(--accent) 6%, transparent); }
 
 .gate-stats-row { display: flex; gap: 12px; }
 .gate-stat { flex: 1; background: var(--sheet); border-radius: 12px; padding: 12px; text-align: center; }
