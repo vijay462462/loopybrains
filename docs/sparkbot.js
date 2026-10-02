@@ -252,8 +252,9 @@ function scroll() {
 
 // ─── CSS ─────────────────────────────────────────────────────────────────────
 function injectCSS() {
-  if (document.getElementById('sb-css')) return;
-  const s=document.createElement('style'); s.id='sb-css';
+  document.getElementById('sb-css92')?.remove();
+  if (document.getElementById('sb-css93')) return;
+  const s=document.createElement('style'); s.id='sb-css93';
   s.textContent=`
 /* ══════════════════════════════════════
    SPARK BOT v3 — Cyberpunk Glass
@@ -438,61 +439,64 @@ function injectCSS() {
 
 /* ── CHIPS ──────────────────────────── */
 .sb-chips{
-  display:flex;flex-wrap:wrap;gap:5px;padding:6px 11px 3px;flex-shrink:0;min-height:0;
+  display:flex;flex-wrap:wrap;gap:6px;padding:8px 11px 4px;flex-shrink:0;min-height:0;
 }
 .sb-chip{
-  padding:5px 12px;border-radius:22px;cursor:pointer;white-space:nowrap;
-  font-size:11.5px;font-weight:600;
-  background:linear-gradient(135deg,rgba(76,29,149,.45),rgba(3,69,120,.35));
-  border:1px solid rgba(196,181,253,.28);
-  color:rgba(216,180,254,.95);
-  backdrop-filter:blur(8px);
-  transition:all .2s cubic-bezier(.34,1.56,.64,1);
-  animation:sb-chip-in .3s cubic-bezier(.34,1.56,.64,1) both;
-  animation-delay:calc(var(--ci,0)*.07s);
+  padding:6px 13px;border-radius:22px;cursor:pointer;white-space:nowrap;
+  font-size:12px;font-weight:700;letter-spacing:.2px;
+  position:relative;overflow:hidden;
+  backdrop-filter:blur(12px);
+  transition:all .22s cubic-bezier(.34,1.56,.64,1);
+  animation:sb-chip-in .32s cubic-bezier(.34,1.56,.64,1) both;
+  animation-delay:calc(var(--ci,0)*.08s);
 }
-@keyframes sb-chip-in{from{opacity:0;transform:translateY(8px) scale(.85)}to{opacity:1;transform:translateY(0) scale(1)}}
-.sb-chip:hover{
-  background:linear-gradient(135deg,rgba(109,40,217,.6),rgba(7,89,133,.5));
-  border-color:rgba(196,181,253,.55);
-  color:#f0abfc;
-  transform:translateY(-2px) scale(1.05);
-  box-shadow:0 4px 18px rgba(109,40,217,.35),0 0 12px rgba(196,181,253,.15);
-}
-.sb-chip:active{transform:scale(.96);}
+/* Each chip gets a vivid color based on its index */
+.sb-chip:nth-child(1){background:linear-gradient(135deg,rgba(126,34,206,.75),rgba(192,38,211,.55));border:1.5px solid rgba(240,171,252,.5);color:#f0abfc;box-shadow:0 2px 12px rgba(192,38,211,.3),inset 0 1px 0 rgba(255,255,255,.1);}
+.sb-chip:nth-child(2){background:linear-gradient(135deg,rgba(3,105,161,.75),rgba(6,182,212,.45));border:1.5px solid rgba(103,232,249,.45);color:#67e8f9;box-shadow:0 2px 12px rgba(6,182,212,.3),inset 0 1px 0 rgba(255,255,255,.1);}
+.sb-chip:nth-child(3){background:linear-gradient(135deg,rgba(180,83,9,.7),rgba(217,119,6,.5));border:1.5px solid rgba(252,211,77,.45);color:#fde68a;box-shadow:0 2px 12px rgba(217,119,6,.3),inset 0 1px 0 rgba(255,255,255,.1);}
+.sb-chip:nth-child(4){background:linear-gradient(135deg,rgba(190,18,60,.7),rgba(244,63,94,.45));border:1.5px solid rgba(253,164,175,.45);color:#fecdd3;box-shadow:0 2px 12px rgba(244,63,94,.3),inset 0 1px 0 rgba(255,255,255,.1);}
+/* Shimmer sweep on each chip */
+.sb-chip::before{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.15),transparent);transform:skewX(-15deg);transition:left .4s ease;}
+.sb-chip:hover::before{left:150%;}
+.sb-chip:hover{transform:translateY(-3px) scale(1.07);filter:brightness(1.15);}
+.sb-chip:active{transform:scale(.95);}
+@keyframes sb-chip-in{from{opacity:0;transform:translateY(10px) scale(.8)}to{opacity:1;transform:translateY(0) scale(1)}}
 
 /* ── INPUT BAR ──────────────────────── */
 .sb-bar{
-  display:flex;align-items:center;gap:8px;padding:9px 11px;flex-shrink:0;
-  border-top:1px solid rgba(196,181,253,.12);
-  background:linear-gradient(90deg,rgba(45,12,102,.6),rgba(4,30,60,.65));
+  display:flex;align-items:center;gap:8px;padding:10px 11px;flex-shrink:0;
+  border-top:1px solid rgba(196,181,253,.15);
+  background:linear-gradient(90deg,rgba(76,29,149,.5) 0%,rgba(23,37,84,.55) 50%,rgba(4,47,82,.5) 100%);
+  backdrop-filter:blur(8px);
 }
 #sb-in{
   flex:1;
-  background:linear-gradient(135deg,rgba(55,20,110,.55),rgba(10,30,70,.6));
-  border:1px solid rgba(196,181,253,.22);
-  border-radius:22px;padding:9px 14px;
-  font-size:13px;color:#e9d5ff;outline:none;
-  transition:border-color .2s,box-shadow .2s;
-  backdrop-filter:blur(8px);box-sizing:border-box;
+  background:linear-gradient(135deg,rgba(88,28,135,.4) 0%,rgba(30,58,138,.4) 100%);
+  border:1.5px solid rgba(167,139,250,.35);
+  border-radius:24px;padding:10px 16px;
+  font-size:13px;font-weight:500;color:#ede9fe;outline:none;
+  transition:border-color .2s,box-shadow .2s,background .2s;
+  backdrop-filter:blur(10px);box-sizing:border-box;
+  box-shadow:inset 0 1px 0 rgba(167,139,250,.15),0 2px 8px rgba(88,28,135,.2);
 }
 #sb-in:focus{
-  border-color:rgba(196,181,253,.6);
-  box-shadow:0 0 0 3px rgba(109,40,217,.2),0 0 20px rgba(168,85,247,.12);
+  border-color:rgba(196,181,253,.7);
+  background:linear-gradient(135deg,rgba(109,40,217,.35) 0%,rgba(30,64,175,.35) 100%);
+  box-shadow:0 0 0 3px rgba(109,40,217,.18),0 0 22px rgba(167,139,250,.14),inset 0 1px 0 rgba(196,181,253,.2);
 }
-#sb-in::placeholder{color:rgba(196,181,253,.35);}
+#sb-in::placeholder{color:rgba(167,139,250,.45);font-weight:400;}
 #sb-go{
-  width:38px;height:38px;border-radius:50%;border:none;cursor:pointer;flex-shrink:0;
-  background:linear-gradient(135deg,#7c3aed 0%,#be185d 50%,#0369a1 100%);
+  width:40px;height:40px;border-radius:50%;border:none;cursor:pointer;flex-shrink:0;
+  background:linear-gradient(135deg,#9333ea 0%,#ec4899 50%,#06b6d4 100%);
   color:#fff;display:flex;align-items:center;justify-content:center;
-  box-shadow:0 4px 14px rgba(124,58,237,.45),0 0 10px rgba(190,24,93,.25);
+  box-shadow:0 4px 16px rgba(147,51,234,.5),0 0 12px rgba(236,72,153,.25);
   transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .2s;
   position:relative;overflow:hidden;
 }
-#sb-go:hover{transform:scale(1.12) translateY(-1px);box-shadow:0 6px 22px rgba(124,58,237,.6),0 0 16px rgba(190,24,93,.3);}
+#sb-go:hover{transform:scale(1.15) translateY(-2px);box-shadow:0 6px 24px rgba(147,51,234,.65),0 0 20px rgba(236,72,153,.4);}
 #sb-go.sb-pop::after{
   content:'';position:absolute;inset:0;border-radius:50%;
-  background:radial-gradient(circle,rgba(255,255,255,.6) 0%,transparent 70%);
+  background:radial-gradient(circle,rgba(255,255,255,.65) 0%,transparent 70%);
   animation:sb-pop .35s ease-out;pointer-events:none;
 }
 @keyframes sb-pop{from{transform:scale(0);opacity:1}to{transform:scale(2.5);opacity:0}}
