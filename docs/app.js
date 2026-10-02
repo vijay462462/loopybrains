@@ -965,8 +965,8 @@ function renderHeader() {
           el("button", { type: "button",
             class: "campus-chip" + (state.campusFilter === c ? " active" : ""),
             style: c !== "all" ? "--cc:" + campusColor(c) : "",
-            onclick: () => { state.campusFilter = c; render(); }
-          }, c === "all" ? "🌐 All" : c)
+            onclick: () => { state.campusFilter = c; render(); if (c !== "all" && innerWidth <= 1000) setTimeout(() => { const l = $("list"); if (l) l.scrollIntoView({ behavior: "smooth", block: "start" }); }, 80); }
+          }, c === "all" ? "🌐 All" : c + " · " + campusPostCount(c))
         ),
         myC ? el("button", { type: "button", class: "campus-chip my",
           onclick: () => { state.mode = "campus"; render(); }
@@ -1208,7 +1208,7 @@ function renderMarketList() {
   const savedSet = savedMkt();
   if (!rows.length) {
     $("list").replaceChildren(
-      mktBanner, mktChips, mktSafetyTips(),
+      mktBanner, campusHub(), mktChips, mktSafetyTips(),
       state.market.length
         ? el("div", { class: "empty" }, el("strong", {}, "Nothing matches"), " Try another category or clear the search.")
         : el("div", { class: "empty" }, el("strong", {}, "No listings yet"), " Be the first to sell something!")
@@ -1216,7 +1216,7 @@ function renderMarketList() {
     return;
   }
   $("list").replaceChildren(
-    mktBanner, mktChips, mktSafetyTips(),
+    mktBanner, campusHub(), mktChips, mktSafetyTips(),
     el("div", { class: "mkt-grid" },
       ...rows.map(d => {
         const condColor = CONDITION_COLOR[d.condition] || "#6b7280";
@@ -1589,6 +1589,64 @@ function subjectHub(count) {
     el("p", { class: "hint" }, "What next? ① Ask your doubt  ② Study the topic  ③ Come back and help others — answering earns you points 🏆"));
 }
 
+// ---------- campus hub: info, live activity, ranking and actions for the selected campus ----------
+const CAMPUS_INFO = {
+  NUZVID: { place: "Nuzvid, Eluru district, Andhra Pradesh", site: "https://www.rguktn.ac.in", q: "RGUKT Nuzvid" },
+  ONGOLE: { place: "Ongole, Prakasam district, Andhra Pradesh", site: "https://www.rguktong.ac.in", q: "RGUKT Ongole" },
+  RKVALLEY: { place: "Idupulapaya, YSR Kadapa district, Andhra Pradesh", site: "https://www.rguktrkv.ac.in", q: "RGUKT RK Valley Idupulapaya" },
+  SRIKAKULAM: { place: "Etcherla, Srikakulam district, Andhra Pradesh", site: "https://www.rguktsklm.ac.in", q: "RGUKT Srikakulam Etcherla" },
+};
+const CAMPUS_COLLS = ["doubts", "ideas", "clubs", "gate", "challenges", "market"];
+const campusPostCount = (c) => CAMPUS_COLLS.reduce((n, k) => n + state[k].filter(x => x.campus === c && !x.deleted).length, 0);
+function campusHub() {
+  const c = state.campusFilter;
+  if (!c || c === "all") return null;
+  const info = CAMPUS_INFO[c] || {}, now = Date.now(), color = campusColor(c);
+  const own = (x) => x.campus === c && !x.deleted;
+  const posts = CAMPUS_COLLS.flatMap(k => state[k].filter(own));
+  const fresh = posts.filter(x => now - x.createdAt < 86400000).length;
+  const week = posts.filter(x => now - x.createdAt < 7 * 86400000).length;
+  const doubts = state.doubts.filter(own), solved = doubts.filter(d => d.resolvedReplyId).length;
+  const students = new Set(posts.filter(x => !x.anonymous && x.authorId).map(x => x.authorId)).size;
+  const campusOf = new Map();
+  for (const k of CAMPUS_COLLS) for (const x of state[k]) if (x.campus && x.authorId) campusOf.set(x.authorId, x.campus);
+  const tally = new Map();
+  for (const r of state.replies) {
+    if (r.deleted || r.anonymous || campusOf.get(r.authorId) !== c) continue;
+    const t = tally.get(r.authorId) || { name: r.authorName || "A student", n: 0 }; t.n++; tally.set(r.authorId, t);
+  }
+  const top = [...tally.values()].sort((a, b) => b.n - a.n).slice(0, 3);
+  const ranks = campusStats(), maxPts = Math.max(...ranks.map(x => x.points), 1), rank = ranks.findIndex(x => x.campus === c) + 1;
+  const isMine = getCampus() === c;
+  const tile = (n, label) => el("div", { class: "intro-stat" }, el("span", { class: "intro-stat-n" }, n), el("span", { class: "intro-stat-l" }, label));
+  const q = encodeURIComponent(info.q || ("RGUKT " + c));
+  const card = el("div", { class: "learn-card campus-hub" },
+    el("div", { class: "campus-hub-head" },
+      el("strong", {}, (CAMPUS_ICON[c] || "🏫") + " RGUKT " + c),
+      isMine && el("span", { class: "pill done" }, "⭐ My campus"),
+      rank > 0 && el("span", { class: "pill open" }, "#" + rank + " campus rank")),
+    info.place && el("p", { class: "hint" }, "📍 " + info.place),
+    el("p", { class: fresh ? "campus-live" : "hint" }, fresh ? "🟢 " + fresh + " new post" + (fresh > 1 ? "s" : "") + " in the last 24 hours" : "⚪ Quiet today. Be the first to post!"),
+    el("div", { class: "intro-stats" }, tile(posts.length, "posts"), tile(week, "this week"), tile(students, "students"), tile(solved + "/" + doubts.length, "doubts solved")),
+    top.length ? el("div", {}, el("small", { class: "hint" }, "Top responders from " + c), ...top.map((t, i) => el("div", { class: "tl-trow" }, el("span", {}, ["🥇", "🥈", "🥉"][i] + " " + t.name), el("strong", {}, t.n + (t.n === 1 ? " reply" : " replies"))))) : null,
+    el("small", { class: "hint" }, "Campus ranking"),
+    ...ranks.map(r => el("div", { class: "rival-row" },
+      el("span", { class: "rival-rank" }, CAMPUS_ICON[r.campus] || "🏫"),
+      el("span", { class: "rival-name", style: "color:" + campusColor(r.campus) + (r.campus === c ? ";font-weight:900" : "") }, r.campus),
+      el("div", { class: "rival-bar-wrap" }, el("div", { class: "rival-bar", style: "width:" + Math.round(r.points * 100 / maxPts) + "%;background:" + campusColor(r.campus) })),
+      el("span", { class: "rival-score" }, r.points + " pts"))),
+    el("div", { class: "rowbtns" },
+      isMine ? null : el("button", { class: "btn sm primary", type: "button", onclick: () => { setCampus(c); showNotice("Done. " + c + " is now your campus.", "ok"); render(); } }, "⭐ Set as my campus"),
+      el("button", { class: "btn sm", type: "button", onclick: openAsk }, "➕ Post"),
+      info.site ? outLink(info.site, "🌐 Website", "linkbtn") : null,
+      outLink("https://www.google.com/maps/search/?api=1&query=" + q, "🗺️ Map", "linkbtn"),
+      outLink("https://www.google.com/maps/dir/?api=1&destination=" + q, "🧭 Directions", "linkbtn"),
+      outLink("https://www.google.com/search?q=" + encodeURIComponent("weather " + (info.place || c).split(",")[0]), "🌦️ Weather", "linkbtn"),
+      el("button", { class: "btn sm", type: "button", onclick: () => { state.campusFilter = "all"; render(); } }, "✕ Show all campuses")));
+  card.style.setProperty("--cc", color);
+  return card;
+}
+
 function renderList() {
   if (state.tab === "market") { renderMarketList(); return; }
   const t = TABS[state.tab], rows = visible(), all = state[t.coll];
@@ -1596,7 +1654,7 @@ function renderList() {
     const noun = state.tab === "doubts" || state.tab === "gate" ? "subject" : state.tab === "clubs" ? "club" : state.tab === "challenges" ? "type" : "category";
     const emptyMsg = state.tab === "doubts" ? "No doubts yet" : state.tab === "clubs" ? "No club posts yet" : state.tab === "gate" ? "No GATE discussions yet" : state.tab === "challenges" ? "No challenges yet" : "No ideas yet";
     const hubEl = state.query.trim() ? null : subjectHub(0);
-    $("list").replaceChildren(...[deptBanner(), hubEl].filter(Boolean), ...(hubEl ? [] : [all.length
+    $("list").replaceChildren(...[deptBanner(), campusHub(), hubEl].filter(Boolean), ...(hubEl ? [] : [all.length
       ? el("div", { class: "empty" }, el("strong", {}, "Nothing matches"), "Try another " + noun + " or clear the search.")
       : el("div", { class: "empty" }, el("strong", {}, emptyMsg), "Press \u201c" + t.ask + "\u201d to post the first one.")]));
     return;
@@ -1606,7 +1664,7 @@ function renderList() {
     el("span", { class: "spot-k" }, "⭐ Doubt of the Day"),
     el("strong", {}, spot.d.title),
     el("span", { class: "spot-why" }, spot.why + " Can you solve it?"));
-  $("list").replaceChildren(...[deptBanner(), subjectHub(rows.length), spotCard].filter(Boolean), ...rows.map(d => {
+  $("list").replaceChildren(...[deptBanner(), campusHub(), subjectHub(rows.length), spotCard].filter(Boolean), ...rows.map(d => {
     const n = repliesFor(d.id).length, g = d[t.field];
     const meta = [el("span", { class: "tag", ...colorAttrs(g) }, g)];
     const votes = likesFor(d.id).length;

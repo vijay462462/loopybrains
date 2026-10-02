@@ -1565,3 +1565,9 @@ header.top { background: linear-gradient(120deg, var(--ta), var(--tb) 50%, var(-
 .mkt-safe summary { font-weight: 800; cursor: pointer; padding: 4px 0; }
 .mkt-safe ul { margin: 6px 0 4px; padding-left: 18px; color: var(--muted); font-size: 13px; display: grid; gap: 4px; }
 .mkt-safe .rowbtns { margin: 8px 0 4px; }
+
+/* ---- campus hub ---- */
+.campus-hub { border-left: 5px solid var(--cc, var(--ta)); }
+.campus-hub-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.campus-hub-head strong { font-size: 1.1rem; color: var(--cc, var(--ink)); }
+.campus-live { margin: 0; font-weight: 700; color: #16a34a; font-size: 13px; }
