@@ -474,8 +474,8 @@ function build() {
         <div class="sb-bar">
           <input id="sb-in" type="text" placeholder="Ask me anything about RGUKT Spark… 🌟" autocomplete="off" maxlength="400">
           <button id="sb-go" type="button" aria-label="Send">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 19-7z" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
             </svg>
           </button>
         </div>
