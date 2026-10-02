@@ -61,6 +61,13 @@ const TABS = {
     placeholder: "e.g. What is the output of this C program? / Arrange 8 queens on a chessboard",
     bodyHint: "Full question or challenge description. For quizzes, reveal the answer in your first reply.",
   },
+  jobs: {
+    coll: "jobs", field: "type", groups: ["Internship", "Full-time", "On-campus drive", "Off-campus drive", "Hackathon", "Referral", "Interview experience", "Prep resource"], groupLabel: "Type", noun: "opportunity",
+    ask: "Post an opportunity", tagline: "Placements, internships and hackathons shared by RGUKT students. Post openings, interview experiences and prep tips.",
+    replyNoun: "reply", replyLabel: "Your reply", replyBtn: "Post reply",
+    placeholder: "e.g. TCS NQT registration open for 2026 batch",
+    bodyHint: "Role, eligibility, selection process, how to apply, and any tips.",
+  },
   market: {
     coll: "market", field: "category", groups: ["Books", "Notes", "Electronics", "Hostel", "Clothing", "Cycles & Bikes", "Sports", "Lab & Stationery", "Furniture", "Services", "Lost & Found", "Other"], groupLabel: "Category", noun: "listing",
     ask: "Sell an item", tagline: "Buy and sell textbooks, electronics, hostel items and more — with fellow RGUKT students.",
@@ -79,6 +86,33 @@ const CAMPUS_FULL = { NUZVID: "RGUKT Nuzvid", ONGOLE: "RGUKT Ongole", RKVALLEY: 
 const campusColor = (c) => CAMPUS_COLORS[c] || "#6366f1";
 const getCampus = () => { try { return localStorage.getItem("dd-campus") || null; } catch(_){return null;} };
 const setCampus = (c) => { try { localStorage.setItem("dd-campus", c); } catch(_){} };
+
+// ---------- placement and internship board ----------
+const safeHttp = (u) => /^https?:\/\/[^\s<>"']{3,280}$/i.test(String(u || "")) ? String(u) : "";
+function jobDaysLeft(d) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d.deadline || ""); if (!m) return null;
+  const now = new Date(), today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return Math.round((new Date(+m[1], +m[2] - 1, +m[3]) - today) / 86400000);
+}
+const jobDeadlineText = (n) => n == null ? "" : n < 0 ? "Closed" : n === 0 ? "Closes today" : n === 1 ? "1 day left" : n + " days left";
+function jobFields(form, create) {
+  const f = form.elements; if (!f.company) return {};
+  const o = { company: f.company.value.trim().slice(0, 60), deadline: /^\d{4}-\d{2}-\d{2}$/.test(f.deadline.value) ? f.deadline.value : "", applyUrl: safeHttp(f.applyUrl.value.trim()), pay: f.pay.value.trim().slice(0, 40) };
+  if (create) for (const k of Object.keys(o)) if (!o[k]) delete o[k];
+  return o;
+}
+const JOB_SITES = [["Internshala", "https://internshala.com"], ["Unstop", "https://unstop.com"], ["AICTE Internships", "https://internship.aicte-india.org/"], ["National Career Service", "https://www.ncs.gov.in"], ["Apprenticeship India", "https://www.apprenticeshipindia.gov.in"], ["Google Summer of Code", "https://summerofcode.withgoogle.com"], ["MLH hackathons", "https://mlh.io"], ["roadmap.sh", "https://roadmap.sh"], ["freeCodeCamp", "https://www.freecodecamp.org"]];
+function jobsHub() {
+  if (state.tab !== "jobs" || state.query.trim()) return null;
+  const soon = state.jobs.filter(d => !d.deleted && !isHidden(d)).map(d => ({ d, n: jobDaysLeft(d) })).filter(x => x.n != null && x.n >= 0 && x.n <= 14).sort((a, b) => a.n - b.n).slice(0, 4);
+  return el("div", { class: "learn-card year-hub" },
+    el("strong", {}, "💼 Placement and internship board"),
+    soon.length ? el("small", { class: "hint" }, "⏰ Closing soon") : el("small", { class: "hint" }, "No deadlines in the next 2 weeks. Post an opening to help your batch."),
+    ...soon.map(x => el("button", { type: "button", class: "campus-link", onclick: () => openItem(x.d.id) }, el("strong", {}, x.d.title), el("small", {}, (x.d.company ? x.d.company + " · " : "") + jobDeadlineText(x.n)))),
+    el("small", { class: "hint" }, "🔎 Where to find openings (free)"),
+    el("div", { class: "rowbtns" }, JOB_SITES.map(([l, u]) => el("a", { class: "btn sm", href: u, target: "_blank", rel: "noopener noreferrer" }, l + " ↗"))),
+    el("p", { class: "hint" }, "🛡️ Real companies never ask for money. Never pay for a job, internship, test or certificate, and never share OTPs or bank details."));
+}
 
 // ---------- department filter ----------
 const DEPT_MAP = {
@@ -114,7 +148,7 @@ const fileExt = (name) => (String(name || "").split(".").pop() || "").toLowerCas
 
 const state = {
   tab: "doubts", group: "All", query: "", filter: "all",
-  doubts: [], ideas: [], clubs: [], gate: [], challenges: [], chalScores: [], market: [], marketReports: [], marketRatings: [], marketInterests: [], replies: [], likes: [], loaded: false,
+  doubts: [], ideas: [], clubs: [], gate: [], jobs: [], challenges: [], chalScores: [], market: [], marketReports: [], marketRatings: [], marketInterests: [], replies: [], likes: [], loaded: false,
   selected: null, mode: "intro", // intro | view | ask | edit | name | campus
   afterName: null,
   replyPages: [], replyAnon: false,
@@ -1011,12 +1045,14 @@ function renderHeader() {
     ft.setAttribute("aria-expanded", String(open));
   }
   $("quizBtn").classList.toggle("dot", !!(store && state.loaded && QUIZ.length && !myQuizAnswer(dayNum())));
-  $("search").placeholder = state.tab === "doubts" ? "Search doubts" : state.tab === "gate" ? "Search GATE discussions" : state.tab === "market" ? "Search listings" : state.tab === "clubs" ? "Search club posts" : state.tab === "challenges" ? "Search challenges" : "Search ideas";
+  $("search").placeholder = state.tab === "doubts" ? "Search doubts" : state.tab === "gate" ? "Search GATE discussions" : state.tab === "market" ? "Search listings" : state.tab === "clubs" ? "Search club posts" : state.tab === "challenges" ? "Search challenges" : state.tab === "jobs" ? "Search openings" : "Search ideas";
   $("rail").setAttribute("aria-label", t.groupLabel);
   const opts = state.tab === "doubts"
     ? [["all","Newest"],["asked","Most asked"],["open","Unanswered"],["mine","My posts"],["mentor","Needs mentor"],["done","Resolved"],["bounty","🎁 Bounty"]]
     : state.tab === "gate"
     ? [["all","Newest"],["mine","My posts"],["pyq","⭐ PYQ Only"],["1m","1️⃣ 1 Mark"],["2m","2️⃣ 2 Marks"],["easy","🟢 Easy"],["medium","🟡 Medium"],["hard","🔴 Hard"]]
+    : state.tab === "jobs"
+    ? [["all","Newest"],["open","Open now"],["soon","Closing soon"],["mine","My posts"]]
     : state.tab === "market"
     ? [["all","All listings"],["available","Available"],["sold","Sold"],["mine","My listings"]]
     : [["all", "Newest"], ["top", "Most liked"]];
@@ -1074,7 +1110,13 @@ function visible() {
   if (state.tab === "gate" && state.filter === "easy") rows = rows.filter(d => d.difficulty === "Easy");
   if (state.tab === "gate" && state.filter === "medium") rows = rows.filter(d => d.difficulty === "Medium");
   if (state.tab === "gate" && state.filter === "hard") rows = rows.filter(d => d.difficulty === "Hard");
+  if (state.tab === "jobs") {
+    if (state.filter === "open") rows = rows.filter(d => { const n = jobDaysLeft(d); return n == null || n >= 0; });
+    if (state.filter === "soon") rows = rows.filter(d => { const n = jobDaysLeft(d); return n != null && n >= 0 && n <= 14; });
+    if (state.filter === "mine") rows = rows.filter(d => store && d.authorId === store.uid);
+  }
   rows.sort((a, b) => b.createdAt - a.createdAt);
+  if (state.tab === "jobs" && state.filter === "soon") rows.sort((a, b) => jobDaysLeft(a) - jobDaysLeft(b));
   if (state.filter === "top" || state.filter === "asked") rows.sort((a, b) => likesFor(b.id).length - likesFor(a.id).length);
   else if (state.tab === "doubts") rows.sort((a, b) => (isUrgent(b) - isUrgent(a)) || (b.bounty ? 1 : 0) - (a.bounty ? 1 : 0) || (b.createdAt - a.createdAt));
   return rows;
@@ -1693,7 +1735,7 @@ function yearHub() {
       el("button", { class: "btn sm", type: "button", onclick: () => { state.yearFilter = "All"; render(); } }, "✕ All years")));
 }
 
-const CAMPUS_COLLS = ["doubts", "ideas", "clubs", "gate", "challenges", "market"];
+const CAMPUS_COLLS = ["doubts", "ideas", "clubs", "gate", "challenges", "jobs", "market"];
 const campusPostCount = (c) => CAMPUS_COLLS.reduce((n, k) => n + state[k].filter(x => x.campus === c && !x.deleted).length, 0);
 function campusHub() {
   const c = state.campusFilter;
@@ -1751,9 +1793,9 @@ function renderList() {
   const t = TABS[state.tab], rows = visible(), all = state[t.coll];
   if (!rows.length) {
     const noun = state.tab === "doubts" || state.tab === "gate" ? "subject" : state.tab === "clubs" ? "club" : state.tab === "challenges" ? "type" : "category";
-    const emptyMsg = state.tab === "doubts" ? "No doubts yet" : state.tab === "clubs" ? "No club posts yet" : state.tab === "gate" ? "No GATE discussions yet" : state.tab === "challenges" ? "No challenges yet" : "No ideas yet";
+    const emptyMsg = state.tab === "doubts" ? "No doubts yet" : state.tab === "clubs" ? "No club posts yet" : state.tab === "gate" ? "No GATE discussions yet" : state.tab === "challenges" ? "No challenges yet" : state.tab === "jobs" ? "No openings yet" : "No ideas yet";
     const hubEl = state.query.trim() ? null : subjectHub(0);
-    $("list").replaceChildren(...[deptBanner(), campusHub(), yearHub(), hubEl].filter(Boolean), ...(hubEl ? [] : [all.length
+    $("list").replaceChildren(...[deptBanner(), campusHub(), yearHub(), jobsHub(), hubEl].filter(Boolean), ...(hubEl ? [] : [all.length
       ? el("div", { class: "empty" }, el("strong", {}, "Nothing matches"), "Try another " + noun + " or clear the search.")
       : el("div", { class: "empty" }, el("strong", {}, emptyMsg), "Press \u201c" + t.ask + "\u201d to post the first one.")]));
     return;
@@ -1763,7 +1805,7 @@ function renderList() {
     el("span", { class: "spot-k" }, "⭐ Doubt of the Day"),
     el("strong", {}, spot.d.title),
     el("span", { class: "spot-why" }, spot.why + " Can you solve it?"));
-  $("list").replaceChildren(...[deptBanner(), campusHub(), yearHub(), subjectHub(rows.length), spotCard].filter(Boolean), ...rows.map(d => {
+  $("list").replaceChildren(...[deptBanner(), campusHub(), yearHub(), jobsHub(), subjectHub(rows.length), spotCard].filter(Boolean), ...rows.map(d => {
     const n = repliesFor(d.id).length, g = d[t.field];
     const meta = [el("span", { class: "tag", ...colorAttrs(g) }, g)];
     const votes = likesFor(d.id).length;
@@ -1776,6 +1818,11 @@ function renderList() {
       if (d.pyqYear) meta.push(el("span", { class: "gate-badge pyq" }, "⭐ " + d.pyqYear));
       if (d.marks) meta.push(el("span", { class: "gate-badge marks" }, d.marks));
       if (d.difficulty) meta.push(el("span", { class: "gate-badge diff-" + d.difficulty.toLowerCase() }, d.difficulty));
+      if (votes) meta.push(el("span", { class: "likes" }, "♥ " + votes));
+    } else if (state.tab === "jobs") {
+      if (d.company) meta.push(el("span", { class: "pill" }, "🏢 " + d.company));
+      const dl = jobDaysLeft(d); if (dl != null) meta.push(el("span", { class: "pill " + (dl < 0 ? "done" : dl <= 3 ? "urgent" : "open") }, "⏰ " + jobDeadlineText(dl)));
+      if (d.pay) meta.push(el("span", { class: "pill" }, "💰 " + d.pay));
       if (votes) meta.push(el("span", { class: "likes" }, "♥ " + votes));
     } else meta.push(el("span", { class: "likes" }, "♥ " + votes));
     if (d.year) meta.push(el("span", { class: "pill year-pill" }, d.year));
@@ -4877,7 +4924,7 @@ function renderAsk(existing) {
         const added = newPages.slice(0, Math.max(0, MAX_PAGES - kept.length));
         const addedIds = await trySavePages(added, existing.id);
         const keptFiles = existing.fileAttachments || [];
-        await store.update(t.coll, existing.id, { title: title.slice(0, 200), body: body.slice(0, 5000), [t.field]: group, authorName: anonymous ? ANON : (getName() || existing.authorName), anonymous, urgent, pages: [...kept, ...addedIds], fileAttachments: [...keptFiles, ...readyFiles] });
+        await store.update(t.coll, existing.id, { title: title.slice(0, 200), body: body.slice(0, 5000), [t.field]: group, authorName: anonymous ? ANON : (getName() || existing.authorName), anonymous, urgent, pages: [...kept, ...addedIds], fileAttachments: [...keptFiles, ...readyFiles], ...jobFields(form, false) });
         state.mode = "view"; render(); return;
       }
       const id = store.newId(t.coll);
@@ -4893,6 +4940,7 @@ function renderAsk(existing) {
       if (pyqYear) doc.pyqYear = pyqYear;
       if (marks) doc.marks = marks;
       if (difficulty) doc.difficulty = difficulty;
+      Object.assign(doc, jobFields(form, true));
       if (state.tab === "doubts") { doc.resolvedReplyId = null; doc.bounty = bounty; }
       if (state.tab === "challenges") {
         doc.chalType = form.elements.chalType ? form.elements.chalType.value : "Quiz";
@@ -4920,8 +4968,14 @@ function renderAsk(existing) {
     }
   } },
     el("div", { class: "two" },
-      el("label", {}, ({ doubts: "Your question", ideas: "Your idea", clubs: "Post title", gate: "Discussion title", challenges: "Challenge title", market: "Item title" })[state.tab] || "Title", el("input", { id: "f-title", name: "title", maxlength: "200", required: true, placeholder: t.placeholder })),
+      el("label", {}, ({ doubts: "Your question", ideas: "Your idea", clubs: "Post title", gate: "Discussion title", challenges: "Challenge title", market: "Item title", jobs: "Opening or experience" })[state.tab] || "Title", el("input", { id: "f-title", name: "title", maxlength: "200", required: true, placeholder: t.placeholder })),
       el("label", {}, state.tab === "doubts" ? "Subject" : "Category", el("select", { id: "f-group", name: "group" }, groups.map(s => el("option", { selected: s === current }, s))))),
+    state.tab === "jobs" && el("div", { class: "two" },
+      el("label", {}, "Company / organisation", el("input", { name: "company", maxlength: "60", placeholder: "e.g. TCS", value: existing && existing.company || "" })),
+      el("label", {}, "Pay / stipend (optional)", el("input", { name: "pay", maxlength: "40", placeholder: "e.g. ₹15,000 per month", value: existing && existing.pay || "" }))),
+    state.tab === "jobs" && el("div", { class: "two" },
+      el("label", {}, "Last date to apply", el("input", { name: "deadline", type: "date", value: existing && existing.deadline || "" })),
+      el("label", {}, "Apply link (https)", el("input", { name: "applyUrl", type: "url", maxlength: "300", placeholder: "https://…", value: existing && existing.applyUrl || "" }))),
     (state.tab === "doubts" || state.tab === "gate") && el("div", { class: "two" },
       el("label", {}, "Your Batch Year",
         el("select", { id: "f-year", name: "year" },
@@ -5039,6 +5093,15 @@ function renderView() {
     el("h2", {}, d.title),
     d.tags && el("div", { class: "post-tags" }, ...d.tags.split(",").map(tag => tag.trim()).filter(Boolean).map(tag => el("span", { class: "post-tag" }, "#" + tag))),
   ];
+  if (state.tab === "jobs") {
+    const dl = jobDaysLeft(d), link = safeHttp(d.applyUrl);
+    out.push(el("div", { class: "learn-card" },
+      d.company && el("div", { class: "tl-trow" }, el("span", {}, "Company"), el("strong", {}, d.company)),
+      d.pay && el("div", { class: "tl-trow" }, el("span", {}, "Pay / stipend"), el("strong", {}, d.pay)),
+      d.deadline && el("div", { class: "tl-trow" }, el("span", {}, "Last date"), el("strong", {}, d.deadline + (dl != null ? " · " + jobDeadlineText(dl) : ""))),
+      link && el("div", { class: "rowbtns" }, el("a", { class: "btn sm primary", href: link, target: "_blank", rel: "noopener noreferrer nofollow" }, "Apply / details ↗")),
+      el("p", { class: "hint" }, "🛡️ Check the company's official website before applying. Never pay money for a job or internship.")));
+  }
   if (d.body) { out.push(el("p", { class: "body" }, d.body)); const yc = renderYtCards(d.body); if (yc) out.push(yc); }
   // AI Help panel
   if (state.tab === "doubts" || state.tab === "gate") {
@@ -5366,7 +5429,7 @@ if (CFG.title) { document.title = CFG.title; }
 // ---------- start ----------
 renderExams();
 startCaptions();
-const deep = /^#(doubts|ideas|clubs|gate|challenges|market)(?:\/([\w-]+))?$/.exec(location.hash);
+const deep = /^#(doubts|ideas|clubs|gate|challenges|jobs|market)(?:\/([\w-]+))?$/.exec(location.hash);
 if (deep) state.tab = deep[1];
 // Show board immediately — Firebase will fill it in once connected
 state.loaded = true;
@@ -5401,6 +5464,7 @@ render();
   store.subscribe("likes", rows => { state.likes = rows; update(); }, onErr);
   store.subscribe("clubs", rows => { const live_ = live(rows); trackNew("clubs", live_); state.clubs = live_; update(); }, e => {});
   store.subscribe("gate", rows => { const live_ = live(rows); trackNew("gate", live_); state.gate = live_; update(); }, e => {});
+  store.subscribe("jobs", rows => { const live_ = live(rows); trackNew("jobs", live_); state.jobs = live_; update(); }, e => {});
   store.subscribe("challenges", rows => { const live_ = live(rows); trackNew("challenges", live_); state.challenges = live_; update(); }, e => {});
   store.subscribe("chal_scores", rows => { state.chalScores = rows.filter(r => !r.deleted); update(); }, e => {});
   store.subscribe("market", rows => { state.market = live(rows); update(); }, e => {});

@@ -32,7 +32,7 @@ $$;
 
 -- ---------- documents ----------
 create table if not exists public.spark_docs (
-  coll text not null check (coll in ('doubts','ideas','clubs','gate','challenges','replies','likes','pages',
+  coll text not null check (coll in ('doubts','ideas','clubs','gate','challenges','jobs','replies','likes','pages',
                                      'market','marketReports','marketRatings','marketInterests','chal_scores')),
   id text not null check (char_length(id) between 1 and 220),
   data jsonb not null check (jsonb_typeof(data) = 'object' and pg_column_size(data) < 900000),
@@ -87,12 +87,12 @@ language plpgsql stable as $$
 declare
   g text; ok boolean;
 begin
-  if p_coll in ('doubts','ideas','clubs','gate','challenges') then
-    g := case p_coll when 'ideas' then 'category' when 'clubs' then 'club' when 'challenges' then 'type' else 'subject' end;
+  if p_coll in ('doubts','ideas','clubs','gate','challenges','jobs') then
+    g := case p_coll when 'ideas' then 'category' when 'clubs' then 'club' when 'challenges' then 'type' when 'jobs' then 'type' else 'subject' end;
     ok := public._keys(d, array['title','body',g,'authorId','authorName','anonymous','urgent','createdAt','pages',
             'fileAttachments','year','tags','pyqYear','marks','difficulty','resolvedReplyId','bounty','campus',
             'chalType','timeLimit','questions','status','winner','winnerName','runnerUp','runnerUpName',
-            'deleted','reports','editedAt'])
+            'deleted','reports','editedAt','company','applyUrl','deadline','pay'])
       and public._txt(d,'title',3,200) and public._txt(d,'body',0,5000) and public._txt(d,g,1,60)
       and public._txt(d,'authorName',1,40) and public._txt(d,'authorId',8,80) and jsonb_typeof(d->'createdAt') = 'number'
       and public._obool(d,'anonymous') and public._obool(d,'urgent') and public._obool(d,'bounty') and public._obool(d,'deleted')
@@ -100,6 +100,7 @@ begin
       and public._olist(d,'questions',10)
       and public._otxt(d,'year',12) and public._otxt(d,'tags',100) and public._otxt(d,'pyqYear',20) and public._otxt(d,'marks',4)
       and public._otxt(d,'difficulty',10) and public._otxt(d,'campus',30) and public._otxt(d,'chalType',20)
+      and public._otxt(d,'company',60) and public._otxt(d,'applyUrl',300) and public._otxt(d,'deadline',10) and public._otxt(d,'pay',40)
       and public._otxt(d,'winner',100) and public._otxt(d,'winnerName',40) and public._otxt(d,'runnerUp',100)
       and public._otxt(d,'runnerUpName',40) and public._otxt(d,'resolvedReplyId',100)
       and public._onum(d,'timeLimit',0,180) and public._onum(d,'editedAt',0,9e15)
@@ -113,7 +114,7 @@ begin
     ok := public._keys(d, array['parentId','parentColl','body','authorId','authorName','anonymous','createdAt','pages',
             'fileAttachments','deleted','reports'])
       and public._txt(d,'body',1,5000) and public._txt(d,'authorName',1,40) and public._txt(d,'authorId',8,80)
-      and d->>'parentColl' in ('doubts','ideas','clubs','gate','challenges','market') and public._txt(d,'parentId',1,100)
+      and d->>'parentColl' in ('doubts','ideas','clubs','gate','challenges','jobs','market') and public._txt(d,'parentId',1,100)
       and jsonb_typeof(d->'createdAt') = 'number' and public._obool(d,'anonymous') and public._obool(d,'deleted')
       and public._olist(d,'pages',5) and public._olist(d,'fileAttachments',5) and public._olist(d,'reports',100);
     if p_new then
@@ -192,13 +193,13 @@ begin
       end if;
       if not public.is_admin() then
         grp := case
-          when new.coll in ('doubts','ideas','clubs','gate','challenges','market') then array['doubts','ideas','clubs','gate','challenges','market']
+          when new.coll in ('doubts','ideas','clubs','gate','challenges','jobs','market') then array['doubts','ideas','clubs','gate','challenges','jobs','market']
           when new.coll = 'replies' then array['replies']
           when new.coll = 'likes' then array['likes']
           when new.coll = 'pages' then array['pages']
           else array[new.coll] end;
         lim := case
-          when new.coll in ('doubts','ideas','clubs','gate','challenges','market') then 15
+          when new.coll in ('doubts','ideas','clubs','gate','challenges','jobs','market') then 15
           when new.coll = 'replies' then 40
           when new.coll = 'likes' then 400
           when new.coll = 'pages' then 60
@@ -206,7 +207,7 @@ begin
         select count(*) into n from public.spark_docs
           where owner = uid and coll = any (grp) and created_at > now() - interval '1 hour';
         if n >= lim then raise exception 'Too many posts. Please wait a while and try again.' using errcode = '42501'; end if;
-        if new.coll in ('doubts','ideas','clubs','gate','challenges','market','replies') then
+        if new.coll in ('doubts','ideas','clubs','gate','challenges','jobs','market','replies') then
           select count(*) into n from public.spark_docs
             where owner = uid and coll = any (grp) and created_at > now() - interval '8 seconds';
           if n > 0 then raise exception 'Slow down a little before posting again.' using errcode = '42501'; end if;
@@ -275,7 +276,7 @@ language plpgsql security definer set search_path = public as $$
 declare uid text := auth.uid()::text;
 begin
   if uid is null then raise exception 'Sign in first' using errcode = '42501'; end if;
-  if p_coll not in ('doubts','ideas','clubs','gate','challenges','replies','market') then
+  if p_coll not in ('doubts','ideas','clubs','gate','challenges','jobs','replies','market') then
     raise exception 'Cannot report this' using errcode = '42501';
   end if;
   update public.spark_docs

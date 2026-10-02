@@ -48,7 +48,8 @@ service cloud.firestore {
       return d.keys().hasOnly(['title', 'body', g, 'authorId', 'authorName', 'anonymous', 'urgent', 'createdAt',
                                'pages', 'fileAttachments', 'year', 'tags', 'pyqYear', 'marks', 'difficulty',
                                'resolvedReplyId', 'bounty', 'campus', 'chalType', 'timeLimit', 'questions', 'status',
-                               'winner', 'winnerName', 'runnerUp', 'runnerUpName', 'deleted', 'reports', 'editedAt'])
+                               'winner', 'winnerName', 'runnerUp', 'runnerUpName', 'deleted', 'reports', 'editedAt',
+                               'company', 'applyUrl', 'deadline', 'pay'])
         && str(d.title, 3, 200) && str(d.body, 0, 5000) && str(d[g], 1, 60)
         && str(d.authorName, 1, 40) && str(d.authorId, 8, 80) && d.createdAt is int
         && optBool(d, 'anonymous') && optBool(d, 'urgent') && optBool(d, 'bounty') && optBool(d, 'deleted')
@@ -56,6 +57,7 @@ service cloud.firestore {
         && optList(d, 'questions', 10)
         && optStr(d, 'year', 12) && optStr(d, 'tags', 100) && optStr(d, 'pyqYear', 20) && optStr(d, 'marks', 4)
         && optStr(d, 'difficulty', 10) && optStr(d, 'campus', 30) && optStr(d, 'chalType', 20)
+        && optStr(d, 'company', 60) && optStr(d, 'applyUrl', 300) && optStr(d, 'deadline', 10) && optStr(d, 'pay', 40)
         && optStr(d, 'winner', 100) && optStr(d, 'winnerName', 40) && optStr(d, 'runnerUp', 100) && optStr(d, 'runnerUpName', 40)
         && (!('timeLimit' in d) || (d.timeLimit is number && d.timeLimit >= 0 && d.timeLimit <= 180))
         && (!('status' in d) || d.status in ['open', 'closed'])
@@ -70,7 +72,7 @@ service cloud.firestore {
     function postEdit(g) {
       return changes(['title', 'body', g, 'authorName', 'anonymous', 'urgent', 'pages', 'fileAttachments', 'year',
                       'tags', 'editedAt', 'deleted', 'reports', 'resolvedReplyId', 'bounty', 'status',
-                      'winner', 'winnerName', 'runnerUp', 'runnerUpName', 'pyqYear', 'marks', 'difficulty', 'campus']);
+                      'winner', 'winnerName', 'runnerUp', 'runnerUpName', 'pyqYear', 'marks', 'difficulty', 'campus', 'company', 'applyUrl', 'deadline', 'pay']);
     }
 
     // ---------- market listings ----------
@@ -111,6 +113,12 @@ service cloud.firestore {
         allow update: if member() && validPost('subject') && unchanged() && postEdit('subject');
         allow delete: if false;
       }
+      match /jobs/{id} {
+        allow read: if member();
+        allow create: if member() && newPost('type');
+        allow update: if member() && validPost('type') && unchanged() && postEdit('type');
+        allow delete: if false;
+      }
       match /challenges/{id} {
         allow read: if member();
         allow create: if member() && newPost('type');
@@ -125,7 +133,7 @@ service cloud.firestore {
           return d.keys().hasOnly(['parentId', 'parentColl', 'body', 'authorId', 'authorName', 'anonymous', 'createdAt',
                                    'pages', 'fileAttachments', 'deleted', 'reports'])
             && str(d.body, 1, 5000) && str(d.authorName, 1, 40) && str(d.authorId, 8, 80)
-            && d.parentColl in ['doubts', 'ideas', 'clubs', 'gate', 'challenges', 'market']
+            && d.parentColl in ['doubts', 'ideas', 'clubs', 'gate', 'challenges', 'jobs', 'market']
             && str(d.parentId, 1, 100) && d.createdAt is int
             && optBool(d, 'anonymous') && optBool(d, 'deleted')
             && optList(d, 'pages', 5) && optList(d, 'fileAttachments', 5) && optList(d, 'reports', 100);
