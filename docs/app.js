@@ -1907,17 +1907,128 @@ const CAREER = {
       links: [["Engineering Toolbox", "https://www.engineeringtoolbox.com"], ["MIT OCW", "https://ocw.mit.edu"], ["NPTEL", "https://nptel.ac.in"]] },
   ]},
 };
+const CAREER_EXTRA = {
+  CSE: [
+    { icon: "🏆", title: "Open source and global competitions", note: "Earn stipends, international visibility and strong resume lines while still a student. Google Summer of Code pays stipends to students who contribute to open-source projects.",
+      links: [["Google Summer of Code", "https://summerofcode.withgoogle.com"], ["Outreachy", "https://www.outreachy.org"], ["MLH Fellowship", "https://fellowship.mlh.io"], ["Codeforces", "https://codeforces.com"], ["CodeChef", "https://www.codechef.com"], ["Kaggle Competitions", "https://www.kaggle.com/competitions"]] },
+    { icon: "🧠", title: "AI / research labs", note: "Research assistant roles and fellowships at top labs. A strong GitHub, a paper or a thesis project helps a lot.",
+      links: [["IISc Bangalore", "https://iisc.ac.in"], ["IIIT Hyderabad Research", "https://www.iiit.ac.in/research/"], ["Microsoft Research India", "https://www.microsoft.com/en-us/research/lab/microsoft-research-india/"], ["arXiv", "https://arxiv.org"]] },
+  ],
+  ECE: [
+    { icon: "🛰️", title: "Space, defence and semiconductor careers", note: "India is investing heavily in chip design, fabrication and space. These are high-value, long-term careers for ECE students.",
+      links: [["ISRO", "https://www.isro.gov.in/Careers.html"], ["DRDO RAC", "https://rac.gov.in"], ["India Semiconductor Mission", "https://www.ism.gov.in"], ["SCL Mohali", "https://www.scl.gov.in"], ["HAL", "https://hal-india.co.in"]] },
+    { icon: "📚", title: "IEEE and research exposure", note: "Join IEEE as a student member, attend conferences and publish a short paper. This opens doors to MS and PhD abroad.",
+      links: [["IEEE", "https://www.ieee.org"], ["IEEE Xplore", "https://ieeexplore.ieee.org"], ["TIFR", "https://www.tifr.res.in"]] },
+  ],
+  EEE: [
+    { icon: "🌱", title: "Energy transition and smart grid research", note: "Smart grids, battery storage, power electronics and hydrogen are the future of the sector. Good for M.Tech and PhD.",
+      links: [["IEEE Power & Energy Society", "https://www.ieee-pes.org"], ["IEA (free reports)", "https://www.iea.org"], ["MNRE", "https://mnre.gov.in"]] },
+    { icon: "🏭", title: "Gulf and global energy projects", note: "Power, oil and gas and infrastructure projects in the Gulf and Europe hire electrical engineers with experience. Build skills first, then apply to global employers.",
+      links: [["EURES (EU jobs portal)", "https://eures.europa.eu"], ["National Career Service", "https://www.ncs.gov.in"]] },
+  ],
+  Civil: [
+    { icon: "🌊", title: "Disaster management and sustainability", note: "Climate resilience, disaster management and green buildings are growing fields with national and UN-level opportunities.",
+      links: [["NDMA", "https://ndma.gov.in"], ["UN Careers", "https://careers.un.org"], ["UN-Habitat", "https://unhabitat.org"], ["IGBC (green buildings)", "https://igbc.in"]] },
+    { icon: "🚆", title: "Metro, rail and mega-infrastructure", note: "Metro rail corporations, DFCCIL, NHAI and port authorities hire civil engineers, often through GATE or direct recruitment.",
+      links: [["DMRC", "https://www.delhimetrorail.com"], ["Indian Railways", "https://indianrailways.gov.in"], ["NHAI", "https://nhai.gov.in"]] },
+  ],
+  Mech: [
+    { icon: "✈️", title: "Aerospace, marine and automotive", note: "Aircraft design and maintenance, ship engineering and EV or automotive R&D are premium career tracks for Mechanical students.",
+      links: [["HAL", "https://hal-india.co.in"], ["DRDO RAC", "https://rac.gov.in"], ["DG Shipping (Marine)", "https://www.dgshipping.gov.in"], ["SAE India", "https://www.saeindia.org"]] },
+    { icon: "🖨️", title: "Robotics, drones and additive manufacturing", note: "Build a drone, a robot or a 3D-printed product and enter national competitions. Great portfolio pieces for jobs and MS applications.",
+      links: [["Smart India Hackathon", "https://www.sih.gov.in"], ["Atal Innovation Mission", "https://aim.gov.in"], ["FreeCAD", "https://www.freecad.org"]] },
+  ],
+};
+const ABROAD = {
+  tag: "Study and work abroad",
+  intro: "A step-by-step view of MS, PhD and work options abroad. Fees, exams and rules change every year, so always confirm on the official websites linked below.",
+  sections: [
+    { icon: "🗓️", title: "Timeline (start in E2, apply in E4)", note: "E2: keep CGPA high, learn one skill deeply. E3 sem 1: pick 2-3 countries, prepare GRE / IELTS / TOEFL where needed, do 2-3 projects. E3 summer: research internship (Mitacs, DAAD WISE, IAS). E4 sem 1: SOP, 3 recommendation letters, apply (many deadlines fall between October and January). E4 sem 2: offers, scholarship, visa, education loan.",
+      links: [["Vidya Lakshmi (govt education loan portal)", "https://www.vidyalakshmi.co.in"], ["EducationUSA", "https://www.educationusa.in"]] },
+    { icon: "🇺🇸", title: "USA", note: "Largest choice of MS and PhD programmes. PhD and many research-based MS offers come with funding (RA / TA). Typical needs: strong CGPA, projects or research, SOP, recommendation letters, TOEFL / IELTS, and GRE for some universities.",
+      links: [["EducationUSA", "https://www.educationusa.in"], ["Fulbright-Nehru (USIEF)", "https://www.usief.org.in"], ["MIT OpenCourseWare", "https://ocw.mit.edu"]] },
+    { icon: "🇩🇪", title: "Germany", note: "Most public universities charge no tuition (only a small semester fee), and the technical universities are world class in engineering. Check language requirements per programme. A job-seeker visa and the Opportunity Card help after graduation.",
+      links: [["DAAD India", "https://www.daad.in"], ["Study in Germany", "https://www.study-in-germany.de"], ["uni-assist", "https://www.uni-assist.de"], ["TU9 universities", "https://www.tu9.de"], ["Make it in Germany", "https://www.make-it-in-germany.com"]] },
+    { icon: "🇨🇦", title: "Canada", note: "Strong in AI, software and engineering with post-study work options. Mitacs Globalink offers funded research internships for undergraduates.",
+      links: [["EduCanada", "https://www.educanada.ca"], ["Mitacs Globalink", "https://www.mitacs.ca/en/programs/globalink"], ["Immigration Canada", "https://www.canada.ca/en/immigration-refugees-citizenship.html"]] },
+    { icon: "🇬🇧", title: "United Kingdom", note: "One-year master's degrees and a graduate work route after study. Chevening and Commonwealth scholarships are fully funded for eligible candidates.",
+      links: [["Study UK (British Council)", "https://study-uk.britishcouncil.org"], ["Chevening", "https://www.chevening.org"], ["Commonwealth Scholarships", "https://cscuk.fcdo.gov.uk"]] },
+    { icon: "🇦🇺", title: "Australia", note: "Good for engineering, civil and mining-related fields, with skilled-migration pathways. Australia Awards offers scholarships for eligible applicants.",
+      links: [["Study Australia", "https://www.studyaustralia.gov.au"], ["Australia Awards", "https://www.dfat.gov.au/people-to-people/australia-awards"], ["Skilled Migration", "https://immi.homeaffairs.gov.au"]] },
+    { icon: "🇪🇺", title: "Europe (Netherlands, Ireland, Sweden, Switzerland and more)", note: "Erasmus Mundus joint master's degrees can be fully funded. ETH Zurich, TU Delft and Nordic universities are strong in engineering.",
+      links: [["Erasmus+", "https://erasmus-plus.ec.europa.eu"], ["Study in the Netherlands", "https://www.studyinnl.org"], ["Study in Ireland", "https://www.studyinireland.ie"], ["Swedish Institute Scholarships", "https://si.se/en/apply/scholarships/"], ["ETH Zurich Scholarships", "https://ethz.ch/students/en/studies/financial/scholarships.html"]] },
+    { icon: "🇸🇬", title: "Singapore", note: "NUS and NTU are top engineering universities with strong industry links and research scholarships.",
+      links: [["NUS", "https://www.nus.edu.sg"], ["NTU", "https://www.ntu.edu.sg"]] },
+    { icon: "🇯🇵", title: "Japan and 🇰🇷 South Korea", note: "Government scholarships (MEXT in Japan, GKS in Korea) cover tuition and a monthly allowance for eligible students. Excellent for robotics, electronics and manufacturing.",
+      links: [["Study in Japan", "https://www.studyinjapan.go.jp/en/"], ["Study in Korea (GKS)", "https://www.studyinkorea.go.kr"]] },
+    { icon: "💼", title: "Work abroad directly (without MS)", note: "Skilled-worker routes, global company transfers and remote work are possible after building 2+ years of strong experience and a good portfolio.",
+      links: [["Make it in Germany", "https://www.make-it-in-germany.com"], ["EURES (EU jobs)", "https://eures.europa.eu"], ["Canada Immigration", "https://www.canada.ca/en/immigration-refugees-citizenship.html"], ["Australia Skilled Migration", "https://immi.homeaffairs.gov.au"]] },
+    { icon: "🎁", title: "Scholarships and funding", note: "Apply early; many close 8-12 months before the course starts. Research assistantships and PhD stipends are the most common full funding for engineering students.",
+      links: [["Fulbright-Nehru", "https://www.usief.org.in"], ["Chevening", "https://www.chevening.org"], ["Erasmus+", "https://erasmus-plus.ec.europa.eu"], ["DAAD", "https://www.daad.in"], ["Social Justice Dept (overseas scholarship)", "https://socialjustice.gov.in"]] },
+    { icon: "📝", title: "Exams you may need (official sites)", note: "These tests are paid, so check whether your target university really requires them. Many universities no longer ask for GRE.",
+      links: [["GRE", "https://www.ets.org/gre"], ["IELTS", "https://ielts.org"], ["TOEFL", "https://www.ets.org/toefl"]] },
+  ],
+};
+const PREMIUM = {
+  tag: "Extraordinary paths most students never hear about",
+  intro: "High-impact options that stand out. Most of these are free to apply to, and several pay you a stipend or fund your research.",
+  sections: [
+    { icon: "🥇", title: "Prime Minister's Research Fellowship (PMRF)", note: "Direct PhD admission at IITs, IISc and IISERs with one of the highest research fellowships in India. For top students with strong CGPA or GATE scores.",
+      links: [["PMRF official", "https://www.pmrf.in"], ["INSPIRE Fellowship", "https://online-inspire.gov.in"]] },
+    { icon: "🔬", title: "Summer research fellowships", note: "Work with leading scientists for 2 months in E2 or E3. The best way to get strong recommendation letters for MS and PhD.",
+      links: [["Indian Academies Summer Research Fellowship", "https://www.ias.ac.in"], ["DAAD WISE (Germany)", "https://www.daad.in"], ["Mitacs Globalink (Canada)", "https://www.mitacs.ca/en/programs/globalink"], ["CERN Summer Student Programme", "https://home.cern/summer-student-programme"]] },
+    { icon: "🛰️", title: "ISRO, DRDO and national labs", note: "Scientist and engineer roles with ISRO, DRDO, BARC and CSIR labs. Recruitment is through GATE or the labs' own exams. Think long term.",
+      links: [["ISRO Careers", "https://www.isro.gov.in/Careers.html"], ["DRDO RAC", "https://rac.gov.in"], ["BARC", "https://barc.gov.in"], ["CSIR", "https://www.csir.res.in"]] },
+    { icon: "🎖️", title: "Join the armed forces as an officer", note: "Engineers can join the Army, Navy and Air Force as technical officers (AFCAT Technical, SSC Tech, University Entry Scheme). Excellent pay, status and training.",
+      links: [["Join Indian Army", "https://joinindianarmy.nic.in"], ["Join Indian Navy", "https://www.joinindiannavy.gov.in"], ["AFCAT (Air Force)", "https://afcat.cdac.in"]] },
+    { icon: "🏛️", title: "UPSC Civil Services and Engineering Services", note: "IAS / IPS / IFS through the Civil Services Exam, or ESE for core engineering posts in railways, CPWD, telecom and defence. The syllabus is free on the UPSC site.",
+      links: [["UPSC", "https://upsc.gov.in"], ["UPSC ESE", "https://upsc.gov.in"], ["IBPS (bank SO / IT officer)", "https://www.ibps.in"]] },
+    { icon: "🏫", title: "Become a professor or researcher", note: "UGC-NET and CSIR-NET qualify you for lectureship and JRF. Combine with M.Tech and PhD to teach at universities and run your own lab.",
+      links: [["UGC NET", "https://ugcnet.nta.ac.in"], ["CSIR NET", "https://csirnet.nta.ac.in"], ["NPTEL (teach and learn)", "https://nptel.ac.in"]] },
+    { icon: "🚀", title: "Build a startup with government backing", note: "Startup India registration, Atal Innovation Mission and incubators at IITs help with funding, mentors and legal support. Patents protect your idea.",
+      links: [["Startup India", "https://www.startupindia.gov.in"], ["Atal Innovation Mission", "https://aim.gov.in"], ["Indian Patent Office", "https://ipindia.gov.in"], ["Smart India Hackathon", "https://www.sih.gov.in"]] },
+    { icon: "🧑‍🏭", title: "Free graduate apprenticeship with stipend", note: "NATS gives fresh graduate engineers paid on-the-job training in real companies, which is a strong stepping stone to a permanent job.",
+      links: [["NATS Portal", "https://nats.education.gov.in"], ["Apprenticeship India", "https://apprenticeshipindia.gov.in"]] },
+    { icon: "🏅", title: "Compete globally and build a name", note: "Contest ratings, open-source contributions and hackathon wins are visible proof of skill and can lead directly to job offers.",
+      links: [["Codeforces", "https://codeforces.com"], ["Kaggle", "https://www.kaggle.com"], ["Google Summer of Code", "https://summerofcode.withgoogle.com"], ["Smart India Hackathon", "https://www.sih.gov.in"]] },
+  ],
+};
+function careerCards(sections) {
+  return sections.map(sec => el("div", { class: "learn-card" },
+    el("strong", {}, sec.icon + " " + sec.title),
+    el("p", { class: "hint" }, sec.note),
+    el("div", { class: "rowbtns" }, sec.links.map(([label, url]) => outLink(url, label, "linkbtn")))));
+}
 function renderCareer() {
-  const back = el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back"));
+  const leave = () => { state.mode = state.selected ? "view" : "intro"; render(); };
+  const go = (v) => () => { careerBranch = v; render(); };
+  const back = el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: leave }, "Back"));
   if (!careerBranch) {
     return [
       el("h2", {}, "🚀 Career Guide"),
       el("p", { class: "hint" }, "Finished (or about to finish) your degree and unsure what next? Pick your branch to see every career path with free links."),
       el("div", { class: "label" }, "Select your branch"),
-      el("div", { class: "rowbtns" }, Object.keys(CAREER).map(b =>
-        el("button", { class: "btn primary", type: "button", onclick: () => { careerBranch = b; render(); } }, b))),
+      el("div", { class: "rowbtns" }, Object.keys(CAREER).map(b => el("button", { class: "btn primary", type: "button", onclick: go(b) }, b))),
+      el("div", { class: "label" }, "For every branch"),
+      el("div", { class: "rowbtns" },
+        el("button", { class: "btn", type: "button", onclick: go("ABROAD") }, "🌍 Abroad Explorer"),
+        el("button", { class: "btn", type: "button", onclick: go("PREMIUM") }, "💎 Premium Paths")),
       el("p", { class: "hint" }, "Tip: ECE, EEE, Civil and Mech students can also apply to software roles. Core and PSU jobs mostly need a good GATE score."),
       back,
+    ];
+  }
+  const nav = el("div", { class: "rowbtns" },
+    el("button", { class: "btn", type: "button", onclick: () => { careerBranch = null; render(); } }, "Change branch"),
+    el("button", { class: "btn", type: "button", onclick: leave }, "Back"));
+  const extras = el("div", { class: "rowbtns" },
+    careerBranch !== "ABROAD" && el("button", { class: "btn sm", type: "button", onclick: go("ABROAD") }, "🌍 Abroad Explorer"),
+    careerBranch !== "PREMIUM" && el("button", { class: "btn sm", type: "button", onclick: go("PREMIUM") }, "💎 Premium Paths"));
+  if (careerBranch === "ABROAD" || careerBranch === "PREMIUM") {
+    const d = careerBranch === "ABROAD" ? ABROAD : PREMIUM;
+    return [
+      el("h2", {}, careerBranch === "ABROAD" ? "🌍 Abroad Explorer" : "💎 Premium Paths"),
+      el("p", { class: "hint" }, d.tag + ". " + d.intro),
+      ...careerCards(d.sections), extras, nav,
     ];
   }
   const c = CAREER[careerBranch];
@@ -1925,14 +2036,9 @@ function renderCareer() {
     el("h2", {}, "🚀 " + careerBranch + " — after graduation"),
     el("p", { class: "hint" }, c.tag + ". Options you can choose after B.Tech. Tap any link; all are free to use."),
     el("div", { class: "rowbtns" }, Object.keys(CAREER).map(b =>
-      el("button", { class: "btn sm" + (b === careerBranch ? " primary" : ""), type: "button", onclick: () => { careerBranch = b; render(); } }, b))),
-    ...c.sections.map(sec => el("div", { class: "learn-card" },
-      el("strong", {}, sec.icon + " " + sec.title),
-      el("p", { class: "hint" }, sec.note),
-      el("div", { class: "rowbtns" }, sec.links.map(([label, url]) => outLink(url, label, "linkbtn"))))),
-    el("div", { class: "rowbtns" },
-      el("button", { class: "btn", type: "button", onclick: () => { careerBranch = null; render(); } }, "Change branch"),
-      el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")),
+      el("button", { class: "btn sm" + (b === careerBranch ? " primary" : ""), type: "button", onclick: go(b) }, b))),
+    ...careerCards([...c.sections, ...(CAREER_EXTRA[careerBranch] || [])]),
+    el("div", { class: "label" }, "Explore more"), extras, nav,
   ];
 }
 

@@ -16,10 +16,16 @@ const KB = [
     ]},
 
 
+  // ── Study / work abroad ──────────────────────────────────
+  { p: /abroad|foreign|overseas|\bms (in|at)|study in (usa|us|germany|canada|uk|australia)|\b(usa|germany|canada|australia|ireland|japan|singapore)\b|\bgre\b|ielts|toefl|phd|fulbright|daad|erasmus|chevening/i,
+    r: [
+      "🌍 **Study & Work Abroad — Your Options!**\n\nFor the full country-by-country guide, tap **🚀 Career Guide → 🌍 Abroad Explorer**.\n\n🇺🇸 **USA** → [EducationUSA](https://www.educationusa.in) · [Fulbright-Nehru](https://www.usief.org.in)\n🇩🇪 **Germany** (mostly tuition-free) → [DAAD India](https://www.daad.in) · [Study in Germany](https://www.study-in-germany.de)\n🇨🇦 **Canada** → [EduCanada](https://www.educanada.ca) · [Mitacs Globalink](https://www.mitacs.ca/en/programs/globalink)\n🇬🇧 **UK** → [Study UK](https://study-uk.britishcouncil.org) · [Chevening](https://www.chevening.org)\n🇦🇺 **Australia** → [Study Australia](https://www.studyaustralia.gov.au)\n🇪🇺 **Europe** → [Erasmus+](https://erasmus-plus.ec.europa.eu)\n🇯🇵 **Japan** → [Study in Japan](https://www.studyinjapan.go.jp/en/) · 🇰🇷 **Korea** → [Study in Korea](https://www.studyinkorea.go.kr)\n\n⏰ **Start in E3, apply in E4.** Many deadlines fall between October and January.\n💡 *Research internships and a strong project make your application stand out!* 🌟",
+    ]},
+
   // ── After graduation ─────────────────────────────────────
   { p: /after (b\.?tech|graduation|engineering|degree|college)|what next|further (step|stud)|career (option|path|guide)|next step|future plan|higher stud|after (e4|4th year|final year)/i,
     r: [
-      "🚀 **After B.Tech — What Next?**\n\nTap the **🚀 Career Guide** button at the top of the app, pick your branch (CSE · ECE · EEE · Civil · Mech) and see every path with free links.\n\n**Main paths for every branch:**\n① 💼 **Private jobs** — apply on company pages → [National Career Service](https://www.ncs.gov.in)\n② 🎓 **M.Tech via GATE** → [GATE official](https://gate2025.iisc.ac.in/) · [COAP](https://coap.iitb.ac.in) · [CCMT](https://ccmt.admissions.nic.in)\n③ 🏛️ **Govt / PSU jobs** → [UPSC ESE](https://upsc.gov.in) · [SSC](https://ssc.gov.in) · PSUs via GATE\n④ 🌍 **MS / PhD abroad** → [EducationUSA](https://www.educationusa.in) · [DAAD Germany](https://www.daad.in)\n⑤ 📈 **MBA** → [CAT](https://iimcat.ac.in)\n⑥ 💡 **Startup** → [Startup India](https://www.startupindia.gov.in)\n\n*Tell me your branch and I'll suggest the best path!* 🎯",
+      "🚀 **After B.Tech — What Next?**\n\nTap the **🚀 Career Guide** button at the top of the app, pick your branch (CSE · ECE · EEE · Civil · Mech) and see every path with free links. It also has **🌍 Abroad Explorer** and **💎 Premium Paths**.\n\n**Main paths for every branch:**\n① 💼 **Private jobs** — apply on company pages → [National Career Service](https://www.ncs.gov.in)\n② 🎓 **M.Tech via GATE** → [GATE official](https://gate2025.iisc.ac.in/) · [COAP](https://coap.iitb.ac.in) · [CCMT](https://ccmt.admissions.nic.in)\n③ 🏛️ **Govt / PSU jobs** → [UPSC ESE](https://upsc.gov.in) · [SSC](https://ssc.gov.in) · PSUs via GATE\n④ 🌍 **MS / PhD abroad** → [EducationUSA](https://www.educationusa.in) · [DAAD Germany](https://www.daad.in)\n⑤ 📈 **MBA** → [CAT](https://iimcat.ac.in)\n⑥ 💡 **Startup** → [Startup India](https://www.startupindia.gov.in)\n\n*Tell me your branch and I'll suggest the best path!* 🎯",
     ]},
 
   // ── Company links ────────────────────────────────────────
