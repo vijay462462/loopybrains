@@ -838,15 +838,13 @@ function renderRail() {
         : [...t.groups, ...extra])
     : [];
 
-  $("rail").replaceChildren(
-    ...(deptTabs ? [deptTabs] : []),
-    visibleSubjects.length > 0 && el("div", { class: "subj-grid" },
-      ...visibleSubjects.map(s => el("button", {
-        type: "button", class: "subj-chip" + (state.group === s ? " active" : ""), ...colorAttrs(s),
-        onclick: () => { state.group = state.group === s ? "All" : s; render(); },
-      }, el("span", {}, s), el("span", { class: "n" }, counts[s] || 0)))
-    )
-  );
+  const subjGrid = visibleSubjects.length > 0 ? el("div", { class: "subj-grid" },
+    ...visibleSubjects.map(s => el("button", {
+      type: "button", class: "subj-chip" + (state.group === s ? " active" : ""), ...colorAttrs(s),
+      onclick: () => { state.group = state.group === s ? "All" : s; render(); },
+    }, el("span", {}, s), el("span", { class: "n" }, counts[s] || 0)))
+  ) : null;
+  $("rail").replaceChildren(...[deptTabs, subjGrid].filter(Boolean));
 }
 
 function visible() {
