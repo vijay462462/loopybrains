@@ -488,6 +488,14 @@ function build() {
   document.getElementById('sb-go').onclick   = send;
   document.getElementById('sb-clr').onclick  = clearChat;
 
+  // ── Force FAB above bot input bar ─────────────────────
+  const fabEl = document.getElementById('fabAsk');
+  if (fabEl) {
+    fabEl.style.setProperty('bottom','175px','important');
+    fabEl.style.setProperty('left','18px','important');
+    fabEl.style.setProperty('right','auto','important');
+  }
+
   // ── Inline styles ─────────────────────────────────────
   const inp = document.getElementById('sb-in');
   Object.assign(inp.style,{
