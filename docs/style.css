@@ -1575,3 +1575,7 @@ header.top { background: linear-gradient(120deg, var(--ta), var(--tb) 50%, var(-
 .campus-link { display: grid; text-align: left; gap: 2px; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; background: var(--sheet); color: inherit; cursor: pointer; }
 .campus-link strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .campus-link small { color: var(--muted); }
+.year-hub { border-left: 5px solid var(--ta); }
+.yr-goal { align-items: flex-start; font-weight: 600; font-size: 14px; }
+.yr-goal input { margin-top: 3px; }
+.yr-dates { margin: 2px 0; padding-left: 18px; color: var(--muted); font-size: 13px; display: grid; gap: 3px; }

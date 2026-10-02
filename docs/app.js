@@ -982,8 +982,8 @@ function renderHeader() {
         el("span", { class: "campus-label" }, "Batch"),
         ...["All", "E1", "E2", "E3", "E4"].map(y =>
           el("button", { type: "button", class: "campus-chip" + (state.yearFilter === y ? " active" : ""),
-            onclick: () => { state.yearFilter = y; render(); }
-          }, y === "All" ? "All Years" : y)
+            onclick: () => { state.yearFilter = y; render(); if (y !== "All" && innerWidth <= 1000) setTimeout(() => { const l = $("list"); if (l) l.scrollIntoView({ behavior: "smooth", block: "start" }); }, 80); }
+          }, y === "All" ? "All Years" : y + " · " + yearPostCount(y))
         )
       );
     }
@@ -1623,6 +1623,66 @@ function campusInnovationBlock(c) {
       el("button", { class: "btn sm primary", type: "button", onclick: () => { state.tab = "ideas"; state.group = "All"; openAsk(); } }, "💡 Share an idea")));
 }
 
+// ---------- year hub: goals, key dates, batch activity and shortcuts for E1 to E4 ----------
+const YEAR_GUIDE = {
+  E1: { name: "Foundation year", tag: "Build strong basics and good habits.",
+    goals: ["Revise Maths, Physics and basic programming every week", "Aim for a CGPA of 8 or above from the first semester", "Learn Git and solve 2 easy coding problems a week", "Join one club and attend its first meetup", "Track attendance and keep it above 75%", "Take the Daily Quiz at least 3 times a week"],
+    dates: ["Plan mid-semester exams 2 weeks ahead", "Choose a club in your first month"],
+    actions: [["📖 Study Tools", () => showPanel("resources")], ["📚 Learn from IIT", () => showPanel("learn")], ["🧠 Daily Quiz", () => showPanel("quiz")], ["📅 Attendance tool", () => showPanel("lab")]] },
+  E2: { name: "Core subjects", tag: "Go deep into your branch and start building.",
+    goals: ["Master the core subjects of your branch, one unit at a time", "Start one small project and put it on GitHub", "Practise competitive programming or circuit design weekly", "Attend a hackathon or workshop this year", "Clear any backlog early and keep your CGPA steady", "Make flashcards for every unit"],
+    dates: ["Look for summer learning programs in the middle of the year", "Enter at least one challenge or hackathon"],
+    actions: [["📖 Study Tools", () => showPanel("resources")], ["🃏 Flashcards", () => showPanel("lab")], ["🎮 Challenges", () => goTab("challenges")], ["🏛 Clubs", () => goTab("clubs")]] },
+  E3: { name: "Skills and internships", tag: "Turn knowledge into skills, projects and experience.",
+    goals: ["Apply for a summer internship (NCS and AICTE portals are free)", "Build a mini project and write a strong one-page resume", "Start GATE basics and solve previous-year papers", "Earn one NPTEL, Kaggle or Google certificate", "Find a mentor among seniors and alumni", "Practise aptitude and communication for placements"],
+    dates: ["Internship applications: begin early in the year", "GATE preparation: aim to start by the second semester"],
+    actions: [["🚀 Career Guide", () => { careerBranch = null; showPanel("career"); }], ["🎯 GATE tab", () => goTab("gate")], ["🎓 Alumni", () => { alumniView = "dir"; showPanel("alumni"); }], ["🧪 Study Lab", () => showPanel("lab")]] },
+  E4: { name: "Launch year", tag: "Finish strong and choose your next step.",
+    goals: ["Finish your major project and write a clear report", "Placement prep: DSA, aptitude and mock interviews", "GATE: revise and take full mock tests (exam is usually in February)", "Study abroad: shortlist universities and apply (usually October to January)", "Update your resume, LinkedIn and GitHub", "Plan your next step with the Career Guide"],
+    dates: ["Campus placements: usually in the final year", "GATE exam: usually in February", "Abroad applications: usually October to January"],
+    actions: [["🚀 Career Guide", () => { careerBranch = null; showPanel("career"); }], ["🌍 Abroad Explorer", () => { careerBranch = "ABROAD"; showPanel("career"); }], ["🎯 GATE tab", () => goTab("gate")], ["🎓 Alumni", () => { alumniView = "dir"; showPanel("alumni"); }]] },
+};
+const yearPosts = (y) => [...state.doubts, ...state.gate].filter(x => x.year === y && !x.deleted);
+const yearPostCount = (y) => yearPosts(y).length;
+function yearHub() {
+  const y = state.yearFilter;
+  if (!(state.tab === "doubts" || state.tab === "gate") || !YEAR_GUIDE[y]) return null;
+  const g = YEAR_GUIDE[y], now = Date.now();
+  const posts = yearPosts(y), doubts = state.doubts.filter(x => x.year === y && !x.deleted), solved = doubts.filter(d => d.resolvedReplyId).length;
+  const fresh = posts.filter(x => now - x.createdAt < 86400000).length;
+  const students = new Set(posts.filter(x => !x.anonymous && x.authorId).map(x => x.authorId)).size;
+  // seniors who help: people from a higher year who replied to this batch's doubts
+  const yearOf = new Map(); for (const x of [...state.doubts, ...state.gate]) if (x.year && x.authorId) yearOf.set(x.authorId, x.year);
+  const idsOfYear = new Set(posts.map(x => x.id)), tally = new Map();
+  for (const r of state.replies) {
+    if (r.deleted || r.anonymous || !idsOfYear.has(r.parentId)) continue;
+    const ry = yearOf.get(r.authorId); if (!ry || ry <= y) continue;
+    const t = tally.get(r.authorId) || { name: r.authorName || "A senior", year: ry, n: 0 }; t.n++; tally.set(r.authorId, t);
+  }
+  const seniors = [...tally.values()].sort((a, b) => b.n - a.n).slice(0, 3);
+  let done; try { done = JSON.parse(localStorage.getItem("dd-yr-" + y) || "[]"); } catch (_) { done = []; }
+  const pct = Math.round((done.length / g.goals.length) * 100);
+  const saveDone = () => { try { localStorage.setItem("dd-yr-" + y, JSON.stringify(done)); } catch (_) {} };
+  const maxN = Math.max(...["E1", "E2", "E3", "E4"].map(yearPostCount), 1);
+  const tile = (n, label) => el("div", { class: "intro-stat" }, el("span", { class: "intro-stat-n" }, n), el("span", { class: "intro-stat-l" }, label));
+  return el("div", { class: "learn-card year-hub" },
+    el("div", { class: "campus-hub-head" }, el("strong", {}, "🎓 " + y + " · " + g.name), el("span", { class: "pill open" }, pct + "% of goals done")),
+    el("p", { class: "hint" }, g.tag),
+    el("p", { class: fresh ? "campus-live" : "hint" }, fresh ? "🟢 " + fresh + " new " + y + " post" + (fresh > 1 ? "s" : "") + " in the last 24 hours" : "⚪ No new " + y + " posts today. Ask one!"),
+    el("div", { class: "intro-stats" }, tile(posts.length, "posts"), tile(students, "students"), tile(solved + "/" + doubts.length, "doubts solved")),
+    el("div", { class: "lab-track small" }, el("span", { class: "lab-fill goal", style: "width:" + pct + "%" })),
+    el("small", { class: "hint" }, "✅ Your " + y + " goals (tap to tick)"),
+    ...g.goals.map((t, i) => el("label", { class: "check yr-goal" }, el("input", { type: "checkbox", checked: done.includes(i), onchange: (e) => { done = e.target.checked ? [...new Set([...done, i])] : done.filter(x => x !== i); saveDone(); render(); } }), t)),
+    el("small", { class: "hint" }, "📅 Key dates"),
+    el("ul", { class: "yr-dates" }, ...g.dates.map(d => el("li", {}, d))),
+    seniors.length ? el("div", {}, el("small", { class: "hint" }, "🧑‍🏫 Seniors helping " + y), ...seniors.map(t => el("div", { class: "tl-trow" }, el("span", {}, t.name + " (" + t.year + ")"), el("strong", {}, t.n + (t.n === 1 ? " reply" : " replies"))))) : null,
+    el("small", { class: "hint" }, "Batch activity"),
+    ...["E1", "E2", "E3", "E4"].map(b => el("div", { class: "rival-row" }, el("span", { class: "rival-rank" }, b), el("div", { class: "rival-bar-wrap" }, el("div", { class: "rival-bar", style: "width:" + Math.round(yearPostCount(b) * 100 / maxN) + "%;background:" + (b === y ? "var(--ta)" : "var(--line)") })), el("span", { class: "rival-score" }, yearPostCount(b) + " posts"))),
+    el("div", { class: "rowbtns" }, g.actions.map(([label, fn]) => el("button", { class: "btn sm", type: "button", onclick: fn }, label)),
+      el("button", { class: "btn sm primary", type: "button", onclick: openAsk }, "➕ Ask as " + y),
+      el("button", { class: "btn sm", type: "button", onclick: () => { state.yearFilter = "All"; render(); } }, "✕ All years")));
+}
+
 const CAMPUS_COLLS = ["doubts", "ideas", "clubs", "gate", "challenges", "market"];
 const campusPostCount = (c) => CAMPUS_COLLS.reduce((n, k) => n + state[k].filter(x => x.campus === c && !x.deleted).length, 0);
 function campusHub() {
@@ -1683,7 +1743,7 @@ function renderList() {
     const noun = state.tab === "doubts" || state.tab === "gate" ? "subject" : state.tab === "clubs" ? "club" : state.tab === "challenges" ? "type" : "category";
     const emptyMsg = state.tab === "doubts" ? "No doubts yet" : state.tab === "clubs" ? "No club posts yet" : state.tab === "gate" ? "No GATE discussions yet" : state.tab === "challenges" ? "No challenges yet" : "No ideas yet";
     const hubEl = state.query.trim() ? null : subjectHub(0);
-    $("list").replaceChildren(...[deptBanner(), campusHub(), hubEl].filter(Boolean), ...(hubEl ? [] : [all.length
+    $("list").replaceChildren(...[deptBanner(), campusHub(), yearHub(), hubEl].filter(Boolean), ...(hubEl ? [] : [all.length
       ? el("div", { class: "empty" }, el("strong", {}, "Nothing matches"), "Try another " + noun + " or clear the search.")
       : el("div", { class: "empty" }, el("strong", {}, emptyMsg), "Press \u201c" + t.ask + "\u201d to post the first one.")]));
     return;
@@ -1693,7 +1753,7 @@ function renderList() {
     el("span", { class: "spot-k" }, "⭐ Doubt of the Day"),
     el("strong", {}, spot.d.title),
     el("span", { class: "spot-why" }, spot.why + " Can you solve it?"));
-  $("list").replaceChildren(...[deptBanner(), campusHub(), subjectHub(rows.length), spotCard].filter(Boolean), ...rows.map(d => {
+  $("list").replaceChildren(...[deptBanner(), campusHub(), yearHub(), subjectHub(rows.length), spotCard].filter(Boolean), ...rows.map(d => {
     const n = repliesFor(d.id).length, g = d[t.field];
     const meta = [el("span", { class: "tag", ...colorAttrs(g) }, g)];
     const votes = likesFor(d.id).length;
@@ -4855,7 +4915,7 @@ function renderAsk(existing) {
     (state.tab === "doubts" || state.tab === "gate") && el("div", { class: "two" },
       el("label", {}, "Your Batch Year",
         el("select", { id: "f-year", name: "year" },
-          ["(Select year)", "E1", "E2", "E3", "E4"].map(y => el("option", { value: y === "(Select year)" ? "" : y, selected: !!(existing && existing.year === y) }, y))
+          ["(Select year)", "E1", "E2", "E3", "E4"].map(y => el("option", { value: y === "(Select year)" ? "" : y, selected: existing ? existing.year === y : (state.yearFilter !== "All" && state.yearFilter === y) }, y))
         )
       ),
       el("label", {}, "Tags (optional)", el("input", { id: "f-tags", name: "tags", maxlength: "100", placeholder: "e.g. mid-1, unit-2, tricky" }))),
