@@ -825,9 +825,9 @@ function renderRail() {
   const extra = Object.keys(counts).filter(s => !t.groups.includes(s));
 
   const deptTabs = (state.tab === "doubts" || state.tab === "gate") ? el("div", { class: "dept-tabs" },
-    ...["All", ...Object.keys(DEPT_MAP)].map(d => el("button", {
+    ...Object.keys(DEPT_MAP).map(d => el("button", {
       type: "button", class: "dept-tab" + (state.dept === d ? " active" : ""),
-      onclick: () => { state.dept = d; state.group = "All"; render(); },
+      onclick: () => { state.dept = state.dept === d ? "All" : d; state.group = "All"; render(); },
     }, d))
   ) : null;
 
