@@ -1832,6 +1832,44 @@ function renderLearn() {
 }
 
 
+// ---------- about us ----------
+function renderAbout() {
+  const feature = (icon, title, text) => el("div", { class: "learn-card" }, el("strong", {}, icon + " " + title), el("p", { class: "hint" }, text));
+  return [
+    el("h2", {}, "ℹ️ About RGUKT Spark"),
+    el("p", { class: "hint" }, "Designed for RGUKTians. One free place to ask doubts, share ideas, prepare for GATE, plan your career and help your juniors."),
+    el("div", { class: "label" }, "🎯 Our mission"),
+    el("p", {}, "Every RGUKT student should have a senior to ask, a clear path after graduation, and quality study material, without paying for any of it. Spark brings these together so no doubt stays unanswered and no student feels lost after E4."),
+    el("div", { class: "label" }, "✨ What you get"),
+    feature("❓", "Doubts", "Ask by subject, year (E1-E4) and campus. Peers answer, you mark the best answer, and helpers earn points."),
+    feature("💡", "Ideas, Clubs and Challenges", "Share project ideas, join clubs and take part in challenges and hackathons."),
+    feature("🎯", "GATE", "Previous-year papers with solutions, MCQs, formulas and a year-wise preparation plan."),
+    feature("🧠", "Daily Quiz and Top Helpers", "A new question every day, a leaderboard and recognition for the students who help most."),
+    feature("📖", "Study Tools and Learn from IIT", "Unit-wise syllabus, formula cards, study plans and free IIT course links."),
+    feature("🚀", "Career Guide", "Branch-wise options after graduation: jobs, M.Tech, PSU, study abroad and premium paths, all with free links."),
+    feature("🤖", "Spark Bot", "Ask anything about academics, GATE, placements, campus life or the app and get instant answers with clickable resources."),
+    feature("🛒", "Market", "Buy and sell textbooks, notes and equipment inside the RGUKT community."),
+    el("div", { class: "label" }, "🔒 Privacy and safety"),
+    el("p", {}, "No login and no password. Your device gets a random ID so your posts stay yours. You can post anonymously, report anything inappropriate and edit your own posts. We do not sell or share your data."),
+    el("div", { class: "label" }, "💚 100% free"),
+    el("p", {}, "No ads, no subscriptions. Every resource we link to is free to use."),
+    el("div", { class: "label" }, "⚠️ Please note"),
+    el("p", { class: "hint" }, "Spark is a student community platform. Always confirm official dates, fees, results and rules on the RGUKT websites before acting on them. Career and scholarship details can change, so check the official links."),
+    el("div", { class: "label" }, "🔗 Official RGUKT campuses"),
+    el("div", { class: "rowbtns" },
+      outLink("https://www.rguktn.ac.in", "Nuzvid", "linkbtn"),
+      outLink("https://www.rguktong.ac.in", "Ongole", "linkbtn"),
+      outLink("https://www.rguktrkv.ac.in", "RK Valley", "linkbtn"),
+      outLink("https://www.rguktsklm.ac.in", "Srikakulam", "linkbtn")),
+    el("div", { class: "label" }, "🤝 Get involved"),
+    el("p", { class: "hint" }, "Found a bug or have an idea? Post it in the Ideas tab or ask Spark Bot. You can also see the code and report issues on GitHub."),
+    el("div", { class: "rowbtns" },
+      outLink("https://github.com/vijay462462/rgukt-spark", "GitHub", "linkbtn"),
+      outLink("https://github.com/vijay462462/rgukt-spark/issues", "Report an issue", "linkbtn")),
+    el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")),
+  ];
+}
+
 // ---------- career guide: what to do after graduation, by branch ----------
 let careerBranch = null;
 const GATE_URL = "https://gate2025.iisc.ac.in/";
@@ -4242,6 +4280,7 @@ function render() {
       state.mode === "learn" ? renderLearn() :
       state.mode === "resources" ? renderResources() :
       state.mode === "career" ? renderCareer() :
+      state.mode === "about" ? renderAbout() :
       state.mode === "network" ? renderNetwork() :
       state.mode === "name" ? renderName() :
       state.mode === "campus" ? renderCampusPicker() :
@@ -4284,6 +4323,7 @@ $("networkBtn") && $("networkBtn").addEventListener("click", () => showPanel("ne
 $("quizBtn").addEventListener("click", () => showPanel("quiz"));
 $("learnBtn").addEventListener("click", () => showPanel("learn"));
 $("studyBtn").addEventListener("click", () => showPanel("resources"));
+$("aboutBtn").addEventListener("click", () => showPanel("about"));
 $("careerBtn").addEventListener("click", () => { careerBranch = null; showPanel("career"); });
 $("nameBtn").addEventListener("click", () => { state.afterName = null; showPanel(getName() ? "me" : "name"); });
 $("search").addEventListener("input", (e) => { state.query = e.target.value; renderList(); });
