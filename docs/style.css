@@ -1624,3 +1624,11 @@ body.st-open { overflow: hidden; }
 .st-sw { display: flex; gap: 6px; flex-wrap: wrap; }
 .st-swb { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--paper); cursor: pointer; box-shadow: 0 0 0 1px var(--line); }
 .st-err { color: #dc2626; min-height: 1em; margin: 0; }
+
+/* stories sit inside the header, right under the title */
+header.top .story-bar { padding: 6px 0 8px; margin: 2px 0 6px; gap: 10px; }
+header.top .st-bub { color: #fff; }
+header.top .st-name { text-shadow: 0 1px 2px rgb(0 0 0 / .35); }
+header.top .st-ring:not(.new):not(.add) { background: rgb(255 255 255 / .45); }
+header.top .st-ring.add { border-color: rgb(255 255 255 / .7); }
+header.top .st-plus { border-color: transparent; }
