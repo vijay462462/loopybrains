@@ -56,6 +56,39 @@ function cleanTenant(raw, slug) {
 }
 // Colleges from colleges-ap.js work without any database setup: same room naming for everyone ("college-<slug>"),
 // common subjects and clubs. A Firestore `colleges/<slug>` document, when present, customises the content.
+// ---------- colours: one family per state, one shade per college ----------
+function hexToHsl(hex) {
+  const n = parseInt(hex.slice(1), 16), r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2; let h = 0, sat = 0;
+  if (mx !== mn) { const d = mx - mn; sat = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn); h = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h *= 60; }
+  return [h, sat * 100, l * 100];
+}
+function hslToHex(h, sat, l) {
+  h = ((h % 360) + 360) % 360; sat = Math.max(0, Math.min(100, sat)) / 100; l = Math.max(0, Math.min(100, l)) / 100;
+  const k = (n) => (n + h / 30) % 12, a = sat * Math.min(l, 1 - l), f = (n) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  return "#" + [f(0), f(8), f(4)].map(x => Math.round(x * 255).toString(16).padStart(2, "0")).join("");
+}
+const shiftColor = (hex, dh, dl) => { const [h, sat, l] = hexToHsl(hex); return hslToHex(h + dh, sat, l + dl); };
+// [main colour, partner colour] for each state, picked from its flag, landscape or culture.
+const STATE_COLORS = {
+  "Andhra Pradesh": ["#e11d48", "#f59e0b"], "Telangana": ["#7c3aed", "#ec4899"], "Tamil Nadu": ["#b91c1c", "#f59e0b"], "Karnataka": ["#dc2626", "#eab308"],
+  "Kerala": ["#15803d", "#facc15"], "Maharashtra": ["#ea580c", "#1d4ed8"], "Gujarat": ["#f97316", "#0d9488"], "Rajasthan": ["#db2777", "#f59e0b"],
+  "Punjab": ["#2563eb", "#f97316"], "Haryana": ["#16a34a", "#ca8a04"], "Delhi": ["#4338ca", "#f43f5e"], "Uttar Pradesh": ["#d97706", "#9333ea"],
+  "Bihar": ["#ca8a04", "#16a34a"], "West Bengal": ["#e11d48", "#2563eb"], "Odisha": ["#0891b2", "#f59e0b"], "Assam": ["#16a34a", "#dc2626"],
+  "Madhya Pradesh": ["#0d9488", "#a16207"], "Chhattisgarh": ["#15803d", "#9a3412"], "Jharkhand": ["#047857", "#f59e0b"], "Uttarakhand": ["#1d4ed8", "#16a34a"],
+  "Himachal Pradesh": ["#0284c7", "#16a34a"], "Jammu and Kashmir": ["#0891b2", "#e11d48"], "Ladakh": ["#1d4ed8", "#f97316"], "Goa": ["#0ea5e9", "#f59e0b"],
+  "Manipur": ["#7c3aed", "#16a34a"], "Meghalaya": ["#059669", "#0ea5e9"], "Mizoram": ["#be123c", "#0d9488"], "Nagaland": ["#b91c1c", "#15803d"],
+  "Arunachal Pradesh": ["#059669", "#f97316"], "Sikkim": ["#0891b2", "#a855f7"], "Tripura": ["#ea580c", "#2563eb"], "Puducherry": ["#2563eb", "#f43f5e"],
+  "Chandigarh": ["#0f766e", "#f59e0b"], "Andaman and Nicobar Islands": ["#0284c7", "#14b8a6"], "Lakshadweep": ["#06b6d4", "#8b5cf6"],
+  "Dadra and Nagar Haveli and Daman and Diu": ["#0891b2", "#f97316"],
+};
+// Every college gets its own shade inside its state's family (a small, repeatable hue and lightness shift from its link name).
+function collegeColors(slug, state) {
+  const [a, b] = STATE_COLORS[state] || ["#6366f1", "#ec4899"];
+  let h = 0; for (const ch of String(slug)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  const dh = ((h % 9) - 4) * 6, dl = (((h >>> 4) % 5) - 2) * 2;
+  return [shiftColor(a, dh, dl), shiftColor(b, dh, -dl)];
+}
 const GENERIC_SUBJECTS = ["Maths", "Physics", "Chemistry", "English", "Programming", "Data Structures", "DBMS", "Operating Systems", "Networks", "Electronics", "Circuits", "Mechanics", "Thermodynamics", "Biology", "Economics", "Management", "Law", "Other"];
 const GENERIC_CLUBS = ["Coding Club", "AI/ML", "Robotics", "Electronics", "Startup Cell", "Research Society", "Cultural", "Sports", "NSS / NCC", "Other"];
 const GENERIC_IDEAS = ["Project", "Startup", "Research", "Campus life", "Social impact", "Other"];
@@ -113,7 +146,12 @@ if (NO_COLLEGE) document.body.classList.add("nocollege");
 if (TENANT) {
   document.body.classList.add("tenant");
   for (const k of ["bot", "alumni", "fun", "jobs", "market", "challenges"]) if (!featureOn(k)) document.body.classList.add("no-" + k);
-  if (TENANT.accent) { document.documentElement.style.setProperty("--accent", TENANT.accent); const m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute("content", TENANT.accent); }
+}
+// Brand colours of the college that is open (its own accent colour when it has one, otherwise its state family shade).
+const BRAND_COLORS = TENANT ? (TENANT.accent ? [TENANT.accent, shiftColor(TENANT.accent, 28, 0)] : collegeColors(SEL, (DIRECTORY.find(c => c.slug === SEL) || {}).state || "Andhra Pradesh")) : null;
+if (BRAND_COLORS) {
+  const root = document.documentElement.style; root.setProperty("--accent", BRAND_COLORS[0]); root.setProperty("--brand-a", BRAND_COLORS[0]); root.setProperty("--brand-b", BRAND_COLORS[1]);
+  const m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute("content", BRAND_COLORS[0]);
 }
 const SUBJECTS = (CFG.subjects && CFG.subjects.length) ? CFG.subjects : ["Maths", "Physics", "Chemistry", "Other"];
 const CATS = (CFG.ideaCategories && CFG.ideaCategories.length) ? CFG.ideaCategories : ["Project", "Other"];
@@ -2364,6 +2402,19 @@ function renderHeatmap(p) {
   return el("div", { class: "heatmap" }, ...cells);
 }
 
+// ---------- invite classmates ----------
+function inviteLink() { return location.origin + location.pathname + "?c=" + encodeURIComponent(TENANT ? TENANT.slug : IS_RGUKT ? "rgukt" : ""); }
+function inviteCard() {
+  if (NO_COLLEGE) return null;
+  const note = el("small", { class: "hint", role: "status" });
+  return el("div", { class: "learn-card" }, el("strong", {}, "📣 Invite your classmates"),
+    el("p", { class: "hint" }, "More students from " + COLLEGE + " means more answers, a livelier board and a stronger place on the quiz battle."),
+    el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: async (e) => {
+      const url = inviteLink(), text = "Join " + COLLEGE + " on " + BRAND + ": ask doubts, take quizzes and share ideas with your classmates.";
+      try { if (navigator.share) { await navigator.share({ title: BRAND, text, url }); return; } } catch (err) { if (err && err.name === "AbortError") return; }
+      try { await navigator.clipboard.writeText(text + " " + url); note.textContent = "Link copied. Paste it in your class group."; } catch (_) { note.textContent = url; }
+    } }, "Share invite link")), note);
+}
 // ---------- CampusLoop Plus ----------
 function plusCard() {
   return el("div", { class: "learn-card" }, el("strong", {}, "⭐ CampusLoop Plus" + (state.plan.plus ? " (active)" : "")),
@@ -2500,6 +2551,7 @@ function renderMe() {
     el("p", { class: "hint" }, "📷 Your profile photo (everyone can see it next to your posts)"),
     el("div", { class: "rowbtns" }, el("button", { type: "button", class: "btn sm primary", onclick: pickDp }, getDp() ? "Change photo" : "Upload photo"), getDp() && el("button", { type: "button", class: "btn sm", onclick: removeDp }, "Remove photo")),
     state.dpMsg && el("p", { class: "hint", role: "status" }, state.dpMsg),
+    inviteCard(),
     plusCard(),
     verifyBlock(),
     el("p", { class: "hint" }, "💬 Your status (shown on your stories)"),
@@ -3205,8 +3257,14 @@ async function fetchColleges() {
 function switchCollege(slug) { location.href = location.pathname + "?c=" + encodeURIComponent(slug); }
 function renderCollege() {
   const cur = TENANT ? TENANT.slug : IS_RGUKT ? "rgukt" : "", list = el("div", { class: "college-list" }, el("p", { class: "hint" }, "Loading colleges…"));
-  const btn = (slug, name, sub) => el("button", { type: "button", class: "campus-link" + (slug === cur ? " sel" : ""), onclick: () => { if (slug !== cur) switchCollege(slug); else { state.mode = "intro"; render(); } } },
-    el("strong", {}, (slug === cur ? "✅ " : "") + name), sub ? el("small", {}, sub) : null);
+  const btn = (slug, name, sub, st) => {
+    const [ca, cb] = slug === "rgukt" ? STATE_COLORS["Andhra Pradesh"] : collegeColors(slug, st || "");
+    const ini = name.replace(/\(.*?\)/g, "").split(/[\s-]+/).filter(w => /^[A-Za-z]/.test(w) && !/^(of|and|the|for|in)$/i.test(w)).slice(0, 2).map(w => w[0].toUpperCase()).join("") || "C";
+    const badge = el("span", { class: "col-badge", "aria-hidden": "true" }, ini); badge.style.setProperty("background", "linear-gradient(135deg," + ca + "," + cb + ")");
+    const b = el("button", { type: "button", class: "campus-link col-row" + (slug === cur ? " sel" : ""), onclick: () => { if (slug !== cur) switchCollege(slug); else { state.mode = "intro"; render(); } } },
+      badge, el("span", { class: "col-text" }, el("strong", {}, (slug === cur ? "✅ " : "") + name), sub ? el("small", {}, sub) : null));
+    b.style.setProperty("--row", ca); return b;
+  };
   let online = [], q = "", stateSel = "Andhra Pradesh";
   try { stateSel = localStorage.getItem("dd-state") || stateSel; } catch (_) {}
   const entries = () => {
@@ -3229,7 +3287,7 @@ function renderCollege() {
     const needle = q.trim().toLowerCase(), all = [rgukt, ...entries()];
     if (stateSel === "All India" && !needle) { list.replaceChildren(el("p", { class: "hint" }, "Type a college name or city above to search all of India, or pick a state.")); return; }
     const rows = all.filter(c => (stateSel === "All India" || c.state === stateSel) && (!needle || (c.name + " " + c.sub + " " + c.slug).toLowerCase().includes(needle)));
-    list.replaceChildren(...(rows.length ? rows.map(c => btn(c.slug, c.name, stateSel === "All India" && c.state ? c.state + " · " + c.sub : c.sub)) : [el("p", { class: "hint" }, "No college found here. Try another state, or use the form below to ask for your college.")]));
+    list.replaceChildren(...(rows.length ? rows.map(c => btn(c.slug, c.name, stateSel === "All India" && c.state ? c.state + " · " + c.sub : c.sub, c.state)) : [el("p", { class: "hint" }, "No college found here. Try another state, or use the form below to ask for your college.")]));
   };
   const search = el("input", { type: "search", placeholder: "Search your college or city…", "aria-label": "Search colleges", oninput: (e) => { q = e.target.value; fill(); } });
   fill();
