@@ -107,3 +107,10 @@
 body.focus .tabs button[data-tab="ideas"], body.focus .tabs button[data-tab="clubs"], body.focus .tabs button[data-tab="challenges"],
 body.focus .tabs button[data-tab="market"], body.focus .tabs button[data-tab="jobs"],
 body.focus #funBtn, body.focus #storyBar { display: none !important; }
+
+/* college switcher and college-specific hiding */
+.college-btn { margin: 4px 0 2px; padding: 3px 12px; border-radius: 999px; border: 1px solid rgb(255 255 255 / .55); background: rgb(255 255 255 / .14); color: #fff; font: 700 12px system-ui; cursor: pointer; }
+.college-list { display: grid; gap: 6px; margin: 8px 0; }
+.college-list .campus-link.sel { outline: 2px solid var(--accent, #7c3aed); }
+body.no-bot #botBtn, body.no-bot #sbw, body.no-alumni #alumniBtn, body.no-fun #funBtn,
+body.no-jobs .tabs button[data-tab="jobs"], body.no-market .tabs button[data-tab="market"], body.no-challenges .tabs button[data-tab="challenges"] { display: none !important; }

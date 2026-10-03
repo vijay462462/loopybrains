@@ -51,3 +51,34 @@ Students can edit and delete their own posts from the same phone they posted on.
 4. To unblock, delete that document.
 
 A blocked person can get a new device id by clearing the browser data, so treat this as a deterrent. The app also pauses posting for 24 hours (72 hours from 4 hidden posts) when two or more of a device's posts have been hidden by classmates' reports.
+
+## Adding a college (multi-college setup)
+
+RGUKT is the built-in college. Every other college is one document in Firestore, and gets its own private board.
+
+1. Firebase console > Firestore Database > Data > **Start collection** `colleges` (once).
+2. **Document ID** = the college's short link name: lowercase letters, digits and dashes, 2 to 40 characters, e.g. `abc-university`.
+3. Add these fields (type in brackets). Only `name` and `room` are required.
+
+| Field | Type | Example / notes |
+| --- | --- | --- |
+| `name` | string | `ABC University` |
+| `room` | string | a private random id, 8 to 40 letters/digits/`-`/`_`, e.g. `k7Qm2xPa9Rtz`. Every post of this college is stored under it, so keep it secret and never reuse it for another college. |
+| `title` | string | `ABC Spark` (shown in the header; defaults to name + " Spark") |
+| `tagline` | string | `Learn together` |
+| `captions` | array of string | rotating lines under the title |
+| `campuses` | array of string | `["MAIN", "CITY"]` (leave empty for a single campus) |
+| `subjects` | array of string | `["Algebra", "Physics 1"]` |
+| `departments` | map | `{ "CSE": ["DSA", "OS"], "MATH": ["Algebra"] }` (optional; shows department tabs) |
+| `clubs` | array of string | `["Coding", "Music"]` |
+| `ideaCategories` | array of string | `["Project", "Startup"]` |
+| `exams` | array of map | `[{ name: "Mid-1", date: "2026-11-20" }]` |
+| `accent` | string | brand colour like `#e11d48` |
+| `features` | map | booleans: `bot`, `alumni` (both default **off** for other colleges because their text is about RGUKT), `fun`, `jobs`, `market`, `challenges` (default on) |
+| `listed` | boolean | `false` hides it from the public college list (students can still use the link) |
+| `enabled` | boolean | `false` switches the college off |
+
+4. Share the link `https://<your site>/?c=abc-university`. Students can also pick the college from the **🏫 College** button under the title.
+5. Requests from the "My college is not listed" form arrive in the `collegeRequests` collection (readable only in the console).
+
+Known limits of this first version: the Spark Bot, Alumni, About and Career Guide pages still contain RGUKT-specific text (Bot and Alumni are off by default for other colleges); the Daily Quiz is the same for every college; sign-in is still anonymous. Publish the updated `firestore.rules` before using this.

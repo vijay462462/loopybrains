@@ -6,7 +6,88 @@ for (const m of ["replaceChildren", "append", "prepend"]) {
 }
 // Data lives in Firebase Firestore when config.js has Firebase settings, otherwise in this browser (demo mode).
 
-const CFG = window.DOUBT_DESK_CONFIG || {};
+// ---------- college (tenant) setup ----------
+// The built-in college is RGUKT. Any other college opens as ?c=<slug>: its name, colours, campuses, subjects and
+// clubs come from the public `colleges/<slug>` document, and its posts live in its own private room (`room` field).
+const BASE_CFG = window.DOUBT_DESK_CONFIG || {};
+const DEFAULT_ROOM_PATH = "rooms/GB-9FE9YR/";
+const t1 = (v, n) => typeof v === "string" ? v.replace(/[\u0000-\u001F\u007F​-‏‪-‮⁠-⁤﻿<>]/g, "").trim().slice(0, n) : "";
+const tList = (v, n, m) => (Array.isArray(v) ? v : []).map(x => t1(x, n)).filter(Boolean).slice(0, m);
+function fsVal(v) {
+  if (!v) return null;
+  if ("stringValue" in v) return v.stringValue; if ("integerValue" in v) return Number(v.integerValue); if ("doubleValue" in v) return v.doubleValue;
+  if ("booleanValue" in v) return v.booleanValue; if ("arrayValue" in v) return (v.arrayValue.values || []).map(fsVal);
+  if ("mapValue" in v) return Object.fromEntries(Object.entries(v.mapValue.fields || {}).map(([k, x]) => [k, fsVal(x)]));
+  return null;
+}
+const fsDoc = (d) => Object.fromEntries(Object.entries((d && d.fields) || {}).map(([k, x]) => [k, fsVal(x)]));
+function tenantSlug() {
+  let p = null; try { p = new URLSearchParams(location.search).get("c"); } catch (_) {}
+  if (p !== null) {
+    p = p.toLowerCase(); const ok = /^[a-z0-9-]{2,40}$/.test(p) && p !== "rgukt";
+    try { if (ok) localStorage.setItem("dd-college", p); else localStorage.removeItem("dd-college"); } catch (_) {}
+    return ok ? p : "";
+  }
+  let s = ""; try { s = localStorage.getItem("dd-college") || ""; } catch (_) {}
+  return /^[a-z0-9-]{2,40}$/.test(s) && s !== "rgukt" ? s : "";
+}
+function cleanTenant(raw, slug) {
+  if (!raw || typeof raw !== "object" || raw.enabled === false) return null;
+  const room = t1(raw.room, 40); if (!/^[A-Za-z0-9_-]{6,40}$/.test(room)) return null;
+  const name = t1(raw.name, 60); if (!name) return null;
+  const f = raw.features && typeof raw.features === "object" ? raw.features : {};
+  const dep = {}; if (raw.departments && typeof raw.departments === "object") for (const [k, v] of Object.entries(raw.departments).slice(0, 12)) { const kk = t1(k, 20); if (kk) dep[kk] = tList(v, 30, 40); }
+  return {
+    slug, room, name, title: t1(raw.title, 40) || name + " Spark", tagline: t1(raw.tagline, 80), captions: tList(raw.captions, 90, 10),
+    campuses: tList(raw.campuses, 24, 12), clubs: tList(raw.clubs, 30, 30), subjects: tList(raw.subjects, 30, 80), ideaCategories: tList(raw.ideaCategories, 30, 20),
+    exams: (Array.isArray(raw.exams) ? raw.exams : []).map(e => ({ name: t1(e && e.name, 40), date: t1(e && e.date, 10) })).filter(e => e.name && /^\d{4}-\d{2}-\d{2}$/.test(e.date)).slice(0, 12),
+    departments: dep, accent: /^#[0-9a-fA-F]{6}$/.test(raw.accent || "") ? raw.accent : "",
+    features: { bot: f.bot === true, alumni: f.alumni === true, fun: f.fun !== false, jobs: f.jobs !== false, market: f.market !== false, challenges: f.challenges !== false },
+  };
+}
+async function loadTenant() {
+  const slug = tenantSlug(); if (!slug) return null;
+  const key = "dd-tenant-" + slug; let cached = null;
+  try { cached = JSON.parse(localStorage.getItem(key) || "null"); } catch (_) {}
+  const fb = BASE_CFG.firebase || {};
+  const url = "https://firestore.googleapis.com/v1/projects/" + encodeURIComponent(fb.projectId || "") + "/databases/(default)/documents/colleges/" + encodeURIComponent(slug) + "?key=" + encodeURIComponent(fb.apiKey || "");
+  const fetchFresh = async () => {
+    const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 7000);
+    try {
+      const r = await fetch(url, { signal: ctl.signal }); if (!r.ok) throw new Error("status " + r.status);
+      const t = cleanTenant(fsDoc(await r.json()), slug); if (!t) throw new Error("invalid college");
+      try { localStorage.setItem(key, JSON.stringify({ t, at: Date.now() })); } catch (_) {}
+      return t;
+    } finally { clearTimeout(to); }
+  };
+  if (cached && cached.t && cleanTenant({ ...cached.t, enabled: true }, slug)) {
+    if (Date.now() - (cached.at || 0) > 6 * 3600 * 1000) fetchFresh().catch(() => {});   // refresh for next visit
+    return cached.t;
+  }
+  try { return await fetchFresh(); }
+  catch (_) {
+    document.body.replaceChildren();
+    const box = document.createElement("div"); box.style.cssText = "max-width:420px;margin:15vh auto;padding:24px;font-family:system-ui,sans-serif;text-align:center";
+    const h = document.createElement("h2"); h.textContent = "We could not open this college";
+    const pp = document.createElement("p"); pp.textContent = "Check the link, or your internet connection, and try again.";
+    const a = document.createElement("a"); a.href = location.pathname + "?c=rgukt"; a.textContent = "Open the default board"; a.style.cssText = "display:inline-block;padding:10px 18px;border-radius:999px;background:#7c3aed;color:#fff;text-decoration:none;font-weight:700";
+    box.append(h, pp, a); document.body.append(box);
+    await new Promise(() => {});   // stop here: never fall back to another college's board
+  }
+}
+const TENANT = await loadTenant();
+const ROOM_PATH = TENANT ? "rooms/" + TENANT.room + "/" : DEFAULT_ROOM_PATH;
+const featureOn = (k) => !TENANT || TENANT.features[k] !== false;
+const CFG = TENANT ? {
+  ...BASE_CFG, title: TENANT.title, tagline: TENANT.tagline || "", captions: TENANT.captions, campuses: TENANT.campuses,
+  clubs: TENANT.clubs, subjects: TENANT.subjects, ideaCategories: TENANT.ideaCategories, exams: TENANT.exams,
+  mentors: [], admins: [], privateClass: false,
+} : BASE_CFG;
+if (TENANT) {
+  document.body.classList.add("tenant");
+  for (const k of ["bot", "alumni", "fun", "jobs", "market", "challenges"]) if (!featureOn(k)) document.body.classList.add("no-" + k);
+  if (TENANT.accent) { document.documentElement.style.setProperty("--accent", TENANT.accent); const m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute("content", TENANT.accent); }
+}
 const SUBJECTS = (CFG.subjects && CFG.subjects.length) ? CFG.subjects : ["Maths", "Physics", "Chemistry", "Other"];
 const CATS = (CFG.ideaCategories && CFG.ideaCategories.length) ? CFG.ideaCategories : ["Project", "Other"];
 const CLUBS = [...((CFG.clubs && CFG.clubs.length) ? CFG.clubs : ["Coding Club", "Other"])];
@@ -88,9 +169,10 @@ const CAMPUSES = (CFG.campuses && CFG.campuses.length) ? CFG.campuses : [];
 const CAMPUS_COLORS = { NUZVID: "#7c3aed", ONGOLE: "#0d9488", RKVALLEY: "#2563eb", SRIKAKULAM: "#0891b2", BASAR: "#d97706", IDUPULAPAYA: "#dc2626" };
 const CAMPUS_ICON = { NUZVID: "🟣", ONGOLE: "🟢", RKVALLEY: "🔵", SRIKAKULAM: "🩵" };
 const CAMPUS_FULL = { NUZVID: "RGUKT Nuzvid", ONGOLE: "RGUKT Ongole", RKVALLEY: "RGUKT RK Valley", SRIKAKULAM: "RGUKT Srikakulam" };
-const campusColor = (c) => CAMPUS_COLORS[c] || "#6366f1";
-const getCampus = () => { try { return localStorage.getItem("dd-campus") || null; } catch(_){return null;} };
-const setCampus = (c) => { try { localStorage.setItem("dd-campus", c); } catch(_){} };
+const campusColor = (c) => CAMPUS_COLORS[c] || PALETTE[Math.max(0, CAMPUSES.indexOf(c)) % PALETTE.length];
+const CAMPUS_KEY = TENANT ? "dd-campus-" + TENANT.slug : "dd-campus";
+const getCampus = () => { try { const c = localStorage.getItem(CAMPUS_KEY); return c && (!TENANT || CAMPUSES.includes(c)) ? c : null; } catch(_){return null;} };
+const setCampus = (c) => { try { localStorage.setItem(CAMPUS_KEY, c); } catch(_){} };
 
 // ---------- placement and internship board ----------
 const safeHttp = (u) => /^https?:\/\/[^\s<>"']{3,280}$/i.test(String(u || "")) ? String(u) : "";
@@ -122,7 +204,7 @@ function jobsHub() {
 }
 
 // ---------- department filter ----------
-const DEPT_MAP = {
+const DEPT_MAP = TENANT ? (TENANT.departments || {}) : {
   ECE:   ["DLD","CS","DSP","PRV","AEC","CN","CO & D","CS-2","RFME"],
   CSE:   ["DS & A","OS","DBMS","OOP","TOC","CD","SE","Python","Maths"],
   Civil: ["SOM","FM","Struct","Geo","Trans","Env","Survey"],
@@ -319,6 +401,7 @@ async function firebaseStore(conf, prefix = "") {
     subscribe: (coll, cb, onErr, since) => fs.onSnapshot(since ? fs.query(fs.collection(db, prefix + coll), fs.where("createdAt", ">", since)) : fs.collection(db, prefix + coll), snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))), onErr),
     newId: (coll) => fs.doc(fs.collection(db, prefix + coll)).id,
     set: (coll, id, data) => fs.setDoc(fs.doc(db, prefix + coll, id), cleanDoc(data)),
+    setTop: (coll, id, data) => fs.setDoc(fs.doc(db, coll, id), cleanDoc(data)),
     update: (coll, id, data) => fs.updateDoc(fs.doc(db, prefix + coll, id), cleanDoc(data)),
     remove: (coll, id) => fs.deleteDoc(fs.doc(db, prefix + coll, id)),
     get: async (coll, id) => { const snap = await fs.getDoc(fs.doc(db, prefix + coll, id)); return snap.exists() ? snap.data() : null; },
@@ -981,7 +1064,7 @@ function renderBottomNav() {
   const icons = { doubts: '❓', ideas: '💡', clubs: '🏛', gate: '🎯', challenges: '🎮', market: '🛒' };
   const labels = { doubts: 'Doubts', ideas: 'Ideas', clubs: 'Clubs', gate: 'GATE', challenges: 'Challenges', market: 'Market' };
   nav.replaceChildren(
-    ...['doubts', 'ideas', 'clubs', 'market', 'gate'].filter(tab => !focusOn() || isAcademicTab(tab)).map(tab => {
+    ...['doubts', 'ideas', 'clubs', 'market', 'gate'].filter(tab => (!focusOn() || isAcademicTab(tab)) && featureOn(tab === 'market' ? 'market' : 'doubts')).map(tab => {
       const cnt = state[TABS[tab].coll].length;
       return el('button', { type: 'button', class: 'bnav-btn' + (state.tab === tab ? ' active' : ''), onclick: () => {
         if (state.tab === tab) { openAsk(); return; }
@@ -1118,14 +1201,14 @@ function renderRail() {
   for (const d of rows) counts[d[t.field]] = (counts[d[t.field]] || 0) + 1;
   const extra = Object.keys(counts).filter(s => !t.groups.includes(s));
 
-  const deptTabs = (state.tab === "doubts" || state.tab === "gate") ? el("div", { class: "dept-tabs" },
+  const deptTabs = (state.tab === "doubts" || state.tab === "gate") && Object.keys(DEPT_MAP).length ? el("div", { class: "dept-tabs" },
     ...Object.keys(DEPT_MAP).map(d => el("button", {
       type: "button", class: "dept-tab" + (state.dept === d ? " active" : ""),
       onclick: () => { state.dept = state.dept === d ? "All" : d; state.group = "All"; render(); },
     }, d))
   ) : null;
 
-  const showSubjects = !(state.tab === "doubts" || state.tab === "gate") || state.dept !== "All";
+  const showSubjects = Object.keys(DEPT_MAP).length === 0 || !(state.tab === "doubts" || state.tab === "gate") || state.dept !== "All";
   const visibleSubjects = showSubjects
     ? ((state.tab === "doubts" || state.tab === "gate") && state.dept !== "All"
         ? [...DEPT_MAP[state.dept].filter(s => t.groups.includes(s)), ...extra]
@@ -2944,6 +3027,56 @@ function renderLab() {
 }
 
 // ---------- about us ----------
+// ---------- college switcher and "add my college" requests ----------
+let collegeRows = null;
+async function fetchColleges() {
+  if (collegeRows) return collegeRows;
+  const fb = BASE_CFG.firebase || {};
+  const r = await fetch("https://firestore.googleapis.com/v1/projects/" + encodeURIComponent(fb.projectId || "") + "/databases/(default)/documents/colleges?pageSize=100&key=" + encodeURIComponent(fb.apiKey || ""));
+  if (!r.ok) throw new Error("status " + r.status);
+  const j = await r.json();
+  collegeRows = (j.documents || []).map(d => ({ slug: String(d.name || "").split("/").pop(), ...fsDoc(d) }))
+    .filter(c => /^[a-z0-9-]{2,40}$/.test(c.slug) && c.enabled !== false && c.listed !== false && typeof c.name === "string")
+    .map(c => ({ slug: c.slug, name: t1(c.name, 60), city: t1(c.city, 40) })).sort((a, b) => a.name.localeCompare(b.name));
+  return collegeRows;
+}
+function switchCollege(slug) { location.href = location.pathname + "?c=" + encodeURIComponent(slug); }
+function renderCollege() {
+  const cur = TENANT ? TENANT.slug : "rgukt", list = el("div", { class: "college-list" }, el("p", { class: "hint" }, "Loading colleges…"));
+  const btn = (slug, name, sub) => el("button", { type: "button", class: "campus-link" + (slug === cur ? " sel" : ""), onclick: () => { if (slug !== cur) switchCollege(slug); else { state.mode = "intro"; render(); } } },
+    el("strong", {}, (slug === cur ? "✅ " : "") + name), sub ? el("small", {}, sub) : null);
+  const fill = (rows) => list.replaceChildren(btn("rgukt", "RGUKT", "Rajiv Gandhi University of Knowledge Technologies"), ...rows.filter(c => c.slug !== "rgukt").map(c => btn(c.slug, c.name, c.city)));
+  fill([]);
+  fetchColleges().then(fill).catch(() => { list.append(el("p", { class: "hint" }, "Could not load the college list. Check your internet and try again.")); });
+  const name = el("input", { name: "cname", maxlength: "80", placeholder: "College or university name", required: true, "aria-label": "College name" });
+  const city = el("input", { name: "ccity", maxlength: "60", placeholder: "City and state", "aria-label": "City" });
+  const role = el("select", { name: "crole", "aria-label": "Your role" }, ["Student", "Teacher or staff", "Club or student body", "Other"].map(r => el("option", {}, r)));
+  const contact = el("input", { name: "ccontact", maxlength: "100", placeholder: "Email or phone (optional)", "aria-label": "Contact" });
+  const consent = el("input", { type: "checkbox", name: "cconsent" }), msg = el("p", { class: "hint", role: "status" });
+  const form = el("form", { class: "form", onsubmit: async (e) => {
+    e.preventDefault(); msg.textContent = "";
+    const n = name.value.trim(); if (n.length < 3) { msg.textContent = "Write the college name."; return; }
+    if (!consent.checked) { msg.textContent = "Please tick the box so we may contact you."; return; }
+    if (hasBadWords(n + " " + city.value)) { msg.textContent = LANGUAGE_MSG; return; }
+    try { if (Date.now() - Number(localStorage.getItem("dd-college-req") || 0) < 86400000) { msg.textContent = "You already sent a request today. Thank you!"; return; } } catch (_) {}
+    if (!store || !store.setTop) { msg.textContent = "Requests need the live board. Connect to the internet and try again."; return; }
+    try {
+      const id = store.newId("collegeRequests");
+      await store.setTop("collegeRequests", id, { name: n.slice(0, 80), city: city.value.trim().slice(0, 60), role: role.value, contact: contact.value.trim().slice(0, 100), consent: true, createdAt: Date.now() });
+      try { localStorage.setItem("dd-college-req", String(Date.now())); } catch (_) {}
+      msg.textContent = "✅ Thank you! We will contact you when " + n.slice(0, 60) + " is ready."; form.reset();
+    } catch (err) { msg.textContent = errText(err); }
+  } }, name, city, role, contact, el("label", { class: "check" }, consent, "I agree that RGUKT Spark may contact me about this request."), el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "submit" }, "Send request")), msg);
+  return [
+    el("h2", {}, "🏫 Your college"),
+    el("p", { class: "hint" }, "Each college has its own private board, subjects and clubs. Pick yours."),
+    list,
+    el("div", { class: "label" }, "My college is not listed"),
+    el("p", { class: "hint" }, "Tell us about your college and we will set up a board for it."),
+    form,
+    el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")),
+  ];
+}
 function renderAbout() {
   const feature = (icon, title, text) => el("div", { class: "learn-card" }, el("strong", {}, icon + " " + title), el("p", { class: "hint" }, text));
   return [
@@ -5732,7 +5865,7 @@ function render() {
     document.body.dataset.tab = state.tab; applyFocus();
     renderHeader(); renderTrendBar(); renderStoryBar(); renderRail(); renderList(); renderBottomNav();
     // Forms keep what the student is typing while live updates arrive.
-    const key = ["ask", "edit", "name", "alumniJoin", "alumniJob", "fun", "lab"].includes(state.mode) ? state.mode + state.tab : "";
+    const key = ["ask", "edit", "name", "alumniJoin", "alumniJob", "fun", "lab", "college"].includes(state.mode) ? state.mode + state.tab : "";
     if (key && key === sheetKey) return;
     sheetKey = key;
     const draft = $("f-reply") ? $("f-reply").value : "";
@@ -5749,6 +5882,7 @@ function render() {
       state.mode === "learn" ? renderLearn() :
       state.mode === "resources" ? renderResources() :
       state.mode === "career" ? renderCareer() :
+      state.mode === "college" ? renderCollege() :
       state.mode === "about" ? renderAbout() :
       state.mode === "lab" ? renderLab() :
       state.mode === "fun" ? renderFun() :
@@ -5837,6 +5971,11 @@ if (themeBtn) {
 
 // Update page title from config
 if (CFG.title) { document.title = CFG.title; }
+{
+  const h1 = $("siteTitle");
+  if (h1 && TENANT) { const w = CFG.title.trim().split(/\s+/), last = w.pop(); h1.replaceChildren(w.join(" ") + (w.length ? " " : ""), el("span", {}, last)); }
+  const cb = $("collegeBtn"); if (cb) { cb.textContent = "🏫 " + (TENANT ? TENANT.name : "RGUKT") + " ▾"; cb.addEventListener("click", () => showPanel("college")); }
+}
 
 // ---------- start ----------
 renderExams();
@@ -5854,7 +5993,7 @@ render();
   try {
     const sbConf = CFG.supabase || {};
     const useSupabase = sbConf.url && sbConf.anonKey && !String(sbConf.url).startsWith("PASTE");
-    store = useSupabase ? await supabaseStore(sbConf) : configured ? await firebaseStore(conf, "rooms/GB-9FE9YR/") : localStore();
+    store = useSupabase ? await supabaseStore(sbConf) : configured ? await firebaseStore(conf, ROOM_PATH) : localStore();
   } catch (e) {
     console.error(e);
     showNotice("Could not connect to the class board. Check your internet and reload. (" + ((e && e.code) || "error") + ")");
