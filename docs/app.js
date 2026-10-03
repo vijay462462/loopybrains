@@ -951,7 +951,7 @@ function renderBottomNav() {
   const icons = { doubts: '❓', ideas: '💡', clubs: '🏛', gate: '🎯', challenges: '🎮', market: '🛒' };
   const labels = { doubts: 'Doubts', ideas: 'Ideas', clubs: 'Clubs', gate: 'GATE', challenges: 'Challenges', market: 'Market' };
   nav.replaceChildren(
-    ...['doubts', 'ideas', 'clubs', 'market', 'gate'].map(tab => {
+    ...['doubts', 'ideas', 'clubs', 'market', 'gate'].filter(tab => !focusOn() || isAcademicTab(tab)).map(tab => {
       const cnt = state[TABS[tab].coll].length;
       return el('button', { type: 'button', class: 'bnav-btn' + (state.tab === tab ? ' active' : ''), onclick: () => {
         if (state.tab === tab) { openAsk(); return; }
@@ -5525,9 +5525,21 @@ function openStories(authorId) {
   show();
 }
 
+// Focus mode: hides everything that is not academic (Ideas, Clubs, Challenges, Market, Jobs, stories, Entertainment).
+const focusOn = () => { try { return localStorage.getItem("dd-focus") === "1"; } catch (_) { return false; } };
+function applyFocus() {
+  const on = focusOn(); document.body.classList.toggle("focus", on);
+  const b = $("focusBtn"); if (b) { b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); b.querySelector(".cl").textContent = on ? "Focus mode is ON · tap to turn off" : "Focus mode · academics only"; }
+}
+function toggleFocus() {
+  try { localStorage.setItem("dd-focus", focusOn() ? "0" : "1"); } catch (_) {}
+  applyFocus();
+  if (focusOn() && !isAcademicTab(state.tab)) { goTab("doubts"); try { history.replaceState(null, "", "#doubts"); } catch (_) {} return; }
+  render();
+}
 function render() {
   try {
-    document.body.dataset.tab = state.tab;
+    document.body.dataset.tab = state.tab; applyFocus();
     renderHeader(); renderTrendBar(); renderStoryBar(); renderRail(); renderList(); renderBottomNav();
     // Forms keep what the student is typing while live updates arrive.
     const key = ["ask", "edit", "name", "alumniJoin", "alumniJob", "fun", "lab"].includes(state.mode) ? state.mode + state.tab : "";
@@ -5596,6 +5608,7 @@ $("networkBtn") && $("networkBtn").addEventListener("click", () => showPanel("ne
 $("quizBtn").addEventListener("click", () => showPanel("quiz"));
 $("learnBtn").addEventListener("click", () => showPanel("learn"));
 $("studyBtn").addEventListener("click", () => showPanel("resources"));
+$("focusBtn") && $("focusBtn").addEventListener("click", toggleFocus);
 $("filterToggle").addEventListener("click", () => { document.querySelector("header.top").classList.toggle("filters-open"); renderHeader(); });
 $("botBtn").addEventListener("click", () => { if (window.sparkBotToggle) window.sparkBotToggle(); });
 $("alumniBtn").addEventListener("click", () => { alumniView = "dir"; showPanel("alumni"); });

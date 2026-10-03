@@ -98,3 +98,12 @@
 .devid { font: 600 .9rem var(--f-mono); overflow-wrap: anywhere; }
 .lab-det summary { cursor: pointer; padding: 6px 0; font-weight: 600; }
 .lab-x { background: none; border: 0; color: var(--muted); cursor: pointer; padding: 4px 8px; }
+
+/* focus mode */
+#focusBtn.on { background: #16a34a; border-color: #fff; color: #fff; }
+@media (max-width: 900px) {
+  .hdr-actions .chip.tool#focusBtn { grid-column: 1 / -1; flex-direction: row; gap: 8px; padding: 8px 14px; font-size: 12.5px; font-weight: 700; }
+}
+body.focus .tabs button[data-tab="ideas"], body.focus .tabs button[data-tab="clubs"], body.focus .tabs button[data-tab="challenges"],
+body.focus .tabs button[data-tab="market"], body.focus .tabs button[data-tab="jobs"],
+body.focus #funBtn, body.focus #storyBar { display: none !important; }
