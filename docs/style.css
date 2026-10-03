@@ -2028,3 +2028,17 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 .boxbtn.fresh .boxbtn-ico { animation: boxShake 2.4s ease-in-out infinite; transform-origin: 50% 80%; }
 @keyframes boxShake { 0%, 70%, 100% { transform: rotate(0); } 75% { transform: rotate(-12deg); } 85% { transform: rotate(10deg); } 92% { transform: rotate(-6deg); } }
 @media (prefers-reduced-motion: reduce) { .boxbtn.fresh, .boxbtn.fresh .boxbtn-ico { animation: none; } }
+/* ---- step-by-step welcome ---- */
+.ob-card { gap: 14px; }
+.ob-bar { display: flex; gap: 6px; width: 100%; margin-top: 8px; } .ob-bar span { flex: 1; height: 5px; border-radius: 99px; background: var(--line); transition: background .3s ease; } .ob-bar span.on { background: var(--grad); }
+.ob-step { display: grid; gap: 10px; justify-items: center; width: 100%; animation: obIn .35s ease both; }
+.ob-loopy { display: grid; place-items: center; } .ob-loopy .loopy-mini { width: 92px; height: 92px; }
+.ob-say { font-size: 15px; } .ob-step input { width: 100%; padding: 13px 16px; border-radius: 16px; text-align: center; font-size: 17px; font-weight: 700; }
+.ob-chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.ob-chip { padding: 10px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--sheet); color: var(--ink); font: inherit; font-weight: 700; font-size: 14px; transition: transform .12s ease; }
+.ob-chip.on { background: var(--grad); color: #fff; border-color: transparent; transform: scale(1.03); }
+.ob-list { text-align: left; display: grid; gap: 8px; padding: 0; list-style: none; margin: 0; } .ob-list li { padding: 10px 12px; border-radius: 14px; background: color-mix(in srgb, var(--accent) 8%, var(--sheet)); }
+.ob-start { display: grid; gap: 8px; width: 100%; } .ob-start .btn { width: 100%; padding: 13px; }
+@keyframes obIn { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .ob-step { animation: none; } }
+.ob-bar { margin-top: 22px; }

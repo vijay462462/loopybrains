@@ -1242,22 +1242,39 @@ const WELCOME = [
 ];
 function showWelcome(force) {
   if (document.getElementById("welcome")) return;
-  const done = () => { try { localStorage.setItem("dd-welcome-done", "1"); } catch (_) {} };
-  let i = 0;
-  const box = el("div", { id: "welcome", class: "welcome", role: "dialog", "aria-modal": "true", "aria-label": "Welcome to " + BRAND });
-  const close = () => { done(); box.remove(); document.removeEventListener("keydown", onKey); };
-  const onKey = (e) => { if (e.key === "Escape") close(); };
-  const paint = () => {
-    const [icon, title, text] = WELCOME[i], last = i === WELCOME.length - 1;
-    box.replaceChildren(el("div", { class: "welcome-card" },
-      el("button", { class: "welcome-skip", type: "button", onclick: close }, "Skip"),
-      el("div", { class: "welcome-icon", "aria-hidden": "true" }, icon),
-      el("h2", {}, i === 0 ? "Welcome to the " + BRAND + " family" : title), i === 0 ? el("h3", {}, title) : null, el("p", {}, text),
-      el("div", { class: "welcome-dots", "aria-hidden": "true" }, ...WELCOME.map((_, k) => el("span", { class: k === i ? "on" : "" }))),
-      el("div", { class: "rowbtns" }, i > 0 ? el("button", { class: "btn", type: "button", onclick: () => { i--; paint(); } }, "Back") : null,
-        el("button", { class: "btn primary", type: "button", onclick: () => { if (last) close(); else { i++; paint(); } } }, last ? "Get started" : "Next"))));
-    const b = box.querySelector(".btn.primary"); if (b) b.focus();
-  };
+  const INTERESTS = [["❓", "Clear my doubts", "doubts"], ["📝", "Prepare for exams", "exams"], ["💼", "Placements and jobs", "placements"], ["🎉", "Clubs and friends", "friends"], ["🔎", "Just exploring", "explore"]];
+  const picked = new Set(readJSON("dd-interests", []));
+  let step = 0, nameVal = (getName() || "").trim();
+  const TOTAL = 4, box = el("div", { id: "welcome", class: "welcome", role: "dialog", "aria-modal": "true", "aria-label": "Welcome to " + BRAND });
+  const finish = () => { try { localStorage.setItem("dd-welcome-done", "1"); } catch (_) {} document.removeEventListener("keydown", onKey); box.remove(); todayKey = ""; try { renderHeader(); } catch (_) {} };
+  const onKey = (e) => { if (e.key === "Escape") finish(); };
+  const saveStep = () => { if (step === 0) { const v = nameVal.trim().slice(0, 30); if (v) setName(v); } if (step === 1) writeJSON("dd-interests", [...picked]); };
+  const go = (d) => { saveStep(); step = Math.max(0, Math.min(TOTAL - 1, step + d)); paint(); };
+  const start = (fn) => () => { saveStep(); finish(); setTimeout(fn, 120); };
+  function paint() {
+    const last = step === TOTAL - 1, who = nameVal.trim() ? nameVal.trim().split(/\s+/)[0] : "";
+    const bar = el("div", { class: "ob-bar", "aria-hidden": "true" }, ...Array.from({ length: TOTAL }, (_, k) => el("span", { class: k <= step ? "on" : "" })));
+    let body;
+    if (step === 0) {
+      const inp = el("input", { type: "text", maxlength: "30", placeholder: "Your first name", "aria-label": "Your name", autocomplete: "given-name", value: nameVal });
+      inp.addEventListener("input", () => { nameVal = inp.value; });
+      inp.addEventListener("keydown", (e) => { if (e.key === "Enter") go(1); });
+      body = [el("div", { class: "ob-loopy" }, loopyMini()), el("h2", {}, "Welcome to the " + BRAND + " family"), el("p", { class: "ob-say" }, "Hi, I\u2019m Loopy \u{1F916}. Ask boldly, answer together, and grow with your whole campus. What should I call you?"), inp];
+    } else if (step === 1) {
+      body = [el("div", { class: "ob-loopy" }, loopyMini()), el("h2", {}, (who ? "Nice to meet you, " + who : "Nice to meet you") + "! \u{1F44B}"), el("p", { class: "ob-say" }, "What brings you here? Pick any. I will tailor your home screen."),
+        el("div", { class: "ob-chips" }, ...INTERESTS.map(([ic, t, k]) => el("button", { class: "ob-chip" + (picked.has(k) ? " on" : ""), type: "button", "aria-pressed": String(picked.has(k)), onclick: (e) => { if (picked.has(k)) picked.delete(k); else picked.add(k); e.currentTarget.classList.toggle("on", picked.has(k)); e.currentTarget.setAttribute("aria-pressed", String(picked.has(k))); } }, ic + " " + t)))];
+    } else if (step === 2) {
+      body = [el("div", { class: "ob-loopy" }, el("span", { class: "welcome-icon", "aria-hidden": "true" }, "\u{1F64F}")), el("h2", {}, "Our family promise"),
+        el("ul", { class: "ob-list" }, el("li", {}, "\u{1F6E1}\uFE0F Safe: anonymous sign-in, moderated posts, no ads."), el("li", {}, "\u{1F64F} Respect: we honour every student, teacher and staff member."), el("li", {}, "\u{1F91D} Help: answer a classmate and earn points and badges."), el("li", {}, "\u{1F193} Free: the board, quizzes and Study Lab stay free."))];
+    } else {
+      const wantsJobs = picked.has("placements"), starters = [["\u2753 Ask my first doubt", () => { const b = $("askBtn"); if (b) b.click(); }, true], ["\u{1F9E0} Try today\u2019s quiz", () => showPanel("quiz"), false], [wantsJobs ? "\u{1F4C4} Build my resume" : "\u{1F9F0} Explore everything", () => showPanel(wantsJobs ? "resume" : "explore"), false]];
+      body = [el("div", { class: "ob-loopy" }, loopyMini()), el("h2", {}, "You\u2019re all set" + (who ? ", " + who : "") + "! \u{1F389}"), el("p", { class: "ob-say" }, "Welcome to the family. Finish your first 3 steps on the home screen to unlock a free gift. \u{1F381}"),
+        el("div", { class: "ob-start" }, ...starters.map(([t, fn, pri]) => el("button", { class: "btn" + (pri ? " primary" : ""), type: "button", onclick: start(fn) }, t)))];
+    }
+    box.replaceChildren(el("div", { class: "welcome-card ob-card" }, el("button", { class: "welcome-skip", type: "button", onclick: finish }, "Skip"), bar, el("div", { class: "ob-step" }, ...body),
+      el("div", { class: "rowbtns" }, step > 0 ? el("button", { class: "btn", type: "button", onclick: () => go(-1) }, "Back") : null, last ? el("button", { class: "btn", type: "button", onclick: finish }, "Close") : el("button", { class: "btn primary", type: "button", onclick: () => go(1) }, step === 0 && !nameVal.trim() ? "Skip for now" : "Next"))));
+    const f = box.querySelector("input") || box.querySelector(".btn.primary"); if (f && step !== 0) f.focus();
+  }
   document.addEventListener("keydown", onKey); paint(); document.body.append(box);
 }
 function maybeWelcome() {
@@ -1325,6 +1342,7 @@ function loopyTip() {
     ["mistakes", mist >= 3, () => ({ text: "You have " + mist + " saved mistakes. Clear 3 of them today and they will never trouble you again. 📓", cta: ["Practise", () => { state.mist = null; showPanel("mistakes"); }] })],
     ["weak", !!weak, () => ({ text: weak[0] + " is your weakest topic (" + Math.round(weak[1].r * 100 / weak[1].n) + "%). A short mock test will lift it. 🎯", cta: ["Mock test", () => { state.mock = null; showPanel("mock"); }] })],
     ["rank", me > 0 && rows[me - 1].points - rows[me].points < 40, () => ({ text: "You are #" + (me + 1) + " on the weekly board, only " + (rows[me - 1].points - rows[me].points + 1) + " points behind " + rows[me - 1].name + ". One focus round could pass them! 🏅", cta: ["Focus timer", () => { state.ft = null; showPanel("focusplus"); }] })],
+    ["place", readJSON("dd-interests", []).includes("placements") && !readJSON("dd-resume", null), () => ({ text: "Placement season is a marathon. Build your one-page resume today, it takes about 10 minutes. \u{1F4C4}", cta: ["Resume builder", () => showPanel("resume")] })],
     ["help", un > 0, () => ({ text: un + " classmate" + (un === 1 ? "" : "s") + " asked a doubt nobody has answered yet. Your answer could be the one they remember. 🙋", cta: ["Help now", showUnanswered] })],
   ];
   let pick = stored && stored.day === today ? C.find(c => c[0] === stored.id) : null;
