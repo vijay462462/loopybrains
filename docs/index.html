@@ -12,7 +12,7 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://api.dicebear.com https://img.youtube.com data: blob:; media-src 'self' blob: https:; connect-src 'self' https://asia-south1-doubt-desk-e6f39.cloudfunctions.net https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com wss://*.firebaseio.com https://*.supabase.co wss://*.supabase.co; frame-src https://www.youtube.com; object-src 'none'; base-uri 'none'; form-action 'self'; worker-src 'self'; manifest-src 'self'; upgrade-insecure-requests;">
 
 <!-- PWA -->
-<link rel="manifest" href="manifest.json?v=226">
+<link rel="manifest" href="manifest.json?v=227">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -24,12 +24,20 @@
 <!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@500&display=swap">
-<link rel="stylesheet" href="style.css?v=226">
-<link rel="stylesheet" href="sparkbot.css?v=226">
-<link rel="stylesheet" href="player.css?v=226">
-<link rel="stylesheet" href="lab.css?v=226">
+<link rel="stylesheet" href="style.css?v=227">
+<link rel="stylesheet" href="sparkbot.css?v=227">
+<link rel="stylesheet" href="player.css?v=227">
+<link rel="stylesheet" href="lab.css?v=227">
 </head>
 <body>
+<div id="splash" class="splash" role="status" aria-live="polite">
+  <img class="splash-logo" src="icon-192.png" alt="" width="96" height="96">
+  <h1 class="splash-title" id="splashTitle">Welcome to the CampusLoop family</h1>
+  <p class="splash-langs">స్వాగతం · स्वागत है · Welcome</p>
+  <p class="splash-sub" id="splashSub">Ask boldly. Answer together. Innovate endlessly.</p>
+  <small class="splash-tap">Tap to continue</small>
+</div>
+<script src="splash.js?v=227"></script>
 
 <!-- offline indicator -->
 <div id="offlineBar" class="offline-bar" hidden>📵 You're offline — showing cached posts</div>
@@ -116,20 +124,20 @@
 <!-- bottom navigation (mobile only) -->
 <nav class="bottom-nav" id="bottomNav" aria-label="Main navigation"></nav>
 
-<script src="config.js?v=226"></script>
-<script src="quiz.js?v=226"></script>
-<script src="plus-data.js?v=226"></script>
-<script src="colleges-ap.js?v=226"></script>
-<script src="colleges-ap2.js?v=226"></script>
-<script src="colleges-ap3.js?v=226"></script>
-<script src="colleges-india.js?v=226"></script>
-<script type="module" src="app.js?v=226"></script>
-<script src="sparkbot.js?v=226"></script>
-<script src="player.js?v=226"></script>
-<script src="tools-core.js?v=226"></script>
-<script src="tools-math.js?v=226"></script>
-<script src="tools-eng.js?v=226"></script>
-<script src="tools-life.js?v=226"></script>
-<script src="lab.js?v=226"></script>
+<script src="config.js?v=227"></script>
+<script src="quiz.js?v=227"></script>
+<script src="plus-data.js?v=227"></script>
+<script src="colleges-ap.js?v=227"></script>
+<script src="colleges-ap2.js?v=227"></script>
+<script src="colleges-ap3.js?v=227"></script>
+<script src="colleges-india.js?v=227"></script>
+<script type="module" src="app.js?v=227"></script>
+<script src="sparkbot.js?v=227"></script>
+<script src="player.js?v=227"></script>
+<script src="tools-core.js?v=227"></script>
+<script src="tools-math.js?v=227"></script>
+<script src="tools-eng.js?v=227"></script>
+<script src="tools-life.js?v=227"></script>
+<script src="lab.js?v=227"></script>
 </body>
 </html>
