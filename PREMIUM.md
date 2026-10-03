@@ -80,3 +80,8 @@ A paid plan sold inside a Play Store app must normally use Google Play Billing (
 ## 10. Promo codes
 
 Admin dashboard › **Promo codes**: create a code (3-20 capitals/digits), percent off (5-90), plan (any or one), days valid and maximum uses. Give it to a college, club or influencer. Students type it under the plan cards on the Plus screen; `checkPromo` validates it and `createPaymentLink` charges the lower price (never below ₹1). The webhook accepts the discounted amount only because the server wrote it into the payment link, and counts the use. **Written but not deployed or tested**: deploy the functions and publish the latest rules. Ideas: exam-season code (EXAM30), college code (RGUKT20), 90% "creator" codes with 5 uses for friends.
+
+## 11. Flash sale banner and focus timer
+
+- **Flash sale:** admin dashboard › **Flash sale**. Type a title, optional text and an existing promo code, and how many hours it runs. Every student sees a red banner with a live countdown and a See Plus button; the code is pre-filled in the promo box. Switch it off any time. The banner is stored in `sales/current` (needs the latest `firestore.rules`).
+- **Focus timer (Plus):** 25-minute rounds with 5-minute breaks, a 7-day study chart, and a weekly goal of 120 focus minutes. It runs on the phone and costs nothing.

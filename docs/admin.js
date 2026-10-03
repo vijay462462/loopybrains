@@ -338,6 +338,30 @@ function promosView() {
     } }, "Create code")), msg), box);
 }
 
+function saleView() {
+  const msg = h("p", { class: "msg" }), cur = h("div", { class: "card" }, h("p", { class: "adm-hint" }, "Loading…"));
+  const f = { title: h("input", { placeholder: "Title, e.g. Flash sale: 30% off Plus", maxlength: "60" }), text: h("input", { placeholder: "Short text (optional), e.g. Today only for exam week", maxlength: "160" }), code: h("input", { placeholder: "Promo code to show (optional, must exist)", maxlength: "20" }), hours: h("input", { type: "number", min: "1", max: "720", value: "48", "aria-label": "Hours the sale runs" }) };
+  const load = async () => {
+    try { const d = await fs.getDoc(fs.doc(db, "sales", "current")); const s = d.exists() ? d.data() : null;
+      cur.replaceChildren(h("h3", {}, "Current sale"), s ? h("div", {}, h("p", {}, h("b", {}, s.title), " ", s.active && s.until > Date.now() ? h("span", { class: "tag ok" }, "live") : h("span", { class: "tag bad" }, "off")), h("p", { class: "mono" }, (s.code ? "code " + s.code + " · " : "") + "ends " + new Date(s.until).toLocaleString()),
+        s.active ? h("div", { class: "row" }, h("button", { class: "b sm bad", onclick: async (e) => { e.currentTarget.disabled = true; try { await fs.setDoc(fs.doc(db, "sales", "current"), { ...s, active: false, updatedAt: Date.now() }); await logAction("sale-off", "sales/current", s.title); load(); } catch (er) { msg.className = "msg err"; msg.textContent = "Not allowed (" + (er.code || "error") + ")."; } } }, "Switch off now")) : null) : h("p", { class: "adm-hint" }, "No sale yet."));
+    } catch (e) { cur.replaceChildren(h("p", { class: "msg err" }, "Could not load (" + (e.code || "error") + ").")); }
+  };
+  load();
+  return h("div", {}, cur, h("div", { class: "card" }, h("h3", {}, "Start a flash sale"), h("p", { class: "adm-hint" }, "Students see a red banner with a live countdown at the top of the app. Create the promo code first (Promo codes tab), then type it here so students can apply it with one tap."),
+    f.title, f.text, f.code, h("label", {}, "Runs for (hours)", f.hours),
+    h("div", { class: "row" }, h("button", { class: "b pri", onclick: async (e) => {
+      const code = f.code.value.trim().toUpperCase(), hours = parseInt(f.hours.value, 10);
+      if (clean(f.title.value, 60).length < 3) { msg.className = "msg err"; msg.textContent = "Write a title."; return; }
+      if (code && !/^[A-Z0-9]{3,20}$/.test(code)) { msg.className = "msg err"; msg.textContent = "Code: 3-20 capital letters or digits."; return; }
+      if (!(hours >= 1 && hours <= 720)) { msg.className = "msg err"; msg.textContent = "Hours: 1 to 720."; return; }
+      e.currentTarget.disabled = true;
+      try { const data = { title: clean(f.title.value, 60), text: clean(f.text.value, 160), code, until: Date.now() + hours * 36e5, active: true, updatedAt: Date.now() }; await fs.setDoc(fs.doc(db, "sales", "current"), data); await logAction("sale-on", "sales/current", data.title); msg.className = "msg ok"; msg.textContent = "Live now."; load(); }
+      catch (er) { msg.className = "msg err"; msg.textContent = "Not saved (" + (er.code || "error") + "). Publish the latest rules."; }
+      e.currentTarget.disabled = false;
+    } }, "Start sale")), msg));
+}
+
 const EXAMS = ["Mid", "End", "Supplementary", "Model", "Other"];
 function papersView() {
   const p = roomPath(), msg = h("p", { class: "msg" }), box = h("div", {});
@@ -367,8 +391,8 @@ function papersView() {
 }
 
 // ---------- shell ----------
-const TABS = [["overview", "Overview", true], ["moderation", "Moderation", true], ["blocked", "Blocked devices", true], ["promos", "Promo codes", false], ["notices", "Notices", true], ["papers", "Papers", true], ["colleges", "Colleges", false], ["requests", "Requests and survey", false], ["log", "Log", false]];
-const VIEWS = { promos: promosView, notices: noticesView, papers: papersView, overview: overviewView, moderation: moderationView, blocked: blockedView, colleges: collegesView, requests: requestsView, log: logView };
+const TABS = [["overview", "Overview", true], ["moderation", "Moderation", true], ["blocked", "Blocked devices", true], ["sale", "Flash sale", false], ["promos", "Promo codes", false], ["notices", "Notices", true], ["papers", "Papers", true], ["colleges", "Colleges", false], ["requests", "Requests and survey", false], ["log", "Log", false]];
+const VIEWS = { sale: saleView, promos: promosView, notices: noticesView, papers: papersView, overview: overviewView, moderation: moderationView, blocked: blockedView, colleges: collegesView, requests: requestsView, log: logView };
 function draw() {
   const u = auth.currentUser;
   const tabs = h("div", { class: "adm-tabs" }, ...TABS.map(([k, label]) => h("button", { class: S.tab === k ? "on" : "", onclick: () => { S.tab = k; draw(); } }, label)));

@@ -2592,10 +2592,11 @@ const PLUS_TILES = [
   ["📚", "Paper vault", "Previous-year papers and solutions, by subject and year.", "papers"],
   ["☁️", "Cloud backup", "Keep flashcards, notes and tasks safe across phones.", ""],
   ["🎨", "Themes", "Your own colour for the whole app.", ""],
+  ["⏱️", "Focus timer", "Pomodoro rounds with a 7-day study chart.", "focusplus"],
   ["🎯", "Goals and badges", "Weekly targets and badges to keep you going.", "goals"],
   ["⭐", "Plus star", "A star next to your name on every post.", ""],
 ];
-const PLUS_COMPARE = [["", "Free", "Plus"], ["Board, stories, quizzes, Study Lab", "✔", "✔"], ["Daily streaks and battles", "✔", "✔"], ["AI study helper", "–", "✔"], ["Mock tests and progress chart", "–", "✔"], ["Mistake notebook and exam planner", "–", "✔"], ["Paper vault", "–", "✔"], ["Weekly goals and badges", "–", "✔"], ["Cloud backup, themes, ⭐", "–", "✔"]];
+const PLUS_COMPARE = [["", "Free", "Plus"], ["Board, stories, quizzes, Study Lab", "✔", "✔"], ["Daily streaks and battles", "✔", "✔"], ["AI study helper", "–", "✔"], ["Mock tests and progress chart", "–", "✔"], ["Mistake notebook and exam planner", "–", "✔"], ["Paper vault", "–", "✔"], ["Weekly goals, badges, focus timer", "–", "✔"], ["Cloud backup, themes, ⭐", "–", "✔"]];
 function renderPlus() {
   const acct = myAccount(), verified = acct.verified, has = state.plan.plus;
   const canBackup = !!store && !!store.getTop && verified && (!PLUS.enabled || has);
@@ -2656,7 +2657,7 @@ function renderPlus() {
       ["semester", "Semester", PLUS.semester || 149, "/ 4 months", "About ₹" + perMonth(PLUS.semester || 149, 130) + " a month. Covers a whole semester.", "Popular", 0],
       ["yearly", "Yearly", PLUS.yearly, "/ year", "About ₹" + perMonth(yearlyNow, 366) + " a month. Save " + Math.max(0, Math.round(100 - yearlyNow * 100 / (PLUS.monthly * 12))) + "% vs monthly.", offer ? offer.label : "Best value", offer ? offer.yearly : 0]]
       .map(([k, n, p, per, note, badge, shown]) => { const c = cut(k, shown || p); return card(k, n, p, per, note, badge, c || shown, c ? shown || p : 0); });
-    const code = el("input", { maxlength: "20", placeholder: "Have a promo code?", "aria-label": "Promo code", autocomplete: "off", value: pr ? pr.code : "" }), codeMsg = el("p", { class: "hint", role: "status" }, pr ? "✅ " + pr.code + ": " + pr.percent + "% off " + (pr.plan === "any" ? "any plan" : "the " + pr.plan + " plan") + "." : "");
+    const code = el("input", { maxlength: "20", placeholder: "Have a promo code?", "aria-label": "Promo code", autocomplete: "off", value: pr ? pr.code : (() => { try { return localStorage.getItem("dd-sale-code") || ""; } catch (_) { return ""; } })() }), codeMsg = el("p", { class: "hint", role: "status" }, pr ? "✅ " + pr.code + ": " + pr.percent + "% off " + (pr.plan === "any" ? "any plan" : "the " + pr.plan + " plan") + "." : "");
     const apply = async (e) => {
       const v = code.value.trim().toUpperCase(); if (!v) { state.promo = null; render(); return; }
       if (!/^[A-Z0-9]{3,20}$/.test(v)) { codeMsg.textContent = "Codes have 3-20 letters or digits."; return; }
@@ -2696,7 +2697,8 @@ function renderPlus() {
       el("button", { class: "btn", type: "button", onclick: () => { state.mist = null; showPanel("mistakes"); } }, "📓 Mistakes (" + mistakeList().length + ")"),
       el("button", { class: "btn", type: "button", onclick: () => showPanel("planner") }, "🗓️ Exam planner"),
       el("button", { class: "btn", type: "button", onclick: () => showPanel("papers") }, "📚 Paper vault (" + state.papers.length + ")"),
-      el("button", { class: "btn", type: "button", onclick: () => showPanel("goals") }, "🎯 Goals and badges")),
+      el("button", { class: "btn", type: "button", onclick: () => showPanel("goals") }, "🎯 Goals and badges"),
+      el("button", { class: "btn", type: "button", onclick: () => { state.ft = null; showPanel("focusplus"); } }, "⏱️ Focus timer")),
     el("div", { class: "label" }, "🎨 Theme"),
     (PLUS.enabled && !has) ? el("p", { class: "hint" }, "Themes are part of the paid plan.") : el("div", { class: "rowbtns" }, ...THEMES.map(([n, c]) => el("button", { class: "btn sm", type: "button", onclick: () => { try { if (c) localStorage.setItem("dd-theme", c); else localStorage.removeItem("dd-theme"); } catch (_) {} if (!c) { const b = BRAND_COLORS || ["#4f46e5", "#7c3aed"]; document.documentElement.style.setProperty("--accent", b[0]); document.documentElement.style.setProperty("--brand-a", b[0]); document.documentElement.style.setProperty("--brand-b", b[1]); } else applyTheme(); } }, n))),
     el("div", { class: "label" }, "☁️ Backup"),
@@ -2881,8 +2883,32 @@ function refInviteCard() {
       try { await navigator.clipboard.writeText(text); say.textContent = "✅ Link copied. Paste it in WhatsApp."; } catch (_) { say.textContent = link; }
     } }, "📤 Share my invite"), el("button", { class: "btn sm", type: "button", onclick: async () => { try { await navigator.clipboard.writeText(link); say.textContent = "✅ Link copied."; } catch (_) { say.textContent = link; } } }, "Copy link")), say);
 }
-const GOAL_DEFS = [["tests", "📝 Take 3 mock tests", 3], ["cleared", "📓 Clear 10 mistakes", 10], ["papers", "📚 Practise 2 papers", 2]];
-const PLUS_BADGES = [["🥉", "First mock", l => l.tests >= 1], ["🥈", "5 mocks done", l => l.tests >= 5], ["🏆", "Ace: 90%+ in a test", l => l.best >= 90], ["🧹", "Mistake slayer (20)", l => l.cleared >= 20], ["📚", "Paper warrior (10)", l => l.papers >= 10], ["🗓️", "Planner set", () => !!readJSON("dd-exam-plan", null)]];
+// Focus timer (Plus): 25-minute focus sessions with 5-minute breaks; completed minutes are logged per day and count toward weekly goals.
+const FOCUS_MIN = 25, BREAK_MIN = 5, dayStr = (d = new Date()) => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+const studyLog = () => { const o = readJSON("dd-study", {}); return o && typeof o === "object" ? o : {}; };
+function ftFinish() {
+  const f = state.ft; if (!f || f.done) return; f.done = true; clearInterval(f.tick);
+  if (f.kind === "focus") { const log = studyLog(), k = dayStr(); log[k] = (log[k] || 0) + FOCUS_MIN; const keep = Object.keys(log).sort().slice(-60); writeJSON("dd-study", Object.fromEntries(keep.map(x => [x, log[x]]))); bump("mins", FOCUS_MIN); }
+  try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch (_) {}
+  const msg = f.kind === "focus" ? "🎉 Great focus! " + FOCUS_MIN + " minutes logged. Take a " + BREAK_MIN + "-minute break." : "Break over. Ready for another round?";
+  state.ft = { msg, idle: true }; render();
+}
+function renderFocusPlus() {
+  const back = el("button", { class: "btn", type: "button", onclick: () => { if (state.ft && state.ft.tick) clearInterval(state.ft.tick); state.ft = null; showPanel("plus"); } }, "Back");
+  if (plusLocked()) return [el("h2", {}, "⏱️ Focus timer"), el("p", { class: "hint" }, "The focus timer is part of CampusLoop Plus."), el("div", { class: "rowbtns" }, back)];
+  const f = state.ft || (state.ft = { idle: true, msg: "" }), log = studyLog(), days = Array.from({ length: 7 }, (_, i) => { const d = new Date(Date.now() - (6 - i) * 864e5); return [d.toLocaleDateString(undefined, { weekday: "short" }), log[dayStr(d)] || 0]; });
+  const max = Math.max(60, ...days.map(x => x[1])), total = days.reduce((a, x) => a + x[1], 0), mm = (ms) => Math.floor(ms / 6e4) + ":" + String(Math.floor(ms % 6e4 / 1e3)).padStart(2, "0");
+  const start = (kind) => { const mins = kind === "focus" ? FOCUS_MIN : BREAK_MIN; const n = { kind, end: Date.now() + mins * 6e4, done: false }; n.tick = setInterval(() => { const l = n.end - Date.now(); if (state.mode !== "focusplus" || state.ft !== n) { clearInterval(n.tick); return; } if (l <= 0) { ftFinish(); return; } const t = document.querySelector("[data-ft]"); if (t) t.textContent = mm(l); }, 1000); state.ft = n; render(); };
+  const chart = el("div", { class: "ft-chart", role: "img", "aria-label": "Minutes studied in the last 7 days: " + days.map(x => x[0] + " " + x[1]).join(", ") }, ...days.map(([n, v]) => { const bar = el("span", { class: "ft-bar" }); bar.style.setProperty("height", Math.max(4, Math.round(v * 100 / max)) + "%"); return el("div", { class: "ft-col" }, el("small", {}, v ? String(v) : ""), el("div", { class: "ft-track" }, bar), el("small", {}, n)); }));
+  return [el("h2", {}, "⏱️ Focus timer"),
+    f.idle ? el("div", { class: "learn-card plus-list" }, el("strong", {}, "Study in short, focused rounds"), el("p", { class: "hint" }, f.msg || FOCUS_MIN + " minutes of focus, then a " + BREAK_MIN + "-minute break. Keep this screen open while the timer runs."),
+      el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", onclick: () => start("focus") }, "▶ Start " + FOCUS_MIN + "-min focus"), el("button", { class: "btn", type: "button", onclick: () => start("break") }, "☕ " + BREAK_MIN + "-min break")))
+      : el("div", { class: "learn-card plus-list ft-run" }, el("strong", {}, f.kind === "focus" ? "🎯 Focus" : "☕ Break"), el("div", { class: "ft-time", "data-ft": "", role: "timer" }, mm(Math.max(0, f.end - Date.now()))), el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: () => { clearInterval(f.tick); state.ft = { idle: true, msg: "Stopped. Unfinished focus rounds are not logged." }; render(); } }, "Stop"))),
+    el("div", { class: "learn-card plus-list" }, el("strong", {}, "Last 7 days: " + total + " minutes"), chart),
+    el("div", { class: "rowbtns" }, back)];
+}
+const GOAL_DEFS = [["tests", "📝 Take 3 mock tests", 3], ["cleared", "📓 Clear 10 mistakes", 10], ["papers", "📚 Practise 2 papers", 2], ["mins", "⏱️ Focus for 120 minutes", 120]];
+const PLUS_BADGES = [["🥉", "First mock", l => l.tests >= 1], ["🥈", "5 mocks done", l => l.tests >= 5], ["🏆", "Ace: 90%+ in a test", l => l.best >= 90], ["🧹", "Mistake slayer (20)", l => l.cleared >= 20], ["📚", "Paper warrior (10)", l => l.papers >= 10], ["🗓️", "Planner set", () => !!readJSON("dd-exam-plan", null)], ["⏱️", "Focused: 10 hours", l => (l.mins || 0) >= 600]];
 function renderGoals() {
   const back = el("button", { class: "btn", type: "button", onclick: () => showPanel("plus") }, "Back");
   if (plusLocked()) return [el("h2", {}, "🎯 Goals and badges"), el("p", { class: "hint" }, "Goals and badges are part of CampusLoop Plus."), el("div", { class: "rowbtns" }, back)];
@@ -6360,6 +6386,21 @@ function storyGroups() {
   for (const g of arr) { g.latest = g.items[g.items.length - 1].createdAt; g.unseen = g.items.some(s => !seen.has(s.id)); g.own = mineIds.has(g.authorId); }
   return arr.sort((a, b) => (b.own - a.own) || (b.unseen - a.unseen) || (b.latest - a.latest));
 }
+// Flash sale banner: one admin-controlled document (sales/current) shown above the board with a live countdown.
+let SALE = null, saleTimer = 0;
+function renderSale() {
+  const bar = $("saleBar"); if (!bar) return;
+  clearInterval(saleTimer);
+  const s = SALE, gone = readJSON("dd-sale-gone", "");
+  if (!s || !s.active || s.until <= Date.now() || gone === String(s.updatedAt)) { bar.hidden = true; bar.replaceChildren(); return; }
+  const left = el("strong", { class: "sale-left" }, ""), tick = () => { const ms = s.until - Date.now(); if (ms <= 0) { clearInterval(saleTimer); renderSale(); return; } const d = Math.floor(ms / 864e5), h = Math.floor(ms % 864e5 / 36e5), m = Math.floor(ms % 36e5 / 6e4), sec = Math.floor(ms % 6e4 / 1e3); left.textContent = (d ? d + "d " : "") + String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0") + ":" + String(sec).padStart(2, "0"); };
+  tick(); saleTimer = setInterval(tick, 1000);
+  bar.replaceChildren(el("span", { class: "sale-tag" }, "🔥 SALE"), el("div", { class: "sale-body" }, el("strong", {}, s.title), s.text ? el("span", {}, " " + s.text) : null, s.code ? el("span", { class: "sale-code" }, " Code " + s.code) : null, el("span", { class: "sale-time" }, " Ends in ", left)),
+    el("button", { class: "btn sm", type: "button", onclick: () => { if (s.code) { try { localStorage.setItem("dd-sale-code", s.code); } catch (_) {} } loadPlan().then(() => { if (state.mode === "plus") render(); }); showPanel("plus"); } }, "See Plus"),
+    el("button", { class: "of-x", type: "button", "aria-label": "Dismiss sale", onclick: () => { writeJSON("dd-sale-gone", String(s.updatedAt)); renderSale(); } }, "✕"));
+  bar.hidden = false;
+}
+async function loadSale() { try { const d = store && store.getTop ? await store.getTop("sales", "current") : null; SALE = d && typeof d.title === "string" ? d : null; } catch (_) { SALE = null; } renderSale(); }
 // Official notices from the college admin: shown as a pinned banner above the board until dismissed or expired.
 function renderOfficial() {
   const bar = $("officialBar"); if (!bar) return;
@@ -6617,6 +6658,7 @@ function render() {
       state.mode === "papers" ? renderPapers() :
       state.mode === "ai" ? renderAI() :
       state.mode === "goals" ? renderGoals() :
+      state.mode === "focusplus" ? renderFocusPlus() :
       state.mode === "college" ? renderCollege() :
       state.mode === "about" ? renderAbout() :
       state.mode === "lab" ? renderLab() :
@@ -6737,7 +6779,7 @@ render();
     return;
   }
   if (NO_COLLEGE) { render(); return; }   // nothing to load until a college is chosen
-  loadPlan().then(() => { render(); claimRef(); });
+  loadPlan().then(() => { render(); claimRef(); }); loadSale(); setInterval(loadSale, 600000);
   if (store.linkResult === "ok") { showNotice(myVerified() ? "✅ Email verified. Welcome, verified student!" : "Email confirmed, but it is not a " + COLLEGE + " address, so you are not marked as verified."); setTimeout(() => showNotice(""), 6000); }
   else if (store.linkResult && store.linkResult.startsWith("error:")) showNotice("Could not finish email verification (" + store.linkResult.slice(6) + "). Open the link on the same phone you asked from, or ask for a new one.");
   if (store.demo) showNotice("Demo mode: posts are saved only in this browser. Add your Firebase settings to config.js so the whole class shares one board.", "demo");

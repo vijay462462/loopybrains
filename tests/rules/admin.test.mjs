@@ -86,5 +86,13 @@ await t("promo with 100% off is refused", () => assertFails(setDoc(doc(admin, "p
 await t("promo starting with used > 0 is refused", () => assertFails(setDoc(doc(admin, "promoCodes/USED1"), promo({ used: 5 }))));
 await t("promo with a lowercase or short code is refused", async () => { await assertFails(setDoc(doc(admin, "promoCodes/exam30x"), promo())); await assertFails(setDoc(doc(admin, "promoCodes/AB"), promo())); });
 await t("admin can switch a code off but not change the discount or usage", async () => { await assertSucceeds(updateDoc(doc(admin, "promoCodes/EXAM30"), { active: false })); await assertFails(updateDoc(doc(admin, "promoCodes/EXAM30"), { percent: 90 })); await assertFails(updateDoc(doc(admin, "promoCodes/EXAM30"), { used: 5 })); });
+console.log("flash sale");
+const sale = (extra = {}) => ({ title: "Flash sale: 30% off", text: "Today only", code: "EXAM30", until: now() + 864e5, active: true, updatedAt: now(), ...extra });
+await t("admin sets the flash sale", () => assertSucceeds(setDoc(doc(admin, "sales/current"), sale())));
+await t("student reads the flash sale", () => assertSucceeds(getDoc(doc(student, "sales/current"))));
+await t("student cannot change the flash sale", () => assertFails(setDoc(doc(student, "sales/current"), sale({ title: "Hacked sale" }))));
+await t("only the document 'current' is allowed", () => assertFails(setDoc(doc(admin, "sales/other"), sale())));
+await t("a bad code or extra field is refused", async () => { await assertFails(setDoc(doc(admin, "sales/current"), sale({ code: "bad code!" }))); await assertFails(setDoc(doc(admin, "sales/current"), sale({ hack: 1 }))); });
+await t("admin switches the sale off", () => assertSucceeds(setDoc(doc(admin, "sales/current"), sale({ active: false }))));
 console.log(`\n${pass} passed, ${fail} failed`);
 await env.cleanup(); process.exit(fail ? 1 : 0);
