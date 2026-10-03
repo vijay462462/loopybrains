@@ -58,6 +58,7 @@ const GENERIC_SUBJECTS = ["Maths", "Physics", "Chemistry", "English", "Programmi
 const GENERIC_CLUBS = ["Coding Club", "AI/ML", "Robotics", "Electronics", "Startup Cell", "Research Society", "Cultural", "Sports", "NSS / NCC", "Other"];
 const GENERIC_IDEAS = ["Project", "Startup", "Research", "Campus life", "Social impact", "Other"];
 const DIRECTORY = Array.isArray(window.COLLEGE_DIRECTORY) ? window.COLLEGE_DIRECTORY : [];
+const INDIA_STATES = ["Andaman and Nicobar Islands", "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chandigarh", "Chhattisgarh", "Dadra and Nagar Haveli and Daman and Diu", "Delhi", "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jammu and Kashmir", "Jharkhand", "Karnataka", "Kerala", "Ladakh", "Lakshadweep", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Puducherry", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal"];
 async function loadTenant() {
   const slug = SEL; if (!slug || slug === "rgukt") return null;
   const dir = DIRECTORY.find(c => c.slug === slug);
@@ -3109,7 +3110,7 @@ async function fetchColleges() {
   const j = await r.json();
   collegeRows = (j.documents || []).map(d => ({ slug: String(d.name || "").split("/").pop(), ...fsDoc(d) }))
     .filter(c => /^[a-z0-9-]{2,40}$/.test(c.slug) && c.enabled !== false && c.listed !== false && typeof c.name === "string")
-    .map(c => ({ slug: c.slug, name: t1(c.name, 60), city: t1(c.city, 40) })).sort((a, b) => a.name.localeCompare(b.name));
+    .map(c => ({ slug: c.slug, name: t1(c.name, 60), city: t1(c.city, 40), state: t1(c.state, 50) })).sort((a, b) => a.name.localeCompare(b.name));
   return collegeRows;
 }
 function switchCollege(slug) { location.href = location.pathname + "?c=" + encodeURIComponent(slug); }
@@ -3117,17 +3118,29 @@ function renderCollege() {
   const cur = TENANT ? TENANT.slug : IS_RGUKT ? "rgukt" : "", list = el("div", { class: "college-list" }, el("p", { class: "hint" }, "Loading colleges…"));
   const btn = (slug, name, sub) => el("button", { type: "button", class: "campus-link" + (slug === cur ? " sel" : ""), onclick: () => { if (slug !== cur) switchCollege(slug); else { state.mode = "intro"; render(); } } },
     el("strong", {}, (slug === cur ? "✅ " : "") + name), sub ? el("small", {}, sub) : null);
-  let online = [], q = "";
+  let online = [], q = "", stateSel = "Andhra Pradesh";
+  try { stateSel = localStorage.getItem("dd-state") || stateSel; } catch (_) {}
   const entries = () => {
     const m = new Map();
-    for (const d of DIRECTORY) m.set(d.slug, { slug: d.slug, name: d.name, sub: [d.city, d.kind].filter(Boolean).join(" · ") });
-    for (const c of online) m.set(c.slug, { slug: c.slug, name: c.name, sub: c.city || (m.get(c.slug) || {}).sub || "" });
+    for (const d of DIRECTORY) m.set(d.slug, { slug: d.slug, name: d.name, state: d.state || "Andhra Pradesh", sub: [d.city, d.kind].filter(Boolean).join(" · ") });
+    for (const c of online) m.set(c.slug, { slug: c.slug, name: c.name, state: c.state || (m.get(c.slug) || {}).state || "", sub: c.city || (m.get(c.slug) || {}).sub || "" });
     m.delete("rgukt");
-    return [{ slug: "rgukt", name: "RGUKT", sub: "Rajiv Gandhi University of Knowledge Technologies" }, ...[...m.values()].sort((a, b) => a.name.localeCompare(b.name))];
+    return [...m.values()].sort((a, b) => a.name.localeCompare(b.name));
+  };
+  const rgukt = { slug: "rgukt", name: "RGUKT", state: "Andhra Pradesh", sub: "Rajiv Gandhi University of Knowledge Technologies" };
+  const stateSelect = el("select", { "aria-label": "State", onchange: (e) => { stateSel = e.target.value; try { localStorage.setItem("dd-state", stateSel); } catch (_) {} fill(); } });
+  const drawStates = () => {
+    const all = [rgukt, ...entries()], counts = {};
+    for (const c of all) counts[c.state] = (counts[c.state] || 0) + 1;
+    stateSelect.replaceChildren(el("option", { value: "All India", selected: stateSel === "All India" }, "🇮🇳 All India (search by name)"),
+      ...INDIA_STATES.map(st => el("option", { value: st, selected: st === stateSel }, st + " (" + (counts[st] || 0) + ")")));
   };
   const fill = () => {
-    const needle = q.trim().toLowerCase(), rows = entries().filter(c => !needle || (c.name + " " + c.sub + " " + c.slug).toLowerCase().includes(needle));
-    list.replaceChildren(...(rows.length ? rows.map(c => btn(c.slug, c.name, c.sub)) : [el("p", { class: "hint" }, "No match. Use the form below to ask for your college.")]));
+    drawStates();
+    const needle = q.trim().toLowerCase(), all = [rgukt, ...entries()];
+    if (stateSel === "All India" && !needle) { list.replaceChildren(el("p", { class: "hint" }, "Type a college name or city above to search all of India, or pick a state.")); return; }
+    const rows = all.filter(c => (stateSel === "All India" || c.state === stateSel) && (!needle || (c.name + " " + c.sub + " " + c.slug).toLowerCase().includes(needle)));
+    list.replaceChildren(...(rows.length ? rows.map(c => btn(c.slug, c.name, stateSel === "All India" && c.state ? c.state + " · " + c.sub : c.sub)) : [el("p", { class: "hint" }, "No college found here. Try another state, or use the form below to ask for your college.")]));
   };
   const search = el("input", { type: "search", placeholder: "Search your college or city…", "aria-label": "Search colleges", oninput: (e) => { q = e.target.value; fill(); } });
   fill();
@@ -3154,6 +3167,8 @@ function renderCollege() {
   return [
     el("h2", {}, "🏫 Your college"),
     el("p", { class: "hint" }, "Each college has its own private board, subjects and clubs. Pick yours."),
+    el("label", { class: "label" }, "Your state"),
+    stateSelect,
     search,
     list,
     el("div", { class: "label" }, "My college is not listed"),
