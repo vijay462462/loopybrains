@@ -1834,3 +1834,31 @@ body.priv-blur > * { filter: blur(22px); }
   body.printing-resume .resume { border: 0; border-radius: 0; padding: 0; }
   @page { margin: 14mm; }
 }
+/* ---- Phone layout v2: slim header, one scrolling row of shortcuts, floating Ask button ---- */
+@media (max-width: 700px) {
+  header.top { padding: 10px 12px 8px; gap: 4px; }
+  #tagline { display: none; }
+  .brand h1 { font-size: 1.3rem; }
+  .trust-bar { margin-top: 4px; }
+  header.top .tabs { margin-top: 6px; }
+  .tools-toggle { display: none !important; }
+  .hdr-actions, .hdr-actions.tools-closed {
+    display: flex !important; flex-wrap: nowrap !important; overflow-x: auto; gap: 8px !important; margin-top: 6px;
+    scrollbar-width: none; scroll-snap-type: x proximity; padding-bottom: 2px;
+  }
+  .hdr-actions::-webkit-scrollbar { display: none; }
+  .hdr-actions > *, .hdr-actions.tools-closed > * { grid-column: auto !important; flex: none !important; scroll-snap-align: start; }
+  .hdr-actions .chip.tool, .hdr-actions.tools-closed .chip.tool, .hdr-actions.tools-closed .chip.tool#quizBtn, .hdr-actions.tools-closed .chip.tool#labBtn, .hdr-actions.tools-closed .chip.tool#focusBtn,
+  .hdr-actions .chip.tool#labBtn, .hdr-actions .chip.tool#focusBtn {
+    display: flex !important; flex-direction: row !important; align-items: center; gap: 6px !important; padding: 8px 14px !important; border-radius: 999px !important;
+    font-size: 12.5px !important; font-weight: 700 !important; white-space: nowrap; text-align: left !important;
+  }
+  .hdr-actions .chip.tool .ci { font-size: 16px !important; }
+  #nameBtn { max-width: 160px; }
+  .hdr-actions .filter-toggle { display: flex !important; padding: 8px 14px !important; border-radius: 999px !important; white-space: nowrap; }
+  header.top .btn.primary#askBtn {
+    position: fixed !important; right: 14px; bottom: 84px; z-index: 70; grid-column: auto !important;
+    padding: 13px 20px !important; font-size: 14px !important; border-radius: 999px !important; box-shadow: 0 10px 28px rgb(79 70 229 / .45);
+  }
+}
+@media (max-width: 700px) { .trust-bar { padding-right: 46px; } .brand { padding-right: 46px; } }
