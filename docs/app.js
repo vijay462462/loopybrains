@@ -6417,8 +6417,11 @@ render();
   let opened = false;
   const onErr = (e) => {
     const code = (e && e.code) || (e && e.message) || "unknown";
+    const ae = (store && store.authError) || "";
     showNotice(code === "permission-denied" && store && store.authed === false
-      ? "Could not sign in to the class board (slow internet or a blocked browser setting). Check your connection and reload. If it keeps happening, tell the admin this code: " + (store.authError || "no-reply") + "."
+      ? (/configuration-not-found|operation-not-allowed|admin-restricted/.test(ae)
+        ? "The class board's sign-in service is not switched on yet. Admin: open Firebase › Authentication, press Get started, and enable the Anonymous sign-in method (" + ae + "). Students: please try again later."
+        : "Could not sign in to the class board (slow internet or a blocked browser setting). Check your connection and reload. If it keeps happening, tell the admin this code: " + (ae || "no-reply") + ".")
       : "Database error: " + code + " — reload or check internet.");
   };
   const update = () => {
