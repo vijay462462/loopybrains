@@ -1333,6 +1333,34 @@ function loopyTip() {
   const i = dayNum() % STUDY_TIPS.length; if (state.dataReady && (!stored || stored.day !== today || stored.id !== "study")) writeJSON("dd-tip", { day: today, id: "study", gone: stored && stored.day === today ? stored.gone : false });
   return { id: "study", text: STUDY_TIPS[i], cta: null };
 }
+// Curiosity hooks on the Today card: a first-steps quest for new students, today's quiz question as a teaser, and the latest helpful reply.
+function questSteps() {
+  const mine = store ? allMyIds() : new Set(), name = !!(getName() || "").trim();
+  const posted = state.doubts.some(d => mine.has(d.authorId)) || state.replies.some(r => mine.has(r.authorId)) || readJSON("dd-quest-post", false);
+  const quiz = (QUIZ.length ? !!myQuizAnswer(dayNum()) : true) || readJSON("dd-quest-quiz", false);
+  if (posted) writeJSON("dd-quest-post", true); if (quiz) writeJSON("dd-quest-quiz", true);
+  return [["✏️", "Set your name", name, () => { const b = $("nameBtn"); if (b) b.click(); }], ["💬", "Ask or answer one doubt", posted, () => { const b = $("askBtn"); if (b) b.click(); }], ["🧠", "Take today's quiz", quiz, () => showPanel("quiz")]];
+}
+function questCard() {
+  if (readJSON("dd-quest-done", false) || (readJSON("dd-visits", { n: 1 }).n || 1) > 21) return null;
+  const steps = questSteps(), n = steps.filter(s => s[2]).length;
+  if (n === 3) { if (state.dataReady) { writeJSON("dd-quest-done", true); const until = Math.max(Number(readJSON("dd-bonus-until", 0)) || 0, Date.now()) + 864e5; writeJSON("dd-bonus-until", until); }
+    return el("div", { class: "wow", role: "status" }, el("span", { class: "wow-conf", "aria-hidden": "true" }, "🎉 ✨ 🎊"), el("strong", {}, "Wow, you finished your first steps!"), el("span", {}, "Welcome to the family. 🎁 1 free day of Plus studio is yours.")); }
+  return el("div", { class: "quest" }, el("div", { class: "quest-head" }, el("strong", {}, "🚀 Your first 3 steps"), el("small", {}, n + "/3")),
+    el("div", { class: "mock-bar" }, (() => { const s = el("span", {}); s.style.setProperty("width", Math.round(n * 100 / 3) + "%"); return s; })()),
+    ...steps.map(([ic, t, ok, fn]) => el("button", { class: "quest-step" + (ok ? " done" : ""), type: "button", disabled: ok ? "" : null, onclick: fn }, el("span", {}, ok ? "✔" : ic), el("b", {}, t), ok ? null : el("i", {}, "Start →"))),
+    el("small", { class: "hint" }, "Finish all three for a free day of Plus studio. 🎁"));
+}
+function quizTeaser() {
+  if (!QUIZ.length || myQuizAnswer(dayNum())) return null;
+  const q = quizFor(dayNum()); if (!q) return null;
+  return el("button", { class: "teaser", type: "button", onclick: () => showPanel("quiz") }, el("small", {}, "🧠 Today's question · " + (q.s || "Quiz")), el("b", {}, q.q.length > 110 ? q.q.slice(0, 107) + "…" : q.q), el("span", {}, "Can you answer it? Tap to try →"));
+}
+function latestHelp() {
+  const r = state.replies.filter(x => !x.deleted && x.authorName && (x.createdAt || 0) > Date.now() - 864e5 && x.parentColl === "doubts").sort((x, y) => y.createdAt - x.createdAt)[0]; if (!r) return null;
+  const d = state.doubts.find(x => x.id === r.parentId); if (!d) return null;
+  return el("button", { class: "ticker", type: "button", onclick: () => openPost("doubts", d.id) }, el("span", { class: "ticker-dot", "aria-hidden": "true" }), el("span", {}, el("b", {}, String(r.authorName).slice(0, 24)), " just answered a doubt" + (d.subject ? " in " + d.subject : "") + " · " + noticeAgo(r.createdAt)));
+}
 function renderToday() {
   const bar = $("todayBar"); if (!bar) return;
   if (NO_COLLEGE || !store) { bar.hidden = true; return; }
@@ -1340,16 +1368,18 @@ function renderToday() {
     streak = state.myStreak || 0, quizDone = QUIZ.length ? !!myQuizAnswer(dayNum()) : true, plan = readJSON("dd-exam-plan", null),
     left = plan && plan.date ? Math.ceil((new Date(plan.date + "T00:00:00").getTime() - new Date().setHours(0, 0, 0, 0)) / 864e5) : null;
   const note = state.welcomeNote && readJSON("dd-note-gone", 0) !== state.welcomeNote.updatedAt ? state.welcomeNote : null;
-  const key = [hello, name, streak, quizDone, left, state.dataReady ? 1 : 0, readJSON("dd-tip", {}).gone ? 1 : 0, mistakeList().length, state.weekly.length, dayNum(), (typeof weekPoints === "function" ? weekPoints() : 0), note ? note.updatedAt : 0, openDrives().length, upcomingEvents().length, unansweredDoubts().length].join("|"); if (key === todayKey && !bar.hidden) return; todayKey = key;
+  const key = [hello, name, streak, quizDone, left, state.dataReady ? 1 : 0, questSteps().filter(s => s[2]).length, state.replies.length, state.doubts.length, readJSON("dd-tip", {}).gone ? 1 : 0, mistakeList().length, state.weekly.length, dayNum(), (typeof weekPoints === "function" ? weekPoints() : 0), note ? note.updatedAt : 0, openDrives().length, upcomingEvents().length, unansweredDoubts().length].join("|"); if (key === todayKey && !bar.hidden) return; todayKey = key;
   const chip = (txt, cls, fn) => el("button", { class: "today-chip " + (cls || ""), type: "button", onclick: fn }, txt);
   const WORDS = ["Welcome to the " + BRAND + " family 💙", "Respect your teachers, help your juniors. 🙏", "Every question is welcome here.", "Kind words build a strong campus. 🌱", "Thank you for being part of our family.", "Learn together, grow together. 🚀", "Our teachers and staff work hard for you. Say thank you today. 🙏"];
+  const newbie = !readJSON("dd-quest-done", false) && (readJSON("dd-visits", { n: 1 }).n || 1) <= 21 && questSteps().filter(s => s[2]).length < 3;
   const stat = (num, label, cls, fn) => el("button", { class: "today-stat " + (cls || ""), type: "button", onclick: fn }, el("b", {}, String(num)), el("span", {}, label));
   const pts = typeof weekPoints === "function" ? weekPoints() : 0;
   bar.replaceChildren(el("div", { class: "today-head" }, loopyMini(), el("div", {}, el("strong", { class: "today-hello" }, hello + (name ? ", " + name : "") + " 👋"), el("small", { class: "today-words" }, WORDS[dayNum() % WORDS.length]))),
-    (() => { const t = loopyTip(), st = readJSON("dd-tip", {}); if (st.gone && st.day === dayStr()) return null;
+    (() => { if (newbie) return null; const t = loopyTip(), st = readJSON("dd-tip", {}); if (st.gone && st.day === dayStr()) return null;
       return el("div", { class: "today-tip" }, el("small", {}, "💡 Loopy\u2019s tip for today"), el("p", {}, t.text), el("div", { class: "rowbtns" }, t.cta ? el("button", { class: "btn sm primary", type: "button", onclick: t.cta[1] }, t.cta[0]) : null, el("button", { class: "btn sm", type: "button", onclick: () => { writeJSON("dd-tip", { ...readJSON("dd-tip", {}), day: dayStr(), gone: true }); todayKey = ""; renderToday(); } }, "Got it"))); })(),
-    note ? el("div", { class: "today-note" }, el("strong", {}, "💬 " + (note.from ? "A note from " + note.from : "A note from your college")), el("p", {}, note.text), el("button", { class: "of-x", type: "button", "aria-label": "Dismiss note", onclick: () => { writeJSON("dd-note-gone", note.updatedAt); todayKey = ""; renderToday(); } }, "✕")) : null, !name ? el("button", { class: "today-chip warn", type: "button", onclick: () => { const b = $("nameBtn"); if (b) b.click(); } }, "✏️ Set your name") : null, el("button", { class: "btn primary today-ask", type: "button", onclick: () => { const b = $("askBtn"); if (b) b.click(); } }, "❓ Ask a doubt"),
-    el("div", { class: "today-stats" },
+    note ? el("div", { class: "today-note" }, el("strong", {}, "💬 " + (note.from ? "A note from " + note.from : "A note from your college")), el("p", {}, note.text), el("button", { class: "of-x", type: "button", "aria-label": "Dismiss note", onclick: () => { writeJSON("dd-note-gone", note.updatedAt); todayKey = ""; renderToday(); } }, "✕")) : null, null, el("button", { class: "btn primary today-ask", type: "button", onclick: () => { const b = $("askBtn"); if (b) b.click(); } }, "❓ Ask a doubt"),
+    questCard(), quizTeaser(), latestHelp(),
+    newbie ? null : el("div", { class: "today-stats" },
       stat(streak, streak === 1 ? "day streak 🔥" : "day streak 🔥", streak && !(state.myDays && state.myDays.has(dayNum())) ? "warn" : "", () => showPanel("me")),
       stat(pts, "points this week ⚡", "", () => showPanel("wboard")),
       QUIZ.length ? stat(quizDone ? "✓" : "Go", quizDone ? "quiz done 🧠" : "today's quiz 🧠", quizDone ? "" : "pulse", () => showPanel("quiz")) : null),
