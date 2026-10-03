@@ -156,6 +156,49 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // College vs College weekly battle. A student's answer moves two documents in ONE batch: their own battlePlayers
+    // counter and their college's battleColleges counter. The rules make sure both move together and by the same amount,
+    // and cap one student at 70 right answers a week, so one student cannot inflate a college.
+    function battleOk(after, before) {
+      let pExists = exists(/databases/$(database)/documents/battlePlayers/$(after.week + '_' + request.auth.uid));
+      let pb = pExists ? get(/databases/$(database)/documents/battlePlayers/$(after.week + '_' + request.auth.uid)).data : {'correct': 0, 'total': 0};
+      let pa = getAfter(/databases/$(database)/documents/battlePlayers/$(after.week + '_' + request.auth.uid)).data;
+      return pa.slug == after.slug && pa.week == after.week
+        && after.correct - before.correct == pa.correct - pb.correct
+        && after.total - before.total == pa.total - pb.total
+        && after.players - before.players == (pExists ? 0 : 1);
+    }
+    match /battleColleges/{id} {
+      allow read: if true;
+      allow create, update: if request.auth != null
+        && request.resource.data.keys().hasOnly(['week', 'slug', 'correct', 'total', 'players', 'updatedAt'])
+        && str(request.resource.data.week, 2, 12) && str(request.resource.data.slug, 2, 40)
+        && request.resource.data.correct is int && request.resource.data.total is int && request.resource.data.players is int
+        && id == request.resource.data.week + '_' + request.resource.data.slug
+        && (resource == null || (resource.data.week == request.resource.data.week && resource.data.slug == request.resource.data.slug))
+        && battleOk(request.resource.data, resource == null ? {'correct': 0, 'total': 0, 'players': 0} : resource.data);
+      allow delete: if false;
+    }
+    match /battlePlayers/{id} {
+      allow get: if request.auth != null && id.matches('.*_' + request.auth.uid);
+      allow list: if false;
+      allow create, update: if request.auth != null
+        && request.resource.data.keys().hasOnly(['week', 'uid', 'slug', 'correct', 'total', 'updatedAt'])
+        && request.resource.data.uid == request.auth.uid
+        && str(request.resource.data.week, 2, 12) && str(request.resource.data.slug, 2, 40)
+        && id == request.resource.data.week + '_' + request.auth.uid
+        && request.resource.data.correct is int && request.resource.data.total is int
+        && request.resource.data.correct >= 0 && request.resource.data.correct <= 70
+        && request.resource.data.total <= 140 && request.resource.data.correct <= request.resource.data.total
+        && recent(request.resource.data.updatedAt)
+        && (resource == null
+            ? (request.resource.data.total == 1)
+            : (resource.data.slug == request.resource.data.slug && resource.data.week == request.resource.data.week
+               && request.resource.data.total == resource.data.total + 1
+               && (request.resource.data.correct == resource.data.correct || request.resource.data.correct == resource.data.correct + 1)));
+      allow delete: if false;
+    }
+
     match /rooms/{room} {
 
       match /doubts/{id} {
@@ -192,7 +235,7 @@ service cloud.firestore {
       match /profiles/{id} {
         function validProfile() {
           let d = request.resource.data;
-          return d.keys().hasOnly(['name', 'dp', 'status', 'verified', 'plus', 'updatedAt']) && str(d.name, 1, 40) && optStr(d, 'status', 60) && optBool(d, 'verified') && optBool(d, 'plus') && (d.get('plus', false) == false || plusActive(request.auth.uid)) && (d.get('verified', false) == false || request.auth.token.email_verified == true) && d.updatedAt is int
+          return d.keys().hasOnly(['name', 'dp', 'status', 'verified', 'plus', 'streak', 'updatedAt']) && str(d.name, 1, 40) && optStr(d, 'status', 60) && optBool(d, 'verified') && optBool(d, 'plus') && (!('streak' in d) || (d.streak is int && d.streak >= 0 && d.streak <= 3650)) && (d.get('plus', false) == false || plusActive(request.auth.uid)) && (d.get('verified', false) == false || request.auth.token.email_verified == true) && d.updatedAt is int
             && d.dp is string && d.dp.size() <= 40000 && (d.dp == '' || d.dp.matches('data:image/jpeg;base64,.*'));
         }
         allow read: if member();

@@ -116,3 +116,10 @@ Limits: Firebase limits how many sign-in emails it sends per day on the free pla
 ## CampusLoop Plus and payments
 
 See `PREMIUM.md` for the plan, the pricing ideas and the step-by-step go-live list. In the app, **Profile > CampusLoop Plus** shows what exists today and collects "which features would you pay for" answers (Firestore `plusInterest`). Payments are off (`plus.enabled: false` in `docs/config.js`) until the Razorpay functions in `functions/` are deployed and tested.
+
+## Streaks, share cards and the College vs College battle
+
+- **Streak:** a day counts when the student does something (quiz, quiz story, answer, post, story). The header shows 🔥 N, Profile shows the last 7 days and the next reward. Milestones at 3, 7, 14, 30, 60 and 100 days unlock avatar frames (bronze, silver, gold, diamond, rainbow, legend). The streak is stored on the profile only for the frame; it is cosmetic.
+- **Share cards:** "📸 Share my result" (Daily Quiz) and "📸 Share my streak" / "Share our rank" draw a picture on the phone and open the share sheet (or save the picture).
+- **College vs College:** every right answer to the daily quiz or a quiz story adds to the college's weekly score (Firestore `battleColleges` and `battlePlayers`, week id like `w2961`, restarting each Monday). Score = right answers per player; a college needs 3 players to be ranked. The security rules make both counters move together, and cap a student at 70 right answers a week, but one person with many anonymous sessions could still inflate a college: for stricter fairness count only verified-email students.
+- The rules are tested with the Firestore emulator: see `tests/rules/README.md`.

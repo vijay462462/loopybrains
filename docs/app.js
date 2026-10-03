@@ -493,6 +493,17 @@ async function firebaseStore(conf, prefix = "") {
     newId: (coll) => fs.doc(fs.collection(db, prefix + coll)).id,
     set: (coll, id, data) => fs.setDoc(fs.doc(db, prefix + coll, id), cleanDoc(data)),
     setTop: (coll, id, data) => fs.setDoc(fs.doc(db, coll, id), cleanDoc(data)),
+    battleHit: async (week, slug, ok) => {
+      if (!auth || !auth.currentUser) return false;
+      const uid = auth.currentUser.uid, now = Date.now(), c = ok ? 1 : 0, pref = fs.doc(db, "battlePlayers", week + "_" + uid);
+      let exists = false;
+      try { const ps = await fs.getDoc(pref); exists = ps.exists(); if (exists) { const d = ps.data(); if (d.correct + c > 70 || d.total + 1 > 140) return false; } } catch (_) {}
+      const b = fs.writeBatch(db);   // both counters move together; the security rules check that they do
+      b.set(pref, { week, uid, slug, correct: fs.increment(c), total: fs.increment(1), updatedAt: now }, { merge: true });
+      b.set(fs.doc(db, "battleColleges", week + "_" + slug), { week, slug, correct: fs.increment(c), total: fs.increment(1), players: fs.increment(exists ? 0 : 1), updatedAt: now }, { merge: true });
+      await b.commit(); return true;
+    },
+    battleBoard: async (week) => (await fs.getDocs(fs.query(fs.collection(db, "battleColleges"), fs.where("week", "==", week), fs.limit(400)))).docs.map(d => d.data()),
     getTop: async (coll, id) => { const snap = await fs.getDoc(fs.doc(db, coll, id)); return snap.exists() ? snap.data() : null; },
     authUid: () => (auth && auth.currentUser ? auth.currentUser.uid : ""),
     idToken: async () => (auth && auth.currentUser ? auth.currentUser.getIdToken() : ""),
@@ -1218,6 +1229,7 @@ function renderHeader() {
 
   $("askBtn").textContent = t.ask;
   const me = store && state.loaded ? allStats().get(store.uid) : null;
+  streakTick(me);
   const myC = getCampus();
   const nb = $("nameBtn");
   if (getName()) {
@@ -2130,6 +2142,7 @@ async function answerQuiz(day, opt) {
   state.likes = [...state.likes, { id, ...doc }];
   render();
   const q = quizFor(day);
+  if (q) battleRecord(q.a === opt);
   if (q && q.a === opt) celebrate();
   try { await store.set("likes", id, doc); }
   catch (e) { state.likes = state.likes.filter(l => l.id !== id); render(); showNotice(errText(e)); }
@@ -2154,6 +2167,7 @@ function renderQuiz() {
   if (mine) {
     out.push(el("p", { class: "quiz-result " + (mine.opt === q.a ? "right" : "wrong") }, mine.opt === q.a ? "✅ Correct! +3 points." : "❌ Not quite. The answer is " + "ABCD"[q.a] + "."));
     out.push(el("p", { class: "body" }, "💡 " + q.e));
+    out.push(el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: () => shareResult({ kicker: "DAILY QUIZ", emoji: mine.opt === q.a ? "✅" : "💪", big: mine.opt === q.a ? "Got it right!" : "Learning every day", line: q.s + " · " + (state.myStreak || 0) + "-day streak 🔥 Can you beat me?" }) }, "📸 Share my result")));
     out.push(el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: async (e) => {
       const b = e.currentTarget; b.disabled = true;
       const ok = await shareToStory({ kind: "quiz", text: String(q.q).slice(0, 200), opts: q.o.map(o => String(o).slice(0, 60)), ans: q.a, expl: String(q.e || "").slice(0, 200) || undefined });
@@ -2254,6 +2268,8 @@ function allStats() {
   const allSorted = [...allUserPosts].sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
   if (allSorted[0] && allSorted[0].authorId) { const p = people.get(allSorted[0].authorId); if (p) p.firstPost = 1; }
 
+  for (const a of state.storyAnswers) active(a.uid, a.createdAt);
+  for (const st of state.stories) active(st.authorId, st.createdAt);
   for (const p of people.values()) { p.streak = streakOf(p.days); p.level = levelOf(p.points); if (!p.name) p.name = "A student"; }
   return people;
 }
@@ -2384,6 +2400,7 @@ function renderLeaders() {
     el("h2", {}, "🏆 Top Helpers"),
     list,
     el("p", { class: "hint" }, "Answer a classmate's doubt +2 · answer marked helpful +5 more · each 👍💡🔥 on your answer +1 · daily quiz right +3 · share an idea +2 · each like on your idea +1 · ask a doubt +1. Anonymous posts don't count."),
+    el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => showPanel("battle") }, "⚔️ College vs College scoreboard")),
     rivalBoard && el("div", { class: "label" }, "🏫 Campus Rivalry — all " + CAMPUSES.length + " campuses"),
     rivalBoard,
     ...weeklyQuizBlock(),
@@ -2402,6 +2419,129 @@ function renderHeatmap(p) {
   return el("div", { class: "heatmap" }, ...cells);
 }
 
+// ---------- streaks, share cards and the college battle ----------
+const STREAK_TIERS = [[3, "Spark", "🥉", "the bronze frame"], [7, "Week Warrior", "🥈", "the silver frame"], [14, "Fortnight Fighter", "🥇", "the gold frame"], [30, "Monthly Master", "💎", "the diamond frame"], [60, "Unstoppable", "🌈", "the rainbow frame"], [100, "Century Club", "👑", "the legend frame"]];
+const frameTier = (n) => STREAK_TIERS.filter(t => n >= t[0]).length;
+function bestStreak(days) {
+  let best = 0, run = 0, prev = null;
+  for (const d of [...days].sort((a, b) => a - b)) { run = prev !== null && d === prev + 1 ? run + 1 : 1; prev = d; if (run > best) best = run; }
+  return best;
+}
+const frameOf = (id) => { const n = store && allMyIds().has(id) ? (state.myStreak || 0) : ((state.profiles.find(x => x.id === id) || {}).streak || 0); const t = frameTier(n); return t ? " fr-t" + t : ""; };
+function streakTick(me) {
+  const n = me ? me.streak : 0, chip = $("streakChip");
+  state.myStreak = n; state.myBest = me ? bestStreak(me.days) : 0; state.myDays = me ? me.days : new Set();
+  if (chip) {
+    chip.hidden = !n; chip.textContent = "🔥 " + n;
+    chip.classList.toggle("risk", n >= 1 && !state.myDays.has(dayNum()));
+    chip.title = chip.classList.contains("risk") ? "Do a quiz or answer a doubt today to keep your streak" : n + "-day streak";
+  }
+  let last = 0; try { last = Number(localStorage.getItem("dd-streak-ms") || 0); } catch (_) {}
+  const reached = STREAK_TIERS.filter(t => n >= t[0]).pop();
+  if (reached && reached[0] > last) {
+    try { localStorage.setItem("dd-streak-ms", String(reached[0])); } catch (_) {}
+    showNotice("🔥 " + reached[0] + "-day streak! You unlocked " + reached[3] + " (" + reached[1] + "). Open Profile to share it."); setTimeout(() => showNotice(""), 9000);
+  } else if (n < last) { try { localStorage.setItem("dd-streak-ms", String((STREAK_TIERS.filter(t => n >= t[0]).pop() || [0])[0])); } catch (_) {} }
+  try { const key = n + "|" + dayNum(); if (store && n && localStorage.getItem("dd-streak-sync") !== key) { localStorage.setItem("dd-streak-sync", key); syncProfile().catch(() => {}); } } catch (_) {}
+}
+function streakCard() {
+  const n = state.myStreak || 0, days = state.myDays || new Set(), today = dayNum(), next = STREAK_TIERS.find(t => t[0] > n), tier = STREAK_TIERS.filter(t => n >= t[0]).pop();
+  const dots = Array.from({ length: 7 }, (_, i) => { const d = today - 6 + i; return el("span", { class: "sk-dot" + (days.has(d) ? " on" : "") + (d === today ? " today" : ""), title: i === 6 ? "Today" : "" }, days.has(d) ? "🔥" : ""); });
+  const prev = tier ? tier[0] : 0, pct = next ? Math.round((n - prev) * 100 / (next[0] - prev)) : 100;
+  const bar = el("div", { class: "lab-track" }, el("span", { class: "lab-fill" })); bar.firstChild.style.setProperty("width", pct + "%");
+  return el("div", { class: "learn-card" }, el("strong", {}, "🔥 " + n + "-day streak" + (state.myBest > n ? " · best " + state.myBest : "")),
+    el("div", { class: "sk-dots" }, dots),
+    n >= 1 && !days.has(today) ? el("p", { class: "hint" }, "Your streak is at risk. Take today's quiz, answer a doubt or post to keep it alive.") : el("p", { class: "hint" }, n ? "Great! Come back tomorrow to keep it going." : "Take today's quiz or answer a doubt to start a streak."),
+    next ? el("div", {}, bar, el("small", { class: "hint" }, (next[0] - n) + " more day" + (next[0] - n === 1 ? "" : "s") + " to unlock " + next[3] + " (" + next[1] + ")")) : el("small", { class: "hint" }, "You unlocked every frame. Legend!"),
+    el("div", { class: "rowbtns" },
+      !days.has(today) ? el("button", { class: "btn sm primary", type: "button", onclick: () => showPanel("quiz") }, "🧠 Today's quiz") : null,
+      n >= 1 ? el("button", { class: "btn sm", type: "button", onclick: () => shareResult({ kicker: "MY STREAK", emoji: "🔥", big: n + (n === 1 ? " day" : " days"), line: tier ? tier[2] + " " + tier[1] + " · " + (state.myBest || n) + " best" : "Learning every day" }) }, "📸 Share my streak") : null));
+}
+// A picture card to post on WhatsApp or Instagram stories. Drawn on a canvas, nothing is uploaded.
+function wrapLines(g, text, maxW) {
+  const out = []; let line = "";
+  for (const w of String(text).split(/\s+/)) { const t = line ? line + " " + w : w; if (g.measureText(t).width > maxW && line) { out.push(line); line = w; } else line = t; }
+  if (line) out.push(line); return out.slice(0, 3);
+}
+async function shareResult({ kicker, emoji, big, line }) {
+  const W = 1080, H = 1350, cv = document.createElement("canvas"); cv.width = W; cv.height = H; const g = cv.getContext("2d");
+  const [a, b] = BRAND_COLORS || (IS_RGUKT ? STATE_COLORS["Andhra Pradesh"] : ["#6d28d9", "#db2777"]);
+  const bg = g.createLinearGradient(0, 0, W, H); bg.addColorStop(0, a); bg.addColorStop(0.55, "#6d28d9"); bg.addColorStop(1, b); g.fillStyle = bg; g.fillRect(0, 0, W, H);
+  g.fillStyle = "rgba(255,255,255,.08)"; g.beginPath(); g.arc(W - 60, 180, 320, 0, 7); g.fill(); g.beginPath(); g.arc(120, H - 120, 380, 0, 7); g.fill();
+  g.strokeStyle = "#fff"; g.lineWidth = 26; g.lineCap = "round"; g.beginPath(); g.arc(150, 150, 58, 0.75, 5.53); g.stroke();   // the C of the logo
+  g.fillStyle = "#fde047"; g.beginPath(); g.moveTo(228, 120); g.lineTo(238, 146); g.lineTo(264, 150); g.lineTo(238, 156); g.lineTo(228, 182); g.lineTo(218, 156); g.lineTo(192, 150); g.lineTo(218, 146); g.closePath(); g.fill();
+  g.fillStyle = "#fff"; g.textAlign = "left"; g.font = "800 58px system-ui, sans-serif"; g.fillText(BRAND, 300, 168);
+  g.textAlign = "center"; g.font = "700 46px system-ui, sans-serif"; g.fillStyle = "rgba(255,255,255,.85)"; g.fillText(kicker, W / 2, 440);
+  g.font = "190px system-ui, 'Apple Color Emoji', 'Noto Color Emoji', sans-serif"; g.fillStyle = "#fff"; g.fillText(emoji, W / 2, 680);
+  let size = 190; g.font = "900 " + size + "px system-ui, sans-serif"; while (g.measureText(big).width > 900 && size > 70) { size -= 10; g.font = "900 " + size + "px system-ui, sans-serif"; }
+  g.fillText(big, W / 2, 900);
+  g.font = "600 54px system-ui, sans-serif"; g.fillStyle = "rgba(255,255,255,.92)"; wrapLines(g, line, 900).forEach((t, i) => g.fillText(t, W / 2, 1000 + i * 68));
+  g.font = "800 52px system-ui, sans-serif"; g.fillStyle = "#fff"; g.fillText(COLLEGE, W / 2, 1230);
+  g.font = "500 38px system-ui, sans-serif"; g.fillStyle = "rgba(255,255,255,.85)"; g.fillText("Join me: " + location.host + location.pathname.replace(/index\.html$/, "").replace(/\/$/, ""), W / 2, 1290);
+  const blob = await new Promise(r => cv.toBlob(r, "image/jpeg", 0.92)), file = new File([blob], "campusloop.jpg", { type: "image/jpeg" });
+  const text = kicker.toLowerCase() + ": " + big + ". Join " + COLLEGE + " on " + BRAND + " " + (NO_COLLEGE ? location.origin + location.pathname : inviteLink());
+  try { if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], text }); return; } } catch (e) { if (e && e.name === "AbortError") return; }
+  const u = URL.createObjectURL(blob), aEl = document.createElement("a"); aEl.href = u; aEl.download = "campusloop.jpg"; document.body.append(aEl); aEl.click(); aEl.remove(); setTimeout(() => URL.revokeObjectURL(u), 3000);
+  showNotice("Picture saved. Post it in your story or class group."); setTimeout(() => showNotice(""), 4000);
+}
+// College vs College: each right answer to the daily quiz or a quiz story scores for your college.
+const weekKey = () => "w" + Math.floor((dayNum() + 3) / 7);
+const battleSlug = () => NO_COLLEGE ? "" : (TENANT ? TENANT.slug : "rgukt");
+async function battleRecord(ok) {
+  const slug = battleSlug(); if (!slug || !store || !store.battleHit) return;
+  let rec = { d: 0, n: 0 }; try { rec = JSON.parse(localStorage.getItem("dd-battle-day") || "{}"); } catch (_) {}
+  if (rec.d !== dayNum()) rec = { d: dayNum(), n: 0 };
+  if (ok && rec.n >= 10) ok = false;          // at most 10 scoring answers a day for one student
+  try { if (await store.battleHit(weekKey(), slug, !!ok) && ok) { rec.n++; localStorage.setItem("dd-battle-day", JSON.stringify(rec)); } } catch (_) {}
+}
+function collegeInfo(slug) {
+  if (slug === "rgukt") return { name: "RGUKT", state: "Andhra Pradesh" };
+  const d = DIRECTORY.find(c => c.slug === slug); if (d) return { name: d.name, state: d.state || "Andhra Pradesh" };
+  return { name: slug.replace(/-/g, " ").replace(/\b\w/g, m => m.toUpperCase()), state: "" };
+}
+function battleCard() {
+  if (NO_COLLEGE) return null;
+  return el("div", { class: "learn-card" }, el("strong", {}, "⚔️ College vs College"),
+    el("p", { class: "hint" }, "Every right quiz answer scores for " + COLLEGE + ". See how your college ranks against others this week."),
+    el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => showPanel("battle") }, "Open the scoreboard")));
+}
+function renderBattle() {
+  const mine = battleSlug(), daysLeft = 7 - ((dayNum() + 3) % 7);
+  const list = el("div", { class: "college-list" }, el("p", { class: "hint" }, "Loading the scoreboard…")), top = el("div", {});
+  const draw = (rows) => {
+    const data = rows.map(r => ({ ...r, ...collegeInfo(r.slug), avg: r.players ? r.correct / r.players : 0 }));
+    const ranked = data.filter(r => r.players >= 3).sort((a, b) => b.avg - a.avg || b.correct - a.correct), warm = data.filter(r => r.players < 3).sort((a, b) => b.correct - a.correct);
+    const rank = ranked.findIndex(r => r.slug === mine) + 1, me = data.find(r => r.slug === mine);
+    top.replaceChildren(el("div", { class: "learn-card" },
+      rank ? el("div", {}, el("strong", {}, "🏅 " + COLLEGE + " is #" + rank + " of " + ranked.length + " this week"), el("p", { class: "hint" }, me.avg.toFixed(1) + " right answers per player · " + me.correct + " right · " + me.players + " players"))
+        : me ? el("div", {}, el("strong", {}, COLLEGE + " needs 3 players to be ranked"), el("p", { class: "hint" }, me.players + " so far. Invite classmates!"))
+        : el("div", {}, el("strong", {}, "No answers from " + COLLEGE + " yet"), el("p", { class: "hint" }, "Answer today's quiz to put your college on the board.")),
+      el("div", { class: "rowbtns" }, rank ? el("button", { class: "btn sm primary", type: "button", onclick: () => shareResult({ kicker: "COLLEGE BATTLE · THIS WEEK", emoji: "⚔️", big: "#" + rank, line: COLLEGE + " · " + me.avg.toFixed(1) + " per player. Help us climb!" }) }, "📸 Share our rank") : null,
+        el("button", { class: "btn sm", type: "button", onclick: async () => { collegeRows = null; battleRows = null; renderBattleInto(); } }, "↻ Refresh"))));
+    const row = (r, i, isRank) => {
+      const [ca, cb] = collegeColors(r.slug, r.state); const badge = el("span", { class: "col-badge", "aria-hidden": "true" }, isRank ? String(i + 1) : "·"); badge.style.setProperty("background", "linear-gradient(135deg," + ca + "," + cb + ")");
+      const b = el("div", { class: "campus-link col-row" + (r.slug === mine ? " sel" : "") }, badge, el("span", { class: "col-text" }, el("strong", {}, (["🥇", "🥈", "🥉"][i] && isRank ? ["🥇", "🥈", "🥉"][i] + " " : "") + r.name + (r.slug === mine ? " (you)" : "")), el("small", {}, (isRank ? r.avg.toFixed(1) + " per player · " : "") + r.correct + " right · " + r.players + (r.players === 1 ? " player" : " players") + (r.state ? " · " + r.state : ""))));
+      b.style.setProperty("--row", ca); return b;
+    };
+    list.replaceChildren(...(data.length ? [...ranked.slice(0, 20).map((r, i) => row(r, i, true)), ...(warm.length ? [el("small", { class: "hint" }, "Warming up (fewer than 3 players)")] : []), ...warm.slice(0, 10).map((r, i) => row(r, i, false))] : [el("p", { class: "hint" }, "No scores yet this week. Be the first: answer today's quiz!")]));
+  };
+  const renderBattleInto = () => { list.replaceChildren(el("p", { class: "hint" }, "Loading the scoreboard…")); loadBattle().then(draw).catch(() => list.replaceChildren(el("p", { class: "hint" }, "Could not load the scoreboard. Check your internet and try again."))); };
+  renderBattleInto();
+  return [
+    el("h2", {}, "⚔️ College vs College"),
+    el("p", { class: "hint" }, "This week: " + daysLeft + (daysLeft === 1 ? " day" : " days") + " left. Every right answer to the daily quiz or a quiz story scores for your college (up to 10 a day per student)."),
+    top, list,
+    el("p", { class: "hint" }, "Score = right answers per player, so small colleges compete fairly. A college needs 3 players to be ranked. The board restarts every Monday."),
+    inviteCard(),
+    el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")),
+  ].filter(Boolean);
+}
+let battleRows = null;
+async function loadBattle() {
+  if (battleRows) return battleRows;
+  if (!store || !store.battleBoard) throw new Error("offline");
+  battleRows = await store.battleBoard(weekKey()); setTimeout(() => { battleRows = null; }, 60000); return battleRows;
+}
 // ---------- invite classmates ----------
 function inviteLink() { return location.origin + location.pathname + "?c=" + encodeURIComponent(TENANT ? TENANT.slug : IS_RGUKT ? "rgukt" : ""); }
 function inviteCard() {
@@ -2544,13 +2684,15 @@ function renderMe() {
     }));
   return [
     el("div", { class: "profile-hero" },
-      avatarEl(cur, "av av-hero"),
+      avatarEl(cur, "av av-hero" + (store ? frameOf(store.uid) : "")),
       el("div", {},
         el("h2", {}, (getName() || "You") + " · Level " + lv.n),
         el("p", { class: "hint" }, titleOf(p.points) + " · " + plural(p.points, "point")))),
     el("p", { class: "hint" }, "📷 Your profile photo (everyone can see it next to your posts)"),
     el("div", { class: "rowbtns" }, el("button", { type: "button", class: "btn sm primary", onclick: pickDp }, getDp() ? "Change photo" : "Upload photo"), getDp() && el("button", { type: "button", class: "btn sm", onclick: removeDp }, "Remove photo")),
     state.dpMsg && el("p", { class: "hint", role: "status" }, state.dpMsg),
+    streakCard(),
+    battleCard(),
     inviteCard(),
     plusCard(),
     verifyBlock(),
@@ -5879,7 +6021,7 @@ async function syncProfile() {
   const status = getStatus();
   const verified = myVerified(), plus = !!state.plan.plus;
   if (!dp && !status && !verified && !plus && !state.profiles.some(p => p.id === store.uid)) return;
-  await store.set("profiles", store.uid, { name: (getName() || "Student").slice(0, 40), dp, status, verified, plus, updatedAt: Date.now() });
+  await store.set("profiles", store.uid, { name: (getName() || "Student").slice(0, 40), dp, status, verified, plus, streak: Math.min(3650, state.myStreak || 0), updatedAt: Date.now() });
 }
 function pickDp() {
   const inp = document.createElement("input"); inp.type = "file"; inp.accept = "image/*";
@@ -5914,7 +6056,7 @@ function renderStoryBar() {
   if (!store) { bar.hidden = true; return; }
   const groups = storyGroups(), own = groups.find(g => g.own);
   const bub = (g) => el("button", { type: "button", class: "st-bub", "aria-label": g.own ? "Your story" : g.name + "'s story", onclick: () => openStories(g.authorId) },
-    el("span", { class: "st-ring" + (g.unseen ? " new" : " seen") }, avatarEl(dpOfId(g.authorId, g.name), "av st-av")),
+    el("span", { class: "st-ring" + (g.unseen ? " new" : " seen") }, avatarEl(dpOfId(g.authorId, g.name), "av st-av" + frameOf(g.authorId))),
     el("span", { class: "st-name" }, g.own ? "Your story" : g.name));
   const me = own ? bub(own) : el("button", { type: "button", class: "st-bub", "aria-label": "Add to your story", onclick: openStoryAdd },
     el("span", { class: "st-ring add" }, avatarEl(getAvatar(), "av st-av")), el("span", { class: "st-name" }, "Your story"));
@@ -6045,7 +6187,7 @@ function openStories(authorId) {
     ov.oncontextmenu = (ev) => { ev.preventDefault(); };
     ov.replaceChildren(
       el("div", { class: "st-bars" }, segs),
-      el("div", { class: "st-top" }, avatarEl(dpOfId(g.authorId, g.name), "av st-av sm"), el("div", { class: "st-who" }, el("strong", {}, (ownS ? "Your story" : g.name) + markOf(g.authorId)), el("small", {}, ago(s.createdAt) + (statusOfId(g.authorId) ? " · " + statusOfId(g.authorId) : ""))), ...actions, el("button", { type: "button", class: "st-x", "aria-label": "Close", onclick: close }, "✕")),
+      el("div", { class: "st-top" }, avatarEl(dpOfId(g.authorId, g.name), "av st-av sm" + frameOf(g.authorId)), el("div", { class: "st-who" }, el("strong", {}, (ownS ? "Your story" : g.name) + markOf(g.authorId)), el("small", {}, ago(s.createdAt) + (statusOfId(g.authorId) ? " · " + statusOfId(g.authorId) : ""))), ...actions, el("button", { type: "button", class: "st-x", "aria-label": "Close", onclick: close }, "✕")),
       body, wm, ownS ? null : el("p", { class: "st-note" }, "📸 Screenshots can be traced to your name. Please don't share others' stories."), vlist,
       el("button", { type: "button", class: "st-tap l", "aria-label": "Previous", onclick: prev }), el("button", { type: "button", class: "st-tap r", "aria-label": "Next", onclick: next }));
     const run = (ms) => { if (my !== gen) return; fill.style.setProperty("animation-duration", ms + "ms"); fill.classList.add("run"); timer = setTimeout(next, ms); };
@@ -6078,6 +6220,7 @@ function openStories(authorId) {
         const ok = i === s.ans, doc = { storyId: s.id, uid: store.uid, name: (getName() || "Student").slice(0, 40), to: s.authorId, campus: (getCampus() || "").slice(0, 30), pick: i, ok, createdAt: Date.now() };
         state.storyAnswers = [...state.storyAnswers, { id: meKey, ...doc }];
         store.set("storyAnswers", meKey, doc).catch(() => {});
+        battleRecord(ok);
         note.textContent = ok ? "✅ Correct! Counts toward this week's quiz stars." : "❌ Not quite. The right answer is highlighted.";
         reveal(i); clearTimeout(timer); fill.classList.remove("run"); void fill.offsetWidth; run(14000);
       };
@@ -6144,6 +6287,7 @@ function render() {
       state.mode === "learn" ? renderLearn() :
       state.mode === "resources" ? renderResources() :
       state.mode === "career" ? renderCareer() :
+      state.mode === "battle" ? renderBattle() :
       state.mode === "plus" ? renderPlus() :
       state.mode === "college" ? renderCollege() :
       state.mode === "about" ? renderAbout() :
@@ -6237,6 +6381,7 @@ if (CFG.title) { document.title = CFG.title; }
 {
   const h1 = $("siteTitle");
   if (h1) { const m = /^(.*?[a-z])([A-Z][a-z]*)$/.exec(CFG.title.trim()); const w = CFG.title.trim().split(/\s+/); if (w.length > 1) { const last = w.pop(); h1.replaceChildren(w.join(" ") + " ", el("span", {}, last)); } else if (m) h1.replaceChildren(m[1], el("span", {}, m[2])); else h1.textContent = CFG.title; }
+  const sc = $("streakChip"); if (sc) sc.addEventListener("click", () => showPanel("me"));
   const cb = $("collegeBtn"); if (cb) { cb.textContent = "🏫 " + (TENANT ? TENANT.name : IS_RGUKT ? "RGUKT" : "Choose your college") + " ▾"; cb.addEventListener("click", () => showPanel("college")); }
 }
 
@@ -6289,7 +6434,7 @@ render();
   store.subscribe("blocked", rows => { state.blocked = rows.map(r => r.id); }, e => {});
   let dpChecked = false;
   store.subscribe("profiles", rows => {
-    state.profiles = rows.filter(p => typeof p.name === "string" && (!p.dp || DP_OK.test(p.dp))).map(p => ({ ...p, status: String(p.status || "").slice(0, 60), verified: p.verified === true, plus: p.plus === true })); update();
+    state.profiles = rows.filter(p => typeof p.name === "string" && (!p.dp || DP_OK.test(p.dp))).map(p => ({ ...p, status: String(p.status || "").slice(0, 60), verified: p.verified === true, plus: p.plus === true, streak: Number.isInteger(p.streak) && p.streak > 0 ? p.streak : 0 })); update();
     if (!dpChecked && (getDp() || getStatus() || myVerified() || state.plan.plus)) { dpChecked = true; const me = rows.find(p => p.id === store.uid); if (!me || (me.dp || "") !== getDp() || me.name !== getName() || (me.status || "") !== getStatus() || (me.verified === true) !== myVerified() || (me.plus === true) !== !!state.plan.plus) syncProfile().catch(() => {}); }
   }, e => {});
   const since = Date.now() - STORY_MS;

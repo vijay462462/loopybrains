@@ -131,3 +131,18 @@ body.nocollege .layout { display: block; }
 .col-row small { overflow-wrap: anywhere; }
 body.tenant header.top { box-shadow: inset 0 6px 0 var(--brand-a), 0 18px 40px -18px color-mix(in oklab, var(--brand-a) 60%, transparent); }
 body.tenant .college-btn { background: linear-gradient(135deg, var(--brand-a), var(--brand-b)); border-color: rgb(255 255 255 / .8); }
+
+/* streaks, frames, share */
+.streak-chip { margin: 4px 0 2px 6px; padding: 3px 12px; border-radius: 999px; border: 1px solid rgb(255 255 255 / .7); background: rgb(0 0 0 / .22); color: #fff; font: 800 12px system-ui; cursor: pointer; }
+.streak-chip.risk { animation: skrisk 1.6s ease-in-out infinite; border-color: #fde047; }
+@keyframes skrisk { 50% { box-shadow: 0 0 0 5px rgb(253 224 71 / .35); } }
+.sk-dots { display: flex; gap: 6px; margin: 8px 0; }
+.sk-dot { flex: 1; height: 34px; border-radius: 10px; background: var(--sheet); border: 1px solid var(--line); display: grid; place-items: center; font-size: 16px; }
+.sk-dot.on { background: linear-gradient(135deg, #f59e0b, #ef4444); border-color: transparent; }
+.sk-dot.today { outline: 2px solid var(--accent, #7c3aed); }
+.fr-t1 { box-shadow: 0 0 0 3px #cd7f32; } .fr-t2 { box-shadow: 0 0 0 3px #cbd5e1, 0 0 0 6px #94a3b8; }
+.fr-t3 { box-shadow: 0 0 0 3px #facc15, 0 0 12px 4px rgb(250 204 21 / .6); }
+.fr-t4 { box-shadow: 0 0 0 3px #67e8f9, 0 0 14px 5px rgb(103 232 249 / .7); }
+.fr-t5 { box-shadow: 0 0 0 3px #f472b6, 0 0 14px 5px rgb(167 139 250 / .7); animation: frhue 4s linear infinite; }
+.fr-t6 { box-shadow: 0 0 0 4px #fde047, 0 0 18px 7px rgb(251 146 60 / .8); animation: frhue 3s linear infinite; }
+@keyframes frhue { to { filter: hue-rotate(360deg); } }
