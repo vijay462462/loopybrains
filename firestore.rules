@@ -370,6 +370,13 @@ service cloud.firestore {
         allow create, update: if (isAdmin() || isStaff(room)) && validNotice();
         allow delete: if isAdmin() || isStaff(room);
       }
+      // ---------- welcome note: one short message from the college (principal, exam cell, placement cell) shown to every student ----------
+      match /welcomeMsg/{id} {
+        allow read: if member();
+        allow create, update: if (isAdmin() || isStaff(room)) && id == 'current' && request.resource.data.keys().hasOnly(['text', 'from', 'active', 'updatedAt'])
+          && str(request.resource.data.text, 3, 240) && optStr(request.resource.data, 'from', 40) && request.resource.data.active is bool && request.resource.data.updatedAt is int;
+        allow delete: if false;
+      }
       // ---------- club and campus events: admins/staff post them; students RSVP ----------
       match /events/{id} {
         function validEvent() {

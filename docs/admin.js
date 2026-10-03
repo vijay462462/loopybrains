@@ -554,6 +554,22 @@ function licencesView() {
       } }, "Save and switch Plus on")), msg), box);
 }
 
+// Welcome note: one short message every student sees under the greeting (and on the opening screen from their next visit).
+function welcomeView() {
+  const p = roomPath(), ref = fs.doc(db, p, "welcomeMsg", "current"), msg = h("p", { class: "msg" });
+  const text = h("textarea", { placeholder: "e.g. Welcome to our campus family. Study hard, be kind, and make us proud. All the best for the exams!", maxlength: "240" }), from = h("input", { placeholder: "From, e.g. Principal, Exam cell, Placement cell", maxlength: "40" }), on = h("input", { type: "checkbox", checked: true });
+  fs.getDoc(ref).then(d => { if (d.exists()) { text.value = d.data().text || ""; from.value = d.data().from || ""; on.checked = d.data().active !== false; } }).catch(() => {});
+  return h("div", {}, h("div", { class: "card" }, h("h3", {}, "Welcome note for " + S.room.name), h("p", { class: "adm-hint" }, "A short, warm message (up to 240 characters). Students see it on the Today card and on the opening screen. Speak with respect and care; it carries your college's name."),
+    text, from, h("label", { class: "check" }, on, "Show it to students"),
+    h("div", { class: "row" }, h("button", { class: "b pri", onclick: async (e) => {
+      const t = clean(text.value, 240); if (t.length < 3) { msg.className = "msg err"; msg.textContent = "Write the message."; return; }
+      e.currentTarget.disabled = true;
+      try { await fs.setDoc(ref, { text: t, from: clean(from.value, 40), active: on.checked, updatedAt: Date.now() }); await logAction("welcome-note", "welcomeMsg/current", t.slice(0, 60)); msg.className = "msg ok"; msg.textContent = "Saved. Students see it within a few minutes."; }
+      catch (er) { msg.className = "msg err"; msg.textContent = "Not saved (" + (er.code || "error") + "). Publish the latest rules."; }
+      e.currentTarget.disabled = false;
+    } }, "Save")), msg));
+}
+
 const EXAMS = ["Mid", "End", "Supplementary", "Model", "Other"];
 function papersView() {
   const p = roomPath(), msg = h("p", { class: "msg" }), box = h("div", {});
@@ -583,11 +599,11 @@ function papersView() {
 }
 
 // ---------- shell ----------
-const TABS = [["overview", "Overview", true], ["report", "Weekly report", true], ["mail", "Report emails", true], ["moderation", "Moderation", true], ["blocked", "Blocked devices", true], ["licences", "College licences", false], ["staff", "College staff", false], ["sale", "Flash sale", false], ["promos", "Promo codes", false], ["events", "Events", true], ["drives", "Placement drives", true], ["notices", "Notices", true], ["papers", "Papers", true], ["colleges", "Colleges", false], ["requests", "Requests and survey", false], ["log", "Log", false]];
-const VIEWS = { events: eventsView, drives: drivesView, mail: mailView, report: reportView, staff: staffView, sale: saleView, promos: promosView, notices: noticesView, papers: papersView, overview: overviewView, moderation: moderationView, blocked: blockedView, colleges: collegesView, requests: requestsView, log: logView };
+const TABS = [["overview", "Overview", true], ["report", "Weekly report", true], ["mail", "Report emails", true], ["moderation", "Moderation", true], ["blocked", "Blocked devices", true], ["licences", "College licences", false], ["staff", "College staff", false], ["sale", "Flash sale", false], ["promos", "Promo codes", false], ["events", "Events", true], ["drives", "Placement drives", true], ["welcome", "Welcome note", true], ["notices", "Notices", true], ["papers", "Papers", true], ["colleges", "Colleges", false], ["requests", "Requests and survey", false], ["log", "Log", false]];
+const VIEWS = { welcome: welcomeView, events: eventsView, drives: drivesView, mail: mailView, report: reportView, staff: staffView, sale: saleView, promos: promosView, notices: noticesView, papers: papersView, overview: overviewView, moderation: moderationView, blocked: blockedView, colleges: collegesView, requests: requestsView, log: logView };
 function draw() {
   const u = auth.currentUser;
-  const STAFF_TABS = ["events", "drives", "report", "notices", "moderation", "blocked", "papers"], shownTabs = S.staffOnly ? TABS.filter(t => STAFF_TABS.includes(t[0])) : TABS;
+  const STAFF_TABS = ["welcome", "events", "drives", "report", "notices", "moderation", "blocked", "papers"], shownTabs = S.staffOnly ? TABS.filter(t => STAFF_TABS.includes(t[0])) : TABS;
   if (S.staffOnly && !STAFF_TABS.includes(S.tab)) S.tab = "notices";
   const tabs = h("div", { class: "adm-tabs" }, ...shownTabs.map(([k, label]) => h("button", { class: S.tab === k ? "on" : "", onclick: () => { S.tab = k; draw(); } }, label)));
   const needs = TABS.find(t => t[0] === S.tab)[2];

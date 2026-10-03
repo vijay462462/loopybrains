@@ -162,6 +162,13 @@ await t("students can read the college switch but not the licence", async () => 
 await t("students and staff cannot change licences or the switch", async () => { await assertFails(setDoc(doc(student, "collegePlus/free"), { name: "X", until: now() + 1e10, updatedAt: now() })); await assertFails(setDoc(doc(sctx, "collegePlus/free2"), { name: "X", until: now() + 1e10, updatedAt: now() })); await assertFails(setDoc(doc(sctx, "licenses/free"), lic())); });
 await t("a licence with an unknown field or negative seats is refused", async () => { await assertFails(setDoc(doc(admin, "licenses/bad1"), lic({ hack: 1 }))); await assertFails(setDoc(doc(admin, "licenses/bad2"), lic({ seats: -5 }))); });
 await t("admin ends the bundle", () => assertSucceeds(deleteDoc(doc(admin, "collegePlus/demo"))));
+console.log("welcome note");
+await env.withSecurityRulesDisabled(async (c) => { await setDoc(doc(c.firestore(), "staff/r00m-Abc123xy_" + staffUid), staffDoc); });
+const wn = (extra = {}) => ({ text: "Welcome to our campus family. Study hard and be kind.", from: "Principal", active: true, updatedAt: now(), ...extra });
+await t("staff posts the welcome note", () => assertSucceeds(setDoc(doc(sctx, R + "/welcomeMsg/current"), wn())));
+await t("admin updates it and students read it", async () => { await assertSucceeds(setDoc(doc(admin, R + "/welcomeMsg/current"), wn({ text: "Best wishes for the exams!" }))); await assertSucceeds(getDoc(doc(student, R + "/welcomeMsg/current"))); });
+await t("student cannot write it; other ids and long text are refused", async () => { await assertFails(setDoc(doc(student, R + "/welcomeMsg/current"), wn())); await assertFails(setDoc(doc(admin, R + "/welcomeMsg/other"), wn())); await assertFails(setDoc(doc(admin, R + "/welcomeMsg/current"), wn({ text: "x".repeat(300) }))); });
+await t("staff cannot write another college's note", () => assertFails(setDoc(doc(sctx, R2 + "/welcomeMsg/current"), wn())));
 console.log("server-only collections");
 await t("gifts, referrals, entitlements and payments cannot be read or written from the app", async () => { for (const p of ["gifts/ABCDEFGHJKLM", "referrals/x", "refStats/x", "payments/p1", "aiUsage/u_1"]) { await assertFails(getDoc(doc(student, p))); await assertFails(setDoc(doc(student, p), { x: 1 })); } await assertFails(setDoc(doc(student, "entitlements/stud"), { plan: "plus", until: now() + 1e10 })); });
 console.log(`\n${pass} passed, ${fail} failed`);

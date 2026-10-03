@@ -1275,6 +1275,15 @@ function showUnanswered() {
   const t = document.querySelector('[data-tab="doubts"]'); if (t) t.click(); state.filter = "open"; const f = $("filter"); if (f) f.value = "open"; render();
   try { $("list").scrollIntoView({ behavior: "smooth", block: "start" }); } catch (_) {}
 }
+// Welcome note from the college: one short message under the greeting on the Today card, also cached for the splash screen.
+async function loadWelcomeNote() {
+  try {
+    const d = store && store.getRoomDoc ? await store.getRoomDoc("welcomeMsg", "current") : null;
+    state.welcomeNote = d && d.active && typeof d.text === "string" ? d : null;
+    writeJSON("dd-welcome-note", state.welcomeNote ? { text: String(d.text).slice(0, 240), from: String(d.from || "").slice(0, 40), t: d.updatedAt } : null);
+    if (typeof renderToday === "function") { todayKey = ""; renderToday(); }
+  } catch (_) {}
+}
 // "Today" card under the header: a personal greeting with the things that bring students back (streak, daily quiz, exam countdown).
 let todayKey = "";
 function renderToday() {
@@ -1283,10 +1292,12 @@ function renderToday() {
   const hr = new Date().getHours(), hello = hr < 12 ? "Good morning" : hr < 17 ? "Good afternoon" : "Good evening", name = (getName() || "").trim().split(/\s+/)[0] || "",
     streak = state.myStreak || 0, quizDone = QUIZ.length ? !!myQuizAnswer(dayNum()) : true, plan = readJSON("dd-exam-plan", null),
     left = plan && plan.date ? Math.ceil((new Date(plan.date + "T00:00:00").getTime() - new Date().setHours(0, 0, 0, 0)) / 864e5) : null;
-  const key = [hello, name, streak, quizDone, left, dayNum(), openDrives().length, upcomingEvents().length, unansweredDoubts().length].join("|"); if (key === todayKey && !bar.hidden) return; todayKey = key;
+  const note = state.welcomeNote && readJSON("dd-note-gone", 0) !== state.welcomeNote.updatedAt ? state.welcomeNote : null;
+  const key = [hello, name, streak, quizDone, left, dayNum(), note ? note.updatedAt : 0, openDrives().length, upcomingEvents().length, unansweredDoubts().length].join("|"); if (key === todayKey && !bar.hidden) return; todayKey = key;
   const chip = (txt, cls, fn) => el("button", { class: "today-chip " + (cls || ""), type: "button", onclick: fn }, txt);
   const WORDS = ["Welcome to the " + BRAND + " family 💙", "Respect your teachers, help your juniors. 🙏", "Every question is welcome here.", "Kind words build a strong campus. 🌱", "Thank you for being part of our family.", "Learn together, grow together. 🚀", "Our teachers and staff work hard for you. Say thank you today. 🙏"];
-  bar.replaceChildren(el("strong", { class: "today-hello" }, hello + (name ? ", " + name : "") + " 👋"), el("small", { class: "today-words" }, WORDS[dayNum() % WORDS.length]), !name ? el("button", { class: "today-chip warn", type: "button", onclick: () => { const b = $("nameBtn"); if (b) b.click(); } }, "✏️ Set your name") : null, el("button", { class: "btn primary today-ask", type: "button", onclick: () => { const b = $("askBtn"); if (b) b.click(); } }, "❓ Ask a doubt"),
+  bar.replaceChildren(el("strong", { class: "today-hello" }, hello + (name ? ", " + name : "") + " 👋"), el("small", { class: "today-words" }, WORDS[dayNum() % WORDS.length]),
+    note ? el("div", { class: "today-note" }, el("strong", {}, "💬 " + (note.from ? "A note from " + note.from : "A note from your college")), el("p", {}, note.text), el("button", { class: "of-x", type: "button", "aria-label": "Dismiss note", onclick: () => { writeJSON("dd-note-gone", note.updatedAt); todayKey = ""; renderToday(); } }, "✕")) : null, !name ? el("button", { class: "today-chip warn", type: "button", onclick: () => { const b = $("nameBtn"); if (b) b.click(); } }, "✏️ Set your name") : null, el("button", { class: "btn primary today-ask", type: "button", onclick: () => { const b = $("askBtn"); if (b) b.click(); } }, "❓ Ask a doubt"),
     el("div", { class: "today-chips" },
       chip(streak ? "🔥 " + streak + "-day streak" : "🔥 Start your streak", streak && !(state.myDays && state.myDays.has(dayNum())) ? "warn" : "", () => showPanel("me")),
       QUIZ.length ? chip(quizDone ? "✅ Quiz done" : "🧠 Today's quiz", quizDone ? "" : "pulse", () => showPanel("quiz")) : null,
@@ -7126,7 +7137,7 @@ render();
   if (NO_COLLEGE) { render(); return; }   // nothing to load until a college is chosen
   loadPlan().then(() => { render(); claimRef(); redeemPendingGift(); });
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && PLUS.enabled) loadPlan().then(() => { if (state.mode === "plus") render(); }); });
-  loadSale(); setInterval(loadSale, 600000);
+  loadSale(); setInterval(loadSale, 600000); loadWelcomeNote(); setInterval(loadWelcomeNote, 900000);
   if (store.linkResult === "ok") { showNotice(myVerified() ? "✅ Email verified. Welcome, verified student!" : "Email confirmed, but it is not a " + COLLEGE + " address, so you are not marked as verified."); setTimeout(() => showNotice(""), 6000); }
   else if (store.linkResult && store.linkResult.startsWith("error:")) showNotice("Could not finish email verification (" + store.linkResult.slice(6) + "). Open the link on the same phone you asked from, or ask for a new one.");
   if (store.demo) showNotice("Demo mode: posts are saved only in this browser. Add your Firebase settings to config.js so the whole class shares one board.", "demo");
