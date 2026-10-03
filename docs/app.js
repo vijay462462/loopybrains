@@ -725,7 +725,7 @@ function attachPicker(list, max) {
     say("");
     for (const f of files) {
       if (list.length >= max) { say("You can attach up to " + max + " pages."); break; }
-      try { const img = await loadImage(f); list.push(toJpeg(img, img.naturalWidth, img.naturalHeight)); }
+      try { const img = await loadImage(f); const why = await imageProblem(img); if (why) { say(why); continue; } list.push(toJpeg(img, img.naturalWidth, img.naturalHeight)); }
       catch (_) { say("Could not read that file. Use a JPG or PNG photo."); }
     }
     // The answer box may have been redrawn by a live update while the file picker was open.
@@ -5397,6 +5397,26 @@ function dpByName(name) {
 const getStatus = () => { try { return (localStorage.getItem("dd-status") || "").slice(0, 60); } catch (_) { return ""; } };
 const statusOfId = (id) => { if (allMyIds().has(id)) return getStatus(); const p = state.profiles.find(x => x.id === id); return (p && p.status) || ""; };
 const dpOfId = (id, name) => { const p = state.profiles.find(x => x.id === id); return (p && p.dp) || (allMyIds().has(id) && getDp()) || dbUrl(name || id); };
+// Academic-only images. Approximate, on-device check: personal photos (selfies, portraits) have a large share of
+// skin-coloured pixels and little paper/board background, while notes, diagrams and screenshots do not. The browser's
+// face detector is used too when the phone has one. Reports are the safety net for anything that slips through.
+async function imageProblem(src) {
+  const w0 = src.naturalWidth || src.width, h0 = src.naturalHeight || src.height;
+  if (!w0 || !h0) return "";
+  const N = 96, c = document.createElement("canvas"); c.width = N; c.height = N;
+  const g = c.getContext("2d", { willReadFrequently: true }); g.drawImage(src, 0, 0, N, N);
+  const d = g.getImageData(0, 0, N, N).data; let skin = 0, paper = 0;
+  for (let i = 0; i < d.length; i += 4) {
+    const r = d[i], gg = d[i + 1], b = d[i + 2], mx = Math.max(r, gg, b), mn = Math.min(r, gg, b), sat = mx ? (mx - mn) / mx : 0;
+    if (sat < 0.18) paper++;
+    if (r > 95 && gg > 40 && b > 20 && mx - mn > 15 && Math.abs(r - gg) > 15 && r > gg && r > b && sat > 0.2 && sat < 0.7) skin++;
+  }
+  const sk = skin / (N * N), pa = paper / (N * N);
+  let face = false;
+  if ("FaceDetector" in window) { try { const f = await new window.FaceDetector({ fastMode: true, maxDetectedFaces: 5 }).detect(src); face = f.some(x => x.boundingBox.width * x.boundingBox.height > 0.02 * w0 * h0); } catch (_) {} }
+  if (face || sk > 0.18 || (sk > 0.1 && pa < 0.6)) return "📵 This looks like a personal photo. Only academic images are allowed here: notes, textbook pages, diagrams, questions and quiz screenshots.";
+  return "";
+}
 // Photo -> small JPEG data URL (square crop for DP). Nothing is uploaded until the student posts it.
 async function imgToJpeg(file, max, q, square) {
   if (!file || !/^image\/(jpeg|png|webp|gif)$/.test(file.type)) throw new Error("Choose a JPG, PNG or WebP photo.");
@@ -5437,7 +5457,7 @@ async function removeDp() { try { localStorage.removeItem("dd-dp"); } catch (_) 
 
 const seenSet = () => { try { return new Set(JSON.parse(localStorage.getItem("dd-seen") || "[]")); } catch (_) { return new Set(); } };
 const markSeen = (id) => { const s = seenSet(); s.add(id); try { localStorage.setItem("dd-seen", JSON.stringify([...s].slice(-300))); } catch (_) {} };
-const activeStories = () => { const cut = Date.now() - STORY_MS; return state.stories.filter(s => !s.deleted && s.createdAt > cut && !isHidden(s) && (s.kind === "text" ? !!s.text : !!s.pageId)).sort((a, b) => a.createdAt - b.createdAt); };
+const activeStories = () => { const cut = Date.now() - STORY_MS; return state.stories.filter(s => !s.deleted && s.createdAt > cut && !isHidden(s) && (s.kind === "photo" ? !!s.pageId : !!s.text && (s.kind !== "quiz" || (Array.isArray(s.opts) && s.opts.length >= 2)))).sort((a, b) => a.createdAt - b.createdAt); };
 function storyGroups() {
   const m = new Map();
   for (const s of activeStories()) { if (!m.has(s.authorId)) m.set(s.authorId, { authorId: s.authorId, name: s.authorName || "Student", items: [] }); const g = m.get(s.authorId); g.items.push(s); g.name = s.authorName || g.name; }
@@ -5464,16 +5484,21 @@ function openStoryAdd() {
   { const pb = postingBlocked(); if (pb) { alert(pb); return; } }
   if (!getName()) { showPanel("name"); showNotice("Set your name first, then add your story."); return; }
   if (state.stories.filter(s => allMyIds().has(s.authorId) && Date.now() - s.createdAt < STORY_MS).length >= STORY_DAILY_MAX) { showNotice("You can add up to " + STORY_DAILY_MAX + " stories a day."); return; }
-  let kind = "photo", img = "", bg = 0;
+  let kind = "text", img = "", bg = 0;
   const ov = el("div", { class: "st-view st-add", role: "dialog", "aria-modal": "true", "aria-label": "Add to your story" });
   const close = () => { ov.remove(); document.body.classList.remove("st-open"); };
   const err = el("p", { class: "hint st-err" }), prev = el("div", { class: "st-prev" });
   const cap = el("input", { type: "text", maxlength: "140", placeholder: "Add a caption (optional)", "aria-label": "Caption" });
-  const txt = el("textarea", { maxlength: "200", rows: "4", placeholder: "Type your status…", "aria-label": "Story text" });
+  const txt = el("textarea", { maxlength: "200", rows: "4", placeholder: "Type a study tip, a formula or a quiz question…", "aria-label": "Story text" });
+  const qopts = [0, 1, 2, 3].map(i => el("input", { type: "text", maxlength: "60", placeholder: "Option " + "ABCD"[i] + (i < 2 ? "" : " (optional)"), "aria-label": "Option " + "ABCD"[i] }));
+  const qans = el("select", { "aria-label": "Correct option" }, "ABCD".split("").map((l, i) => el("option", { value: String(i) }, "Correct answer: " + l)));
+  const quizBox = el("div", { class: "st-quiz-form" }, ...qopts, qans);
   const file = el("input", { type: "file", accept: "image/*", "aria-label": "Choose a photo" });
   file.addEventListener("change", async () => {
     err.textContent = ""; img = "";
     try {
+      if (!file.files[0]) return;
+      { const bmp = await createImageBitmap(file.files[0]); const why = await imageProblem(bmp); if (bmp.close) bmp.close(); if (why) throw new Error(why); }
       let u = await imgToJpeg(file.files[0], 720, 0.65, false); if (u.length > 280000) u = await imgToJpeg(file.files[0], 600, 0.5, false);
       if (!IMG_OK.test(u) || u.length > 280000) throw new Error("That photo is too big. Try a smaller one.");
       img = u; draw();
@@ -5482,12 +5507,21 @@ function openStoryAdd() {
   const post = el("button", { type: "button", class: "btn primary", onclick: async () => {
     err.textContent = "";
     if (kind === "photo" && !img) { err.textContent = "Choose a photo first."; return; }
-    const t = txt.value.trim(); if (kind === "text" && !t) { err.textContent = "Type something first."; return; }
+    const t = txt.value.trim(); if ((kind === "text" || kind === "quiz") && !t) { err.textContent = kind === "quiz" ? "Type your quiz question first." : "Type something first."; return; }
+    let qo = [], qa = 0;
+    if (kind === "quiz") {
+      const filled = qopts.map((o, i) => ({ v: o.value.trim().slice(0, 60), i })).filter(x => x.v);
+      if (filled.length < 2) { err.textContent = "Add at least two answer options."; return; }
+      const pos = filled.findIndex(x => x.i === Number(qans.value));
+      if (pos < 0) { err.textContent = "The correct answer must be one of the options you filled in."; return; }
+      qo = filled.map(x => x.v); qa = pos;
+    }
+    if (hasBadWords([t, cap.value, ...qo].join(" "))) { err.textContent = LANGUAGE_MSG; return; }
     post.disabled = true; post.textContent = "Posting…";
     try {
       const id = store.newId("stories"), now = Date.now(), doc = { authorId: store.uid, authorName: getName().slice(0, 40), kind, createdAt: now };
       if (kind === "photo") { const pid = store.newId("pages"); await store.set("pages", pid, { data: img, parentId: id, createdAt: now }); doc.pageId = pid; storyImgCache.set(pid, img); const c = cap.value.trim(); if (c) doc.caption = c.slice(0, 140); }
-      else { doc.text = t.slice(0, 200); doc.bg = String(bg); }
+      else { doc.text = t.slice(0, 200); doc.bg = String(bg); if (kind === "quiz") { doc.opts = qo; doc.ans = qa; } }
       state.stories = [...state.stories, { id, ...doc }];
       await store.set("stories", id, doc);
       close(); renderStoryBar(); showNotice("Story posted for 24 hours ✅"); setTimeout(() => showNotice(""), 2500);
@@ -5495,17 +5529,18 @@ function openStoryAdd() {
   } }, "Post story");
   const draw = () => {
     prev.replaceChildren(kind === "photo"
-      ? (img ? el("img", { class: "st-previmg", src: img, alt: "Preview" }) : el("div", { class: "st-ph" }, "📷 Tap below to choose a photo"))
+      ? (img ? el("img", { class: "st-previmg", src: img, alt: "Preview" }) : el("div", { class: "st-ph" }, "📄 Choose a photo of your notes, a diagram or a question. Personal photos are not allowed."))
       : el("div", { class: "st-textcard st-small" }, txt));
-    if (kind === "text") { const g = STORY_BG[bg]; prev.firstChild.style.setProperty("background", "linear-gradient(135deg," + g[0] + "," + g[1] + ")"); }
-    tabs.replaceChildren(...[["photo", "📷 Photo"], ["text", "✍️ Text"]].map(([k, l]) => el("button", { type: "button", class: "btn sm" + (kind === k ? " primary" : ""), onclick: () => { kind = k; draw(); } }, l)));
-    sw.hidden = kind !== "text"; file.hidden = kind !== "photo"; cap.hidden = kind !== "photo";
+    txt.placeholder = kind === "quiz" ? "Type your quiz question…" : "Type a study tip, a formula or a quick note…";
+    if (kind !== "photo") { const g = STORY_BG[bg]; prev.firstChild.style.setProperty("background", "linear-gradient(135deg," + g[0] + "," + g[1] + ")"); }
+    tabs.replaceChildren(...[["text", "✍️ Tip / note"], ["quiz", "🧠 Quiz"], ["photo", "📄 Notes photo"]].map(([k, l]) => el("button", { type: "button", class: "btn sm" + (kind === k ? " primary" : ""), onclick: () => { kind = k; draw(); } }, l)));
+    sw.hidden = kind === "photo"; file.hidden = kind !== "photo"; cap.hidden = kind !== "photo"; quizBox.hidden = kind !== "quiz";
   };
   const tabs = el("div", { class: "rowbtns" });
   const sw = el("div", { class: "st-sw" }, STORY_BG.map((g, i) => { const b = el("button", { type: "button", class: "st-swb", "aria-label": "Colour " + (i + 1), onclick: () => { bg = i; draw(); } }); b.style.setProperty("background", "linear-gradient(135deg," + g[0] + "," + g[1] + ")"); return b; }));
   ov.append(el("div", { class: "st-card" }, el("div", { class: "st-head" }, el("strong", {}, "Add to your story"), el("button", { type: "button", class: "st-x", "aria-label": "Close", onclick: close }, "✕")),
-    el("p", { class: "hint" }, "Everyone on RGUKT Spark can see it for 24 hours. Keep it friendly. Reported stories are hidden. Viewers see their own name faintly over your story, so screenshots can be traced."),
-    tabs, prev, sw, file, cap, err, post));
+    el("p", { class: "hint" }, "Stories are for study content only: tips, quizzes, and photos of notes, diagrams or questions. Personal photos are not allowed. Everyone on RGUKT Spark can see it for 24 hours. Reported stories are hidden. Viewers see their own name faintly over your story, so screenshots can be traced."),
+    tabs, prev, quizBox, sw, file, cap, err, post));
   document.body.append(ov); document.body.classList.add("st-open"); draw();
 }
 const storyImgCache = new Map();
@@ -5549,7 +5584,19 @@ function openStories(authorId) {
       body, wm, ownS ? null : el("p", { class: "st-note" }, "📸 Screenshots can be traced to your name. Please don't share others' stories."), vlist,
       el("button", { type: "button", class: "st-tap l", "aria-label": "Previous", onclick: prev }), el("button", { type: "button", class: "st-tap r", "aria-label": "Next", onclick: next }));
     const run = (ms) => { if (my !== gen) return; fill.style.setProperty("animation-duration", ms + "ms"); fill.classList.add("run"); timer = setTimeout(next, ms); };
-    if (s.kind === "text") {
+    if (s.kind === "quiz") {
+      const c = STORY_BG[Number(s.bg)] || STORY_BG[4], card = el("div", { class: "st-textcard st-quizcard" });
+      card.style.setProperty("background", "linear-gradient(135deg," + c[0] + "," + c[1] + ")");
+      const opts = (s.opts || []).slice(0, 4), done = { v: false };
+      const btns = opts.map((o, i) => el("button", { type: "button", class: "st-opt" + (ownS && i === s.ans ? " good" : ""), onclick: () => {
+        if (done.v || ownS) return; done.v = true;
+        btns.forEach((b, k) => { b.disabled = true; if (k === s.ans) b.classList.add("good"); else if (k === i) b.classList.add("bad"); });
+        note.textContent = i === s.ans ? "✅ Correct!" : "❌ The right answer is highlighted.";
+        clearTimeout(timer); fill.classList.remove("run"); void fill.offsetWidth; run(6000);
+      } }, "ABCD"[i] + ".  " + o));
+      const note = el("p", { class: "st-qnote" }, ownS ? "Viewers can tap an option. The right answer is marked." : "Tap your answer");
+      card.append(el("p", { class: "st-q" }, s.text), ...btns, note, el("button", { type: "button", class: "st-opt st-skip", onclick: next }, "Next ➜")); body.append(card); run(30000);
+    } else if (s.kind === "text") {
       const c = STORY_BG[Number(s.bg)] || STORY_BG[0], card = el("div", { class: "st-textcard" }, s.text); card.style.setProperty("background", "linear-gradient(135deg," + c[0] + "," + c[1] + ")"); body.append(card); run(STORY_SHOW + 1500);
     } else {
       body.append(el("p", { class: "st-load" }, "Loading…"));
