@@ -1268,6 +1268,13 @@ function maybeWelcome() {
   } catch (_) { return; }
   setTimeout(showWelcome, 700);
 }
+// Doubts nobody has answered yet (not mine, last 14 days): the Today card nudges helpers to answer them, which keeps the board alive.
+const unansweredDoubts = () => { const mine = store ? allMyIds() : new Set(), since = Date.now() - 14 * 864e5; return state.doubts.filter(d => !d.deleted && !isHidden(d) && (d.createdAt || 0) > since && !mine.has(d.authorId) && !d.resolvedReplyId && !repliesFor(d.id).length); };
+function showUnanswered() {
+  state.mode = state.selected ? "view" : "intro"; state.filter = "open"; state.tab = "doubts";
+  const t = document.querySelector('[data-tab="doubts"]'); if (t) t.click(); state.filter = "open"; const f = $("filter"); if (f) f.value = "open"; render();
+  try { $("list").scrollIntoView({ behavior: "smooth", block: "start" }); } catch (_) {}
+}
 // "Today" card under the header: a personal greeting with the things that bring students back (streak, daily quiz, exam countdown).
 let todayKey = "";
 function renderToday() {
@@ -1276,7 +1283,7 @@ function renderToday() {
   const hr = new Date().getHours(), hello = hr < 12 ? "Good morning" : hr < 17 ? "Good afternoon" : "Good evening", name = (getName() || "").trim().split(/\s+/)[0] || "",
     streak = state.myStreak || 0, quizDone = QUIZ.length ? !!myQuizAnswer(dayNum()) : true, plan = readJSON("dd-exam-plan", null),
     left = plan && plan.date ? Math.ceil((new Date(plan.date + "T00:00:00").getTime() - new Date().setHours(0, 0, 0, 0)) / 864e5) : null;
-  const key = [hello, name, streak, quizDone, left, dayNum(), openDrives().length, upcomingEvents().length].join("|"); if (key === todayKey && !bar.hidden) return; todayKey = key;
+  const key = [hello, name, streak, quizDone, left, dayNum(), openDrives().length, upcomingEvents().length, unansweredDoubts().length].join("|"); if (key === todayKey && !bar.hidden) return; todayKey = key;
   const chip = (txt, cls, fn) => el("button", { class: "today-chip " + (cls || ""), type: "button", onclick: fn }, txt);
   const WORDS = ["Welcome to the " + BRAND + " family 💙", "Respect your teachers, help your juniors. 🙏", "Every question is welcome here.", "Kind words build a strong campus. 🌱", "Thank you for being part of our family.", "Learn together, grow together. 🚀", "Our teachers and staff work hard for you. Say thank you today. 🙏"];
   bar.replaceChildren(el("strong", { class: "today-hello" }, hello + (name ? ", " + name : "") + " 👋"), el("small", { class: "today-words" }, WORDS[dayNum() % WORDS.length]), !name ? el("button", { class: "today-chip warn", type: "button", onclick: () => { const b = $("nameBtn"); if (b) b.click(); } }, "✏️ Set your name") : null, el("button", { class: "btn primary today-ask", type: "button", onclick: () => { const b = $("askBtn"); if (b) b.click(); } }, "❓ Ask a doubt"),
@@ -1285,6 +1292,7 @@ function renderToday() {
       QUIZ.length ? chip(quizDone ? "✅ Quiz done" : "🧠 Today's quiz", quizDone ? "" : "pulse", () => showPanel("quiz")) : null,
       left != null && left >= 0 && left <= 60 ? chip("⏳ " + (left === 0 ? "Exam today" : left + " days to exam"), left <= 7 ? "warn" : "", () => showPanel("planner")) : null,
       upcomingEvents().filter(e => e.startAt < Date.now() + 7 * 864e5).length ? chip("🎉 " + upcomingEvents().filter(e => e.startAt < Date.now() + 7 * 864e5).length + " event" + (upcomingEvents().filter(e => e.startAt < Date.now() + 7 * 864e5).length === 1 ? "" : "s") + " this week", "", () => showPanel("events")) : null,
+      unansweredDoubts().length ? chip("🙋 " + unansweredDoubts().length + " doubt" + (unansweredDoubts().length === 1 ? "" : "s") + " need an answer", "pulse", showUnanswered) : null,
       openDrives().length ? chip("🏢 " + openDrives().length + " campus drive" + (openDrives().length === 1 ? "" : "s"), "", () => showPanel("drives")) : null,
       chip("🧰 Explore", "", () => showPanel("explore")))); 
   bar.hidden = false;
