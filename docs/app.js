@@ -1231,6 +1231,40 @@ function trendingSubject() {
   return top && top[1] >= 2 ? top[0] : null;
 }
 
+// First-visit welcome: three short cards (safe, rewarding, smart). Shown once, only to brand-new visitors who already picked a college.
+const WELCOME = [
+  ["🛡️", "Ask without fear", "Sign in is anonymous, you choose your name, and admins and students moderate every post. Bad posts are hidden fast and abusive devices are blocked."],
+  ["🏆", "Answer together, earn rewards", "Help a classmate to earn points, build a daily streak, win badges and show up on the Top Helpers board. Stories and quizzes keep it fun."],
+  ["🚀", "Study smarter", "Daily quiz, Study Lab, flashcards, CGPA tools, jobs and papers, all in one place. Everything on the board is free. Plus adds extras like mock tests and an AI helper."],
+];
+function showWelcome(force) {
+  if (document.getElementById("welcome")) return;
+  const done = () => { try { localStorage.setItem("dd-welcome-done", "1"); } catch (_) {} };
+  let i = 0;
+  const box = el("div", { id: "welcome", class: "welcome", role: "dialog", "aria-modal": "true", "aria-label": "Welcome to " + BRAND });
+  const close = () => { done(); box.remove(); document.removeEventListener("keydown", onKey); };
+  const onKey = (e) => { if (e.key === "Escape") close(); };
+  const paint = () => {
+    const [icon, title, text] = WELCOME[i], last = i === WELCOME.length - 1;
+    box.replaceChildren(el("div", { class: "welcome-card" },
+      el("button", { class: "welcome-skip", type: "button", onclick: close }, "Skip"),
+      el("div", { class: "welcome-icon", "aria-hidden": "true" }, icon),
+      el("h2", {}, i === 0 ? "Welcome to " + BRAND : title), i === 0 ? el("h3", {}, title) : null, el("p", {}, text),
+      el("div", { class: "welcome-dots", "aria-hidden": "true" }, ...WELCOME.map((_, k) => el("span", { class: k === i ? "on" : "" }))),
+      el("div", { class: "rowbtns" }, i > 0 ? el("button", { class: "btn", type: "button", onclick: () => { i--; paint(); } }, "Back") : null,
+        el("button", { class: "btn primary", type: "button", onclick: () => { if (last) close(); else { i++; paint(); } } }, last ? "Get started" : "Next"))));
+    const b = box.querySelector(".btn.primary"); if (b) b.focus();
+  };
+  document.addEventListener("keydown", onKey); paint(); document.body.append(box);
+}
+function maybeWelcome() {
+  try {
+    if (localStorage.getItem("dd-welcome-done") || NO_COLLEGE) return;
+    // people who already used the app before this welcome existed do not need it
+    if (["dd-name", "dd-avatar", "dd-post-times", "dd-seen"].some(k => localStorage.getItem(k) !== null)) { localStorage.setItem("dd-welcome-done", "1"); return; }
+  } catch (_) { return; }
+  setTimeout(showWelcome, 700);
+}
 // Trust strip under the tagline: honest promises plus real numbers from this college (shown only once they are big enough to mean something).
 let trustKey = "";
 function renderTrust() {
@@ -3860,6 +3894,7 @@ function renderAbout() {
   const feature = (icon, title, text) => el("div", { class: "learn-card" }, el("strong", {}, icon + " " + title), el("p", { class: "hint" }, text));
   return [
     el("h2", {}, "ℹ️ About " + BRAND),
+    el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: () => showWelcome(true) }, "👋 Show the welcome tour")),
     el("p", { class: "hint" }, el("a", { href: "terms.html", target: "_blank", rel: "noopener" }, "Terms"), " · ", el("a", { href: "privacy.html", target: "_blank", rel: "noopener" }, "Privacy"), " · ", el("a", { href: "refund.html", target: "_blank", rel: "noopener" }, "Refunds")),
     el("p", { class: "hint" }, "One free place to ask doubts, share ideas, prepare for GATE, plan your career and help your juniors."),
     el("div", { class: "learn-card" },
@@ -6775,6 +6810,7 @@ $("focusBtn") && $("focusBtn").addEventListener("click", toggleFocus);
   b.addEventListener("click", () => { open = !open; try { localStorage.setItem("dd-tools-open", open ? "1" : "0"); } catch (_) {} paint(); });
   acts.prepend(b); paint();
 })();
+maybeWelcome();
 $("filterToggle").addEventListener("click", () => { document.querySelector("header.top").classList.toggle("filters-open"); renderHeader(); });
 $("botBtn").addEventListener("click", () => { if (window.sparkBotToggle) window.sparkBotToggle(); });
 $("alumniBtn").addEventListener("click", () => { alumniView = "dir"; showPanel("alumni"); });
@@ -6844,7 +6880,8 @@ render();
     return;
   }
   if (NO_COLLEGE) { render(); return; }   // nothing to load until a college is chosen
-  loadPlan().then(() => { render(); claimRef(); redeemPendingGift(); }); loadSale(); setInterval(loadSale, 600000);
+  loadPlan().then(() => { render(); claimRef(); redeemPendingGift(); });
+  loadSale(); setInterval(loadSale, 600000);
   if (store.linkResult === "ok") { showNotice(myVerified() ? "✅ Email verified. Welcome, verified student!" : "Email confirmed, but it is not a " + COLLEGE + " address, so you are not marked as verified."); setTimeout(() => showNotice(""), 6000); }
   else if (store.linkResult && store.linkResult.startsWith("error:")) showNotice("Could not finish email verification (" + store.linkResult.slice(6) + "). Open the link on the same phone you asked from, or ask for a new one.");
   if (store.demo) showNotice("Demo mode: posts are saved only in this browser. Add your Firebase settings to config.js so the whole class shares one board.", "demo");
