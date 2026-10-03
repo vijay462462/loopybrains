@@ -129,6 +129,16 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
     // Moderation by an admin: hide or restore something, or clear its reports. Nothing else can change.
+    // College staff: a global admin adds a document staff/<room>_<uid>. Staff can manage ONLY that college's room:
+    // hide/restore posts, block devices, post notices and papers. They cannot touch colleges, promos, sales or other rooms.
+    function isStaff(room) {
+      return request.auth != null && request.auth.token.email_verified == true
+        && exists(/databases/$(database)/documents/staff/$(room + '_' + request.auth.uid));
+    }
+    function staffMod(room) {
+      return isStaff(room) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['deleted', 'reports'])
+        && request.resource.data.get('deleted', false) is bool;
+    }
     function adminMod() {
       return isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['deleted', 'reports'])
         && request.resource.data.get('deleted', false) is bool;
@@ -194,6 +204,15 @@ service cloud.firestore {
     match /config/{doc} {
       allow read: if isAdmin();
       allow write: if isAdmin();
+    }
+    // Staff roster: only global admins write it; a staff member can read their own entries (to see which college they manage).
+    match /staff/{id} {
+      allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow create, update: if isAdmin() && request.resource.data.keys().hasOnly(['uid', 'room', 'slug', 'name', 'label', 'by', 'createdAt'])
+        && str(request.resource.data.uid, 10, 128) && request.resource.data.room.matches('[A-Za-z0-9_-]{6,40}')
+        && id == request.resource.data.room + '_' + request.resource.data.uid
+        && str(request.resource.data.name, 1, 60) && optStr(request.resource.data, 'label', 40) && request.resource.data.createdAt is int;
+      allow delete: if isAdmin();
     }
     // Flash sale banner: one document, sales/current. Everyone signed in reads it; only admins change it.
     match /sales/{id} {
@@ -286,31 +305,31 @@ service cloud.firestore {
       match /doubts/{id} {
         allow read: if member();
         allow create: if member() && ownerOk(request.resource.data) && notBlocked(room, request.resource.data.authorId) && newPost('subject');
-        allow update: if adminMod() || reportOnly() || member() && isOwner() && sameOwner() && notBlocked(room, request.resource.data.authorId) && validPost('subject') && unchanged() && postEdit('subject');
+        allow update: if adminMod() || staffMod(room) || reportOnly() || member() && isOwner() && sameOwner() && notBlocked(room, request.resource.data.authorId) && validPost('subject') && unchanged() && postEdit('subject');
         allow delete: if false;
       }
       match /ideas/{id} {
         allow read: if member();
         allow create: if member() && ownerOk(request.resource.data) && notBlocked(room, request.resource.data.authorId) && newPost('category');
-        allow update: if adminMod() || reportOnly() || member() && isOwner() && sameOwner() && notBlocked(room, request.resource.data.authorId) && validPost('category') && unchanged() && postEdit('category');
+        allow update: if adminMod() || staffMod(room) || reportOnly() || member() && isOwner() && sameOwner() && notBlocked(room, request.resource.data.authorId) && validPost('category') && unchanged() && postEdit('category');
         allow delete: if false;
       }
       match /clubs/{id} {
         allow read: if member();
         allow create: if member() && ownerOk(request.resource.data) && notBlocked(room, request.resource.data.authorId) && newPost('club');
-        allow update: if adminMod() || reportOnly() || member() && isOwner() && sameOwner() && notBlocked(room, request.resource.data.authorId) && validPost('club') && unchanged() && postEdit('club');
+        allow update: if adminMod() || staffMod(room) || reportOnly() || member() && isOwner() && sameOwner() && notBlocked(room, request.resource.data.authorId) && validPost('club') && unchanged() && postEdit('club');
         allow delete: if false;
       }
       match /gate/{id} {
         allow read: if member();
         allow create: if member() && ownerOk(request.resource.data) && notBlocked(room, request.resource.data.authorId) && newPost('subject');
-        allow update: if adminMod() || reportOnly() || member() && isOwner() && sameOwner() && notBlocked(room, request.resource.data.authorId) && validPost('subject') && unchanged() && postEdit('subject');
+        allow update: if adminMod() || staffMod(room) || reportOnly() || member() && isOwner() && sameOwner() && notBlocked(room, request.resource.data.authorId) && validPost('subject') && unchanged() && postEdit('subject');
         allow delete: if false;
       }
       match /jobs/{id} {
         allow read: if member();
         allow create: if member() && ownerOk(request.resource.data) && notBlocked(room, request.resource.data.authorId) && newPost('type');
-        allow update: if adminMod() || reportOnly() || member() && isOwner() && sameOwner() && notBlocked(room, request.resource.data.authorId) && validPost('type') && unchanged() && postEdit('type');
+        allow update: if adminMod() || staffMod(room) || reportOnly() || member() && isOwner() && sameOwner() && notBlocked(room, request.resource.data.authorId) && validPost('type') && unchanged() && postEdit('type');
         allow delete: if false;
       }
       // ---------- official notices: only admins post; everyone signed in can read ----------
@@ -324,8 +343,8 @@ service cloud.firestore {
             && (!('expiresAt' in d) || d.expiresAt is int) && d.createdAt is int;
         }
         allow read: if member();
-        allow create, update: if isAdmin() && validNotice();
-        allow delete: if isAdmin();
+        allow create, update: if (isAdmin() || isStaff(room)) && validNotice();
+        allow delete: if isAdmin() || isStaff(room);
       }
       // ---------- previous-year paper vault: only admins add papers (links to files), everyone signed in can read ----------
       match /papers/{id} {
@@ -339,8 +358,8 @@ service cloud.firestore {
             && optStr(d, 'note', 200) && d.createdAt is int && optBool(d, 'deleted');
         }
         allow read: if member();
-        allow create, update: if isAdmin() && validPaper();
-        allow delete: if isAdmin();
+        allow create, update: if (isAdmin() || isStaff(room)) && validPaper();
+        allow delete: if isAdmin() || isStaff(room);
       }
       // ---------- profile photos and 24-hour stories ----------
       match /profiles/{id} {
@@ -366,7 +385,7 @@ service cloud.firestore {
         allow read: if member();
         allow create: if member() && ownerOk(request.resource.data) && notBlocked(room, request.resource.data.authorId) && validStory() && recent(request.resource.data.createdAt)
           && request.resource.data.get('deleted', false) == false && !('reports' in request.resource.data);
-        allow update: if adminMod() || reportOnly() || member() && isOwner() && sameOwner() && validStory() && unchanged() && changes(['deleted', 'reports']);
+        allow update: if adminMod() || staffMod(room) || reportOnly() || member() && isOwner() && sameOwner() && validStory() && unchanged() && changes(['deleted', 'reports']);
         allow delete: if false;
       }
       match /storyAnswers/{id} {
@@ -393,14 +412,14 @@ service cloud.firestore {
       // Device block list. Only the Firebase console can write here (rules deny everyone else).
       match /blocked/{id} {
         allow read: if member();
-        allow create, update: if isAdmin() && request.resource.data.keys().hasOnly(['reason', 'by', 'at'])
+        allow create, update: if (isAdmin() || isStaff(room)) && request.resource.data.keys().hasOnly(['reason', 'by', 'at'])
           && request.resource.data.get('reason', '') is string && request.resource.data.get('reason', '').size() <= 120;
-        allow delete: if isAdmin();
+        allow delete: if isAdmin() || isStaff(room);
       }
       match /challenges/{id} {
         allow read: if member();
         allow create: if member() && ownerOk(request.resource.data) && notBlocked(room, request.resource.data.authorId) && newPost('type');
-        allow update: if adminMod() || reportOnly() || member() && isOwner() && sameOwner() && notBlocked(room, request.resource.data.authorId) && validPost('type') && unchanged() && postEdit('type');
+        allow update: if adminMod() || staffMod(room) || reportOnly() || member() && isOwner() && sameOwner() && notBlocked(room, request.resource.data.authorId) && validPost('type') && unchanged() && postEdit('type');
         allow delete: if false;
       }
 
@@ -420,7 +439,7 @@ service cloud.firestore {
         allow create: if member() && ownerOk(request.resource.data) && notBlocked(room, request.resource.data.authorId) && validReply() && recent(request.resource.data.createdAt)
           && request.resource.data.get('deleted', false) == false && !('reports' in request.resource.data);
         // A reply can only be hidden (deleted) or reported after posting.
-        allow update: if adminMod() || reportOnly() || member() && isOwner() && sameOwner() && validReply() && unchanged() && changes(['deleted', 'reports']);
+        allow update: if adminMod() || staffMod(room) || reportOnly() || member() && isOwner() && sameOwner() && validReply() && unchanged() && changes(['deleted', 'reports']);
         allow delete: if false;
       }
 
@@ -453,7 +472,7 @@ service cloud.firestore {
         allow read: if member();
         allow create: if member() && ownerOk(request.resource.data) && notBlocked(room, request.resource.data.authorId) && validListing() && recent(request.resource.data.createdAt)
           && request.resource.data.get('deleted', false) == false && !('reports' in request.resource.data);
-        allow update: if adminMod() || reportOnly() || member() && isOwner() && sameOwner() && validListing() && unchanged()
+        allow update: if adminMod() || staffMod(room) || reportOnly() || member() && isOwner() && sameOwner() && validListing() && unchanged()
           && changes(['title', 'body', 'category', 'price', 'condition', 'whatsapp', 'sold', 'deleted', 'reports']);
         allow delete: if false;
       }
@@ -474,7 +493,7 @@ service cloud.firestore {
           && str(request.resource.data.raterId, 8, 80)
           && request.resource.data.score is number && request.resource.data.score >= 1 && request.resource.data.score <= 5
           && recent(request.resource.data.createdAt);
-        allow update: if adminMod() || reportOnly() || member() && isOwner() && sameOwner() && changes(['score'])
+        allow update: if adminMod() || staffMod(room) || reportOnly() || member() && isOwner() && sameOwner() && changes(['score'])
           && request.resource.data.score is number && request.resource.data.score >= 1 && request.resource.data.score <= 5;
         allow delete: if false;
       }
@@ -486,7 +505,7 @@ service cloud.firestore {
           && str(request.resource.data.buyerId, 8, 80) && str(request.resource.data.buyerName, 1, 40)
           && request.resource.data.get('buyerCampus', '') is string && request.resource.data.get('buyerCampus', '').size() <= 30
           && recent(request.resource.data.createdAt);
-        allow update: if adminMod() || reportOnly() || member() && isOwner() && sameOwner() && changes(['deleted']) && request.resource.data.deleted is bool;
+        allow update: if adminMod() || staffMod(room) || reportOnly() || member() && isOwner() && sameOwner() && changes(['deleted']) && request.resource.data.deleted is bool;
         allow delete: if false;
       }
 

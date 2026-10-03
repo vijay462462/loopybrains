@@ -37,7 +37,7 @@ try {
   throw e;
 }
 
-const S = { tab: "overview", admin: false, room: null, msg: "" };
+const S = { tab: "overview", admin: false, room: null, msg: "", staff: [], staffOnly: false };
 
 // ---------- sign in (email link) ----------
 async function finishLink() {
@@ -102,7 +102,7 @@ const reasons = (reports) => { const r = { o: 0, a: 0, s: 0, other: 0 }; for (co
 function roomPicker(onPick) {
   const input = h("input", { list: "adm-rooms", placeholder: "Type a college name…", "aria-label": "College" }), dl = h("datalist", { id: "adm-rooms" }), msg = h("p", { class: "msg" });
   let all = [];
-  loadColleges().then(rows => { all = rows; dl.replaceChildren(...rows.map(r => h("option", { value: r.name + " (" + r.slug + ")" }))); if (S.room) input.value = S.room.name + " (" + S.room.slug + ")"; }).catch(() => { msg.textContent = "Could not load the college list."; });
+  (S.staffOnly ? Promise.resolve(S.staff.map(x => ({ slug: x.slug || x.room, name: x.name, room: x.room, state: "", city: "" }))) : loadColleges()).then(rows => { if (S.staffOnly && rows.length && !S.room) { S.room = rows[0]; setTimeout(() => draw(), 0); } all = rows; dl.replaceChildren(...rows.map(r => h("option", { value: r.name + " (" + r.slug + ")" }))); if (S.room) input.value = S.room.name + " (" + S.room.slug + ")"; }).catch(() => { msg.textContent = "Could not load the college list."; });
   input.addEventListener("change", () => {
     const m = /\(([a-z0-9-]+)\)\s*$/.exec(input.value), pick = all.find(r => m && r.slug === m[1]) || all.find(r => r.name.toLowerCase() === input.value.trim().toLowerCase());
     if (!pick) { msg.textContent = "Pick a college from the list."; return; }
@@ -362,6 +362,32 @@ function saleView() {
     } }, "Start sale")), msg));
 }
 
+function staffView() {
+  const msg = h("p", { class: "msg" }), box = h("div", {});
+  const uid = h("input", { placeholder: "Staff member's user id (they copy it from the admin page)", maxlength: "128" }), label = h("input", { placeholder: "Role, e.g. Exam cell (optional)", maxlength: "40" }), pick = h("input", { list: "adm-staff-colleges", placeholder: "Type the college name…", "aria-label": "College" }), dl = h("datalist", { id: "adm-staff-colleges" });
+  let all = [];
+  loadColleges().then(rows => { all = rows.filter(r => r.slug !== "rgukt" || r.room); dl.replaceChildren(...all.map(r => h("option", { value: r.name + " (" + r.slug + ")" }))); }).catch(() => {});
+  const load = async () => {
+    try {
+      const snap = await fs.getDocs(fs.query(fs.collection(db, "staff"), fs.limit(300)));
+      box.replaceChildren(h("h3", {}, snap.size + " staff member" + (snap.size === 1 ? "" : "s")), ...snap.docs.map(d => { const r = d.data(); return h("div", { class: "card" }, h("div", { class: "row" }, h("b", {}, r.name), r.label ? h("span", { class: "tag" }, r.label) : null), h("p", { class: "mono" }, r.uid + " · added " + ago(r.createdAt || 0)),
+        h("div", { class: "row" }, h("button", { class: "b sm bad", onclick: async (e) => { if (!confirm("Remove this staff member?")) return; e.currentTarget.disabled = true; try { await fs.deleteDoc(fs.doc(db, "staff", d.id)); await logAction("remove-staff", "staff/" + d.id, r.name); load(); } catch (er) { msg.className = "msg err"; msg.textContent = "Not allowed (" + (er.code || "error") + ")."; } } }, "Remove"))); }));
+    } catch (e) { box.replaceChildren(h("p", { class: "msg err" }, "Could not load (" + (e.code || "error") + ").")); }
+  };
+  load();
+  return h("div", {}, h("div", { class: "card" }, h("h3", {}, "Add a college staff member"), h("p", { class: "adm-hint" }, "1) The staff member opens /admin.html and signs in with their email. 2) They copy the user id the page shows and send it to you. 3) You add them here. They can then post notices and papers, hide reported posts and block devices for THEIR college only."),
+    uid, pick, dl, label,
+    h("div", { class: "row" }, h("button", { class: "b pri", onclick: async (e) => {
+      const m = /\(([a-z0-9-]+)\)\s*$/.exec(pick.value), c = all.find(r => m && r.slug === m[1]), id = uid.value.trim();
+      if (!c || !c.room) { msg.className = "msg err"; msg.textContent = "Pick a college from the list (for RGUKT, open it once in another tab so its room id is saved)."; return; }
+      if (id.length < 10 || /[\/\s]/.test(id)) { msg.className = "msg err"; msg.textContent = "Paste the staff member's user id."; return; }
+      e.currentTarget.disabled = true;
+      try { await fs.setDoc(fs.doc(db, "staff", c.room + "_" + id), { uid: id, room: c.room, slug: c.slug, name: c.name.slice(0, 60), label: clean(label.value, 40), by: auth.currentUser.uid, createdAt: Date.now() }); await logAction("add-staff", "staff/" + c.slug + "_" + id.slice(0, 6), c.name); msg.className = "msg ok"; msg.textContent = "Added."; uid.value = ""; label.value = ""; load(); }
+      catch (er) { msg.className = "msg err"; msg.textContent = "Not saved (" + (er.code || "error") + "). Publish the latest rules."; }
+      e.currentTarget.disabled = false;
+    } }, "Add staff")), msg), box);
+}
+
 const EXAMS = ["Mid", "End", "Supplementary", "Model", "Other"];
 function papersView() {
   const p = roomPath(), msg = h("p", { class: "msg" }), box = h("div", {});
@@ -391,11 +417,13 @@ function papersView() {
 }
 
 // ---------- shell ----------
-const TABS = [["overview", "Overview", true], ["moderation", "Moderation", true], ["blocked", "Blocked devices", true], ["sale", "Flash sale", false], ["promos", "Promo codes", false], ["notices", "Notices", true], ["papers", "Papers", true], ["colleges", "Colleges", false], ["requests", "Requests and survey", false], ["log", "Log", false]];
-const VIEWS = { sale: saleView, promos: promosView, notices: noticesView, papers: papersView, overview: overviewView, moderation: moderationView, blocked: blockedView, colleges: collegesView, requests: requestsView, log: logView };
+const TABS = [["overview", "Overview", true], ["moderation", "Moderation", true], ["blocked", "Blocked devices", true], ["staff", "College staff", false], ["sale", "Flash sale", false], ["promos", "Promo codes", false], ["notices", "Notices", true], ["papers", "Papers", true], ["colleges", "Colleges", false], ["requests", "Requests and survey", false], ["log", "Log", false]];
+const VIEWS = { staff: staffView, sale: saleView, promos: promosView, notices: noticesView, papers: papersView, overview: overviewView, moderation: moderationView, blocked: blockedView, colleges: collegesView, requests: requestsView, log: logView };
 function draw() {
   const u = auth.currentUser;
-  const tabs = h("div", { class: "adm-tabs" }, ...TABS.map(([k, label]) => h("button", { class: S.tab === k ? "on" : "", onclick: () => { S.tab = k; draw(); } }, label)));
+  const STAFF_TABS = ["notices", "moderation", "blocked", "papers"], shownTabs = S.staffOnly ? TABS.filter(t => STAFF_TABS.includes(t[0])) : TABS;
+  if (S.staffOnly && !STAFF_TABS.includes(S.tab)) S.tab = "notices";
+  const tabs = h("div", { class: "adm-tabs" }, ...shownTabs.map(([k, label]) => h("button", { class: S.tab === k ? "on" : "", onclick: () => { S.tab = k; draw(); } }, label)));
   const needs = TABS.find(t => t[0] === S.tab)[2];
   const pickerBox = needs ? roomPicker(() => draw()) : null;
   const body = h("div", {});
@@ -417,6 +445,8 @@ else {
     if (!adm.exists()) WHY.text = "no document admins/" + user.uid + " was found. Check the collection name is exactly admins and the document id matches the id below.";
     else if (!user.emailVerified) WHY.text = "the document exists but this email is not verified. Sign out and sign in again with the email link.";
   } catch (e) { S.admin = false; WHY.text = (e && e.code === "permission-denied") ? "Firebase blocked the read (permission-denied). The new rules are not published yet: Firestore › Rules › paste firestore.rules › Publish." : "could not check (" + ((e && e.code) || "error") + ")."; }
-  if (!S.admin) root.replaceChildren(notAdminView());
-  else draw();
+  if (!S.admin) {
+    try { const sn = await fs.getDocs(fs.query(fs.collection(db, "staff"), fs.where("uid", "==", user.uid))); S.staff = sn.docs.map(d => d.data()); } catch (_) { S.staff = []; }
+    if (S.staff.length && user.emailVerified) { S.staffOnly = true; S.tab = "notices"; draw(); } else root.replaceChildren(notAdminView());
+  } else draw();
 }

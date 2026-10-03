@@ -132,3 +132,11 @@ See `PREMIUM.md` for the plan, the pricing ideas and the step-by-step go-live li
 4. Tabs: Overview, Moderation (hide/restore, clear reports, block device), Blocked devices, Colleges (create/edit), Requests and survey, Log. Every action is written to `adminLog`.
 
 New posts now store `ownerUid`, so only their author (or an admin) can edit them. Older posts without it stay editable by anyone until replaced.
+
+## College staff accounts
+
+A college's own staff (exam cell, placement cell, principal's office) can run their college's board without being platform admins.
+1. The staff member opens `/admin.html` and signs in with their email link. The page shows "not an admin yet" and their user id; they send you that id.
+2. In `/admin.html` open **College staff**, paste the id, pick their college, add a role label, and tap **Add staff**.
+3. They reload `/admin.html`. They now see only **Notices, Moderation, Blocked devices and Papers**, and only for their own college. They cannot touch other colleges, colleges' settings, promo codes, sales or the staff list. Remove them from the same tab any time.
+Staff need a verified email (the email link does that). Their actions are not written to the audit log yet.

@@ -10,7 +10,7 @@ What colleges pay for (in the order I would build and sell it). Prices are guess
 | 4 | **Paper vault** curated by the college | **Built** (admin dashboard › Papers) |
 | 5 | **Own colours, subjects, clubs, branding** per college | **Built** |
 | 6 | **Engagement report** (weekly active students, posts, doubts answered) emailed to the principal | Next |
-| 7 | **College admins** (a staff member who manages only their college, not the whole platform) | Next: needs a per-college `admins` role in the rules |
+| 7 | **College staff accounts** (a staff member who manages only their college) | **Built** (admin dashboard › College staff) |
 | 8 | **Placement cell tools**: drives, eligibility, applicant list | Next |
 | 9 | **Club and event management** with RSVP | Later |
 | 10 | **Bulk email-domain verification** and a student count against the licence | Later |
