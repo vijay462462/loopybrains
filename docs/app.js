@@ -308,7 +308,7 @@ const fileExt = (name) => (String(name || "").split(".").pop() || "").toLowerCas
 
 const state = {
   tab: "doubts", group: "All", query: "", filter: "all",
-  doubts: [], ideas: [], clubs: [], gate: [], jobs: [], challenges: [], chalScores: [], market: [], marketReports: [], marketRatings: [], marketInterests: [], replies: [], likes: [], plan: { plus: false, until: 0 }, papers: [], notices: [], drives: [], blocked: [], profiles: [], stories: [], storyViews: [], storyAnswers: [], loaded: false,
+  doubts: [], ideas: [], clubs: [], gate: [], jobs: [], challenges: [], chalScores: [], market: [], marketReports: [], marketRatings: [], marketInterests: [], replies: [], likes: [], plan: { plus: false, until: 0 }, papers: [], notices: [], drives: [], weekly: [], blocked: [], profiles: [], stories: [], storyViews: [], storyAnswers: [], loaded: false,
   selected: null, mode: "intro", // intro | view | ask | edit | name | campus
   afterName: null,
   replyPages: [], replyAnon: false,
@@ -2696,12 +2696,13 @@ const PLUS_TILES = [
   ["📚", "Paper vault", "Previous-year papers and solutions, by subject and year.", "papers"],
   ["☁️", "Cloud backup", "Keep flashcards, notes and tasks safe across phones.", ""],
   ["🎨", "Themes", "Your own colour for the whole app.", ""],
+  ["🏅", "Weekly leaderboard", "Compete with Plus members of your college every week.", "wboard"],
   ["📄", "Resume builder", "A one-page ATS-friendly resume you can print as a PDF.", "resume"],
   ["⏱️", "Focus timer", "Pomodoro rounds with a 7-day study chart.", "focusplus"],
   ["🎯", "Goals and badges", "Weekly targets and badges to keep you going.", "goals"],
   ["⭐", "Plus star", "A star next to your name on every post.", ""],
 ];
-const PLUS_COMPARE = [["", "Free", "Plus"], ["Board, stories, quizzes, Study Lab", "✔", "✔"], ["Daily streaks and battles", "✔", "✔"], ["AI study helper", "–", "✔"], ["Mock tests and progress chart", "–", "✔"], ["Mistake notebook and exam planner", "–", "✔"], ["Paper vault", "–", "✔"], ["Weekly goals, badges, focus timer", "–", "✔"], ["Resume builder", "–", "✔"], ["Cloud backup, themes, ⭐", "–", "✔"]];
+const PLUS_COMPARE = [["", "Free", "Plus"], ["Board, stories, quizzes, Study Lab", "✔", "✔"], ["Daily streaks and battles", "✔", "✔"], ["AI study helper", "–", "✔"], ["Mock tests and progress chart", "–", "✔"], ["Mistake notebook and exam planner", "–", "✔"], ["Paper vault", "–", "✔"], ["Weekly goals, badges, focus timer", "–", "✔"], ["Resume builder, weekly leaderboard", "–", "✔"], ["Cloud backup, themes, ⭐", "–", "✔"]];
 function renderPlus() {
   const acct = myAccount(), verified = acct.verified, has = state.plan.plus;
   const canBackup = !!store && !!store.getTop && verified && (!PLUS.enabled || has);
@@ -2807,7 +2808,8 @@ function renderPlus() {
       el("button", { class: "btn", type: "button", onclick: () => showPanel("papers") }, "📚 Paper vault (" + state.papers.length + ")"),
       el("button", { class: "btn", type: "button", onclick: () => showPanel("goals") }, "🎯 Goals and badges"),
       el("button", { class: "btn", type: "button", onclick: () => { state.ft = null; showPanel("focusplus"); } }, "⏱️ Focus timer"),
-      el("button", { class: "btn", type: "button", onclick: () => showPanel("resume") }, "📄 Resume builder")),
+      el("button", { class: "btn", type: "button", onclick: () => showPanel("resume") }, "📄 Resume builder"),
+      el("button", { class: "btn", type: "button", onclick: () => showPanel("wboard") }, "🏅 Weekly leaderboard")),
     el("div", { class: "label" }, "🎨 Theme"),
     (PLUS.enabled && !has) ? el("p", { class: "hint" }, "Themes are part of the paid plan.") : el("div", { class: "rowbtns" }, ...THEMES.map(([n, c]) => el("button", { class: "btn sm", type: "button", onclick: () => { try { if (c) localStorage.setItem("dd-theme", c); else localStorage.removeItem("dd-theme"); } catch (_) {} if (!c) { const b = BRAND_COLORS || ["#4f46e5", "#7c3aed"]; document.documentElement.style.setProperty("--accent", b[0]); document.documentElement.style.setProperty("--brand-a", b[0]); document.documentElement.style.setProperty("--brand-b", b[1]); } else applyTheme(); } }, n))),
     el("div", { class: "label" }, "☁️ Backup"),
@@ -2827,6 +2829,19 @@ const offerOn = () => { const o = PLUS.offer; if (!o || !o.yearly || !o.until) r
 const goalStats = () => { const g = readJSON("dd-goals", {}); return g.week === weekKey() ? g : { week: weekKey(), tests: 0, cleared: 0, papers: 0 }; };
 const lifeStats = () => ({ tests: 0, cleared: 0, papers: 0, best: 0, ...readJSON("dd-life", {}) });
 const dailyStats = () => { const d = readJSON("dd-daily", {}); return d.day === dayStr() ? d : { day: dayStr(), tests: 0, cleared: 0, mins: 0 }; };
+const weekStartMs = () => (parseInt(weekKey().slice(1), 10) * 7 - 3) * 864e5;
+const weekPoints = () => { const g = goalStats(); return Math.min(3000, Math.floor((g.mins || 0) / 5) + (g.tests || 0) * 20 + (g.cleared || 0) * 2 + (g.papers || 0) * 10); };
+let weeklyTimer = 0;
+function syncWeekly() {
+  clearTimeout(weeklyTimer);
+  weeklyTimer = setTimeout(async () => {
+    try {
+      if (!store || !store.set || !store.authUid || NO_COLLEGE || plusLocked()) return;
+      const g = goalStats(), pts = weekPoints(), uid = store.authUid(); if (!uid || !pts) return;
+      await store.set("weekly", weekKey() + "_" + uid, { week: weekKey(), uid, name: (getName() || "Student").slice(0, 30), points: pts, mins: Math.min(3000, g.mins || 0), tests: Math.min(60, g.tests || 0), createdAt: weekStartMs(), updatedAt: Date.now() });
+    } catch (_) {}
+  }, 2500);
+}
 function bump(key, n, score) { try { const dd = dailyStats(); dd[key] = (dd[key] || 0) + n; writeJSON("dd-daily", dd); } catch (_) {} const g = goalStats(); g[key] = (g[key] || 0) + n; writeJSON("dd-goals", g); const l = lifeStats(); l[key] = (l[key] || 0) + n; if (score && score > l.best) l.best = score; writeJSON("dd-life", l); }
 
 const readJSON = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k) || "null"); return v == null ? d : v; } catch (_) { return d; } };
@@ -3099,6 +3114,21 @@ function renderResume() {
       window.addEventListener("afterprint", done); setTimeout(() => window.print(), 50);
     } }, "🖨️ Print / Save as PDF"), el("button", { class: "btn sm", type: "button", onclick: () => { if (confirm("Clear your resume?")) { localStorage.removeItem("dd-resume"); render(); } } }, "Clear"), back),
     el("p", { class: "hint" }, "Tip: keep it to one page, use numbers (for example 'cut load time by 30%'), and name the technologies you used.")];
+}
+// Weekly Plus leaderboard: points from focus minutes, mock tests, mistakes cleared and papers practised. Resets every Monday.
+function renderWeeklyBoard() {
+  const back = el("button", { class: "btn", type: "button", onclick: () => showPanel("plus") }, "Back");
+  if (plusLocked()) return [el("h2", {}, "🏅 Weekly leaderboard"), el("p", { class: "hint" }, "The weekly leaderboard is for CampusLoop Plus members."), el("div", { class: "rowbtns" }, back)];
+  syncWeekly();
+  const uid = store && store.authUid ? store.authUid() : "", rows = state.weekly.slice().sort((a, b) => b.points - a.points || a.updatedAt - b.updatedAt), mine = rows.findIndex(r => r.uid === uid), medal = ["🥇", "🥈", "🥉"];
+  const left = (() => { const ms = weekStartMs() + 7 * 864e5 - Date.now(), d = Math.floor(ms / 864e5), h = Math.floor(ms % 864e5 / 36e5); return d + "d " + h + "h"; })();
+  const next = mine > 0 ? rows[mine - 1].points - rows[mine].points + 1 : 0;
+  return [el("h2", {}, "🏅 Weekly leaderboard"), el("p", { class: "hint" }, "Plus members of " + COLLEGE + ". Resets in " + left + "."),
+    el("div", { class: "learn-card plus-list" }, el("strong", {}, mine >= 0 ? "You are #" + (mine + 1) + " with " + rows[mine].points + " points" : "You have " + weekPoints() + " points this week"),
+      mine > 0 ? el("p", { class: "hint" }, next + " more point" + (next === 1 ? "" : "s") + " to pass " + rows[mine - 1].name + ".") : mine === 0 ? el("p", { class: "hint" }, "You lead the board. Wow, amazing! 🎉") : el("p", { class: "hint" }, "Do a focus round, mock test or paper to join the board.")),
+    ...(rows.length ? rows.slice(0, 20).map((r, i) => el("div", { class: "lb-row" + (r.uid === uid ? " me" : "") }, el("span", { class: "lb-rank" }, medal[i] || String(i + 1)), el("span", { class: "lb-name" }, r.name + (r.uid === uid ? " (you)" : "")), el("b", {}, String(r.points)))) : [el("p", { class: "hint" }, "No scores yet this week. Be the first!")]),
+    el("div", { class: "learn-card plus-list" }, el("strong", {}, "How points work"), el("p", { class: "hint" }, "⏱️ 5 minutes of focus = 1 point · 📝 a mock test = 20 · 📚 a paper practised = 10 · 📓 a mistake cleared = 2. Scores are reported by each phone, so play fair. 🙏")),
+    el("div", { class: "rowbtns" }, back)];
 }
 const GOAL_DEFS = [["tests", "📝 Take 3 mock tests", 3], ["cleared", "📓 Clear 10 mistakes", 10], ["papers", "📚 Practise 2 papers", 2], ["mins", "⏱️ Focus for 120 minutes", 120]];
 const PLUS_BADGES = [["🥉", "First mock", l => l.tests >= 1], ["🥈", "5 mocks done", l => l.tests >= 5], ["🏆", "Ace: 90%+ in a test", l => l.best >= 90], ["🧹", "Mistake slayer (20)", l => l.cleared >= 20], ["📚", "Paper warrior (10)", l => l.papers >= 10], ["🗓️", "Planner set", () => !!readJSON("dd-exam-plan", null)], ["⏱️", "Focused: 10 hours", l => (l.mins || 0) >= 600]];
@@ -6867,6 +6897,7 @@ function render() {
       state.mode === "drives" ? renderDrives() :
       state.mode === "ai" ? renderAI() :
       state.mode === "goals" ? renderGoals() :
+      state.mode === "wboard" ? renderWeeklyBoard() :
       state.mode === "resume" ? renderResume() :
       state.mode === "focusplus" ? renderFocusPlus() :
       state.mode === "college" ? renderCollege() :
@@ -7037,6 +7068,7 @@ render();
   store.subscribe("storyViews", rows => { state.storyViews = rows; }, e => {}, since);
   store.subscribe("storyAnswers", rows => { state.storyAnswers = rows; update(); }, e => {}, Date.now() - 7 * 86400000);
   store.subscribe("drives", rows => { state.drives = rows.filter(d => !d.deleted && typeof d.company === "string"); renderHeader(); if (state.mode === "drives") render(); }, e => {});
+  store.subscribe("weekly", rows => { state.weekly = rows.filter(r => r.week === weekKey() && typeof r.points === "number"); if (state.mode === "wboard") render(); }, e => {}, weekStartMs() - 1);
   store.subscribe("notices", rows => { state.notices = rows.filter(n => !n.deleted && typeof n.title === "string"); renderOfficial(); }, e => {});
   store.subscribe("papers", rows => { state.papers = rows.filter(p => !p.deleted && typeof p.title === "string" && /^https:\/\//.test(p.link || "")); if (state.mode === "papers") render(); }, e => {});
   store.subscribe("jobs", rows => { const live_ = live(rows); trackNew("jobs", live_); state.jobs = live_; update(); }, e => {});

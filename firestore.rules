@@ -355,6 +355,20 @@ service cloud.firestore {
         allow create, update: if (isAdmin() || isStaff(room)) && validNotice();
         allow delete: if isAdmin() || isStaff(room);
       }
+      // ---------- weekly Plus leaderboard: each student writes only their own score row for the current week ----------
+      match /weekly/{id} {
+        function validWeekly() {
+          let d = request.resource.data;
+          return d.keys().hasOnly(['week', 'uid', 'name', 'points', 'mins', 'tests', 'createdAt', 'updatedAt'])
+            && d.uid == request.auth.uid && id == d.week + '_' + request.auth.uid && d.week.matches('w[0-9]{3,6}')
+            && str(d.name, 1, 30) && d.points is int && d.points >= 0 && d.points <= 3000
+            && d.mins is int && d.mins >= 0 && d.mins <= 3000 && d.tests is int && d.tests >= 0 && d.tests <= 60
+            && d.createdAt is int && d.createdAt > request.time.toMillis() - 691200000 && d.createdAt <= request.time.toMillis() + 86400000 && recent(d.updatedAt);
+        }
+        allow read: if member();
+        allow create, update: if member() && validWeekly();
+        allow delete: if signedIn() && resource.data.uid == request.auth.uid;
+      }
       // ---------- placement cell: campus drives posted by admins/staff, students register interest ----------
       match /drives/{id} {
         function validDrive() {

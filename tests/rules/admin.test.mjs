@@ -137,6 +137,15 @@ await t("student reads own interest but not others'", async () => { await assert
 await t("placement staff and admin read all applicants", async () => { await assertSucceeds(getDocs(collection(sctx, R + "/driveInterest"))); await assertSucceeds(getDocs(collection(admin, R + "/driveInterest"))); });
 await t("a student cannot list all applicants", () => assertFails(getDocs(collection(student, R + "/driveInterest"))));
 await t("student withdraws their interest", () => assertSucceeds(deleteDoc(doc(student, R + "/driveInterest/d1_stud"))));
+console.log("weekly leaderboard");
+const wk = (extra = {}) => ({ week: "w2900", uid: "stud", name: "Revi", points: 120, mins: 100, tests: 2, createdAt: now() - 864e5, updatedAt: now(), ...extra });
+await t("student writes their own weekly score", () => assertSucceeds(setDoc(doc(student, R + "/weekly/w2900_stud"), wk())));
+await t("student updates their own score", () => assertSucceeds(setDoc(doc(student, R + "/weekly/w2900_stud"), wk({ points: 160 }))));
+await t("student cannot write someone else's row", () => assertFails(setDoc(doc(student, R + "/weekly/w2900_other"), wk({ uid: "other" }))));
+await t("absurd points are refused", () => assertFails(setDoc(doc(student, R + "/weekly/w2900_stud"), wk({ points: 99999 }))));
+await t("an old week row cannot be faked into this week (createdAt too old)", () => assertFails(setDoc(doc(student, R + "/weekly/w2900_stud"), wk({ createdAt: now() - 864e5 * 40 }))));
+await t("everyone signed in reads the board", () => assertSucceeds(getDocs(collection(anon, R + "/weekly"))));
+await t("student removes only their own row", async () => { await assertSucceeds(deleteDoc(doc(student, R + "/weekly/w2900_stud"))); await env.withSecurityRulesDisabled(async (c) => { await setDoc(doc(c.firestore(), R + "/weekly/w2900_zed"), wk({ uid: "zed" })); }); await assertFails(deleteDoc(doc(student, R + "/weekly/w2900_zed"))); });
 console.log("server-only collections");
 await t("gifts, referrals, entitlements and payments cannot be read or written from the app", async () => { for (const p of ["gifts/ABCDEFGHJKLM", "referrals/x", "refStats/x", "payments/p1", "aiUsage/u_1"]) { await assertFails(getDoc(doc(student, p))); await assertFails(setDoc(doc(student, p), { x: 1 })); } await assertFails(setDoc(doc(student, "entitlements/stud"), { plan: "plus", until: now() + 1e10 })); });
 console.log(`\n${pass} passed, ${fail} failed`);

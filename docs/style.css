@@ -1862,3 +1862,7 @@ body.priv-blur > * { filter: blur(22px); }
   }
 }
 @media (max-width: 700px) { .trust-bar { padding-right: 46px; } .brand { padding-right: 46px; } }
+.lb-row { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); }
+.lb-row.me { border-color: var(--accent); background: var(--accent-soft); font-weight: 700; }
+.lb-rank { width: 30px; text-align: center; font-weight: 800; }
+.lb-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
