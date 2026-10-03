@@ -1368,6 +1368,40 @@ function renderExplore() {
     ...EXPLORE.flatMap(([title, items]) => [el("div", { class: "label" }, title), el("div", { class: "plus-tiles" }, ...items.filter(it => !it[3] || !document.body.classList.contains("no-" + it[3])).map(([id, icon, label]) => el("button", { class: "plus-tile", type: "button", onclick: () => go(id) }, el("span", { class: "pt-i", "aria-hidden": "true" }, icon), el("strong", {}, label))))]),
     el("div", { class: "rowbtns" }, back)];
 }
+// Milestone welcome: counts the different days a student opened the app and celebrates 3, 7, 14, 30, 60 and 100 days with the family.
+const MILESTONES = [
+  [3, "🌱", "Your first three days", "You are already part of the family. Small steps every day grow into big results.", 0],
+  [7, "🔥", "A full week together", "Seven days of showing up. Thank you for helping build a kind, curious campus.", 1],
+  [14, "⭐", "Two weeks strong", "You are becoming a pillar of this family. Keep asking, keep answering.", 0],
+  [30, "🏆", "One month with the family", "Thirty days of learning together. Your juniors are lucky to have you here.", 3],
+  [60, "💎", "Sixty days of dedication", "Respect. Consistency like yours lifts everyone around you.", 0],
+  [100, "👑", "100 days: a true family member", "A hundred days. You are the heart of this campus. Thank you from all of us. 🙏", 7],
+];
+function recordVisit() {
+  const v = readJSON("dd-visits", { n: 0, last: "" }), today = dayStr();
+  if (v.last !== today) { v.n = (v.n || 0) + 1; v.last = today; writeJSON("dd-visits", v); }
+  return v.n || 1;
+}
+function showMilestone(n, tries) {
+  if (document.getElementById("milestone")) return;
+  if ((document.getElementById("welcome") || document.getElementById("splash")) && (tries || 0) < 12) { setTimeout(() => showMilestone(n, (tries || 0) + 1), 1000); return; }
+  const m = MILESTONES.find(x => x[0] === n); if (!m) return;
+  const [, icon, title, text, bonus] = m;
+  const box = el("div", { id: "milestone", class: "welcome", role: "dialog", "aria-modal": "true", "aria-label": "Milestone" });
+  const close = () => { box.remove(); };
+  if (bonus) { const until = Math.max(Number(readJSON("dd-bonus-until", 0)) || 0, Date.now()) + bonus * 864e5; writeJSON("dd-bonus-until", until); }
+  writeJSON("dd-milestones", [...(readJSON("dd-milestones", [])), n]);
+  box.append(el("div", { class: "welcome-card" },
+    el("div", { class: "welcome-icon", "aria-hidden": "true" }, icon), el("h2", {}, "Day " + n + " with the " + BRAND + " family 🎉"), el("h3", {}, title), el("p", {}, text),
+    bonus ? el("p", { class: "plan-deal" }, "🎁 Our gift: " + bonus + " free day" + (bonus === 1 ? "" : "s") + " of Plus studio") : null,
+    el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", onclick: close }, "Thank you!"),
+      el("button", { class: "btn", type: "button", onclick: () => { shareResult({ kicker: "Member of the " + BRAND + " family", emoji: icon, big: "Day " + n, line: title }); } }, "📤 Share"))));
+  document.body.append(box);
+}
+function maybeMilestone() {
+  const n = recordVisit(), done = readJSON("dd-milestones", []);
+  if (MILESTONES.some(m => m[0] === n) && !done.includes(n) && !NO_COLLEGE) setTimeout(() => showMilestone(n, 0), 1800);
+}
 // Trust strip under the tagline: honest promises plus real numbers from this college (shown only once they are big enough to mean something).
 let trustKey = "";
 function renderTrust() {
@@ -2869,7 +2903,8 @@ function renderPlus() {
 // CampusLoop Plus studio: timed mock tests (subjects or placement), progress chart, mistake notebook and exam planner. Data stays on this phone.
 const MOCK_N = 15, MOCK_SECS = 20 * 60;
 const trialLeft = () => { const t = Number(readJSON("dd-trial-start", 0)) || 0, d = Number(PLUS.trialDays) || 0; return t && d ? Math.max(0, Math.ceil((t + d * 864e5 - Date.now()) / 864e5)) : 0; };
-const plusLocked = () => PLUS.enabled && !state.plan.plus && trialLeft() === 0;
+const bonusLeft = () => Math.max(0, Math.ceil(((Number(readJSON("dd-bonus-until", 0)) || 0) - Date.now()) / 864e5));
+const plusLocked = () => PLUS.enabled && !state.plan.plus && trialLeft() === 0 && bonusLeft() === 0;
 const offerOn = () => { const o = PLUS.offer; if (!o || !o.yearly || !o.until) return null; const end = new Date(o.until + "T23:59:59+05:30").getTime(); return end > Date.now() ? { label: o.label || "Offer", yearly: o.yearly, days: Math.ceil((end - Date.now()) / 864e5) } : null; };
 // Weekly goals and lifetime badges, kept on this phone.
 const goalStats = () => { const g = readJSON("dd-goals", {}); return g.week === weekKey() ? g : { week: weekKey(), tests: 0, cleared: 0, papers: 0 }; };
@@ -3177,7 +3212,7 @@ function renderWeeklyBoard() {
     el("div", { class: "rowbtns" }, back)];
 }
 const GOAL_DEFS = [["tests", "📝 Take 3 mock tests", 3], ["cleared", "📓 Clear 10 mistakes", 10], ["papers", "📚 Practise 2 papers", 2], ["mins", "⏱️ Focus for 120 minutes", 120]];
-const PLUS_BADGES = [["🥉", "First mock", l => l.tests >= 1], ["🥈", "5 mocks done", l => l.tests >= 5], ["🏆", "Ace: 90%+ in a test", l => l.best >= 90], ["🧹", "Mistake slayer (20)", l => l.cleared >= 20], ["📚", "Paper warrior (10)", l => l.papers >= 10], ["🗓️", "Planner set", () => !!readJSON("dd-exam-plan", null)], ["⏱️", "Focused: 10 hours", l => (l.mins || 0) >= 600]];
+const PLUS_BADGES = [["🥉", "First mock", l => l.tests >= 1], ["🥈", "5 mocks done", l => l.tests >= 5], ["🏆", "Ace: 90%+ in a test", l => l.best >= 90], ["🧹", "Mistake slayer (20)", l => l.cleared >= 20], ["📚", "Paper warrior (10)", l => l.papers >= 10], ["🗓️", "Planner set", () => !!readJSON("dd-exam-plan", null)], ["⏱️", "Focused: 10 hours", l => (l.mins || 0) >= 600], ["🌳", "Family: 7 days", () => (readJSON("dd-visits", { n: 0 }).n || 0) >= 7], ["🏆", "Family: 30 days", () => (readJSON("dd-visits", { n: 0 }).n || 0) >= 30]];
 function renderGoals() {
   const back = el("button", { class: "btn", type: "button", onclick: () => showPanel("plus") }, "Back");
   if (plusLocked()) return [el("h2", {}, "🎯 Goals and badges"), el("p", { class: "hint" }, "Goals and badges are part of CampusLoop Plus."), el("div", { class: "rowbtns" }, back)];
@@ -7017,6 +7052,7 @@ $("focusBtn") && $("focusBtn").addEventListener("click", toggleFocus);
 // A tiny tap vibration on buttons gives the app a native feel (phones that support it).
 document.addEventListener("click", (e) => { const b = e.target.closest && e.target.closest(".btn, .tabs button, .bnav-btn, .today-chip, .plus-tile"); if (b) { try { navigator.vibrate && navigator.vibrate(6); } catch (_) {} } }, { passive: true });
 maybeWelcome();
+maybeMilestone();
 $("filterToggle").addEventListener("click", () => { document.querySelector("header.top").classList.toggle("filters-open"); renderHeader(); });
 $("botBtn").addEventListener("click", () => { if (window.sparkBotToggle) window.sparkBotToggle(); });
 $("drivesBtn").addEventListener("click", () => showPanel("drives"));
