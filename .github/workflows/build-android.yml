@@ -27,6 +27,9 @@ jobs:
         run: npm install
       - name: Create the Android project
         run: npx cap add android
+      - name: App icon (optional, a failure here does not stop the build)
+        continue-on-error: true
+        run: npx --yes @capacitor/assets generate --android --iconBackgroundColor '#9333ea' --iconBackgroundColorDark '#4f46e5'
       - name: Block screenshots (FLAG_SECURE)
         run: python3 patch_android.py
       - name: Sync web assets

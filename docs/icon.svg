@@ -1,17 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <defs>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512"><defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#4f46e5"/>
-      <stop offset="40%" stop-color="#9333ea"/>
-      <stop offset="80%" stop-color="#db2777"/>
-      <stop offset="100%" stop-color="#f97316"/>
+      <stop offset="0%" stop-color="#4f46e5"/><stop offset="42%" stop-color="#9333ea"/>
+      <stop offset="78%" stop-color="#db2777"/><stop offset="100%" stop-color="#f97316"/>
     </linearGradient>
-    <filter id="glow">
-      <feGaussianBlur stdDeviation="8" result="blur"/>
-      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-  </defs>
-  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
-  <path d="M296 64 L152 280 h112 l-48 168 L440 232 H320 Z"
-        fill="white" fill-opacity="0.95" filter="url(#glow)"/>
-</svg>
+    <linearGradient id="star" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fffbd0"/><stop offset="100%" stop-color="#fde047"/>
+    </linearGradient>
+    <filter id="sh" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="6" stdDeviation="7" flood-color="#1e1b4b" flood-opacity=".35"/></filter>
+  </defs><rect width="512" height="512" rx="112" fill="url(#bg)"/><circle cx="150" cy="120" r="220" fill="#fff" opacity=".09"/><g filter="url(#sh)">
+    <path d="M355 157 A140 140 0 1 0 355 355" fill="none" stroke="#fff" stroke-width="40" stroke-linecap="round"/>
+    <circle cx="256" cy="226" r="31" fill="#fff"/>
+    <path d="M192 338 C192 290 222 272 256 272 C290 272 320 290 320 338 Z" fill="#fff"/>
+    <path d="M382 212 C386 238 392 244 418 248 C392 252 386 258 382 284 C378 258 372 252 346 248 C372 244 378 238 382 212 Z" fill="url(#star)"/>
+  </g></svg>

@@ -1,23 +1,28 @@
 // RGUKT Spark service worker — v36
 // Cache versioned assets only. Never cache index.html so updates deploy instantly.
-const CACHE = 'spark-v178';
+const CACHE = 'spark-v179';
 const SHELL = [
-  './style.css?v=178',
-  './sparkbot.css?v=178',
-  './config.js?v=178',
-  './quiz.js?v=178',
-  './app.js?v=178',
-  './sparkbot.js?v=178',
-  './player.js?v=178',
-  './player.css?v=178',
-  './tools-core.js?v=178',
-  './tools-math.js?v=178',
-  './tools-eng.js?v=178',
-  './tools-life.js?v=178',
-  './lab.js?v=178',
-  './lab.css?v=178',
+  './style.css?v=179',
+  './sparkbot.css?v=179',
+  './config.js?v=179',
+  './quiz.js?v=179',
+  './app.js?v=179',
+  './sparkbot.js?v=179',
+  './player.js?v=179',
+  './player.css?v=179',
+  './tools-core.js?v=179',
+  './tools-math.js?v=179',
+  './tools-eng.js?v=179',
+  './tools-life.js?v=179',
+  './lab.js?v=179',
+  './lab.css?v=179',
   './manifest.json',
   './icon.svg',
+  './icon-192.png',
+  './icon-512.png',
+  './icon-maskable-512.png',
+  './apple-touch-icon.png',
+  './favicon-32.png',
 ];
 
 self.addEventListener('install', e => {
