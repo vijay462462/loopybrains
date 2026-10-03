@@ -1866,3 +1866,10 @@ body.priv-blur > * { filter: blur(22px); }
 .lb-row.me { border-color: var(--accent); background: var(--accent-soft); font-weight: 700; }
 .lb-rank { width: 30px; text-align: center; font-weight: 800; }
 .lb-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Ask a doubt is no longer a floating button: it is the first shortcut in the scrolling row. */
+@media (max-width: 700px) {
+  header.top .btn.primary#askBtn {
+    position: static !important; right: auto; bottom: auto; z-index: auto; box-shadow: none; order: -1;
+    padding: 8px 16px !important; font-size: 12.5px !important; font-weight: 800; white-space: nowrap;
+  }
+}
