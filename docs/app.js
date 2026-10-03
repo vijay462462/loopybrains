@@ -2650,7 +2650,7 @@ async function startCheckout(planKey, gift) {
   if (!r.ok || !url || !/^https:\/\/(rzp\.io|razorpay\.com|[a-z0-9-]+\.razorpay\.com)\//.test(url)) throw new Error(j.error || "Could not start the payment.");
   window.open(url, "_blank", "noopener");
 }
-const PLUS_FEATURES = ["Plus gift link for a friend", "Group study rooms with a shared timer", "Scan handwritten notes into flashcards", "Live doubt sessions with seniors", "Placement preparation kit", "Offline downloads of papers", "Weekly leaderboard for Plus members", "Resume builder", "No ads, ever"];
+const PLUS_FEATURES = ["Plus gift link for a friend", "Group study rooms with a shared timer", "Scan handwritten notes into flashcards", "Live doubt sessions with seniors", "Placement preparation kit", "Offline downloads of papers", "Weekly leaderboard for Plus members", "More resume templates", "No ads, ever"];
 const PLUS_TILES = [
   ["🤖", "AI study helper", "Ask doubts and get step-by-step answers from Claude. 40 a day.", "ai"],
   ["📝", "Mock tests", "Timed subject and placement tests with a topic-wise report.", "mock"],
@@ -2659,11 +2659,12 @@ const PLUS_TILES = [
   ["📚", "Paper vault", "Previous-year papers and solutions, by subject and year.", "papers"],
   ["☁️", "Cloud backup", "Keep flashcards, notes and tasks safe across phones.", ""],
   ["🎨", "Themes", "Your own colour for the whole app.", ""],
+  ["📄", "Resume builder", "A one-page ATS-friendly resume you can print as a PDF.", "resume"],
   ["⏱️", "Focus timer", "Pomodoro rounds with a 7-day study chart.", "focusplus"],
   ["🎯", "Goals and badges", "Weekly targets and badges to keep you going.", "goals"],
   ["⭐", "Plus star", "A star next to your name on every post.", ""],
 ];
-const PLUS_COMPARE = [["", "Free", "Plus"], ["Board, stories, quizzes, Study Lab", "✔", "✔"], ["Daily streaks and battles", "✔", "✔"], ["AI study helper", "–", "✔"], ["Mock tests and progress chart", "–", "✔"], ["Mistake notebook and exam planner", "–", "✔"], ["Paper vault", "–", "✔"], ["Weekly goals, badges, focus timer", "–", "✔"], ["Cloud backup, themes, ⭐", "–", "✔"]];
+const PLUS_COMPARE = [["", "Free", "Plus"], ["Board, stories, quizzes, Study Lab", "✔", "✔"], ["Daily streaks and battles", "✔", "✔"], ["AI study helper", "–", "✔"], ["Mock tests and progress chart", "–", "✔"], ["Mistake notebook and exam planner", "–", "✔"], ["Paper vault", "–", "✔"], ["Weekly goals, badges, focus timer", "–", "✔"], ["Resume builder", "–", "✔"], ["Cloud backup, themes, ⭐", "–", "✔"]];
 function renderPlus() {
   const acct = myAccount(), verified = acct.verified, has = state.plan.plus;
   const canBackup = !!store && !!store.getTop && verified && (!PLUS.enabled || has);
@@ -2768,7 +2769,8 @@ function renderPlus() {
       el("button", { class: "btn", type: "button", onclick: () => showPanel("planner") }, "🗓️ Exam planner"),
       el("button", { class: "btn", type: "button", onclick: () => showPanel("papers") }, "📚 Paper vault (" + state.papers.length + ")"),
       el("button", { class: "btn", type: "button", onclick: () => showPanel("goals") }, "🎯 Goals and badges"),
-      el("button", { class: "btn", type: "button", onclick: () => { state.ft = null; showPanel("focusplus"); } }, "⏱️ Focus timer")),
+      el("button", { class: "btn", type: "button", onclick: () => { state.ft = null; showPanel("focusplus"); } }, "⏱️ Focus timer"),
+      el("button", { class: "btn", type: "button", onclick: () => showPanel("resume") }, "📄 Resume builder")),
     el("div", { class: "label" }, "🎨 Theme"),
     (PLUS.enabled && !has) ? el("p", { class: "hint" }, "Themes are part of the paid plan.") : el("div", { class: "rowbtns" }, ...THEMES.map(([n, c]) => el("button", { class: "btn sm", type: "button", onclick: () => { try { if (c) localStorage.setItem("dd-theme", c); else localStorage.removeItem("dd-theme"); } catch (_) {} if (!c) { const b = BRAND_COLORS || ["#4f46e5", "#7c3aed"]; document.documentElement.style.setProperty("--accent", b[0]); document.documentElement.style.setProperty("--brand-a", b[0]); document.documentElement.style.setProperty("--brand-b", b[1]); } else applyTheme(); } }, n))),
     el("div", { class: "label" }, "☁️ Backup"),
@@ -3016,6 +3018,50 @@ function giftCard() {
     el("div", { class: "rowbtns" }, buyGift("weekly", "Gift 1 week · ₹" + (PLUS.weekly || 19)), buyGift("monthly", "Gift 1 month · ₹" + PLUS.monthly), buyGift("semester", "Gift a semester · ₹" + (PLUS.semester || 149))),
     ...((giftsState.list || []).map(g => el("div", { class: "rowbtns" }, el("span", { class: "hint" }, "🎁 " + g.days + " days · " + (g.redeemed ? "claimed ✔" : "not claimed yet")), g.redeemed ? null : el("button", { class: "btn sm primary", type: "button", onclick: () => share(g.code) }, "Share link")))),
     el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: () => { giftsState.list = null; giftsState.loading = false; loadGifts(); } }, "↻ Refresh my gifts")), say);
+}
+// Resume builder (Plus): fill a short form, see an ATS-friendly resume, print or save it as a PDF. Stays on this phone.
+const RESUME_EMPTY = { name: "", title: "", email: "", phone: "", city: "", link: "", summary: "", edu: [{ a: "", b: "", c: "" }, { a: "", b: "", c: "" }], skills: "", projects: [{ a: "", b: "" }, { a: "", b: "" }], exp: [{ a: "", b: "" }], ach: "", tpl: "classic" };
+const resumeData = () => { const d = readJSON("dd-resume", null); return d && typeof d === "object" ? { ...RESUME_EMPTY, ...d } : JSON.parse(JSON.stringify(RESUME_EMPTY)); };
+function resumeDoc(d) {
+  const sec = (title, ...kids) => { const k = kids.flat().filter(Boolean); return k.length ? el("section", { class: "rs-sec" }, el("h4", {}, title), ...k) : null; };
+  const list = (t) => String(t || "").split(/[\n,;]/).map(x => x.trim()).filter(Boolean);
+  const contact = [d.email, d.phone, d.city, /^https:\/\//.test(d.link || "") ? d.link : ""].filter(Boolean).join("  |  ");
+  return el("article", { class: "resume tpl-" + (d.tpl === "modern" ? "modern" : "classic") },
+    el("header", {}, el("h3", {}, d.name || "Your Name"), d.title ? el("p", { class: "rs-title" }, d.title) : null, contact ? el("p", { class: "rs-contact" }, contact) : null),
+    sec("Summary", d.summary ? el("p", {}, d.summary) : null),
+    sec("Education", d.edu.filter(e => e.a || e.b).map(e => el("p", {}, el("b", {}, e.a || ""), e.b ? ", " + e.b : "", e.c ? " (" + e.c + ")" : ""))),
+    sec("Skills", list(d.skills).length ? el("p", {}, list(d.skills).join(" · ")) : null),
+    sec("Projects", d.projects.filter(p => p.a || p.b).map(p => el("p", {}, el("b", {}, p.a || ""), p.b ? ": " + p.b : ""))),
+    sec("Experience and internships", d.exp.filter(p => p.a || p.b).map(p => el("p", {}, el("b", {}, p.a || ""), p.b ? ": " + p.b : ""))),
+    sec("Achievements", list(d.ach).length ? el("ul", {}, ...list(d.ach).map(x => el("li", {}, x))) : null));
+}
+function renderResume() {
+  const back = el("button", { class: "btn", type: "button", onclick: () => showPanel("plus") }, "Back");
+  if (plusLocked()) return [el("h2", {}, "📄 Resume builder"), el("p", { class: "hint" }, "The resume builder is part of CampusLoop Plus."), el("div", { class: "rowbtns" }, back)];
+  const d = resumeData(), prev = el("div", { class: "resume-wrap" }), save = () => { writeJSON("dd-resume", d); prev.replaceChildren(resumeDoc(d)); };
+  const inp = (label, get, set, max, ph, area) => { const f = el(area ? "textarea" : "input", { maxlength: String(max), placeholder: ph || label, "aria-label": label }); f.value = get(); f.addEventListener("input", () => { set(f.value.slice(0, max)); save(); }); return f; };
+  const row = (...kids) => el("div", { class: "two" }, ...kids);
+  const form = el("div", { class: "form" },
+    row(inp("Full name", () => d.name, v => d.name = v, 50), inp("Target role", () => d.title, v => d.title = v, 60, "Target role, e.g. Software Engineer Intern")),
+    row(inp("Email", () => d.email, v => d.email = v, 80), inp("Phone", () => d.phone, v => d.phone = v, 20)),
+    row(inp("City", () => d.city, v => d.city = v, 40), inp("Link (https://...)", () => d.link, v => d.link = v, 120, "LinkedIn or GitHub link (https://...)")),
+    inp("Summary", () => d.summary, v => d.summary = v, 300, "Two lines about you", true),
+    el("div", { class: "label" }, "Education"), ...d.edu.map((e, i) => row(inp("Degree " + (i + 1), () => e.a, v => e.a = v, 60, "Degree, e.g. B.Tech CSE"), inp("College " + (i + 1), () => e.b, v => e.b = v, 70, "College, year, CGPA"))),
+    inp("Skills", () => d.skills, v => d.skills = v, 300, "Skills separated by commas", true),
+    el("div", { class: "label" }, "Projects"), ...d.projects.map((p, i) => row(inp("Project " + (i + 1), () => p.a, v => p.a = v, 50, "Project name"), inp("What it does " + (i + 1), () => p.b, v => p.b = v, 160, "What you built and the result"))),
+    el("div", { class: "label" }, "Experience and internships"), ...d.exp.map((p, i) => row(inp("Role " + (i + 1), () => p.a, v => p.a = v, 60, "Role, organisation"), inp("Details " + (i + 1), () => p.b, v => p.b = v, 160, "What you did"))),
+    inp("Achievements", () => d.ach, v => d.ach = v, 300, "Achievements separated by commas", true));
+  const tplBtn = (t, label) => el("button", { class: "btn sm" + (d.tpl === t ? " primary" : ""), type: "button", onclick: () => { d.tpl = t; save(); render(); } }, label);
+  save();
+  return [el("h2", {}, "📄 Resume builder"), el("p", { class: "hint" }, "One clean page that recruiters and applicant tracking systems can read. Saved only on this phone."),
+    el("div", { class: "rowbtns" }, tplBtn("classic", "Classic"), tplBtn("modern", "Modern")), form, el("div", { class: "label" }, "Preview"), prev,
+    el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", onclick: () => {
+      const old = document.getElementById("resumePrint"); if (old) old.remove();
+      const box = el("div", { id: "resumePrint" }, resumeDoc(d)); document.body.append(box); document.body.classList.add("printing-resume");
+      const done = () => { document.body.classList.remove("printing-resume"); box.remove(); window.removeEventListener("afterprint", done); };
+      window.addEventListener("afterprint", done); setTimeout(() => window.print(), 50);
+    } }, "🖨️ Print / Save as PDF"), el("button", { class: "btn sm", type: "button", onclick: () => { if (confirm("Clear your resume?")) { localStorage.removeItem("dd-resume"); render(); } } }, "Clear"), back),
+    el("p", { class: "hint" }, "Tip: keep it to one page, use numbers (for example 'cut load time by 30%'), and name the technologies you used.")];
 }
 const GOAL_DEFS = [["tests", "📝 Take 3 mock tests", 3], ["cleared", "📓 Clear 10 mistakes", 10], ["papers", "📚 Practise 2 papers", 2], ["mins", "⏱️ Focus for 120 minutes", 120]];
 const PLUS_BADGES = [["🥉", "First mock", l => l.tests >= 1], ["🥈", "5 mocks done", l => l.tests >= 5], ["🏆", "Ace: 90%+ in a test", l => l.best >= 90], ["🧹", "Mistake slayer (20)", l => l.cleared >= 20], ["📚", "Paper warrior (10)", l => l.papers >= 10], ["🗓️", "Planner set", () => !!readJSON("dd-exam-plan", null)], ["⏱️", "Focused: 10 hours", l => (l.mins || 0) >= 600]];
@@ -6783,6 +6829,7 @@ function render() {
       state.mode === "notices" ? renderNotices() :
       state.mode === "ai" ? renderAI() :
       state.mode === "goals" ? renderGoals() :
+      state.mode === "resume" ? renderResume() :
       state.mode === "focusplus" ? renderFocusPlus() :
       state.mode === "college" ? renderCollege() :
       state.mode === "about" ? renderAbout() :
