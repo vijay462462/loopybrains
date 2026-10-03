@@ -21,6 +21,8 @@
   var i = 0, typer = setInterval(function () { if (!bubble) { clearInterval(typer); return; } i += 2; bubble.textContent = say.slice(0, i); if (i >= say.length) clearInterval(typer); }, 28);
   var done = false;
   function close() { if (done) return; done = true; clearInterval(typer); el.classList.add("splash-out"); setTimeout(function () { if (el.parentNode) el.remove(); }, 450); }
-  el.addEventListener("click", close);
-  setTimeout(close, first ? 4800 : 3400);
+  var go = document.getElementById("splashGo"); if (go) go.addEventListener("click", close);
+  if (!first) el.addEventListener("click", close);      // returning students: tap anywhere
+  document.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === "Escape") close(); });
+  if (!first) setTimeout(close, 9000);                  // new students stay until they press Continue
 })();
