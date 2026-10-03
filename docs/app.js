@@ -306,7 +306,7 @@ const fileExt = (name) => (String(name || "").split(".").pop() || "").toLowerCas
 
 const state = {
   tab: "doubts", group: "All", query: "", filter: "all",
-  doubts: [], ideas: [], clubs: [], gate: [], jobs: [], challenges: [], chalScores: [], market: [], marketReports: [], marketRatings: [], marketInterests: [], replies: [], likes: [], plan: { plus: false, until: 0 }, papers: [], blocked: [], profiles: [], stories: [], storyViews: [], storyAnswers: [], loaded: false,
+  doubts: [], ideas: [], clubs: [], gate: [], jobs: [], challenges: [], chalScores: [], market: [], marketReports: [], marketRatings: [], marketInterests: [], replies: [], likes: [], plan: { plus: false, until: 0 }, papers: [], notices: [], blocked: [], profiles: [], stories: [], storyViews: [], storyAnswers: [], loaded: false,
   selected: null, mode: "intro", // intro | view | ask | edit | name | campus
   afterName: null,
   replyPages: [], replyAnon: false,
@@ -6267,6 +6267,19 @@ function storyGroups() {
   for (const g of arr) { g.latest = g.items[g.items.length - 1].createdAt; g.unseen = g.items.some(s => !seen.has(s.id)); g.own = mineIds.has(g.authorId); }
   return arr.sort((a, b) => (b.own - a.own) || (b.unseen - a.unseen) || (b.latest - a.latest));
 }
+// Official notices from the college admin: shown as a pinned banner above the board until dismissed or expired.
+function renderOfficial() {
+  const bar = $("officialBar"); if (!bar) return;
+  const gone = new Set(readJSON("dd-notice-gone", [])), now = Date.now();
+  const live = state.notices.filter(n => !gone.has(n.id) && (!n.expiresAt || n.expiresAt > now)).sort((a, b) => (b.pinned === true) - (a.pinned === true) || (b.createdAt || 0) - (a.createdAt || 0));
+  if (!live.length) { bar.hidden = true; bar.replaceChildren(); return; }
+  const n = live[0], link = /^https:\/\//.test(n.link || "") ? n.link : "";
+  bar.replaceChildren(el("span", { class: "of-tag" }, n.pinned ? "📌 Official" : "📢 Official"), el("div", { class: "of-body" }, el("strong", {}, n.title), n.body ? el("span", {}, " " + n.body) : null),
+    link ? el("button", { class: "btn sm primary", type: "button", onclick: () => { try { window.open(link, "_blank", "noopener"); } catch (_) {} } }, "Open") : null,
+    live.length > 1 ? el("span", { class: "of-more" }, "+" + (live.length - 1)) : null,
+    el("button", { class: "of-x", type: "button", "aria-label": "Dismiss notice", onclick: () => { writeJSON("dd-notice-gone", [...gone, n.id].slice(-100)); renderOfficial(); } }, "✕"));
+  bar.hidden = false;
+}
 function renderStoryBar() {
   const bar = $("storyBar"); if (!bar) return;
   if (!store) { bar.hidden = true; return; }
@@ -6665,6 +6678,7 @@ render();
   store.subscribe("stories", rows => { state.stories = rows.filter(x => !x.deleted); renderStoryBar(); }, e => {}, since);
   store.subscribe("storyViews", rows => { state.storyViews = rows; }, e => {}, since);
   store.subscribe("storyAnswers", rows => { state.storyAnswers = rows; update(); }, e => {}, Date.now() - 7 * 86400000);
+  store.subscribe("notices", rows => { state.notices = rows.filter(n => !n.deleted && typeof n.title === "string"); renderOfficial(); }, e => {});
   store.subscribe("papers", rows => { state.papers = rows.filter(p => !p.deleted && typeof p.title === "string" && /^https:\/\//.test(p.link || "")); if (state.mode === "papers") render(); }, e => {});
   store.subscribe("jobs", rows => { const live_ = live(rows); trackNew("jobs", live_); state.jobs = live_; update(); }, e => {});
   store.subscribe("challenges", rows => { const live_ = live(rows); trackNew("challenges", live_); state.challenges = live_; update(); }, e => {});

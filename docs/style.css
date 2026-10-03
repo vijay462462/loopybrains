@@ -1724,3 +1724,9 @@ body.priv-blur > * { filter: blur(22px); }
 @keyframes float { 50% { transform: translateY(-5px); } }
 @media (prefers-reduced-motion: reduce) { .plus-hero, .wow, .wow-conf { animation: none; } }
 .ai-msg{white-space:pre-wrap;padding:9px 12px;border-radius:12px;margin:2px 0}.ai-msg.me{background:var(--accent-soft);justify-self:end}.ai-msg.bot{background:var(--paper);border:1px solid var(--line)}
+.official-bar { display: flex; gap: 10px; align-items: center; margin: 8px 12px; padding: 9px 12px; border-radius: 14px; color: #3b2a00; background: linear-gradient(110deg, #fde68a, #fbbf24); }
+.official-bar[hidden] { display: none; }
+.official-bar .of-tag { font-weight: 800; white-space: nowrap; }
+.official-bar .of-body { flex: 1; min-width: 0; }
+.official-bar .of-more { font-size: 12px; font-weight: 700; }
+.official-bar .of-x { border: 0; background: transparent; color: inherit; font-size: 16px; padding: 4px 6px; }

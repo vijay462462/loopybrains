@@ -282,6 +282,20 @@ service cloud.firestore {
         allow update: if adminMod() || reportOnly() || member() && isOwner() && sameOwner() && notBlocked(room, request.resource.data.authorId) && validPost('type') && unchanged() && postEdit('type');
         allow delete: if false;
       }
+      // ---------- official notices: only admins post; everyone signed in can read ----------
+      match /notices/{id} {
+        function validNotice() {
+          let d = request.resource.data;
+          return d.keys().hasOnly(['title', 'body', 'link', 'pinned', 'expiresAt', 'createdAt', 'deleted'])
+            && str(d.title, 3, 100) && str(d.body, 0, 600)
+            && (!('link' in d) || d.link == '' || (d.link is string && d.link.matches('https://[^ ]{4,290}')))
+            && optBool(d, 'pinned') && optBool(d, 'deleted')
+            && (!('expiresAt' in d) || d.expiresAt is int) && d.createdAt is int;
+        }
+        allow read: if member();
+        allow create, update: if isAdmin() && validNotice();
+        allow delete: if isAdmin();
+      }
       // ---------- previous-year paper vault: only admins add papers (links to files), everyone signed in can read ----------
       match /papers/{id} {
         function validPaper() {

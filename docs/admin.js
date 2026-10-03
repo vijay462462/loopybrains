@@ -283,6 +283,33 @@ function logView() {
 }
 
 
+function noticesView() {
+  const p = roomPath(), msg = h("p", { class: "msg" }), box = h("div", {});
+  const f = { title: h("input", { placeholder: "Title, e.g. Mid-sem timetable released", maxlength: "100" }), body: h("textarea", { placeholder: "Details (optional)", maxlength: "600" }), link: h("input", { placeholder: "https:// link (optional)", maxlength: "290" }),
+    days: h("input", { type: "number", min: "0", max: "365", value: "7", "aria-label": "Show for how many days (0 = until removed)" }), pinned: h("input", { type: "checkbox", checked: true }) };
+  const load = async () => {
+    try {
+      const snap = await fs.getDocs(fs.query(fs.collection(db, p, "notices"), fs.limit(100)));
+      const rows = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      box.replaceChildren(h("h3", {}, rows.length + " notice" + (rows.length === 1 ? "" : "s")), ...rows.map(r => h("div", { class: "card item" + (r.deleted ? " hidden" : "") }, h("div", { class: "row" }, h("b", {}, r.title), r.pinned ? h("span", { class: "tag warn" }, "pinned") : null, r.deleted ? h("span", { class: "tag bad" }, "archived") : null),
+        h("p", { class: "mono" }, ago(r.createdAt || 0) + (r.expiresAt ? " · until " + new Date(r.expiresAt).toLocaleDateString() : "")),
+        h("div", { class: "row" }, h("button", { class: "b sm", onclick: async (e) => { e.currentTarget.disabled = true; try { const { id, ...data } = r; await fs.setDoc(fs.doc(db, p, "notices", id), { ...data, deleted: !r.deleted }); await logAction(r.deleted ? "restore-notice" : "archive-notice", "notices/" + id, r.title); load(); } catch (er) { msg.className = "msg err"; msg.textContent = "Not allowed (" + (er.code || "error") + ")."; } } }, r.deleted ? "Restore" : "Archive")))));
+    } catch (e) { box.replaceChildren(h("p", { class: "msg err" }, "Could not load (" + (e.code || "error") + ").")); }
+  };
+  load();
+  return h("div", {}, h("div", { class: "card" }, h("h3", {}, "Post an official notice"), h("p", { class: "adm-hint" }, "Students see it as a gold banner at the top of the board until they dismiss it or it expires."),
+    f.title, f.body, f.link, h("label", {}, "Show for days (0 = until archived)", f.days), h("label", { class: "check" }, f.pinned, "Pin to the top"),
+    h("div", { class: "row" }, h("button", { class: "b pri", onclick: async (e) => {
+      const link = f.link.value.trim(), days = Math.max(0, Math.min(365, parseInt(f.days.value, 10) || 0));
+      if (clean(f.title.value, 100).length < 3) { msg.className = "msg err"; msg.textContent = "Write a title."; return; }
+      if (link && !/^https:\/\/[^\s]{4,290}$/.test(link)) { msg.className = "msg err"; msg.textContent = "The link must start with https://"; return; }
+      e.currentTarget.disabled = true;
+      try { const ref = fs.doc(fs.collection(db, p, "notices")), data = { title: clean(f.title.value, 100), body: clean(f.body.value, 600), link, pinned: f.pinned.checked, createdAt: Date.now() }; if (days) data.expiresAt = Date.now() + days * 864e5; await fs.setDoc(ref, data); await logAction("post-notice", "notices/" + ref.id, data.title); msg.className = "msg ok"; msg.textContent = "Posted."; f.title.value = ""; f.body.value = ""; f.link.value = ""; load(); }
+      catch (er) { msg.className = "msg err"; msg.textContent = "Not saved (" + (er.code || "error") + "). Publish the latest rules."; }
+      e.currentTarget.disabled = false;
+    } }, "Post notice")), msg), box);
+}
+
 const EXAMS = ["Mid", "End", "Supplementary", "Model", "Other"];
 function papersView() {
   const p = roomPath(), msg = h("p", { class: "msg" }), box = h("div", {});
@@ -312,8 +339,8 @@ function papersView() {
 }
 
 // ---------- shell ----------
-const TABS = [["overview", "Overview", true], ["moderation", "Moderation", true], ["blocked", "Blocked devices", true], ["papers", "Papers", true], ["colleges", "Colleges", false], ["requests", "Requests and survey", false], ["log", "Log", false]];
-const VIEWS = { papers: papersView, overview: overviewView, moderation: moderationView, blocked: blockedView, colleges: collegesView, requests: requestsView, log: logView };
+const TABS = [["overview", "Overview", true], ["moderation", "Moderation", true], ["blocked", "Blocked devices", true], ["notices", "Notices", true], ["papers", "Papers", true], ["colleges", "Colleges", false], ["requests", "Requests and survey", false], ["log", "Log", false]];
+const VIEWS = { notices: noticesView, papers: papersView, overview: overviewView, moderation: moderationView, blocked: blockedView, colleges: collegesView, requests: requestsView, log: logView };
 function draw() {
   const u = auth.currentUser;
   const tabs = h("div", { class: "adm-tabs" }, ...TABS.map(([k, label]) => h("button", { class: S.tab === k ? "on" : "", onclick: () => { S.tab = k; draw(); } }, label)));

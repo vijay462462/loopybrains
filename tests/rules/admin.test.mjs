@@ -64,5 +64,13 @@ await t("paper with a bad year is refused", () => assertFails(setDoc(doc(admin, 
 await t("paper with an unknown field is refused", () => assertFails(setDoc(doc(admin, R + "/papers/p6"), paper({ hack: 1 }))));
 await t("paper with a solution link is accepted", () => assertSucceeds(setDoc(doc(admin, R + "/papers/p7"), paper({ solution: "https://example.com/sol.pdf" }))));
 await t("admin removes a paper", () => assertSucceeds(deleteDoc(doc(admin, R + "/papers/p7"))));
+console.log("official notices");
+const notice = (extra = {}) => ({ title: "Exam timetable out", body: "Check the portal.", pinned: true, createdAt: now(), ...extra });
+await t("admin posts a notice", () => assertSucceeds(setDoc(doc(admin, R + "/notices/n1"), notice())));
+await t("student reads notices", () => assertSucceeds(getDocs(collection(student, R + "/notices"))));
+await t("student cannot post a notice", () => assertFails(setDoc(doc(student, R + "/notices/n2"), notice())));
+await t("notice with a non-https link is refused", () => assertFails(setDoc(doc(admin, R + "/notices/n3"), notice({ link: "javascript:alert(1)" }))));
+await t("notice with an unknown field is refused", () => assertFails(setDoc(doc(admin, R + "/notices/n4"), notice({ hack: 1 }))));
+await t("admin archives a notice", () => assertSucceeds(setDoc(doc(admin, R + "/notices/n1"), notice({ deleted: true }))));
 console.log(`\n${pass} passed, ${fail} failed`);
 await env.cleanup(); process.exit(fail ? 1 : 0);
