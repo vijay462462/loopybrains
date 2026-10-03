@@ -1,0 +1,13 @@
+{
+  "name": "rgukt-spark-android",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Android wrapper for RGUKT Spark. Screenshots and screen recording are blocked inside this app.",
+  "dependencies": {
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/core": "^6.1.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.1.2"
+  }
+}
