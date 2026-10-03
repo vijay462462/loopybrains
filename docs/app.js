@@ -52,8 +52,17 @@ function cleanTenant(raw, slug) {
     features: { bot: f.bot === true, alumni: f.alumni === true, fun: f.fun !== false, jobs: f.jobs !== false, market: f.market !== false, challenges: f.challenges !== false },
   };
 }
+// Colleges from colleges-ap.js work without any database setup: same room naming for everyone ("college-<slug>"),
+// common subjects and clubs. A Firestore `colleges/<slug>` document, when present, customises the content.
+const GENERIC_SUBJECTS = ["Maths", "Physics", "Chemistry", "English", "Programming", "Data Structures", "DBMS", "Operating Systems", "Networks", "Electronics", "Circuits", "Mechanics", "Thermodynamics", "Biology", "Economics", "Management", "Law", "Other"];
+const GENERIC_CLUBS = ["Coding Club", "AI/ML", "Robotics", "Electronics", "Startup Cell", "Research Society", "Cultural", "Sports", "NSS / NCC", "Other"];
+const GENERIC_IDEAS = ["Project", "Startup", "Research", "Campus life", "Social impact", "Other"];
+const DIRECTORY = Array.isArray(window.COLLEGE_DIRECTORY) ? window.COLLEGE_DIRECTORY : [];
 async function loadTenant() {
   const slug = SEL; if (!slug || slug === "rgukt") return null;
+  const dir = DIRECTORY.find(c => c.slug === slug);
+  const withDir = (t) => dir ? { ...t, room: "college-" + slug } : t;   // directory colleges always share one room
+  const fromDir = () => cleanTenant({ name: dir.name, room: "college-" + slug, clubs: GENERIC_CLUBS, subjects: GENERIC_SUBJECTS, ideaCategories: GENERIC_IDEAS }, slug);
   const key = "dd-tenant-" + slug; let cached = null;
   try { cached = JSON.parse(localStorage.getItem(key) || "null"); } catch (_) {}
   const fb = BASE_CFG.firebase || {};
@@ -69,10 +78,11 @@ async function loadTenant() {
   };
   if (cached && cached.t && cleanTenant({ ...cached.t, enabled: true }, slug)) {
     if (Date.now() - (cached.at || 0) > 6 * 3600 * 1000) fetchFresh().catch(() => {});   // refresh for next visit
-    return cached.t;
+    return withDir(cached.t);
   }
-  try { return await fetchFresh(); }
+  try { return withDir(await fetchFresh()); }
   catch (_) {
+    if (dir) return fromDir();
     document.body.replaceChildren();
     const box = document.createElement("div"); box.style.cssText = "max-width:420px;margin:15vh auto;padding:24px;font-family:system-ui,sans-serif;text-align:center";
     const h = document.createElement("h2"); h.textContent = "We could not open this college";
@@ -3054,12 +3064,24 @@ async function fetchColleges() {
 }
 function switchCollege(slug) { location.href = location.pathname + "?c=" + encodeURIComponent(slug); }
 function renderCollege() {
-  const cur = TENANT ? TENANT.slug : "rgukt", list = el("div", { class: "college-list" }, el("p", { class: "hint" }, "Loading colleges…"));
+  const cur = TENANT ? TENANT.slug : IS_RGUKT ? "rgukt" : "", list = el("div", { class: "college-list" }, el("p", { class: "hint" }, "Loading colleges…"));
   const btn = (slug, name, sub) => el("button", { type: "button", class: "campus-link" + (slug === cur ? " sel" : ""), onclick: () => { if (slug !== cur) switchCollege(slug); else { state.mode = "intro"; render(); } } },
     el("strong", {}, (slug === cur ? "✅ " : "") + name), sub ? el("small", {}, sub) : null);
-  const fill = (rows) => list.replaceChildren(btn("rgukt", "RGUKT", "Rajiv Gandhi University of Knowledge Technologies"), ...rows.filter(c => c.slug !== "rgukt").map(c => btn(c.slug, c.name, c.city)));
-  fill([]);
-  fetchColleges().then(fill).catch(() => { list.append(el("p", { class: "hint" }, "Could not load the college list. Check your internet and try again.")); });
+  let online = [], q = "";
+  const entries = () => {
+    const m = new Map();
+    for (const d of DIRECTORY) m.set(d.slug, { slug: d.slug, name: d.name, sub: [d.city, d.kind].filter(Boolean).join(" · ") });
+    for (const c of online) m.set(c.slug, { slug: c.slug, name: c.name, sub: c.city || (m.get(c.slug) || {}).sub || "" });
+    m.delete("rgukt");
+    return [{ slug: "rgukt", name: "RGUKT", sub: "Rajiv Gandhi University of Knowledge Technologies" }, ...[...m.values()].sort((a, b) => a.name.localeCompare(b.name))];
+  };
+  const fill = () => {
+    const needle = q.trim().toLowerCase(), rows = entries().filter(c => !needle || (c.name + " " + c.sub + " " + c.slug).toLowerCase().includes(needle));
+    list.replaceChildren(...(rows.length ? rows.map(c => btn(c.slug, c.name, c.sub)) : [el("p", { class: "hint" }, "No match. Use the form below to ask for your college.")]));
+  };
+  const search = el("input", { type: "search", placeholder: "Search your college or city…", "aria-label": "Search colleges", oninput: (e) => { q = e.target.value; fill(); } });
+  fill();
+  fetchColleges().then(rows => { online = rows; fill(); }).catch(() => {});
   const name = el("input", { name: "cname", maxlength: "80", placeholder: "College or university name", required: true, "aria-label": "College name" });
   const city = el("input", { name: "ccity", maxlength: "60", placeholder: "City and state", "aria-label": "City" });
   const role = el("select", { name: "crole", "aria-label": "Your role" }, ["Student", "Teacher or staff", "Club or student body", "Other"].map(r => el("option", {}, r)));
@@ -3082,6 +3104,7 @@ function renderCollege() {
   return [
     el("h2", {}, "🏫 Your college"),
     el("p", { class: "hint" }, "Each college has its own private board, subjects and clubs. Pick yours."),
+    search,
     list,
     el("div", { class: "label" }, "My college is not listed"),
     el("p", { class: "hint" }, "Tell us about your college and we will set up a board for it."),

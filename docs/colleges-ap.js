@@ -1,0 +1,57 @@
+// Directory of colleges that can be picked in CampusLoop. Edit this list to add or fix a college.
+// slug = the link name (?c=slug): lowercase letters, digits and dashes. Each college gets its own board under the room
+// "college-<slug>" with the common subjects and clubs below. To customise one (its own subjects, campuses, colours),
+// add a document with the same slug to the Firestore `colleges` collection (see SETUP.md); its content replaces the defaults.
+// Source: compiled from public knowledge of Andhra Pradesh universities. Please verify names and add missing ones.
+window.COLLEGE_DIRECTORY = [
+  // State universities
+  { slug: "andhra-university", name: "Andhra University", city: "Visakhapatnam", kind: "State university" },
+  { slug: "anu", name: "Acharya Nagarjuna University", city: "Guntur", kind: "State university" },
+  { slug: "svu", name: "Sri Venkateswara University", city: "Tirupati", kind: "State university" },
+  { slug: "sku", name: "Sri Krishnadevaraya University", city: "Anantapur", kind: "State university" },
+  { slug: "yvu", name: "Yogi Vemana University", city: "Kadapa", kind: "State university" },
+  { slug: "aknu", name: "Adikavi Nannaya University", city: "Rajamahendravaram", kind: "State university" },
+  { slug: "krishna-university", name: "Krishna University", city: "Machilipatnam", kind: "State university" },
+  { slug: "rayalaseema-university", name: "Rayalaseema University", city: "Kurnool", kind: "State university" },
+  { slug: "dravidian-university", name: "Dravidian University", city: "Kuppam", kind: "State university" },
+  { slug: "vsu", name: "Vikrama Simhapuri University", city: "Nellore", kind: "State university" },
+  { slug: "brau", name: "Dr. B.R. Ambedkar University", city: "Srikakulam", kind: "State university" },
+  { slug: "spmvv", name: "Sri Padmavati Mahila Visvavidyalayam", city: "Tirupati", kind: "State university (women)" },
+  { slug: "dsnlu", name: "Damodaram Sanjivayya National Law University", city: "Visakhapatnam", kind: "Law university" },
+  // Technical, agriculture, health and other specialised universities
+  { slug: "jntuk", name: "JNTU Kakinada", city: "Kakinada", kind: "Technological university" },
+  { slug: "jntua", name: "JNTU Anantapur", city: "Anantapur", kind: "Technological university" },
+  { slug: "jntugv", name: "JNTU-GV Vizianagaram", city: "Vizianagaram", kind: "Technological university" },
+  { slug: "angrau", name: "Acharya N.G. Ranga Agricultural University", city: "Guntur", kind: "Agricultural university" },
+  { slug: "drysrhu", name: "Dr. YSR Horticultural University", city: "Venkataramannagudem", kind: "Horticultural university" },
+  { slug: "svvu", name: "Sri Venkateswara Veterinary University", city: "Tirupati", kind: "Veterinary university" },
+  { slug: "ntruhs", name: "Dr. NTR University of Health Sciences", city: "Vijayawada", kind: "Health sciences university" },
+  { slug: "dysrafau", name: "Dr. YSR Architecture and Fine Arts University", city: "Kadapa", kind: "Architecture and arts university" },
+  { slug: "svvedic", name: "Sri Venkateswara Vedic University", city: "Tirupati", kind: "Specialised university" },
+  // Central and national institutes
+  { slug: "cuap", name: "Central University of Andhra Pradesh", city: "Anantapur", kind: "Central university" },
+  { slug: "ctuap", name: "Central Tribal University of Andhra Pradesh", city: "Vizianagaram", kind: "Central university" },
+  { slug: "nsu-tirupati", name: "National Sanskrit University", city: "Tirupati", kind: "Central university" },
+  { slug: "iit-tirupati", name: "IIT Tirupati", city: "Tirupati", kind: "National institute" },
+  { slug: "iim-visakhapatnam", name: "IIM Visakhapatnam", city: "Visakhapatnam", kind: "National institute" },
+  { slug: "iiit-sricity", name: "IIIT Sri City", city: "Sri City", kind: "National institute" },
+  { slug: "iiser-tirupati", name: "IISER Tirupati", city: "Tirupati", kind: "National institute" },
+  { slug: "nit-andhra-pradesh", name: "NIT Andhra Pradesh", city: "Tadepalligudem", kind: "National institute" },
+  { slug: "aiims-mangalagiri", name: "AIIMS Mangalagiri", city: "Mangalagiri", kind: "National institute" },
+  { slug: "iipe-visakhapatnam", name: "IIPE Visakhapatnam", city: "Visakhapatnam", kind: "National institute" },
+  { slug: "spa-vijayawada", name: "School of Planning and Architecture Vijayawada", city: "Vijayawada", kind: "National institute" },
+  { slug: "iiitdm-kurnool", name: "IIITDM Kurnool", city: "Kurnool", kind: "National institute" },
+  { slug: "svims", name: "Sri Venkateswara Institute of Medical Sciences", city: "Tirupati", kind: "Medical university" },
+  // Deemed and private universities
+  { slug: "gitam", name: "GITAM", city: "Visakhapatnam", kind: "Deemed university" },
+  { slug: "vignan", name: "Vignan's Foundation for Science, Technology and Research", city: "Guntur", kind: "Deemed university" },
+  { slug: "klef", name: "Koneru Lakshmaiah Education Foundation (KL University)", city: "Vaddeswaram", kind: "Deemed university" },
+  { slug: "sssihl", name: "Sri Sathya Sai Institute of Higher Learning", city: "Puttaparthi", kind: "Deemed university" },
+  { slug: "srm-ap", name: "SRM University-AP", city: "Amaravati", kind: "Private university" },
+  { slug: "vit-ap", name: "VIT-AP University", city: "Amaravati", kind: "Private university" },
+  { slug: "aditya-university", name: "Aditya University", city: "Surampalem", kind: "Private university" },
+  { slug: "raghu-university", name: "Raghu University", city: "Visakhapatnam", kind: "Private university" },
+  { slug: "mohan-babu-university", name: "Mohan Babu University", city: "Tirupati", kind: "Private university" },
+  { slug: "krea-university", name: "Krea University", city: "Sri City", kind: "Private university" },
+  { slug: "centurion-ap", name: "Centurion University (Vizianagaram campus)", city: "Vizianagaram", kind: "Private university" },
+];

@@ -82,3 +82,7 @@ RGUKT is the built-in college. Every other college is one document in Firestore,
 5. Requests from the "My college is not listed" form arrive in the `collegeRequests` collection (readable only in the console).
 
 Known limits of this first version: the Spark Bot, Alumni, About and Career Guide pages still contain RGUKT-specific text (Bot and Alumni are off by default for other colleges); the Daily Quiz is the same for every college; sign-in is still anonymous. Publish the updated `firestore.rules` before using this.
+
+### Colleges that need no database setup
+
+`docs/colleges-ap.js` lists 46 Andhra Pradesh universities and institutes. Each one already works at `?c=<slug>` (for example `?c=andhra-university`) with its own private board under the room `college-<slug>`, plus common subjects and clubs, and shows up in the college picker with search. To add another college, add a line to that file. To give one its own subjects, campuses, colours or features, create a Firestore `colleges/<same slug>` document: its content replaces the defaults, but the room always stays `college-<slug>` so posts never move.
