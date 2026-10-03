@@ -1886,3 +1886,8 @@ body.priv-blur > * { filter: blur(22px); }
   .hdr-actions .chip.tool#quizBtn, .hdr-actions .chip.tool#labBtn, .hdr-actions .chip.tool#focusBtn,
   .hdr-actions.tools-closed .chip.tool#quizBtn, .hdr-actions.tools-closed .chip.tool#labBtn, .hdr-actions.tools-closed .chip.tool#focusBtn { display: none !important; }
 }
+/* Phones: no Filters button in the header (keeps the home screen simple). */
+@media (max-width: 700px) {
+  .hdr-actions .filter-toggle { display: none !important; }
+  .hdr-actions, .hdr-actions.tools-closed { margin: 0 !important; padding: 0 !important; min-height: 0 !important; gap: 0 !important; }
+}
