@@ -38,6 +38,8 @@ function pickCollege() {
 }
 const SEL = pickCollege(), NO_COLLEGE = SEL === "", IS_RGUKT = SEL === "rgukt";
 const BRAND = BASE_CFG.brand || "CampusLoop";
+// CampusLoop Plus (optional paid plan). enabled:false = free early access and a waitlist; see PREMIUM.md to go live.
+const PLUS = { enabled: false, monthly: 49, yearly: 399, functionsUrl: "", ...(BASE_CFG.plus || {}) };
 function cleanTenant(raw, slug) {
   if (!raw || typeof raw !== "object" || raw.enabled === false) return null;
   const room = t1(raw.room, 40); if (!/^[A-Za-z0-9_-]{6,40}$/.test(room)) return null;
@@ -262,7 +264,7 @@ const fileExt = (name) => (String(name || "").split(".").pop() || "").toLowerCas
 
 const state = {
   tab: "doubts", group: "All", query: "", filter: "all",
-  doubts: [], ideas: [], clubs: [], gate: [], jobs: [], challenges: [], chalScores: [], market: [], marketReports: [], marketRatings: [], marketInterests: [], replies: [], likes: [], blocked: [], profiles: [], stories: [], storyViews: [], storyAnswers: [], loaded: false,
+  doubts: [], ideas: [], clubs: [], gate: [], jobs: [], challenges: [], chalScores: [], market: [], marketReports: [], marketRatings: [], marketInterests: [], replies: [], likes: [], plan: { plus: false, until: 0 }, blocked: [], profiles: [], stories: [], storyViews: [], storyAnswers: [], loaded: false,
   selected: null, mode: "intro", // intro | view | ask | edit | name | campus
   afterName: null,
   replyPages: [], replyAnon: false,
@@ -453,6 +455,9 @@ async function firebaseStore(conf, prefix = "") {
     newId: (coll) => fs.doc(fs.collection(db, prefix + coll)).id,
     set: (coll, id, data) => fs.setDoc(fs.doc(db, prefix + coll, id), cleanDoc(data)),
     setTop: (coll, id, data) => fs.setDoc(fs.doc(db, coll, id), cleanDoc(data)),
+    getTop: async (coll, id) => { const snap = await fs.getDoc(fs.doc(db, coll, id)); return snap.exists() ? snap.data() : null; },
+    authUid: () => (auth && auth.currentUser ? auth.currentUser.uid : ""),
+    idToken: async () => (auth && auth.currentUser ? auth.currentUser.getIdToken() : ""),
     update: (coll, id, data) => fs.updateDoc(fs.doc(db, prefix + coll, id), cleanDoc(data)),
     remove: (coll, id) => fs.deleteDoc(fs.doc(db, prefix + coll, id)),
     get: async (coll, id) => { const snap = await fs.getDoc(fs.doc(db, prefix + coll, id)); return snap.exists() ? snap.data() : null; },
@@ -2315,7 +2320,7 @@ function renderLeaders() {
         avatarEl(p.id === meId ? getAvatar() : avatarFor(p.name || ""), "av av-lg"),
         el("span", { class: "who" },
           el("span", { class: "board-name-row" },
-            el("strong", {}, (p.id === meId ? p.name + " (you)" : p.name) + (isVerifiedId(p.id) ? " ✔" : "") + " " + BADGES.filter(b => b[3](p)).map(b => b[0]).join(""))),
+            el("strong", {}, (p.id === meId ? p.name + " (you)" : p.name) + markOf(p.id) + " " + BADGES.filter(b => b[3](p)).map(b => b[0]).join(""))),
           el("small", {}, "Lv " + p.level.n + " " + titleOf(p.points) + " · " + plural(p.answers, "answer") + " · " + p.helpful + " helpful · " + p.quizRight + " quiz" + (p.streak > 1 ? " · 🔥" + p.streak + "-day streak" : ""))),
         el("span", { class: "pts" }, p.points + " pts"))))
     : el("p", { class: "hint" }, "No points yet. Answer a doubt or today's quiz to get on the board.");
@@ -2359,6 +2364,89 @@ function renderHeatmap(p) {
   return el("div", { class: "heatmap" }, ...cells);
 }
 
+// ---------- CampusLoop Plus ----------
+function plusCard() {
+  return el("div", { class: "learn-card" }, el("strong", {}, "⭐ CampusLoop Plus" + (state.plan.plus ? " (active)" : "")),
+    el("p", { class: "hint" }, PLUS.enabled ? "Cloud backup of your study tools, a ⭐ badge and more." : "Early access is free while we build it. Tell us what you would like."),
+    el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => { loadPlan().then(() => { if (state.mode === "plus") render(); }); showPanel("plus"); } }, "See Plus")));
+}
+const LAB_KEY = /^lab-[\w-]{1,60}$/;
+function collectBackup() {
+  const items = {};
+  try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (LAB_KEY.test(k)) items[k] = localStorage.getItem(k); } } catch (_) {}
+  return JSON.stringify({ v: 1, items });
+}
+async function startCheckout(planKey) {
+  if (!PLUS.functionsUrl) throw new Error("Payments are not switched on yet.");
+  const tok = store.idToken ? await store.idToken() : "";
+  const r = await fetch(PLUS.functionsUrl.replace(/\/$/, "") + "/createPaymentLink", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + tok }, body: JSON.stringify({ plan: planKey }) });
+  const j = await r.json().catch(() => ({}));
+  const url = safeHttp(j.url || "");
+  if (!r.ok || !url || !/^https:\/\/(rzp\.io|razorpay\.com|[a-z0-9-]+\.razorpay\.com)\//.test(url)) throw new Error(j.error || "Could not start the payment.");
+  window.open(url, "_blank", "noopener");
+}
+const PLUS_FEATURES = ["AI doubt helper", "Previous-year paper vault with solutions", "Mock tests with analytics", "Cloud backup and sync", "Profile themes and frames", "Placement preparation kit", "No ads, ever"];
+function renderPlus() {
+  const acct = myAccount(), verified = acct.verified, has = state.plan.plus;
+  const canBackup = !!store && !!store.getTop && verified && (!PLUS.enabled || has);
+  const msg = el("p", { class: "hint", role: "status" }, state.plusMsg || "");
+  const say = (t) => { state.plusMsg = t; msg.textContent = t; };
+  const backup = el("button", { class: "btn sm primary", type: "button", disabled: !canBackup, onclick: async () => {
+    try {
+      const json = collectBackup(); if (json.length > 900000) { say("Your data is too big to back up (over 900 KB). Delete old notes or decks and try again."); return; }
+      say("Backing up…"); await store.setTop("userData", store.authUid(), { json, updatedAt: Date.now() }); say("✅ Backed up " + Object.keys(JSON.parse(json).items).length + " items at " + new Date().toLocaleTimeString() + ".");
+    } catch (e) { say("Could not back up: " + (e && e.code === "permission-denied" ? "this needs a verified email" + (PLUS.enabled ? " and an active Plus plan." : ".") : "check your internet and try again.")); }
+  } }, "☁️ Back up now");
+  const restore = el("button", { class: "btn sm", type: "button", disabled: !canBackup, onclick: async () => {
+    try {
+      const d = await store.getTop("userData", store.authUid());
+      if (!d || !d.json) { say("No backup found for this account yet."); return; }
+      const data = JSON.parse(d.json), keys = Object.keys((data && data.items) || {}).filter(k => LAB_KEY.test(k) && typeof data.items[k] === "string");
+      if (!keys.length) { say("The backup is empty."); return; }
+      if (!confirm("Replace the study tools data on this phone with your backup from " + new Date(d.updatedAt || 0).toLocaleString() + "?")) return;
+      for (const k of keys) localStorage.setItem(k, data.items[k]);
+      say("✅ Restored " + keys.length + " items. Reopen Study Lab to see them.");
+    } catch (e) { say("Could not restore: check your internet and try again."); }
+  } }, "⬇️ Restore");
+  const buy = (key, label) => el("button", { class: "btn primary", type: "button", onclick: async (e) => { e.currentTarget.disabled = true; try { await startCheckout(key); say("The payment page opened in a new tab. Come back here after you pay."); } catch (err) { say(err.message || "Could not start the payment."); } e.currentTarget.disabled = false; } }, label);
+  // interest survey (works today, no payment needed)
+  const email = el("input", { type: "email", maxlength: "100", placeholder: "Email (optional, only to tell you when Plus opens)", "aria-label": "Email", autocomplete: "email" });
+  const picks = PLUS_FEATURES.map(f => ({ f, box: el("input", { type: "checkbox" }) }));
+  const price = el("select", { "aria-label": "What would you pay per month?" }, ["I would not pay", "₹29 a month", "₹49 a month", "₹99 a month", "₹149 or more"].map(o => el("option", {}, o)));
+  const survey = el("form", { class: "form", onsubmit: async (e) => {
+    e.preventDefault();
+    try { if (Date.now() - Number(localStorage.getItem("dd-plus-interest") || 0) < 86400000) { say("Thank you! You already answered today."); return; } } catch (_) {}
+    if (!store || !store.setTop) { say("Needs the live board. Connect to the internet and try again."); return; }
+    try {
+      const em = email.value.trim(); if (em && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { say("Type a valid email or leave it empty."); return; }
+      await store.setTop("plusInterest", store.newId("plusInterest"), { email: em.slice(0, 100), college: COLLEGE.slice(0, 60), features: picks.filter(x => x.box.checked).map(x => x.f), price: price.value, createdAt: Date.now() });
+      try { localStorage.setItem("dd-plus-interest", String(Date.now())); } catch (_) {}
+      say("✅ Thank you! Your answer helps us decide what to build first.");
+    } catch (err) { say("We could not save your answer right now. Please try again later."); }
+  } },
+    el("p", { class: "hint" }, "Which of these would you want? Tick any."),
+    ...picks.map(x => el("label", { class: "check" }, x.box, x.f)),
+    price, email, el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "submit" }, "Send my answer")));
+  return [
+    el("h2", {}, "⭐ CampusLoop Plus" + (has ? " (active)" : "")),
+    el("p", { class: "hint" }, has ? "Thank you for supporting CampusLoop. Your plan is active until " + new Date(state.plan.until).toLocaleDateString() + "." : PLUS.enabled ? "Extras for students who want more. Everything free today stays free." : "Early access: everything below that already works is free while we build Plus. Everything free today stays free."),
+    el("div", { class: "learn-card" },
+      el("strong", {}, "What you get"),
+      el("p", {}, "☁️ Cloud backup and restore of your flashcards, notes, tasks and planner, so a new phone keeps your study data."),
+      el("p", {}, "⭐ A Plus star next to your name."),
+      el("p", { class: "hint" }, "Coming next: " + PLUS_FEATURES.slice(0, 3).join(", ") + ". Tell us below which you want first.")),
+    PLUS.enabled && !has ? el("div", { class: "learn-card" }, el("strong", {}, "Choose a plan"),
+      el("div", { class: "rowbtns" }, buy("monthly", "₹" + PLUS.monthly + " per month"), buy("yearly", "₹" + PLUS.yearly + " per year (best value)")),
+      verified ? null : el("p", { class: "hint" }, "Verify your email first (Profile › Verify your college email) so we can attach the plan to you.")) : null,
+    el("div", { class: "label" }, "☁️ Backup"),
+    !verified ? el("p", { class: "hint" }, "Backup needs a verified email so you can sign in on a new phone. Open Profile and tap “Verify your college email”.") : (PLUS.enabled && !has ? el("p", { class: "hint" }, "Backup is part of the paid plan.") : null),
+    el("div", { class: "rowbtns" }, backup, restore),
+    msg,
+    el("div", { class: "label" }, "🗳️ Help us decide"),
+    survey,
+    el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")),
+  ].filter(Boolean);
+}
 // "Verify your college email": a sign-in link is sent to the email; tapping it proves the student owns that address.
 function verifyBlock() {
   const acct = myAccount(), ok = myVerified(), doms = COLLEGE_DOMAINS;
@@ -2412,6 +2500,7 @@ function renderMe() {
     el("p", { class: "hint" }, "📷 Your profile photo (everyone can see it next to your posts)"),
     el("div", { class: "rowbtns" }, el("button", { type: "button", class: "btn sm primary", onclick: pickDp }, getDp() ? "Change photo" : "Upload photo"), getDp() && el("button", { type: "button", class: "btn sm", onclick: removeDp }, "Remove photo")),
     state.dpMsg && el("p", { class: "hint", role: "status" }, state.dpMsg),
+    plusCard(),
     verifyBlock(),
     el("p", { class: "hint" }, "💬 Your status (shown on your stories)"),
     (() => { const inp = el("input", { type: "text", maxlength: "60", placeholder: "e.g. Busy with exams 📚", "aria-label": "Your status", value: getStatus() }); const save = async () => { try { localStorage.setItem("dd-status", inp.value.trim().slice(0, 60)); } catch (_) {} state.dpMsg = "✅ Status saved on this phone."; render(); try { await syncProfile(); state.dpMsg = "✅ Status saved and shared."; } catch (e) { state.dpMsg = "📱 Status saved on this phone, but sharing failed: " + errText(e); } render(); };
@@ -3199,8 +3288,8 @@ function renderAbout() {
     feature("🛒", "Market", "Buy and sell textbooks, notes and equipment inside the " + COLLEGE + " community."),
     el("div", { class: "label" }, "🔒 Privacy and safety"),
     el("p", {}, "No login and no password. Your device gets a random ID so your posts stay yours. You can post anonymously, report anything inappropriate and edit your own posts. We do not sell or share your data."),
-    el("div", { class: "label" }, "💚 100% free"),
-    el("p", {}, "No ads, no subscriptions. Every resource we link to is free to use."),
+    el("div", { class: "label" }, "💚 Free to use"),
+    el("p", {}, "The board, quizzes, study tools and every resource we link to are free, with no ads. An optional paid plan, CampusLoop Plus, is being prepared for extras. Nothing that is free today will be taken away."),
     el("div", { class: "label" }, "⚠️ Please note"),
     el("p", { class: "hint" }, "CampusLoop is a student community platform. Always confirm official dates, fees, results and rules on your college's official websites before acting on them. Career and scholarship details can change, so check the official links."),
     IS_RGUKT && el("div", { class: "label" }, "🔗 Official RGUKT campuses"),
@@ -5715,14 +5804,24 @@ async function imgToJpeg(file, max, q, square) {
 const emailDomainOk = (e) => !COLLEGE_DOMAINS.length || COLLEGE_DOMAINS.includes(String(e || "").split("@")[1] ? String(e).split("@")[1].toLowerCase() : "");
 const myAccount = () => (store && store.account ? store.account() : { email: "", verified: false });
 const myVerified = () => { const a = myAccount(); return a.verified && emailDomainOk(a.email); };
+async function loadPlan() {
+  try {
+    const uid = store && store.authUid ? store.authUid() : "";
+    const d = uid && store.getTop ? await store.getTop("entitlements", uid) : null;
+    const until = d && Number(d.until) || 0;
+    state.plan = { plus: until > Date.now(), until };
+  } catch (_) { state.plan = { plus: false, until: 0 }; }
+}
+const isPlusId = (id) => { if (store && allMyIds().has(id)) return !!state.plan.plus; const p = state.profiles.find(x => x.id === id); return !!(p && p.plus); };
+const markOf = (id) => (isVerifiedId(id) ? " ✔" : "") + (isPlusId(id) ? " ⭐" : "");
 const isVerifiedId = (id) => { if (store && allMyIds().has(id)) return myVerified(); const p = state.profiles.find(x => x.id === id); return !!(p && p.verified); };
 async function syncProfile() {
   if (!store) return;
   const dp = getDp();
   const status = getStatus();
-  const verified = myVerified();
-  if (!dp && !status && !verified && !state.profiles.some(p => p.id === store.uid)) return;
-  await store.set("profiles", store.uid, { name: (getName() || "Student").slice(0, 40), dp, status, verified, updatedAt: Date.now() });
+  const verified = myVerified(), plus = !!state.plan.plus;
+  if (!dp && !status && !verified && !plus && !state.profiles.some(p => p.id === store.uid)) return;
+  await store.set("profiles", store.uid, { name: (getName() || "Student").slice(0, 40), dp, status, verified, plus, updatedAt: Date.now() });
 }
 function pickDp() {
   const inp = document.createElement("input"); inp.type = "file"; inp.accept = "image/*";
@@ -5888,7 +5987,7 @@ function openStories(authorId) {
     ov.oncontextmenu = (ev) => { ev.preventDefault(); };
     ov.replaceChildren(
       el("div", { class: "st-bars" }, segs),
-      el("div", { class: "st-top" }, avatarEl(dpOfId(g.authorId, g.name), "av st-av sm"), el("div", { class: "st-who" }, el("strong", {}, (ownS ? "Your story" : g.name) + (isVerifiedId(g.authorId) ? " ✔" : "")), el("small", {}, ago(s.createdAt) + (statusOfId(g.authorId) ? " · " + statusOfId(g.authorId) : ""))), ...actions, el("button", { type: "button", class: "st-x", "aria-label": "Close", onclick: close }, "✕")),
+      el("div", { class: "st-top" }, avatarEl(dpOfId(g.authorId, g.name), "av st-av sm"), el("div", { class: "st-who" }, el("strong", {}, (ownS ? "Your story" : g.name) + markOf(g.authorId)), el("small", {}, ago(s.createdAt) + (statusOfId(g.authorId) ? " · " + statusOfId(g.authorId) : ""))), ...actions, el("button", { type: "button", class: "st-x", "aria-label": "Close", onclick: close }, "✕")),
       body, wm, ownS ? null : el("p", { class: "st-note" }, "📸 Screenshots can be traced to your name. Please don't share others' stories."), vlist,
       el("button", { type: "button", class: "st-tap l", "aria-label": "Previous", onclick: prev }), el("button", { type: "button", class: "st-tap r", "aria-label": "Next", onclick: next }));
     const run = (ms) => { if (my !== gen) return; fill.style.setProperty("animation-duration", ms + "ms"); fill.classList.add("run"); timer = setTimeout(next, ms); };
@@ -5970,7 +6069,7 @@ function render() {
     document.body.dataset.tab = state.tab; applyFocus();
     renderHeader(); renderTrendBar(); renderStoryBar(); renderRail(); renderList(); renderBottomNav();
     // Forms keep what the student is typing while live updates arrive.
-    const key = ["ask", "edit", "name", "alumniJoin", "alumniJob", "fun", "lab", "college"].includes(state.mode) ? state.mode + state.tab : "";
+    const key = ["ask", "edit", "name", "alumniJoin", "alumniJob", "fun", "lab", "college", "plus"].includes(state.mode) ? state.mode + state.tab : "";
     if (key && key === sheetKey) return;
     sheetKey = key;
     const draft = $("f-reply") ? $("f-reply").value : "";
@@ -5987,6 +6086,7 @@ function render() {
       state.mode === "learn" ? renderLearn() :
       state.mode === "resources" ? renderResources() :
       state.mode === "career" ? renderCareer() :
+      state.mode === "plus" ? renderPlus() :
       state.mode === "college" ? renderCollege() :
       state.mode === "about" ? renderAbout() :
       state.mode === "lab" ? renderLab() :
@@ -6106,6 +6206,7 @@ render();
     return;
   }
   if (NO_COLLEGE) { render(); return; }   // nothing to load until a college is chosen
+  loadPlan().then(() => render());
   if (store.linkResult === "ok") { showNotice(myVerified() ? "✅ Email verified. Welcome, verified student!" : "Email confirmed, but it is not a " + COLLEGE + " address, so you are not marked as verified."); setTimeout(() => showNotice(""), 6000); }
   else if (store.linkResult && store.linkResult.startsWith("error:")) showNotice("Could not finish email verification (" + store.linkResult.slice(6) + "). Open the link on the same phone you asked from, or ask for a new one.");
   if (store.demo) showNotice("Demo mode: posts are saved only in this browser. Add your Firebase settings to config.js so the whole class shares one board.", "demo");
@@ -6130,8 +6231,8 @@ render();
   store.subscribe("blocked", rows => { state.blocked = rows.map(r => r.id); }, e => {});
   let dpChecked = false;
   store.subscribe("profiles", rows => {
-    state.profiles = rows.filter(p => typeof p.name === "string" && (!p.dp || DP_OK.test(p.dp))).map(p => ({ ...p, status: String(p.status || "").slice(0, 60), verified: p.verified === true })); update();
-    if (!dpChecked && (getDp() || getStatus() || myVerified())) { dpChecked = true; const me = rows.find(p => p.id === store.uid); if (!me || (me.dp || "") !== getDp() || me.name !== getName() || (me.status || "") !== getStatus() || (me.verified === true) !== myVerified()) syncProfile().catch(() => {}); }
+    state.profiles = rows.filter(p => typeof p.name === "string" && (!p.dp || DP_OK.test(p.dp))).map(p => ({ ...p, status: String(p.status || "").slice(0, 60), verified: p.verified === true, plus: p.plus === true })); update();
+    if (!dpChecked && (getDp() || getStatus() || myVerified() || state.plan.plus)) { dpChecked = true; const me = rows.find(p => p.id === store.uid); if (!me || (me.dp || "") !== getDp() || me.name !== getName() || (me.status || "") !== getStatus() || (me.verified === true) !== myVerified() || (me.plus === true) !== !!state.plan.plus) syncProfile().catch(() => {}); }
   }, e => {});
   const since = Date.now() - STORY_MS;
   store.subscribe("stories", rows => { state.stories = rows.filter(x => !x.deleted); renderStoryBar(); }, e => {}, since);

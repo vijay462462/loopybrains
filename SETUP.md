@@ -112,3 +112,7 @@ Limits: Firebase limits how many sign-in emails it sends per day on the free pla
 ### Colleges across India
 
 `docs/colleges-india.js` lists about 750 institutions in the 35 other states and union territories (central, state and national institutes, private universities, and well-known engineering, medical and degree colleges). The college picker has a **Your state** drop-down (it remembers the last state) and an **All India** search. Every entry already works at `?c=<slug>` with its own board. The list was compiled from public knowledge: please check names, fix mistakes and add missing colleges, one line each (`{ slug, name, city, state, kind }`).
+
+## CampusLoop Plus and payments
+
+See `PREMIUM.md` for the plan, the pricing ideas and the step-by-step go-live list. In the app, **Profile > CampusLoop Plus** shows what exists today and collects "which features would you pay for" answers (Firestore `plusInterest`). Payments are off (`plus.enabled: false` in `docs/config.js`) until the Razorpay functions in `functions/` are deployed and tested.

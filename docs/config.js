@@ -3,6 +3,10 @@ window.DOUBT_DESK_CONFIG = {
   // Product name shown across the app. Change it here to rename everything.
   brand: "CampusLoop",
 
+  // CampusLoop Plus (optional paid plan). Keep enabled:false until payments are set up (see PREMIUM.md).
+  // monthly / yearly are prices in rupees; functionsUrl is the address of the deployed payment functions.
+  plus: { enabled: false, monthly: 49, yearly: 399, functionsUrl: "" },
+
   // Site title shown in the header
   title: "CampusLoop",
 
