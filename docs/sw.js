@@ -2,7 +2,7 @@
 // Cache versioned assets only. Never cache index.html so updates deploy instantly.
 const CACHE = 'spark-v194';
 const SHELL = [
-  './style.css?v=194',
+  './style.css?v=195',
   './sparkbot.css?v=194',
   './config.js?v=194',
   './quiz.js?v=194',

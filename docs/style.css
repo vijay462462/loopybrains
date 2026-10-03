@@ -1724,3 +1724,54 @@ body.priv-blur > * { filter: blur(22px); }
 @keyframes float { 50% { transform: translateY(-5px); } }
 @media (prefers-reduced-motion: reduce) { .plus-hero, .wow, .wow-conf { animation: none; } }
 .ai-msg{white-space:pre-wrap;padding:9px 12px;border-radius:12px;margin:2px 0}.ai-msg.me{background:var(--accent-soft);justify-self:end}.ai-msg.bot{background:var(--paper);border:1px solid var(--line)}
+
+/* Premium theme layer: royal indigo + champagne gold, glass surfaces, richer interaction */
+:root {
+  --accent: #5b3df5; --accent-soft: #ece8ff;
+  --g1: #4338ca; --g2: #7c3aed; --g3: #c026d3; --g4: #f5b942;
+  --gold: #f5b942; --gold-deep: #b8860b;
+  --shadow: 0 1px 2px rgb(30 27 75 / .08), 0 14px 34px -12px rgb(91 61 245 / .35);
+  --ease: cubic-bezier(.2, .8, .2, 1);
+}
+:root[data-theme="dark"], :root:not([data-theme="light"]) {
+  --paper: #07081a; --sheet: #101330; --accent: #b6a8ff; --accent-soft: #241f55;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --paper: #f5f3ff; } }
+
+.item, .ans, .learn-card, .badge {
+  transition: transform .25s var(--ease), box-shadow .25s var(--ease), border-color .2s;
+}
+.item { backdrop-filter: blur(10px); }
+.item:hover { transform: translateY(-3px) scale(1.01); box-shadow: 0 18px 40px -18px var(--c, var(--g2)); }
+.item:active { transform: scale(.985); }
+
+.btn { transition: transform .15s var(--ease), box-shadow .2s, filter .2s, border-color .2s; }
+.btn:hover { transform: translateY(-1px); }
+.btn:active { transform: scale(.96); }
+.btn.primary {
+  background: linear-gradient(120deg, var(--g1), var(--g2) 45%, var(--g3));
+  box-shadow: 0 8px 22px -8px var(--g2), inset 0 1px 0 rgb(255 255 255 / .35);
+}
+.btn.primary:hover { box-shadow: 0 12px 28px -8px var(--g3), 0 0 0 2px color-mix(in oklab, var(--gold) 70%, transparent); }
+
+.chip { transition: transform .15s var(--ease), background .2s, box-shadow .2s; backdrop-filter: blur(8px); }
+.chip:hover { background: rgb(255 255 255 / .26); transform: translateY(-2px); box-shadow: 0 8px 18px -8px rgb(0 0 0 / .4); }
+.chip:active { transform: scale(.94); }
+
+.tabs { background: rgb(255 255 255 / .16); backdrop-filter: blur(10px); }
+.tabs button { transition: background .2s, color .2s, transform .15s var(--ease); }
+.tabs button:hover { background: rgb(255 255 255 / .22); }
+.tabs button[aria-selected="true"] {
+  background: linear-gradient(135deg, #fff, #fff6dc); color: var(--g1);
+  box-shadow: 0 6px 16px -6px rgb(0 0 0 / .35), 0 0 0 1px var(--gold);
+}
+
+.pill.open { background: linear-gradient(90deg, var(--gold), #fb923c); }
+.streak-chip { background: linear-gradient(135deg, var(--gold), #fb923c); color: #3b2300; border: 0; box-shadow: 0 6px 16px -6px var(--gold); }
+:focus-visible { outline-color: var(--gold); }
+::selection { background: color-mix(in oklab, var(--g2) 35%, transparent); }
+
+@media (prefers-reduced-motion: reduce) {
+  .item, .btn, .chip, .tabs button { transition: none; }
+  .item:hover, .btn:hover, .chip:hover { transform: none; }
+}
