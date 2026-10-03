@@ -423,6 +423,30 @@ function reportView() {
   return h("div", {}, h("div", { class: "card no-print" }, h("h3", {}, "Weekly engagement report"), h("p", { class: "adm-hint" }, "Share this with the principal or head of department every Monday. It uses only counts and subjects, never names or posts.")), out);
 }
 
+// Who gets the Monday e-mail for the selected college (admins only; needs the e-mail function deployed).
+function mailView() {
+  const msg = h("p", { class: "msg" }), slug = S.room.slug, ref = fs.doc(db, "reportEmails", slug);
+  const box = h("div", { class: "card" }, h("p", { class: "adm-hint" }, "Loading…"));
+  const emails = h("textarea", { placeholder: "One e-mail per line (up to 5), e.g. principal@college.edu.in", maxlength: "600" }), on = h("input", { type: "checkbox", checked: true });
+  fs.getDoc(ref).then(d => { if (d.exists()) { emails.value = (d.data().emails || []).join("\n"); on.checked = d.data().active !== false; box.replaceChildren(h("p", { class: "adm-hint" }, d.data().lastSent ? "Last sent " + new Date(d.data().lastSent).toLocaleString() : "Not sent yet.")); } else box.replaceChildren(h("p", { class: "adm-hint" }, "Not set up yet.")); }).catch(() => box.replaceChildren(h("p", { class: "msg err" }, "Could not load.")));
+  const parse = () => emails.value.split(/[\n,;]/).map(x => x.trim().toLowerCase()).filter(Boolean);
+  return h("div", {}, h("div", { class: "card" }, h("h3", {}, "Monday report e-mail for " + S.room.name), h("p", { class: "adm-hint" }, "Every Monday at 8:00 (India time) these people get last week's engagement numbers. Counts and subjects only, no names or posts."),
+    emails, h("label", { class: "check" }, on, "Send every Monday"),
+    h("div", { class: "row" }, h("button", { class: "b pri", onclick: async (e) => {
+      const list = parse(); if (!list.length || list.length > 5 || list.some(x => !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(x))) { msg.className = "msg err"; msg.textContent = "Add 1 to 5 valid e-mail addresses."; return; }
+      e.currentTarget.disabled = true;
+      try { await fs.setDoc(ref, { room: S.room.room, name: S.room.name.slice(0, 60), emails: list, active: on.checked, updatedAt: Date.now() }, { merge: true }); await logAction("report-emails", "reportEmails/" + slug, list.length + " recipients"); msg.className = "msg ok"; msg.textContent = "Saved."; }
+      catch (er) { msg.className = "msg err"; msg.textContent = "Not saved (" + (er.code || "error") + "). Only platform admins can do this; publish the latest rules."; }
+      e.currentTarget.disabled = false;
+    } }, "Save"), h("button", { class: "b", onclick: async (e) => {
+      const url = (window.DOUBT_DESK_CONFIG.plus || {}).functionsUrl; if (!url) { msg.className = "msg err"; msg.textContent = "Deploy the functions first and set functionsUrl in config.js."; return; }
+      e.currentTarget.disabled = true; msg.className = "msg"; msg.textContent = "Sending…";
+      try { const tok = await auth.currentUser.getIdToken(), r = await fetch(url.replace(/\/$/, "") + "/sendReportNow", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + tok }, body: JSON.stringify({ slug }) }), d = await r.json().catch(() => ({})); if (!r.ok) throw new Error(d.error || "Could not send."); msg.className = "msg ok"; msg.textContent = "Test e-mail sent. Check the inbox (and spam)."; }
+      catch (er) { msg.className = "msg err"; msg.textContent = er.message || "Could not send."; }
+      e.currentTarget.disabled = false;
+    } }, "Send a test now")), msg), box);
+}
+
 const EXAMS = ["Mid", "End", "Supplementary", "Model", "Other"];
 function papersView() {
   const p = roomPath(), msg = h("p", { class: "msg" }), box = h("div", {});
@@ -452,8 +476,8 @@ function papersView() {
 }
 
 // ---------- shell ----------
-const TABS = [["overview", "Overview", true], ["report", "Weekly report", true], ["moderation", "Moderation", true], ["blocked", "Blocked devices", true], ["staff", "College staff", false], ["sale", "Flash sale", false], ["promos", "Promo codes", false], ["notices", "Notices", true], ["papers", "Papers", true], ["colleges", "Colleges", false], ["requests", "Requests and survey", false], ["log", "Log", false]];
-const VIEWS = { report: reportView, staff: staffView, sale: saleView, promos: promosView, notices: noticesView, papers: papersView, overview: overviewView, moderation: moderationView, blocked: blockedView, colleges: collegesView, requests: requestsView, log: logView };
+const TABS = [["overview", "Overview", true], ["report", "Weekly report", true], ["mail", "Report emails", true], ["moderation", "Moderation", true], ["blocked", "Blocked devices", true], ["staff", "College staff", false], ["sale", "Flash sale", false], ["promos", "Promo codes", false], ["notices", "Notices", true], ["papers", "Papers", true], ["colleges", "Colleges", false], ["requests", "Requests and survey", false], ["log", "Log", false]];
+const VIEWS = { mail: mailView, report: reportView, staff: staffView, sale: saleView, promos: promosView, notices: noticesView, papers: papersView, overview: overviewView, moderation: moderationView, blocked: blockedView, colleges: collegesView, requests: requestsView, log: logView };
 function draw() {
   const u = auth.currentUser;
   const STAFF_TABS = ["report", "notices", "moderation", "blocked", "papers"], shownTabs = S.staffOnly ? TABS.filter(t => STAFF_TABS.includes(t[0])) : TABS;

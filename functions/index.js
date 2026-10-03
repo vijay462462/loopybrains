@@ -6,9 +6,11 @@
 //  razorpayWebhook    - Razorpay calls this when a link is paid; we check the signature and the amount, then switch
 //                       on the student's Plus plan by writing entitlements/<uid> (only this server can write it).
 const { onRequest } = require("firebase-functions/v2/https");
+const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { defineSecret, defineString } = require("firebase-functions/params");
 const admin = require("firebase-admin");
 const crypto = require("crypto");
+const nodemailer = require("nodemailer");
 const Razorpay = require("razorpay");
 
 admin.initializeApp();
@@ -240,4 +242,64 @@ exports.redeemGift = onRequest({ cors: true, region: "asia-south1", maxInstances
     });
     return out.error ? res.status(out.status).json({ error: out.error }) : res.json({ ok: true, days: out.days });
   } catch (e) { console.error("redeemGift", e); return res.status(500).json({ error: "Could not redeem the gift. Please try again." }); }
+});
+
+// ---------- Weekly engagement report e-mail ----------
+// Every Monday 08:00 (India time) each college listed in reportEmails/<slug> (set up by an admin in the dashboard) gets an e-mail
+// with the last 7 days against the 7 days before. Only counts and subjects, never names or post text. NOT DEPLOYED and NOT TESTED yet.
+// Mail goes out through any SMTP account (for example a Gmail address with an App Password): set secrets SMTP_USER and SMTP_PASS.
+const SMTP_USER = defineSecret("SMTP_USER");
+const SMTP_PASS = defineSecret("SMTP_PASS");
+const POST_COLLS = [["doubts", "Doubts"], ["ideas", "Ideas"], ["clubs", "Club posts"], ["gate", "GATE"], ["jobs", "Jobs"], ["challenges", "Challenges"], ["market", "Market"]];
+const countRange = async (col, from, to) => { try { return (await col.where("createdAt", ">=", from).where("createdAt", "<", to).count().get()).data().count; } catch (e) { return 0; } };
+const recentDocs = async (col, from) => { try { return (await col.where("createdAt", ">=", from).limit(1000).get()).docs.map(d => ({ id: d.id, ...d.data() })); } catch (e) { return []; } };
+const pct = (cur, prev) => { const d = prev ? Math.round((cur - prev) * 100 / prev) : (cur ? 100 : 0); return d > 0 ? "up " + d + "%" : d < 0 ? "down " + Math.abs(d) + "%" : "no change"; };
+async function buildReport(room, name) {
+  const now = Date.now(), W = 7 * DAY, t0 = now - W, t1 = now - 2 * W, base = db.collection("rooms").doc(room);
+  const counts = {};
+  await Promise.all([...POST_COLLS.map(x => x[0]), "replies", "stories"].map(async c => { counts[c] = [await countRange(base.collection(c), t0, now + 1), await countRange(base.collection(c), t1, t0)]; }));
+  const [recent, replies, profiles] = await Promise.all([Promise.all(POST_COLLS.map(x => recentDocs(base.collection(x[0]), t0))), recentDocs(base.collection("replies"), t0), base.collection("profiles").count().get().then(s => s.data().count).catch(() => 0)]);
+  const all = recent.flat(), active = new Set([...all, ...replies].map(x => x.authorId).filter(Boolean)), doubts = recent[0] || [];
+  const answered = new Set(replies.filter(r => r.parentColl === "doubts").map(r => r.parentId)), nAnswered = doubts.filter(d => answered.has(d.id)).length;
+  const subj = {}; for (const d of doubts) subj[d.subject || "Other"] = (subj[d.subject || "Other"] || 0) + 1;
+  const top = Object.entries(subj).sort((a, b) => b[1] - a[1]).slice(0, 5), flagged = all.filter(x => x.deleted || (x.reports || []).length >= 2).length;
+  const total = POST_COLLS.reduce((n, x) => n + counts[x[0]][0], 0), prev = POST_COLLS.reduce((n, x) => n + counts[x[0]][1], 0);
+  const range = new Date(t0).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }) + " to " + new Date(now).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" });
+  const lines = [
+    name + " on CampusLoop: weekly engagement report (" + range + ")", "",
+    "Active students this week: " + active.size + " (of " + profiles + " with a profile)",
+    "New posts: " + total + " (" + pct(total, prev) + " vs last week)", "Replies: " + counts.replies[0] + " (" + pct(counts.replies[0], counts.replies[1]) + ")",
+    "Doubts asked: " + doubts.length + ", answered: " + nAnswered + (doubts.length ? " (" + Math.round(nAnswered * 100 / doubts.length) + "%)" : ""),
+    "Stories shared: " + counts.stories[0], "Most asked subjects: " + (top.map(t => t[0] + " (" + t[1] + ")").join(", ") || "none this week"),
+    "Items reported or hidden by moderators: " + flagged, "",
+    "This report contains only counts and subjects, never student names or post text.", "Thank you for supporting your students. - CampusLoop",
+  ];
+  return { subject: "CampusLoop weekly report: " + name, text: lines.join("\n"), html: "<div style=\"font-family:Arial,sans-serif;line-height:1.5\"><h2>" + name.replace(/[<>&]/g, "") + " - weekly report</h2><p>" + range + "</p><ul>" + lines.slice(2, 9).map(l => "<li>" + l.replace(/[<>&]/g, "") + "</li>").join("") + "</ul><p style=\"color:#666\">" + lines.slice(10).join("<br>") + "</p></div>" };
+}
+const mailer = () => nodemailer.createTransport({ service: "gmail", auth: { user: SMTP_USER.value(), pass: SMTP_PASS.value() } });
+async function sendReportFor(slug, d, tx) {
+  const rep = await buildReport(d.room, d.name || slug);
+  await tx.sendMail({ from: '"CampusLoop" <' + SMTP_USER.value() + ">", to: (d.emails || []).join(","), subject: rep.subject, text: rep.text, html: rep.html });
+  await db.collection("reportEmails").doc(slug).set({ lastSent: Date.now() }, { merge: true });
+}
+exports.weeklyReport = onSchedule({ schedule: "every monday 08:00", timeZone: "Asia/Kolkata", region: "asia-south1", secrets: [SMTP_USER, SMTP_PASS], timeoutSeconds: 540, memory: "512MiB" }, async () => {
+  const snap = await db.collection("reportEmails").where("active", "==", true).limit(200).get(), tx = mailer();
+  for (const doc of snap.docs) { try { const d = doc.data(); if ((d.emails || []).length) await sendReportFor(doc.id, d, tx); } catch (e) { console.error("weeklyReport", doc.id, e); } }
+});
+// Admin button "Send test email now" in the dashboard.
+exports.sendReportNow = onRequest({ secrets: [SMTP_USER, SMTP_PASS], cors: true, region: "asia-south1", timeoutSeconds: 120, maxInstances: 2 }, async (req, res) => {
+  try {
+    if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
+    const m = /^Bearer (.+)$/.exec(req.get("Authorization") || "");
+    if (!m) return res.status(401).json({ error: "Please sign in first." });
+    const user = await admin.auth().verifyIdToken(m[1]);
+    const adm = await db.collection("admins").doc(user.uid).get();
+    if (!adm.exists || user.email_verified !== true) return res.status(403).json({ error: "Admins only." });
+    const slug = String((req.body || {}).slug || "");
+    if (!/^[a-z0-9-]{2,40}$/.test(slug)) return res.status(400).json({ error: "Bad college." });
+    const snap = await db.collection("reportEmails").doc(slug).get();
+    if (!snap.exists || !(snap.data().emails || []).length) return res.status(404).json({ error: "Add at least one email first." });
+    await sendReportFor(slug, snap.data(), mailer());
+    return res.json({ ok: true });
+  } catch (e) { console.error("sendReportNow", e); return res.status(500).json({ error: "Could not send. Check the e-mail settings." }); }
 });

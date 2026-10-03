@@ -116,6 +116,12 @@ await t("staff cannot touch colleges, promos, sales or the roster", async () => 
 const staffNoVerify = env.authenticatedContext(staffUid, { email: "t@college.edu", email_verified: false }).firestore();
 await t("staff with an unverified email has no powers", () => assertFails(setDoc(doc(staffNoVerify, R + "/notices/s3"), notice())));
 await t("admin removes the staff member and the powers stop", async () => { await assertSucceeds(deleteDoc(doc(admin, "staff/r00m-Abc123xy_" + staffUid))); await assertFails(setDoc(doc(sctx, R + "/notices/s4"), notice())); });
+console.log("report e-mails");
+const repDoc = (extra = {}) => ({ room: "r00m-Abc123xy", name: "Demo College", emails: ["principal@demo.edu"], active: true, updatedAt: now(), ...extra });
+await t("admin sets up report e-mails", () => assertSucceeds(setDoc(doc(admin, "reportEmails/demo"), repDoc())));
+await t("student cannot read or write report settings", async () => { await assertFails(getDoc(doc(student, "reportEmails/demo"))); await assertFails(setDoc(doc(student, "reportEmails/evil"), repDoc())); });
+await t("more than 5 recipients is refused", () => assertFails(setDoc(doc(admin, "reportEmails/many"), repDoc({ emails: ["a@x.com", "b@x.com", "c@x.com", "d@x.com", "e@x.com", "f@x.com"] }))));
+await t("a bad room id is refused", () => assertFails(setDoc(doc(admin, "reportEmails/bad"), repDoc({ room: "a/b" }))));
 console.log("server-only collections");
 await t("gifts, referrals, entitlements and payments cannot be read or written from the app", async () => { for (const p of ["gifts/ABCDEFGHJKLM", "referrals/x", "refStats/x", "payments/p1", "aiUsage/u_1"]) { await assertFails(getDoc(doc(student, p))); await assertFails(setDoc(doc(student, p), { x: 1 })); } await assertFails(setDoc(doc(student, "entitlements/stud"), { plan: "plus", until: now() + 1e10 })); });
 console.log(`\n${pass} passed, ${fail} failed`);

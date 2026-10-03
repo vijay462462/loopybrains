@@ -89,3 +89,13 @@ Admin dashboard › **Promo codes**: create a code (3-20 capitals/digits), perce
 ## 12. Plus gifts
 
 A student pays for a gift (1 week ₹19, 1 month ₹49 or a semester ₹149) from the Plus screen. After the payment the webhook creates `gifts/<CODE>` (12 characters, server-side only) and the gifter sees a **Share link** (`?gift=CODE`) under "Refresh my gifts". The friend opens the link, verifies their college email, and the app calls `redeemGift`: the friend gets the plan days, the gift is marked used and cannot be redeemed twice or by the gifter. Functions `listGifts` and `redeemGift` and the gift branch of the webhook are in `functions/index.js`: **written but not deployed or tested**. Test the whole flow with Razorpay TEST keys: pay for a gift, share the link, redeem it with a second account, and try redeeming twice.
+
+## 13. Monday report e-mail
+
+Admin dashboard › pick a college › **Report emails**: add up to 5 addresses (principal, HOD, placement officer) and tick "Send every Monday". The scheduled function `weeklyReport` (every Monday 08:00 India time) e-mails each active college the same numbers as the **Weekly report** tab; **Send a test now** sends one immediately. Only counts and subjects are e-mailed, never names or posts.
+
+To switch on (it is **written but not deployed or tested**):
+1. Use a sender mailbox, for example a new Gmail address like `campusloop.reports@gmail.com` with 2-step verification and an **App Password** (Google Account › Security › App passwords).
+2. `firebase functions:secrets:set SMTP_USER` (the address) and `firebase functions:secrets:set SMTP_PASS` (the App Password), then `cd functions && npm install && cd .. && firebase deploy --only functions`.
+3. Publish the latest `firestore.rules`, set `plus.functionsUrl` in `docs/config.js` (the test button uses it), add recipients, and press **Send a test now**.
+Gmail allows about 500 e-mails a day, plenty for weekly reports. For many colleges later, switch to a transactional mail service (Resend, SendGrid, Brevo) by changing `mailer()` in `functions/index.js`.
