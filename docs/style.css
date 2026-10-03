@@ -1747,3 +1747,8 @@ body.priv-blur > * { filter: blur(22px); }
 .pc-row.head { font-weight: 800; background: var(--accent-soft); }
 .pc-row span:nth-child(n+2) { text-align: center; }
 @media (min-width: 701px) { .sheet .plan-grid, .sheet .plus-tiles { gap: 12px; } }
+.plan-was { font-size: 16px; font-weight: 600; opacity: .55; }
+.plan-deal { margin: 0; font-size: 13px; font-weight: 700; color: var(--accent); }
+.plus-tile.badge { text-align: center; justify-items: center; opacity: .55; }
+.plus-tile.badge.on { opacity: 1; border-color: var(--accent); }
+@media (max-width: 380px) { .pc-row { grid-template-columns: minmax(0, 1fr) 46px 46px; padding: 8px; font-size: 13px; } .plan-price { font-size: 24px; } }

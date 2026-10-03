@@ -64,3 +64,9 @@ A paid plan sold inside a Play Store app must normally use Google Play Billing (
 3. Set `plus.functionsUrl` in `docs/config.js` and add the functions domain to `connect-src` in `docs/index.html`.
 4. Paying students (or admins, for testing) get 40 questions a day; change `AI_DAILY_LIMIT` in the function to suit the cost. The default model is claude-haiku-4-5-20251001 (cheapest); change `AI_MODEL` for stronger answers at a higher cost.
 5. Test with your admin account first, and check what a day of use costs before opening it to everyone.
+
+## 8. Offers and trial
+
+- **Founding student offer:** yearly plan ₹299 (instead of ₹399) until 31 Dec 2026. Set in `plus.offer` in `docs/config.js` **and** `OFFER` in `functions/index.js` (the server charges the real amount; keep both the same, set `offer: null` and move `until` into the past to end it). The webhook accepts both the normal and the offer price.
+- **Free trial:** `plus.trialDays: 7` unlocks the Plus studio for 7 days once payments are on (stored on the phone, so it is easy to reset; that is fine because the studio costs nothing to run). The AI helper is not part of the trial because every question costs money.
+- Add more later: referral weeks, college bundles, exam-season discounts.

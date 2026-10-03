@@ -5,7 +5,10 @@ window.DOUBT_DESK_CONFIG = {
 
   // CampusLoop Plus (optional paid plan). Keep enabled:false until payments are set up (see PREMIUM.md).
   // monthly / yearly are prices in rupees; functionsUrl is the address of the deployed payment functions.
-  plus: { enabled: false, monthly: 49, yearly: 399, functionsUrl: "" },
+  plus: { enabled: false, monthly: 49, yearly: 399, functionsUrl: "",
+    // Launch offer on the yearly plan until the date below (also set OFFER in functions/index.js). Set offer: null to remove it.
+    offer: { label: "Founding student offer", yearly: 299, until: "2026-12-31" },
+    trialDays: 7 },
 
   // Site title shown in the header
   title: "CampusLoop",

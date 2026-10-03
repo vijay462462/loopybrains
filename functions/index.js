@@ -24,6 +24,10 @@ const PLANS = {
   yearly: { amount: 39900, days: 366, label: "CampusLoop Plus - 1 year" },
 };
 const DAY = 86400000;
+// Launch offer: the yearly plan costs less until this date (India time). Keep in step with `plus.offer` in docs/config.js.
+const OFFER = { plan: "yearly", amount: 29900, until: Date.parse("2026-12-31T23:59:59+05:30") };
+const amountFor = (key, now) => (OFFER.plan === key && now <= OFFER.until ? OFFER.amount : PLANS[key].amount);
+const amountOk = (key, paid) => paid === PLANS[key].amount || (OFFER.plan === key && paid === OFFER.amount);
 
 exports.createPaymentLink = onRequest({ secrets: [KEY_ID, KEY_SECRET], cors: true, region: "asia-south1" }, async (req, res) => {
   try {
@@ -36,7 +40,7 @@ exports.createPaymentLink = onRequest({ secrets: [KEY_ID, KEY_SECRET], cors: tru
     if (!plan) return res.status(400).json({ error: "Unknown plan." });
     const rz = new Razorpay({ key_id: KEY_ID.value(), key_secret: KEY_SECRET.value() });
     const link = await rz.paymentLink.create({
-      amount: plan.amount, currency: "INR", description: plan.label,
+      amount: amountFor(req.body.plan, Date.now()), currency: "INR", description: plan.label,
       reference_id: (user.uid.slice(0, 20) + "-" + Date.now()).slice(0, 40),
       customer: { email: user.email }, notify: { email: true, sms: false },
       notes: { uid: user.uid, plan: req.body.plan },
@@ -59,7 +63,7 @@ exports.razorpayWebhook = onRequest({ secrets: [WEBHOOK_SECRET], region: "asia-s
     const payment = ev.payload && ev.payload.payment && ev.payload.payment.entity;
     const notes = (link && link.notes) || {};
     const plan = PLANS[notes.plan];
-    if (!link || !payment || !notes.uid || !plan || link.amount_paid !== plan.amount) { console.warn("webhook: unexpected payload", link && link.id); return res.sendStatus(200); }
+    if (!link || !payment || !notes.uid || !plan || !amountOk(notes.plan, link.amount_paid)) { console.warn("webhook: unexpected payload", link && link.id); return res.sendStatus(200); }
     const payRef = db.collection("payments").doc(payment.id), entRef = db.collection("entitlements").doc(notes.uid);
     await db.runTransaction(async (tx) => {
       if ((await tx.get(payRef)).exists) return;                                // Razorpay may send the same event twice

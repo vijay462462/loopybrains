@@ -2591,9 +2591,10 @@ const PLUS_TILES = [
   ["📚", "Paper vault", "Previous-year papers and solutions, by subject and year.", "papers"],
   ["☁️", "Cloud backup", "Keep flashcards, notes and tasks safe across phones.", ""],
   ["🎨", "Themes", "Your own colour for the whole app.", ""],
+  ["🎯", "Goals and badges", "Weekly targets and badges to keep you going.", "goals"],
   ["⭐", "Plus star", "A star next to your name on every post.", ""],
 ];
-const PLUS_COMPARE = [["", "Free", "Plus"], ["Board, stories, quizzes, Study Lab", "✔", "✔"], ["Daily streaks and battles", "✔", "✔"], ["AI study helper", "–", "✔"], ["Mock tests and progress chart", "–", "✔"], ["Mistake notebook and exam planner", "–", "✔"], ["Paper vault", "–", "✔"], ["Cloud backup, themes, ⭐", "–", "✔"]];
+const PLUS_COMPARE = [["", "Free", "Plus"], ["Board, stories, quizzes, Study Lab", "✔", "✔"], ["Daily streaks and battles", "✔", "✔"], ["AI study helper", "–", "✔"], ["Mock tests and progress chart", "–", "✔"], ["Mistake notebook and exam planner", "–", "✔"], ["Paper vault", "–", "✔"], ["Weekly goals and badges", "–", "✔"], ["Cloud backup, themes, ⭐", "–", "✔"]];
 function renderPlus() {
   const acct = myAccount(), verified = acct.verified, has = state.plan.plus;
   const canBackup = !!store && !!store.getTop && verified && (!PLUS.enabled || has);
@@ -2644,12 +2645,15 @@ function renderPlus() {
     catch (_) { say("We could not save that right now. Please try again later."); }
   };
   const plansBlock = () => {
-    const save = Math.max(0, Math.round(100 - PLUS.yearly * 100 / (PLUS.monthly * 12))), card = (key, name, price, per, note, best) => el("div", { class: "plan-card" + (best ? " best" : "") },
-      best ? el("span", { class: "plan-badge" }, "Best value") : null, el("strong", {}, name), el("div", { class: "plan-price" }, "₹" + price, el("small", {}, " " + per)), el("p", { class: "hint" }, note),
+    const offer = offerOn(), save = Math.max(0, Math.round(100 - (offer ? offer.yearly : PLUS.yearly) * 100 / (PLUS.monthly * 12))), card = (key, name, price, per, note, best) => el("div", { class: "plan-card" + (best ? " best" : "") },
+      best ? el("span", { class: "plan-badge" }, offer ? offer.label : "Best value") : null, el("strong", {}, name),
+      el("div", { class: "plan-price" }, best && offer ? [el("s", { class: "plan-was" }, "₹" + price), " ₹" + offer.yearly] : "₹" + price, el("small", {}, " " + per)),
+      best && offer ? el("p", { class: "plan-deal" }, "Ends in " + offer.days + " day" + (offer.days === 1 ? "" : "s") + ". Lock this price for your first year.") : null, el("p", { class: "hint" }, note),
       has ? (PLUS.enabled ? buy(key, "Renew") : el("span", { class: "hint" }, "Active ✔")) : PLUS.enabled ? buy(key, "Upgrade") : el("button", { class: "btn" + (best ? " primary" : ""), type: "button", onclick: () => wait(key) }, "Notify me"));
     return el("div", {}, el("div", { class: "label" }, has ? "Your plan" : "Plans"),
       el("div", { class: "plan-grid" }, card("monthly", "Monthly", PLUS.monthly, "/ month", "Cancel any time. Pay again when you want.", false), card("yearly", "Yearly", PLUS.yearly, "/ year", "Save " + save + "% compared with monthly.", true)),
-      PLUS.enabled ? el("p", { class: "hint" }, "Pay safely by UPI, card or net banking (Razorpay). Your plan switches on within a minute of paying." + (verified ? "" : " Verify your email first (Profile › Verify your college email) so we can attach the plan to you.")) : el("div", {}, el("p", { class: "hint" }, "Payments open soon. Everything below is free while we build Plus. Tap Notify me and we will tell you the day it opens."), wemail));
+      (PLUS.enabled && !has && PLUS.trialDays) ? (trialLeft() ? el("p", { class: "plan-deal" }, "🎁 Free trial active: " + trialLeft() + " day" + (trialLeft() === 1 ? "" : "s") + " left (AI helper needs a paid plan).") : (readJSON("dd-trial-start", 0) ? null : el("button", { class: "btn", type: "button", onclick: () => { writeJSON("dd-trial-start", Date.now()); render(); } }, "🎁 Start " + PLUS.trialDays + "-day free trial"))) : null,
+      PLUS.enabled ? el("p", { class: "hint" }, "Pay safely by UPI, card or net banking (Razorpay). Your plan switches on within a minute of paying." + (verified ? "" : " Verify your email first (Profile › Verify your college email) so we can attach the plan to you.")) : el("div", {}, el("p", { class: "hint" }, "Payments open soon. Everything below is free while we build Plus. Tap Notify me and we will tell you the day it opens" + (offerOn() ? ", and you get the " + offerOn().label.toLowerCase() + " price of ₹" + offerOn().yearly + " for the first year." : ".")), wemail));
   };
   return [
     el("h2", {}, "⭐ CampusLoop Plus" + (has ? " (active)" : "")),
@@ -2669,7 +2673,8 @@ function renderPlus() {
       el("button", { class: "btn", type: "button", onclick: () => { state.mock = null; showPanel("mock"); } }, "📝 Mock tests"),
       el("button", { class: "btn", type: "button", onclick: () => { state.mist = null; showPanel("mistakes"); } }, "📓 Mistakes (" + mistakeList().length + ")"),
       el("button", { class: "btn", type: "button", onclick: () => showPanel("planner") }, "🗓️ Exam planner"),
-      el("button", { class: "btn", type: "button", onclick: () => showPanel("papers") }, "📚 Paper vault (" + state.papers.length + ")")),
+      el("button", { class: "btn", type: "button", onclick: () => showPanel("papers") }, "📚 Paper vault (" + state.papers.length + ")"),
+      el("button", { class: "btn", type: "button", onclick: () => showPanel("goals") }, "🎯 Goals and badges")),
     el("div", { class: "label" }, "🎨 Theme"),
     (PLUS.enabled && !has) ? el("p", { class: "hint" }, "Themes are part of the paid plan.") : el("div", { class: "rowbtns" }, ...THEMES.map(([n, c]) => el("button", { class: "btn sm", type: "button", onclick: () => { try { if (c) localStorage.setItem("dd-theme", c); else localStorage.removeItem("dd-theme"); } catch (_) {} if (!c) { const b = BRAND_COLORS || ["#4f46e5", "#7c3aed"]; document.documentElement.style.setProperty("--accent", b[0]); document.documentElement.style.setProperty("--brand-a", b[0]); document.documentElement.style.setProperty("--brand-b", b[1]); } else applyTheme(); } }, n))),
     el("div", { class: "label" }, "☁️ Backup"),
@@ -2682,7 +2687,14 @@ function renderPlus() {
 }
 // CampusLoop Plus studio: timed mock tests (subjects or placement), progress chart, mistake notebook and exam planner. Data stays on this phone.
 const MOCK_N = 15, MOCK_SECS = 20 * 60;
-const plusLocked = () => PLUS.enabled && !state.plan.plus;
+const trialLeft = () => { const t = Number(readJSON("dd-trial-start", 0)) || 0, d = Number(PLUS.trialDays) || 0; return t && d ? Math.max(0, Math.ceil((t + d * 864e5 - Date.now()) / 864e5)) : 0; };
+const plusLocked = () => PLUS.enabled && !state.plan.plus && trialLeft() === 0;
+const offerOn = () => { const o = PLUS.offer; if (!o || !o.yearly || !o.until) return null; const end = new Date(o.until + "T23:59:59+05:30").getTime(); return end > Date.now() ? { label: o.label || "Offer", yearly: o.yearly, days: Math.ceil((end - Date.now()) / 864e5) } : null; };
+// Weekly goals and lifetime badges, kept on this phone.
+const goalStats = () => { const g = readJSON("dd-goals", {}); return g.week === weekKey() ? g : { week: weekKey(), tests: 0, cleared: 0, papers: 0 }; };
+const lifeStats = () => ({ tests: 0, cleared: 0, papers: 0, best: 0, ...readJSON("dd-life", {}) });
+function bump(key, n, score) { const g = goalStats(); g[key] = (g[key] || 0) + n; writeJSON("dd-goals", g); const l = lifeStats(); l[key] = (l[key] || 0) + n; if (score && score > l.best) l.best = score; writeJSON("dd-life", l); }
+
 const readJSON = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k) || "null"); return v == null ? d : v; } catch (_) { return d; } };
 const writeJSON = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} };
 const BANKS = { college: { label: "Subject mock test", icon: "📝", get: () => QUIZ }, place: { label: "Placement practice", icon: "💼", get: () => window.CL_PLACEMENT || [] } };
@@ -2701,7 +2713,7 @@ function mockFinish() {
   m.qs.forEach((q, k) => { const b = bySub[q.s] || (bySub[q.s] = { r: 0, n: 0 }); b.n++; if (m.ans[k] === q.a) { b.r++; right++; } else wrong.push(q); });
   m.result = { right, n: m.qs.length, bySub, at: Date.now(), wrong };
   writeJSON("dd-mock-hist", [...mockHistory(), { at: m.result.at, b: m.bank, right, n: m.qs.length, bySub }]);
-  addMistakes(wrong);
+  addMistakes(wrong); bump("tests", 1, Math.round(right * 100 / m.qs.length));
   render();
 }
 // A small line chart of recent scores, drawn as SVG (no libraries).
@@ -2791,7 +2803,7 @@ function renderPapers() {
     ...(rows.length ? rows.map(p => el("div", { class: "learn-card plus-list" }, el("strong", {}, p.title), el("p", { class: "hint" }, p.subject + " · " + p.year + " · " + p.exam + (p.note ? " · " + p.note : "")),
       el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => open(p.link) }, "📄 Open paper"),
         /^https:\/\//.test(p.solution || "") ? el("button", { class: "btn sm", type: "button", onclick: () => open(p.solution) }, "✅ Solution") : null,
-        el("button", { class: "btn sm", type: "button", onclick: () => { if (done.has(p.id)) done.delete(p.id); else done.add(p.id); writeJSON("dd-papers-done", [...done].slice(-500)); render(); } }, done.has(p.id) ? "✔ Practised" : "Mark practised")))) : [el("p", { class: "hint" }, "No papers match.")]),
+        el("button", { class: "btn sm", type: "button", onclick: () => { if (done.has(p.id)) done.delete(p.id); else { done.add(p.id); bump("papers", 1); } writeJSON("dd-papers-done", [...done].slice(-500)); render(); } }, done.has(p.id) ? "✔ Practised" : "Mark practised")))) : [el("p", { class: "hint" }, "No papers match.")]),
     el("div", { class: "rowbtns" }, back)].filter(Boolean);
 }
 // AI study helper (Plus): chat with Claude through our own server function; the secret key never reaches the phone.
@@ -2819,6 +2831,18 @@ function renderAI() {
     box, chat.note ? el("p", { class: "hint", role: "status" }, chat.note) : null,
     el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", disabled: chat.busy ? "" : null, onclick: send }, "Ask"), chat.msgs.length ? el("button", { class: "btn sm", type: "button", onclick: () => { state.ai = null; render(); } }, "New chat") : null, back)].filter(Boolean);
 }
+const GOAL_DEFS = [["tests", "📝 Take 3 mock tests", 3], ["cleared", "📓 Clear 10 mistakes", 10], ["papers", "📚 Practise 2 papers", 2]];
+const PLUS_BADGES = [["🥉", "First mock", l => l.tests >= 1], ["🥈", "5 mocks done", l => l.tests >= 5], ["🏆", "Ace: 90%+ in a test", l => l.best >= 90], ["🧹", "Mistake slayer (20)", l => l.cleared >= 20], ["📚", "Paper warrior (10)", l => l.papers >= 10], ["🗓️", "Planner set", () => !!readJSON("dd-exam-plan", null)]];
+function renderGoals() {
+  const back = el("button", { class: "btn", type: "button", onclick: () => showPanel("plus") }, "Back");
+  if (plusLocked()) return [el("h2", {}, "🎯 Goals and badges"), el("p", { class: "hint" }, "Goals and badges are part of CampusLoop Plus."), el("div", { class: "rowbtns" }, back)];
+  const g = goalStats(), l = lifeStats(), allDone = GOAL_DEFS.every(([k, , n]) => (g[k] || 0) >= n), got = PLUS_BADGES.filter(b => b[2](l)).length;
+  return [el("h2", {}, "🎯 Goals and badges"), allDone ? el("div", { class: "wow", role: "status" }, el("span", { class: "wow-conf", "aria-hidden": "true" }, "🎉 ✨ 🎊"), el("strong", {}, "Wow, all weekly goals done!")) : el("p", { class: "hint" }, "Weekly goals reset every Monday."),
+    el("div", { class: "learn-card plus-list" }, el("strong", {}, "This week"), ...GOAL_DEFS.map(([k, label, n]) => { const v = Math.min(n, g[k] || 0), bar = el("div", { class: "mock-bar" }, el("span", {})); bar.firstChild.style.setProperty("width", Math.round(v * 100 / n) + "%"); return el("div", {}, el("div", { class: "rowbtns" }, el("span", {}, label), el("b", {}, v + "/" + n)), bar); })),
+    el("div", { class: "label" }, "Badges (" + got + "/" + PLUS_BADGES.length + ")"),
+    el("div", { class: "plus-tiles" }, ...PLUS_BADGES.map(([ic, name, ok]) => el("div", { class: "plus-tile badge" + (ok(l) ? " on" : ""), "aria-label": name + (ok(l) ? " unlocked" : " locked") }, el("span", { class: "pt-i", "aria-hidden": "true" }, ok(l) ? ic : "🔒"), el("strong", {}, name)))),
+    el("div", { class: "rowbtns" }, back)];
+}
 // Mistake notebook: questions you missed come back until you answer them right.
 function renderMistakes() {
   const back = el("button", { class: "btn", type: "button", onclick: () => { state.mist = null; showPanel("plus"); } }, "Back"), list = mistakeList();
@@ -2829,7 +2853,7 @@ function renderMistakes() {
   const next = () => { st.i = Math.floor(Math.random() * Math.max(1, mistakeList().length)); st.pick = -1; render(); };
   return [el("h2", {}, "📓 Mistake notebook (" + list.length + ")"), el("p", { class: "hint" }, q.s + ". Answer right to remove it from the notebook."), el("p", {}, q.q),
     ...q.o.map((o, k) => el("button", { class: "btn" + (answered && k === q.a ? " primary" : ""), type: "button", disabled: answered ? "" : null, onclick: () => {
-      st.pick = k; if (k === q.a) writeJSON("dd-mistakes", mistakeList().filter(x => x.q !== q.q)); render(); } }, (answered && k === st.pick && k !== q.a ? "✖ " : answered && k === q.a ? "✔ " : "") + o)),
+      st.pick = k; if (k === q.a) { writeJSON("dd-mistakes", mistakeList().filter(x => x.q !== q.q)); bump("cleared", 1); } render(); } }, (answered && k === st.pick && k !== q.a ? "✖ " : answered && k === q.a ? "✔ " : "") + o)),
     answered ? el("p", { class: "hint" }, (st.pick === q.a ? "Correct! Removed from your notebook. " : "Not quite. ") + (q.e || "")) : null,
     el("div", { class: "rowbtns" }, answered ? el("button", { class: "btn primary", type: "button", onclick: next }, "Next") : null, el("button", { class: "btn sm", type: "button", onclick: () => { if (confirm("Clear the whole notebook?")) { writeJSON("dd-mistakes", []); state.mist = null; render(); } } }, "Clear all"), back)].filter(Boolean);
 }
@@ -6542,6 +6566,7 @@ function render() {
       state.mode === "planner" ? renderPlanner() :
       state.mode === "papers" ? renderPapers() :
       state.mode === "ai" ? renderAI() :
+      state.mode === "goals" ? renderGoals() :
       state.mode === "college" ? renderCollege() :
       state.mode === "about" ? renderAbout() :
       state.mode === "lab" ? renderLab() :
