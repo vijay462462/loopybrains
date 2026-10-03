@@ -463,7 +463,7 @@ function draw() {
   const pickerBox = needs ? roomPicker(() => draw()) : null;
   const body = h("div", {});
   root.replaceChildren(
-    h("div", { class: "adm-head" }, h("h1", {}, "CampusLoop admin"), h("small", {}, u.email || ""), h("button", { class: "b sm", onclick: async () => { await au.signOut(auth); location.reload(); } }, "Sign out")),
+    h("div", { class: "adm-head" }, h("h1", {}, S.staffOnly ? "Welcome, respected staff" : "CampusLoop admin"), h("small", {}, (S.staffOnly ? "Thank you for serving your college. " : "") + (u.email || "")), h("button", { class: "b sm", onclick: async () => { await au.signOut(auth); location.reload(); } }, "Sign out")),
     tabs, pickerBox, body);
   if (needs) { if (S.room) body.append(VIEWS[S.tab]()); else body.append(h("p", { class: "adm-hint" }, "Choose a college above first.")); }
   else body.append(VIEWS[S.tab]());

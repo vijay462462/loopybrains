@@ -1235,6 +1235,7 @@ function trendingSubject() {
 const WELCOME = [
   ["🛡️", "Ask without fear", "Sign in is anonymous, you choose your name, and admins and students moderate every post. Bad posts are hidden fast and abusive devices are blocked."],
   ["🏆", "Answer together, earn rewards", "Help a classmate to earn points, build a daily streak, win badges and show up on the Top Helpers board. Stories and quizzes keep it fun."],
+  ["🙏", "Respect for everyone", "We honour our students, teachers and staff. Speak kindly, help your juniors, thank those who help you, and treat every person here the way you want your own family to be treated. Together we grow."],
   ["🚀", "Study smarter", "Daily quiz, Study Lab, flashcards, CGPA tools, jobs and papers, all in one place. Everything on the board is free. Plus adds extras like mock tests and an AI helper."],
 ];
 function showWelcome(force) {
@@ -1249,7 +1250,7 @@ function showWelcome(force) {
     box.replaceChildren(el("div", { class: "welcome-card" },
       el("button", { class: "welcome-skip", type: "button", onclick: close }, "Skip"),
       el("div", { class: "welcome-icon", "aria-hidden": "true" }, icon),
-      el("h2", {}, i === 0 ? "Welcome to " + BRAND : title), i === 0 ? el("h3", {}, title) : null, el("p", {}, text),
+      el("h2", {}, i === 0 ? "Welcome to the " + BRAND + " family" : title), i === 0 ? el("h3", {}, title) : null, el("p", {}, text),
       el("div", { class: "welcome-dots", "aria-hidden": "true" }, ...WELCOME.map((_, k) => el("span", { class: k === i ? "on" : "" }))),
       el("div", { class: "rowbtns" }, i > 0 ? el("button", { class: "btn", type: "button", onclick: () => { i--; paint(); } }, "Back") : null,
         el("button", { class: "btn primary", type: "button", onclick: () => { if (last) close(); else { i++; paint(); } } }, last ? "Get started" : "Next"))));
@@ -1265,6 +1266,25 @@ function maybeWelcome() {
   } catch (_) { return; }
   setTimeout(showWelcome, 700);
 }
+// "Today" card under the header: a personal greeting with the things that bring students back (streak, daily quiz, exam countdown).
+let todayKey = "";
+function renderToday() {
+  const bar = $("todayBar"); if (!bar) return;
+  if (NO_COLLEGE || !store) { bar.hidden = true; return; }
+  const hr = new Date().getHours(), hello = hr < 12 ? "Good morning" : hr < 17 ? "Good afternoon" : "Good evening", name = (getName() || "").trim().split(/\s+/)[0] || "",
+    streak = state.myStreak || 0, quizDone = QUIZ.length ? !!myQuizAnswer(dayNum()) : true, plan = readJSON("dd-exam-plan", null),
+    left = plan && plan.date ? Math.ceil((new Date(plan.date + "T00:00:00").getTime() - new Date().setHours(0, 0, 0, 0)) / 864e5) : null;
+  const key = [hello, name, streak, quizDone, left, dayNum()].join("|"); if (key === todayKey && !bar.hidden) return; todayKey = key;
+  const chip = (txt, cls, fn) => el("button", { class: "today-chip " + (cls || ""), type: "button", onclick: fn }, txt);
+  const WORDS = ["Welcome to the " + BRAND + " family 💙", "Respect your teachers, help your juniors. 🙏", "Every question is welcome here.", "Kind words build a strong campus. 🌱", "Thank you for being part of our family.", "Learn together, grow together. 🚀", "Our teachers and staff work hard for you. Say thank you today. 🙏"];
+  bar.replaceChildren(el("strong", { class: "today-hello" }, hello + (name ? ", " + name : "") + " 👋"), el("small", { class: "today-words" }, WORDS[dayNum() % WORDS.length]),
+    el("div", { class: "today-chips" },
+      chip(streak ? "🔥 " + streak + "-day streak" : "🔥 Start your streak", streak && !(state.myDays && state.myDays.has(dayNum())) ? "warn" : "", () => showPanel("me")),
+      QUIZ.length ? chip(quizDone ? "✅ Quiz done" : "🧠 Today's quiz", quizDone ? "" : "pulse", () => showPanel("quiz")) : null,
+      left != null && left >= 0 && left <= 60 ? chip("⏳ " + (left === 0 ? "Exam today" : left + " days to exam"), left <= 7 ? "warn" : "", () => showPanel("planner")) : null,
+      chip("❓ Ask a doubt", "", () => { const b = $("askBtn"); if (b) b.click(); }))); 
+  bar.hidden = false;
+}
 // Trust strip under the tagline: honest promises plus real numbers from this college (shown only once they are big enough to mean something).
 let trustKey = "";
 function renderTrust() {
@@ -1277,7 +1297,7 @@ function renderTrust() {
   bar.replaceChildren(...chips.map(([i, t]) => el("span", { class: "trust-chip" }, i + " " + t)), el("a", { class: "trust-link", href: "privacy.html", target: "_blank", rel: "noopener" }, "Privacy"));
 }
 function renderHeader() {
-  renderTrust();
+  renderTrust(); renderToday();
   const t = TABS[state.tab];
   document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === state.tab)));
 

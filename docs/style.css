@@ -1800,3 +1800,22 @@ body.priv-blur > * { filter: blur(22px); }
 .official-bar .of-open { display: grid; gap: 1px; text-align: left; border: 0; background: transparent; color: inherit; font: inherit; padding: 0; min-width: 0; }
 .official-bar .of-open strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .official-bar .of-open small { opacity: .8; font-size: 11.5px; }
+.today-bar { display: grid; gap: 8px; margin: 8px 12px; padding: 12px 14px; border-radius: 16px; background: var(--paper); border: 1px solid var(--line); box-shadow: 0 6px 18px rgb(79 70 229 / .10); }
+.today-bar[hidden] { display: none; }
+.today-hello { font-size: 17px; }
+.today-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.today-chip { border: 1px solid var(--line); background: var(--accent-soft); color: var(--ink); border-radius: 999px; padding: 6px 12px; font-weight: 700; font-size: 13px; }
+.today-chip.warn { border-color: #f59e0b; background: #fef3c7; color: #78350f; }
+.today-chip.pulse { animation: pulseGlow 2s ease-in-out infinite; }
+@keyframes pulseGlow { 50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 25%, transparent); } }
+@media (prefers-reduced-motion: reduce) { .today-chip.pulse { animation: none; } }
+@media (max-width: 700px) {
+  /* one scrollable row of sections instead of three rows */
+  header.top .tabs { display: flex; overflow-x: auto; scrollbar-width: none; scroll-snap-type: x proximity; gap: 6px; }
+  header.top .tabs::-webkit-scrollbar { display: none; }
+  header.top .tabs button { flex: none; scroll-snap-align: start; padding: 8px 14px; }
+  /* Daily Quiz, Study Lab and Focus mode share one row of three tiles */
+  .hdr-actions.tools-closed .chip.tool#quizBtn, .hdr-actions.tools-closed .chip.tool#labBtn, .hdr-actions.tools-closed .chip.tool#focusBtn { grid-column: span 2; flex-direction: column; gap: 2px; padding: 8px 4px; font-size: 11px; font-weight: 700; text-align: center; }
+  .hdr-actions.tools-closed .chip.tool#labBtn .ci, .hdr-actions.tools-closed .chip.tool#focusBtn .ci { font-size: 19px; }
+}
+.today-words { opacity: .8; margin-top: -4px; }
