@@ -7014,6 +7014,8 @@ $("focusBtn") && $("focusBtn").addEventListener("click", toggleFocus);
   b.addEventListener("click", () => { open = !open; try { localStorage.setItem("dd-tools-open", open ? "1" : "0"); } catch (_) {} paint(); });
   acts.prepend(b); paint();
 })();
+// A tiny tap vibration on buttons gives the app a native feel (phones that support it).
+document.addEventListener("click", (e) => { const b = e.target.closest && e.target.closest(".btn, .tabs button, .bnav-btn, .today-chip, .plus-tile"); if (b) { try { navigator.vibrate && navigator.vibrate(6); } catch (_) {} } }, { passive: true });
 maybeWelcome();
 $("filterToggle").addEventListener("click", () => { document.querySelector("header.top").classList.toggle("filters-open"); renderHeader(); });
 $("botBtn").addEventListener("click", () => { if (window.sparkBotToggle) window.sparkBotToggle(); });
