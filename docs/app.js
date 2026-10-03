@@ -3065,7 +3065,7 @@ function renderCollege() {
       await store.setTop("collegeRequests", id, { name: n.slice(0, 80), city: city.value.trim().slice(0, 60), role: role.value, contact: contact.value.trim().slice(0, 100), consent: true, createdAt: Date.now() });
       try { localStorage.setItem("dd-college-req", String(Date.now())); } catch (_) {}
       msg.textContent = "✅ Thank you! We will contact you when " + n.slice(0, 60) + " is ready."; form.reset();
-    } catch (err) { msg.textContent = errText(err); }
+    } catch (err) { msg.textContent = err && err.code === "permission-denied" ? "We could not save your request right now because the board is still being updated. Please try again in a little while." : "We could not send your request. Check your internet and try again."; }
   } }, name, city, role, contact, el("label", { class: "check" }, consent, "I agree that RGUKT Spark may contact me about this request."), el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "submit" }, "Send request")), msg);
   return [
     el("h2", {}, "🏫 Your college"),
