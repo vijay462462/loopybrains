@@ -1,0 +1,272 @@
+rules_version = '2';
+// Security rules for RGUKT Spark.
+//
+// HOW TO USE
+//  1. Firebase console > Firestore Database > Rules. COPY YOUR CURRENT RULES SOMEWHERE SAFE FIRST.
+//  2. Paste this file, then replace nothing: the room is matched generically ({room}) so the
+//     private class code never appears in this public repository.
+//  3. Click "Rules playground" and test a create on /rooms/TEST/doubts/abc with a sample post
+//     before you publish. If a real action in the app is rejected, tell me the field name.
+//
+// WHAT THESE RULES DO
+//  - Every collection the app uses is listed. Anything not listed is denied.
+//  - Each document may only contain the known fields, with the right types and sizes.
+//  - New posts must carry a current timestamp, can't start deleted or with reports.
+//  - authorId and createdAt can never change after posting.
+//  - Updates may only touch the fields the app really edits (quiz answers, authorId, createdAt and
+//    the challenge questions can not be changed after posting).
+//  - Nothing can be permanently deleted except your own like or reaction (website uses soft delete).
+//
+// ANONYMOUS SIGN-IN IS NOW ON: the app signs every browser in anonymously (no account, no password)
+// and member() requires that session. ORDER MATTERS: 1) deploy the app (v154+), 2) Firebase console >
+// Authentication > Sign-in method > enable Anonymous, 3) only then publish these rules. Publishing
+// them earlier locks out everyone. To roll back, change member() to `return true;`.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- helpers ----------
+    function signedIn() { return request.auth != null; }
+    function member() { return true; }
+    // Device block list: an admin adds a document whose id is the device id to rooms/<room>/blocked in the console.
+    function notBlocked(room, id) { return !(id is string) || !exists(/databases/$(database)/documents/rooms/$(room)/blocked/$(id)); }
+
+    function str(v, min, max) { return v is string && v.size() >= min && v.size() <= max; }
+    function optStr(d, k, max) { return !(k in d) || (d[k] is string && d[k].size() <= max); }
+    function optBool(d, k) { return !(k in d) || d[k] is bool; }
+    function optList(d, k, n) { return !(k in d) || (d[k] is list && d[k].size() <= n); }
+    function recent(t) { return t is int && t > request.time.toMillis() - 1800000 && t < request.time.toMillis() + 1800000; }
+    function unchanged() {
+      return request.resource.data.authorId == resource.data.authorId
+        && request.resource.data.createdAt == resource.data.createdAt;
+    }
+    function changes(keys) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
+    }
+
+    // ---------- posts: doubts, ideas, clubs, gate, challenges ----------
+    // g is the field that holds the subject / category / club / type.
+    function validPost(g) {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['title', 'body', g, 'authorId', 'authorName', 'anonymous', 'urgent', 'createdAt',
+                               'pages', 'fileAttachments', 'year', 'tags', 'pyqYear', 'marks', 'difficulty',
+                               'resolvedReplyId', 'bounty', 'campus', 'chalType', 'timeLimit', 'questions', 'status',
+                               'winner', 'winnerName', 'runnerUp', 'runnerUpName', 'deleted', 'reports', 'editedAt',
+                               'company', 'applyUrl', 'deadline', 'pay'])
+        && str(d.title, 3, 200) && str(d.body, 0, 5000) && str(d[g], 1, 60)
+        && str(d.authorName, 1, 40) && str(d.authorId, 8, 80) && d.createdAt is int
+        && optBool(d, 'anonymous') && optBool(d, 'urgent') && optBool(d, 'bounty') && optBool(d, 'deleted')
+        && optList(d, 'pages', 5) && optList(d, 'fileAttachments', 5) && optList(d, 'reports', 100)
+        && optList(d, 'questions', 10)
+        && optStr(d, 'year', 12) && optStr(d, 'tags', 100) && optStr(d, 'pyqYear', 20) && optStr(d, 'marks', 4)
+        && optStr(d, 'difficulty', 10) && optStr(d, 'campus', 30) && optStr(d, 'chalType', 20)
+        && optStr(d, 'company', 60) && optStr(d, 'applyUrl', 300) && optStr(d, 'deadline', 10) && optStr(d, 'pay', 40)
+        && optStr(d, 'winner', 100) && optStr(d, 'winnerName', 40) && optStr(d, 'runnerUp', 100) && optStr(d, 'runnerUpName', 40)
+        && (!('timeLimit' in d) || (d.timeLimit is number && d.timeLimit >= 0 && d.timeLimit <= 180))
+        && (!('status' in d) || d.status in ['open', 'closed'])
+        && (!('editedAt' in d) || d.editedAt is int)
+        && (!('resolvedReplyId' in d) || d.resolvedReplyId == null || str(d.resolvedReplyId, 1, 100));
+    }
+    function newPost(g) {
+      let d = request.resource.data;
+      return validPost(g) && recent(d.createdAt) && d.get('deleted', false) == false && !('reports' in d);
+    }
+    // Fields a post update may change. Questions, authorId and createdAt are fixed after posting.
+    function postEdit(g) {
+      return changes(['title', 'body', g, 'authorName', 'anonymous', 'urgent', 'pages', 'fileAttachments', 'year',
+                      'tags', 'editedAt', 'deleted', 'reports', 'resolvedReplyId', 'bounty', 'status',
+                      'winner', 'winnerName', 'runnerUp', 'runnerUpName', 'pyqYear', 'marks', 'difficulty', 'campus', 'company', 'applyUrl', 'deadline', 'pay']);
+    }
+
+    // ---------- market listings ----------
+    function validListing() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['title', 'body', 'category', 'price', 'condition', 'whatsapp', 'authorId', 'authorName',
+                               'sold', 'createdAt', 'campus', 'deleted', 'reports'])
+        && str(d.title, 3, 200) && str(d.body, 0, 2000) && str(d.category, 1, 40)
+        && (d.price == null || (d.price is number && d.price >= 0 && d.price <= 10000000))
+        && optStr(d, 'condition', 40) && optStr(d, 'whatsapp', 10) && optStr(d, 'campus', 30)
+        && str(d.authorName, 1, 40) && str(d.authorId, 8, 80) && d.createdAt is int
+        && optBool(d, 'sold') && optBool(d, 'deleted') && optList(d, 'reports', 100);
+    }
+
+    match /rooms/{room} {
+
+      match /doubts/{id} {
+        allow read: if member();
+        allow create: if member() && notBlocked(room, request.resource.data.authorId) && newPost('subject');
+        allow update: if member() && notBlocked(room, request.resource.data.authorId) && validPost('subject') && unchanged() && postEdit('subject');
+        allow delete: if false;
+      }
+      match /ideas/{id} {
+        allow read: if member();
+        allow create: if member() && notBlocked(room, request.resource.data.authorId) && newPost('category');
+        allow update: if member() && notBlocked(room, request.resource.data.authorId) && validPost('category') && unchanged() && postEdit('category');
+        allow delete: if false;
+      }
+      match /clubs/{id} {
+        allow read: if member();
+        allow create: if member() && notBlocked(room, request.resource.data.authorId) && newPost('club');
+        allow update: if member() && notBlocked(room, request.resource.data.authorId) && validPost('club') && unchanged() && postEdit('club');
+        allow delete: if false;
+      }
+      match /gate/{id} {
+        allow read: if member();
+        allow create: if member() && notBlocked(room, request.resource.data.authorId) && newPost('subject');
+        allow update: if member() && notBlocked(room, request.resource.data.authorId) && validPost('subject') && unchanged() && postEdit('subject');
+        allow delete: if false;
+      }
+      match /jobs/{id} {
+        allow read: if member();
+        allow create: if member() && notBlocked(room, request.resource.data.authorId) && newPost('type');
+        allow update: if member() && notBlocked(room, request.resource.data.authorId) && validPost('type') && unchanged() && postEdit('type');
+        allow delete: if false;
+      }
+      // ---------- profile photos and 24-hour stories ----------
+      match /profiles/{id} {
+        function validProfile() {
+          let d = request.resource.data;
+          return d.keys().hasOnly(['name', 'dp', 'status', 'updatedAt']) && str(d.name, 1, 40) && optStr(d, 'status', 60) && d.updatedAt is int
+            && d.dp is string && d.dp.size() <= 40000 && (d.dp == '' || d.dp.matches('data:image/jpeg;base64,.*'));
+        }
+        allow read: if member();
+        allow create, update: if member() && notBlocked(room, id) && validProfile() && str(id, 8, 80);
+        allow delete: if false;
+      }
+      match /stories/{id} {
+        function validStory() {
+          let d = request.resource.data;
+          return d.keys().hasOnly(['authorId', 'authorName', 'kind', 'pageId', 'text', 'bg', 'caption', 'createdAt', 'deleted', 'reports'])
+            && str(d.authorId, 8, 80) && str(d.authorName, 1, 40) && d.kind in ['photo', 'text'] && d.createdAt is int
+            && (d.kind == 'photo' ? str(d.pageId, 1, 100) : str(d.text, 1, 200))
+            && optStr(d, 'caption', 140) && optStr(d, 'bg', 3) && optBool(d, 'deleted') && optList(d, 'reports', 100);
+        }
+        allow read: if member();
+        allow create: if member() && notBlocked(room, request.resource.data.authorId) && validStory() && recent(request.resource.data.createdAt)
+          && request.resource.data.get('deleted', false) == false && !('reports' in request.resource.data);
+        allow update: if member() && validStory() && unchanged() && changes(['deleted', 'reports']);
+        allow delete: if false;
+      }
+      match /storyViews/{id} {
+        allow read: if member();
+        allow create: if member()
+          && request.resource.data.keys().hasOnly(['storyId', 'uid', 'name', 'createdAt'])
+          && str(request.resource.data.storyId, 1, 100) && str(request.resource.data.uid, 8, 80)
+          && str(request.resource.data.name, 1, 40) && recent(request.resource.data.createdAt)
+          && id == request.resource.data.storyId + '_' + request.resource.data.uid;
+        allow update, delete: if false;
+      }
+      // Device block list. Only the Firebase console can write here (rules deny everyone else).
+      match /blocked/{id} {
+        allow read: if member();
+        allow write: if false;
+      }
+      match /challenges/{id} {
+        allow read: if member();
+        allow create: if member() && notBlocked(room, request.resource.data.authorId) && newPost('type');
+        allow update: if member() && notBlocked(room, request.resource.data.authorId) && validPost('type') && unchanged() && postEdit('type');
+        allow delete: if false;
+      }
+
+      // ---------- replies (answers, thoughts, inquiries) ----------
+      match /replies/{id} {
+        function validReply() {
+          let d = request.resource.data;
+          return d.keys().hasOnly(['parentId', 'parentColl', 'body', 'authorId', 'authorName', 'anonymous', 'createdAt',
+                                   'pages', 'fileAttachments', 'deleted', 'reports'])
+            && str(d.body, 1, 5000) && str(d.authorName, 1, 40) && str(d.authorId, 8, 80)
+            && d.parentColl in ['doubts', 'ideas', 'clubs', 'gate', 'challenges', 'jobs', 'market']
+            && str(d.parentId, 1, 100) && d.createdAt is int
+            && optBool(d, 'anonymous') && optBool(d, 'deleted')
+            && optList(d, 'pages', 5) && optList(d, 'fileAttachments', 5) && optList(d, 'reports', 100);
+        }
+        allow read: if member();
+        allow create: if member() && notBlocked(room, request.resource.data.authorId) && validReply() && recent(request.resource.data.createdAt)
+          && request.resource.data.get('deleted', false) == false && !('reports' in request.resource.data);
+        // A reply can only be hidden (deleted) or reported after posting.
+        allow update: if member() && validReply() && unchanged() && changes(['deleted', 'reports']);
+        allow delete: if false;
+      }
+
+      // ---------- notebook pages (compressed photos and handwriting) ----------
+      match /pages/{id} {
+        allow read: if member();
+        allow create: if member()
+          && request.resource.data.keys().hasOnly(['data', 'parentId', 'createdAt'])
+          && str(request.resource.data.data, 30, 750000)
+          && str(request.resource.data.parentId, 1, 100) && recent(request.resource.data.createdAt);
+        allow update, delete: if false;
+      }
+
+      // ---------- likes, reactions, quiz answers, alumni approvals ----------
+      // Document id must be <ideaId>_<uid>.
+      match /likes/{id} {
+        allow read: if member();
+        allow create: if member()
+          && request.resource.data.keys().hasOnly(['ideaId', 'uid', 'createdAt', 'name'])
+          && str(request.resource.data.uid, 8, 80) && str(request.resource.data.ideaId, 1, 200)
+          && id == request.resource.data.ideaId + '_' + request.resource.data.uid
+          && recent(request.resource.data.createdAt)
+          && (!('name' in request.resource.data) || str(request.resource.data.name, 1, 40));
+        allow delete: if member();
+        allow update: if false;
+      }
+
+      // ---------- market ----------
+      match /market/{id} {
+        allow read: if member();
+        allow create: if member() && notBlocked(room, request.resource.data.authorId) && validListing() && recent(request.resource.data.createdAt)
+          && request.resource.data.get('deleted', false) == false && !('reports' in request.resource.data);
+        allow update: if member() && validListing() && unchanged()
+          && changes(['title', 'body', 'category', 'price', 'condition', 'whatsapp', 'sold', 'deleted', 'reports']);
+        allow delete: if false;
+      }
+      match /marketReports/{id} {
+        allow read: if member();
+        allow create: if member()
+          && request.resource.data.keys().hasOnly(['listingId', 'sellerId', 'reporterId', 'reason', 'createdAt'])
+          && str(request.resource.data.listingId, 1, 100) && str(request.resource.data.sellerId, 8, 80)
+          && str(request.resource.data.reporterId, 8, 80) && str(request.resource.data.reason, 1, 120)
+          && recent(request.resource.data.createdAt);
+        allow update, delete: if false;
+      }
+      match /marketRatings/{id} {
+        allow read: if member();
+        allow create: if member()
+          && request.resource.data.keys().hasOnly(['listingId', 'sellerId', 'raterId', 'score', 'createdAt'])
+          && str(request.resource.data.listingId, 1, 100) && str(request.resource.data.sellerId, 8, 80)
+          && str(request.resource.data.raterId, 8, 80)
+          && request.resource.data.score is number && request.resource.data.score >= 1 && request.resource.data.score <= 5
+          && recent(request.resource.data.createdAt);
+        allow update: if member() && changes(['score'])
+          && request.resource.data.score is number && request.resource.data.score >= 1 && request.resource.data.score <= 5;
+        allow delete: if false;
+      }
+      match /marketInterests/{id} {
+        allow read: if member();
+        allow create: if member()
+          && request.resource.data.keys().hasOnly(['listingId', 'sellerId', 'buyerId', 'buyerName', 'buyerCampus', 'createdAt'])
+          && str(request.resource.data.listingId, 1, 100) && str(request.resource.data.sellerId, 8, 80)
+          && str(request.resource.data.buyerId, 8, 80) && str(request.resource.data.buyerName, 1, 40)
+          && request.resource.data.get('buyerCampus', '') is string && request.resource.data.get('buyerCampus', '').size() <= 30
+          && recent(request.resource.data.createdAt);
+        allow update: if member() && changes(['deleted']) && request.resource.data.deleted is bool;
+        allow delete: if false;
+      }
+
+      // ---------- challenge scores (document id is <challengeId>_<uid>) ----------
+      match /chal_scores/{id} {
+        allow read: if member();
+        allow create, update: if member()
+          && request.resource.data.keys().hasOnly(['challengeId', 'userId', 'userName', 'score', 'timeTaken', 'answers', 'submittedAt'])
+          && str(request.resource.data.challengeId, 1, 100) && str(request.resource.data.userId, 8, 80)
+          && id == request.resource.data.challengeId + '_' + request.resource.data.userId
+          && str(request.resource.data.userName, 1, 40)
+          && request.resource.data.score is number && request.resource.data.score >= 0 && request.resource.data.score <= 1000
+          && request.resource.data.timeTaken is number && request.resource.data.timeTaken >= 0
+          && request.resource.data.answers is list && request.resource.data.answers.size() <= 10
+          && recent(request.resource.data.submittedAt);
+        allow delete: if false;
+      }
+    }
+  }
+}
