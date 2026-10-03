@@ -150,7 +150,7 @@ const fileExt = (name) => (String(name || "").split(".").pop() || "").toLowerCas
 
 const state = {
   tab: "doubts", group: "All", query: "", filter: "all",
-  doubts: [], ideas: [], clubs: [], gate: [], jobs: [], challenges: [], chalScores: [], market: [], marketReports: [], marketRatings: [], marketInterests: [], replies: [], likes: [], loaded: false,
+  doubts: [], ideas: [], clubs: [], gate: [], jobs: [], challenges: [], chalScores: [], market: [], marketReports: [], marketRatings: [], marketInterests: [], replies: [], likes: [], profiles: [], stories: [], storyViews: [], loaded: false,
   selected: null, mode: "intro", // intro | view | ask | edit | name | campus
   afterName: null,
   replyPages: [], replyAnon: false,
@@ -215,17 +215,17 @@ const AVATARS = [
 // DiceBear 3D portrait seeds shown in the avatar picker
 const DB_SEEDS = ["apex","cipher","echo","flash","ghost","hawk","jade","luna","nova","orbit","pixel","vega","storm","blaze","frost","zion"];
 const dbUrl = (seed) => "https://api.dicebear.com/9.x/notionists/svg?seed=" + encodeURIComponent(seed) + "&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf&backgroundType=gradientLinear";
-function getAvatar() { try { return localStorage.getItem("dd-avatar") || AVATARS[0]; } catch (_) { return AVATARS[0]; } }
-function setAvatar(v) { try { localStorage.setItem("dd-avatar", v); } catch (_) {} }
+function getAvatar() { try { return getDp() || localStorage.getItem("dd-avatar") || AVATARS[0]; } catch (_) { return AVATARS[0]; } }
+function setAvatar(v) { try { localStorage.setItem("dd-avatar", v); localStorage.removeItem("dd-dp"); } catch (_) {} if (store) syncProfile().catch(() => {}); }
 // Avatar for any user by name — returns DiceBear URL for a consistent illustrated portrait
 function avatarFor(name) {
   if (!name || name === ANON) return "👤";
-  return dbUrl(name);
+  return dpByName(name) || dbUrl(name);
 }
 const AVATAR_ALLOWED = /^https:\/\/api\.dicebear\.com\//;
 // Render a small avatar circle element; accepts emoji string or a safe DiceBear URL (renders <img>)
 function avatarEl(icon, cls = "av") {
-  if (icon && AVATAR_ALLOWED.test(icon)) {
+  if (icon && (AVATAR_ALLOWED.test(icon) || DP_OK.test(icon))) {
     const img = document.createElement("img");
     img.className = cls + " av-img";
     img.src = icon; img.alt = "avatar"; img.loading = "lazy";
@@ -307,7 +307,7 @@ async function firebaseStore(conf, prefix = "") {
   } catch (e) { console.warn("Anonymous sign-in unavailable:", e && e.code || e && e.message); }
   return {
     uid: deviceId(), demo: false, authed: signedIn,
-    subscribe: (coll, cb, onErr) => fs.onSnapshot(fs.collection(db, prefix + coll), snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))), onErr),
+    subscribe: (coll, cb, onErr, since) => fs.onSnapshot(since ? fs.query(fs.collection(db, prefix + coll), fs.where("createdAt", ">", since)) : fs.collection(db, prefix + coll), snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))), onErr),
     newId: (coll) => fs.doc(fs.collection(db, prefix + coll)).id,
     set: (coll, id, data) => fs.setDoc(fs.doc(db, prefix + coll, id), cleanDoc(data)),
     update: (coll, id, data) => fs.updateDoc(fs.doc(db, prefix + coll, id), cleanDoc(data)),
@@ -2175,6 +2175,11 @@ function renderMe() {
       el("div", {},
         el("h2", {}, (getName() || "You") + " · Level " + lv.n),
         el("p", { class: "hint" }, titleOf(p.points) + " · " + plural(p.points, "point")))),
+    el("p", { class: "hint" }, "📷 Your profile photo (everyone can see it next to your posts)"),
+    el("div", { class: "rowbtns" }, el("button", { type: "button", class: "btn sm primary", onclick: pickDp }, getDp() ? "Change photo" : "Upload photo"), getDp() && el("button", { type: "button", class: "btn sm", onclick: removeDp }, "Remove photo")),
+    el("p", { class: "hint" }, "💬 Your status (shown on your stories)"),
+    (() => { const inp = el("input", { type: "text", maxlength: "60", placeholder: "e.g. Busy with exams 📚", "aria-label": "Your status", value: getStatus() }); const save = async () => { try { localStorage.setItem("dd-status", inp.value.trim().slice(0, 60)); await syncProfile(); showNotice("Status saved ✅"); setTimeout(() => showNotice(""), 2000); } catch (e) { showNotice(errText(e)); } };
+      return el("div", { class: "rowbtns" }, inp, el("button", { type: "button", class: "btn sm primary", onclick: save }, "Save"), ...["📚 Studying", "😴 Sleeping", "🎯 Placement prep", "🎮 Free"].map(t => el("button", { type: "button", class: "btn sm", onclick: () => { inp.value = t; } }, t))); })(),
     el("p", { class: "hint" }, "🎨 3D Portraits"),
     dbPicker,
     el("p", { class: "hint" }, "Emoji icons"),
@@ -5323,10 +5328,178 @@ function renderCampusPicker() {
   ];
 }
 
+// ---------- profile photo (DP) and 24-hour stories ----------
+const STORY_MS = 86400000, STORY_SHOW = 5500, STORY_DAILY_MAX = 10;
+const STORY_BG = [["#7c3aed", "#2563eb"], ["#db2777", "#f97316"], ["#059669", "#0ea5e9"], ["#f59e0b", "#ef4444"], ["#1e293b", "#6366f1"], ["#0d9488", "#84cc16"], ["#9333ea", "#ec4899"], ["#0f172a", "#334155"]];
+const DP_OK = /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]{20,40000}$/;
+const IMG_OK = /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]{20,700000}$/;
+const getDp = () => { try { const v = localStorage.getItem("dd-dp"); return DP_OK.test(v || "") ? v : ""; } catch (_) { return ""; } };
+let _dpSrc = null, _dpMap = new Map();
+function dpByName(name) {
+  if (_dpSrc !== state.profiles) { _dpSrc = state.profiles; _dpMap = new Map(); for (const p of [...state.profiles].sort((a, b) => (a.updatedAt || 0) - (b.updatedAt || 0))) if (p.name && p.dp) _dpMap.set(p.name, p.dp); }
+  return _dpMap.get(name) || "";
+}
+const getStatus = () => { try { return (localStorage.getItem("dd-status") || "").slice(0, 60); } catch (_) { return ""; } };
+const statusOfId = (id) => { if (allMyIds().has(id)) return getStatus(); const p = state.profiles.find(x => x.id === id); return (p && p.status) || ""; };
+const dpOfId = (id, name) => { const p = state.profiles.find(x => x.id === id); return (p && p.dp) || (allMyIds().has(id) && getDp()) || dbUrl(name || id); };
+// Photo -> small JPEG data URL (square crop for DP). Nothing is uploaded until the student posts it.
+async function imgToJpeg(file, max, q, square) {
+  if (!file || !/^image\/(jpeg|png|webp|gif)$/.test(file.type)) throw new Error("Choose a JPG, PNG or WebP photo.");
+  if (file.size > 20 * 1024 * 1024) throw new Error("That photo is too large (max 20 MB).");
+  const bmp = await createImageBitmap(file);
+  let sx = 0, sy = 0, sw = bmp.width, sh = bmp.height;
+  if (square) { const m = Math.min(sw, sh); sx = (sw - m) / 2; sy = (sh - m) / 2; sw = sh = m; }
+  const k = Math.min(1, max / Math.max(sw, sh)), cw = Math.max(1, Math.round(sw * k)), ch = Math.max(1, Math.round(sh * k));
+  const c = document.createElement("canvas"); c.width = cw; c.height = ch;
+  const g = c.getContext("2d"); g.fillStyle = "#000"; g.fillRect(0, 0, cw, ch); g.drawImage(bmp, sx, sy, sw, sh, 0, 0, cw, ch);
+  if (bmp.close) bmp.close();
+  return c.toDataURL("image/jpeg", q);
+}
+async function syncProfile() {
+  if (!store) return;
+  const dp = getDp();
+  const status = getStatus();
+  if (!dp && !status && !state.profiles.some(p => p.id === store.uid)) return;
+  await store.set("profiles", store.uid, { name: (getName() || "Student").slice(0, 40), dp, status, updatedAt: Date.now() });
+}
+function pickDp() {
+  const inp = document.createElement("input"); inp.type = "file"; inp.accept = "image/*";
+  inp.addEventListener("change", async () => {
+    try {
+      const url = await imgToJpeg(inp.files[0], 96, 0.8, true);
+      if (!DP_OK.test(url)) throw new Error("Could not use that photo. Try another one.");
+      try { localStorage.setItem("dd-dp", url); } catch (_) {}
+      await syncProfile(); showNotice("Profile photo updated ✅"); setTimeout(() => showNotice(""), 2500); render();
+    } catch (e) { showNotice((e && e.message) || "Could not update the photo."); }
+  });
+  inp.click();
+}
+async function removeDp() { try { localStorage.removeItem("dd-dp"); await syncProfile(); } catch (_) {} render(); }
+
+const seenSet = () => { try { return new Set(JSON.parse(localStorage.getItem("dd-seen") || "[]")); } catch (_) { return new Set(); } };
+const markSeen = (id) => { const s = seenSet(); s.add(id); try { localStorage.setItem("dd-seen", JSON.stringify([...s].slice(-300))); } catch (_) {} };
+const activeStories = () => { const cut = Date.now() - STORY_MS; return state.stories.filter(s => !s.deleted && s.createdAt > cut && !isHidden(s) && (s.kind === "text" ? !!s.text : !!s.pageId)).sort((a, b) => a.createdAt - b.createdAt); };
+function storyGroups() {
+  const m = new Map();
+  for (const s of activeStories()) { if (!m.has(s.authorId)) m.set(s.authorId, { authorId: s.authorId, name: s.authorName || "Student", items: [] }); const g = m.get(s.authorId); g.items.push(s); g.name = s.authorName || g.name; }
+  const seen = seenSet(), arr = [...m.values()], mineIds = allMyIds();
+  for (const g of arr) { g.latest = g.items[g.items.length - 1].createdAt; g.unseen = g.items.some(s => !seen.has(s.id)); g.own = mineIds.has(g.authorId); }
+  return arr.sort((a, b) => (b.own - a.own) || (b.unseen - a.unseen) || (b.latest - a.latest));
+}
+function renderStoryBar() {
+  const bar = $("storyBar"); if (!bar) return;
+  if (!store) { bar.hidden = true; return; }
+  const groups = storyGroups(), own = groups.find(g => g.own);
+  const bub = (g) => el("button", { type: "button", class: "st-bub", "aria-label": g.own ? "Your story" : g.name + "'s story", onclick: () => openStories(g.authorId) },
+    el("span", { class: "st-ring" + (g.unseen ? " new" : " seen") }, avatarEl(dpOfId(g.authorId, g.name), "av st-av")),
+    el("span", { class: "st-name" }, g.own ? "Your story" : g.name));
+  const me = own ? bub(own) : el("button", { type: "button", class: "st-bub", "aria-label": "Add to your story", onclick: openStoryAdd },
+    el("span", { class: "st-ring add" }, avatarEl(getAvatar(), "av st-av")), el("span", { class: "st-name" }, "Your story"));
+  if (own) me.append(el("span", { class: "st-plus", role: "button", "aria-label": "Add another story", onclick: (e) => { e.stopPropagation(); openStoryAdd(); } }, "+"));
+  else me.append(el("span", { class: "st-plus" }, "+"));
+  bar.replaceChildren(me, ...groups.filter(g => !g.own).map(bub));
+  bar.hidden = false;
+}
+function openStoryAdd() {
+  if (!store) return;
+  if (!getName()) { showPanel("name"); showNotice("Set your name first, then add your story."); return; }
+  if (state.stories.filter(s => allMyIds().has(s.authorId) && Date.now() - s.createdAt < STORY_MS).length >= STORY_DAILY_MAX) { showNotice("You can add up to " + STORY_DAILY_MAX + " stories a day."); return; }
+  let kind = "photo", img = "", bg = 0;
+  const ov = el("div", { class: "st-view st-add", role: "dialog", "aria-modal": "true", "aria-label": "Add to your story" });
+  const close = () => { ov.remove(); document.body.classList.remove("st-open"); };
+  const err = el("p", { class: "hint st-err" }), prev = el("div", { class: "st-prev" });
+  const cap = el("input", { type: "text", maxlength: "140", placeholder: "Add a caption (optional)", "aria-label": "Caption" });
+  const txt = el("textarea", { maxlength: "200", rows: "4", placeholder: "Type your status…", "aria-label": "Story text" });
+  const file = el("input", { type: "file", accept: "image/*", "aria-label": "Choose a photo" });
+  file.addEventListener("change", async () => {
+    err.textContent = ""; img = "";
+    try {
+      let u = await imgToJpeg(file.files[0], 720, 0.65, false); if (u.length > 280000) u = await imgToJpeg(file.files[0], 600, 0.5, false);
+      if (!IMG_OK.test(u) || u.length > 280000) throw new Error("That photo is too big. Try a smaller one.");
+      img = u; draw();
+    } catch (e) { err.textContent = (e && e.message) || "Could not read that photo."; }
+  });
+  const post = el("button", { type: "button", class: "btn primary", onclick: async () => {
+    err.textContent = "";
+    if (kind === "photo" && !img) { err.textContent = "Choose a photo first."; return; }
+    const t = txt.value.trim(); if (kind === "text" && !t) { err.textContent = "Type something first."; return; }
+    post.disabled = true; post.textContent = "Posting…";
+    try {
+      const id = store.newId("stories"), now = Date.now(), doc = { authorId: store.uid, authorName: getName().slice(0, 40), kind, createdAt: now };
+      if (kind === "photo") { const pid = store.newId("pages"); await store.set("pages", pid, { data: img, parentId: id, createdAt: now }); doc.pageId = pid; storyImgCache.set(pid, img); const c = cap.value.trim(); if (c) doc.caption = c.slice(0, 140); }
+      else { doc.text = t.slice(0, 200); doc.bg = String(bg); }
+      state.stories = [...state.stories, { id, ...doc }];
+      await store.set("stories", id, doc);
+      close(); renderStoryBar(); showNotice("Story posted for 24 hours ✅"); setTimeout(() => showNotice(""), 2500);
+    } catch (e) { post.disabled = false; post.textContent = "Post story"; err.textContent = errText(e); }
+  } }, "Post story");
+  const draw = () => {
+    prev.replaceChildren(kind === "photo"
+      ? (img ? el("img", { class: "st-previmg", src: img, alt: "Preview" }) : el("div", { class: "st-ph" }, "📷 Tap below to choose a photo"))
+      : el("div", { class: "st-textcard st-small" }, txt));
+    if (kind === "text") { const g = STORY_BG[bg]; prev.firstChild.style.setProperty("background", "linear-gradient(135deg," + g[0] + "," + g[1] + ")"); }
+    tabs.replaceChildren(...[["photo", "📷 Photo"], ["text", "✍️ Text"]].map(([k, l]) => el("button", { type: "button", class: "btn sm" + (kind === k ? " primary" : ""), onclick: () => { kind = k; draw(); } }, l)));
+    sw.hidden = kind !== "text"; file.hidden = kind !== "photo"; cap.hidden = kind !== "photo";
+  };
+  const tabs = el("div", { class: "rowbtns" });
+  const sw = el("div", { class: "st-sw" }, STORY_BG.map((g, i) => { const b = el("button", { type: "button", class: "st-swb", "aria-label": "Colour " + (i + 1), onclick: () => { bg = i; draw(); } }); b.style.setProperty("background", "linear-gradient(135deg," + g[0] + "," + g[1] + ")"); return b; }));
+  ov.append(el("div", { class: "st-card" }, el("div", { class: "st-head" }, el("strong", {}, "Add to your story"), el("button", { type: "button", class: "st-x", "aria-label": "Close", onclick: close }, "✕")),
+    el("p", { class: "hint" }, "Everyone on RGUKT Spark can see it for 24 hours. Keep it friendly. Reported stories are hidden."),
+    tabs, prev, sw, file, cap, err, post));
+  document.body.append(ov); document.body.classList.add("st-open"); draw();
+}
+const storyImgCache = new Map();
+async function storyImage(pid) {
+  if (storyImgCache.has(pid)) return storyImgCache.get(pid);
+  const d = await store.get("pages", pid); const u = d && d.data;
+  if (!IMG_OK.test(u || "")) throw new Error("Photo unavailable");
+  storyImgCache.set(pid, u); return u;
+}
+function openStories(authorId) {
+  const gs = storyGroups(); let gi = gs.findIndex(g => g.authorId === authorId); if (gi < 0 || !store) return;
+  const seen = seenSet(); let ii = Math.max(0, gs[gi].items.findIndex(s => !seen.has(s.id)));
+  const ov = el("div", { class: "st-view", role: "dialog", "aria-modal": "true", "aria-label": "Story" });
+  document.body.append(ov); document.body.classList.add("st-open");
+  let timer = null, gen = 0;
+  const close = () => { clearTimeout(timer); gen++; ov.remove(); document.body.classList.remove("st-open"); document.removeEventListener("keydown", key); renderStoryBar(); };
+  const next = () => { const g = gs[gi]; if (ii < g.items.length - 1) ii++; else if (gi < gs.length - 1) { gi++; ii = 0; } else { close(); return; } show(); };
+  const prev = () => { if (ii > 0) ii--; else if (gi > 0) { gi--; ii = 0; } show(); };
+  const key = (e) => { if (e.key === "Escape") close(); else if (e.key === "ArrowRight") next(); else if (e.key === "ArrowLeft") prev(); };
+  document.addEventListener("keydown", key);
+  async function show() {
+    clearTimeout(timer); const my = ++gen, g = gs[gi], s = g.items[ii], ownS = g.own;
+    markSeen(s.id);
+    if (!ownS && !state.storyViews.some(v => v.id === s.id + "_" + store.uid)) { const v = { storyId: s.id, uid: store.uid, name: (getName() || "Student").slice(0, 40), createdAt: Date.now() }; state.storyViews = [...state.storyViews, { id: s.id + "_" + store.uid, ...v }]; store.set("storyViews", s.id + "_" + store.uid, v).catch(() => {}); }
+    const fill = el("span", { class: "st-fill" });
+    const segs = g.items.map((_, k) => el("span", { class: "st-seg" + (k < ii ? " done" : "") }, k === ii ? fill : null));
+    const body = el("div", { class: "st-body" });
+    const viewers = ownS ? [...new Map(state.storyViews.filter(v => v.storyId === s.id).map(v => [v.uid, v.name])).values()] : [];
+    const vlist = el("div", { class: "st-viewers", hidden: true }, el("strong", {}, "👁 Seen by " + viewers.length), ...viewers.map(n => el("div", {}, n)), !viewers.length && el("small", {}, "No views yet"));
+    const actions = ownS
+      ? [el("button", { type: "button", class: "st-x", "aria-label": "Who saw this", onclick: () => { vlist.hidden = !vlist.hidden; } }, "👁 " + viewers.length),
+         el("button", { type: "button", class: "st-x", "aria-label": "Delete story", onclick: async () => { if (!confirm("Delete this story?")) return; try { await softDelete("stories", s.id); state.stories = state.stories.filter(x => x.id !== s.id); close(); } catch (e) { showNotice(errText(e)); } } }, "🗑")]
+      : [el("button", { type: "button", class: "st-x", "aria-label": "Report story", onclick: async () => { if (!confirm("Report this story as inappropriate?")) return; try { const reports = [...new Set([...(s.reports || []), store.uid])].slice(0, 100); s.reports = reports; await store.update("stories", s.id, { reports }); showNotice("Reported. Thank you."); setTimeout(() => showNotice(""), 2500); } catch (e) { showNotice(errText(e)); } next(); } }, "🚩")];
+    ov.replaceChildren(
+      el("div", { class: "st-bars" }, segs),
+      el("div", { class: "st-top" }, avatarEl(dpOfId(g.authorId, g.name), "av st-av sm"), el("div", { class: "st-who" }, el("strong", {}, ownS ? "Your story" : g.name), el("small", {}, ago(s.createdAt) + (statusOfId(g.authorId) ? " · " + statusOfId(g.authorId) : ""))), ...actions, el("button", { type: "button", class: "st-x", "aria-label": "Close", onclick: close }, "✕")),
+      body, vlist,
+      el("button", { type: "button", class: "st-tap l", "aria-label": "Previous", onclick: prev }), el("button", { type: "button", class: "st-tap r", "aria-label": "Next", onclick: next }));
+    const run = (ms) => { if (my !== gen) return; fill.style.setProperty("animation-duration", ms + "ms"); fill.classList.add("run"); timer = setTimeout(next, ms); };
+    if (s.kind === "text") {
+      const c = STORY_BG[Number(s.bg)] || STORY_BG[0], card = el("div", { class: "st-textcard" }, s.text); card.style.setProperty("background", "linear-gradient(135deg," + c[0] + "," + c[1] + ")"); body.append(card); run(STORY_SHOW + 1500);
+    } else {
+      body.append(el("p", { class: "st-load" }, "Loading…"));
+      storyImage(s.pageId).then(u => { if (my !== gen) return; body.replaceChildren(el("img", { class: "st-img", src: u, alt: "Story photo" }), s.caption ? el("p", { class: "st-cap" }, s.caption) : null); run(STORY_SHOW); })
+        .catch(() => { if (my !== gen) return; body.replaceChildren(el("p", { class: "st-load" }, "Could not load this photo.")); run(2500); });
+    }
+  }
+  show();
+}
+
 function render() {
   try {
     document.body.dataset.tab = state.tab;
-    renderHeader(); renderTrendBar(); renderRail(); renderList(); renderBottomNav();
+    renderHeader(); renderTrendBar(); renderStoryBar(); renderRail(); renderList(); renderBottomNav();
     // Forms keep what the student is typing while live updates arrive.
     const key = ["ask", "edit", "name", "alumniJoin", "alumniJob", "fun", "lab"].includes(state.mode) ? state.mode + state.tab : "";
     if (key && key === sheetKey) return;
@@ -5471,6 +5644,14 @@ render();
   store.subscribe("likes", rows => { state.likes = rows; update(); }, onErr);
   store.subscribe("clubs", rows => { const live_ = live(rows); trackNew("clubs", live_); state.clubs = live_; update(); }, e => {});
   store.subscribe("gate", rows => { const live_ = live(rows); trackNew("gate", live_); state.gate = live_; update(); }, e => {});
+  let dpChecked = false;
+  store.subscribe("profiles", rows => {
+    state.profiles = rows.filter(p => typeof p.name === "string" && (!p.dp || DP_OK.test(p.dp))).map(p => ({ ...p, status: String(p.status || "").slice(0, 60) })); update();
+    if (!dpChecked && (getDp() || getStatus())) { dpChecked = true; const me = rows.find(p => p.id === store.uid); if (!me || (me.dp || "") !== getDp() || me.name !== getName() || (me.status || "") !== getStatus()) syncProfile().catch(() => {}); }
+  }, e => {});
+  const since = Date.now() - STORY_MS;
+  store.subscribe("stories", rows => { state.stories = rows.filter(x => !x.deleted); renderStoryBar(); }, e => {}, since);
+  store.subscribe("storyViews", rows => { state.storyViews = rows; }, e => {}, since);
   store.subscribe("jobs", rows => { const live_ = live(rows); trackNew("jobs", live_); state.jobs = live_; update(); }, e => {});
   store.subscribe("challenges", rows => { const live_ = live(rows); trackNew("challenges", live_); state.challenges = live_; update(); }, e => {});
   store.subscribe("chal_scores", rows => { state.chalScores = rows.filter(r => !r.deleted); update(); }, e => {});

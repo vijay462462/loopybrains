@@ -1579,3 +1579,48 @@ header.top { background: linear-gradient(120deg, var(--ta), var(--tb) 50%, var(-
 .yr-goal { align-items: flex-start; font-weight: 600; font-size: 14px; }
 .yr-goal input { margin-top: 3px; }
 .yr-dates { margin: 2px 0; padding-left: 18px; color: var(--muted); font-size: 13px; display: grid; gap: 3px; }
+
+/* profile photo, stories and status */
+.story-bar { display: flex; gap: 12px; overflow-x: auto; padding: 8px 14px; scrollbar-width: none; }
+.story-bar::-webkit-scrollbar { display: none; }
+.st-bub { position: relative; display: grid; justify-items: center; gap: 4px; background: none; border: 0; padding: 0; cursor: pointer; flex: 0 0 auto; width: 66px; color: var(--ink); }
+.st-ring { display: grid; place-items: center; width: 60px; height: 60px; border-radius: 50%; padding: 3px; background: var(--line); }
+.st-ring.new { background: linear-gradient(135deg, #22c55e, #6366f1, #ec4899); }
+.st-ring.add { background: none; border: 2px dashed var(--line); }
+.st-av { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; display: grid; place-items: center; font-size: 26px; background: var(--paper); border: 2px solid var(--paper); }
+.st-av.sm { width: 36px; height: 36px; font-size: 18px; }
+.st-name { font-size: 11px; max-width: 66px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.st-plus { position: absolute; right: 4px; top: 38px; width: 20px; height: 20px; border-radius: 50%; background: #22c55e; color: #fff; font: 700 15px/20px system-ui; text-align: center; border: 2px solid var(--paper); }
+body.st-open { overflow: hidden; }
+.st-view { position: fixed; inset: 0; z-index: 3000; background: #000; color: #fff; display: grid; grid-template-rows: auto auto 1fr; max-width: 520px; margin: 0 auto; }
+.st-view.st-add { background: rgb(0 0 0 / .6); max-width: none; display: grid; place-items: center; padding: 14px; }
+.st-bars { display: flex; gap: 3px; padding: 8px 8px 4px; }
+.st-seg { flex: 1; height: 3px; border-radius: 2px; background: rgb(255 255 255 / .3); overflow: hidden; }
+.st-seg.done { background: #fff; }
+.st-fill { display: block; height: 100%; width: 0; background: #fff; }
+.st-fill.run { animation: stfill linear forwards; }
+@keyframes stfill { from { width: 0; } to { width: 100%; } }
+.st-top { display: flex; align-items: center; gap: 8px; padding: 6px 10px; }
+.st-who { flex: 1; min-width: 0; display: grid; }
+.st-who small { opacity: .75; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.st-x { background: none; border: 0; color: inherit; font-size: 18px; padding: 6px 8px; cursor: pointer; }
+.st-body { position: relative; display: grid; place-items: center; overflow: hidden; }
+.st-img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.st-cap { position: absolute; left: 0; right: 0; bottom: 0; margin: 0; padding: 18px 16px; background: linear-gradient(transparent, rgb(0 0 0 / .7)); text-align: center; overflow-wrap: anywhere; }
+.st-load { opacity: .8; }
+.st-textcard { display: grid; place-items: center; width: 100%; height: 100%; padding: 24px; text-align: center; font: 700 1.5rem/1.35 system-ui; overflow-wrap: anywhere; white-space: pre-wrap; }
+.st-textcard.st-small { height: 150px; border-radius: 14px; padding: 8px; }
+.st-textcard textarea { width: 100%; height: 100%; background: none; border: 0; color: #fff; font: inherit; text-align: center; resize: none; outline: none; }
+.st-textcard textarea::placeholder { color: rgb(255 255 255 / .7); }
+.st-tap { position: absolute; top: 90px; bottom: 0; width: 35%; background: none; border: 0; cursor: pointer; }
+.st-tap.l { left: 0; } .st-tap.r { right: 0; width: 65%; }
+.st-viewers { position: absolute; z-index: 2; left: 10px; right: 10px; bottom: 10px; max-height: 40%; overflow: auto; background: rgb(0 0 0 / .8); padding: 10px; border-radius: 12px; display: grid; gap: 4px; }
+.st-viewers[hidden] { display: none; }
+.st-card { width: min(420px, 100%); background: var(--paper); color: var(--ink); border-radius: 16px; padding: 14px; display: grid; gap: 10px; max-height: 92vh; overflow: auto; }
+.st-head { display: flex; align-items: center; justify-content: space-between; }
+.st-prev { display: grid; place-items: center; }
+.st-previmg { max-width: 100%; max-height: 240px; border-radius: 12px; }
+.st-ph { padding: 30px; text-align: center; color: var(--muted); border: 2px dashed var(--line); border-radius: 12px; }
+.st-sw { display: flex; gap: 6px; flex-wrap: wrap; }
+.st-swb { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--paper); cursor: pointer; box-shadow: 0 0 0 1px var(--line); }
+.st-err { color: #dc2626; min-height: 1em; margin: 0; }

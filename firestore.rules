@@ -119,6 +119,40 @@ service cloud.firestore {
         allow update: if member() && validPost('type') && unchanged() && postEdit('type');
         allow delete: if false;
       }
+      // ---------- profile photos and 24-hour stories ----------
+      match /profiles/{id} {
+        function validProfile() {
+          let d = request.resource.data;
+          return d.keys().hasOnly(['name', 'dp', 'status', 'updatedAt']) && str(d.name, 1, 40) && optStr(d, 'status', 60) && d.updatedAt is int
+            && d.dp is string && d.dp.size() <= 40000 && (d.dp == '' || d.dp.matches('data:image/jpeg;base64,.*'));
+        }
+        allow read: if member();
+        allow create, update: if member() && validProfile() && str(id, 8, 80);
+        allow delete: if false;
+      }
+      match /stories/{id} {
+        function validStory() {
+          let d = request.resource.data;
+          return d.keys().hasOnly(['authorId', 'authorName', 'kind', 'pageId', 'text', 'bg', 'caption', 'createdAt', 'deleted', 'reports'])
+            && str(d.authorId, 8, 80) && str(d.authorName, 1, 40) && d.kind in ['photo', 'text'] && d.createdAt is int
+            && (d.kind == 'photo' ? str(d.pageId, 1, 100) : str(d.text, 1, 200))
+            && optStr(d, 'caption', 140) && optStr(d, 'bg', 3) && optBool(d, 'deleted') && optList(d, 'reports', 100);
+        }
+        allow read: if member();
+        allow create: if member() && validStory() && recent(request.resource.data.createdAt)
+          && request.resource.data.get('deleted', false) == false && !('reports' in request.resource.data);
+        allow update: if member() && validStory() && unchanged() && changes(['deleted', 'reports']);
+        allow delete: if false;
+      }
+      match /storyViews/{id} {
+        allow read: if member();
+        allow create: if member()
+          && request.resource.data.keys().hasOnly(['storyId', 'uid', 'name', 'createdAt'])
+          && str(request.resource.data.storyId, 1, 100) && str(request.resource.data.uid, 8, 80)
+          && str(request.resource.data.name, 1, 40) && recent(request.resource.data.createdAt)
+          && id == request.resource.data.storyId + '_' + request.resource.data.uid;
+        allow update, delete: if false;
+      }
       match /challenges/{id} {
         allow read: if member();
         allow create: if member() && newPost('type');
