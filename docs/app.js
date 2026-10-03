@@ -5559,7 +5559,7 @@ function openStoryAdd() {
   const qans = el("select", { "aria-label": "Correct option" }, "ABCD".split("").map((l, i) => el("option", { value: String(i) }, "Correct answer: " + l)));
   const det = el("textarea", { maxlength: "300", rows: "3", "aria-label": "Details" });
   const qexpl = el("input", { type: "text", maxlength: "200", placeholder: "Why is it correct? (optional, shown after answering)", "aria-label": "Explanation" });
-  const quizBox = el("div", { class: "st-quiz-form" }, ...qopts, qans, qexpl);
+  const quizBox = el("div", { class: "st-quiz-form" }, ...qopts.map((inp, i) => el("label", { class: "st-optrow o" + i }, el("b", {}, "ABCD"[i]), inp)), el("label", { class: "st-ansrow" }, el("span", {}, "✅"), qans), qexpl);
   const file = el("input", { type: "file", accept: "image/*", "aria-label": "Choose a photo" });
   file.addEventListener("change", async () => {
     err.textContent = ""; img = "";
@@ -5661,12 +5661,12 @@ function openStories(authorId) {
       const earlier = ownS ? null : state.storyAnswers.find(a => a.id === meKey);
       let answered = false;
       const note = el("p", { class: "st-qnote" }), extra = el("div", { class: "st-extra" });
-      const btns = opts.map((o, i) => el("button", { type: "button", class: "st-opt", onclick: () => answer(i) }, "ABCD"[i] + ".  " + o));
+      const btns = opts.map((o, i) => el("button", { type: "button", class: "st-opt o" + i, onclick: () => answer(i) }, el("span", { class: "st-chip" }, "ABCD"[i]), el("span", { class: "st-otext" }, o)));
       const reveal = (pick) => {
         const rows = state.storyAnswers.filter(a => a.storyId === s.id && a.uid !== s.authorId), total = rows.length, right = rows.filter(a => a.ok).length;
         btns.forEach((b, k) => {
           b.disabled = true; if (k === s.ans) b.classList.add("good"); else if (k === pick) b.classList.add("bad");
-          if (ownS) b.textContent += "   · " + rows.filter(a => a.pick === k).length;
+          if (ownS) b.append(el("span", { class: "st-count" }, rows.filter(a => a.pick === k).length));
         });
         const bits = [];
         if (s.expl) bits.push(el("p", { class: "st-expl" }, "💡 " + s.expl));
