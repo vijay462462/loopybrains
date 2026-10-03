@@ -453,23 +453,36 @@ function notePosted() {
 
 // Posts reported by this many classmates are hidden until the teacher checks them in Firebase.
 const REPORT_LIMIT = 3;
-const isHidden = (x) => (x.reports || []).length >= REPORT_LIMIT && !mine(x);
-const reportedByMe = (x) => store && (x.reports || []).includes(store.uid);
-async function reportPost(coll, x) {
+// A report is the reporter's id, optionally with a reason: "<id>|o" off-topic, "|a" abuse, "|s" spam.
+// Two off-topic reports (or three of any kind) hide a post for everyone.
+const isHidden = (x) => { const r = x.reports || []; return (r.length >= REPORT_LIMIT || r.filter(v => String(v).endsWith("|o")).length >= 2) && !mine(x); };
+const reportedByMe = (x) => store && (x.reports || []).some(v => String(v).split("|")[0] === store.uid);
+// Academic tabs only: blocks greetings and one-word chatter, and asks for a real question or answer.
+const CHATTER = /^(hi+|hello+|hey+|hii+|hlo|ok+|okay|k|hmm+|lol|haha+|bro|anyone|any ?one( there)?|yes|no|yo|sup|wassup|good (morning|night|evening|afternoon)|gm|gn|how are you|test|testing|\.+|\?+)[\s!.?,]*$/i;
+const isAcademicTab = (tab) => tab === "doubts" || tab === "gate";
+function academicProblem(kind, text, hasAttachment) {
+  const t = String(text || "").trim();
+  if (CHATTER.test(t)) return "This space is for academic questions and answers. Please write a real " + kind + ", or use Ideas or Clubs for casual chat.";
+  if (kind === "answer" && t.length < 10 && !hasAttachment) return "Please write a helpful answer of at least 10 characters, or attach a page or file.";
+  return "";
+}
+async function reportPost(coll, x, reason) {
   if (!store || reportedByMe(x)) return;
-  const reports = [...new Set([...(x.reports || []), store.uid])].slice(0, 100);
+  const reports = [...(x.reports || []), store.uid + (reason ? "|" + reason : "")].slice(-100);
   try { await store.update(coll, x.id, { reports }); showNotice("Thanks. The post was reported. Posts with " + REPORT_LIMIT + " reports are hidden for everyone."); }
   catch (e) { showNotice(errText(e)); }
 }
 function reportButton(coll, x) {
   if (mine(x)) return null;
   if (reportedByMe(x)) return el("span", { class: "hint" }, "🚩 Reported");
-  return el("button", { class: "linkbtn danger", type: "button", title: "Report abuse or spam", onclick: (e) => {
-    const b = e.currentTarget;
-    if (b.dataset.armed) { b.disabled = true; reportPost(coll, x); return; }
-    b.dataset.armed = "1"; b.textContent = "Tap again to report";
-    setTimeout(() => { if (b.isConnected) { delete b.dataset.armed; b.textContent = "🚩 Report"; } }, 3000);
-  } }, "🚩 Report");
+  const wrap = el("span", { class: "report-wrap" });
+  const reset = () => wrap.replaceChildren(el("button", { class: "linkbtn danger", type: "button", title: "Report a post", onclick: choose }, "🚩 Report"));
+  const choose = () => {
+    wrap.replaceChildren(el("small", { class: "hint" }, "Why? "), ...[["o", "Off-topic"], ["a", "Abuse"], ["s", "Spam"]].map(([code, label]) => el("button", { class: "linkbtn danger", type: "button", onclick: (e) => { e.currentTarget.disabled = true; reportPost(coll, x, code); wrap.replaceChildren(el("span", { class: "hint" }, "🚩 Reported")); } }, label)));
+    setTimeout(() => { if (wrap.isConnected && wrap.querySelector("button:not([disabled])")) reset(); }, 6000);
+  };
+  reset();
+  return wrap;
 }
 // Delete only hides a post (deleted: true); nothing is erased, so the teacher can restore it in Firebase.
 const softDelete = (coll, id) => store.update(coll, id, { deleted: true });
@@ -4929,6 +4942,11 @@ function renderAsk(existing) {
     const anonymous = form.elements.anon.checked, urgent = !!(form.elements.urgent && form.elements.urgent.checked), bounty = !!(form.elements.bounty && form.elements.bounty.checked);
     if (title.length < 3) { err.textContent = "Write a title of at least 3 characters."; err.hidden = false; return; }
     if (hasBadWords(title + " " + body)) { err.textContent = LANGUAGE_MSG; err.hidden = false; return; }
+    if (isAcademicTab(state.tab)) {
+      const hasAtt = newPages.length > 0 || newFileLinks.some(f => f.url) || !!(existing && ((existing.pages || []).length || (existing.fileAttachments || []).length));
+      const prob = academicProblem("question", title + " " + body, true) || (title.length < 8 ? "Make the title a clear question (at least 8 characters)." : "") || (body.length < 20 && !hasAtt ? "Add details (at least 20 characters): the chapter, the full problem and what you tried. Or attach a photo or file." : "");
+      if (prob) { err.textContent = prob; err.hidden = false; return; }
+    }
     const wait = existing ? "" : spamCheck();
     if (wait) { err.textContent = wait; err.hidden = false; return; }
     if (newFileLinks.some(f => f.pct !== undefined)) { err.textContent = "Please wait for uploads to finish."; err.hidden = false; return; }
@@ -5264,6 +5282,7 @@ function renderView() {
     if (!body && !pages.length && !replyFiles.filter(f => f.url).length) return;
     if (!getName()) { state.afterName = "view"; state.mode = "name"; render(); return; }
     if (hasBadWords(body)) { showNotice(LANGUAGE_MSG); return; }
+    if (isAcademicTab(state.tab)) { const prob = academicProblem("answer", body, pages.length > 0 || replyFiles.some(f => f.url)); if (prob) { const m = $("f-reply-msg"); if (m) { m.textContent = prob; m.hidden = false; } else showNotice(prob); return; } }
     if (replyFiles.some(f => f.pct !== undefined)) { showNotice("Please wait for uploads to finish."); return; }
     const wait = spamCheck();
     if (wait) { showNotice(wait); return; }
@@ -5283,6 +5302,7 @@ function renderView() {
   } },
     el("label", { for: "f-reply", class: "label" }, t.replyLabel),
     el("textarea", { id: "f-reply", name: "reply", maxlength: "5000", placeholder: state.tab === "doubts" ? "Explain step by step. Show the working, not only the result." : "Add a thought, an improvement, or offer to help build it." }),
+    el("p", { class: "hint st-err", id: "f-reply-msg", role: "alert", hidden: true }),
     attachPicker(state.replyPages, MAX_PAGES),
     store.uploadFile ? filePicker(replyFiles) : null,
     el("label", { class: "check" }, el("input", { type: "checkbox", id: "f-reply-anon", checked: state.replyAnon, onchange: (e) => { state.replyAnon = e.target.checked; } }), "🙈 Answer anonymously"),

@@ -1,21 +1,21 @@
 // RGUKT Spark service worker — v36
 // Cache versioned assets only. Never cache index.html so updates deploy instantly.
-const CACHE = 'spark-v161';
+const CACHE = 'spark-v162';
 const SHELL = [
-  './style.css?v=161',
-  './sparkbot.css?v=161',
-  './config.js?v=161',
-  './quiz.js?v=161',
-  './app.js?v=161',
-  './sparkbot.js?v=161',
-  './player.js?v=161',
-  './player.css?v=161',
-  './tools-core.js?v=161',
-  './tools-math.js?v=161',
-  './tools-eng.js?v=161',
-  './tools-life.js?v=161',
-  './lab.js?v=161',
-  './lab.css?v=161',
+  './style.css?v=162',
+  './sparkbot.css?v=162',
+  './config.js?v=162',
+  './quiz.js?v=162',
+  './app.js?v=162',
+  './sparkbot.js?v=162',
+  './player.js?v=162',
+  './player.css?v=162',
+  './tools-core.js?v=162',
+  './tools-math.js?v=162',
+  './tools-eng.js?v=162',
+  './tools-life.js?v=162',
+  './lab.js?v=162',
+  './lab.css?v=162',
   './manifest.json',
   './icon.svg',
 ];
