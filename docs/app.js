@@ -1295,6 +1295,44 @@ function loopyMini() {
     mk("ellipse", { cx: 23, cy: 28, rx: 3.4, ry: 4.6, fill: "#67e8f9", class: "lp-eyes" }), mk("ellipse", { cx: 37, cy: 28, rx: 3.4, ry: 4.6, fill: "#67e8f9", class: "lp-eyes" }), mk("path", { d: "M25 36q5 4.5 10 0", fill: "none", stroke: "#fde68a", "stroke-width": 2.4, "stroke-linecap": "round" }));
   return svg;
 }
+// Loopy's daily tip: one helpful, personal suggestion a day (chosen from your streak, quiz, exam date, mistakes, weak topic, rank or the board), else a study tip.
+const STUDY_TIPS = [
+  "Try the 25-5 rule: 25 minutes of focus, then a 5-minute break. Your brain keeps more that way.",
+  "After reading a topic, close the book and explain it in your own words. That is the fastest way to learn.",
+  "Sleep is part of studying. 7 hours tonight will help you more than 1 extra hour of reading.",
+  "Start with the hardest subject while your mind is fresh, and keep the easy one for later.",
+  "Write your doubts down as soon as they come. Asking a clear question already solves half of it.",
+  "Revise a topic after 1 day, 3 days and 7 days. That spacing makes it stay.",
+  "Explaining a concept to a junior is the best revision. Try answering one doubt today.",
+  "Put your phone in another room for one study round. You will finish faster.",
+  "Solve one previous-year question before you read the notes. It shows you what really matters.",
+  "Drink water and stretch for a minute between rounds. A fresh body helps a fresh mind.",
+  "Be kind in your replies. A good answer given with respect makes a junior's whole day.",
+  "Small and daily beats big and rare. Ten minutes every day beats three hours once a week.",
+];
+function loopyTip() {
+  const today = dayStr(), stored = readJSON("dd-tip", null);
+  const streak = state.myStreak || 0, doneToday = state.myDays && state.myDays.has(dayNum()), quizDone = QUIZ.length ? !!myQuizAnswer(dayNum()) : true;
+  const plan = readJSON("dd-exam-plan", null), left = plan && plan.date ? Math.ceil((new Date(plan.date + "T00:00:00").getTime() - new Date().setHours(0, 0, 0, 0)) / 864e5) : null;
+  const mist = mistakeList().length, un = unansweredDoubts().length, uid = store && store.authUid ? store.authUid() : "";
+  const rows = state.weekly.slice().sort((x, y) => y.points - x.points), me = rows.findIndex(r => r.uid === uid);
+  const topics = {}; for (const r of mockHistory().slice(-5)) for (const [k, v] of Object.entries(r.bySub || {})) { const t = topics[k] || (topics[k] = { r: 0, n: 0 }); t.r += v.r; t.n += v.n; }
+  const weak = Object.entries(topics).filter(([, v]) => v.n >= 3 && v.r / v.n < 0.7).sort((x, y) => x[1].r / x[1].n - y[1].r / y[1].n)[0];
+  const C = [
+    ["streak", streak >= 2 && !doneToday, () => ({ text: "Your " + streak + "-day streak is at risk today! Answer one doubt or take the daily quiz to keep it alive. 🔥", cta: ["Daily quiz", () => showPanel("quiz")] })],
+    ["exam", left != null && left >= 0 && left <= 10, () => ({ text: (left === 0 ? "Your exam is today. Breathe, you have prepared. All the best! 🙏" : "Your exam is in " + left + " day" + (left === 1 ? "" : "s") + ". Open your plan and do today's revision.") + "", cta: ["My plan", () => showPanel("planner")] })],
+    ["quiz", !quizDone && QUIZ.length > 0, () => ({ text: "Today's quiz is waiting. One question, one minute, and it counts for your college in the weekly battle. 🧠", cta: ["Take it", () => showPanel("quiz")] })],
+    ["mistakes", mist >= 3, () => ({ text: "You have " + mist + " saved mistakes. Clear 3 of them today and they will never trouble you again. 📓", cta: ["Practise", () => { state.mist = null; showPanel("mistakes"); }] })],
+    ["weak", !!weak, () => ({ text: weak[0] + " is your weakest topic (" + Math.round(weak[1].r * 100 / weak[1].n) + "%). A short mock test will lift it. 🎯", cta: ["Mock test", () => { state.mock = null; showPanel("mock"); }] })],
+    ["rank", me > 0 && rows[me - 1].points - rows[me].points < 40, () => ({ text: "You are #" + (me + 1) + " on the weekly board, only " + (rows[me - 1].points - rows[me].points + 1) + " points behind " + rows[me - 1].name + ". One focus round could pass them! 🏅", cta: ["Focus timer", () => { state.ft = null; showPanel("focusplus"); }] })],
+    ["help", un > 0, () => ({ text: un + " classmate" + (un === 1 ? "" : "s") + " asked a doubt nobody has answered yet. Your answer could be the one they remember. 🙋", cta: ["Help now", showUnanswered] })],
+  ];
+  let pick = stored && stored.day === today ? C.find(c => c[0] === stored.id) : null;
+  if (!pick || !pick[1]) pick = C.find(c => c[1]) || null;
+  if (pick) { if (state.dataReady && (!stored || stored.day !== today || stored.id !== pick[0])) writeJSON("dd-tip", { day: today, id: pick[0], gone: stored && stored.day === today ? stored.gone : false }); return { ...pick[2](), id: pick[0] }; }
+  const i = dayNum() % STUDY_TIPS.length; if (state.dataReady && (!stored || stored.day !== today || stored.id !== "study")) writeJSON("dd-tip", { day: today, id: "study", gone: stored && stored.day === today ? stored.gone : false });
+  return { id: "study", text: STUDY_TIPS[i], cta: null };
+}
 function renderToday() {
   const bar = $("todayBar"); if (!bar) return;
   if (NO_COLLEGE || !store) { bar.hidden = true; return; }
@@ -1302,12 +1340,14 @@ function renderToday() {
     streak = state.myStreak || 0, quizDone = QUIZ.length ? !!myQuizAnswer(dayNum()) : true, plan = readJSON("dd-exam-plan", null),
     left = plan && plan.date ? Math.ceil((new Date(plan.date + "T00:00:00").getTime() - new Date().setHours(0, 0, 0, 0)) / 864e5) : null;
   const note = state.welcomeNote && readJSON("dd-note-gone", 0) !== state.welcomeNote.updatedAt ? state.welcomeNote : null;
-  const key = [hello, name, streak, quizDone, left, dayNum(), (typeof weekPoints === "function" ? weekPoints() : 0), note ? note.updatedAt : 0, openDrives().length, upcomingEvents().length, unansweredDoubts().length].join("|"); if (key === todayKey && !bar.hidden) return; todayKey = key;
+  const key = [hello, name, streak, quizDone, left, state.dataReady ? 1 : 0, readJSON("dd-tip", {}).gone ? 1 : 0, mistakeList().length, state.weekly.length, dayNum(), (typeof weekPoints === "function" ? weekPoints() : 0), note ? note.updatedAt : 0, openDrives().length, upcomingEvents().length, unansweredDoubts().length].join("|"); if (key === todayKey && !bar.hidden) return; todayKey = key;
   const chip = (txt, cls, fn) => el("button", { class: "today-chip " + (cls || ""), type: "button", onclick: fn }, txt);
   const WORDS = ["Welcome to the " + BRAND + " family 💙", "Respect your teachers, help your juniors. 🙏", "Every question is welcome here.", "Kind words build a strong campus. 🌱", "Thank you for being part of our family.", "Learn together, grow together. 🚀", "Our teachers and staff work hard for you. Say thank you today. 🙏"];
   const stat = (num, label, cls, fn) => el("button", { class: "today-stat " + (cls || ""), type: "button", onclick: fn }, el("b", {}, String(num)), el("span", {}, label));
   const pts = typeof weekPoints === "function" ? weekPoints() : 0;
   bar.replaceChildren(el("div", { class: "today-head" }, loopyMini(), el("div", {}, el("strong", { class: "today-hello" }, hello + (name ? ", " + name : "") + " 👋"), el("small", { class: "today-words" }, WORDS[dayNum() % WORDS.length]))),
+    (() => { const t = loopyTip(), st = readJSON("dd-tip", {}); if (st.gone && st.day === dayStr()) return null;
+      return el("div", { class: "today-tip" }, el("small", {}, "💡 Loopy\u2019s tip for today"), el("p", {}, t.text), el("div", { class: "rowbtns" }, t.cta ? el("button", { class: "btn sm primary", type: "button", onclick: t.cta[1] }, t.cta[0]) : null, el("button", { class: "btn sm", type: "button", onclick: () => { writeJSON("dd-tip", { ...readJSON("dd-tip", {}), day: dayStr(), gone: true }); todayKey = ""; renderToday(); } }, "Got it"))); })(),
     note ? el("div", { class: "today-note" }, el("strong", {}, "💬 " + (note.from ? "A note from " + note.from : "A note from your college")), el("p", {}, note.text), el("button", { class: "of-x", type: "button", "aria-label": "Dismiss note", onclick: () => { writeJSON("dd-note-gone", note.updatedAt); todayKey = ""; renderToday(); } }, "✕")) : null, !name ? el("button", { class: "today-chip warn", type: "button", onclick: () => { const b = $("nameBtn"); if (b) b.click(); } }, "✏️ Set your name") : null, el("button", { class: "btn primary today-ask", type: "button", onclick: () => { const b = $("askBtn"); if (b) b.click(); } }, "❓ Ask a doubt"),
     el("div", { class: "today-stats" },
       stat(streak, streak === 1 ? "day streak 🔥" : "day streak 🔥", streak && !(state.myDays && state.myDays.has(dayNum())) ? "warn" : "", () => showPanel("me")),

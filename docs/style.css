@@ -2007,3 +2007,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 .ptr-ico { display: inline-block; font-size: 16px; } .ptr.spin .ptr-ico { animation: ptrSpin .8s linear infinite; }
 @keyframes ptrSpin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .ptr.spin .ptr-ico { animation: none; } .ptr { transition: none; } }
+.today-tip { position: relative; padding: 12px 14px; border-radius: 18px; background: color-mix(in srgb, var(--accent) 9%, var(--sheet)); border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--line)); }
+.today-tip::before { content: ""; position: absolute; top: -7px; left: 26px; width: 14px; height: 14px; background: inherit; border-left: 1px solid color-mix(in srgb, var(--accent) 24%, var(--line)); border-top: 1px solid color-mix(in srgb, var(--accent) 24%, var(--line)); transform: rotate(45deg); border-radius: 3px; }
+.today-tip small { font-weight: 800; color: var(--accent); }
+.today-tip p { margin: 4px 0 8px; line-height: 1.45; }
