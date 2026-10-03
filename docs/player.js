@@ -1,4 +1,4 @@
-// Spark Player: a private music player that runs fully in the browser.
+// Loop Player: a private music player that runs fully in the browser.
 // - Plays the student's own audio files (MP3, FLAC, WAV, AAC/M4A, OGG, OPUS) and free direct links.
 // - Files are saved on this device (IndexedDB), so the library works offline and never leaves the phone.
 // - Audio is decoded and played without re-encoding; the equalizer works in 32-bit floating point.
@@ -291,7 +291,7 @@
     const t = curTrack(); if (!t) return;
     try {
       const art = coverOf(t);
-      navigator.mediaSession.metadata = new MediaMetadata({ title: t.title, artist: t.artist || "Spark Player", album: t.album || "Spark", artwork: art ? [{ src: art, sizes: "512x512", type: (t.cover && t.cover.type) || "image/jpeg" }] : [] });
+      navigator.mediaSession.metadata = new MediaMetadata({ title: t.title, artist: t.artist || "Loop Player", album: t.album || "CampusLoop", artwork: art ? [{ src: art, sizes: "512x512", type: (t.cover && t.cover.type) || "image/jpeg" }] : [] });
       const set = (a, f) => { try { navigator.mediaSession.setActionHandler(a, f); } catch (_) {} };
       set("play", () => togglePlay()); set("pause", () => audio.pause());
       set("previoustrack", () => step(-1)); set("nexttrack", () => step(1, false));
@@ -357,7 +357,7 @@
   function renderNow() {
     const t = curTrack();
     ui.title.textContent = t ? t.title : "Nothing playing";
-    ui.sub.textContent = t ? [t.artist, t.album].filter(Boolean).join(" · ") || "Spark Player" : "Add songs from your phone to start";
+    ui.sub.textContent = t ? [t.artist, t.album].filter(Boolean).join(" · ") || "Loop Player" : "Add songs from your phone to start";
     ui.quality.textContent = t ? qualityOf(t) : "";
     ui.fmt.textContent = t ? (t.ext || "").toUpperCase() + (t.size ? " · " + fmtSize(t.size) : "") + (ctx ? " · " + (ctx.sampleRate / 1000).toFixed(1) + " kHz" : "") : "";
     const art = t ? coverOf(t) : "";
@@ -455,7 +455,7 @@
         h("div", { class: "sp-opts" }, h("label", { class: "sp-addbtn" }, "➕ Add songs", fileIn), ui.favBtn), ui.search, drop,
         h("div", { class: "sp-opts" }, urlIn, h("button", { type: "button", class: "sp-chip", onclick: () => { addUrl(urlIn.value); urlIn.value = ""; } }, "Add link")),
         ui.msg, ui.list,
-        h("p", { class: "sp-hint" }, "Spark Player plays your own music and free links. It cannot take audio from YouTube, which is against YouTube's rules. Your songs are stored privately on this device only.")));
+        h("p", { class: "sp-hint" }, "Loop Player plays your own music and free links. It cannot take audio from YouTube, which is against YouTube's rules. Your songs are stored privately on this device only.")));
     // mini player (stays visible while browsing other screens)
     ui.mTitle = h("strong", {}); ui.mSub = h("small", {}); ui.mBar = h("span", { class: "sp-mbar-fill" });
     ui.mPlay = h("button", { type: "button", class: "sp-mbtn", "aria-label": "Play or pause", onclick: (e) => { e.stopPropagation(); togglePlay(); } }, "▶");

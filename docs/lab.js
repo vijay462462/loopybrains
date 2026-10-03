@@ -1,4 +1,4 @@
-// Spark Study Lab: focus timer with ambient sounds, spaced-repetition flashcards, CGPA and attendance calculators.
+// Loop Study Lab: focus timer with ambient sounds, spaced-repetition flashcards, CGPA and attendance calculators.
 // Everything is stored on the device (localStorage). No account, no network.
 (function () {
   "use strict";

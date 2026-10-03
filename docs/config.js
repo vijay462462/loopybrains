@@ -1,10 +1,10 @@
 // Doubt Desk settings. Edit this file to change subjects or connect the database.
 window.DOUBT_DESK_CONFIG = {
   // Product name shown across the app. Change it here to rename everything.
-  brand: "Campus Spark",
+  brand: "CampusLoop",
 
   // Site title shown in the header
-  title: "RGUKT Spark",
+  title: "CampusLoop",
 
   // Paste your Firebase web app config here (Firebase console > Project settings > Your apps).
   firebase: {

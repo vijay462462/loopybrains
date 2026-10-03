@@ -37,7 +37,7 @@ function pickCollege() {
   return "";
 }
 const SEL = pickCollege(), NO_COLLEGE = SEL === "", IS_RGUKT = SEL === "rgukt";
-const BRAND = BASE_CFG.brand || "Campus Spark";
+const BRAND = BASE_CFG.brand || "CampusLoop";
 function cleanTenant(raw, slug) {
   if (!raw || typeof raw !== "object" || raw.enabled === false) return null;
   const room = t1(raw.room, 40); if (!/^[A-Za-z0-9_-]{6,40}$/.test(room)) return null;
@@ -45,7 +45,7 @@ function cleanTenant(raw, slug) {
   const f = raw.features && typeof raw.features === "object" ? raw.features : {};
   const dep = {}; if (raw.departments && typeof raw.departments === "object") for (const [k, v] of Object.entries(raw.departments).slice(0, 12)) { const kk = t1(k, 20); if (kk) dep[kk] = tList(v, 30, 40); }
   return {
-    slug, room, name, title: t1(raw.title, 40) || name + " Spark", tagline: t1(raw.tagline, 80), captions: tList(raw.captions, 90, 10),
+    slug, room, name, title: t1(raw.title, 40) || BRAND, tagline: t1(raw.tagline, 80), captions: tList(raw.captions, 90, 10),
     campuses: tList(raw.campuses, 24, 12), clubs: tList(raw.clubs, 30, 30), subjects: tList(raw.subjects, 30, 80), ideaCategories: tList(raw.ideaCategories, 30, 20),
     exams: (Array.isArray(raw.exams) ? raw.exams : []).map(e => ({ name: t1(e && e.name, 40), date: t1(e && e.date, 10) })).filter(e => e.name && /^\d{4}-\d{2}-\d{2}$/.test(e.date)).slice(0, 12),
     departments: dep, accent: /^#[0-9a-fA-F]{6}$/.test(raw.accent || "") ? raw.accent : "",
@@ -2167,7 +2167,7 @@ function allStats() {
     clubsBy.get(c.authorId).add(c.club);
   }
   for (const [id, clubs] of clubsBy) { const p = people.get(id); if (p) p.clubsPosted = clubs.size; }
-  // Spark Starter: first post ever on the board (oldest authorId)
+  // Loop Starter: first post ever on the board (oldest authorId)
   const allSorted = [...allUserPosts].sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
   if (allSorted[0] && allSorted[0].authorId) { const p = people.get(allSorted[0].authorId); if (p) p.firstPost = 1; }
 
@@ -2194,7 +2194,7 @@ const BADGES = [
   ["🏆", "Legend",          "Reach 50 points",                 p => p.points >= 50],
   ["🌙", "Night Owl",       "Post after midnight",             p => p.nightPost > 0],
   ["🏛",  "Club Founder",   "Post in 3 different clubs",       p => p.clubsPosted >= 3],
-  ["⚡", "Spark Starter",   "First to post in any subject",    p => p.firstPost > 0],
+  ["⚡", "Loop Starter",   "First to post in any subject",    p => p.firstPost > 0],
   ["🎖",  "Veteran",        "Active for 7+ days total",        p => p.days && p.days.size >= 7],
 ];
 const TITLES = [[50, "Legend"], [25, "Mentor"], [10, "Helper"], [0, "Rising star"]];
@@ -2726,7 +2726,7 @@ const funShuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--
 const funBest = (k, v) => { try { const o = JSON.parse(localStorage.getItem("dd-fun-best") || "{}"); if (v === undefined) return o[k]; o[k] = v; localStorage.setItem("dd-fun-best", JSON.stringify(o)); } catch (_) {} return undefined; };
 
 const yt = (q) => "https://www.youtube.com/results?search_query=" + encodeURIComponent(q);
-// Official YouTube jukeboxes. These are copyrighted songs streamed by the rights holders on YouTube; Spark only links out.
+// Official YouTube jukeboxes. These are copyrighted songs streamed by the rights holders on YouTube; CampusLoop only links out.
 const FUN_JUKE = [
   ["🎤 Telugu directors",[["M. M. Keeravani","M M Keeravani hits jukebox"], ["Devi Sri Prasad","Devi Sri Prasad hits jukebox"], ["S. Thaman","S Thaman hits jukebox"], ["Mani Sharma","Mani Sharma hits jukebox"], ["Ilaiyaraaja (Telugu)","Ilaiyaraaja (Telugu) hits jukebox"], ["A. R. Rahman (Telugu)","A R Rahman (Telugu) hits jukebox"], ["Koti","Koti hits jukebox"], ["Raj-Koti","Raj Koti hits jukebox"], ["Chakri","Chakri hits jukebox"], ["Anup Rubens","Anup Rubens hits jukebox"], ["Mickey J Meyer","Mickey J Meyer hits jukebox"], ["Kalyani Malik","Kalyani Malik hits jukebox"], ["R. P. Patnaik","R P Patnaik hits jukebox"], ["Gopi Sundar","Gopi Sundar hits jukebox"], ["Ghibran","Ghibran hits jukebox"], ["Bheems Ceciroleo","Bheems Ceciroleo hits jukebox"], ["Radhan","Radhan hits jukebox"], ["Vishal Chandrashekhar","Vishal Chandrashekhar hits jukebox"], ["Sai Kartheek","Sai Kartheek hits jukebox"], ["Harris Jayaraj (Telugu)","Harris Jayaraj (Telugu) hits jukebox"], ["Vidyasagar (Telugu)","Vidyasagar (Telugu) hits jukebox"], ["Ramesh Naidu","Ramesh Naidu hits jukebox"], ["K. Chakravarthy","K Chakravarthy hits jukebox"], ["Satyam","Satyam hits jukebox"], ["K. V. Mahadevan","K V Mahadevan hits jukebox"], ["Ghantasala","Ghantasala hits jukebox"], ["Ramana Gogula","Ramana Gogula hits jukebox"], ["M. M. Srilekha","M M Srilekha hits jukebox"], ["Vandemataram Srinivas","Vandemataram Srinivas hits jukebox"], ["Sri Kommineni","Sri Kommineni hits jukebox"], ["S. V. Krishna Reddy","S V Krishna Reddy hits jukebox"], ["Joshua Sridhar","Joshua Sridhar hits jukebox"], ["Shravan Bharadwaj","Shravan Bharadwaj hits jukebox"], ["Prashanth R Vihari","Prashanth R Vihari hits jukebox"], ["Sekhar Chandra","Sekhar Chandra hits jukebox"], ["Leon James (Telugu)","Leon James (Telugu) hits jukebox"], ["Sunil Kashyap","Sunil Kashyap hits jukebox"], ["Phani Kalyan","Phani Kalyan hits jukebox"], ["Mahati Swara Sagar","Mahati Swara Sagar hits jukebox"], ["Praveen Lakkaraju","Praveen Lakkaraju hits jukebox"], ["Gowra Hari","Gowra Hari hits jukebox"], ["Sricharan Pakala","Sricharan Pakala hits jukebox"], ["Achu Rajamani","Achu Rajamani hits jukebox"], ["Jakes Bejoy (Telugu)","Jakes Bejoy (Telugu) hits jukebox"], ["Hesham Abdul Wahab","Hesham Abdul Wahab hits jukebox"], ["Justin Prabhakaran (Telugu)","Justin Prabhakaran (Telugu) hits jukebox"], ["Anirudh (Telugu)","Anirudh (Telugu) hits jukebox"], ["Vijaya Bhaskar","Vijaya Bhaskar hits jukebox"], ["Pendyala Nageswara Rao","Pendyala Nageswara Rao hits jukebox"], ["Saluri Rajeswara Rao","Saluri Rajeswara Rao hits jukebox"], ["T. V. Raju","T V Raju hits jukebox"], ["Adi Narayana Rao","Adi Narayana Rao hits jukebox"], ["J. V. Raghavulu","J V Raghavulu hits jukebox"], ["S. Rajeswara Rao","S Rajeswara Rao hits jukebox"], ["Harshavardhan Rameshwar","Harshavardhan Rameshwar hits jukebox"], ["Ajay Arasada","Ajay Arasada hits jukebox"], ["Vijay Bulganin","Vijay Bulganin hits jukebox"], ["Chaitan Bharadwaj","Chaitan Bharadwaj hits jukebox"], ["Sagar Mahati","Sagar Mahati hits jukebox"], ["Shakthikanth Karthick","Shakthikanth Karthick hits jukebox"], ["Karthik Rodriguez","Karthik Rodriguez hits jukebox"], ["Raghu Kunche","Raghu Kunche hits jukebox"], ["Madhavapeddi Suresh","Madhavapeddi Suresh hits jukebox"], ["Chellapilla Satyam","Chellapilla Satyam hits jukebox"], ["Ram Miriyala","Ram Miriyala hits jukebox"], ["Kaala Bhairava","Kaala Bhairava hits jukebox"], ["S. A. Rajkumar (Telugu)","S A Rajkumar (Telugu) hits jukebox"], ["Deva (Telugu)","Deva (Telugu) hits jukebox"], ["Rajan-Nagendra (Telugu)","Rajan Nagendra (Telugu) hits jukebox"], ["Vijay Antony (Telugu)","Vijay Antony (Telugu) hits jukebox"], ["Santhosh Narayanan (Telugu)","Santhosh Narayanan (Telugu) hits jukebox"], ["Yuvan Shankar Raja (Telugu)","Yuvan Shankar Raja (Telugu) hits jukebox"], ["Rajesh Murugesan (Telugu)","Rajesh Murugesan (Telugu) hits jukebox"], ["Gopi Sundar (Telugu)","Gopi Sundar (Telugu) hits jukebox"]]],
   ["🎙️ Telugu playlists",[["Telugu melodies","Telugu melody songs video jukebox"], ["Telugu love songs","Telugu love songs jukebox"], ["Telugu mass beats","Telugu mass songs jukebox"], ["Telugu 90s hits","90s Telugu hit songs jukebox"], ["Telugu 2000s hits","2000s Telugu hit songs jukebox"], ["Telugu folk (Janapada)","Telugu folk songs jukebox"], ["Telugu devotional","Telugu devotional songs jukebox"], ["Telugu friendship songs","Telugu friendship songs jukebox"], ["Telugu old golden hits","Telugu old golden hits jukebox"], ["Telugu duets","Telugu duet songs jukebox"], ["Telugu sad songs","Telugu emotional sad songs jukebox"], ["Telugu college songs","Telugu college life songs jukebox"]]],
@@ -2906,7 +2906,7 @@ function moviesView() {
       outLink("https://www.google.com/search?q=" + encodeURIComponent("new " + label + " movies releasing this week OTT and theatres"), "🗓️ This week", "linkbtn"),
       outLink("https://www.google.com/search?q=" + encodeURIComponent(label + " movie reviews and ratings " + yr), "⭐ Reviews", "linkbtn")))),
     watch,
-    el("p", { class: "hint" }, "Watch movies only in theatres or on official OTT apps. Piracy sites are illegal and often carry viruses and scams. Spark does not host any movie."));
+    el("p", { class: "hint" }, "Watch movies only in theatres or on official OTT apps. Piracy sites are illegal and often carry viruses and scams. CampusLoop does not host any movie."));
 }
 
 function memoryGame() {
@@ -2979,7 +2979,7 @@ function renderFun() {
       body.replaceChildren(
         chillPlayer(),
         el("div", { class: "label" }, "🎬 Music director and singer jukeboxes"),
-        el("p", { class: "hint" }, "Tap a name to open official jukeboxes on YouTube. These are copyrighted songs streamed by the rights holders, so Spark only links to them. Listen on YouTube with low volume and earphones."),
+        el("p", { class: "hint" }, "Tap a name to open official jukeboxes on YouTube. These are copyrighted songs streamed by the rights holders, so CampusLoop only links to them. Listen on YouTube with low volume and earphones."),
         el("details", { class: "fun-det", open: true },
           el("summary", {}, "🆕 Latest released songs (" + FUN_NEW.length + ")"),
           el("p", { class: "hint" }, "Newest uploads first, from official channels. Pick this week or this month."),
@@ -3099,7 +3099,7 @@ function renderAbout() {
       el("p", {}, "Built by students, for students."),
       el("p", {}, "💙 Dedicated to our students: advanced, disciplined and obedient learners who work hard, respect their teachers and lift each other up. You are the reason Spark exists.")),
     el("div", { class: "label" }, "🎯 Our mission"),
-    el("p", {}, "Every student should have a senior to ask, a clear path after graduation, and quality study material, without paying for any of it. Spark brings these together so no doubt stays unanswered and no student feels lost after E4."),
+    el("p", {}, "Every student should have a senior to ask, a clear path after graduation, and quality study material, without paying for any of it. CampusLoop brings these together so no doubt stays unanswered and no student feels lost after E4."),
     el("div", { class: "label" }, "✨ What you get"),
     feature("❓", "Doubts", "Ask by subject, year (E1-E4) and campus. Peers answer, you mark the best answer, and helpers earn points."),
     feature("💡", "Ideas, Clubs and Challenges", "Share project ideas, join clubs and take part in challenges and hackathons."),
@@ -3107,14 +3107,14 @@ function renderAbout() {
     feature("🧠", "Daily Quiz and Top Helpers", "A new question every day, a leaderboard and recognition for the students who help most."),
     feature("📖", "Study Tools and Learn from IIT", "Unit-wise syllabus, formula cards, study plans and free IIT course links."),
     feature("🚀", "Career Guide", "Branch-wise options after graduation: jobs, M.Tech, PSU, study abroad and premium paths, all with free links."),
-    feature("🤖", "Spark Bot", "Ask anything about academics, GATE, placements, campus life or the app and get instant answers with clickable resources."),
+    feature("🤖", "Loop Bot", "Ask anything about academics, GATE, placements, campus life or the app and get instant answers with clickable resources."),
     feature("🛒", "Market", "Buy and sell textbooks, notes and equipment inside the " + COLLEGE + " community."),
     el("div", { class: "label" }, "🔒 Privacy and safety"),
     el("p", {}, "No login and no password. Your device gets a random ID so your posts stay yours. You can post anonymously, report anything inappropriate and edit your own posts. We do not sell or share your data."),
     el("div", { class: "label" }, "💚 100% free"),
     el("p", {}, "No ads, no subscriptions. Every resource we link to is free to use."),
     el("div", { class: "label" }, "⚠️ Please note"),
-    el("p", { class: "hint" }, "Spark is a student community platform. Always confirm official dates, fees, results and rules on your college's official websites before acting on them. Career and scholarship details can change, so check the official links."),
+    el("p", { class: "hint" }, "CampusLoop is a student community platform. Always confirm official dates, fees, results and rules on your college's official websites before acting on them. Career and scholarship details can change, so check the official links."),
     IS_RGUKT && el("div", { class: "label" }, "🔗 Official RGUKT campuses"),
     IS_RGUKT && el("div", { class: "rowbtns" },
       outLink("https://www.rguktn.ac.in", "Nuzvid", "linkbtn"),
@@ -3122,7 +3122,7 @@ function renderAbout() {
       outLink("https://www.rguktrkv.ac.in", "RK Valley", "linkbtn"),
       outLink("https://www.rguktsklm.ac.in", "Srikakulam", "linkbtn")),
     el("div", { class: "label" }, "🤝 Get involved"),
-    el("p", { class: "hint" }, "Found a bug or have an idea? Post it in the Ideas tab or ask Spark Bot. You can also see the code and report issues on GitHub."),
+    el("p", { class: "hint" }, "Found a bug or have an idea? Post it in the Ideas tab or ask Loop Bot. You can also see the code and report issues on GitHub."),
     el("div", { class: "rowbtns" },
       outLink("https://github.com/vijay462462/rgukt-spark", "GitHub", "linkbtn"),
       outLink("https://github.com/vijay462462/rgukt-spark/issues", "Report an issue", "linkbtn")),
@@ -5985,7 +5985,7 @@ if (themeBtn) {
 if (CFG.title) { document.title = CFG.title; }
 {
   const h1 = $("siteTitle");
-  if (h1) { const w = CFG.title.trim().split(/\s+/), last = w.pop(); h1.replaceChildren(w.join(" ") + (w.length ? " " : ""), el("span", {}, last)); }
+  if (h1) { const m = /^(.*?[a-z])([A-Z][a-z]*)$/.exec(CFG.title.trim()); const w = CFG.title.trim().split(/\s+/); if (w.length > 1) { const last = w.pop(); h1.replaceChildren(w.join(" ") + " ", el("span", {}, last)); } else if (m) h1.replaceChildren(m[1], el("span", {}, m[2])); else h1.textContent = CFG.title; }
   const cb = $("collegeBtn"); if (cb) { cb.textContent = "🏫 " + (TENANT ? TENANT.name : IS_RGUKT ? "RGUKT" : "Choose your college") + " ▾"; cb.addEventListener("click", () => showPanel("college")); }
 }
 

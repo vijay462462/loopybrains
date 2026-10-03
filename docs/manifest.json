@@ -1,6 +1,6 @@
 {
-  "name": "Campus Spark",
-  "short_name": "Spark",
+  "name": "CampusLoop",
+  "short_name": "CampusLoop",
   "description": "Ask doubts, share ideas and run clubs with students of your college.",
   "start_url": "./",
   "scope": "./",

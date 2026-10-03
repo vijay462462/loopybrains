@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Campus Spark</title>
-<meta name="description" content="Campus Spark — ask doubts, share ideas and run clubs together with students of your college. Every question brings you closer to the answer.">
+<title>CampusLoop</title>
+<meta name="description" content="CampusLoop — ask doubts, share ideas and run clubs together with students of your college. Every question brings you closer to the answer.">
 <meta name="theme-color" content="#7c3aed">
 <meta http-equiv="Cache-Control" content="no-cache">
 <meta name="referrer" content="no-referrer">
@@ -12,20 +12,20 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://api.dicebear.com https://img.youtube.com data: blob:; media-src 'self' blob: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com wss://*.firebaseio.com https://*.supabase.co wss://*.supabase.co; frame-src https://www.youtube.com; object-src 'none'; base-uri 'none'; form-action 'self'; worker-src 'self'; manifest-src 'self'; upgrade-insecure-requests;">
 
 <!-- PWA -->
-<link rel="manifest" href="manifest.json?v=177">
+<link rel="manifest" href="manifest.json?v=178">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Spark">
+<meta name="apple-mobile-web-app-title" content="CampusLoop">
 <link rel="apple-touch-icon" href="icon.svg">
 
 <!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@500&display=swap">
-<link rel="stylesheet" href="style.css?v=177">
-<link rel="stylesheet" href="sparkbot.css?v=177">
-<link rel="stylesheet" href="player.css?v=177">
-<link rel="stylesheet" href="lab.css?v=177">
+<link rel="stylesheet" href="style.css?v=178">
+<link rel="stylesheet" href="sparkbot.css?v=178">
+<link rel="stylesheet" href="player.css?v=178">
+<link rel="stylesheet" href="lab.css?v=178">
 </head>
 <body>
 
@@ -34,7 +34,7 @@
 
 <!-- PWA install prompt -->
 <div id="installBanner" class="install-banner" hidden>
-  <span class="install-text">📲 Add Campus Spark to your home screen for quick access!</span>
+  <span class="install-text">📲 Add CampusLoop to your home screen for quick access!</span>
   <button class="btn primary sm" id="installBtn" type="button">Install App</button>
   <button class="install-close" id="installDismiss" type="button" aria-label="Dismiss">✕</button>
 </div>
@@ -46,7 +46,7 @@
   <canvas id="particles" aria-hidden="true"></canvas>
   <header class="top">
     <div class="brand">
-      <h1 id="siteTitle">Campus <span>Spark</span></h1>
+      <h1 id="siteTitle">Campus<span>Loop</span></h1>
       <p id="tagline">One doubt. Many minds. Zero fear.</p>
       <button type="button" id="collegeBtn" class="college-btn" aria-label="Choose your college">🏫 College ▾</button>
       <div id="storyBar" class="story-bar" aria-label="Stories" hidden></div>
@@ -75,7 +75,7 @@
       <button class="btn primary" id="askBtn" type="button">Ask a doubt</button>
       <button class="chip filter-toggle" id="filterToggle" type="button" aria-expanded="false">🎚️ Filters</button>
       <button class="chip tool" id="alumniBtn" type="button"><span class="ci">🎓</span> <span class="cl">Alumni</span></button>
-      <button class="chip tool" id="botBtn" type="button"><span class="ci">🤖</span> <span class="cl">Spark Bot</span></button>
+      <button class="chip tool" id="botBtn" type="button"><span class="ci">🤖</span> <span class="cl">Loop Bot</span></button>
       <button class="chip tool" id="funBtn" type="button"><span class="ci">🎉</span> <span class="cl">Entertainment</span></button>
     </div>
     <div id="campusBar" class="campus-bar" hidden></div>
@@ -107,15 +107,15 @@
 <!-- bottom navigation (mobile only) -->
 <nav class="bottom-nav" id="bottomNav" aria-label="Main navigation"></nav>
 
-<script src="config.js?v=177"></script>
-<script src="quiz.js?v=177"></script>
-<script type="module" src="app.js?v=177"></script>
-<script src="sparkbot.js?v=177"></script>
-<script src="player.js?v=177"></script>
-<script src="tools-core.js?v=177"></script>
-<script src="tools-math.js?v=177"></script>
-<script src="tools-eng.js?v=177"></script>
-<script src="tools-life.js?v=177"></script>
-<script src="lab.js?v=177"></script>
+<script src="config.js?v=178"></script>
+<script src="quiz.js?v=178"></script>
+<script type="module" src="app.js?v=178"></script>
+<script src="sparkbot.js?v=178"></script>
+<script src="player.js?v=178"></script>
+<script src="tools-core.js?v=178"></script>
+<script src="tools-math.js?v=178"></script>
+<script src="tools-eng.js?v=178"></script>
+<script src="tools-life.js?v=178"></script>
+<script src="lab.js?v=178"></script>
 </body>
 </html>
