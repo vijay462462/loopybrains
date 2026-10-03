@@ -1361,6 +1361,49 @@ function latestHelp() {
   const d = state.doubts.find(x => x.id === r.parentId); if (!d) return null;
   return el("button", { class: "ticker", type: "button", onclick: () => openPost("doubts", d.id) }, el("span", { class: "ticker-dot", "aria-hidden": "true" }), el("span", {}, el("b", {}, String(r.authorName).slice(0, 24)), " just answered a doubt" + (d.subject ? " in " + d.subject : "") + " · " + noticeAgo(r.createdAt)));
 }
+// Mystery daily box: open it once a day for a fun fact, a collectible Loopy sticker, or (rarely) a bonus day of Plus studio.
+const STICKERS = [["🚀", "Rocket Loopy"], ["📚", "Bookworm Loopy"], ["🧠", "Genius Loopy"], ["🎧", "Focus Loopy"], ["🏆", "Champion Loopy"], ["🌟", "Star Loopy"], ["☕", "Chai Loopy"], ["🎓", "Graduate Loopy"], ["👑", "Golden Loopy"]];
+const BOX_FACTS = [
+  "The first computer bug was a real moth found stuck in a computer in 1947.", "Honey never spoils. Jars found in old Egyptian tombs were still good to eat.", "Your brain uses about 20% of your body's energy, though it is only 2% of your weight.",
+  "Binary has only 0 and 1, yet every video, song and photo on your phone is made from it.", "Zero was invented in India. Aryabhata and Brahmagupta helped the world use it.", "A day on Venus is longer than a year on Venus.",
+  "Writing by hand helps you remember more than typing. Try it for your key formulas.", "The Python language is named after the comedy group Monty Python, not the snake.", "Octopuses have three hearts and blue blood.",
+  "The 'Wi-Fi' name does not stand for anything. It was chosen because it sounded catchy.", "Light from the Sun takes about 8 minutes to reach Earth.", "Short breaks help you learn: after 25 minutes of focus, your brain needs a reset.",
+  "Sleeping after studying helps your brain lock in what you learned.", "The first website ever made is still online, from 1991.", "India's Chandrayaan-3 landed near the Moon's south pole in 2023, a first for any country.",
+  "A 'byte' is 8 bits, and one letter like A takes exactly one byte.", "Bananas are slightly radioactive because of potassium, but completely safe.", "Teaching someone else a topic is the best way to learn it yourself.",
+  "The word 'robot' comes from a Czech word meaning 'forced labour', first used in a 1920 play.", "Lightning is about five times hotter than the surface of the Sun.",
+];
+const boxToday = () => { const b = readJSON("dd-box", null); return b && b.day === dayStr() ? b : null; };
+function openBox() {
+  if (boxToday()) return boxToday();
+  const owned = readJSON("dd-stickers", []), roll = Math.random(); let r;
+  const missing = STICKERS.map((s, i) => i).filter(i => !owned.includes(i) && i !== 8);
+  if (roll < 0.02 && !owned.includes(8)) r = { kind: "sticker", id: 8 };
+  else if (roll < 0.10) { const until = Math.max(Number(readJSON("dd-bonus-until", 0)) || 0, Date.now()) + 864e5; writeJSON("dd-bonus-until", until); r = { kind: "bonus" }; }
+  else if (roll < 0.45 && missing.length) r = { kind: "sticker", id: missing[Math.floor(Math.random() * missing.length)] };
+  else r = { kind: "fact", id: Math.floor(Math.random() * BOX_FACTS.length) };
+  if (r.kind === "sticker" && !owned.includes(r.id)) writeJSON("dd-stickers", [...owned, r.id]);
+  const rec = { day: dayStr(), ...r }; writeJSON("dd-box", rec); return rec;
+}
+function showBox() {
+  if (document.getElementById("boxModal")) return;
+  const fresh = !boxToday(), rec = openBox(), box = el("div", { id: "boxModal", class: "welcome", role: "dialog", "aria-modal": "true", "aria-label": "Mystery box" });
+  const close = () => { box.remove(); todayKey = ""; renderToday(); };
+  const body = rec.kind === "sticker" ? [el("div", { class: "welcome-icon", "aria-hidden": "true" }, STICKERS[rec.id][0]), el("h2", {}, "New sticker: " + STICKERS[rec.id][1] + "!"), el("p", {}, rec.id === 8 ? "A rare golden sticker! Very few students find this one. ✨" : "You now have " + readJSON("dd-stickers", []).length + " of " + STICKERS.length + " stickers. Come back tomorrow for more.")]
+    : rec.kind === "bonus" ? [el("div", { class: "welcome-icon", "aria-hidden": "true" }, "🎁"), el("h2", {}, "Lucky day! A bonus gift"), el("p", {}, "You won 1 free day of Plus studio. Use the mock tests, planner and more today.")]
+    : [el("div", { class: "welcome-icon", "aria-hidden": "true" }, "💡"), el("h2", {}, "Did you know?"), el("p", {}, BOX_FACTS[rec.id])];
+  box.append(el("div", { class: "welcome-card" }, ...body, el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", onclick: close }, fresh ? "Wow, nice!" : "Close"), el("button", { class: "btn", type: "button", onclick: () => { close(); showPanel("stickers"); } }, "🎴 Sticker book"))));
+  document.body.append(box);
+}
+function renderStickers() {
+  const owned = readJSON("dd-stickers", []), back = el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back");
+  return [el("h2", {}, "🎴 Loopy sticker book"), el("p", { class: "hint" }, owned.length + " of " + STICKERS.length + " collected. Open the mystery box on the home screen once a day to find more."),
+    el("div", { class: "plus-tiles" }, ...STICKERS.map(([ic, name], i) => el("div", { class: "plus-tile badge" + (owned.includes(i) ? " on" : ""), "aria-label": name + (owned.includes(i) ? " collected" : " not found yet") }, el("span", { class: "pt-i", "aria-hidden": "true" }, owned.includes(i) ? ic : "❔"), el("strong", {}, owned.includes(i) ? name : "???")))),
+    owned.length === STICKERS.length ? el("div", { class: "wow", role: "status" }, el("strong", {}, "Wow, the full collection! 🏆")) : null, el("div", { class: "rowbtns" }, back)];
+}
+function boxButton() {
+  const done = boxToday();
+  return el("button", { class: "boxbtn" + (done ? "" : " fresh"), type: "button", onclick: showBox }, el("span", { class: "boxbtn-ico", "aria-hidden": "true" }, done ? "📭" : "🎁"), el("span", {}, el("b", {}, done ? "Today's box opened" : "Mystery box"), el("small", {}, done ? "Come back tomorrow · tap to see it again" : "Tap to open today's surprise")));
+}
 function renderToday() {
   const bar = $("todayBar"); if (!bar) return;
   if (NO_COLLEGE || !store) { bar.hidden = true; return; }
@@ -1368,7 +1411,7 @@ function renderToday() {
     streak = state.myStreak || 0, quizDone = QUIZ.length ? !!myQuizAnswer(dayNum()) : true, plan = readJSON("dd-exam-plan", null),
     left = plan && plan.date ? Math.ceil((new Date(plan.date + "T00:00:00").getTime() - new Date().setHours(0, 0, 0, 0)) / 864e5) : null;
   const note = state.welcomeNote && readJSON("dd-note-gone", 0) !== state.welcomeNote.updatedAt ? state.welcomeNote : null;
-  const key = [hello, name, streak, quizDone, left, state.dataReady ? 1 : 0, questSteps().filter(s => s[2]).length, state.replies.length, state.doubts.length, readJSON("dd-tip", {}).gone ? 1 : 0, mistakeList().length, state.weekly.length, dayNum(), (typeof weekPoints === "function" ? weekPoints() : 0), note ? note.updatedAt : 0, openDrives().length, upcomingEvents().length, unansweredDoubts().length].join("|"); if (key === todayKey && !bar.hidden) return; todayKey = key;
+  const key = [hello, name, streak, quizDone, left, state.dataReady ? 1 : 0, boxToday() ? 1 : 0, questSteps().filter(s => s[2]).length, state.replies.length, state.doubts.length, readJSON("dd-tip", {}).gone ? 1 : 0, mistakeList().length, state.weekly.length, dayNum(), (typeof weekPoints === "function" ? weekPoints() : 0), note ? note.updatedAt : 0, openDrives().length, upcomingEvents().length, unansweredDoubts().length].join("|"); if (key === todayKey && !bar.hidden) return; todayKey = key;
   const chip = (txt, cls, fn) => el("button", { class: "today-chip " + (cls || ""), type: "button", onclick: fn }, txt);
   const WORDS = ["Welcome to the " + BRAND + " family 💙", "Respect your teachers, help your juniors. 🙏", "Every question is welcome here.", "Kind words build a strong campus. 🌱", "Thank you for being part of our family.", "Learn together, grow together. 🚀", "Our teachers and staff work hard for you. Say thank you today. 🙏"];
   const newbie = !readJSON("dd-quest-done", false) && (readJSON("dd-visits", { n: 1 }).n || 1) <= 21 && questSteps().filter(s => s[2]).length < 3;
@@ -1378,7 +1421,7 @@ function renderToday() {
     (() => { if (newbie) return null; const t = loopyTip(), st = readJSON("dd-tip", {}); if (st.gone && st.day === dayStr()) return null;
       return el("div", { class: "today-tip" }, el("small", {}, "💡 Loopy\u2019s tip for today"), el("p", {}, t.text), el("div", { class: "rowbtns" }, t.cta ? el("button", { class: "btn sm primary", type: "button", onclick: t.cta[1] }, t.cta[0]) : null, el("button", { class: "btn sm", type: "button", onclick: () => { writeJSON("dd-tip", { ...readJSON("dd-tip", {}), day: dayStr(), gone: true }); todayKey = ""; renderToday(); } }, "Got it"))); })(),
     note ? el("div", { class: "today-note" }, el("strong", {}, "💬 " + (note.from ? "A note from " + note.from : "A note from your college")), el("p", {}, note.text), el("button", { class: "of-x", type: "button", "aria-label": "Dismiss note", onclick: () => { writeJSON("dd-note-gone", note.updatedAt); todayKey = ""; renderToday(); } }, "✕")) : null, null, el("button", { class: "btn primary today-ask", type: "button", onclick: () => { const b = $("askBtn"); if (b) b.click(); } }, "❓ Ask a doubt"),
-    questCard(), quizTeaser(), latestHelp(),
+    questCard(), boxButton(), quizTeaser(), latestHelp(),
     newbie ? null : el("div", { class: "today-stats" },
       stat(streak, streak === 1 ? "day streak 🔥" : "day streak 🔥", streak && !(state.myDays && state.myDays.has(dayNum())) ? "warn" : "", () => showPanel("me")),
       stat(pts, "points this week ⚡", "", () => showPanel("wboard")),
@@ -1453,11 +1496,11 @@ const EXPLORE = [
   ["Study", [["quizBtn", "🧠", "Daily Quiz"], ["labBtn", "🧪", "Study Lab"], ["studyBtn", "📖", "Study Tools"], ["learnBtn", "📚", "Learn from IIT"], ["focusBtn", "🎯", "Focus mode"]]],
   ["Campus", [["eventsBtn", "🎉", "Events"], ["drivesBtn", "🏢", "Campus Drives"], ["leadersBtn", "🏆", "Top Helpers"], ["alumniBtn", "🎓", "Alumni", "alumni"]]],
   ["Career", [["careerBtn", "🚀", "Career Guide"], ["__resume", "📄", "Resume builder"]]],
-  ["More", [["__plus", "⭐", "CampusLoop Plus"], ["botBtn", "🤖", "Loop Bot", "bot"], ["funBtn", "🎉", "Entertainment", "fun"], ["aboutBtn", "ℹ️", "About Us"]]],
+  ["More", [["__stickers", "🎴", "Sticker book"], ["__plus", "⭐", "CampusLoop Plus"], ["botBtn", "🤖", "Loop Bot", "bot"], ["funBtn", "🎉", "Entertainment", "fun"], ["aboutBtn", "ℹ️", "About Us"]]],
 ];
 function renderExplore() {
   const back = el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back");
-  const go = (id) => { if (id === "__plus") { showPanel("plus"); return; } if (id === "__resume") { showPanel("resume"); return; } const b = $(id); if (b) b.click(); };
+  const go = (id) => { if (id === "__plus") { showPanel("plus"); return; } if (id === "__resume") { showPanel("resume"); return; } if (id === "__stickers") { showPanel("stickers"); return; } const b = $(id); if (b) b.click(); };
   return [el("h2", {}, "🧰 Explore"), el("p", { class: "hint" }, "Everything in " + BRAND + ", in one place."),
     ...EXPLORE.flatMap(([title, items]) => [el("div", { class: "label" }, title), el("div", { class: "plus-tiles" }, ...items.filter(it => !it[3] || !document.body.classList.contains("no-" + it[3])).map(([id, icon, label]) => el("button", { class: "plus-tile", type: "button", onclick: () => go(id) }, el("span", { class: "pt-i", "aria-hidden": "true" }, icon), el("strong", {}, label))))]),
     el("div", { class: "rowbtns" }, back)];
@@ -7081,6 +7124,7 @@ function render() {
       state.mode === "papers" ? renderPapers() :
       state.mode === "notices" ? renderNotices() :
       state.mode === "explore" ? renderExplore() :
+      state.mode === "stickers" ? renderStickers() :
       state.mode === "drives" ? renderDrives() :
       state.mode === "events" ? renderEvents() :
       state.mode === "ai" ? renderAI() :

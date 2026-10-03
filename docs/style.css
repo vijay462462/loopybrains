@@ -2022,3 +2022,9 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 .ticker-dot { width: 9px; height: 9px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 0 rgb(34 197 94 / .6); animation: tickPulse 1.8s infinite; flex: none; }
 @keyframes tickPulse { 70% { box-shadow: 0 0 0 8px rgb(34 197 94 / 0); } 100% { box-shadow: 0 0 0 0 rgb(34 197 94 / 0); } }
 @media (prefers-reduced-motion: reduce) { .teaser, .ticker-dot { animation: none; } }
+.boxbtn { display: flex; align-items: center; gap: 12px; text-align: left; padding: 10px 14px; border-radius: 18px; border: 1px solid var(--line); background: var(--sheet); color: var(--ink); font: inherit; }
+.boxbtn small { display: block; opacity: .75; } .boxbtn-ico { font-size: 30px; line-height: 1; }
+.boxbtn.fresh { border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 14%, var(--sheet)), var(--sheet)); animation: pulseGlow 2.4s ease-in-out infinite; }
+.boxbtn.fresh .boxbtn-ico { animation: boxShake 2.4s ease-in-out infinite; transform-origin: 50% 80%; }
+@keyframes boxShake { 0%, 70%, 100% { transform: rotate(0); } 75% { transform: rotate(-12deg); } 85% { transform: rotate(10deg); } 92% { transform: rotate(-6deg); } }
+@media (prefers-reduced-motion: reduce) { .boxbtn.fresh, .boxbtn.fresh .boxbtn-ico { animation: none; } }
