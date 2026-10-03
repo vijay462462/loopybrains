@@ -1698,3 +1698,28 @@ body.priv-blur > * { filter: blur(22px); }
 .st-quizcard .st-qnote { text-align: center; }
 .st-skip, .st-save, .st-open { justify-content: center; text-align: center; }
 .mock-bar{height:8px;border-radius:99px;background:var(--accent-soft);overflow:hidden;margin:2px 0 8px}.mock-bar span{display:block;height:100%;background:var(--accent)}
+.plus-list p { margin: 0; }
+.mock-chart { width: 100%; height: auto; max-height: 130px; }
+.mock-chart .mc-axis { stroke: var(--line); stroke-width: 1; }
+.mock-chart .mc-line { stroke: var(--accent); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.mock-chart .mc-dot { fill: var(--accent); }
+.plan-today { margin: 0; font-weight: 700; color: var(--accent); }
+.plus-hero { padding: 10px 14px; border-radius: 14px; font-weight: 800; color: #3b2a00; background: linear-gradient(110deg, #fcd34d, #f59e0b, #fde68a, #f59e0b); background-size: 220% 100%; animation: shimmer 4s linear infinite; }
+.coach { display: grid; gap: 10px; padding: 14px; border-radius: 16px; color: #fff; background: linear-gradient(135deg, var(--brand-a, #4f46e5), var(--brand-b, #7c3aed)); }
+.coach-top { display: flex; gap: 14px; align-items: center; }
+.coach-ring { width: 84px; height: 84px; flex: none; }
+.coach-ring .cr-bg { stroke: rgb(255 255 255 / .28); stroke-width: 7; }
+.coach-ring .cr-fg { stroke: #fff; stroke-width: 7; stroke-linecap: round; transition: stroke-dasharray .8s ease; }
+.coach-ring .cr-num { fill: #fff; font-size: 17px; font-weight: 800; }
+.coach-sub { margin: 2px 0 6px; opacity: .95; }
+.coach-level { display: inline-block; padding: 2px 10px; border-radius: 999px; background: rgb(255 255 255 / .22); font-size: 12px; font-weight: 700; }
+.coach-next { display: grid; gap: 6px; }
+.coach-tip { text-align: left; border: 1px solid rgb(255 255 255 / .35); background: rgb(255 255 255 / .14); color: #fff; border-radius: 12px; padding: 9px 12px; font-weight: 600; }
+.coach-tip.first { background: #fff; color: #1e1b4b; border-color: #fff; }
+.wow { display: grid; gap: 2px; justify-items: center; text-align: center; padding: 14px; border-radius: 16px; color: #3b2a00; background: linear-gradient(110deg, #fde68a, #fbbf24, #fde68a); animation: pop .5s ease-out; }
+.wow strong { font-size: 22px; }
+.wow-conf { font-size: 22px; letter-spacing: 6px; animation: float 1.6s ease-in-out infinite; }
+@keyframes shimmer { to { background-position: -220% 0; } }
+@keyframes pop { from { transform: scale(.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes float { 50% { transform: translateY(-5px); } }
+@media (prefers-reduced-motion: reduce) { .plus-hero, .wow, .wow-conf { animation: none; } }

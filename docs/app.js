@@ -2582,7 +2582,7 @@ async function startCheckout(planKey) {
   if (!r.ok || !url || !/^https:\/\/(rzp\.io|razorpay\.com|[a-z0-9-]+\.razorpay\.com)\//.test(url)) throw new Error(j.error || "Could not start the payment.");
   window.open(url, "_blank", "noopener");
 }
-const PLUS_FEATURES = ["AI doubt helper", "Previous-year paper vault with solutions", "Mock tests with analytics", "Cloud backup and sync", "Profile themes and frames", "Placement preparation kit", "No ads, ever"];
+const PLUS_FEATURES = ["AI doubt helper", "Previous-year paper vault with solutions", "Mock tests with analytics", "Mistake notebook", "Exam planner", "Placement preparation kit", "Cloud backup and sync", "Profile themes and frames", "No ads, ever"];
 function renderPlus() {
   const acct = myAccount(), verified = acct.verified, has = state.plan.plus;
   const canBackup = !!store && !!store.getTop && verified && (!PLUS.enabled || has);
@@ -2626,19 +2626,27 @@ function renderPlus() {
     price, email, el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "submit" }, "Send my answer")));
   return [
     el("h2", {}, "⭐ CampusLoop Plus" + (has ? " (active)" : "")),
+    has ? el("div", { class: "plus-hero" }, "✨ Welcome, Plus member. Your studio is ready.") : null,
     el("p", { class: "hint" }, has ? "Thank you for supporting CampusLoop. Your plan is active until " + new Date(state.plan.until).toLocaleDateString() + "." : PLUS.enabled ? "Extras for students who want more. Everything free today stays free." : "Early access: everything below that already works is free while we build Plus. Everything free today stays free."),
-    el("div", { class: "learn-card" },
+    (!plusLocked() ? coachCard() : null),
+    el("div", { class: "learn-card plus-list" },
       el("strong", {}, "What you get"),
       el("p", {}, "☁️ Cloud backup and restore of your flashcards, notes, tasks and planner, so a new phone keeps your study data."),
       el("p", {}, "⭐ A Plus star next to your name."),
-      el("p", {}, "📝 Mock tests with a timer and a subject-wise report."),
+      el("p", {}, "📝 Timed mock tests for your subjects and for placements, with a topic-wise report and progress chart."),
+      el("p", {}, "📓 A mistake notebook that brings back the questions you missed."),
+      el("p", {}, "🗓️ An exam planner with spaced revision."),
       el("p", {}, "🎨 Profile colour themes."),
-      el("p", { class: "hint" }, "Coming next: " + PLUS_FEATURES.slice(0, 3).join(", ") + ". Tell us below which you want first.")),
+      el("p", { class: "hint" }, "Coming next: AI doubt helper, Previous-year paper vault with solutions" + ". Tell us below which you want first.")),
     PLUS.enabled && !has ? el("div", { class: "learn-card" }, el("strong", {}, "Choose a plan"),
       el("div", { class: "rowbtns" }, buy("monthly", "₹" + PLUS.monthly + " per month"), buy("yearly", "₹" + PLUS.yearly + " per year (best value)")),
       verified ? null : el("p", { class: "hint" }, "Verify your email first (Profile › Verify your college email) so we can attach the plan to you.")) : null,
-    el("div", { class: "label" }, "📝 Mock test"),
-    el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", onclick: () => { state.mock = null; showPanel("mock"); } }, "Open mock test")),
+    el("div", { class: "label" }, "🚀 Plus studio"),
+    (PLUS.enabled && !has) ? el("p", { class: "hint" }, "The studio is part of the paid plan.") : null,
+    el("div", { class: "rowbtns" },
+      el("button", { class: "btn primary", type: "button", onclick: () => { state.mock = null; showPanel("mock"); } }, "📝 Mock tests"),
+      el("button", { class: "btn", type: "button", onclick: () => { state.mist = null; showPanel("mistakes"); } }, "📓 Mistakes (" + mistakeList().length + ")"),
+      el("button", { class: "btn", type: "button", onclick: () => showPanel("planner") }, "🗓️ Exam planner")),
     el("div", { class: "label" }, "🎨 Theme"),
     (PLUS.enabled && !has) ? el("p", { class: "hint" }, "Themes are part of the paid plan.") : el("div", { class: "rowbtns" }, ...THEMES.map(([n, c]) => el("button", { class: "btn sm", type: "button", onclick: () => { try { if (c) localStorage.setItem("dd-theme", c); else localStorage.removeItem("dd-theme"); } catch (_) {} if (!c) { const b = BRAND_COLORS || ["#4f46e5", "#7c3aed"]; document.documentElement.style.setProperty("--accent", b[0]); document.documentElement.style.setProperty("--brand-a", b[0]); document.documentElement.style.setProperty("--brand-b", b[1]); } else applyTheme(); } }, n))),
     el("div", { class: "label" }, "☁️ Backup"),
@@ -2650,53 +2658,151 @@ function renderPlus() {
     el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")),
   ].filter(Boolean);
 }
-// Mock test (Plus): 15 random questions from the quiz bank, timed, with subject-wise analytics saved on this phone.
+// CampusLoop Plus studio: timed mock tests (subjects or placement), progress chart, mistake notebook and exam planner. Data stays on this phone.
 const MOCK_N = 15, MOCK_SECS = 20 * 60;
-const mockHistory = () => { try { const a = JSON.parse(localStorage.getItem("dd-mock-hist") || "[]"); return Array.isArray(a) ? a.slice(-30) : []; } catch (_) { return []; } };
-function mockStart() {
-  const idx = QUIZ.map((_, i) => i); for (let i = idx.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [idx[i], idx[j]] = [idx[j], idx[i]]; }
-  const qs = idx.slice(0, Math.min(MOCK_N, idx.length));
-  state.mock = { qs, ans: qs.map(() => -1), i: 0, end: Date.now() + MOCK_SECS * 1000, done: false };
+const plusLocked = () => PLUS.enabled && !state.plan.plus;
+const readJSON = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k) || "null"); return v == null ? d : v; } catch (_) { return d; } };
+const writeJSON = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} };
+const BANKS = { college: { label: "Subject mock test", icon: "📝", get: () => QUIZ }, place: { label: "Placement practice", icon: "💼", get: () => window.CL_PLACEMENT || [] } };
+const mockHistory = () => { const a = readJSON("dd-mock-hist", []); return Array.isArray(a) ? a.slice(-30) : []; };
+const mistakeList = () => { const a = readJSON("dd-mistakes", []); return Array.isArray(a) ? a.filter(x => x && typeof x.q === "string" && Array.isArray(x.o) && x.o.length === 4) : []; };
+function addMistakes(qs) { const cur = mistakeList(), have = new Set(cur.map(x => x.q)); for (const q of qs) if (!have.has(q.q)) cur.push({ s: q.s, q: q.q, o: q.o, a: q.a, e: q.e || "" }); writeJSON("dd-mistakes", cur.slice(-100)); }
+function mockStart(bank) {
+  const all = BANKS[bank].get(), idx = all.map((_, i) => i); for (let i = idx.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [idx[i], idx[j]] = [idx[j], idx[i]]; }
+  const qs = idx.slice(0, Math.min(MOCK_N, all.length)).map(i => all[i]);
+  state.mock = { bank, qs, ans: qs.map(() => -1), i: 0, end: Date.now() + MOCK_SECS * 1000, done: false };
   render();
 }
 function mockFinish() {
-  const m = state.mock; if (!m || m.done) return; m.done = true;
-  const bySub = {}; let right = 0;
-  m.qs.forEach((qi, k) => { const q = QUIZ[qi], b = bySub[q.s] || (bySub[q.s] = { r: 0, n: 0 }); b.n++; if (m.ans[k] === q.a) { b.r++; right++; } });
-  m.result = { right, n: m.qs.length, bySub, at: Date.now(), secs: Math.min(MOCK_SECS, Math.round((Date.now() - (m.end - MOCK_SECS * 1000)) / 1000)) };
-  try { localStorage.setItem("dd-mock-hist", JSON.stringify([...mockHistory(), { at: m.result.at, right, n: m.result.n, bySub }])); } catch (_) {}
+  const m = state.mock; if (!m || m.done) return; m.done = true; clearInterval(m.tick);
+  const bySub = {}; let right = 0; const wrong = [];
+  m.qs.forEach((q, k) => { const b = bySub[q.s] || (bySub[q.s] = { r: 0, n: 0 }); b.n++; if (m.ans[k] === q.a) { b.r++; right++; } else wrong.push(q); });
+  m.result = { right, n: m.qs.length, bySub, at: Date.now(), wrong };
+  writeJSON("dd-mock-hist", [...mockHistory(), { at: m.result.at, b: m.bank, right, n: m.qs.length, bySub }]);
+  addMistakes(wrong);
   render();
 }
+// A small line chart of recent scores, drawn as SVG (no libraries).
+function trendChart(rows) {
+  if (rows.length < 2) return el("p", { class: "hint" }, "Take two tests to see your progress chart.");
+  const NS = "http://www.w3.org/2000/svg", W = 300, H = 110, pad = 14, pts = rows.map((r, i) => [pad + i * (W - 2 * pad) / (rows.length - 1), H - pad - (r.right / r.n) * (H - 2 * pad)]);
+  const mk = (t, a) => { const n = document.createElementNS(NS, t); for (const k in a) n.setAttribute(k, a[k]); return n; };
+  const svg = mk("svg", { viewBox: "0 0 " + W + " " + H, role: "img", "aria-label": "Your last " + rows.length + " test scores", class: "mock-chart" });
+  svg.append(mk("line", { x1: pad, y1: H - pad, x2: W - pad, y2: H - pad, class: "mc-axis" }), mk("polyline", { points: pts.map(p => p.join(",")).join(" "), class: "mc-line", fill: "none" }));
+  pts.forEach((p, i) => { svg.append(mk("circle", { cx: p[0], cy: p[1], r: 3.5, class: "mc-dot" })); });
+  const last = rows[rows.length - 1], avg = Math.round(rows.reduce((s, r) => s + r.right / r.n, 0) * 100 / rows.length);
+  return el("div", {}, svg, el("p", { class: "hint" }, "Last " + rows.length + " tests: average " + avg + "%, latest " + Math.round(last.right * 100 / last.n) + "%."));
+}
+function scoreBars(bySub) {
+  return Object.entries(bySub).sort((a, b) => (a[1].r / a[1].n) - (b[1].r / b[1].n)).map(([sb, v]) => { const p = Math.round(v.r * 100 / v.n), bar = el("div", { class: "mock-bar" }, el("span", {})); bar.firstChild.style.setProperty("width", p + "%"); return el("div", {}, el("div", { class: "rowbtns" }, el("span", {}, sb), el("b", {}, v.r + "/" + v.n)), bar); });
+}
 function renderMock() {
-  const has = state.plan.plus, locked = PLUS.enabled && !has, m = state.mock;
-  const back = el("button", { class: "btn", type: "button", onclick: () => { state.mock = null; showPanel("plus"); } }, "Back");
-  if (locked) return [el("h2", {}, "📝 Mock test"), el("p", { class: "hint" }, "Mock tests are part of CampusLoop Plus."), el("div", { class: "rowbtns" }, back)];
-  if (!QUIZ.length) return [el("h2", {}, "📝 Mock test"), el("p", { class: "hint" }, "No questions are available yet."), el("div", { class: "rowbtns" }, back)];
-  if (m && m.result) {
-    const r = m.result, pct = Math.round(r.right * 100 / r.n), subs = Object.entries(r.bySub).sort((a, b) => (a[1].r / a[1].n) - (b[1].r / b[1].n));
-    const hist = mockHistory(), prev = hist.length > 1 ? hist[hist.length - 2] : null;
-    return [el("h2", {}, "📝 Result: " + r.right + " / " + r.n + " (" + pct + "%)"),
-      prev ? el("p", { class: "hint" }, "Last time: " + Math.round(prev.right * 100 / prev.n) + "%. " + (pct > Math.round(prev.right * 100 / prev.n) ? "Better! 📈" : pct === Math.round(prev.right * 100 / prev.n) ? "Same." : "Keep practising.")) : null,
-      el("div", { class: "learn-card" }, el("strong", {}, "By subject (weakest first)"), ...subs.map(([sb, v]) => { const p = Math.round(v.r * 100 / v.n), bar = el("div", { class: "mock-bar" }, el("span", {})); bar.firstChild.style.setProperty("width", p + "%"); return el("div", {}, el("div", { class: "rowbtns" }, el("span", {}, sb), el("b", {}, v.r + "/" + v.n)), bar); })),
-      subs[0] && subs[0][1].r < subs[0][1].n ? el("p", { class: "hint" }, "Focus next on " + subs[0][0] + ".") : el("p", { class: "hint" }, "Great, no weak subject this time."),
-      el("div", { class: "learn-card" }, el("strong", {}, "Review your mistakes"), ...m.qs.map((qi, k) => ({ q: QUIZ[qi], a: m.ans[k] })).filter(x => x.a !== x.q.a).map(x => el("p", { class: "hint" }, "• " + x.q.q + " → " + x.q.o[x.q.a] + (x.q.e ? ". " + x.q.e : "")))),
-      el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", onclick: mockStart }, "Try another"), back)].filter(Boolean);
-  }
+  const m = state.mock, back = el("button", { class: "btn", type: "button", onclick: () => { if (state.mock) clearInterval(state.mock.tick); state.mock = null; showPanel("plus"); } }, "Back");
+  if (plusLocked()) return [el("h2", {}, "📝 Mock tests"), el("p", { class: "hint" }, "Mock tests are part of CampusLoop Plus."), el("div", { class: "rowbtns" }, back)];
   if (!m) {
     const hist = mockHistory();
-    return [el("h2", {}, "📝 Mock test"), el("p", { class: "hint" }, Math.min(MOCK_N, QUIZ.length) + " questions, " + (MOCK_SECS / 60) + " minutes. You get a subject-wise report at the end."),
-      hist.length ? el("div", { class: "learn-card" }, el("strong", {}, "Your last tests"), ...hist.slice(-5).reverse().map(x => el("p", { class: "hint" }, new Date(x.at).toLocaleDateString() + ": " + x.right + "/" + x.n + " (" + Math.round(x.right * 100 / x.n) + "%)"))) : null,
-      el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", onclick: mockStart }, "Start test"), back)].filter(Boolean);
+    return [el("h2", {}, "📝 Mock tests"), el("p", { class: "hint" }, MOCK_N + " questions, " + (MOCK_SECS / 60) + " minutes, then a subject-wise report. Questions you miss go to your Mistake notebook."),
+      el("div", { class: "rowbtns" }, ...Object.entries(BANKS).filter(([, b]) => b.get().length).map(([k, b]) => el("button", { class: "btn primary", type: "button", onclick: () => mockStart(k) }, b.icon + " " + b.label))),
+      el("div", { class: "learn-card plus-list" }, el("strong", {}, "Your progress"), trendChart(hist.slice(-10))),
+      hist.length ? el("div", { class: "learn-card plus-list" }, el("strong", {}, "Recent tests"), ...hist.slice(-5).reverse().map(x => el("p", { class: "hint" }, new Date(x.at).toLocaleDateString() + " · " + (x.b === "place" ? "Placement" : "Subjects") + ": " + x.right + "/" + x.n + " (" + Math.round(x.right * 100 / x.n) + "%)"))) : null,
+      el("div", { class: "rowbtns" }, back)].filter(Boolean);
   }
-  const q = QUIZ[m.qs[m.i]], left = Math.max(0, Math.ceil((m.end - Date.now()) / 1000));
-  if (left === 0) { setTimeout(mockFinish, 0); }
-  const timer = el("span", { class: "hint", role: "timer" }, Math.floor(left / 60) + ":" + String(left % 60).padStart(2, "0"));
-  if (!m.tick) m.tick = setInterval(() => { if (state.mode !== "mock" || !state.mock || state.mock.done) { clearInterval(m.tick); return; } const l = Math.max(0, Math.ceil((m.end - Date.now()) / 1000)); const t = document.querySelector("[role=timer]"); if (t) t.textContent = Math.floor(l / 60) + ":" + String(l % 60).padStart(2, "0"); if (l === 0) { clearInterval(m.tick); mockFinish(); } }, 1000);
-  return [el("div", { class: "rowbtns" }, el("b", {}, "Question " + (m.i + 1) + " / " + m.qs.length), timer),
+  if (m.result) {
+    const r = m.result, pct = Math.round(r.right * 100 / r.n), same = mockHistory().filter(x => x.b === m.bank), prev = same.length > 1 ? same[same.length - 2] : null, pp = prev ? Math.round(prev.right * 100 / prev.n) : null;
+    const weak = Object.entries(r.bySub).sort((a, b) => (a[1].r / a[1].n) - (b[1].r / b[1].n))[0];
+    return [pct >= 70 ? el("div", { class: "wow", role: "status" }, el("span", { class: "wow-conf", "aria-hidden": "true" }, "🎉 ✨ 🎊 ⭐ 🎉"), el("strong", {}, pct >= 90 ? "Wow, outstanding!" : pct >= 80 ? "Wow, amazing!" : "Great job!"), el("span", {}, r.right + " out of " + r.n + " correct")) : null,
+      el("h2", {}, "📝 Result: " + r.right + " / " + r.n + " (" + pct + "%)"),
+      prev ? el("p", { class: "hint" }, "Last time: " + pp + "%. " + (pct > pp ? "Better! 📈" : pct === pp ? "Same." : "Keep practising.")) : null,
+      el("div", { class: "learn-card plus-list" }, el("strong", {}, "By topic (weakest first)"), ...scoreBars(r.bySub)),
+      weak && weak[1].r < weak[1].n ? el("p", { class: "hint" }, "Focus next on " + weak[0] + ".") : el("p", { class: "hint" }, "Great, no weak topic this time."),
+      el("div", { class: "learn-card plus-list" }, el("strong", {}, "Review your mistakes (" + r.wrong.length + ")"), ...r.wrong.map(q => el("p", { class: "hint" }, "• " + q.q + " → " + q.o[q.a] + (q.e ? ". " + q.e : "")))),
+      el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", onclick: () => mockStart(m.bank) }, "Try another"), r.wrong.length ? el("button", { class: "btn", type: "button", onclick: () => { state.mock = null; state.mist = null; showPanel("mistakes"); } }, "📓 Practise mistakes") : null, back)].filter(Boolean);
+  }
+  const q = m.qs[m.i], left = Math.max(0, Math.ceil((m.end - Date.now()) / 1000)), fmt = (l) => Math.floor(l / 60) + ":" + String(l % 60).padStart(2, "0");
+  if (left === 0) setTimeout(mockFinish, 0);
+  if (!m.tick) m.tick = setInterval(() => { if (state.mode !== "mock" || state.mock !== m || m.done) { clearInterval(m.tick); return; } const l = Math.max(0, Math.ceil((m.end - Date.now()) / 1000)), t = document.querySelector("[role=timer]"); if (t) t.textContent = fmt(l); if (l === 0) mockFinish(); }, 1000);
+  return [el("div", { class: "rowbtns" }, el("b", {}, "Question " + (m.i + 1) + " / " + m.qs.length), el("span", { class: "hint", role: "timer" }, fmt(left))),
     el("p", {}, q.q),
     ...q.o.map((o, k) => el("button", { class: "btn" + (m.ans[m.i] === k ? " primary" : ""), type: "button", onclick: () => { m.ans[m.i] = k; render(); } }, o)),
     el("div", { class: "rowbtns" }, m.i > 0 ? el("button", { class: "btn sm", type: "button", onclick: () => { m.i--; render(); } }, "← Previous") : null,
       m.i < m.qs.length - 1 ? el("button", { class: "btn sm", type: "button", onclick: () => { m.i++; render(); } }, "Next →") : el("button", { class: "btn sm primary", type: "button", onclick: () => { const un = m.ans.filter(a => a < 0).length; if (!un || confirm(un + " unanswered. Finish now?")) mockFinish(); } }, "Finish"))].filter(Boolean);
+}
+// Smart coach: reads your tests, mistakes and exam date, then tells you the single best thing to do next.
+function coachCard() {
+  const hist = mockHistory(), rec = hist.slice(-5), mist = mistakeList().length, plan = readJSON("dd-exam-plan", null);
+  const avg = rec.length ? rec.reduce((a, r) => a + r.right / r.n, 0) * 100 / rec.length : null;
+  const ready = avg == null ? null : Math.round(avg * 0.7 + Math.max(0, 100 - mist * 5) * 0.3);
+  const topics = {}; for (const r of rec) for (const [k, v] of Object.entries(r.bySub || {})) { const t = topics[k] || (topics[k] = { r: 0, n: 0 }); t.r += v.r; t.n += v.n; }
+  const weak = Object.entries(topics).filter(([, v]) => v.n >= 3).sort((a, b) => (a[1].r / a[1].n) - (b[1].r / b[1].n))[0];
+  const daysLeft = plan && plan.date ? Math.ceil((new Date(plan.date + "T00:00:00").getTime() - new Date().setHours(0, 0, 0, 0)) / 864e5) : null;
+  const lastAt = hist.length ? hist[hist.length - 1].at : 0, idleDays = lastAt ? Math.floor((Date.now() - lastAt) / 864e5) : 99;
+  const tips = [];
+  if (daysLeft != null && daysLeft >= 0 && daysLeft <= 7) tips.push(["⏳ " + (plan.name || "Your exam") + " is " + (daysLeft === 0 ? "today" : "in " + daysLeft + " day" + (daysLeft === 1 ? "" : "s")) + ". Open your plan.", "planner"]);
+  if (mist > 0) tips.push(["📓 Clear " + Math.min(mist, 5) + " of your " + mist + " saved mistakes (3 minutes).", "mistakes"]);
+  if (weak && weak[1].r / weak[1].n < 0.7) tips.push(["🎯 " + weak[0] + " is your weakest topic (" + Math.round(weak[1].r * 100 / weak[1].n) + "%). Take a mock test to improve it.", "mock"]);
+  if (idleDays >= 2) tips.push([hist.length ? "📝 It has been " + idleDays + " days since your last test. A quick one keeps the streak." : "📝 Take your first mock test to start your progress chart.", "mock"]);
+  if (!tips.length) tips.push(["💼 You are on track. Try a placement practice round.", "mock"]);
+  const C = 2 * Math.PI * 34, NS = "http://www.w3.org/2000/svg", mk = (t, a) => { const n = document.createElementNS(NS, t); for (const k in a) n.setAttribute(k, a[k]); return n; };
+  const ring = mk("svg", { viewBox: "0 0 80 80", class: "coach-ring", role: "img", "aria-label": ready == null ? "No readiness score yet" : "Readiness " + ready + " percent" });
+  ring.append(mk("circle", { cx: 40, cy: 40, r: 34, class: "cr-bg", fill: "none" }), mk("circle", { cx: 40, cy: 40, r: 34, class: "cr-fg", fill: "none", "stroke-dasharray": (ready == null ? 0 : C * ready / 100) + " " + C, transform: "rotate(-90 40 40)" }));
+  const t = mk("text", { x: 40, y: 46, "text-anchor": "middle", class: "cr-num" }); t.textContent = ready == null ? "–" : ready + "%"; ring.append(t);
+  const level = Math.min(5, Math.floor(hist.length / 3) + 1), names = ["Rookie", "Learner", "Achiever", "Scholar", "Topper"];
+  return el("div", { class: "coach" },
+    el("div", { class: "coach-top" }, ring, el("div", {}, el("strong", {}, "Your readiness"), el("p", { class: "coach-sub" }, ready == null ? "Take a mock test to see it." : ready >= 80 ? "Wow, amazing! You are exam ready." : ready >= 60 ? "Good progress. Keep going." : "Let's build it up together."), el("span", { class: "coach-level" }, "Level " + level + " · " + names[level - 1]))),
+    el("div", { class: "coach-next" }, el("strong", {}, "Best next step"), ...tips.slice(0, 3).map(([text, mode], i) => el("button", { class: "coach-tip" + (i === 0 ? " first" : ""), type: "button", onclick: () => { state.mock = null; state.mist = null; showPanel(mode); } }, text))));
+}
+// Mistake notebook: questions you missed come back until you answer them right.
+function renderMistakes() {
+  const back = el("button", { class: "btn", type: "button", onclick: () => { state.mist = null; showPanel("plus"); } }, "Back"), list = mistakeList();
+  if (plusLocked()) return [el("h2", {}, "📓 Mistake notebook"), el("p", { class: "hint" }, "The mistake notebook is part of CampusLoop Plus."), el("div", { class: "rowbtns" }, back)];
+  if (!list.length) return [el("h2", {}, "📓 Mistake notebook"), el("p", { class: "hint" }, "Nothing here yet. Questions you get wrong in a mock test are saved here so you can practise them again."), el("div", { class: "rowbtns" }, back)];
+  const st = state.mist || (state.mist = { i: Math.floor(Math.random() * list.length), pick: -1 });
+  const q = list[st.i % list.length], answered = st.pick >= 0;
+  const next = () => { st.i = Math.floor(Math.random() * Math.max(1, mistakeList().length)); st.pick = -1; render(); };
+  return [el("h2", {}, "📓 Mistake notebook (" + list.length + ")"), el("p", { class: "hint" }, q.s + ". Answer right to remove it from the notebook."), el("p", {}, q.q),
+    ...q.o.map((o, k) => el("button", { class: "btn" + (answered && k === q.a ? " primary" : ""), type: "button", disabled: answered ? "" : null, onclick: () => {
+      st.pick = k; if (k === q.a) writeJSON("dd-mistakes", mistakeList().filter(x => x.q !== q.q)); render(); } }, (answered && k === st.pick && k !== q.a ? "✖ " : answered && k === q.a ? "✔ " : "") + o)),
+    answered ? el("p", { class: "hint" }, (st.pick === q.a ? "Correct! Removed from your notebook. " : "Not quite. ") + (q.e || "")) : null,
+    el("div", { class: "rowbtns" }, answered ? el("button", { class: "btn primary", type: "button", onclick: next }, "Next") : null, el("button", { class: "btn sm", type: "button", onclick: () => { if (confirm("Clear the whole notebook?")) { writeJSON("dd-mistakes", []); state.mist = null; render(); } } }, "Clear all"), back)].filter(Boolean);
+}
+// Exam planner: turns an exam date and subject list into a day-by-day plan with spaced revision (1, 3 and 7 days later).
+function buildPlan(subjects, examDate) {
+  const days = Math.min(30, Math.max(0, Math.ceil((examDate - new Date().setHours(0, 0, 0, 0)) / 864e5))), out = [], studied = [];
+  for (let d = 0; d < days; d++) {
+    const left = days - d, items = [];
+    if (left <= 2) items.push(left === 1 ? "🧪 Light revision + sleep early" : "📝 Full mock test + fix mistakes");
+    else {
+      const s = subjects[d % subjects.length]; items.push("📖 Study: " + s); studied[d] = s;
+      for (const gap of [1, 3, 7]) if (studied[d - gap] && d - gap >= 0) items.push("🔁 Revise: " + studied[d - gap]);
+    }
+    out.push({ date: new Date(new Date().setHours(0, 0, 0, 0) + d * 864e5), items });
+  }
+  return out;
+}
+function renderPlanner() {
+  const back = el("button", { class: "btn", type: "button", onclick: () => showPanel("plus") }, "Back");
+  if (plusLocked()) return [el("h2", {}, "🗓️ Exam planner"), el("p", { class: "hint" }, "The exam planner is part of CampusLoop Plus."), el("div", { class: "rowbtns" }, back)];
+  const saved = readJSON("dd-exam-plan", null) || {}, name = el("input", { maxlength: "40", placeholder: "Exam name, e.g. Semester 3", value: saved.name || "", "aria-label": "Exam name" }),
+    date = el("input", { type: "date", value: saved.date || "", "aria-label": "Exam date" }), subs = el("textarea", { maxlength: "300", placeholder: "Subjects, separated by commas", "aria-label": "Subjects" }, saved.subjects || ""),
+    msg = el("p", { class: "hint", role: "status" }, "");
+  const out = el("div", {});
+  const draw = () => {
+    const p = readJSON("dd-exam-plan", null); if (!p || !p.date) { out.replaceChildren(); return; }
+    const subjects = String(p.subjects || "").split(",").map(x => x.trim().slice(0, 30)).filter(Boolean).slice(0, 12), t = new Date(p.date + "T00:00:00").getTime(), left = Math.ceil((t - new Date().setHours(0, 0, 0, 0)) / 864e5);
+    if (!subjects.length) { out.replaceChildren(el("p", { class: "hint" }, "Add at least one subject.")); return; }
+    if (left < 0) { out.replaceChildren(el("p", { class: "hint" }, "That date has passed. Pick the next exam date.")); return; }
+    const plan = buildPlan(subjects, t);
+    out.replaceChildren(el("div", { class: "learn-card plus-list" }, el("strong", {}, "⏳ " + (p.name || "Your exam") + ": " + (left === 0 ? "today" : left + " day" + (left === 1 ? "" : "s") + " to go")),
+      ...plan.map((d, i) => el("p", { class: i === 0 ? "plan-today" : "hint" }, (i === 0 ? "Today · " : d.date.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" }) + " · ") + d.items.join("  ·  "))),
+      left > 30 ? el("p", { class: "hint" }, "Showing the next 30 days.") : null));
+  };
+  draw();
+  return [el("h2", {}, "🗓️ Exam planner"), el("p", { class: "hint" }, "Enter your exam date and subjects. You get a daily plan with revision after 1, 3 and 7 days, and a mock test two days before."),
+    name, date, subs,
+    el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", onclick: () => {
+      if (!date.value) { msg.textContent = "Pick the exam date."; return; } if (!subs.value.trim()) { msg.textContent = "Write your subjects."; return; }
+      writeJSON("dd-exam-plan", { name: name.value.trim().slice(0, 40), date: date.value, subjects: subs.value.trim().slice(0, 300) }); msg.textContent = "✅ Plan saved on this phone."; draw();
+    } }, "Make my plan"), back), msg, out].filter(Boolean);
 }
 // "Verify your college email": a sign-in link is sent to the email; tapping it proves the student owns that address.
 function verifyBlock() {
@@ -6350,6 +6456,8 @@ function render() {
       state.mode === "battle" ? renderBattle() :
       state.mode === "plus" ? renderPlus() :
       state.mode === "mock" ? renderMock() :
+      state.mode === "mistakes" ? renderMistakes() :
+      state.mode === "planner" ? renderPlanner() :
       state.mode === "college" ? renderCollege() :
       state.mode === "about" ? renderAbout() :
       state.mode === "lab" ? renderLab() :
