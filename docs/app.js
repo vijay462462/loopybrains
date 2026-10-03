@@ -2777,29 +2777,40 @@ function renderPapers() {
     el("div", { class: "rowbtns" }, back)].filter(Boolean);
 }
 // AI study helper (Plus): chat with Claude through our own server function; the secret key never reaches the phone.
+const AI_MODES = { explain: ["💡 Explain", "Explain simply with an example"], solve: ["🧮 Solve", "Solve step by step"], exam: ["📝 Exam answer", "Write a model exam answer"], quiz: ["🎯 Quiz me", "Ask me 5 practice questions"],
+  summary: ["📌 Revise", "Give a quick revision summary"], code: ["💻 Code", "Help with this code"], interview: ["🤝 Interview", "Run a mock interview"], plan: ["🗓 Plan", "Make a study plan"] };
 function renderAI() {
   const back = el("button", { class: "btn", type: "button", onclick: () => showPanel("plus") }, "Back");
   if (plusLocked()) return [el("h2", {}, "🤖 AI study helper"), el("p", { class: "hint" }, "The AI study helper is part of CampusLoop Plus."), el("div", { class: "rowbtns" }, back)];
   if (!PLUS.functionsUrl) return [el("h2", {}, "🤖 AI study helper"), el("p", { class: "hint" }, "The AI helper is being set up and will switch on soon."), el("div", { class: "rowbtns" }, back)];
-  const chat = state.ai || (state.ai = { msgs: [], busy: false, note: "" });
+  const chat = state.ai || (state.ai = { msgs: [], busy: false, note: "", mode: "explain", subject: "", lang: "en", level: "normal", draft: "" });
   const box = el("textarea", { maxlength: "1000", rows: "3", placeholder: "Ask a study doubt, e.g. Explain Dijkstra with an example", "aria-label": "Your question" });
-  const send = async () => {
-    const text = box.value.trim(); if (!text || chat.busy) return;
-    chat.msgs.push({ role: "user", content: text }); chat.busy = true; chat.note = ""; render();
+  box.value = chat.draft || ""; box.oninput = () => { chat.draft = box.value; };
+  const send = async (override) => {
+    const text = (typeof override === "string" ? override : box.value).trim(); if (!text || chat.busy) return;
+    chat.msgs.push({ role: "user", content: text }); chat.busy = true; chat.note = ""; chat.draft = ""; render();
     try {
       const tok = store && store.idToken ? await store.idToken() : ""; if (!tok) throw new Error("Please connect to the internet and sign in first.");
-      const r = await fetch(PLUS.functionsUrl.replace(/\/$/, "") + "/askAI", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + tok }, body: JSON.stringify({ messages: chat.msgs.slice(-8) }) });
+      const r = await fetch(PLUS.functionsUrl.replace(/\/$/, "") + "/askAI", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + tok }, body: JSON.stringify({ messages: chat.msgs.slice(-8), mode: chat.mode, subject: chat.subject, lang: chat.lang, level: chat.level }) });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(d.error || "The AI helper is busy. Try again.");
       chat.msgs.push({ role: "assistant", content: String(d.reply || "") }); chat.note = typeof d.left === "number" ? d.left + " questions left today." : "";
-    } catch (e) { chat.msgs.pop(); chat.note = (e && e.message) || "Could not reach the AI helper."; box.value = text; }
+    } catch (e) { chat.msgs.pop(); chat.note = (e && e.message) || "Could not reach the AI helper."; chat.draft = text; }
     chat.busy = false; render();
   };
+  const pick = (id, label, opts, key) => { const s = el("select", { "aria-label": label }, ...opts.map(([v, t]) => el("option", { value: v }, t))); s.value = chat[key]; s.onchange = () => { chat[key] = s.value; }; return s; };
+  const subjects = [["", "Any subject"], ...((window.DOUBT_DESK_CONFIG && window.DOUBT_DESK_CONFIG.subjects) || []).map(x => [x, x])];
+  const last = chat.msgs.length ? chat.msgs[chat.msgs.length - 1] : null;
+  const follow = last && last.role === "assistant" ? ["Explain more simply", "Give another example", "Quiz me on this", "Summarise in 5 points"] : [];
   return [el("h2", {}, "🤖 AI study helper"), el("p", { class: "hint" }, "Ask academic doubts only. Answers can contain mistakes, so check important facts with your book or teacher."),
-    ...chat.msgs.map(m => el("div", { class: "ai-msg " + (m.role === "user" ? "me" : "bot") }, m.content)),
+    el("div", { class: "rowbtns", role: "group", "aria-label": "Mode" }, ...Object.entries(AI_MODES).map(([k, v]) => el("button", { class: "btn sm", type: "button", "aria-pressed": chat.mode === k ? "true" : "false", onclick: () => { chat.mode = k; if (!box.value.trim()) chat.draft = v[1] + ": "; render(); } }, v[0]))),
+    el("div", { class: "rowbtns" }, pick("s", "Subject", subjects, "subject"), pick("l", "Language", [["en", "English"], ["te", "తెలుగు + English"], ["hi", "Hinglish"]], "lang"), pick("v", "Level", [["basic", "Beginner"], ["normal", "Normal"], ["adv", "Advanced"]], "level")),
+    ...chat.msgs.map(m => el("div", { class: "ai-msg " + (m.role === "user" ? "me" : "bot") }, m.content,
+      m.role === "assistant" ? el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: (e) => { try { navigator.clipboard.writeText(m.content); e.target.textContent = "✔ Copied"; } catch (_) {} } }, "📋 Copy")) : null)),
     chat.busy ? el("p", { class: "hint", role: "status" }, "Thinking…") : null,
+    follow.length ? el("div", { class: "rowbtns" }, ...follow.map(f => el("button", { class: "btn sm", type: "button", onclick: () => send(f) }, f))) : null,
     box, chat.note ? el("p", { class: "hint", role: "status" }, chat.note) : null,
-    el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", disabled: chat.busy ? "" : null, onclick: send }, "Ask"), chat.msgs.length ? el("button", { class: "btn sm", type: "button", onclick: () => { state.ai = null; render(); } }, "New chat") : null, back)].filter(Boolean);
+    el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", disabled: chat.busy ? "" : null, onclick: () => send() }, "Ask"), chat.msgs.length ? el("button", { class: "btn sm", type: "button", onclick: () => { state.ai = null; render(); } }, "New chat") : null, back)].filter(Boolean);
 }
 // Mistake notebook: questions you missed come back until you answer them right.
 function renderMistakes() {

@@ -85,6 +85,18 @@ const AI_SYSTEM = "You are CampusLoop's study helper for Indian college students
   "exam and placement preparation, coding doubts, study plans, and interview practice. If asked about anything else, politely say you can only help with studies. " +
   "Be accurate and concise (under 250 words unless a derivation needs more). Show steps for calculations. If you are not sure, say so instead of guessing. " +
   "Never help with cheating on an exam in progress, and never write abusive or adult content. Use plain text, no markdown tables.";
+const AI_MODES = {
+  explain: "Mode: explain the concept simply, build up from basics, and end with one worked example.",
+  solve: "Mode: solve the problem step by step, state formulas used, and give the final answer clearly.",
+  exam: "Mode: write a model exam answer with headings, key points and a diagram description if useful, sized for the marks implied.",
+  quiz: "Mode: ask exactly 5 practice questions on the topic (mix of easy and hard), WITHOUT answers, then wait for the student's replies and grade them.",
+  summary: "Mode: give a compact revision summary: key definitions, formulas, and 5 likely exam points.",
+  code: "Mode: help with the code: find the bug or explain it, show corrected code in plain text, and state time complexity if relevant.",
+  interview: "Mode: act as an interviewer. Ask one question at a time, wait for the answer, then give brief feedback and the next question.",
+  plan: "Mode: make a realistic day-by-day study plan with topics, practice and revision slots.",
+};
+const AI_LANGS = { en: "", te: "Answer in simple Telugu mixed with English technical terms.", hi: "Answer in Hinglish (Hindi written in English letters) with English technical terms." };
+const AI_LEVELS = { basic: "Assume a beginner; avoid jargon.", normal: "", adv: "Assume a strong student; be rigorous and include derivations and edge cases." };
 exports.askAI = onRequest({ secrets: [ANTHROPIC_KEY], cors: true, region: "asia-south1", timeoutSeconds: 60, memory: "256MiB", maxInstances: 5 }, async (req, res) => {
   try {
     if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
@@ -107,10 +119,12 @@ exports.askAI = onRequest({ secrets: [ANTHROPIC_KEY], cors: true, region: "asia-
       return n + 1;
     });
     if (used < 0) return res.status(429).json({ error: "You have used today's " + AI_DAILY_LIMIT + " questions. Come back tomorrow." });
+    const b = req.body || {}, subj = typeof b.subject === "string" ? b.subject.replace(/[^\w &\-+./]/g, "").slice(0, 40) : "";
+    const system = [AI_SYSTEM, AI_MODES[b.mode] || "", subj ? "Subject focus: " + subj + "." : "", AI_LANGS[b.lang] || "", AI_LEVELS[b.level] || ""].filter(Boolean).join(" ");
     const r = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "content-type": "application/json", "x-api-key": ANTHROPIC_KEY.value(), "anthropic-version": "2023-06-01" },
-      body: JSON.stringify({ model: AI_MODEL, max_tokens: 700, system: AI_SYSTEM, messages }),
+      body: JSON.stringify({ model: AI_MODEL, max_tokens: 1000, system: system, messages }),
     });
     if (!r.ok) { console.error("askAI upstream", r.status, (await r.text()).slice(0, 300)); return res.status(502).json({ error: "The AI helper is busy. Please try again in a minute." }); }
     const data = await r.json();
