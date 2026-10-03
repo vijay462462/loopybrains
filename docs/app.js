@@ -48,7 +48,7 @@ function cleanTenant(raw, slug) {
     slug, room, name, title: t1(raw.title, 40) || BRAND, tagline: t1(raw.tagline, 80), captions: tList(raw.captions, 90, 10),
     campuses: tList(raw.campuses, 24, 12), clubs: tList(raw.clubs, 30, 30), subjects: tList(raw.subjects, 30, 80), ideaCategories: tList(raw.ideaCategories, 30, 20),
     exams: (Array.isArray(raw.exams) ? raw.exams : []).map(e => ({ name: t1(e && e.name, 40), date: t1(e && e.date, 10) })).filter(e => e.name && /^\d{4}-\d{2}-\d{2}$/.test(e.date)).slice(0, 12),
-    departments: dep, accent: /^#[0-9a-fA-F]{6}$/.test(raw.accent || "") ? raw.accent : "",
+    domains: tList(raw.domains, 60, 8).map(d => d.toLowerCase().replace(/^@/, '')).filter(d => /^[a-z0-9.-]+\.[a-z]{2,}$/.test(d)), requireVerified: raw.requireVerified === true, departments: dep, accent: /^#[0-9a-fA-F]{6}$/.test(raw.accent || "") ? raw.accent : "",
     features: { bot: f.bot === true, alumni: f.alumni === true, fun: f.fun !== false, jobs: f.jobs !== false, market: f.market !== false, challenges: f.challenges !== false },
   };
 }
@@ -95,6 +95,8 @@ async function loadTenant() {
 const TENANT = await loadTenant();
 const ROOM_PATH = TENANT ? "rooms/" + TENANT.room + "/" : IS_RGUKT ? DEFAULT_ROOM_PATH : "lobby/";
 const COLLEGE = TENANT ? TENANT.name : IS_RGUKT ? "RGUKT" : "your college";
+// Email domains a student of this college signs up with. Used to check the verified email; empty = any email is accepted.
+const COLLEGE_DOMAINS = TENANT ? TENANT.domains : IS_RGUKT ? ["rguktn.ac.in", "rguktong.ac.in", "rguktrkv.ac.in", "rguktsklm.ac.in"] : [];
 const featureOn = (k) => !TENANT || TENANT.features[k] !== false;
 const CFG = NO_COLLEGE ? {
   ...BASE_CFG, title: BRAND, tagline: "", captions: ["Ask boldly. Answer together.", "Doubt today. Discover tomorrow.", "Every doubt you ask is a concept you own tomorrow."],
@@ -408,18 +410,44 @@ async function firebaseStore(conf, prefix = "") {
   // Anonymous sign-in: no account, no password. It gives every browser a verified session so the
   // security rules can refuse requests that do not come from this app. If it fails (for example
   // the provider is not enabled yet) the app keeps working while the rules still allow it.
-  let signedIn = false, authP = null, authError = "";
+  let signedIn = false, authP = null, authError = "", auth = null;
   try {
     // initializeAuth with an in-memory fallback also works in private/incognito tabs.
-    const auth = (() => { try { return au.initializeAuth(app, { persistence: [au.indexedDBLocalPersistence, au.browserLocalPersistence, au.inMemoryPersistence] }); } catch (_) { return au.getAuth(app); } })();
+    auth = (() => { try { return au.initializeAuth(app, { persistence: [au.indexedDBLocalPersistence, au.browserLocalPersistence, au.inMemoryPersistence] }); } catch (_) { return au.getAuth(app); } })();
     if (auth.authStateReady) await auth.authStateReady();   // reuse the saved anonymous user instead of creating a new one
     if (!auth.currentUser) { authP = au.signInAnonymously(auth); await Promise.race([authP, new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 15000))]); }
     signedIn = !!auth.currentUser;
   } catch (e) { authError = (e && (e.code || e.message)) || "unknown"; console.warn("Anonymous sign-in unavailable:", authError); }
   // On a very slow connection sign-in can finish late. Reload once so the board loads with it.
   if (!signedIn && authP) authP.then(() => { try { if (!sessionStorage.getItem("dd-auth-reload")) { sessionStorage.setItem("dd-auth-reload", "1"); location.reload(); } } catch (_) {} }).catch(() => {});
+  // A student tapped the sign-in link from their email: attach the verified email to this same session (keeps the same user).
+  let linkResult = "";
+  try {
+    if (auth && au.isSignInWithEmailLink(auth, location.href)) {
+      let email = ""; try { email = localStorage.getItem("dd-email-pending") || ""; } catch (_) {}
+      if (!email) email = (prompt("Confirm your email address to finish verifying:") || "").trim();
+      if (email) {
+        try {
+          const cred = au.EmailAuthProvider.credentialWithLink(email, location.href);
+          if (auth.currentUser && auth.currentUser.isAnonymous) await au.linkWithCredential(auth.currentUser, cred);
+          else await au.signInWithEmailLink(auth, email, location.href);
+        } catch (e) {
+          if (e && (e.code === "auth/credential-already-in-use" || e.code === "auth/email-already-in-use")) await au.signInWithEmailLink(auth, email, location.href);
+          else throw e;
+        }
+        await auth.currentUser.getIdToken(true);   // refresh so the rules see the verified email
+        linkResult = "ok"; try { localStorage.removeItem("dd-email-pending"); } catch (_) {}
+      }
+      try { const u = new URL(location.href); for (const k of ["apiKey", "oobCode", "mode", "lang", "continueUrl"]) u.searchParams.delete(k); history.replaceState(null, "", u.pathname + u.search + u.hash); } catch (_) {}
+    }
+  } catch (e) { linkResult = "error:" + ((e && e.code) || "unknown"); }
   return {
-    uid: deviceId(), demo: false, authed: signedIn, authError,
+    uid: deviceId(), demo: false, authed: signedIn, authError, linkResult,
+    sendEmailLink: async (email) => {
+      await au.sendSignInLinkToEmail(auth, email, { url: location.origin + location.pathname + (SEL ? "?c=" + encodeURIComponent(SEL) : ""), handleCodeInApp: true });
+      try { localStorage.setItem("dd-email-pending", email); } catch (_) {}
+    },
+    account: () => { const u = auth && auth.currentUser; return { email: (u && u.email) || "", verified: !!(u && u.email && u.emailVerified) }; },
     subscribe: (coll, cb, onErr, since) => fs.onSnapshot(since ? fs.query(fs.collection(db, prefix + coll), fs.where("createdAt", ">", since)) : fs.collection(db, prefix + coll), snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))), onErr),
     newId: (coll) => fs.doc(fs.collection(db, prefix + coll)).id,
     set: (coll, id, data) => fs.setDoc(fs.doc(db, prefix + coll, id), cleanDoc(data)),
@@ -563,6 +591,7 @@ function myHiddenCount() {
   return n;
 }
 function postingBlocked() {
+  if (TENANT && TENANT.requireVerified && !myVerified()) return "🔒 This college board needs a verified college email to post. Open Profile and tap “Verify your college email”.";
   if (isBlockedDevice()) return "🚫 This device has been blocked from posting for breaking the class rules. Contact the admin to appeal.";
   let st = {}; try { st = JSON.parse(localStorage.getItem("dd-restrict") || "{}"); } catch (_) {}
   const n = myHiddenCount();
@@ -2285,7 +2314,7 @@ function renderLeaders() {
         avatarEl(p.id === meId ? getAvatar() : avatarFor(p.name || ""), "av av-lg"),
         el("span", { class: "who" },
           el("span", { class: "board-name-row" },
-            el("strong", {}, (p.id === meId ? p.name + " (you)" : p.name) + " " + BADGES.filter(b => b[3](p)).map(b => b[0]).join(""))),
+            el("strong", {}, (p.id === meId ? p.name + " (you)" : p.name) + (isVerifiedId(p.id) ? " ✔" : "") + " " + BADGES.filter(b => b[3](p)).map(b => b[0]).join(""))),
           el("small", {}, "Lv " + p.level.n + " " + titleOf(p.points) + " · " + plural(p.answers, "answer") + " · " + p.helpful + " helpful · " + p.quizRight + " quiz" + (p.streak > 1 ? " · 🔥" + p.streak + "-day streak" : ""))),
         el("span", { class: "pts" }, p.points + " pts"))))
     : el("p", { class: "hint" }, "No points yet. Answer a doubt or today's quiz to get on the board.");
@@ -2329,6 +2358,26 @@ function renderHeatmap(p) {
   return el("div", { class: "heatmap" }, ...cells);
 }
 
+// "Verify your college email": a sign-in link is sent to the email; tapping it proves the student owns that address.
+function verifyBlock() {
+  const acct = myAccount(), ok = myVerified(), doms = COLLEGE_DOMAINS;
+  if (ok) return el("div", { class: "learn-card" }, el("strong", {}, "✅ Verified student"), el("p", { class: "hint" }, acct.email.replace(/^(.).*(@.*)$/, "$1•••$2") + " · other students see a ✔ next to your name."));
+  const email = el("input", { type: "email", name: "vemail", maxlength: "100", placeholder: doms.length ? "you@" + doms[0] : "your college email", "aria-label": "College email", autocomplete: "email" });
+  const msg = el("p", { class: "hint", role: "status" }, state.mailMsg || (acct.verified && !ok ? "That email is not from " + COLLEGE + ". Use your college email." : ""));
+  const send = el("button", { type: "button", class: "btn sm primary", onclick: async () => {
+    const e = email.value.trim().toLowerCase();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) { msg.textContent = "Type a valid email address."; return; }
+    if (!emailDomainOk(e)) { msg.textContent = "Please use your " + COLLEGE + " email (ending " + doms.map(d => "@" + d).join(", ") + ")."; return; }
+    if (!store || !store.sendEmailLink) { msg.textContent = "Email verification needs the live board. Connect to the internet and try again."; return; }
+    send.disabled = true; msg.textContent = "Sending…";
+    try { await store.sendEmailLink(e); state.mailMsg = "📧 Link sent to " + e + ". Open it on this phone to finish. Check spam too."; msg.textContent = state.mailMsg; }
+    catch (err) { msg.textContent = err && err.code === "auth/operation-not-allowed" ? "Email sign-in is not switched on yet for this app. Please tell the admin." : err && err.code === "auth/unauthorized-continue-uri" ? "This website address is not allowed for email links yet. Please tell the admin." : "Could not send the email. Check your internet and try again."; }
+    send.disabled = false;
+  } }, "Send verification link");
+  return el("div", { class: "learn-card" }, el("strong", {}, "✔ Verify your college email"),
+    el("p", { class: "hint" }, "Optional. Verified students get a ✔ and can post on boards that need it." + (doms.length ? " Use an email ending " + doms.map(d => "@" + d).join(" or ") + "." : "")),
+    email, el("div", { class: "rowbtns" }, send), msg);
+}
 function renderMe() {
   const p = (store && allStats().get(store.uid)) || { name: getName(), points: 0, answers: 0, helpful: 0, ideas: 0, quizRight: 0, streak: 0, reacts: 0, likes: 0, asked: 0, quizDone: 0, level: levelOf(0) };
   const lv = p.level, pct = Math.round((p.points - lv.from) * 100 / (lv.to - lv.from));
@@ -2362,6 +2411,7 @@ function renderMe() {
     el("p", { class: "hint" }, "📷 Your profile photo (everyone can see it next to your posts)"),
     el("div", { class: "rowbtns" }, el("button", { type: "button", class: "btn sm primary", onclick: pickDp }, getDp() ? "Change photo" : "Upload photo"), getDp() && el("button", { type: "button", class: "btn sm", onclick: removeDp }, "Remove photo")),
     state.dpMsg && el("p", { class: "hint", role: "status" }, state.dpMsg),
+    verifyBlock(),
     el("p", { class: "hint" }, "💬 Your status (shown on your stories)"),
     (() => { const inp = el("input", { type: "text", maxlength: "60", placeholder: "e.g. Busy with exams 📚", "aria-label": "Your status", value: getStatus() }); const save = async () => { try { localStorage.setItem("dd-status", inp.value.trim().slice(0, 60)); } catch (_) {} state.dpMsg = "✅ Status saved on this phone."; render(); try { await syncProfile(); state.dpMsg = "✅ Status saved and shared."; } catch (e) { state.dpMsg = "📱 Status saved on this phone, but sharing failed: " + errText(e); } render(); };
       return el("div", { class: "rowbtns" }, inp, el("button", { type: "button", class: "btn sm primary", onclick: save }, "Save"), ...["📚 Studying", "😴 Sleeping", "🎯 Placement prep", "🎮 Free"].map(t => el("button", { type: "button", class: "btn sm", onclick: () => { inp.value = t; } }, t))); })(),
@@ -5647,12 +5697,17 @@ async function imgToJpeg(file, max, q, square) {
   if (bmp.close) bmp.close();
   return c.toDataURL("image/jpeg", q);
 }
+const emailDomainOk = (e) => !COLLEGE_DOMAINS.length || COLLEGE_DOMAINS.includes(String(e || "").split("@")[1] ? String(e).split("@")[1].toLowerCase() : "");
+const myAccount = () => (store && store.account ? store.account() : { email: "", verified: false });
+const myVerified = () => { const a = myAccount(); return a.verified && emailDomainOk(a.email); };
+const isVerifiedId = (id) => { if (store && allMyIds().has(id)) return myVerified(); const p = state.profiles.find(x => x.id === id); return !!(p && p.verified); };
 async function syncProfile() {
   if (!store) return;
   const dp = getDp();
   const status = getStatus();
-  if (!dp && !status && !state.profiles.some(p => p.id === store.uid)) return;
-  await store.set("profiles", store.uid, { name: (getName() || "Student").slice(0, 40), dp, status, updatedAt: Date.now() });
+  const verified = myVerified();
+  if (!dp && !status && !verified && !state.profiles.some(p => p.id === store.uid)) return;
+  await store.set("profiles", store.uid, { name: (getName() || "Student").slice(0, 40), dp, status, verified, updatedAt: Date.now() });
 }
 function pickDp() {
   const inp = document.createElement("input"); inp.type = "file"; inp.accept = "image/*";
@@ -5818,7 +5873,7 @@ function openStories(authorId) {
     ov.oncontextmenu = (ev) => { ev.preventDefault(); };
     ov.replaceChildren(
       el("div", { class: "st-bars" }, segs),
-      el("div", { class: "st-top" }, avatarEl(dpOfId(g.authorId, g.name), "av st-av sm"), el("div", { class: "st-who" }, el("strong", {}, ownS ? "Your story" : g.name), el("small", {}, ago(s.createdAt) + (statusOfId(g.authorId) ? " · " + statusOfId(g.authorId) : ""))), ...actions, el("button", { type: "button", class: "st-x", "aria-label": "Close", onclick: close }, "✕")),
+      el("div", { class: "st-top" }, avatarEl(dpOfId(g.authorId, g.name), "av st-av sm"), el("div", { class: "st-who" }, el("strong", {}, (ownS ? "Your story" : g.name) + (isVerifiedId(g.authorId) ? " ✔" : "")), el("small", {}, ago(s.createdAt) + (statusOfId(g.authorId) ? " · " + statusOfId(g.authorId) : ""))), ...actions, el("button", { type: "button", class: "st-x", "aria-label": "Close", onclick: close }, "✕")),
       body, wm, ownS ? null : el("p", { class: "st-note" }, "📸 Screenshots can be traced to your name. Please don't share others' stories."), vlist,
       el("button", { type: "button", class: "st-tap l", "aria-label": "Previous", onclick: prev }), el("button", { type: "button", class: "st-tap r", "aria-label": "Next", onclick: next }));
     const run = (ms) => { if (my !== gen) return; fill.style.setProperty("animation-duration", ms + "ms"); fill.classList.add("run"); timer = setTimeout(next, ms); };
@@ -6036,6 +6091,8 @@ render();
     return;
   }
   if (NO_COLLEGE) { render(); return; }   // nothing to load until a college is chosen
+  if (store.linkResult === "ok") { showNotice(myVerified() ? "✅ Email verified. Welcome, verified student!" : "Email confirmed, but it is not a " + COLLEGE + " address, so you are not marked as verified."); setTimeout(() => showNotice(""), 6000); }
+  else if (store.linkResult && store.linkResult.startsWith("error:")) showNotice("Could not finish email verification (" + store.linkResult.slice(6) + "). Open the link on the same phone you asked from, or ask for a new one.");
   if (store.demo) showNotice("Demo mode: posts are saved only in this browser. Add your Firebase settings to config.js so the whole class shares one board.", "demo");
   const live = (rows) => rows.filter(x => !x.deleted);
   let opened = false;
@@ -6058,8 +6115,8 @@ render();
   store.subscribe("blocked", rows => { state.blocked = rows.map(r => r.id); }, e => {});
   let dpChecked = false;
   store.subscribe("profiles", rows => {
-    state.profiles = rows.filter(p => typeof p.name === "string" && (!p.dp || DP_OK.test(p.dp))).map(p => ({ ...p, status: String(p.status || "").slice(0, 60) })); update();
-    if (!dpChecked && (getDp() || getStatus())) { dpChecked = true; const me = rows.find(p => p.id === store.uid); if (!me || (me.dp || "") !== getDp() || me.name !== getName() || (me.status || "") !== getStatus()) syncProfile().catch(() => {}); }
+    state.profiles = rows.filter(p => typeof p.name === "string" && (!p.dp || DP_OK.test(p.dp))).map(p => ({ ...p, status: String(p.status || "").slice(0, 60), verified: p.verified === true })); update();
+    if (!dpChecked && (getDp() || getStatus() || myVerified())) { dpChecked = true; const me = rows.find(p => p.id === store.uid); if (!me || (me.dp || "") !== getDp() || me.name !== getName() || (me.status || "") !== getStatus() || (me.verified === true) !== myVerified()) syncProfile().catch(() => {}); }
   }, e => {});
   const since = Date.now() - STORY_MS;
   store.subscribe("stories", rows => { state.stories = rows.filter(x => !x.deleted); renderStoryBar(); }, e => {}, since);

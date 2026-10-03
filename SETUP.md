@@ -86,3 +86,25 @@ Known limits of this first version: the Spark Bot, Alumni, About and Career Guid
 ### Colleges that need no database setup
 
 `docs/colleges-ap.js` lists 46 Andhra Pradesh universities and institutes. Each one already works at `?c=<slug>` (for example `?c=andhra-university`) with its own private board under the room `college-<slug>`, plus common subjects and clubs, and shows up in the college picker with search. To add another college, add a line to that file. To give one its own subjects, campuses, colours or features, create a Firestore `colleges/<same slug>` document: its content replaces the defaults, but the room always stays `college-<slug>` so posts never move.
+
+### College email verification (optional, per college)
+
+Students can tap **Profile > Verify your college email**. A sign-in link is emailed to them; opening it on the same phone proves they own that address and shows a ✔ next to their name.
+
+One-time setup in the Firebase console:
+1. Authentication > Sign-in method > **Email/Password** > switch on, then also switch on **Email link (passwordless sign-in)** and Save.
+2. Authentication > Settings > **Authorized domains** > add your website domain (for example `vijay462462.github.io`, or your own domain later).
+3. Publish the updated `firestore.rules`.
+
+Per-college fields in `colleges/<slug>` (all optional):
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `domains` | array of string | allowed email domains, e.g. `["abc.edu.in"]`. Empty means any email address counts as verified. |
+| `requireVerified` | boolean | `true` = only verified students (with a matching domain, if listed) can post, reply, add stories or listings. Everyone can still read. |
+
+`requireVerified` is enforced by the security rules for colleges from the directory (rooms named `college-<slug>`); for other colleges it is only checked in the app. The RGUKT board accepts the four RGUKT email domains for the ✔ but does not require verification.
+
+Limits: Firebase limits how many sign-in emails it sends per day on the free plan; the link opens in the phone's browser (not inside the Android app); a student who changes phone must verify again.
+
+`docs/colleges-ap2.js` adds 60 engineering, medical and degree colleges of Andhra Pradesh to the picker. They were listed from public knowledge: please check the names and add the ones that are missing.

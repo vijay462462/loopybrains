@@ -28,7 +28,20 @@ service cloud.firestore {
     function signedIn() { return request.auth != null; }
     function member() { return signedIn(); }
     // Device block list: an admin adds a document whose id is the device id to rooms/<room>/blocked in the console.
-    function notBlocked(room, id) { return !(id is string) || !exists(/databases/$(database)/documents/rooms/$(room)/blocked/$(id)); }
+    function notBlocked(room, id) {
+      return (!(id is string) || !exists(/databases/$(database)/documents/rooms/$(room)/blocked/$(id))) && verifiedOk(room);
+    }
+    // Boards of directory colleges live in the room 'college-<slug>'. If colleges/<slug> says requireVerified, only signed-in
+    // users with a verified email (from one of its `domains`, when listed) may write. Everyone can still read.
+    function collegeSlug(room) { return room.matches('college-.+') ? room.split('college-')[1] : ''; }
+    function verifiedOk(room) {
+      let slug = collegeSlug(room);
+      return slug == '' || !exists(/databases/$(database)/documents/colleges/$(slug))
+        || get(/databases/$(database)/documents/colleges/$(slug)).data.get('requireVerified', false) != true
+        || (request.auth.token.email_verified == true
+            && (get(/databases/$(database)/documents/colleges/$(slug)).data.get('domains', []).size() == 0
+                || request.auth.token.email.split('@')[1] in get(/databases/$(database)/documents/colleges/$(slug)).data.get('domains', [])));
+    }
 
     function str(v, min, max) { return v is string && v.size() >= min && v.size() <= max; }
     function optStr(d, k, max) { return !(k in d) || (d[k] is string && d[k].size() <= max); }
@@ -142,7 +155,7 @@ service cloud.firestore {
       match /profiles/{id} {
         function validProfile() {
           let d = request.resource.data;
-          return d.keys().hasOnly(['name', 'dp', 'status', 'updatedAt']) && str(d.name, 1, 40) && optStr(d, 'status', 60) && d.updatedAt is int
+          return d.keys().hasOnly(['name', 'dp', 'status', 'verified', 'updatedAt']) && str(d.name, 1, 40) && optStr(d, 'status', 60) && optBool(d, 'verified') && (d.get('verified', false) == false || request.auth.token.email_verified == true) && d.updatedAt is int
             && d.dp is string && d.dp.size() <= 40000 && (d.dp == '' || d.dp.matches('data:image/jpeg;base64,.*'));
         }
         allow read: if member();
