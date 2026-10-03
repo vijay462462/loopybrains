@@ -11,3 +11,4 @@ h1{font-size:28px;margin:14px 0 4px}h2{font-size:19px;margin:26px 0 6px}
 ul{padding-left:20px}li{margin:4px 0}
 nav.legal{display:flex;flex-wrap:wrap;gap:12px;margin-top:30px;font-size:14px}
 nav.legal a{color:var(--accent)}
+.seats{width:7em;padding:6px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}

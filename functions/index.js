@@ -137,7 +137,15 @@ exports.askAI = onRequest({ secrets: [ANTHROPIC_KEY], cors: true, region: "asia-
     if (!m) return res.status(401).json({ error: "Please sign in first." });
     const user = await admin.auth().verifyIdToken(m[1]);
     const [ent, adm] = await Promise.all([db.collection("entitlements").doc(user.uid).get(), db.collection("admins").doc(user.uid).get()]);
-    const paid = ent.exists && Number(ent.data().until) > Date.now();
+    let paid = ent.exists && Number(ent.data().until) > Date.now();
+    if (!paid) {                                                                  // college bundle: the college's Plus is on AND the e-mail belongs to that college
+      const slug = String((req.body || {}).college || "");
+      if (/^[a-z0-9-]{2,40}$/.test(slug)) {
+        const [cp, col] = await Promise.all([db.collection("collegePlus").doc(slug).get(), db.collection("colleges").doc(slug).get()]);
+        const domains = (col.exists && Array.isArray(col.data().domains)) ? col.data().domains : [], host = String(user.email || "").toLowerCase().split("@")[1] || "";
+        paid = user.email_verified === true && cp.exists && Number(cp.data().until) > Date.now() && domains.length > 0 && domains.some(d => host === d || host.endsWith("." + d));
+      }
+    }
     if (!paid && !(adm.exists && user.email_verified === true)) return res.status(403).json({ error: "The AI helper is part of CampusLoop Plus." });
     const raw = Array.isArray((req.body || {}).messages) ? req.body.messages.slice(-8) : [];
     const messages = raw.filter(x => x && (x.role === "user" || x.role === "assistant") && typeof x.content === "string" && x.content.trim())

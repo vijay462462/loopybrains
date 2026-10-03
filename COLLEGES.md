@@ -24,3 +24,6 @@ What colleges pay for (in the order I would build and sell it). Prices are guess
 - Terms of Use, Privacy Policy and a grievance contact (a lawyer should review them).
 - Tell the college what data is stored (names chosen by students, posts, optional email) and that you do not sell data.
 - Agree who answers reports (you, or a staff member once college admins exist).
+
+## College bundle (built)
+Public page `colleges.html` (price calculator: ₹60 per student up to 999, ₹45 up to 2999, ₹30 from 3000, minimum ₹25,000 a year; replace `YOUR-EMAIL-HERE` in `colleges-page.js`). In the dashboard, **College licences** records a paid licence and switches Plus on for the whole college until the end date (`licenses/<slug>` private, `collegePlus/<slug>` public switch). The AI helper works for bundle students only when their verified email matches the college's domains.

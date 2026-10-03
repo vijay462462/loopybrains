@@ -2810,7 +2810,7 @@ function renderPlus() {
   return [
     el("h2", {}, "⭐ CampusLoop Plus" + (has ? " (active)" : "")),
     has ? el("div", { class: "plus-hero" }, "✨ Welcome, Plus member. Your studio is ready.") : null,
-    el("p", { class: "hint" }, has ? "Thank you for supporting CampusLoop. Your plan is active until " + new Date(state.plan.until).toLocaleDateString() + "." : PLUS.enabled ? "Extras for students who want more. Everything free today stays free." : "Early access: everything below that already works is free while we build Plus. Everything free today stays free."),
+    el("p", { class: "hint" }, has && state.plan.college ? "🎓 " + COLLEGE + " provides Plus for every student until " + new Date(state.plan.until).toLocaleDateString() + ". Enjoy, and thank your college!" : has ? "Thank you for supporting CampusLoop. Your plan is active until " + new Date(state.plan.until).toLocaleDateString() + "." : PLUS.enabled ? "Extras for students who want more. Everything free today stays free." : "Early access: everything below that already works is free while we build Plus. Everything free today stays free."),
     (!plusLocked() ? coachCard() : null),
     plansBlock(),
     msg,
@@ -2991,7 +2991,7 @@ function renderAI() {
     chat.msgs.push({ role: "user", content: text }); chat.busy = true; chat.note = ""; render();
     try {
       const tok = store && store.idToken ? await store.idToken() : ""; if (!tok) throw new Error("Please connect to the internet and sign in first.");
-      const r = await fetch(PLUS.functionsUrl.replace(/\/$/, "") + "/askAI", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + tok }, body: JSON.stringify({ messages: chat.msgs.slice(-8) }) });
+      const r = await fetch(PLUS.functionsUrl.replace(/\/$/, "") + "/askAI", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + tok }, body: JSON.stringify({ messages: chat.msgs.slice(-8), college: SEL }) });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(d.error || "The AI helper is busy. Try again.");
       chat.msgs.push({ role: "assistant", content: String(d.reply || "") }); chat.note = typeof d.left === "number" ? d.left + " questions left today." : "";
@@ -6593,6 +6593,11 @@ async function loadPlan() {
     const d = uid && store.getTop ? await store.getTop("entitlements", uid) : null;
     const until = d && Number(d.until) || 0;
     state.plan = { plus: until > Date.now(), until };
+    // College bundle: if the college has paid for everyone, its students get Plus too (no star: the star is for personal plans).
+    if (!state.plan.plus && !NO_COLLEGE && store && store.getTop) {
+      const c = await store.getTop("collegePlus", SEL).catch(() => null), cu = c && Number(c.until) || 0;
+      if (cu > Date.now()) state.plan = { plus: true, until: cu, college: true };
+    }
   } catch (_) { state.plan = { plus: false, until: 0 }; }
 }
 const isPlusId = (id) => { if (store && allMyIds().has(id)) return !!state.plan.plus; const p = state.profiles.find(x => x.id === id); return !!(p && p.plus); };
@@ -6602,7 +6607,7 @@ async function syncProfile() {
   if (!store) return;
   const dp = getDp();
   const status = getStatus();
-  const verified = myVerified(), plus = !!state.plan.plus;
+  const verified = myVerified(), plus = !!state.plan.plus && !state.plan.college;
   if (!dp && !status && !verified && !plus && !state.profiles.some(p => p.id === store.uid)) return;
   await store.set("profiles", store.uid, { name: (getName() || "Student").slice(0, 40), dp, status, verified, plus, streak: Math.min(3650, state.myStreak || 0), updatedAt: Date.now() });
 }

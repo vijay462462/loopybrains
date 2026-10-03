@@ -520,6 +520,40 @@ function eventsView() {
     } }, "Post event")), msg), box);
 }
 
+// College licences: record what a college paid, switch Plus on for all its students until the end date, and see renewals coming up.
+function licencesView() {
+  const msg = h("p", { class: "msg" }), box = h("div", {}), pick = h("input", { list: "adm-lic-colleges", placeholder: "Type the college name…", "aria-label": "College" }), dl = h("datalist", { id: "adm-lic-colleges" });
+  const f = { seats: h("input", { type: "number", min: "1", placeholder: "Number of students (seats)" }), price: h("input", { type: "number", min: "0", placeholder: "Price per student per year (₹)" }), months: h("input", { type: "number", min: "1", max: "60", value: "12", "aria-label": "Months" }),
+    contact: h("input", { placeholder: "Contact person and phone/email", maxlength: "120" }), notes: h("input", { placeholder: "Notes (invoice no., pilot, discount…)", maxlength: "300" }) };
+  let all = [];
+  loadColleges().then(rows => { all = rows; dl.replaceChildren(...rows.map(r => h("option", { value: r.name + " (" + r.slug + ")" }))); }).catch(() => {});
+  const load = async () => {
+    try {
+      const snap = await fs.getDocs(fs.query(fs.collection(db, "licenses"), fs.limit(300)));
+      const rows = snap.docs.map(d => ({ slug: d.id, ...d.data() })).sort((a, b) => a.until - b.until), active = rows.filter(r => r.until > Date.now()), total = active.reduce((n, r) => n + (r.amount || 0), 0);
+      box.replaceChildren(h("h3", {}, active.length + " active licence" + (active.length === 1 ? "" : "s") + " · ₹" + total.toLocaleString("en-IN") + " per year"), ...rows.map(r => { const days = Math.ceil((r.until - Date.now()) / 864e5), live = days > 0;
+        return h("div", { class: "card item" + (live ? "" : " hidden") }, h("div", { class: "row" }, h("b", {}, r.name), live ? h("span", { class: "tag " + (days <= 30 ? "warn" : "ok") }, days <= 30 ? "renew in " + days + " d" : "active") : h("span", { class: "tag bad" }, "expired")),
+          h("p", { class: "mono" }, (r.seats || 0) + " seats · ₹" + (r.pricePerStudent || 0) + "/student · ₹" + (r.amount || 0).toLocaleString("en-IN") + " · until " + new Date(r.until).toLocaleDateString()), r.contact ? h("p", { class: "adm-hint" }, r.contact) : null,
+          h("div", { class: "row" }, h("button", { class: "b sm bad", onclick: async (e) => { if (!confirm("End Plus for all students of " + r.name + " now?")) return; e.currentTarget.disabled = true; try { await fs.deleteDoc(fs.doc(db, "collegePlus", r.slug)); await fs.setDoc(fs.doc(db, "licenses", r.slug), { ...Object.fromEntries(Object.entries(r).filter(([k]) => k !== "slug")), until: Date.now(), updatedAt: Date.now() }); await logAction("end-licence", "licenses/" + r.slug, r.name); load(); } catch (er) { msg.className = "msg err"; msg.textContent = "Not allowed (" + (er.code || "error") + ")."; } } }, "End now")));
+      }));
+    } catch (e) { box.replaceChildren(h("p", { class: "msg err" }, "Could not load (" + (e.code || "error") + ").")); }
+  };
+  load();
+  const quote = () => { const n = parseInt(f.seats.value, 10) || 0, rate = n >= 3000 ? 30 : n >= 1000 ? 45 : 60, amt = Math.max(25000, n * rate); f.price.value = String(n ? Math.round(amt / n) : rate); return amt; };
+  return h("div", {}, h("div", { class: "card" }, h("h3", {}, "Record a college licence"), h("p", { class: "adm-hint" }, "When a college pays (by invoice, bank transfer or UPI), record it here. All its students then get Plus until the end date. The AI helper works only for students whose verified college email matches the college's domains (set in the Colleges tab)."),
+    pick, dl, f.seats, f.price, h("label", {}, "Months", f.months), f.contact, f.notes,
+    h("div", { class: "row" }, h("button", { class: "b sm", onclick: () => { const amt = quote(); msg.className = "msg"; msg.textContent = "Suggested: ₹" + amt.toLocaleString("en-IN") + " per year (₹60 up to 999 students, ₹45 up to 2999, ₹30 above, minimum ₹25,000)."; } }, "Suggest a price"),
+      h("button", { class: "b pri", onclick: async (e) => {
+        const m = /\(([a-z0-9-]+)\)\s*$/.exec(pick.value), c = all.find(r => m && r.slug === m[1]), seats = parseInt(f.seats.value, 10), price = parseFloat(f.price.value), months = parseInt(f.months.value, 10);
+        if (!c || c.slug === "rgukt") { msg.className = "msg err"; msg.textContent = "Pick a college from the list (not the private RGUKT board)."; return; }
+        if (!(seats >= 1) || !(price >= 0) || !(months >= 1)) { msg.className = "msg err"; msg.textContent = "Fill seats, price and months."; return; }
+        e.currentTarget.disabled = true; const now = Date.now(), until = now + months * 30.5 * 864e5;
+        try { const b = fs.writeBatch(db); b.set(fs.doc(db, "licenses", c.slug), { name: c.name.slice(0, 60), seats, pricePerStudent: price, amount: Math.round(seats * price), startAt: now, until: Math.round(until), contact: clean(f.contact.value, 120), notes: clean(f.notes.value, 300), updatedAt: now }); b.set(fs.doc(db, "collegePlus", c.slug), { name: c.name.slice(0, 60), until: Math.round(until), updatedAt: now }); await b.commit(); await logAction("licence", "licenses/" + c.slug, seats + " seats, " + months + " months"); msg.className = "msg ok"; msg.textContent = "Plus is now on for " + c.name + " until " + new Date(until).toLocaleDateString() + "."; load(); }
+        catch (er) { msg.className = "msg err"; msg.textContent = "Not saved (" + (er.code || "error") + "). Publish the latest rules."; }
+        e.currentTarget.disabled = false;
+      } }, "Save and switch Plus on")), msg), box);
+}
+
 const EXAMS = ["Mid", "End", "Supplementary", "Model", "Other"];
 function papersView() {
   const p = roomPath(), msg = h("p", { class: "msg" }), box = h("div", {});
@@ -549,7 +583,7 @@ function papersView() {
 }
 
 // ---------- shell ----------
-const TABS = [["overview", "Overview", true], ["report", "Weekly report", true], ["mail", "Report emails", true], ["moderation", "Moderation", true], ["blocked", "Blocked devices", true], ["staff", "College staff", false], ["sale", "Flash sale", false], ["promos", "Promo codes", false], ["events", "Events", true], ["drives", "Placement drives", true], ["notices", "Notices", true], ["papers", "Papers", true], ["colleges", "Colleges", false], ["requests", "Requests and survey", false], ["log", "Log", false]];
+const TABS = [["overview", "Overview", true], ["report", "Weekly report", true], ["mail", "Report emails", true], ["moderation", "Moderation", true], ["blocked", "Blocked devices", true], ["licences", "College licences", false], ["staff", "College staff", false], ["sale", "Flash sale", false], ["promos", "Promo codes", false], ["events", "Events", true], ["drives", "Placement drives", true], ["notices", "Notices", true], ["papers", "Papers", true], ["colleges", "Colleges", false], ["requests", "Requests and survey", false], ["log", "Log", false]];
 const VIEWS = { events: eventsView, drives: drivesView, mail: mailView, report: reportView, staff: staffView, sale: saleView, promos: promosView, notices: noticesView, papers: papersView, overview: overviewView, moderation: moderationView, blocked: blockedView, colleges: collegesView, requests: requestsView, log: logView };
 function draw() {
   const u = auth.currentUser;
