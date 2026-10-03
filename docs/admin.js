@@ -310,6 +310,34 @@ function noticesView() {
     } }, "Post notice")), msg), box);
 }
 
+function promosView() {
+  const msg = h("p", { class: "msg" }), box = h("div", {});
+  const f = { code: h("input", { placeholder: "CODE, e.g. EXAM30 (3-20 capitals/digits)", maxlength: "20" }), percent: h("input", { type: "number", min: "5", max: "90", value: "30", "aria-label": "Percent off" }),
+    plan: h("select", {}, ...["any", "weekly", "monthly", "semester", "yearly"].map(x => h("option", { value: x }, x === "any" ? "Any plan" : x))), days: h("input", { type: "number", min: "1", max: "365", value: "30", "aria-label": "Valid for days" }), uses: h("input", { type: "number", min: "1", max: "100000", value: "100", "aria-label": "Maximum uses" }), note: h("input", { placeholder: "Note (optional), e.g. Instagram campaign", maxlength: "100" }) };
+  const load = async () => {
+    try {
+      const snap = await fs.getDocs(fs.query(fs.collection(db, "promoCodes"), fs.limit(200)));
+      const rows = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      box.replaceChildren(h("h3", {}, rows.length + " code" + (rows.length === 1 ? "" : "s")), ...rows.map(r => { const dead = r.active === false || r.until < Date.now() || (r.used || 0) >= r.maxUses;
+        return h("div", { class: "card item" + (dead ? " hidden" : "") }, h("div", { class: "row" }, h("b", { class: "mono" }, r.id), h("span", { class: "tag ok" }, r.percent + "% off"), h("span", { class: "tag" }, r.plan), dead ? h("span", { class: "tag bad" }, "off") : null),
+          h("p", { class: "mono" }, "used " + (r.used || 0) + "/" + r.maxUses + " · until " + new Date(r.until).toLocaleDateString() + (r.note ? " · " + r.note : "")),
+          h("div", { class: "row" }, h("button", { class: "b sm", onclick: async (e) => { e.currentTarget.disabled = true; try { await fs.updateDoc(fs.doc(db, "promoCodes", r.id), { active: r.active === false }); await logAction(r.active === false ? "promo-on" : "promo-off", "promoCodes/" + r.id, ""); load(); } catch (er) { msg.className = "msg err"; msg.textContent = "Not allowed (" + (er.code || "error") + ")."; } } }, r.active === false ? "Switch on" : "Switch off"))); }));
+    } catch (e) { box.replaceChildren(h("p", { class: "msg err" }, "Could not load (" + (e.code || "error") + ").")); }
+  };
+  load();
+  return h("div", {}, h("div", { class: "card" }, h("h3", {}, "Create a promo code"), h("p", { class: "adm-hint" }, "Give a code to a college, a club or an influencer. Students type it on the Plus screen and the payment page shows the lower price."),
+    f.code, h("div", { class: "cols" }, h("label", {}, "Percent off (5-90)", f.percent), h("label", { }, "Plan", f.plan), h("label", {}, "Valid for days", f.days), h("label", {}, "Maximum uses", f.uses)), f.note,
+    h("div", { class: "row" }, h("button", { class: "b pri", onclick: async (e) => {
+      const code = f.code.value.trim().toUpperCase(), percent = parseInt(f.percent.value, 10), days = parseInt(f.days.value, 10), uses = parseInt(f.uses.value, 10);
+      if (!/^[A-Z0-9]{3,20}$/.test(code)) { msg.className = "msg err"; msg.textContent = "Code: 3-20 capital letters or digits."; return; }
+      if (!(percent >= 5 && percent <= 90) || !(days >= 1) || !(uses >= 1)) { msg.className = "msg err"; msg.textContent = "Check the percent (5-90), days and uses."; return; }
+      e.currentTarget.disabled = true;
+      try { await fs.setDoc(fs.doc(db, "promoCodes", code), { percent, plan: f.plan.value, until: Date.now() + days * 864e5, maxUses: uses, used: 0, active: true, note: clean(f.note.value, 100), createdAt: Date.now() }); await logAction("create-promo", "promoCodes/" + code, percent + "% " + f.plan.value); msg.className = "msg ok"; msg.textContent = "Created " + code + "."; f.code.value = ""; load(); }
+      catch (er) { msg.className = "msg err"; msg.textContent = "Not saved (" + (er.code || "error") + "). That code may already exist, or publish the latest rules."; }
+      e.currentTarget.disabled = false;
+    } }, "Create code")), msg), box);
+}
+
 const EXAMS = ["Mid", "End", "Supplementary", "Model", "Other"];
 function papersView() {
   const p = roomPath(), msg = h("p", { class: "msg" }), box = h("div", {});
@@ -339,8 +367,8 @@ function papersView() {
 }
 
 // ---------- shell ----------
-const TABS = [["overview", "Overview", true], ["moderation", "Moderation", true], ["blocked", "Blocked devices", true], ["notices", "Notices", true], ["papers", "Papers", true], ["colleges", "Colleges", false], ["requests", "Requests and survey", false], ["log", "Log", false]];
-const VIEWS = { notices: noticesView, papers: papersView, overview: overviewView, moderation: moderationView, blocked: blockedView, colleges: collegesView, requests: requestsView, log: logView };
+const TABS = [["overview", "Overview", true], ["moderation", "Moderation", true], ["blocked", "Blocked devices", true], ["promos", "Promo codes", false], ["notices", "Notices", true], ["papers", "Papers", true], ["colleges", "Colleges", false], ["requests", "Requests and survey", false], ["log", "Log", false]];
+const VIEWS = { promos: promosView, notices: noticesView, papers: papersView, overview: overviewView, moderation: moderationView, blocked: blockedView, colleges: collegesView, requests: requestsView, log: logView };
 function draw() {
   const u = auth.currentUser;
   const tabs = h("div", { class: "adm-tabs" }, ...TABS.map(([k, label]) => h("button", { class: S.tab === k ? "on" : "", onclick: () => { S.tab = k; draw(); } }, label)));

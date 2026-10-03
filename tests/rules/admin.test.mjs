@@ -78,5 +78,13 @@ await t("student registers own referral code", () => assertSucceeds(setDoc(doc(r
 await t("student cannot register someone else's code", () => assertFails(setDoc(doc(rc, "refCodes/zzzzzzzzzz"), { uid: longUid, createdAt: now() })));
 await t("student cannot claim a code for another uid", () => assertFails(setDoc(doc(rc, "refCodes/abcdefghij2"), { uid: "other", createdAt: now() })));
 await t("nobody can read or change codes from the app", async () => { await assertFails(getDoc(doc(rc, "refCodes/abcdefghij"))); await assertFails(updateDoc(doc(rc, "refCodes/abcdefghij"), { uid: "x" })); await assertFails(deleteDoc(doc(rc, "refCodes/abcdefghij"))); });
+console.log("promo codes");
+const promo = (extra = {}) => ({ percent: 30, plan: "any", until: now() + 864e5 * 30, maxUses: 100, used: 0, active: true, note: "Exam season", createdAt: now(), ...extra });
+await t("admin creates a promo code", () => assertSucceeds(setDoc(doc(admin, "promoCodes/EXAM30"), promo())));
+await t("student cannot read or create promo codes", async () => { await assertFails(getDoc(doc(student, "promoCodes/EXAM30"))); await assertFails(setDoc(doc(student, "promoCodes/FREE90"), promo({ percent: 90 }))); });
+await t("promo with 100% off is refused", () => assertFails(setDoc(doc(admin, "promoCodes/FREE100"), promo({ percent: 100 }))));
+await t("promo starting with used > 0 is refused", () => assertFails(setDoc(doc(admin, "promoCodes/USED1"), promo({ used: 5 }))));
+await t("promo with a lowercase or short code is refused", async () => { await assertFails(setDoc(doc(admin, "promoCodes/exam30x"), promo())); await assertFails(setDoc(doc(admin, "promoCodes/AB"), promo())); });
+await t("admin can switch a code off but not change the discount or usage", async () => { await assertSucceeds(updateDoc(doc(admin, "promoCodes/EXAM30"), { active: false })); await assertFails(updateDoc(doc(admin, "promoCodes/EXAM30"), { percent: 90 })); await assertFails(updateDoc(doc(admin, "promoCodes/EXAM30"), { used: 5 })); });
 console.log(`\n${pass} passed, ${fail} failed`);
 await env.cleanup(); process.exit(fail ? 1 : 0);

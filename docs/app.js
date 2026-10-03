@@ -2577,7 +2577,7 @@ function collectBackup() {
 async function startCheckout(planKey) {
   if (!PLUS.functionsUrl) throw new Error("Payments are not switched on yet.");
   const tok = store.idToken ? await store.idToken() : "";
-  const r = await fetch(PLUS.functionsUrl.replace(/\/$/, "") + "/createPaymentLink", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + tok }, body: JSON.stringify({ plan: planKey }) });
+  const r = await fetch(PLUS.functionsUrl.replace(/\/$/, "") + "/createPaymentLink", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + tok }, body: JSON.stringify({ plan: planKey, code: state.promo && (state.promo.plan === "any" || state.promo.plan === planKey) ? state.promo.code : "" }) });
   const j = await r.json().catch(() => ({}));
   const url = safeHttp(j.url || "");
   if (!r.ok || !url || !/^https:\/\/(rzp\.io|razorpay\.com|[a-z0-9-]+\.razorpay\.com)\//.test(url)) throw new Error(j.error || "Could not start the payment.");
@@ -2646,16 +2646,33 @@ function renderPlus() {
     catch (_) { say("We could not save that right now. Please try again later."); }
   };
   const plansBlock = () => {
-    const offer = offerOn(), perMonth = (price, days) => Math.round(price / (days / 30.5)), yearlyNow = offer ? offer.yearly : PLUS.yearly, card = (key, name, price, per, note, badge, shown) => el("div", { class: "plan-card" + (badge ? " best" : "") },
+    const offer = offerOn(), perMonth = (price, days) => Math.round(price / (days / 30.5)), yearlyNow = offer ? offer.yearly : PLUS.yearly, card = (key, name, price, per, note, badge, shown, was) => el("div", { class: "plan-card" + (badge ? " best" : "") },
       badge ? el("span", { class: "plan-badge" }, badge) : null, el("strong", {}, name),
-      el("div", { class: "plan-price" }, shown ? [el("s", { class: "plan-was" }, "₹" + price), " ₹" + shown] : "₹" + price, el("small", {}, " " + per)),
+      el("div", { class: "plan-price" }, shown ? [el("s", { class: "plan-was" }, "₹" + (was || price)), " ₹" + shown] : "₹" + price, el("small", {}, " " + per)),
       key === "yearly" && offer ? el("p", { class: "plan-deal" }, "Ends in " + offer.days + " day" + (offer.days === 1 ? "" : "s") + ". Lock this price for your first year.") : null, el("p", { class: "hint" }, note),
       has ? (PLUS.enabled ? buy(key, "Renew") : el("span", { class: "hint" }, "Active ✔")) : PLUS.enabled ? buy(key, "Upgrade") : el("button", { class: "btn" + (badge ? " primary" : ""), type: "button", onclick: () => wait(key) }, "Notify me"));
-    const cards = [card("weekly", "Exam week", PLUS.weekly || 19, "/ 7 days", "Cram before an exam. Cheapest way to try Plus.", "", 0), card("monthly", "Monthly", PLUS.monthly, "/ month", "Cancel any time. Pay again when you want.", "", 0),
-      card("semester", "Semester", PLUS.semester || 149, "/ 4 months", "About ₹" + perMonth(PLUS.semester || 149, 130) + " a month. Covers a whole semester.", "Popular", 0),
-      card("yearly", "Yearly", PLUS.yearly, "/ year", "About ₹" + perMonth(yearlyNow, 366) + " a month. Save " + Math.max(0, Math.round(100 - yearlyNow * 100 / (PLUS.monthly * 12))) + "% vs monthly.", offer ? offer.label : "Best value", offer ? offer.yearly : 0)];
+    const pr = state.promo, cut = (key, cur) => (pr && pr.percent && (pr.plan === "any" || pr.plan === key)) ? Math.max(1, Math.round(cur * (100 - pr.percent) / 100)) : 0;
+    const cards = [["weekly", "Exam week", PLUS.weekly || 19, "/ 7 days", "Cram before an exam. Cheapest way to try Plus.", "", 0], ["monthly", "Monthly", PLUS.monthly, "/ month", "One payment. No auto-renewal.", "", 0],
+      ["semester", "Semester", PLUS.semester || 149, "/ 4 months", "About ₹" + perMonth(PLUS.semester || 149, 130) + " a month. Covers a whole semester.", "Popular", 0],
+      ["yearly", "Yearly", PLUS.yearly, "/ year", "About ₹" + perMonth(yearlyNow, 366) + " a month. Save " + Math.max(0, Math.round(100 - yearlyNow * 100 / (PLUS.monthly * 12))) + "% vs monthly.", offer ? offer.label : "Best value", offer ? offer.yearly : 0]]
+      .map(([k, n, p, per, note, badge, shown]) => { const c = cut(k, shown || p); return card(k, n, p, per, note, badge, c || shown, c ? shown || p : 0); });
+    const code = el("input", { maxlength: "20", placeholder: "Have a promo code?", "aria-label": "Promo code", autocomplete: "off", value: pr ? pr.code : "" }), codeMsg = el("p", { class: "hint", role: "status" }, pr ? "✅ " + pr.code + ": " + pr.percent + "% off " + (pr.plan === "any" ? "any plan" : "the " + pr.plan + " plan") + "." : "");
+    const apply = async (e) => {
+      const v = code.value.trim().toUpperCase(); if (!v) { state.promo = null; render(); return; }
+      if (!/^[A-Z0-9]{3,20}$/.test(v)) { codeMsg.textContent = "Codes have 3-20 letters or digits."; return; }
+      if (!PLUS.functionsUrl) { codeMsg.textContent = "Codes work once payments open."; return; }
+      e.currentTarget.disabled = true; codeMsg.textContent = "Checking…";
+      try {
+        const tok = store && store.idToken ? await store.idToken() : ""; if (!tok) throw new Error("Connect to the internet and sign in first.");
+        const r = await fetch(PLUS.functionsUrl.replace(/\/$/, "") + "/checkPromo", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + tok }, body: JSON.stringify({ code: v }) }), d = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(d.error || "That code did not work.");
+        const found = { code: d.code, percent: d.percent, plan: d.plan };
+        state.promo = found; render();
+      } catch (err) { codeMsg.textContent = err.message || "That code did not work."; e.currentTarget.disabled = false; }
+    };
     return el("div", {}, el("div", { class: "label" }, has ? "Your plan" : "Plans"),
       el("div", { class: "plan-grid" }, ...cards),
+      (PLUS.enabled && !has) ? el("div", { class: "promo-row" }, code, el("button", { class: "btn sm", type: "button", onclick: apply }, "Apply")) : null, (PLUS.enabled && !has) ? codeMsg : null,
       (PLUS.enabled && !has && PLUS.trialDays) ? (trialLeft() ? el("p", { class: "plan-deal" }, "🎁 Free trial active: " + trialLeft() + " day" + (trialLeft() === 1 ? "" : "s") + " left (AI helper needs a paid plan).") : (readJSON("dd-trial-start", 0) ? null : el("button", { class: "btn", type: "button", onclick: () => { writeJSON("dd-trial-start", Date.now()); render(); } }, "🎁 Start " + PLUS.trialDays + "-day free trial"))) : null,
       PLUS.enabled ? el("p", { class: "hint" }, "Pay safely by UPI, card or net banking (Razorpay). Your plan switches on within a minute of paying." + (verified ? "" : " Verify your email first (Profile › Verify your college email) so we can attach the plan to you.")) : el("div", {}, el("p", { class: "hint" }, "Payments open soon. Everything below is free while we build Plus. Tap Notify me and we will tell you the day it opens" + (offerOn() ? ", and you get the " + offerOn().label.toLowerCase() + " price of ₹" + offerOn().yearly + " for the first year." : ".")), wemail));
   };

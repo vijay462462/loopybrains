@@ -195,6 +195,20 @@ service cloud.firestore {
       allow read: if isAdmin();
       allow write: if isAdmin();
     }
+    // Promo codes: admins create them in the dashboard; the payment server checks and counts them.
+    match /promoCodes/{code} {
+      function validPromo() {
+        let d = request.resource.data;
+        return d.keys().hasOnly(['percent', 'plan', 'until', 'maxUses', 'used', 'active', 'note', 'createdAt'])
+          && d.percent is int && d.percent >= 5 && d.percent <= 90 && d.plan in ['any', 'weekly', 'monthly', 'semester', 'yearly']
+          && d.until is int && d.maxUses is int && d.maxUses >= 1 && d.maxUses <= 100000 && d.used == 0 && d.active is bool
+          && optStr(d, 'note', 100) && d.createdAt is int;
+      }
+      allow read: if isAdmin();
+      allow create: if isAdmin() && code.matches('[A-Z0-9]{3,20}') && validPromo();
+      allow update: if isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['active', 'until', 'maxUses']);
+      allow delete: if isAdmin();
+    }
     // Referral codes: a student registers their own code (the first 10 characters of their sign-in id) so friends can use it.
     // Only the server reads these and gives the rewards.
     match /refCodes/{code} {

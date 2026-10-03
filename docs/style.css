@@ -1752,3 +1752,5 @@ body.priv-blur > * { filter: blur(22px); }
 .plus-tile.badge { text-align: center; justify-items: center; opacity: .55; }
 .plus-tile.badge.on { opacity: 1; border-color: var(--accent); }
 @media (max-width: 380px) { .pc-row { grid-template-columns: minmax(0, 1fr) 46px 46px; padding: 8px; font-size: 13px; } .plan-price { font-size: 24px; } }
+.promo-row { display: flex; gap: 8px; margin-top: 8px; }
+.promo-row input { flex: 1; min-width: 0; text-transform: uppercase; }

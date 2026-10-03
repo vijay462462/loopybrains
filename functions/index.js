@@ -31,6 +31,29 @@ const OFFER = { plan: "yearly", amount: 29900, until: Date.parse("2026-12-31T23:
 const amountFor = (key, now) => (OFFER.plan === key && now <= OFFER.until ? OFFER.amount : PLANS[key].amount);
 const amountOk = (key, paid) => paid === PLANS[key].amount || (OFFER.plan === key && paid === OFFER.amount);
 
+// Promo codes: documents in `promoCodes/<CODE>` created by an admin in the dashboard (percent off, plan, expiry, max uses).
+const promoFor = async (rawCode, planKey) => {
+  const code = String(rawCode || "").toUpperCase();
+  if (!/^[A-Z0-9]{3,20}$/.test(code)) return { error: "That code is not valid." };
+  const snap = await db.collection("promoCodes").doc(code).get();
+  if (!snap.exists) return { error: "That code was not found." };
+  const d = snap.data();
+  if (d.active === false || Number(d.until) < Date.now()) return { error: "That code has expired." };
+  if ((Number(d.used) || 0) >= (Number(d.maxUses) || 0)) return { error: "That code has been fully used." };
+  if (planKey && d.plan !== "any" && d.plan !== planKey) return { error: "That code is for the " + d.plan + " plan." };
+  return { code, plan: d.plan, percent: Math.min(90, Math.max(5, Number(d.percent) || 0)) };
+};
+exports.checkPromo = onRequest({ cors: true, region: "asia-south1", maxInstances: 5 }, async (req, res) => {
+  try {
+    if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
+    const m = /^Bearer (.+)$/.exec(req.get("Authorization") || "");
+    if (!m) return res.status(401).json({ error: "Please sign in first." });
+    await admin.auth().verifyIdToken(m[1]);
+    const b = req.body || {}, p = await promoFor(b.code, b.plan);
+    return p.error ? res.status(400).json({ error: p.error }) : res.json({ code: p.code, percent: p.percent, plan: p.plan });
+  } catch (e) { console.error("checkPromo", e); return res.status(500).json({ error: "Could not check the code." }); }
+});
+
 exports.createPaymentLink = onRequest({ secrets: [KEY_ID, KEY_SECRET], cors: true, region: "asia-south1" }, async (req, res) => {
   try {
     if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
@@ -40,12 +63,18 @@ exports.createPaymentLink = onRequest({ secrets: [KEY_ID, KEY_SECRET], cors: tru
     if (!user.email || user.email_verified !== true) return res.status(403).json({ error: "Verify your email first." });
     const plan = PLANS[(req.body || {}).plan];
     if (!plan) return res.status(400).json({ error: "Unknown plan." });
+    let amount = amountFor(req.body.plan, Date.now()), code = "";
+    if (req.body.code) {
+      const p = await promoFor(req.body.code, req.body.plan);
+      if (p.error) return res.status(400).json({ error: p.error });
+      code = p.code; amount = Math.max(100, Math.round(amount * (100 - p.percent) / 100));
+    }
     const rz = new Razorpay({ key_id: KEY_ID.value(), key_secret: KEY_SECRET.value() });
     const link = await rz.paymentLink.create({
-      amount: amountFor(req.body.plan, Date.now()), currency: "INR", description: plan.label,
+      amount, currency: "INR", description: plan.label,
       reference_id: (user.uid.slice(0, 20) + "-" + Date.now()).slice(0, 40),
       customer: { email: user.email }, notify: { email: true, sms: false },
-      notes: { uid: user.uid, plan: req.body.plan },
+      notes: { uid: user.uid, plan: req.body.plan, amount: String(amount), code },
       callback_url: SITE_URL.value(), callback_method: "get",
     });
     return res.json({ url: link.short_url });
@@ -65,14 +94,15 @@ exports.razorpayWebhook = onRequest({ secrets: [WEBHOOK_SECRET], region: "asia-s
     const payment = ev.payload && ev.payload.payment && ev.payload.payment.entity;
     const notes = (link && link.notes) || {};
     const plan = PLANS[notes.plan];
-    if (!link || !payment || !notes.uid || !plan || !amountOk(notes.plan, link.amount_paid)) { console.warn("webhook: unexpected payload", link && link.id); return res.sendStatus(200); }
+    if (!link || !payment || !notes.uid || !plan || !(notes.amount ? (link.amount_paid === Number(notes.amount) && link.amount_paid >= 100 && link.amount_paid <= plan.amount) : amountOk(notes.plan, link.amount_paid))) { console.warn("webhook: unexpected payload", link && link.id); return res.sendStatus(200); }
     const payRef = db.collection("payments").doc(payment.id), entRef = db.collection("entitlements").doc(notes.uid);
     await db.runTransaction(async (tx) => {
       if ((await tx.get(payRef)).exists) return;                                // Razorpay may send the same event twice
       const cur = await tx.get(entRef), now = Date.now();
       const from = Math.max(now, cur.exists ? Number(cur.data().until) || 0 : 0);   // renewing early adds time on top
       tx.set(entRef, { plan: "plus", until: from + plan.days * DAY, updatedAt: now });
-      tx.set(payRef, { uid: notes.uid, plan: notes.plan, amount: link.amount_paid, linkId: link.id, createdAt: now });
+      tx.set(payRef, { uid: notes.uid, plan: notes.plan, amount: link.amount_paid, linkId: link.id, code: notes.code || "", createdAt: now });
+      if (notes.code) tx.set(db.collection("promoCodes").doc(notes.code), { used: admin.firestore.FieldValue.increment(1) }, { merge: true });
     });
     return res.sendStatus(200);
   } catch (e) {
