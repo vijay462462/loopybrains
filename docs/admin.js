@@ -68,9 +68,11 @@ function loginView(note) {
       e.currentTarget.disabled = false;
     } }, "Send me a sign-in link")), msg);
 }
+const WHY = { text: "" };
 function notAdminView() {
   const u = auth.currentUser, id = u.uid;
   return h("div", { class: "card" }, h("h2", {}, "You are signed in, but not an admin yet"),
+    WHY.text ? h("p", { class: "msg err" }, "Reason: " + WHY.text) : null,
     h("p", {}, "Signed in as ", h("b", {}, u.email || "(no email)"), u.emailVerified ? "" : " (email not verified)"),
     h("p", {}, "To make this account an admin: open the Firebase console › Firestore Database › Data › Start collection ", h("b", {}, "admins"), " › Document ID: "),
     h("p", { class: "mono" }, id),
@@ -304,7 +306,9 @@ else {
   try {
     const adm = await fs.getDoc(fs.doc(db, "admins", user.uid));
     S.admin = adm.exists() && user.emailVerified;
-  } catch (_) { S.admin = false; }
+    if (!adm.exists()) WHY.text = "no document admins/" + user.uid + " was found. Check the collection name is exactly admins and the document id matches the id below.";
+    else if (!user.emailVerified) WHY.text = "the document exists but this email is not verified. Sign out and sign in again with the email link.";
+  } catch (e) { S.admin = false; WHY.text = (e && e.code === "permission-denied") ? "Firebase blocked the read (permission-denied). The new rules are not published yet: Firestore › Rules › paste firestore.rules › Publish." : "could not check (" + ((e && e.code) || "error") + ")."; }
   if (!S.admin) root.replaceChildren(notAdminView());
   else draw();
 }
