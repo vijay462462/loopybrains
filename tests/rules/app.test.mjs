@@ -2,6 +2,7 @@ import { initializeTestEnvironment, assertSucceeds, assertFails } from "@firebas
 import { readFileSync } from "fs";
 import { doc, setDoc, getDoc, updateDoc, deleteDoc, collection, getDocs } from "firebase/firestore";
 const env = await initializeTestEnvironment({ projectId: "demo-test", firestore: { rules: readFileSync("../../firestore.rules", "utf8"), host: "127.0.0.1", port: 8081 } });
+await env.clearFirestore();
 let pass = 0, fail = 0;
 const t = async (name, fn) => { try { await fn(); pass++; console.log("  ok  ", name); } catch (e) { fail++; console.log("  FAIL", name, "-", String(e.message).slice(0, 120)); } };
 const R = "rooms/r00m-Abc123xy", now = () => Date.now();
@@ -19,6 +20,18 @@ await t("jobs post with company/deadline/link is accepted", () => assertSucceeds
 await t("reply to a doubt is accepted", () => assertSucceeds(setDoc(doc(anonU, R + "/replies/r1"), { parentId: "d1", parentColl: "doubts", body: "use partial fractions", authorId: me, authorName: "Ravi", anonymous: false, createdAt: now(), pages: [], fileAttachments: [] })));
 await t("author can soft-delete (deleted:true) and report", async () => { await assertSucceeds(updateDoc(doc(anonU, R + "/doubts/d1"), { deleted: true })); await assertSucceeds(updateDoc(doc(anonU, R + "/doubts/d1"), { reports: ["u|o"] })); });
 await t("hard delete is refused", () => assertFails(deleteDoc(doc(anonU, R + "/doubts/d1"))));
+console.log("ownership");
+await env.withSecurityRulesDisabled(async (c) => { await setDoc(doc(c.firestore(), R + "/doubts/own1"), post({ ownerUid: "u1", reports: ["x"] })); });
+await t("a post created with someone else's ownerUid is refused", () => assertFails(setDoc(doc(anonU, R + "/doubts/own2"), post({ ownerUid: "u2" }))));
+await t("a post created with my own ownerUid is accepted", () => assertSucceeds(setDoc(doc(anonU, R + "/doubts/own3"), post({ ownerUid: "u1" }))));
+await t("owner can edit own post", () => assertSucceeds(updateDoc(doc(anonU, R + "/doubts/own1"), { title: "Edited title ok" })));
+await t("another student cannot edit it", () => assertFails(updateDoc(doc(verU, R + "/doubts/own1"), { title: "Hacked title ok" })));
+await t("another student cannot hide it", () => assertFails(updateDoc(doc(verU, R + "/doubts/own1"), { deleted: true })));
+await t("another student can add a report", () => assertSucceeds(updateDoc(doc(verU, R + "/doubts/own1"), { reports: ["x", "u2|o"] })));
+await t("...but cannot remove reports", () => assertFails(updateDoc(doc(verU, R + "/doubts/own1"), { reports: [] })));
+await t("...or add many reports at once", () => assertFails(updateDoc(doc(verU, R + "/doubts/own1"), { reports: ["x", "u2|o", "a", "b"] })));
+await t("...or change another field together with a report", () => assertFails(updateDoc(doc(verU, R + "/doubts/own1"), { reports: ["x", "u2|o", "u2|a"], title: "Sneaky title" })));
+await t("owner cannot transfer the post to someone else", () => assertFails(updateDoc(doc(anonU, R + "/doubts/own1"), { ownerUid: "u2" })));
 console.log("stories, answers, profiles");
 const story = (extra) => ({ authorId: me, authorName: "Ravi", createdAt: now(), ...extra });
 await t("text story", () => assertSucceeds(setDoc(doc(anonU, R + "/stories/s1"), story({ kind: "text", text: "tip", bg: "2" }))));

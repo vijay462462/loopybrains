@@ -123,3 +123,12 @@ See `PREMIUM.md` for the plan, the pricing ideas and the step-by-step go-live li
 - **Share cards:** "📸 Share my result" (Daily Quiz) and "📸 Share my streak" / "Share our rank" draw a picture on the phone and open the share sheet (or save the picture).
 - **College vs College:** every right answer to the daily quiz or a quiz story adds to the college's weekly score (Firestore `battleColleges` and `battlePlayers`, week id like `w2961`, restarting each Monday). Score = right answers per player; a college needs 3 players to be ranked. The security rules make both counters move together, and cap a student at 70 right answers a week, but one person with many anonymous sessions could still inflate a college: for stricter fairness count only verified-email students.
 - The rules are tested with the Firestore emulator: see `tests/rules/README.md`.
+
+## Admin dashboard (moderation, colleges, requests)
+
+1. Publish the new `firestore.rules` (adds admin + ownership rules).
+2. Open `https://<your-site>/admin.html` and sign in with your email (a link is sent; open it on the same device).
+3. The page shows "not an admin yet" and your user id. In Firebase console › Firestore › Data, create collection `admins` with a document whose ID is that user id (any one field, e.g. `note: owner`). Reload.
+4. Tabs: Overview, Moderation (hide/restore, clear reports, block device), Blocked devices, Colleges (create/edit), Requests and survey, Log. Every action is written to `adminLog`.
+
+New posts now store `ownerUid`, so only their author (or an admin) can edit them. Older posts without it stay editable by anyone until replaced.

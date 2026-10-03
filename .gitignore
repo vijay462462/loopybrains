@@ -1,2 +1,5 @@
 *.sql.bak
 firestore-export.sql
+tests/rules/node_modules
+tests/rules/firebase.json
+tests/rules/*.log

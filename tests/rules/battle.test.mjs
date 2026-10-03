@@ -2,6 +2,7 @@ import { initializeTestEnvironment, assertSucceeds, assertFails } from "@firebas
 import { readFileSync } from "fs";
 import { doc, setDoc, getDoc, writeBatch, increment, collection, getDocs, query, where } from "firebase/firestore";
 const env = await initializeTestEnvironment({ projectId: "demo-test", firestore: { rules: readFileSync("../../firestore.rules", "utf8"), host: "127.0.0.1", port: 8081 } });
+await env.clearFirestore();
 let pass = 0, fail = 0;
 const t = async (name, fn) => { try { await fn(); pass++; console.log("  ok  ", name); } catch (e) { fail++; console.log("  FAIL", name, "-", String(e.message).slice(0, 140)); } };
 const hit = async (db, week, slug, uid, ok, tweak = {}) => {

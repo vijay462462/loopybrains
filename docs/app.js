@@ -442,6 +442,7 @@ function allMyIds() {
   if (typeof store !== "undefined" && store && store.uid) ids.add(store.uid);
   return ids;
 }
+const OWNED_COLLS = new Set(["doubts", "ideas", "clubs", "gate", "jobs", "challenges", "market", "replies", "stories"]);
 async function firebaseStore(conf, prefix = "") {
   const base = "https://www.gstatic.com/firebasejs/" + FB_VERSION + "/";
   const [{ initializeApp }, fs, st, au] = await Promise.all([import(base + "firebase-app.js"), import(base + "firebase-firestore.js"), import(base + "firebase-storage.js"), import(base + "firebase-auth.js")]);
@@ -491,7 +492,8 @@ async function firebaseStore(conf, prefix = "") {
     account: () => { const u = auth && auth.currentUser; return { email: (u && u.email) || "", verified: !!(u && u.email && u.emailVerified) }; },
     subscribe: (coll, cb, onErr, since) => fs.onSnapshot(since ? fs.query(fs.collection(db, prefix + coll), fs.where("createdAt", ">", since)) : fs.collection(db, prefix + coll), snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))), onErr),
     newId: (coll) => fs.doc(fs.collection(db, prefix + coll)).id,
-    set: (coll, id, data) => fs.setDoc(fs.doc(db, prefix + coll, id), cleanDoc(data)),
+    // New posts, replies, stories and listings are stamped with the author's sign-in id so only they can change them.
+    set: (coll, id, data) => fs.setDoc(fs.doc(db, prefix + coll, id), cleanDoc(OWNED_COLLS.has(coll) && auth && auth.currentUser ? { ...data, ownerUid: auth.currentUser.uid } : data)),
     setTop: (coll, id, data) => fs.setDoc(fs.doc(db, coll, id), cleanDoc(data)),
     battleHit: async (week, slug, ok) => {
       if (!auth || !auth.currentUser) return false;
