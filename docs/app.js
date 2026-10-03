@@ -2177,8 +2177,9 @@ function renderMe() {
         el("p", { class: "hint" }, titleOf(p.points) + " · " + plural(p.points, "point")))),
     el("p", { class: "hint" }, "📷 Your profile photo (everyone can see it next to your posts)"),
     el("div", { class: "rowbtns" }, el("button", { type: "button", class: "btn sm primary", onclick: pickDp }, getDp() ? "Change photo" : "Upload photo"), getDp() && el("button", { type: "button", class: "btn sm", onclick: removeDp }, "Remove photo")),
+    state.dpMsg && el("p", { class: "hint", role: "status" }, state.dpMsg),
     el("p", { class: "hint" }, "💬 Your status (shown on your stories)"),
-    (() => { const inp = el("input", { type: "text", maxlength: "60", placeholder: "e.g. Busy with exams 📚", "aria-label": "Your status", value: getStatus() }); const save = async () => { try { localStorage.setItem("dd-status", inp.value.trim().slice(0, 60)); await syncProfile(); showNotice("Status saved ✅"); setTimeout(() => showNotice(""), 2000); } catch (e) { showNotice(errText(e)); } };
+    (() => { const inp = el("input", { type: "text", maxlength: "60", placeholder: "e.g. Busy with exams 📚", "aria-label": "Your status", value: getStatus() }); const save = async () => { try { localStorage.setItem("dd-status", inp.value.trim().slice(0, 60)); } catch (_) {} state.dpMsg = "✅ Status saved on this phone."; render(); try { await syncProfile(); state.dpMsg = "✅ Status saved and shared."; } catch (e) { state.dpMsg = "📱 Status saved on this phone, but sharing failed: " + errText(e); } render(); };
       return el("div", { class: "rowbtns" }, inp, el("button", { type: "button", class: "btn sm primary", onclick: save }, "Save"), ...["📚 Studying", "😴 Sleeping", "🎯 Placement prep", "🎮 Free"].map(t => el("button", { type: "button", class: "btn sm", onclick: () => { inp.value = t; } }, t))); })(),
     el("p", { class: "hint" }, "🎨 3D Portraits"),
     dbPicker,
@@ -5365,16 +5366,20 @@ async function syncProfile() {
 function pickDp() {
   const inp = document.createElement("input"); inp.type = "file"; inp.accept = "image/*";
   inp.addEventListener("change", async () => {
+    if (!inp.files || !inp.files[0]) return;
     try {
       const url = await imgToJpeg(inp.files[0], 96, 0.8, true);
       if (!DP_OK.test(url)) throw new Error("Could not use that photo. Try another one.");
-      try { localStorage.setItem("dd-dp", url); } catch (_) {}
-      await syncProfile(); showNotice("Profile photo updated ✅"); setTimeout(() => showNotice(""), 2500); render();
-    } catch (e) { showNotice((e && e.message) || "Could not update the photo."); }
+      try { localStorage.setItem("dd-dp", url); } catch (_) { throw new Error("This browser would not save the photo. Turn off private mode and try again."); }
+    } catch (e) { state.dpMsg = "⚠️ " + ((e && e.message) || "Could not read that photo. Try a JPG or PNG."); render(); return; }
+    state.dpMsg = "✅ Photo saved on this phone. Sharing with classmates…"; render();
+    try { await syncProfile(); state.dpMsg = "✅ Profile photo updated. Classmates can see it."; }
+    catch (e) { state.dpMsg = "📱 Photo saved on this phone, but sharing failed: " + errText(e) + " (the board's security rules may need updating)."; }
+    render();
   });
   inp.click();
 }
-async function removeDp() { try { localStorage.removeItem("dd-dp"); await syncProfile(); } catch (_) {} render(); }
+async function removeDp() { try { localStorage.removeItem("dd-dp"); } catch (_) {} state.dpMsg = ""; render(); try { await syncProfile(); } catch (_) {} }
 
 const seenSet = () => { try { return new Set(JSON.parse(localStorage.getItem("dd-seen") || "[]")); } catch (_) { return new Set(); } };
 const markSeen = (id) => { const s = seenSet(); s.add(id); try { localStorage.setItem("dd-seen", JSON.stringify([...s].slice(-300))); } catch (_) {} };
