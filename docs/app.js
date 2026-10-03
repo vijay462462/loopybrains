@@ -1286,6 +1286,15 @@ async function loadWelcomeNote() {
 }
 // "Today" card under the header: a personal greeting with the things that bring students back (streak, daily quiz, exam countdown).
 let todayKey = "";
+// Small Loopy face for the Today card (same robot as the welcome screen).
+function loopyMini() {
+  const NS = "http://www.w3.org/2000/svg", mk = (t, at) => { const n = document.createElementNS(NS, t); for (const k in at) n.setAttribute(k, at[k]); return n; };
+  const svg = mk("svg", { viewBox: "0 0 60 60", width: "46", height: "46", class: "loopy-mini", "aria-hidden": "true" });
+  svg.append(mk("line", { x1: 30, y1: 6, x2: 30, y2: 12, stroke: "#c4b5fd", "stroke-width": 3, "stroke-linecap": "round" }), mk("circle", { cx: 30, cy: 5, r: 3.5, fill: "#fde047" }),
+    mk("rect", { x: 8, y: 12, width: 44, height: 38, rx: 15, fill: "#fff", stroke: "#a78bfa", "stroke-width": 2.5 }), mk("rect", { x: 13, y: 18, width: 34, height: 25, rx: 11, fill: "#1e1757" }),
+    mk("ellipse", { cx: 23, cy: 28, rx: 3.4, ry: 4.6, fill: "#67e8f9", class: "lp-eyes" }), mk("ellipse", { cx: 37, cy: 28, rx: 3.4, ry: 4.6, fill: "#67e8f9", class: "lp-eyes" }), mk("path", { d: "M25 36q5 4.5 10 0", fill: "none", stroke: "#fde68a", "stroke-width": 2.4, "stroke-linecap": "round" }));
+  return svg;
+}
 function renderToday() {
   const bar = $("todayBar"); if (!bar) return;
   if (NO_COLLEGE || !store) { bar.hidden = true; return; }
@@ -1293,14 +1302,18 @@ function renderToday() {
     streak = state.myStreak || 0, quizDone = QUIZ.length ? !!myQuizAnswer(dayNum()) : true, plan = readJSON("dd-exam-plan", null),
     left = plan && plan.date ? Math.ceil((new Date(plan.date + "T00:00:00").getTime() - new Date().setHours(0, 0, 0, 0)) / 864e5) : null;
   const note = state.welcomeNote && readJSON("dd-note-gone", 0) !== state.welcomeNote.updatedAt ? state.welcomeNote : null;
-  const key = [hello, name, streak, quizDone, left, dayNum(), note ? note.updatedAt : 0, openDrives().length, upcomingEvents().length, unansweredDoubts().length].join("|"); if (key === todayKey && !bar.hidden) return; todayKey = key;
+  const key = [hello, name, streak, quizDone, left, dayNum(), (typeof weekPoints === "function" ? weekPoints() : 0), note ? note.updatedAt : 0, openDrives().length, upcomingEvents().length, unansweredDoubts().length].join("|"); if (key === todayKey && !bar.hidden) return; todayKey = key;
   const chip = (txt, cls, fn) => el("button", { class: "today-chip " + (cls || ""), type: "button", onclick: fn }, txt);
   const WORDS = ["Welcome to the " + BRAND + " family 💙", "Respect your teachers, help your juniors. 🙏", "Every question is welcome here.", "Kind words build a strong campus. 🌱", "Thank you for being part of our family.", "Learn together, grow together. 🚀", "Our teachers and staff work hard for you. Say thank you today. 🙏"];
-  bar.replaceChildren(el("strong", { class: "today-hello" }, hello + (name ? ", " + name : "") + " 👋"), el("small", { class: "today-words" }, WORDS[dayNum() % WORDS.length]),
+  const stat = (num, label, cls, fn) => el("button", { class: "today-stat " + (cls || ""), type: "button", onclick: fn }, el("b", {}, String(num)), el("span", {}, label));
+  const pts = typeof weekPoints === "function" ? weekPoints() : 0;
+  bar.replaceChildren(el("div", { class: "today-head" }, loopyMini(), el("div", {}, el("strong", { class: "today-hello" }, hello + (name ? ", " + name : "") + " 👋"), el("small", { class: "today-words" }, WORDS[dayNum() % WORDS.length]))),
     note ? el("div", { class: "today-note" }, el("strong", {}, "💬 " + (note.from ? "A note from " + note.from : "A note from your college")), el("p", {}, note.text), el("button", { class: "of-x", type: "button", "aria-label": "Dismiss note", onclick: () => { writeJSON("dd-note-gone", note.updatedAt); todayKey = ""; renderToday(); } }, "✕")) : null, !name ? el("button", { class: "today-chip warn", type: "button", onclick: () => { const b = $("nameBtn"); if (b) b.click(); } }, "✏️ Set your name") : null, el("button", { class: "btn primary today-ask", type: "button", onclick: () => { const b = $("askBtn"); if (b) b.click(); } }, "❓ Ask a doubt"),
+    el("div", { class: "today-stats" },
+      stat(streak, streak === 1 ? "day streak 🔥" : "day streak 🔥", streak && !(state.myDays && state.myDays.has(dayNum())) ? "warn" : "", () => showPanel("me")),
+      stat(pts, "points this week ⚡", "", () => showPanel("wboard")),
+      QUIZ.length ? stat(quizDone ? "✓" : "Go", quizDone ? "quiz done 🧠" : "today's quiz 🧠", quizDone ? "" : "pulse", () => showPanel("quiz")) : null),
     el("div", { class: "today-chips" },
-      chip(streak ? "🔥 " + streak + "-day streak" : "🔥 Start your streak", streak && !(state.myDays && state.myDays.has(dayNum())) ? "warn" : "", () => showPanel("me")),
-      QUIZ.length ? chip(quizDone ? "✅ Quiz done" : "🧠 Today's quiz", quizDone ? "" : "pulse", () => showPanel("quiz")) : null,
       left != null && left >= 0 && left <= 60 ? chip("⏳ " + (left === 0 ? "Exam today" : left + " days to exam"), left <= 7 ? "warn" : "", () => showPanel("planner")) : null,
       upcomingEvents().filter(e => e.startAt < Date.now() + 7 * 864e5).length ? chip("🎉 " + upcomingEvents().filter(e => e.startAt < Date.now() + 7 * 864e5).length + " event" + (upcomingEvents().filter(e => e.startAt < Date.now() + 7 * 864e5).length === 1 ? "" : "s") + " this week", "", () => showPanel("events")) : null,
       unansweredDoubts().length ? chip("🙋 " + unansweredDoubts().length + " doubt" + (unansweredDoubts().length === 1 ? "" : "s") + " need an answer", "pulse", showUnanswered) : null,

@@ -1980,3 +1980,20 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 @keyframes lpGlow { 50% { transform: scale(1.35); filter: drop-shadow(0 0 8px #fde047); } }
 @media (prefers-reduced-motion: reduce) { .lp-float, .lp-shadow, .lp-wave, .lp-eyes, .lp-ant, .loopy, .splash-bubble { animation: none; } }
 .today-hello::before { content: "🤖 "; }
+
+/* ---- Today card v2: Loopy, three stat tiles, tidy chip grid ---- */
+.today-hello::before { content: none; }
+.today-head { display: flex; gap: 12px; align-items: center; }
+.today-head > div { display: grid; gap: 2px; min-width: 0; }
+.loopy-mini { flex: none; filter: drop-shadow(0 6px 8px rgb(79 70 229 / .35)); animation: lpFloat 3s ease-in-out infinite; }
+.today-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.today-stat { display: grid; gap: 2px; justify-items: center; padding: 10px 6px; border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--line)); border-radius: 16px; background: color-mix(in srgb, var(--accent) 8%, var(--sheet)); color: var(--ink); font: inherit; transition: transform .12s ease; }
+.today-stat b { font-family: var(--f-display); font-size: 24px; line-height: 1.1; background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.today-stat span { font-size: 11.5px; font-weight: 700; opacity: .85; text-align: center; }
+.today-stat.warn { border-color: #f59e0b; } .today-stat.pulse { animation: pulseGlow 2s ease-in-out infinite; }
+.today-stat:active { transform: scale(.97); }
+.today-chips { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.today-chip { justify-content: center; text-align: center; padding: 9px 10px; }
+.today-ask { width: 100%; justify-self: stretch; padding: 13px 18px; font-size: 16px; border-radius: 16px; }
+@media (prefers-reduced-motion: reduce) { .loopy-mini, .today-stat.pulse { animation: none; } }
+.today-chips .today-chip:last-child:nth-child(odd) { grid-column: 1 / -1; } .today-hello { font-size: 18px; }
