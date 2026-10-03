@@ -135,17 +135,29 @@ service cloud.firestore {
       match /stories/{id} {
         function validStory() {
           let d = request.resource.data;
-          return d.keys().hasOnly(['authorId', 'authorName', 'kind', 'pageId', 'text', 'bg', 'caption', 'opts', 'ans', 'createdAt', 'deleted', 'reports'])
+          return d.keys().hasOnly(['authorId', 'authorName', 'kind', 'pageId', 'text', 'bg', 'caption', 'opts', 'ans', 'expl', 'createdAt', 'deleted', 'reports'])
             && str(d.authorId, 8, 80) && str(d.authorName, 1, 40) && d.kind in ['photo', 'text', 'quiz'] && d.createdAt is int
             && (d.kind == 'photo' ? str(d.pageId, 1, 100) : str(d.text, 1, 200))
             && (d.kind != 'quiz' || (d.opts is list && d.opts.size() >= 2 && d.opts.size() <= 4 && d.ans is int && d.ans >= 0 && d.ans < d.opts.size()))
-            && optList(d, 'opts', 4) && optStr(d, 'caption', 140) && optStr(d, 'bg', 3) && optBool(d, 'deleted') && optList(d, 'reports', 100);
+            && optList(d, 'opts', 4) && optStr(d, 'expl', 200) && optStr(d, 'caption', 140) && optStr(d, 'bg', 3) && optBool(d, 'deleted') && optList(d, 'reports', 100);
         }
         allow read: if member();
         allow create: if member() && notBlocked(room, request.resource.data.authorId) && validStory() && recent(request.resource.data.createdAt)
           && request.resource.data.get('deleted', false) == false && !('reports' in request.resource.data);
         allow update: if member() && validStory() && unchanged() && changes(['deleted', 'reports']);
         allow delete: if false;
+      }
+      match /storyAnswers/{id} {
+        function validAnswer() {
+          let d = request.resource.data;
+          return d.keys().hasOnly(['storyId', 'uid', 'name', 'to', 'campus', 'pick', 'ok', 'createdAt'])
+            && str(d.storyId, 1, 100) && str(d.uid, 8, 80) && str(d.name, 1, 40) && str(d.to, 8, 80) && optStr(d, 'campus', 30)
+            && d.pick is int && d.pick >= 0 && d.pick <= 3 && d.ok is bool && recent(d.createdAt)
+            && id == d.storyId + '_' + d.uid;
+        }
+        allow read: if member();
+        allow create: if member() && notBlocked(room, request.resource.data.uid) && validAnswer();
+        allow update, delete: if false;
       }
       match /storyViews/{id} {
         allow read: if member();

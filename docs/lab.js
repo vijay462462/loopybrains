@@ -307,5 +307,14 @@
     queueMicrotask(drawFocus);
     return h("div", {}, bar, body);
   }
-  window.SparkLab = { mount, _fs: FS, _f: F, _done: fDone, _rate: rate, _streak: streak };
+  // Used by quiz stories: put a question into a deck (created if needed). Returns false if it is already there.
+  function addCard(deckName, q, a) {
+    const all = decks(); let d = all.find((x) => x.name === deckName);
+    if (!d) { d = { id: uid(), name: deckName, cards: [] }; all.push(d); }
+    q = String(q).slice(0, 400); a = String(a).slice(0, 500);
+    if (d.cards.some((c) => c.q === q)) return false;
+    d.cards.unshift({ id: uid(), q, a, reps: 0, ease: 2.5, interval: 0, due: 0 });
+    save("decks", all); return true;
+  }
+  window.SparkLab = { mount, addCard, _fs: FS, _f: F, _done: fDone, _rate: rate, _streak: streak };
 })();

@@ -155,7 +155,7 @@ const fileExt = (name) => (String(name || "").split(".").pop() || "").toLowerCas
 
 const state = {
   tab: "doubts", group: "All", query: "", filter: "all",
-  doubts: [], ideas: [], clubs: [], gate: [], jobs: [], challenges: [], chalScores: [], market: [], marketReports: [], marketRatings: [], marketInterests: [], replies: [], likes: [], blocked: [], profiles: [], stories: [], storyViews: [], loaded: false,
+  doubts: [], ideas: [], clubs: [], gate: [], jobs: [], challenges: [], chalScores: [], market: [], marketReports: [], marketRatings: [], marketInterests: [], replies: [], likes: [], blocked: [], profiles: [], stories: [], storyViews: [], storyAnswers: [], loaded: false,
   selected: null, mode: "intro", // intro | view | ask | edit | name | campus
   afterName: null,
   replyPages: [], replyAnon: false,
@@ -2139,6 +2139,31 @@ function campusStats() {
   return Object.values(map).sort((a, b) => b.points - a.points);
 }
 
+// Quiz stories feed a weekly board (answers are kept for 7 days, so these do not change permanent levels).
+function weeklyQuiz() {
+  const cut = Date.now() - 7 * 86400000, perDay = new Map(), who = new Map(), camp = new Map();
+  for (const a of state.storyAnswers) {
+    if (!a.uid || a.uid === a.to || a.createdAt < cut) continue;
+    let counted = false;
+    if (a.ok) { const k = a.uid + "~" + dayNum(a.createdAt), n = perDay.get(k) || 0; if (n < 10) { perDay.set(k, n + 1); counted = true; } }
+    const w = who.get(a.uid) || { uid: a.uid, name: a.name || "Student", correct: 0, total: 0 }; w.total++; if (counted) w.correct++; who.set(a.uid, w);
+    if (a.campus) { const c = camp.get(a.campus) || { campus: a.campus, players: new Set(), correct: 0, total: 0 }; c.players.add(a.uid); c.total++; if (counted) c.correct++; camp.set(a.campus, c); }
+  }
+  return { stars: [...who.values()].filter(w => w.correct > 0).sort((a, b) => b.correct - a.correct).slice(0, 5), campuses: [...camp.values()].map(c => ({ ...c, players: c.players.size, avg: c.correct / c.players.size })).sort((a, b) => b.avg - a.avg) };
+}
+function weeklyQuizBlock() {
+  const w = weeklyQuiz(), meId = store && store.uid, maxAvg = Math.max(...w.campuses.map(c => c.avg), 1);
+  return [
+    el("div", { class: "label" }, "🧠 Quiz stars this week"),
+    w.stars.length ? el("ol", { class: "board" }, w.stars.map((p, i) => el("li", { class: p.uid === meId ? "me" : null }, el("span", { class: "rank" }, ["🥇", "🥈", "🥉"][i] || String(i + 1)), el("span", { class: "who" }, el("strong", {}, p.name + (p.uid === meId ? " (you)" : "")), el("small", {}, p.correct + " correct of " + p.total + " answered")), el("span", { class: "pts" }, p.correct)))) : el("p", { class: "hint" }, "Answer quiz stories to become a quiz star. Each correct answer counts (up to 10 a day)."),
+    el("div", { class: "label" }, "⚔️ Campus quiz battle (this week)"),
+    w.campuses.length ? el("div", { class: "rival-board" }, ...w.campuses.map(c => el("div", { class: "rival-row" },
+      el("span", { class: "rival-rank" }, CAMPUS_ICON[c.campus] || "🏫"), el("span", { class: "rival-name", style: "color:" + campusColor(c.campus) }, c.campus),
+      el("div", { class: "rival-bar-wrap" }, el("div", { class: "rival-bar", style: "width:" + Math.round(c.avg * 100 / maxAvg) + "%;background:" + campusColor(c.campus) })),
+      el("span", { class: "rival-score" }, c.avg.toFixed(1)), el("span", { class: "rival-sub" }, c.correct + " correct · " + c.players + (c.players === 1 ? " player" : " players"))))) : el("p", { class: "hint" }, "No campus has answered yet. Pick your campus in Filters, then answer a quiz story."),
+    el("p", { class: "hint" }, "Score = correct answers per player, so small campuses compete fairly."),
+  ];
+}
 function renderLeaders() {
   const rows = [...allStats().values()].filter(p => p.points > 0).sort((a, b) => b.points - a.points).slice(0, 15);
   const medal = ["🥇", "🥈", "🥉"];
@@ -2177,6 +2202,7 @@ function renderLeaders() {
     el("p", { class: "hint" }, "Answer a classmate's doubt +2 · answer marked helpful +5 more · each 👍💡🔥 on your answer +1 · daily quiz right +3 · share an idea +2 · each like on your idea +1 · ask a doubt +1. Anonymous posts don't count."),
     rivalBoard && el("div", { class: "label" }, "🏫 Campus Rivalry — all 4 RGUKT campuses"),
     rivalBoard,
+    ...weeklyQuizBlock(),
     rivalBoard && el("p", { class: "hint" }, "Campus points — ask a doubt +1 · share an idea +2 · helpful answer +5 · post in clubs +1. Compete with other campuses."),
     el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")),
   ].filter(Boolean);
@@ -5492,7 +5518,8 @@ function openStoryAdd() {
   const txt = el("textarea", { maxlength: "200", rows: "4", placeholder: "Type a study tip, a formula or a quiz question…", "aria-label": "Story text" });
   const qopts = [0, 1, 2, 3].map(i => el("input", { type: "text", maxlength: "60", placeholder: "Option " + "ABCD"[i] + (i < 2 ? "" : " (optional)"), "aria-label": "Option " + "ABCD"[i] }));
   const qans = el("select", { "aria-label": "Correct option" }, "ABCD".split("").map((l, i) => el("option", { value: String(i) }, "Correct answer: " + l)));
-  const quizBox = el("div", { class: "st-quiz-form" }, ...qopts, qans);
+  const qexpl = el("input", { type: "text", maxlength: "200", placeholder: "Why is it correct? (optional, shown after answering)", "aria-label": "Explanation" });
+  const quizBox = el("div", { class: "st-quiz-form" }, ...qopts, qans, qexpl);
   const file = el("input", { type: "file", accept: "image/*", "aria-label": "Choose a photo" });
   file.addEventListener("change", async () => {
     err.textContent = ""; img = "";
@@ -5516,12 +5543,12 @@ function openStoryAdd() {
       if (pos < 0) { err.textContent = "The correct answer must be one of the options you filled in."; return; }
       qo = filled.map(x => x.v); qa = pos;
     }
-    if (hasBadWords([t, cap.value, ...qo].join(" "))) { err.textContent = LANGUAGE_MSG; return; }
+    if (hasBadWords([t, cap.value, qexpl.value, ...qo].join(" "))) { err.textContent = LANGUAGE_MSG; return; }
     post.disabled = true; post.textContent = "Posting…";
     try {
       const id = store.newId("stories"), now = Date.now(), doc = { authorId: store.uid, authorName: getName().slice(0, 40), kind, createdAt: now };
       if (kind === "photo") { const pid = store.newId("pages"); await store.set("pages", pid, { data: img, parentId: id, createdAt: now }); doc.pageId = pid; storyImgCache.set(pid, img); const c = cap.value.trim(); if (c) doc.caption = c.slice(0, 140); }
-      else { doc.text = t.slice(0, 200); doc.bg = String(bg); if (kind === "quiz") { doc.opts = qo; doc.ans = qa; } }
+      else { doc.text = t.slice(0, 200); doc.bg = String(bg); if (kind === "quiz") { doc.opts = qo; doc.ans = qa; const ex = qexpl.value.trim(); if (ex) doc.expl = ex.slice(0, 200); } }
       state.stories = [...state.stories, { id, ...doc }];
       await store.set("stories", id, doc);
       close(); renderStoryBar(); showNotice("Story posted for 24 hours ✅"); setTimeout(() => showNotice(""), 2500);
@@ -5587,15 +5614,40 @@ function openStories(authorId) {
     if (s.kind === "quiz") {
       const c = STORY_BG[Number(s.bg)] || STORY_BG[4], card = el("div", { class: "st-textcard st-quizcard" });
       card.style.setProperty("background", "linear-gradient(135deg," + c[0] + "," + c[1] + ")");
-      const opts = (s.opts || []).slice(0, 4), done = { v: false };
-      const btns = opts.map((o, i) => el("button", { type: "button", class: "st-opt" + (ownS && i === s.ans ? " good" : ""), onclick: () => {
-        if (done.v || ownS) return; done.v = true;
-        btns.forEach((b, k) => { b.disabled = true; if (k === s.ans) b.classList.add("good"); else if (k === i) b.classList.add("bad"); });
-        note.textContent = i === s.ans ? "✅ Correct!" : "❌ The right answer is highlighted.";
-        clearTimeout(timer); fill.classList.remove("run"); void fill.offsetWidth; run(6000);
-      } }, "ABCD"[i] + ".  " + o));
-      const note = el("p", { class: "st-qnote" }, ownS ? "Viewers can tap an option. The right answer is marked." : "Tap your answer");
-      card.append(el("p", { class: "st-q" }, s.text), ...btns, note, el("button", { type: "button", class: "st-opt st-skip", onclick: next }, "Next ➜")); body.append(card); run(30000);
+      const opts = (s.opts || []).slice(0, 4), meKey = s.id + "_" + store.uid;
+      const earlier = ownS ? null : state.storyAnswers.find(a => a.id === meKey);
+      let answered = false;
+      const note = el("p", { class: "st-qnote" }), extra = el("div", { class: "st-extra" });
+      const btns = opts.map((o, i) => el("button", { type: "button", class: "st-opt", onclick: () => answer(i) }, "ABCD"[i] + ".  " + o));
+      const reveal = (pick) => {
+        const rows = state.storyAnswers.filter(a => a.storyId === s.id && a.uid !== s.authorId), total = rows.length, right = rows.filter(a => a.ok).length;
+        btns.forEach((b, k) => {
+          b.disabled = true; if (k === s.ans) b.classList.add("good"); else if (k === pick) b.classList.add("bad");
+          if (ownS) b.textContent += "   · " + rows.filter(a => a.pick === k).length;
+        });
+        const bits = [];
+        if (s.expl) bits.push(el("p", { class: "st-expl" }, "💡 " + s.expl));
+        if (total) bits.push(el("p", { class: "st-qnote" }, "📊 " + Math.round(right * 100 / total) + "% of " + total + (total === 1 ? " student" : " students") + " got this right"));
+        else if (ownS) bits.push(el("p", { class: "st-qnote" }, "No answers yet. Viewers can tap an option; you will see the counts here."));
+        if (!ownS) bits.push(el("button", { type: "button", class: "st-opt st-save", onclick: (e) => {
+          const added = window.SparkLab && window.SparkLab.addCard ? window.SparkLab.addCard("From quiz stories", s.text + "\n" + opts.map((o, k) => "ABCD"[k] + ". " + o).join("\n"), "Answer: " + "ABCD"[s.ans] + ". " + opts[s.ans] + (s.expl ? "\n" + s.expl : "")) : null;
+          e.currentTarget.disabled = true; e.currentTarget.textContent = added === false ? "📇 Already in your flashcards" : "📇 Saved! Find it in Study Lab › Flashcards";
+        } }, "📇 Save to my flashcards"));
+        extra.replaceChildren(...bits);
+      };
+      const answer = (i) => {
+        if (ownS || answered) return; answered = true;
+        const ok = i === s.ans, doc = { storyId: s.id, uid: store.uid, name: (getName() || "Student").slice(0, 40), to: s.authorId, campus: (getCampus() || "").slice(0, 30), pick: i, ok, createdAt: Date.now() };
+        state.storyAnswers = [...state.storyAnswers, { id: meKey, ...doc }];
+        store.set("storyAnswers", meKey, doc).catch(() => {});
+        note.textContent = ok ? "✅ Correct! Counts toward this week's quiz stars." : "❌ Not quite. The right answer is highlighted.";
+        reveal(i); clearTimeout(timer); fill.classList.remove("run"); void fill.offsetWidth; run(14000);
+      };
+      card.append(el("p", { class: "st-q" }, s.text), ...btns, note, extra, el("button", { type: "button", class: "st-opt st-skip", onclick: next }, "Next ➜"));
+      body.append(card);
+      if (ownS) { note.textContent = "Your quiz. Viewers can answer it."; reveal(-1); run(20000); }
+      else if (earlier) { answered = true; note.textContent = earlier.ok ? "✅ You answered this correctly." : "❌ You answered this already."; reveal(earlier.pick); run(8000); }
+      else { note.textContent = "Tap your answer"; run(30000); }
     } else if (s.kind === "text") {
       const c = STORY_BG[Number(s.bg)] || STORY_BG[0], card = el("div", { class: "st-textcard" }, s.text); card.style.setProperty("background", "linear-gradient(135deg," + c[0] + "," + c[1] + ")"); body.append(card); run(STORY_SHOW + 1500);
     } else {
@@ -5784,6 +5836,7 @@ render();
   const since = Date.now() - STORY_MS;
   store.subscribe("stories", rows => { state.stories = rows.filter(x => !x.deleted); renderStoryBar(); }, e => {}, since);
   store.subscribe("storyViews", rows => { state.storyViews = rows; }, e => {}, since);
+  store.subscribe("storyAnswers", rows => { state.storyAnswers = rows; update(); }, e => {}, Date.now() - 7 * 86400000);
   store.subscribe("jobs", rows => { const live_ = live(rows); trackNew("jobs", live_); state.jobs = live_; update(); }, e => {});
   store.subscribe("challenges", rows => { const live_ = live(rows); trackNew("challenges", live_); state.challenges = live_; update(); }, e => {});
   store.subscribe("chal_scores", rows => { state.chalScores = rows.filter(r => !r.deleted); update(); }, e => {});
