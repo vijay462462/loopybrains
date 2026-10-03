@@ -1363,6 +1363,7 @@ function questCard() {
   if (readJSON("dd-quest-done", false) || (readJSON("dd-visits", { n: 1 }).n || 1) > 21) return null;
   const steps = questSteps(), n = steps.filter(s => s[2]).length;
   if (n === 3) { if (state.dataReady) { writeJSON("dd-quest-done", true); const until = Math.max(Number(readJSON("dd-bonus-until", 0)) || 0, Date.now()) + 864e5; writeJSON("dd-bonus-until", until); }
+    if (!readJSON("dd-quest-cele", false)) { writeJSON("dd-quest-cele", true); setTimeout(() => confetti(140), 200); }
     return el("div", { class: "wow", role: "status" }, el("span", { class: "wow-conf", "aria-hidden": "true" }, "🎉 ✨ 🎊"), el("strong", {}, "Wow, you finished your first steps!"), el("span", {}, "Welcome to the family. 🎁 1 free day of Plus studio is yours.")); }
   return el("div", { class: "quest" }, el("div", { class: "quest-head" }, el("strong", {}, "🚀 Your first 3 steps"), el("small", {}, n + "/3")),
     el("div", { class: "mock-bar" }, (() => { const s = el("span", {}); s.style.setProperty("width", Math.round(n * 100 / 3) + "%"); return s; })()),
@@ -1378,6 +1379,20 @@ function latestHelp() {
   const r = state.replies.filter(x => !x.deleted && x.authorName && (x.createdAt || 0) > Date.now() - 864e5 && x.parentColl === "doubts").sort((x, y) => y.createdAt - x.createdAt)[0]; if (!r) return null;
   const d = state.doubts.find(x => x.id === r.parentId); if (!d) return null;
   return el("button", { class: "ticker", type: "button", onclick: () => openPost("doubts", d.id) }, el("span", { class: "ticker-dot", "aria-hidden": "true" }), el("span", {}, el("b", {}, String(r.authorName).slice(0, 24)), " just answered a doubt" + (d.subject ? " in " + d.subject : "") + " · " + noticeAgo(r.createdAt)));
+}
+// Confetti burst for happy moments (finished quest, milestone, great score, rare reward). Pure canvas, removes itself.
+function confetti(n) {
+  try {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const cv = document.createElement("canvas"); cv.className = "confetti"; cv.width = innerWidth; cv.height = innerHeight; document.body.append(cv);
+    const g = cv.getContext("2d"), cols = ["#8b7cff", "#d946ef", "#f97316", "#fde047", "#22c55e", "#38bdf8"], N = n || 90, ps = Array.from({ length: N }, () => ({ x: innerWidth / 2 + (Math.random() - 0.5) * 80, y: innerHeight * 0.45, vx: (Math.random() - 0.5) * 12, vy: -Math.random() * 13 - 4, s: 5 + Math.random() * 6, r: Math.random() * 6, vr: (Math.random() - 0.5) * 0.4, c: cols[Math.floor(Math.random() * cols.length)] }));
+    const t0 = performance.now();
+    (function tick(t) {
+      const k = t - t0; g.clearRect(0, 0, cv.width, cv.height);
+      for (const p of ps) { p.vy += 0.35; p.x += p.vx; p.y += p.vy; p.r += p.vr; g.save(); g.translate(p.x, p.y); g.rotate(p.r); g.globalAlpha = Math.max(0, 1 - k / 2200); g.fillStyle = p.c; g.fillRect(-p.s / 2, -p.s / 3, p.s, p.s * 0.6); g.restore(); }
+      if (k < 2200) requestAnimationFrame(tick); else cv.remove();
+    })(t0);
+  } catch (_) {}
 }
 // Mystery daily box: open it once a day for a fun fact, a collectible Loopy sticker, or (rarely) a bonus day of Plus studio.
 const STICKERS = [["🚀", "Rocket Loopy"], ["📚", "Bookworm Loopy"], ["🧠", "Genius Loopy"], ["🎧", "Focus Loopy"], ["🏆", "Champion Loopy"], ["🌟", "Star Loopy"], ["☕", "Chai Loopy"], ["🎓", "Graduate Loopy"], ["👑", "Golden Loopy"]];
@@ -1410,7 +1425,7 @@ function showBox() {
     : rec.kind === "bonus" ? [el("div", { class: "welcome-icon", "aria-hidden": "true" }, "🎁"), el("h2", {}, "Lucky day! A bonus gift"), el("p", {}, "You won 1 free day of Plus studio. Use the mock tests, planner and more today.")]
     : [el("div", { class: "welcome-icon", "aria-hidden": "true" }, "💡"), el("h2", {}, "Did you know?"), el("p", {}, BOX_FACTS[rec.id])];
   box.append(el("div", { class: "welcome-card" }, ...body, el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", onclick: close }, fresh ? "Wow, nice!" : "Close"), el("button", { class: "btn", type: "button", onclick: () => { close(); showPanel("stickers"); } }, "🎴 Sticker book"))));
-  document.body.append(box);
+  document.body.append(box); if (rec.kind !== "fact" && fresh) confetti(rec.id === 8 ? 160 : 90);
 }
 function renderStickers() {
   const owned = readJSON("dd-stickers", []), back = el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back");
@@ -1551,7 +1566,7 @@ function showMilestone(n, tries) {
     bonus ? el("p", { class: "plan-deal" }, "🎁 Our gift: " + bonus + " free day" + (bonus === 1 ? "" : "s") + " of Plus studio") : null,
     el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", onclick: close }, "Thank you!"),
       el("button", { class: "btn", type: "button", onclick: () => { shareResult({ kicker: "Member of the " + BRAND + " family", emoji: icon, big: "Day " + n, line: title }); } }, "📤 Share"))));
-  document.body.append(box);
+  document.body.append(box); confetti(120);
 }
 function maybeMilestone() {
   const n = recordVisit(), done = readJSON("dd-milestones", []);
@@ -3134,6 +3149,7 @@ function renderMock() {
   if (m.result) {
     const r = m.result, pct = Math.round(r.right * 100 / r.n), same = mockHistory().filter(x => x.b === m.bank), prev = same.length > 1 ? same[same.length - 2] : null, pp = prev ? Math.round(prev.right * 100 / prev.n) : null;
     const weak = Object.entries(r.bySub).sort((a, b) => (a[1].r / a[1].n) - (b[1].r / b[1].n))[0];
+    if (pct >= 80 && !m.cele) { m.cele = true; setTimeout(() => confetti(110), 150); }
     return [pct >= 70 ? el("div", { class: "wow", role: "status" }, el("span", { class: "wow-conf", "aria-hidden": "true" }, "🎉 ✨ 🎊 ⭐ 🎉"), el("strong", {}, pct >= 90 ? "Wow, outstanding!" : pct >= 80 ? "Wow, amazing!" : "Great job!"), el("span", {}, r.right + " out of " + r.n + " correct")) : null,
       el("h2", {}, "📝 Result: " + r.right + " / " + r.n + " (" + pct + "%)"),
       prev ? el("p", { class: "hint" }, "Last time: " + pp + "%. " + (pct > pp ? "Better! 📈" : pct === pp ? "Same." : "Keep practising.")) : null,
@@ -7194,7 +7210,7 @@ document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click
   render(); if (toJobs) { $("rail").scrollIntoView({ block: "start" }); return; } openAsk();
 }));
 $("askBtn").addEventListener("click", openAsk);
-const showPanel = (mode) => { state.mode = mode; render(); if (innerWidth <= 1000) $("sheet").scrollIntoView({ behavior: "smooth" }); };
+const showPanel = (mode) => { state.mode = mode; render(); { const sh = $("sheet"); if (sh) { sh.classList.remove("enter"); void sh.offsetWidth; sh.classList.add("enter"); } } if (innerWidth <= 1000) $("sheet").scrollIntoView({ behavior: "smooth" }); };
 $("leadersBtn").addEventListener("click", () => showPanel("leaders"));
 $("networkBtn") && $("networkBtn").addEventListener("click", () => showPanel("network"));
 $("quizBtn").addEventListener("click", () => showPanel("quiz"));
