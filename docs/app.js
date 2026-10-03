@@ -1,4 +1,9 @@
 // Doubt Desk: class board for doubts and ideas.
+// DOM safety: replaceChildren/append/prepend turn null, undefined and false into the text "null". Skip them instead.
+for (const m of ["replaceChildren", "append", "prepend"]) {
+  const orig = Element.prototype[m];
+  Element.prototype[m] = function (...nodes) { return orig.apply(this, nodes.filter(n => n != null && n !== false)); };
+}
 // Data lives in Firebase Firestore when config.js has Firebase settings, otherwise in this browser (demo mode).
 
 const CFG = window.DOUBT_DESK_CONFIG || {};
