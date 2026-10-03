@@ -2583,7 +2583,7 @@ async function startCheckout(planKey) {
   if (!r.ok || !url || !/^https:\/\/(rzp\.io|razorpay\.com|[a-z0-9-]+\.razorpay\.com)\//.test(url)) throw new Error(j.error || "Could not start the payment.");
   window.open(url, "_blank", "noopener");
 }
-const PLUS_FEATURES = ["AI doubt helper", "Previous-year paper vault with solutions", "Mock tests with analytics", "Mistake notebook", "Exam planner", "Placement preparation kit", "Cloud backup and sync", "Profile themes and frames", "No ads, ever"];
+const PLUS_FEATURES = ["Plus gift link for a friend", "Group study rooms with a shared timer", "Scan handwritten notes into flashcards", "Live doubt sessions with seniors", "Placement preparation kit", "Offline downloads of papers", "Weekly leaderboard for Plus members", "Resume builder", "No ads, ever"];
 const PLUS_TILES = [
   ["🤖", "AI study helper", "Ask doubts and get step-by-step answers from Claude. 40 a day.", "ai"],
   ["📝", "Mock tests", "Timed subject and placement tests with a topic-wise report.", "mock"],
@@ -2623,7 +2623,7 @@ function renderPlus() {
   // interest survey (works today, no payment needed)
   const email = el("input", { type: "email", maxlength: "100", placeholder: "Email (optional, only to tell you when Plus opens)", "aria-label": "Email", autocomplete: "email" });
   const picks = PLUS_FEATURES.map(f => ({ f, box: el("input", { type: "checkbox" }) }));
-  const price = el("select", { "aria-label": "What would you pay per month?" }, ["I would not pay", "₹29 a month", "₹49 a month", "₹99 a month", "₹149 or more"].map(o => el("option", {}, o)));
+  const price = el("select", { "aria-label": "What would you pay per month?" }, ["₹29 a month", "₹49 a month", "₹99 a month", "₹149 or more"].map(o => el("option", {}, o)));
   const survey = el("form", { class: "form", onsubmit: async (e) => {
     e.preventDefault();
     try { if (Date.now() - Number(localStorage.getItem("dd-plus-interest") || 0) < 86400000) { say("Thank you! You already answered today."); return; } } catch (_) {}
@@ -2684,6 +2684,7 @@ function renderPlus() {
     (!plusLocked() ? coachCard() : null),
     plansBlock(),
     msg,
+    (!plusLocked() ? dailyCard() : null),
     refInviteCard(),
     el("div", { class: "label" }, "What you get"),
     el("div", { class: "plus-tiles" }, ...PLUS_TILES.map(([icon, title, text, mode]) => el("button", { class: "plus-tile", type: "button", onclick: () => { if (mode) { state.mock = null; state.mist = null; showPanel(mode); } } }, el("span", { class: "pt-i", "aria-hidden": "true" }, icon), el("strong", {}, title), el("span", {}, text)))),
@@ -2717,7 +2718,8 @@ const offerOn = () => { const o = PLUS.offer; if (!o || !o.yearly || !o.until) r
 // Weekly goals and lifetime badges, kept on this phone.
 const goalStats = () => { const g = readJSON("dd-goals", {}); return g.week === weekKey() ? g : { week: weekKey(), tests: 0, cleared: 0, papers: 0 }; };
 const lifeStats = () => ({ tests: 0, cleared: 0, papers: 0, best: 0, ...readJSON("dd-life", {}) });
-function bump(key, n, score) { const g = goalStats(); g[key] = (g[key] || 0) + n; writeJSON("dd-goals", g); const l = lifeStats(); l[key] = (l[key] || 0) + n; if (score && score > l.best) l.best = score; writeJSON("dd-life", l); }
+const dailyStats = () => { const d = readJSON("dd-daily", {}); return d.day === dayStr() ? d : { day: dayStr(), tests: 0, cleared: 0, mins: 0 }; };
+function bump(key, n, score) { try { const dd = dailyStats(); dd[key] = (dd[key] || 0) + n; writeJSON("dd-daily", dd); } catch (_) {} const g = goalStats(); g[key] = (g[key] || 0) + n; writeJSON("dd-goals", g); const l = lifeStats(); l[key] = (l[key] || 0) + n; if (score && score > l.best) l.best = score; writeJSON("dd-life", l); }
 
 const readJSON = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k) || "null"); return v == null ? d : v; } catch (_) { return d; } };
 const writeJSON = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} };
@@ -2905,7 +2907,14 @@ function renderFocusPlus() {
       el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", onclick: () => start("focus") }, "▶ Start " + FOCUS_MIN + "-min focus"), el("button", { class: "btn", type: "button", onclick: () => start("break") }, "☕ " + BREAK_MIN + "-min break")))
       : el("div", { class: "learn-card plus-list ft-run" }, el("strong", {}, f.kind === "focus" ? "🎯 Focus" : "☕ Break"), el("div", { class: "ft-time", "data-ft": "", role: "timer" }, mm(Math.max(0, f.end - Date.now()))), el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: () => { clearInterval(f.tick); state.ft = { idle: true, msg: "Stopped. Unfinished focus rounds are not logged." }; render(); } }, "Stop"))),
     el("div", { class: "learn-card plus-list" }, el("strong", {}, "Last 7 days: " + total + " minutes"), chart),
+    el("div", { class: "learn-card plus-list" }, el("strong", {}, "Study calendar (last 5 weeks)"), (() => { const cells = Array.from({ length: 35 }, (_, i) => { const d = new Date(Date.now() - (34 - i) * 864e5), v = log[dayStr(d)] || 0; return el("span", { class: "hm hm" + (v >= 100 ? 3 : v >= 50 ? 2 : v > 0 ? 1 : 0), title: d.toLocaleDateString() + ": " + v + " min" }); }); return el("div", { class: "heat", role: "img", "aria-label": "Study calendar for the last 5 weeks" }, ...cells); })()),
     el("div", { class: "rowbtns" }, back)];
+}
+// "Daily 3": three small tasks that tick themselves off as you study.
+function dailyCard() {
+  const d = dailyStats(), items = [["⏱️", "One focus round", (d.mins || 0) >= 25], ["📓", "Clear 3 mistakes", (d.cleared || 0) >= 3], ["📝", "Take a mock test", (d.tests || 0) >= 1]], n = items.filter(x => x[2]).length;
+  return el("div", { class: "learn-card plus-list" }, el("strong", {}, "✅ Daily 3 · " + n + "/3" + (n === 3 ? " · Wow, amazing day! 🎉" : "")),
+    ...items.map(([ic, t, ok]) => el("p", { class: ok ? "daily-done" : "" }, (ok ? "✔ " : "○ ") + ic + " " + t)));
 }
 const GOAL_DEFS = [["tests", "📝 Take 3 mock tests", 3], ["cleared", "📓 Clear 10 mistakes", 10], ["papers", "📚 Practise 2 papers", 2], ["mins", "⏱️ Focus for 120 minutes", 120]];
 const PLUS_BADGES = [["🥉", "First mock", l => l.tests >= 1], ["🥈", "5 mocks done", l => l.tests >= 5], ["🏆", "Ace: 90%+ in a test", l => l.best >= 90], ["🧹", "Mistake slayer (20)", l => l.cleared >= 20], ["📚", "Paper warrior (10)", l => l.papers >= 10], ["🗓️", "Planner set", () => !!readJSON("dd-exam-plan", null)], ["⏱️", "Focused: 10 hours", l => (l.mins || 0) >= 600]];

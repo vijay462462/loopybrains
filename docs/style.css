@@ -1770,3 +1770,9 @@ body.priv-blur > * { filter: blur(22px); }
 .ft-track { display: flex; align-items: flex-end; width: 100%; max-width: 28px; }
 .ft-bar { display: block; width: 100%; border-radius: 6px 6px 2px 2px; background: var(--accent); }
 .ft-col small { font-size: 11px; opacity: .75; }
+.daily-done { opacity: .65; text-decoration: line-through; }
+.heat { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.hm { aspect-ratio: 1; border-radius: 5px; background: var(--accent-soft); }
+.hm1 { background: color-mix(in srgb, var(--accent) 35%, var(--accent-soft)); }
+.hm2 { background: color-mix(in srgb, var(--accent) 65%, var(--accent-soft)); }
+.hm3 { background: var(--accent); }
