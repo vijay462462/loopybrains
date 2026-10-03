@@ -105,10 +105,12 @@ const JOB_SITES = [["Internshala", "https://internshala.com"], ["Unstop", "https
 function jobsHub() {
   if (state.tab !== "jobs" || state.query.trim()) return null;
   const soon = state.jobs.filter(d => !d.deleted && !isHidden(d)).map(d => ({ d, n: jobDaysLeft(d) })).filter(x => x.n != null && x.n >= 0 && x.n <= 14).sort((a, b) => a.n - b.n).slice(0, 4);
+  const latest = state.jobs.filter(d => !d.deleted && !isHidden(d) && !(jobDaysLeft(d) < 0)).sort((a, b) => b.createdAt - a.createdAt).slice(0, 3);
   return el("div", { class: "learn-card year-hub" },
     el("strong", {}, "💼 Placement and internship board"),
     soon.length ? el("small", { class: "hint" }, "⏰ Closing soon") : el("small", { class: "hint" }, "No deadlines in the next 2 weeks. Post an opening to help your batch."),
     ...soon.map(x => el("button", { type: "button", class: "campus-link", onclick: () => openItem(x.d.id) }, el("strong", {}, x.d.title), el("small", {}, (x.d.company ? x.d.company + " · " : "") + jobDeadlineText(x.n)))),
+    ...(latest.length ? [el("small", { class: "hint" }, "🆕 Latest openings"), ...latest.map(d => el("button", { type: "button", class: "campus-link", onclick: () => openItem(d.id) }, el("strong", {}, d.title), el("small", {}, [d.type, d.company, jobDeadlineText(jobDaysLeft(d))].filter(Boolean).join(" · "))))] : []),
     el("small", { class: "hint" }, "🔎 Where to find openings (free)"),
     el("div", { class: "rowbtns" }, JOB_SITES.map(([l, u]) => el("a", { class: "btn sm", href: u, target: "_blank", rel: "noopener noreferrer" }, l + " ↗"))),
     el("p", { class: "hint" }, "🛡️ Real companies never ask for money. Never pay for a job, internship, test or certificate, and never share OTPs or bank details."));
@@ -1089,7 +1091,7 @@ function renderRail() {
       onclick: () => { state.group = state.group === s ? "All" : s; render(); if (innerWidth <= 1000 && state.group !== "All") setTimeout(() => { const l = $("list"); if (l) l.scrollIntoView({ behavior: "smooth", block: "start" }); }, 60); },
     }, el("span", {}, s), el("span", { class: "n" }, counts[s] || 0)))
   ) : null;
-  $("rail").replaceChildren(...[deptTabs, subjGrid].filter(Boolean));
+  $("rail").replaceChildren(...[jobsHub(), deptTabs, subjGrid].filter(Boolean));
 }
 
 function visible() {
@@ -1795,7 +1797,7 @@ function renderList() {
     const noun = state.tab === "doubts" || state.tab === "gate" ? "subject" : state.tab === "clubs" ? "club" : state.tab === "challenges" ? "type" : "category";
     const emptyMsg = state.tab === "doubts" ? "No doubts yet" : state.tab === "clubs" ? "No club posts yet" : state.tab === "gate" ? "No GATE discussions yet" : state.tab === "challenges" ? "No challenges yet" : state.tab === "jobs" ? "No openings yet" : "No ideas yet";
     const hubEl = state.query.trim() ? null : subjectHub(0);
-    $("list").replaceChildren(...[deptBanner(), campusHub(), yearHub(), jobsHub(), hubEl].filter(Boolean), ...(hubEl ? [] : [all.length
+    $("list").replaceChildren(...[deptBanner(), campusHub(), yearHub(), hubEl].filter(Boolean), ...(hubEl ? [] : [all.length
       ? el("div", { class: "empty" }, el("strong", {}, "Nothing matches"), "Try another " + noun + " or clear the search.")
       : el("div", { class: "empty" }, el("strong", {}, emptyMsg), "Press \u201c" + t.ask + "\u201d to post the first one.")]));
     return;
@@ -1805,7 +1807,7 @@ function renderList() {
     el("span", { class: "spot-k" }, "⭐ Doubt of the Day"),
     el("strong", {}, spot.d.title),
     el("span", { class: "spot-why" }, spot.why + " Can you solve it?"));
-  $("list").replaceChildren(...[deptBanner(), campusHub(), yearHub(), jobsHub(), subjectHub(rows.length), spotCard].filter(Boolean), ...rows.map(d => {
+  $("list").replaceChildren(...[deptBanner(), campusHub(), yearHub(), subjectHub(rows.length), spotCard].filter(Boolean), ...rows.map(d => {
     const n = repliesFor(d.id).length, g = d[t.field];
     const meta = [el("span", { class: "tag", ...colorAttrs(g) }, g)];
     const votes = likesFor(d.id).length;
