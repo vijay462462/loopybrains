@@ -5457,11 +5457,21 @@ async function imageProblem(src) {
   return "";
 }
 // Photo -> small JPEG data URL (square crop for DP). Nothing is uploaded until the student posts it.
+// createImageBitmap fails on some phone photos; fall back to a plain <img> element.
+async function decodeImage(file) {
+  try { return await createImageBitmap(file); } catch (_) {}
+  const url = URL.createObjectURL(file);
+  try {
+    const img = new Image(); img.src = url;
+    await new Promise((res, rej) => { img.onload = res; img.onerror = () => rej(new Error("That photo could not be opened. Try another photo, or take a screenshot of it and use that.")); });
+    return img;
+  } finally { setTimeout(() => URL.revokeObjectURL(url), 5000); }
+}
 async function imgToJpeg(file, max, q, square) {
   if (!file || !/^image\/(jpeg|png|webp|gif)$/.test(file.type)) throw new Error("Choose a JPG, PNG or WebP photo.");
   if (file.size > 20 * 1024 * 1024) throw new Error("That photo is too large (max 20 MB).");
-  const bmp = await createImageBitmap(file);
-  let sx = 0, sy = 0, sw = bmp.width, sh = bmp.height;
+  const bmp = await decodeImage(file);
+  let sx = 0, sy = 0, sw = bmp.width || bmp.naturalWidth, sh = bmp.height || bmp.naturalHeight;
   if (square) { const m = Math.min(sw, sh); sx = (sw - m) / 2; sy = (sh - m) / 2; sw = sh = m; }
   const k = Math.min(1, max / Math.max(sw, sh)), cw = Math.max(1, Math.round(sw * k)), ch = Math.max(1, Math.round(sh * k));
   const c = document.createElement("canvas"); c.width = cw; c.height = ch;
@@ -5555,7 +5565,7 @@ function openStoryAdd() {
     err.textContent = ""; img = "";
     try {
       if (!file.files[0]) return;
-      { const bmp = await createImageBitmap(file.files[0]); const why = await imageProblem(bmp); if (bmp.close) bmp.close(); if (why) throw new Error(why); }
+      { const bmp = await decodeImage(file.files[0]); const why = await imageProblem(bmp); if (bmp.close) bmp.close(); if (why) throw new Error(why); }
       let u = await imgToJpeg(file.files[0], 720, 0.65, false); if (u.length > 280000) u = await imgToJpeg(file.files[0], 600, 0.5, false);
       if (!IMG_OK.test(u) || u.length > 280000) throw new Error("That photo is too big. Try a smaller one.");
       img = u; draw();

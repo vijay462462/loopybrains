@@ -1661,3 +1661,8 @@ body.priv-blur > * { filter: blur(22px); }
 .st-tagbadge { justify-self: start; padding: 4px 10px; border-radius: 999px; background: rgb(255 255 255 / .25); font: 800 .75rem system-ui; letter-spacing: .06em; }
 .st-detail { margin: 0; font: 500 1rem/1.45 system-ui; opacity: .95; overflow-wrap: anywhere; white-space: pre-wrap; }
 .st-open { text-align: center; background: rgb(255 255 255 / .22); }
+
+/* the add-story form must really hide the parts that do not belong to the chosen tab */
+.st-view [hidden] { display: none !important; }
+.st-card { box-sizing: border-box; max-width: 100%; overflow-x: hidden; }
+.st-card input[type=text], .st-card input[type=file], .st-card textarea, .st-card select { box-sizing: border-box; width: 100%; max-width: 100%; }
