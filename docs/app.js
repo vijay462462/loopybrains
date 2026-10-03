@@ -1279,14 +1279,14 @@ function renderToday() {
   const key = [hello, name, streak, quizDone, left, dayNum(), openDrives().length, upcomingEvents().length].join("|"); if (key === todayKey && !bar.hidden) return; todayKey = key;
   const chip = (txt, cls, fn) => el("button", { class: "today-chip " + (cls || ""), type: "button", onclick: fn }, txt);
   const WORDS = ["Welcome to the " + BRAND + " family 💙", "Respect your teachers, help your juniors. 🙏", "Every question is welcome here.", "Kind words build a strong campus. 🌱", "Thank you for being part of our family.", "Learn together, grow together. 🚀", "Our teachers and staff work hard for you. Say thank you today. 🙏"];
-  bar.replaceChildren(el("strong", { class: "today-hello" }, hello + (name ? ", " + name : "") + " 👋"), el("small", { class: "today-words" }, WORDS[dayNum() % WORDS.length]),
+  bar.replaceChildren(el("strong", { class: "today-hello" }, hello + (name ? ", " + name : "") + " 👋"), el("small", { class: "today-words" }, WORDS[dayNum() % WORDS.length]), !name ? el("button", { class: "today-chip warn", type: "button", onclick: () => { const b = $("nameBtn"); if (b) b.click(); } }, "✏️ Set your name") : null, el("button", { class: "btn primary today-ask", type: "button", onclick: () => { const b = $("askBtn"); if (b) b.click(); } }, "❓ Ask a doubt"),
     el("div", { class: "today-chips" },
       chip(streak ? "🔥 " + streak + "-day streak" : "🔥 Start your streak", streak && !(state.myDays && state.myDays.has(dayNum())) ? "warn" : "", () => showPanel("me")),
       QUIZ.length ? chip(quizDone ? "✅ Quiz done" : "🧠 Today's quiz", quizDone ? "" : "pulse", () => showPanel("quiz")) : null,
       left != null && left >= 0 && left <= 60 ? chip("⏳ " + (left === 0 ? "Exam today" : left + " days to exam"), left <= 7 ? "warn" : "", () => showPanel("planner")) : null,
       upcomingEvents().filter(e => e.startAt < Date.now() + 7 * 864e5).length ? chip("🎉 " + upcomingEvents().filter(e => e.startAt < Date.now() + 7 * 864e5).length + " event" + (upcomingEvents().filter(e => e.startAt < Date.now() + 7 * 864e5).length === 1 ? "" : "s") + " this week", "", () => showPanel("events")) : null,
       openDrives().length ? chip("🏢 " + openDrives().length + " campus drive" + (openDrives().length === 1 ? "" : "s"), "", () => showPanel("drives")) : null,
-      chip("❓ Ask a doubt", "", () => { const b = $("askBtn"); if (b) b.click(); }))); 
+      chip("🧰 Explore", "", () => showPanel("explore")))); 
   bar.hidden = false;
 }
 // Placement drives: posted by the placement cell (admin or staff). Students check eligibility and register interest; the cell sees the list.
@@ -1345,6 +1345,20 @@ function renderEvents() {
   const list = upcomingEvents();
   return [el("h2", {}, "🎉 Events"), el("p", { class: "hint" }, "Club and campus events for " + COLLEGE + ". Tap I am going so the organisers can plan."),
     ...(list.length ? list.map(card) : [el("p", { class: "hint" }, "No upcoming events yet. Club coordinators and the college admin post them here.")]), note, el("div", { class: "rowbtns" }, back)];
+}
+// Explore: every tool in one tidy screen, so the home screen can stay simple.
+const EXPLORE = [
+  ["Study", [["quizBtn", "🧠", "Daily Quiz"], ["labBtn", "🧪", "Study Lab"], ["studyBtn", "📖", "Study Tools"], ["learnBtn", "📚", "Learn from IIT"], ["focusBtn", "🎯", "Focus mode"]]],
+  ["Campus", [["eventsBtn", "🎉", "Events"], ["drivesBtn", "🏢", "Campus Drives"], ["leadersBtn", "🏆", "Top Helpers"], ["alumniBtn", "🎓", "Alumni", "alumni"]]],
+  ["Career", [["careerBtn", "🚀", "Career Guide"], ["__resume", "📄", "Resume builder"]]],
+  ["More", [["__plus", "⭐", "CampusLoop Plus"], ["botBtn", "🤖", "Loop Bot", "bot"], ["funBtn", "🎉", "Entertainment", "fun"], ["aboutBtn", "ℹ️", "About Us"]]],
+];
+function renderExplore() {
+  const back = el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back");
+  const go = (id) => { if (id === "__plus") { showPanel("plus"); return; } if (id === "__resume") { showPanel("resume"); return; } const b = $(id); if (b) b.click(); };
+  return [el("h2", {}, "🧰 Explore"), el("p", { class: "hint" }, "Everything in " + BRAND + ", in one place."),
+    ...EXPLORE.flatMap(([title, items]) => [el("div", { class: "label" }, title), el("div", { class: "plus-tiles" }, ...items.filter(it => !it[3] || !document.body.classList.contains("no-" + it[3])).map(([id, icon, label]) => el("button", { class: "plus-tile", type: "button", onclick: () => go(id) }, el("span", { class: "pt-i", "aria-hidden": "true" }, icon), el("strong", {}, label))))]),
+    el("div", { class: "rowbtns" }, back)];
 }
 // Trust strip under the tagline: honest promises plus real numbers from this college (shown only once they are big enough to mean something).
 let trustKey = "";
@@ -6923,6 +6937,7 @@ function render() {
       state.mode === "planner" ? renderPlanner() :
       state.mode === "papers" ? renderPapers() :
       state.mode === "notices" ? renderNotices() :
+      state.mode === "explore" ? renderExplore() :
       state.mode === "drives" ? renderDrives() :
       state.mode === "events" ? renderEvents() :
       state.mode === "ai" ? renderAI() :

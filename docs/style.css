@@ -1873,3 +1873,16 @@ body.priv-blur > * { filter: blur(22px); }
     padding: 8px 16px !important; font-size: 12.5px !important; font-weight: 800; white-space: nowrap;
   }
 }
+/* ---- Simple home on phones: brand, stories, sections, Today card. Everything else lives in Explore. ---- */
+.today-ask { justify-self: start; padding: 10px 18px; font-weight: 800; }
+@media (max-width: 700px) {
+  .trust-bar { display: none !important; }
+  .hdr-actions, .hdr-actions.tools-closed { display: flex !important; overflow: visible; margin-top: 4px; }
+  .hdr-actions .chip.tool, .hdr-actions.tools-closed .chip.tool, #nameBtn, header.top .btn.primary#askBtn, .tools-toggle { display: none !important; }
+  .hdr-actions .filter-toggle { display: flex !important; }
+  header.top { padding-bottom: 10px; }
+}
+@media (max-width: 700px) {
+  .hdr-actions .chip.tool#quizBtn, .hdr-actions .chip.tool#labBtn, .hdr-actions .chip.tool#focusBtn,
+  .hdr-actions.tools-closed .chip.tool#quizBtn, .hdr-actions.tools-closed .chip.tool#labBtn, .hdr-actions.tools-closed .chip.tool#focusBtn { display: none !important; }
+}
