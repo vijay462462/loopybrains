@@ -1091,7 +1091,11 @@ function renderRail() {
       onclick: () => { state.group = state.group === s ? "All" : s; render(); if (innerWidth <= 1000 && state.group !== "All") setTimeout(() => { const l = $("list"); if (l) l.scrollIntoView({ behavior: "smooth", block: "start" }); }, 60); },
     }, el("span", {}, s), el("span", { class: "n" }, counts[s] || 0)))
   ) : null;
-  $("rail").replaceChildren(...[jobsHub(), deptTabs, subjGrid].filter(Boolean));
+  if (state.tab === "jobs") {
+    const chips = el("div", { class: "dept-tabs" }, ...["All", ...t.groups].map(g => el("button", { type: "button", class: "dept-tab" + ((state.group === g || (g === "All" && state.group === "All")) ? " active" : ""), onclick: () => { state.group = g; render(); } }, g === "All" ? "All" : g + (counts[g] ? " (" + counts[g] + ")" : ""))));
+    $("rail").replaceChildren(...[jobsHub(), chips].filter(Boolean)); return;
+  }
+  $("rail").replaceChildren(...[deptTabs, subjGrid].filter(Boolean));
 }
 
 function visible() {
