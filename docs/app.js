@@ -7,7 +7,7 @@ for (const m of ["replaceChildren", "append", "prepend"]) {
 // Data lives in Firebase Firestore when config.js has Firebase settings, otherwise in this browser (demo mode).
 
 // ---------- college (tenant) setup ----------
-// The built-in college is RGUKT. Any other college opens as ?c=<slug>: its name, colours, campuses, subjects and
+// The original board (RGUKT) keeps working as one college. Any other college opens as ?c=<slug>: its name, colours, campuses, subjects and
 // clubs come from the public `colleges/<slug>` document, and its posts live in its own private room (`room` field).
 const BASE_CFG = window.DOUBT_DESK_CONFIG || {};
 const DEFAULT_ROOM_PATH = "rooms/GB-9FE9YR/";
@@ -21,16 +21,23 @@ function fsVal(v) {
   return null;
 }
 const fsDoc = (d) => Object.fromEntries(Object.entries((d && d.fields) || {}).map(([k, x]) => [k, fsVal(x)]));
-function tenantSlug() {
+// Which college is this visitor on? "" = not chosen yet, "rgukt" = the original built-in board, anything else = a tenant.
+function pickCollege() {
+  const valid = (v) => /^[a-z0-9-]{2,40}$/.test(v);
   let p = null; try { p = new URLSearchParams(location.search).get("c"); } catch (_) {}
   if (p !== null) {
-    p = p.toLowerCase(); const ok = /^[a-z0-9-]{2,40}$/.test(p) && p !== "rgukt";
-    try { if (ok) localStorage.setItem("dd-college", p); else localStorage.removeItem("dd-college"); } catch (_) {}
-    return ok ? p : "";
+    p = p.toLowerCase();
+    try { if (valid(p)) localStorage.setItem("dd-college", p); else localStorage.removeItem("dd-college"); } catch (_) {}
+    return valid(p) ? p : "";
   }
   let s = ""; try { s = localStorage.getItem("dd-college") || ""; } catch (_) {}
-  return /^[a-z0-9-]{2,40}$/.test(s) && s !== "rgukt" ? s : "";
+  if (valid(s)) return s;
+  // People who already used the original board before colleges existed keep their board.
+  try { if (["dd-name", "dd-avatar", "dd-campus", "dd-post-times", "dd-seen"].some(k => localStorage.getItem(k) !== null)) { localStorage.setItem("dd-college", "rgukt"); return "rgukt"; } } catch (_) {}
+  return "";
 }
+const SEL = pickCollege(), NO_COLLEGE = SEL === "", IS_RGUKT = SEL === "rgukt";
+const BRAND = BASE_CFG.brand || "Campus Spark";
 function cleanTenant(raw, slug) {
   if (!raw || typeof raw !== "object" || raw.enabled === false) return null;
   const room = t1(raw.room, 40); if (!/^[A-Za-z0-9_-]{6,40}$/.test(room)) return null;
@@ -46,7 +53,7 @@ function cleanTenant(raw, slug) {
   };
 }
 async function loadTenant() {
-  const slug = tenantSlug(); if (!slug) return null;
+  const slug = SEL; if (!slug || slug === "rgukt") return null;
   const key = "dd-tenant-" + slug; let cached = null;
   try { cached = JSON.parse(localStorage.getItem(key) || "null"); } catch (_) {}
   const fb = BASE_CFG.firebase || {};
@@ -76,13 +83,18 @@ async function loadTenant() {
   }
 }
 const TENANT = await loadTenant();
-const ROOM_PATH = TENANT ? "rooms/" + TENANT.room + "/" : DEFAULT_ROOM_PATH;
+const ROOM_PATH = TENANT ? "rooms/" + TENANT.room + "/" : IS_RGUKT ? DEFAULT_ROOM_PATH : "lobby/";
+const COLLEGE = TENANT ? TENANT.name : IS_RGUKT ? "RGUKT" : "your college";
 const featureOn = (k) => !TENANT || TENANT.features[k] !== false;
-const CFG = TENANT ? {
+const CFG = NO_COLLEGE ? {
+  ...BASE_CFG, title: BRAND, tagline: "", captions: ["Ask boldly. Answer together.", "Doubt today. Discover tomorrow.", "Every doubt you ask is a concept you own tomorrow."],
+  campuses: [], clubs: [], subjects: [], ideaCategories: [], exams: [], mentors: [], admins: [], privateClass: false,
+} : TENANT ? {
   ...BASE_CFG, title: TENANT.title, tagline: TENANT.tagline || "", captions: TENANT.captions, campuses: TENANT.campuses,
   clubs: TENANT.clubs, subjects: TENANT.subjects, ideaCategories: TENANT.ideaCategories, exams: TENANT.exams,
   mentors: [], admins: [], privateClass: false,
 } : BASE_CFG;
+if (NO_COLLEGE) document.body.classList.add("nocollege");
 if (TENANT) {
   document.body.classList.add("tenant");
   for (const k of ["bot", "alumni", "fun", "jobs", "market", "challenges"]) if (!featureOn(k)) document.body.classList.add("no-" + k);
@@ -128,14 +140,14 @@ const TABS = {
   },
   clubs: {
     coll: "clubs", field: "club", groups: CLUBS, groupLabel: "Clubs", noun: "post",
-    ask: "Post to a club", tagline: "Connect with RGUKT students. Share projects, find team members, plan events.",
+    ask: "Post to a club", tagline: "Connect with " + COLLEGE + " students. Share projects, find team members, plan events.",
     replyNoun: "reply", replyLabel: "Your reply", replyBtn: "Post reply",
     placeholder: "e.g. Looking for teammates for a robotics project",
     bodyHint: "Details, what help you need, who can join.",
   },
   gate: {
     coll: "gate", field: "subject", groups: SUBJECTS, groupLabel: "Subjects", noun: "discussion",
-    ask: "Post GATE discussion", tagline: "GATE PYQs, shortcuts, concepts and exam alerts — shared across all RGUKT campuses.",
+    ask: "Post GATE discussion", tagline: "GATE PYQs, shortcuts, concepts and exam alerts — shared across all campuses.",
     replyNoun: "reply", replyLabel: "Your reply", replyBtn: "Post reply",
     placeholder: "e.g. GATE EC 2023 — Z-transform question (Session 1, Q14)",
     bodyHint: "Full question, approach, shortcut trick, or exam alert.",
@@ -149,14 +161,14 @@ const TABS = {
   },
   jobs: {
     coll: "jobs", field: "type", groups: ["Internship", "Full-time", "On-campus drive", "Off-campus drive", "Hackathon", "Referral", "Interview experience", "Prep resource"], groupLabel: "Type", noun: "opportunity",
-    ask: "Post an opportunity", tagline: "Placements, internships and hackathons shared by RGUKT students. Post openings, interview experiences and prep tips.",
+    ask: "Post an opportunity", tagline: "Placements, internships and hackathons shared by " + COLLEGE + " students. Post openings, interview experiences and prep tips.",
     replyNoun: "reply", replyLabel: "Your reply", replyBtn: "Post reply",
     placeholder: "e.g. TCS NQT registration open for 2026 batch",
     bodyHint: "Role, eligibility, selection process, how to apply, and any tips.",
   },
   market: {
     coll: "market", field: "category", groups: ["Books", "Notes", "Electronics", "Hostel", "Clothing", "Cycles & Bikes", "Sports", "Lab & Stationery", "Furniture", "Services", "Lost & Found", "Other"], groupLabel: "Category", noun: "listing",
-    ask: "Sell an item", tagline: "Buy and sell textbooks, electronics, hostel items and more — with fellow RGUKT students.",
+    ask: "Sell an item", tagline: "Buy and sell textbooks, electronics, hostel items and more — with fellow " + COLLEGE + " students.",
     replyNoun: "inquiry", replyLabel: "Your message", replyBtn: "Send",
     placeholder: "e.g. Data Structures book by Cormen — 2nd year, good condition",
     bodyHint: "Describe the item, its condition, why you're selling, and any extra details.",
@@ -168,7 +180,7 @@ const TABS = {
 const CAMPUSES = (CFG.campuses && CFG.campuses.length) ? CFG.campuses : [];
 const CAMPUS_COLORS = { NUZVID: "#7c3aed", ONGOLE: "#0d9488", RKVALLEY: "#2563eb", SRIKAKULAM: "#0891b2", BASAR: "#d97706", IDUPULAPAYA: "#dc2626" };
 const CAMPUS_ICON = { NUZVID: "🟣", ONGOLE: "🟢", RKVALLEY: "🔵", SRIKAKULAM: "🩵" };
-const CAMPUS_FULL = { NUZVID: "RGUKT Nuzvid", ONGOLE: "RGUKT Ongole", RKVALLEY: "RGUKT RK Valley", SRIKAKULAM: "RGUKT Srikakulam" };
+const CAMPUS_FULL = !IS_RGUKT ? {} : { NUZVID: "RGUKT Nuzvid", ONGOLE: "RGUKT Ongole", RKVALLEY: "RGUKT RK Valley", SRIKAKULAM: "RGUKT Srikakulam" };
 const campusColor = (c) => CAMPUS_COLORS[c] || PALETTE[Math.max(0, CAMPUSES.indexOf(c)) % PALETTE.length];
 const CAMPUS_KEY = TENANT ? "dd-campus-" + TENANT.slug : "dd-campus";
 const getCampus = () => { try { const c = localStorage.getItem(CAMPUS_KEY); return c && (!TENANT || CAMPUSES.includes(c)) ? c : null; } catch(_){return null;} };
@@ -1320,7 +1332,7 @@ function mktSafetyTips() {
       el("li", {}, "Check the item properly before you pay. Pay only after you are happy."),
       el("li", {}, "Never pay in advance, share an OTP, or accept a UPI “collect request” to receive money."),
       el("li", {}, "Be careful with prices that look too good to be true. Report suspicious listings."),
-      el("li", {}, "College-issued laptops cannot be sold (RGUKT policy).")));
+      el("li", {}, "College-issued laptops cannot be sold (college policy).")));
 }
 // Rough resale estimate: condition factor, then about 2% less for every month of use.
 function priceHelper(getForm) {
@@ -1519,7 +1531,7 @@ function renderBuyPanel(d) {
   const already = myInterest(d.id);
   const count = interestCount(d.id);
   const waNum = (d.whatsapp || "").replace(/\D/g, "");
-  const waLink = waNum.length >= 10 ? "https://wa.me/91" + waNum.slice(-10) + "?text=" + encodeURIComponent("Hi! I'm interested in your listing on RGUKT Spark: " + d.title + " (₹" + (d.price || "Negotiable") + ")") : null;
+  const waLink = waNum.length >= 10 ? "https://wa.me/91" + waNum.slice(-10) + "?text=" + encodeURIComponent("Hi! I'm interested in your listing on " + BRAND + ": " + d.title + " (₹" + (d.price || "Negotiable") + ")") : null;
 
   if (already) {
     return el("div", { class: "mkt-buy-panel expressed" },
@@ -1587,7 +1599,7 @@ function renderMarketView() {
   const own = mine(d);
   const condColor = CONDITION_COLOR[d.condition] || "#6b7280";
   const waNum = (d.whatsapp || "").replace(/\D/g, "");
-  const waLink = waNum.length >= 10 ? "https://wa.me/91" + waNum.slice(-10) + "?text=" + encodeURIComponent("Hi! I saw your listing on RGUKT Spark: " + d.title) : null;
+  const waLink = waNum.length >= 10 ? "https://wa.me/91" + waNum.slice(-10) + "?text=" + encodeURIComponent("Hi! I saw your listing on " + BRAND + ": " + d.title) : null;
 
   const actions = [
     own && !d.sold && el("button", { class: "btn primary", type: "button", onclick: async () => {
@@ -1606,7 +1618,7 @@ function renderMarketView() {
     own && el("button", { class: "btn danger", type: "button", onclick: (e) => confirmDelete(e.currentTarget, async () => { await softDelete("market", d.id); state.selected = null; state.mode = "intro"; render(); })}, "🗑 Delete"),
     el("button", { class: "btn", type: "button", onclick: () => {
       const url = location.origin + location.pathname + "#market/" + d.id;
-      if (navigator.share) navigator.share({ title: d.title, text: "Check this listing on RGUKT Spark: " + d.title + (d.price ? " — ₹" + d.price : ""), url });
+      if (navigator.share) navigator.share({ title: d.title, text: "Check this listing on " + BRAND + ": " + d.title + (d.price ? " — ₹" + d.price : ""), url });
       else { navigator.clipboard && navigator.clipboard.writeText(url); showNotice("Link copied!", "ok"); }
     }}, "🔗 Share"),
     el("button", { class: "btn", type: "button", onclick: () => { state.selected = null; state.mode = "intro"; render(); }}, "← Back")
@@ -1661,8 +1673,8 @@ function renderMarketAsk(existing) {
     if (hasBadWords(title + " " + body)) { err.textContent = LANGUAGE_MSG; err.hidden = false; return; }
     if (whatsapp && whatsapp.length < 10) { err.textContent = "Enter a valid 10-digit WhatsApp number."; err.hidden = false; return; }
     if (!existing && store && sellerFlagged(store.uid)) { err.textContent = "Your account has been restricted from posting due to multiple reports. Contact an admin to appeal."; err.hidden = false; return; }
-    // College-issued laptops cannot be sold — RGUKT policy
-    if (category === "Electronics" && /\blaptop\b|\bhp\s*laptop\b|\bdell\s*laptop\b|\brgukt\s*laptop\b|\bcollege\s*laptop\b/i.test(title + " " + body)) { err.textContent = "College-issued laptops cannot be sold on this platform (RGUKT policy). Remove this item."; err.hidden = false; return; }
+    // College-issued laptops cannot be sold — college policy
+    if (category === "Electronics" && /\blaptop\b|\bhp\s*laptop\b|\bdell\s*laptop\b|\bcollege\s*laptop\b/i.test(title + " " + body)) { err.textContent = "College-issued laptops cannot be sold on this platform (RGUKT policy). Remove this item."; err.hidden = false; return; }
     const wait = existing ? "" : spamCheck();
     if (wait) { err.textContent = wait; err.hidden = false; return; }
     const btn = form.querySelector("button[type=submit]"); btn.disabled = true; btn.textContent = "Saving…";
@@ -1704,7 +1716,7 @@ function renderMarketAsk(existing) {
       el("input", { name: "whatsapp", type: "tel", maxlength: "15", placeholder: "e.g. 9876543210 — not shown publicly except to buyers" })
     ),
     el("p", { class: "hint" }, "⚠️ Your WhatsApp number is only shared with students who open this listing."),
-    el("p", { class: "hint" }, "🚫 College-issued laptops cannot be sold — RGUKT policy. Books & Notes are visible to all campuses; other items are campus-local."),
+    el("p", { class: "hint" }, "🚫 College-issued laptops cannot be sold — college policy. Books & Notes are visible to all campuses; other items are campus-local."),
     mktSafetyTips(),
     err,
     el("div", { class: "rowbtns" },
@@ -1777,7 +1789,7 @@ function subjectHub(count) {
 }
 
 // ---------- campus hub: info, live activity, ranking and actions for the selected campus ----------
-const CAMPUS_INFO = {
+const CAMPUS_INFO = !IS_RGUKT ? {} : {
   NUZVID: { place: "Nuzvid, Eluru district, Andhra Pradesh", site: "https://www.rguktn.ac.in", q: "RGUKT Nuzvid" },
   ONGOLE: { place: "Ongole, Prakasam district, Andhra Pradesh", site: "https://www.rguktong.ac.in", q: "RGUKT Ongole" },
   RKVALLEY: { place: "Idupulapaya, YSR Kadapa district, Andhra Pradesh", site: "https://www.rguktrkv.ac.in", q: "RGUKT RK Valley Idupulapaya" },
@@ -1894,10 +1906,10 @@ function campusHub() {
   const ranks = campusStats(), maxPts = Math.max(...ranks.map(x => x.points), 1), rank = ranks.findIndex(x => x.campus === c) + 1;
   const isMine = getCampus() === c;
   const tile = (n, label) => el("div", { class: "intro-stat" }, el("span", { class: "intro-stat-n" }, n), el("span", { class: "intro-stat-l" }, label));
-  const q = encodeURIComponent(info.q || ("RGUKT " + c));
+  const q = encodeURIComponent(info.q || (COLLEGE + " " + c));
   const card = el("div", { class: "learn-card campus-hub" },
     el("div", { class: "campus-hub-head" },
-      el("strong", {}, (CAMPUS_ICON[c] || "🏫") + " RGUKT " + c),
+      el("strong", {}, (CAMPUS_ICON[c] || "🏫") + " " + COLLEGE + " " + c),
       isMine && el("span", { class: "pill done" }, "⭐ My campus"),
       rank > 0 && el("span", { class: "pill open" }, "#" + rank + " campus rank")),
     info.place && el("p", { class: "hint" }, "📍 " + info.place),
@@ -2193,14 +2205,14 @@ function renderNetwork() {
   const totalPosts = allPosts.length;
   const totalMembers = new Set(allPosts.filter(p => !p.anonymous).map(p => p.authorId)).size;
   return [
-    el("h2", {}, "🌐 RGUKT Spark Network"),
+    el("h2", {}, "🌐 " + BRAND + " Network"),
     el("p", { class: "hint" }, totalMembers + " students · " + totalPosts + " posts"),
     el("div", { class: "label" }, "What you can do"),
     el("ul", { class: "network-features" },
-      el("li", {}, "📚 Ask doubts that any RGUKT student can answer"),
+      el("li", {}, "📚 Ask doubts that any " + COLLEGE + " student can answer"),
       el("li", {}, "💡 Share ideas for projects and research"),
       el("li", {}, "🏛 Join clubs and find teammates"),
-      el("li", {}, "🏆 Compete on the all-RGUKT leaderboard"),
+      el("li", {}, "🏆 Compete on the college leaderboard"),
       el("li", {}, "🎓 Learn from IIT mentors")),
     el("div", { class: "rowbtns" },
       el("button", { class: "btn primary", type: "button", onclick: () => { state.tab = "clubs"; state.group = "All"; state.mode = "intro"; render(); } }, "🏛 Browse Clubs"),
@@ -2289,7 +2301,7 @@ function renderLeaders() {
     el("h2", {}, "🏆 Top Helpers"),
     list,
     el("p", { class: "hint" }, "Answer a classmate's doubt +2 · answer marked helpful +5 more · each 👍💡🔥 on your answer +1 · daily quiz right +3 · share an idea +2 · each like on your idea +1 · ask a doubt +1. Anonymous posts don't count."),
-    rivalBoard && el("div", { class: "label" }, "🏫 Campus Rivalry — all 4 RGUKT campuses"),
+    rivalBoard && el("div", { class: "label" }, "🏫 Campus Rivalry — all " + CAMPUSES.length + " campuses"),
     rivalBoard,
     ...weeklyQuizBlock(),
     rivalBoard && el("p", { class: "hint" }, "Campus points — ask a doubt +1 · share an idea +2 · helpful answer +5 · post in clubs +1. Compete with other campuses."),
@@ -2540,7 +2552,7 @@ function renderAlumni() {
   const tabBtn = (id, label) => el("button", { class: "btn sm" + (alumniView === id ? " primary" : ""), type: "button", onclick: () => { alumniView = id; render(); } }, label);
   const out = [
     el("h2", {}, "🎓 Alumni Connect"),
-    el("p", { class: "hint" }, "Meet RGUKT seniors who graduated and are now working, studying or building startups. Ask for guidance, referrals and advice. Profiles are shared by the alumni themselves, so check their LinkedIn before trusting any offer, and never pay anyone for a job."),
+    el("p", { class: "hint" }, "Meet seniors from " + COLLEGE + " who graduated and are now working, studying or building startups. Ask for guidance, referrals and advice. Profiles are shared by the alumni themselves, so check their LinkedIn before trusting any offer, and never pay anyone for a job."),
     el("div", { class: "rowbtns" },
       el("button", { class: "btn primary", type: "button", onclick: () => alumniGo(getName() ? "alumniJoin" : "name") }, "🎓 I'm an alumnus: join"),
       el("button", { class: "btn", type: "button", onclick: () => alumniGo(getName() ? "alumniJob" : "name") }, "💼 Post a job / referral"),
@@ -2553,24 +2565,24 @@ function renderAlumni() {
   }
   if (alumniView === "dir") {
     out.push(el("div", { class: "rowbtns" }, ["All", ...Object.keys(CAREER)].map(b => el("button", { class: "btn sm" + (alumniBranch === b ? " primary" : ""), type: "button", onclick: () => { alumniBranch = b; render(); } }, b))));
-    out.push(...(profiles.length ? profiles.map(alumniProfileCard) : [el("div", { class: "empty" }, el("strong", {}, "No alumni profiles here yet"), "Are you an RGUKT alumnus? Tap “I'm an alumnus: join” and help your juniors.")]));
+    out.push(...(profiles.length ? profiles.map(alumniProfileCard) : [el("div", { class: "empty" }, el("strong", {}, "No alumni profiles here yet"), "Are you an alumnus of " + COLLEGE + "? Tap “I'm an alumnus: join” and help your juniors.")]));
   } else if (alumniView === "jobs") {
-    out.push(...(jobs.length ? jobs.map(alumniJobCard) : [el("div", { class: "empty" }, el("strong", {}, "No jobs or referrals yet"), "Alumni can post openings and referrals here for RGUKT students.")]));
+    out.push(...(jobs.length ? jobs.map(alumniJobCard) : [el("div", { class: "empty" }, el("strong", {}, "No jobs or referrals yet"), "Alumni can post openings and referrals here for " + COLLEGE + " students.")]));
   } else if (alumniView === "admin" && isAdmin()) {
-    out.push(el("p", { class: "hint" }, "Review each profile or job before approving. Check the LinkedIn link and make sure the person is really an RGUKT alumnus. Approved profiles are shown to all students."));
+    out.push(el("p", { class: "hint" }, "Review each profile or job before approving. Check the LinkedIn link and make sure the person is really an alumnus of " + COLLEGE + ". Approved profiles are shown to all students."));
     out.push(...(pending.length ? pending.map(d => isAlumniProfile(d) ? alumniProfileCard(d) : alumniJobCard(d)) : [el("div", { class: "empty" }, el("strong", {}, "Nothing waiting"), "All alumni profiles and jobs are reviewed.")]));
   } else {
     out.push(...(questions.length ? questions.map(d => el("div", { class: "learn-card" }, el("strong", {}, d.title), el("p", { class: "hint" }, "By " + who(d) + " · " + ago(d.createdAt) + " · " + repliesFor(d.id).length + " replies"), el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: () => openAlumniPost(d.id) }, "Open")))) : [el("div", { class: "empty" }, el("strong", {}, "No questions yet"), "Tap “Ask alumni” to ask the first one.")]));
   }
   out.push(
     el("div", { class: "label" }, "💬 How to message an alumnus"),
-    el("p", { class: "hint" }, "“Hello sir/madam, I'm [name], E[year] [branch] at RGUKT [campus]. I'm interested in [role/field] and saw you work at [company]. Could you spare 10 minutes to guide me on [specific question]? Thank you!” Keep it short, specific and polite."),
-    el("div", { class: "label" }, "🔎 Find more RGUKT alumni (free)"),
+    el("p", { class: "hint" }, "“Hello sir/madam, I'm [name], E[year] [branch] at [college]. I'm interested in [role/field] and saw you work at [company]. Could you spare 10 minutes to guide me on [specific question]? Thank you!” Keep it short, specific and polite."),
+    el("div", { class: "label" }, "🔎 Find more " + COLLEGE + " alumni (free)"),
     el("div", { class: "rowbtns" },
-      outLink("https://www.linkedin.com/search/results/people/?keywords=RGUKT", "LinkedIn: search RGUKT", "linkbtn"),
-      outLink("https://www.linkedin.com/search/results/groups/?keywords=RGUKT", "LinkedIn groups", "linkbtn"),
+      outLink("https://www.linkedin.com/search/results/people/?keywords=" + encodeURIComponent(COLLEGE), "LinkedIn: search " + COLLEGE, "linkbtn"),
+      outLink("https://www.linkedin.com/search/results/groups/?keywords=" + encodeURIComponent(COLLEGE), "LinkedIn groups", "linkbtn"),
       outLink("https://adplist.org", "ADPList free mentors", "linkbtn"),
-      outLink("https://www.rguktn.ac.in", "RGUKT Nuzvid", "linkbtn"),
+      IS_RGUKT && outLink("https://www.rguktn.ac.in", "RGUKT Nuzvid", "linkbtn"),
       outLink("https://www.rguktong.ac.in", "Ongole", "linkbtn"),
       outLink("https://www.rguktrkv.ac.in", "RK Valley", "linkbtn"),
       outLink("https://www.rguktsklm.ac.in", "Srikakulam", "linkbtn")),
@@ -2640,7 +2652,7 @@ function alumniForm(kind) {
       el("div", { class: "label" }, "I can help with"),
       el("div", { class: "checks" }, ALUMNI_HELP.map((h, i) => el("label", { class: "check" }, el("input", { type: "checkbox", name: "help" + i }), h))),
       el("label", {}, "About you (optional)", el("textarea", { name: "about", maxlength: "400", placeholder: "A line or two for juniors: your journey, advice, how to reach you." })),
-      el("div", { class: "checks" }, el("label", { class: "check" }, el("input", { type: "checkbox", name: "consent" }), "I agree to show my name, work details and LinkedIn to RGUKT Spark students. I will not share my phone number publicly.")),
+      el("div", { class: "checks" }, el("label", { class: "check" }, el("input", { type: "checkbox", name: "consent" }), "I agree to show my name, work details and LinkedIn to " + COLLEGE + " students. I will not share my phone number publicly.")),
     ]),
     err,
     el("div", { class: "rowbtns" },
@@ -3066,7 +3078,7 @@ function renderCollege() {
       try { localStorage.setItem("dd-college-req", String(Date.now())); } catch (_) {}
       msg.textContent = "✅ Thank you! We will contact you when " + n.slice(0, 60) + " is ready."; form.reset();
     } catch (err) { msg.textContent = err && err.code === "permission-denied" ? "We could not save your request right now because the board is still being updated. Please try again in a little while." : "We could not send your request. Check your internet and try again."; }
-  } }, name, city, role, contact, el("label", { class: "check" }, consent, "I agree that RGUKT Spark may contact me about this request."), el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "submit" }, "Send request")), msg);
+  } }, name, city, role, contact, el("label", { class: "check" }, consent, "I agree that " + BRAND + " may contact me about this request."), el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "submit" }, "Send request")), msg);
   return [
     el("h2", {}, "🏫 Your college"),
     el("p", { class: "hint" }, "Each college has its own private board, subjects and clubs. Pick yours."),
@@ -3080,14 +3092,14 @@ function renderCollege() {
 function renderAbout() {
   const feature = (icon, title, text) => el("div", { class: "learn-card" }, el("strong", {}, icon + " " + title), el("p", { class: "hint" }, text));
   return [
-    el("h2", {}, "ℹ️ About RGUKT Spark"),
-    el("p", { class: "hint" }, "Designed for RGUKTians. One free place to ask doubts, share ideas, prepare for GATE, plan your career and help your juniors."),
+    el("h2", {}, "ℹ️ About " + BRAND),
+    el("p", { class: "hint" }, "One free place to ask doubts, share ideas, prepare for GATE, plan your career and help your juniors."),
     el("div", { class: "learn-card" },
-      el("strong", {}, "🔥 Built by RGUKTians"),
-      el("p", {}, "Spark is built by RGUKTians, for RGUKTians."),
+      el("strong", {}, "🔥 Built by students"),
+      el("p", {}, "Built by students, for students."),
       el("p", {}, "💙 Dedicated to our students: advanced, disciplined and obedient learners who work hard, respect their teachers and lift each other up. You are the reason Spark exists.")),
     el("div", { class: "label" }, "🎯 Our mission"),
-    el("p", {}, "Every RGUKT student should have a senior to ask, a clear path after graduation, and quality study material, without paying for any of it. Spark brings these together so no doubt stays unanswered and no student feels lost after E4."),
+    el("p", {}, "Every student should have a senior to ask, a clear path after graduation, and quality study material, without paying for any of it. Spark brings these together so no doubt stays unanswered and no student feels lost after E4."),
     el("div", { class: "label" }, "✨ What you get"),
     feature("❓", "Doubts", "Ask by subject, year (E1-E4) and campus. Peers answer, you mark the best answer, and helpers earn points."),
     feature("💡", "Ideas, Clubs and Challenges", "Share project ideas, join clubs and take part in challenges and hackathons."),
@@ -3096,15 +3108,15 @@ function renderAbout() {
     feature("📖", "Study Tools and Learn from IIT", "Unit-wise syllabus, formula cards, study plans and free IIT course links."),
     feature("🚀", "Career Guide", "Branch-wise options after graduation: jobs, M.Tech, PSU, study abroad and premium paths, all with free links."),
     feature("🤖", "Spark Bot", "Ask anything about academics, GATE, placements, campus life or the app and get instant answers with clickable resources."),
-    feature("🛒", "Market", "Buy and sell textbooks, notes and equipment inside the RGUKT community."),
+    feature("🛒", "Market", "Buy and sell textbooks, notes and equipment inside the " + COLLEGE + " community."),
     el("div", { class: "label" }, "🔒 Privacy and safety"),
     el("p", {}, "No login and no password. Your device gets a random ID so your posts stay yours. You can post anonymously, report anything inappropriate and edit your own posts. We do not sell or share your data."),
     el("div", { class: "label" }, "💚 100% free"),
     el("p", {}, "No ads, no subscriptions. Every resource we link to is free to use."),
     el("div", { class: "label" }, "⚠️ Please note"),
-    el("p", { class: "hint" }, "Spark is a student community platform. Always confirm official dates, fees, results and rules on the RGUKT websites before acting on them. Career and scholarship details can change, so check the official links."),
-    el("div", { class: "label" }, "🔗 Official RGUKT campuses"),
-    el("div", { class: "rowbtns" },
+    el("p", { class: "hint" }, "Spark is a student community platform. Always confirm official dates, fees, results and rules on your college's official websites before acting on them. Career and scholarship details can change, so check the official links."),
+    IS_RGUKT && el("div", { class: "label" }, "🔗 Official RGUKT campuses"),
+    IS_RGUKT && el("div", { class: "rowbtns" },
       outLink("https://www.rguktn.ac.in", "Nuzvid", "linkbtn"),
       outLink("https://www.rguktong.ac.in", "Ongole", "linkbtn"),
       outLink("https://www.rguktrkv.ac.in", "RK Valley", "linkbtn"),
@@ -4157,7 +4169,7 @@ function renderResources() {
       (byBranch[data.branch] ||= []).push(subj);
     }
     content = [
-      el("p", { class: "hint" }, "RGUKT AP unit-wise syllabus. Tap a subject, then tap any unit to see topics and auto-linked textbook chapters, videos, and notes."),
+      el("p", { class: "hint" }, "Unit-wise syllabus. Tap a subject, then tap any unit to see topics and auto-linked textbook chapters, videos, and notes."),
       ...branches.map(branch => {
         const subjects = byBranch[branch] || [];
         if (!subjects.length) return null;
@@ -4909,7 +4921,7 @@ function renderIntro() {
     el("p", { class: "body" }, steps),
     el("div", { class: "rowbtns" },
       el("button", { class: "btn primary", type: "button", onclick: openAsk }, t.ask),
-      el("button", { class: "btn", type: "button", onclick: () => showPanel("network") }, "🌐 RGUKT Network")),
+      el("button", { class: "btn", type: "button", onclick: () => showPanel("network") }, "🌐 College network")),
     kbHint,
   ].filter(Boolean);
 }
@@ -5541,14 +5553,14 @@ function openAsk() {
 let sheetKey = "";
 function renderCampusPicker() {
   return [
-    el("h2", {}, "🏫 Welcome to RGUKT Spark"),
-    el("p", { class: "body" }, "Connect with students from all RGUKT campuses. Pick your campus to tag your posts — you'll still see doubts, ideas and clubs from everyone."),
+    el("h2", {}, "🏫 Welcome to " + BRAND),
+    el("p", { class: "body" }, "Connect with students from all " + COLLEGE + " campuses. Pick your campus to tag your posts — you'll still see doubts, ideas and clubs from everyone."),
     el("div", { class: "campus-picker-grid" },
       ...CAMPUSES.map(c => el("button", {
         type: "button", class: "campus-pick-btn",
         style: "--cc:" + campusColor(c),
         onclick: () => { setCampus(c); state.mode = "intro"; render(); },
-      }, el("span", { class: "campus-pick-icon" }, CAMPUS_ICON[c] || "🏫"), el("span", { class: "campus-pick-name" }, c), el("span", { class: "campus-pick-sub" }, CAMPUS_FULL[c] || "RGUKT " + c)))
+      }, el("span", { class: "campus-pick-icon" }, CAMPUS_ICON[c] || "🏫"), el("span", { class: "campus-pick-name" }, c), el("span", { class: "campus-pick-sub" }, CAMPUS_FULL[c] || COLLEGE)))
     ),
     el("p", { class: "hint" }, "You can change campus later from your name button."),
     el("button", { class: "btn", type: "button", onclick: () => { state.mode = "intro"; render(); } }, "Skip for now"),
@@ -5742,7 +5754,7 @@ function openStoryAdd() {
   const tabs = el("div", { class: "rowbtns" });
   const sw = el("div", { class: "st-sw" }, STORY_BG.map((g, i) => { const b = el("button", { type: "button", class: "st-swb", "aria-label": "Colour " + (i + 1), onclick: () => { bg = i; draw(); } }); b.style.setProperty("background", "linear-gradient(135deg," + g[0] + "," + g[1] + ")"); return b; }));
   ov.append(el("div", { class: "st-card" }, el("div", { class: "st-head" }, el("strong", {}, "Add to your story"), el("button", { type: "button", class: "st-x", "aria-label": "Close", onclick: close }, "✕")),
-    el("p", { class: "hint" }, "Stories are for study content only: tips, quizzes, best ideas, innovations, and photos of notes, diagrams or questions. Personal photos are not allowed. Everyone on RGUKT Spark can see it for 24 hours. Reported stories are hidden. Viewers see their own name faintly over your story, so screenshots can be traced."),
+    el("p", { class: "hint" }, "Stories are for study content only: tips, quizzes, best ideas, innovations, and photos of notes, diagrams or questions. Personal photos are not allowed. Everyone on " + BRAND + " can see it for 24 hours. Reported stories are hidden. Viewers see their own name faintly over your story, so screenshots can be traced."),
     tabs, prev, quizBox, det, sw, file, cap, err, post));
   document.body.append(ov); document.body.classList.add("st-open"); draw();
 }
@@ -5778,7 +5790,7 @@ function openStories(authorId) {
          el("button", { type: "button", class: "st-x", "aria-label": "Delete story", onclick: async () => { if (!confirm("Delete this story?")) return; try { await softDelete("stories", s.id); state.stories = state.stories.filter(x => x.id !== s.id); close(); } catch (e) { showNotice(errText(e)); } } }, "🗑")]
       : [el("button", { type: "button", class: "st-x", "aria-label": "Report story", onclick: async () => { if (!confirm("Report this story as inappropriate?")) return; try { const reports = [...new Set([...(s.reports || []), store.uid])].slice(0, 100); s.reports = reports; await store.update("stories", s.id, { reports }); showNotice("Reported. Thank you."); setTimeout(() => showNotice(""), 2500); } catch (e) { showNotice(errText(e)); } next(); } }, "🚩")];
     // Deterrent only (a website cannot block screenshots): the viewer's own name is tiled faintly over others' stories.
-    const wmName = (getName() || "RGUKT Spark").slice(0, 20);
+    const wmName = (getName() || BRAND).slice(0, 20);
     const wm = ownS ? null : el("div", { class: "st-wm", "aria-hidden": "true" }, Array.from({ length: 24 }, () => el("span", {}, wmName)));
     ov.oncontextmenu = (ev) => { ev.preventDefault(); };
     ov.replaceChildren(
@@ -5973,8 +5985,8 @@ if (themeBtn) {
 if (CFG.title) { document.title = CFG.title; }
 {
   const h1 = $("siteTitle");
-  if (h1 && TENANT) { const w = CFG.title.trim().split(/\s+/), last = w.pop(); h1.replaceChildren(w.join(" ") + (w.length ? " " : ""), el("span", {}, last)); }
-  const cb = $("collegeBtn"); if (cb) { cb.textContent = "🏫 " + (TENANT ? TENANT.name : "RGUKT") + " ▾"; cb.addEventListener("click", () => showPanel("college")); }
+  if (h1) { const w = CFG.title.trim().split(/\s+/), last = w.pop(); h1.replaceChildren(w.join(" ") + (w.length ? " " : ""), el("span", {}, last)); }
+  const cb = $("collegeBtn"); if (cb) { cb.textContent = "🏫 " + (TENANT ? TENANT.name : IS_RGUKT ? "RGUKT" : "Choose your college") + " ▾"; cb.addEventListener("click", () => showPanel("college")); }
 }
 
 // ---------- start ----------
@@ -5984,6 +5996,7 @@ const deep = /^#(doubts|ideas|clubs|gate|challenges|jobs|market)(?:\/([\w-]+))?$
 if (deep) state.tab = deep[1];
 // Show board immediately — Firebase will fill it in once connected
 state.loaded = true;
+if (NO_COLLEGE) state.mode = "college";
 // First-time campus pick
 if (CAMPUSES.length > 0 && !getCampus() && !deep) state.mode = "campus";
 render();
@@ -5999,6 +6012,7 @@ render();
     showNotice("Could not connect to the class board. Check your internet and reload. (" + ((e && e.code) || "error") + ")");
     return;
   }
+  if (NO_COLLEGE) { render(); return; }   // nothing to load until a college is chosen
   if (store.demo) showNotice("Demo mode: posts are saved only in this browser. Add your Firebase settings to config.js so the whole class shares one board.", "demo");
   const live = (rows) => rows.filter(x => !x.deleted);
   let opened = false;

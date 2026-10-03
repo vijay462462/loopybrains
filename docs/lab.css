@@ -114,3 +114,8 @@ body.focus #funBtn, body.focus #storyBar { display: none !important; }
 .college-list .campus-link.sel { outline: 2px solid var(--accent, #7c3aed); }
 body.no-bot #botBtn, body.no-bot #sbw, body.no-alumni #alumniBtn, body.no-fun #funBtn,
 body.no-jobs .tabs button[data-tab="jobs"], body.no-market .tabs button[data-tab="market"], body.no-challenges .tabs button[data-tab="challenges"] { display: none !important; }
+
+/* no college chosen yet: show only the header and the college picker */
+body.nocollege .tabs, body.nocollege .hdr-actions, body.nocollege #bottomNav, body.nocollege .rail, body.nocollege .listcol,
+body.nocollege #storyBar, body.nocollege #sbw, body.nocollege #trendBar, body.nocollege .exams { display: none !important; }
+body.nocollege .layout { display: block; }

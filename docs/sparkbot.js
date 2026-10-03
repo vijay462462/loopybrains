@@ -10,7 +10,7 @@ const KB = [
   // ── Greetings ────────────────────────────────────────────
   { p: /^(hi|hello|hey|hlo|hii|helo|namaste|sup|yo|howdy|hola|vanakkam|bonjour)\b/i,
     r: [
-      "🌟 **Heyyy!** Welcome to **Spark Bot** — your premium AI guide!\nI can answer *anything* about RGUKT Spark, academics, GATE, career, and campus life. 🚀",
+      "🌟 **Heyyy!** Welcome to **Spark Bot** — your premium AI guide!\nI can answer *anything* about Spark, academics, GATE, career, and campus life. 🚀",
       "👋 **Hey there, Sparkie!**\nAsk me about doubts, GATE papers, hostel life, coding tips, career guidance — I know it all! ✨🔥",
       "🎉 **Namaste!** I'm **Spark Bot v5** — smarter, faster, and more powerful than ever!\nWhat topic shall we explore today? 🧠💡",
     ]},
@@ -55,7 +55,7 @@ const KB = [
   // ── What is the app ──────────────────────────────────────
   { p: /what (is|are|about|this)|about (this|app|site|rgukt spark|spark)|explain (this|app|site|platform)/i,
     r: [
-      "🔥 **RGUKT Spark** — the ultimate student community PWA!\n\n📌 **Doubts** → Ask anything, get peer answers\n💡 **Ideas** → Share innovations & suggestions\n🏛️ **Clubs** → Discover all campus clubs\n🎮 **Challenges** → Academic & fun competitions\n🛒 **Market** → Buy/sell textbooks & gadgets\n🎯 **GATE** → PYQ papers 2016–2025, free courses\n🏆 **Leaderboard** → Top helpers of the week\n🧠 **Daily Quiz** → Unique per device, every day\n\n✅ **100% free. Zero login. Works offline. PWA!**",
+      "🔥 **Spark** — the ultimate student community PWA!\n\n📌 **Doubts** → Ask anything, get peer answers\n💡 **Ideas** → Share innovations & suggestions\n🏛️ **Clubs** → Discover all campus clubs\n🎮 **Challenges** → Academic & fun competitions\n🛒 **Market** → Buy/sell textbooks & gadgets\n🎯 **GATE** → PYQ papers 2016–2025, free courses\n🏆 **Leaderboard** → Top helpers of the week\n🧠 **Daily Quiz** → Unique per device, every day\n\n✅ **100% free. Zero login. Works offline. PWA!**",
     ]},
 
   // ── How to post ──────────────────────────────────────────
@@ -151,7 +151,7 @@ const KB = [
   // ── PWA/Offline ──────────────────────────────────────────
   { p: /offline|install|pwa|home screen|app install|add to home/i,
     r: [
-      "📲 **RGUKT Spark PWA — Install & Use Offline!**\n\n**Android:**\n① Open Spark in Chrome\n② Tap ⋮ menu → **\"Add to Home Screen\"**\n③ Confirm → Done! 🎉\n\n**iOS (Safari):**\n① Open in Safari\n② Tap Share → **\"Add to Home Screen\"**\n\n**Offline features:**\n🔌 Loads from cache without internet\n📵 Orange bar shows offline status\n🔄 Auto-syncs when reconnected\n⚡ No Play Store. No App Store. Just works!\n\n*Native app experience, zero storage! 🚀*",
+      "📲 **Spark PWA — Install & Use Offline!**\n\n**Android:**\n① Open Spark in Chrome\n② Tap ⋮ menu → **\"Add to Home Screen\"**\n③ Confirm → Done! 🎉\n\n**iOS (Safari):**\n① Open in Safari\n② Tap Share → **\"Add to Home Screen\"**\n\n**Offline features:**\n🔌 Loads from cache without internet\n📵 Orange bar shows offline status\n🔄 Auto-syncs when reconnected\n⚡ No Play Store. No App Store. Just works!\n\n*Native app experience, zero storage! 🚀*",
     ]},
 
   // ── Campus filter ────────────────────────────────────────
@@ -175,7 +175,7 @@ const KB = [
   // ── Who is Spark Bot ─────────────────────────────────────
   { p: /who are you|spark bot|about you|what can you do|your features/i,
     r: [
-      "🤖 **I'm Spark Bot v5 — Your Premium AI Guide!**\n\n**I answer questions about:**\n📱 Every feature of RGUKT Spark\n🎯 GATE prep — papers, strategy, PSUs\n🏫 Campus life — hostel, mess, fees, exams\n📐 Academics — Maths, Physics, ECE, CSE, EEE, Civil, Mech\n💼 Career — placements, internships, resume, interviews\n🧠 Study strategies & schedules\n💻 Programming — C, Python, Java, DSA, Web\n🔬 Core engineering concepts\n\n**Special features:**\n✦ Contextual follow-up chip suggestions\n✦ Copy any answer with one click ⎘\n✦ Clear chat anytime 🗑️\n✦ Smart topic routing\n\n*Just ask naturally — I understand Indian English too!* 🇮🇳😄",
+      "🤖 **I'm Spark Bot v5 — Your Premium AI Guide!**\n\n**I answer questions about:**\n📱 Every feature of Spark\n🎯 GATE prep — papers, strategy, PSUs\n🏫 Campus life — hostel, mess, fees, exams\n📐 Academics — Maths, Physics, ECE, CSE, EEE, Civil, Mech\n💼 Career — placements, internships, resume, interviews\n🧠 Study strategies & schedules\n💻 Programming — C, Python, Java, DSA, Web\n🔬 Core engineering concepts\n\n**Special features:**\n✦ Contextual follow-up chip suggestions\n✦ Copy any answer with one click ⎘\n✦ Clear chat anytime 🗑️\n✦ Smart topic routing\n\n*Just ask naturally — I understand Indian English too!* 🇮🇳😄",
     ]},
 
   // ── GATE strategy ────────────────────────────────────────
@@ -369,7 +369,7 @@ const KB = [
   { p: /thank|bye|goodbye|ok thanks|great|awesome|nice|cool|helpful|perfect|amazing/i,
     r: [
       "😊 **You're so welcome!** Keep that spark alive! 🔥✨",
-      "🌟 **Anytime, always!** RGUKT Spark is here 24/7 for you! 💙",
+      "🌟 **Anytime, always!** Spark is here 24/7 for you! 💙",
       "🎉 **Happy to help!** All the best for GATE & beyond! 🏆🚀",
       "💪 **Go conquer it!** The community is always behind you! 🌟",
     ]},
@@ -409,7 +409,7 @@ function respond(text) {
 // ════════════════════════════════════════════════════════════
 //  CONTEXT CHIPS
 // ════════════════════════════════════════════════════════════
-const QUICK_DEFAULT = ["What is RGUKT Spark? ✨","GATE PYQ Papers 📂","Career & Placements 💼","Daily Quiz 🧠"];
+const QUICK_DEFAULT = ["What is Spark? ✨","GATE PYQ Papers 📂","Career & Placements 💼","Daily Quiz 🧠"];
 
 function ctxChips(t) {
   t = t.toLowerCase();
@@ -515,7 +515,7 @@ function build() {
         <div class="sb-msgs" id="sb-msgs"></div>
         <div class="sb-chips" id="sb-chips"></div>
         <div class="sb-bar">
-          <input id="sb-in" type="text" name="spark-bot-q" placeholder="Ask me anything about RGUKT Spark… 🌟" autocomplete="off" autocorrect="off" autocapitalize="sentences" spellcheck="false" enterkeyhint="send" aria-label="Ask Spark Bot" maxlength="400">
+          <input id="sb-in" type="text" name="spark-bot-q" placeholder="Ask me anything about Spark… 🌟" autocomplete="off" autocorrect="off" autocapitalize="sentences" spellcheck="false" enterkeyhint="send" aria-label="Ask Spark Bot" maxlength="400">
           <button id="sb-mic" type="button" aria-label="Speak your question" title="Speak your question">🎤</button>
           <button id="sb-go" type="button" aria-label="Send">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -579,7 +579,7 @@ function build() {
   });
 
   setChips(QUICK_DEFAULT);
-  addMsg('bot',"🌟 **Hey! I'm Spark Bot v5** — your premium AI companion for RGUKT Spark!\n\nI can answer questions about:\n📚 Academics · 🎯 GATE prep · 🏫 Campus life · 💼 Career\n💻 Programming · 🧠 Engineering subjects · ✨ App features\n\n*Ask me anything in your own words!* 🚀", true);
+  addMsg('bot',"🌟 **Hey! I'm Spark Bot v5** — your premium AI companion for Spark!\n\nI can answer questions about:\n📚 Academics · 🎯 GATE prep · 🏫 Campus life · 💼 Career\n💻 Programming · 🧠 Engineering subjects · ✨ App features\n\n*Ask me anything in your own words!* 🚀", true);
 }
 
 function toggle() {
@@ -657,7 +657,7 @@ function initVoice() {
       if (e.results[e.results.length - 1].isFinal) setTimeout(send, 250);
     };
     recog.onerror = (e) => { if (e.error === 'not-allowed' || e.error === 'service-not-allowed') addMsg('bot', '🎤 Microphone permission is blocked. Allow the microphone for this site in your browser settings, then try again.'); };
-    recog.onend = () => { listening = false; mic.classList.remove('sb-rec'); inp.placeholder = 'Ask me anything about RGUKT Spark… 🌟'; };
+    recog.onend = () => { listening = false; mic.classList.remove('sb-rec'); inp.placeholder = 'Ask me anything about Spark… 🌟'; };
     try { recog.start(); } catch (_) {}
   };
 }

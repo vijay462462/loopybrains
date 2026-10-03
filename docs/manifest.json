@@ -1,7 +1,7 @@
 {
-  "name": "RGUKT Spark",
+  "name": "Campus Spark",
   "short_name": "Spark",
-  "description": "Ask doubts, share ideas and run clubs — RGUKT Spark for RGUKT AP students.",
+  "description": "Ask doubts, share ideas and run clubs with students of your college.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
