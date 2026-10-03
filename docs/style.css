@@ -1697,3 +1697,4 @@ body.priv-blur > * { filter: blur(22px); }
 .st-sharecard .st-tagbadge { width: auto; }
 .st-quizcard .st-qnote { text-align: center; }
 .st-skip, .st-save, .st-open { justify-content: center; text-align: center; }
+.mock-bar{height:8px;border-radius:99px;background:var(--accent-soft);overflow:hidden;margin:2px 0 8px}.mock-bar span{display:block;height:100%;background:var(--accent)}

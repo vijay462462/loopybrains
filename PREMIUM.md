@@ -8,7 +8,7 @@ This is a working plan, not legal or tax advice. Numbers marked (guess) are star
 
 **CampusLoop Plus (students), suggested price ₹49 a month or ₹399 a year (guess):**
 - Built now: cloud backup and restore of flashcards, notes, tasks and planner (works across phones when the student has a verified email), and a ⭐ next to the name.
-- Build next, in the order students ask for it in the "Help us decide" survey: AI doubt helper, previous-year paper vault with solutions, mock tests with analytics, profile themes, placement preparation kit.
+- Built now: mock tests with a timer and subject-wise analytics, and profile colour themes (both free while `plus.enabled` is false). Build next, in the order students ask for it: AI doubt helper (needs a paid AI backend), previous-year paper vault, placement preparation kit.
 - Rule: never put today's free features behind the paywall. Plus only adds.
 
 **Colleges (B2B), suggested ₹30 to ₹60 per student per year with a minimum (guess):** admin dashboard, announcements, moderation tools, engagement reports, club and event management, verified-student-only boards (`requireVerified`), placement cell tools.

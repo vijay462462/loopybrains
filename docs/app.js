@@ -153,6 +153,10 @@ if (BRAND_COLORS) {
   const root = document.documentElement.style; root.setProperty("--accent", BRAND_COLORS[0]); root.setProperty("--brand-a", BRAND_COLORS[0]); root.setProperty("--brand-b", BRAND_COLORS[1]);
   const m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute("content", BRAND_COLORS[0]);
 }
+// Plus profile themes: a personal accent colour kept on this phone.
+const THEMES = [["Default", ""], ["Ocean", "#0ea5e9"], ["Forest", "#16a34a"], ["Sunset", "#f97316"], ["Rose", "#e11d48"], ["Violet", "#7c3aed"], ["Gold", "#ca8a04"]];
+const applyTheme = () => { try { const c = localStorage.getItem("dd-theme") || ""; if (/^#[0-9a-f]{6}$/i.test(c)) { document.documentElement.style.setProperty("--accent", c); document.documentElement.style.setProperty("--brand-a", c); document.documentElement.style.setProperty("--brand-b", shiftColor(c, 28, 0)); } } catch (_) {} };
+applyTheme();
 const SUBJECTS = (CFG.subjects && CFG.subjects.length) ? CFG.subjects : ["Maths", "Physics", "Chemistry", "Other"];
 const CATS = (CFG.ideaCategories && CFG.ideaCategories.length) ? CFG.ideaCategories : ["Project", "Other"];
 const CLUBS = [...((CFG.clubs && CFG.clubs.length) ? CFG.clubs : ["Coding Club", "Other"])];
@@ -2627,10 +2631,16 @@ function renderPlus() {
       el("strong", {}, "What you get"),
       el("p", {}, "☁️ Cloud backup and restore of your flashcards, notes, tasks and planner, so a new phone keeps your study data."),
       el("p", {}, "⭐ A Plus star next to your name."),
+      el("p", {}, "📝 Mock tests with a timer and a subject-wise report."),
+      el("p", {}, "🎨 Profile colour themes."),
       el("p", { class: "hint" }, "Coming next: " + PLUS_FEATURES.slice(0, 3).join(", ") + ". Tell us below which you want first.")),
     PLUS.enabled && !has ? el("div", { class: "learn-card" }, el("strong", {}, "Choose a plan"),
       el("div", { class: "rowbtns" }, buy("monthly", "₹" + PLUS.monthly + " per month"), buy("yearly", "₹" + PLUS.yearly + " per year (best value)")),
       verified ? null : el("p", { class: "hint" }, "Verify your email first (Profile › Verify your college email) so we can attach the plan to you.")) : null,
+    el("div", { class: "label" }, "📝 Mock test"),
+    el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", onclick: () => { state.mock = null; showPanel("mock"); } }, "Open mock test")),
+    el("div", { class: "label" }, "🎨 Theme"),
+    (PLUS.enabled && !has) ? el("p", { class: "hint" }, "Themes are part of the paid plan.") : el("div", { class: "rowbtns" }, ...THEMES.map(([n, c]) => el("button", { class: "btn sm", type: "button", onclick: () => { try { if (c) localStorage.setItem("dd-theme", c); else localStorage.removeItem("dd-theme"); } catch (_) {} if (!c) { const b = BRAND_COLORS || ["#4f46e5", "#7c3aed"]; document.documentElement.style.setProperty("--accent", b[0]); document.documentElement.style.setProperty("--brand-a", b[0]); document.documentElement.style.setProperty("--brand-b", b[1]); } else applyTheme(); } }, n))),
     el("div", { class: "label" }, "☁️ Backup"),
     !verified ? el("p", { class: "hint" }, "Backup needs a verified email so you can sign in on a new phone. Open Profile and tap “Verify your college email”.") : (PLUS.enabled && !has ? el("p", { class: "hint" }, "Backup is part of the paid plan.") : null),
     el("div", { class: "rowbtns" }, backup, restore),
@@ -2639,6 +2649,54 @@ function renderPlus() {
     survey,
     el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")),
   ].filter(Boolean);
+}
+// Mock test (Plus): 15 random questions from the quiz bank, timed, with subject-wise analytics saved on this phone.
+const MOCK_N = 15, MOCK_SECS = 20 * 60;
+const mockHistory = () => { try { const a = JSON.parse(localStorage.getItem("dd-mock-hist") || "[]"); return Array.isArray(a) ? a.slice(-30) : []; } catch (_) { return []; } };
+function mockStart() {
+  const idx = QUIZ.map((_, i) => i); for (let i = idx.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [idx[i], idx[j]] = [idx[j], idx[i]]; }
+  const qs = idx.slice(0, Math.min(MOCK_N, idx.length));
+  state.mock = { qs, ans: qs.map(() => -1), i: 0, end: Date.now() + MOCK_SECS * 1000, done: false };
+  render();
+}
+function mockFinish() {
+  const m = state.mock; if (!m || m.done) return; m.done = true;
+  const bySub = {}; let right = 0;
+  m.qs.forEach((qi, k) => { const q = QUIZ[qi], b = bySub[q.s] || (bySub[q.s] = { r: 0, n: 0 }); b.n++; if (m.ans[k] === q.a) { b.r++; right++; } });
+  m.result = { right, n: m.qs.length, bySub, at: Date.now(), secs: Math.min(MOCK_SECS, Math.round((Date.now() - (m.end - MOCK_SECS * 1000)) / 1000)) };
+  try { localStorage.setItem("dd-mock-hist", JSON.stringify([...mockHistory(), { at: m.result.at, right, n: m.result.n, bySub }])); } catch (_) {}
+  render();
+}
+function renderMock() {
+  const has = state.plan.plus, locked = PLUS.enabled && !has, m = state.mock;
+  const back = el("button", { class: "btn", type: "button", onclick: () => { state.mock = null; showPanel("plus"); } }, "Back");
+  if (locked) return [el("h2", {}, "📝 Mock test"), el("p", { class: "hint" }, "Mock tests are part of CampusLoop Plus."), el("div", { class: "rowbtns" }, back)];
+  if (!QUIZ.length) return [el("h2", {}, "📝 Mock test"), el("p", { class: "hint" }, "No questions are available yet."), el("div", { class: "rowbtns" }, back)];
+  if (m && m.result) {
+    const r = m.result, pct = Math.round(r.right * 100 / r.n), subs = Object.entries(r.bySub).sort((a, b) => (a[1].r / a[1].n) - (b[1].r / b[1].n));
+    const hist = mockHistory(), prev = hist.length > 1 ? hist[hist.length - 2] : null;
+    return [el("h2", {}, "📝 Result: " + r.right + " / " + r.n + " (" + pct + "%)"),
+      prev ? el("p", { class: "hint" }, "Last time: " + Math.round(prev.right * 100 / prev.n) + "%. " + (pct > Math.round(prev.right * 100 / prev.n) ? "Better! 📈" : pct === Math.round(prev.right * 100 / prev.n) ? "Same." : "Keep practising.")) : null,
+      el("div", { class: "learn-card" }, el("strong", {}, "By subject (weakest first)"), ...subs.map(([sb, v]) => { const p = Math.round(v.r * 100 / v.n), bar = el("div", { class: "mock-bar" }, el("span", {})); bar.firstChild.style.setProperty("width", p + "%"); return el("div", {}, el("div", { class: "rowbtns" }, el("span", {}, sb), el("b", {}, v.r + "/" + v.n)), bar); })),
+      subs[0] && subs[0][1].r < subs[0][1].n ? el("p", { class: "hint" }, "Focus next on " + subs[0][0] + ".") : el("p", { class: "hint" }, "Great, no weak subject this time."),
+      el("div", { class: "learn-card" }, el("strong", {}, "Review your mistakes"), ...m.qs.map((qi, k) => ({ q: QUIZ[qi], a: m.ans[k] })).filter(x => x.a !== x.q.a).map(x => el("p", { class: "hint" }, "• " + x.q.q + " → " + x.q.o[x.q.a] + (x.q.e ? ". " + x.q.e : "")))),
+      el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", onclick: mockStart }, "Try another"), back)].filter(Boolean);
+  }
+  if (!m) {
+    const hist = mockHistory();
+    return [el("h2", {}, "📝 Mock test"), el("p", { class: "hint" }, Math.min(MOCK_N, QUIZ.length) + " questions, " + (MOCK_SECS / 60) + " minutes. You get a subject-wise report at the end."),
+      hist.length ? el("div", { class: "learn-card" }, el("strong", {}, "Your last tests"), ...hist.slice(-5).reverse().map(x => el("p", { class: "hint" }, new Date(x.at).toLocaleDateString() + ": " + x.right + "/" + x.n + " (" + Math.round(x.right * 100 / x.n) + "%)"))) : null,
+      el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", onclick: mockStart }, "Start test"), back)].filter(Boolean);
+  }
+  const q = QUIZ[m.qs[m.i]], left = Math.max(0, Math.ceil((m.end - Date.now()) / 1000));
+  if (left === 0) { setTimeout(mockFinish, 0); }
+  const timer = el("span", { class: "hint", role: "timer" }, Math.floor(left / 60) + ":" + String(left % 60).padStart(2, "0"));
+  if (!m.tick) m.tick = setInterval(() => { if (state.mode !== "mock" || !state.mock || state.mock.done) { clearInterval(m.tick); return; } const l = Math.max(0, Math.ceil((m.end - Date.now()) / 1000)); const t = document.querySelector("[role=timer]"); if (t) t.textContent = Math.floor(l / 60) + ":" + String(l % 60).padStart(2, "0"); if (l === 0) { clearInterval(m.tick); mockFinish(); } }, 1000);
+  return [el("div", { class: "rowbtns" }, el("b", {}, "Question " + (m.i + 1) + " / " + m.qs.length), timer),
+    el("p", {}, q.q),
+    ...q.o.map((o, k) => el("button", { class: "btn" + (m.ans[m.i] === k ? " primary" : ""), type: "button", onclick: () => { m.ans[m.i] = k; render(); } }, o)),
+    el("div", { class: "rowbtns" }, m.i > 0 ? el("button", { class: "btn sm", type: "button", onclick: () => { m.i--; render(); } }, "← Previous") : null,
+      m.i < m.qs.length - 1 ? el("button", { class: "btn sm", type: "button", onclick: () => { m.i++; render(); } }, "Next →") : el("button", { class: "btn sm primary", type: "button", onclick: () => { const un = m.ans.filter(a => a < 0).length; if (!un || confirm(un + " unanswered. Finish now?")) mockFinish(); } }, "Finish"))].filter(Boolean);
 }
 // "Verify your college email": a sign-in link is sent to the email; tapping it proves the student owns that address.
 function verifyBlock() {
@@ -6291,6 +6349,7 @@ function render() {
       state.mode === "career" ? renderCareer() :
       state.mode === "battle" ? renderBattle() :
       state.mode === "plus" ? renderPlus() :
+      state.mode === "mock" ? renderMock() :
       state.mode === "college" ? renderCollege() :
       state.mode === "about" ? renderAbout() :
       state.mode === "lab" ? renderLab() :
