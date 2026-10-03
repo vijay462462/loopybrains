@@ -1730,3 +1730,20 @@ body.priv-blur > * { filter: blur(22px); }
 .official-bar .of-body { flex: 1; min-width: 0; }
 .official-bar .of-more { font-size: 12px; font-weight: 700; }
 .official-bar .of-x { border: 0; background: transparent; color: inherit; font-size: 16px; padding: 4px 6px; }
+.plan-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+.plan-card { position: relative; display: grid; gap: 6px; align-content: start; padding: 14px; border: 1px solid var(--line); border-radius: 16px; background: var(--paper); }
+.plan-card.best { border: 2px solid var(--accent); }
+.plan-badge { position: absolute; top: -10px; right: 12px; padding: 2px 10px; border-radius: 999px; font-size: 11px; font-weight: 800; color: #fff; background: var(--accent); }
+.plan-price { font-size: 28px; font-weight: 800; }
+.plan-price small { font-size: 13px; font-weight: 600; color: var(--muted, #6b7280); }
+.plan-card .hint { margin: 0; }
+.plus-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.plus-tile { display: grid; gap: 4px; align-content: start; text-align: left; padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--paper); color: inherit; font: inherit; }
+.plus-tile .pt-i { font-size: 24px; }
+.plus-tile span:last-child { font-size: 13px; opacity: .8; }
+.plus-cmp { display: grid; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.pc-row { display: grid; grid-template-columns: minmax(0, 1fr) 56px 56px; gap: 6px; padding: 8px 12px; border-top: 1px solid var(--line); font-size: 14px; }
+.pc-row:first-child { border-top: 0; }
+.pc-row.head { font-weight: 800; background: var(--accent-soft); }
+.pc-row span:nth-child(n+2) { text-align: center; }
+@media (min-width: 701px) { .sheet .plan-grid, .sheet .plus-tiles { gap: 12px; } }

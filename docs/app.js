@@ -2583,6 +2583,17 @@ async function startCheckout(planKey) {
   window.open(url, "_blank", "noopener");
 }
 const PLUS_FEATURES = ["AI doubt helper", "Previous-year paper vault with solutions", "Mock tests with analytics", "Mistake notebook", "Exam planner", "Placement preparation kit", "Cloud backup and sync", "Profile themes and frames", "No ads, ever"];
+const PLUS_TILES = [
+  ["🤖", "AI study helper", "Ask doubts and get step-by-step answers from Claude. 40 a day.", "ai"],
+  ["📝", "Mock tests", "Timed subject and placement tests with a topic-wise report.", "mock"],
+  ["📓", "Mistake notebook", "Questions you missed come back until you get them right.", "mistakes"],
+  ["🗓️", "Exam planner", "A daily plan with spaced revision before your exam.", "planner"],
+  ["📚", "Paper vault", "Previous-year papers and solutions, by subject and year.", "papers"],
+  ["☁️", "Cloud backup", "Keep flashcards, notes and tasks safe across phones.", ""],
+  ["🎨", "Themes", "Your own colour for the whole app.", ""],
+  ["⭐", "Plus star", "A star next to your name on every post.", ""],
+];
+const PLUS_COMPARE = [["", "Free", "Plus"], ["Board, stories, quizzes, Study Lab", "✔", "✔"], ["Daily streaks and battles", "✔", "✔"], ["AI study helper", "–", "✔"], ["Mock tests and progress chart", "–", "✔"], ["Mistake notebook and exam planner", "–", "✔"], ["Paper vault", "–", "✔"], ["Cloud backup, themes, ⭐", "–", "✔"]];
 function renderPlus() {
   const acct = myAccount(), verified = acct.verified, has = state.plan.plus;
   const canBackup = !!store && !!store.getTop && verified && (!PLUS.enabled || has);
@@ -2624,25 +2635,33 @@ function renderPlus() {
     el("p", { class: "hint" }, "Which of these would you want? Tick any."),
     ...picks.map(x => el("label", { class: "check" }, x.box, x.f)),
     price, email, el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "submit" }, "Send my answer")));
+  const wemail = el("input", { type: "email", maxlength: "100", placeholder: "Email (optional) to hear when payments open", "aria-label": "Email", autocomplete: "email" });
+  const wait = async (key) => {
+    try { if (Date.now() - Number(localStorage.getItem("dd-plus-wait") || 0) < 86400000) { say("Thank you! You are already on the list."); return; } } catch (_) {}
+    if (!store || !store.setTop) { say("Needs the live board. Connect to the internet and try again."); return; }
+    const em = wemail.value.trim(); if (em && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { say("Type a valid email or leave it empty."); return; }
+    try { await store.setTop("plusInterest", store.newId("plusInterest"), { email: em.slice(0, 100), college: COLLEGE.slice(0, 60), features: [], price: "Waitlist " + key, createdAt: Date.now() }); try { localStorage.setItem("dd-plus-wait", String(Date.now())); } catch (_) {} say("✅ You are on the list. Early access stays free until payments open."); }
+    catch (_) { say("We could not save that right now. Please try again later."); }
+  };
+  const plansBlock = () => {
+    const save = Math.max(0, Math.round(100 - PLUS.yearly * 100 / (PLUS.monthly * 12))), card = (key, name, price, per, note, best) => el("div", { class: "plan-card" + (best ? " best" : "") },
+      best ? el("span", { class: "plan-badge" }, "Best value") : null, el("strong", {}, name), el("div", { class: "plan-price" }, "₹" + price, el("small", {}, " " + per)), el("p", { class: "hint" }, note),
+      has ? (PLUS.enabled ? buy(key, "Renew") : el("span", { class: "hint" }, "Active ✔")) : PLUS.enabled ? buy(key, "Upgrade") : el("button", { class: "btn" + (best ? " primary" : ""), type: "button", onclick: () => wait(key) }, "Notify me"));
+    return el("div", {}, el("div", { class: "label" }, has ? "Your plan" : "Plans"),
+      el("div", { class: "plan-grid" }, card("monthly", "Monthly", PLUS.monthly, "/ month", "Cancel any time. Pay again when you want.", false), card("yearly", "Yearly", PLUS.yearly, "/ year", "Save " + save + "% compared with monthly.", true)),
+      PLUS.enabled ? el("p", { class: "hint" }, "Pay safely by UPI, card or net banking (Razorpay). Your plan switches on within a minute of paying." + (verified ? "" : " Verify your email first (Profile › Verify your college email) so we can attach the plan to you.")) : el("div", {}, el("p", { class: "hint" }, "Payments open soon. Everything below is free while we build Plus. Tap Notify me and we will tell you the day it opens."), wemail));
+  };
   return [
     el("h2", {}, "⭐ CampusLoop Plus" + (has ? " (active)" : "")),
     has ? el("div", { class: "plus-hero" }, "✨ Welcome, Plus member. Your studio is ready.") : null,
     el("p", { class: "hint" }, has ? "Thank you for supporting CampusLoop. Your plan is active until " + new Date(state.plan.until).toLocaleDateString() + "." : PLUS.enabled ? "Extras for students who want more. Everything free today stays free." : "Early access: everything below that already works is free while we build Plus. Everything free today stays free."),
     (!plusLocked() ? coachCard() : null),
-    el("div", { class: "learn-card plus-list" },
-      el("strong", {}, "What you get"),
-      el("p", {}, "☁️ Cloud backup and restore of your flashcards, notes, tasks and planner, so a new phone keeps your study data."),
-      el("p", {}, "⭐ A Plus star next to your name."),
-      el("p", {}, "🤖 An AI study helper (powered by Claude) for your doubts, 40 questions a day."),
-      el("p", {}, "📝 Timed mock tests for your subjects and for placements, with a topic-wise report and progress chart."),
-      el("p", {}, "📓 A mistake notebook that brings back the questions you missed."),
-      el("p", {}, "🗓️ An exam planner with spaced revision."),
-      el("p", {}, "📚 A previous-year paper vault with solutions, filtered by subject and year."),
-      el("p", {}, "🎨 Profile colour themes."),
-      el("p", { class: "hint" }, "Tell us below what you want next" + ". Tell us below which you want first.")),
-    PLUS.enabled && !has ? el("div", { class: "learn-card" }, el("strong", {}, "Choose a plan"),
-      el("div", { class: "rowbtns" }, buy("monthly", "₹" + PLUS.monthly + " per month"), buy("yearly", "₹" + PLUS.yearly + " per year (best value)")),
-      verified ? null : el("p", { class: "hint" }, "Verify your email first (Profile › Verify your college email) so we can attach the plan to you.")) : null,
+    plansBlock(),
+    msg,
+    el("div", { class: "label" }, "What you get"),
+    el("div", { class: "plus-tiles" }, ...PLUS_TILES.map(([icon, title, text, mode]) => el("button", { class: "plus-tile", type: "button", onclick: () => { if (mode) { state.mock = null; state.mist = null; showPanel(mode); } } }, el("span", { class: "pt-i", "aria-hidden": "true" }, icon), el("strong", {}, title), el("span", {}, text)))),
+    el("div", { class: "label" }, "Free vs Plus"),
+    el("div", { class: "plus-cmp", role: "table" }, ...PLUS_COMPARE.map(([f, free, plus], i) => el("div", { class: "pc-row" + (i === 0 ? " head" : ""), role: "row" }, el("span", { role: "cell" }, f), el("span", { role: "cell" }, free), el("span", { role: "cell" }, plus)))),
     el("div", { class: "label" }, "🚀 Plus studio"),
     (PLUS.enabled && !has) ? el("p", { class: "hint" }, "The studio is part of the paid plan.") : null,
     el("div", { class: "rowbtns" },
@@ -2656,7 +2675,6 @@ function renderPlus() {
     el("div", { class: "label" }, "☁️ Backup"),
     !verified ? el("p", { class: "hint" }, "Backup needs a verified email so you can sign in on a new phone. Open Profile and tap “Verify your college email”.") : (PLUS.enabled && !has ? el("p", { class: "hint" }, "Backup is part of the paid plan.") : null),
     el("div", { class: "rowbtns" }, backup, restore),
-    msg,
     el("div", { class: "label" }, "🗳️ Help us decide"),
     survey,
     el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")),
