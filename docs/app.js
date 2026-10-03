@@ -2633,19 +2633,21 @@ function renderPlus() {
       el("strong", {}, "What you get"),
       el("p", {}, "☁️ Cloud backup and restore of your flashcards, notes, tasks and planner, so a new phone keeps your study data."),
       el("p", {}, "⭐ A Plus star next to your name."),
+      el("p", {}, "🤖 An AI study helper (powered by Claude) for your doubts, 40 questions a day."),
       el("p", {}, "📝 Timed mock tests for your subjects and for placements, with a topic-wise report and progress chart."),
       el("p", {}, "📓 A mistake notebook that brings back the questions you missed."),
       el("p", {}, "🗓️ An exam planner with spaced revision."),
       el("p", {}, "📚 A previous-year paper vault with solutions, filtered by subject and year."),
       el("p", {}, "🎨 Profile colour themes."),
-      el("p", { class: "hint" }, "Coming next: AI doubt helper, Previous-year paper vault with solutions" + ". Tell us below which you want first.")),
+      el("p", { class: "hint" }, "Tell us below what you want next" + ". Tell us below which you want first.")),
     PLUS.enabled && !has ? el("div", { class: "learn-card" }, el("strong", {}, "Choose a plan"),
       el("div", { class: "rowbtns" }, buy("monthly", "₹" + PLUS.monthly + " per month"), buy("yearly", "₹" + PLUS.yearly + " per year (best value)")),
       verified ? null : el("p", { class: "hint" }, "Verify your email first (Profile › Verify your college email) so we can attach the plan to you.")) : null,
     el("div", { class: "label" }, "🚀 Plus studio"),
     (PLUS.enabled && !has) ? el("p", { class: "hint" }, "The studio is part of the paid plan.") : null,
     el("div", { class: "rowbtns" },
-      el("button", { class: "btn primary", type: "button", onclick: () => { state.mock = null; showPanel("mock"); } }, "📝 Mock tests"),
+      el("button", { class: "btn primary", type: "button", onclick: () => showPanel("ai") }, "🤖 AI helper"),
+      el("button", { class: "btn", type: "button", onclick: () => { state.mock = null; showPanel("mock"); } }, "📝 Mock tests"),
       el("button", { class: "btn", type: "button", onclick: () => { state.mist = null; showPanel("mistakes"); } }, "📓 Mistakes (" + mistakeList().length + ")"),
       el("button", { class: "btn", type: "button", onclick: () => showPanel("planner") }, "🗓️ Exam planner"),
       el("button", { class: "btn", type: "button", onclick: () => showPanel("papers") }, "📚 Paper vault (" + state.papers.length + ")")),
@@ -2773,6 +2775,31 @@ function renderPapers() {
         /^https:\/\//.test(p.solution || "") ? el("button", { class: "btn sm", type: "button", onclick: () => open(p.solution) }, "✅ Solution") : null,
         el("button", { class: "btn sm", type: "button", onclick: () => { if (done.has(p.id)) done.delete(p.id); else done.add(p.id); writeJSON("dd-papers-done", [...done].slice(-500)); render(); } }, done.has(p.id) ? "✔ Practised" : "Mark practised")))) : [el("p", { class: "hint" }, "No papers match.")]),
     el("div", { class: "rowbtns" }, back)].filter(Boolean);
+}
+// AI study helper (Plus): chat with Claude through our own server function; the secret key never reaches the phone.
+function renderAI() {
+  const back = el("button", { class: "btn", type: "button", onclick: () => showPanel("plus") }, "Back");
+  if (plusLocked()) return [el("h2", {}, "🤖 AI study helper"), el("p", { class: "hint" }, "The AI study helper is part of CampusLoop Plus."), el("div", { class: "rowbtns" }, back)];
+  if (!PLUS.functionsUrl) return [el("h2", {}, "🤖 AI study helper"), el("p", { class: "hint" }, "The AI helper is being set up and will switch on soon."), el("div", { class: "rowbtns" }, back)];
+  const chat = state.ai || (state.ai = { msgs: [], busy: false, note: "" });
+  const box = el("textarea", { maxlength: "1000", rows: "3", placeholder: "Ask a study doubt, e.g. Explain Dijkstra with an example", "aria-label": "Your question" });
+  const send = async () => {
+    const text = box.value.trim(); if (!text || chat.busy) return;
+    chat.msgs.push({ role: "user", content: text }); chat.busy = true; chat.note = ""; render();
+    try {
+      const tok = store && store.idToken ? await store.idToken() : ""; if (!tok) throw new Error("Please connect to the internet and sign in first.");
+      const r = await fetch(PLUS.functionsUrl.replace(/\/$/, "") + "/askAI", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + tok }, body: JSON.stringify({ messages: chat.msgs.slice(-8) }) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || "The AI helper is busy. Try again.");
+      chat.msgs.push({ role: "assistant", content: String(d.reply || "") }); chat.note = typeof d.left === "number" ? d.left + " questions left today." : "";
+    } catch (e) { chat.msgs.pop(); chat.note = (e && e.message) || "Could not reach the AI helper."; box.value = text; }
+    chat.busy = false; render();
+  };
+  return [el("h2", {}, "🤖 AI study helper"), el("p", { class: "hint" }, "Ask academic doubts only. Answers can contain mistakes, so check important facts with your book or teacher."),
+    ...chat.msgs.map(m => el("div", { class: "ai-msg " + (m.role === "user" ? "me" : "bot") }, m.content)),
+    chat.busy ? el("p", { class: "hint", role: "status" }, "Thinking…") : null,
+    box, chat.note ? el("p", { class: "hint", role: "status" }, chat.note) : null,
+    el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", disabled: chat.busy ? "" : null, onclick: send }, "Ask"), chat.msgs.length ? el("button", { class: "btn sm", type: "button", onclick: () => { state.ai = null; render(); } }, "New chat") : null, back)].filter(Boolean);
 }
 // Mistake notebook: questions you missed come back until you answer them right.
 function renderMistakes() {
@@ -6482,6 +6509,7 @@ function render() {
       state.mode === "mistakes" ? renderMistakes() :
       state.mode === "planner" ? renderPlanner() :
       state.mode === "papers" ? renderPapers() :
+      state.mode === "ai" ? renderAI() :
       state.mode === "college" ? renderCollege() :
       state.mode === "about" ? renderAbout() :
       state.mode === "lab" ? renderLab() :

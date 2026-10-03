@@ -53,3 +53,14 @@ A paid plan sold inside a Play Store app must normally use Google Play Billing (
 - Refunds and failed payments need a person to answer them: put a support email in the app.
 - Keep student data private: the survey email is optional and only for telling students when Plus opens.
 - Test the webhook carefully: a bug there can give Plus to the wrong person or not at all. The amount and the plan in the payment are checked, and each payment id is processed once.
+
+## 7. AI study helper (Claude) and paper vault
+
+**Paper vault:** works once the new rules are published. In `/admin.html` pick a college, open the Papers tab, and add papers as https links (upload files to Google Drive with "anyone with the link can view"). Add only papers you may share. Plus students open them from Profile > CampusLoop Plus > Paper vault.
+
+**AI helper:** the app only talks to our own function `askAI` (in `functions/index.js`), which calls the Claude API with a secret key that never reaches the phone. It is **written but NOT deployed and NOT tested**. To switch on:
+1. Create an API key at console.anthropic.com and set a monthly spend limit there.
+2. `firebase functions:secrets:set ANTHROPIC_API_KEY`, then `firebase deploy --only functions` (Blaze plan needed; set a budget alert).
+3. Set `plus.functionsUrl` in `docs/config.js` and add the functions domain to `connect-src` in `docs/index.html`.
+4. Paying students (or admins, for testing) get 40 questions a day; change `AI_DAILY_LIMIT` in the function to suit the cost. The default model is claude-haiku-4-5-20251001 (cheapest); change `AI_MODEL` for stronger answers at a higher cost.
+5. Test with your admin account first, and check what a day of use costs before opening it to everyone.
