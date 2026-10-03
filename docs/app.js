@@ -1231,7 +1231,19 @@ function trendingSubject() {
   return top && top[1] >= 2 ? top[0] : null;
 }
 
+// Trust strip under the tagline: honest promises plus real numbers from this college (shown only once they are big enough to mean something).
+let trustKey = "";
+function renderTrust() {
+  const bar = $("trustBar"); if (!bar) return;
+  const students = state.profiles.length, posts = ["doubts", "ideas", "clubs", "gate", "jobs", "challenges"].reduce((n, k) => n + (state[k] || []).length, 0);
+  const key = students + "/" + posts + "/" + NO_COLLEGE; if (key === trustKey) return; trustKey = key;
+  const chips = [["🔒", "Anonymous sign-in"], ["🛡️", "Moderated"], ["🚫", "No ads"], ["✔", "Verified students"]];
+  if (!NO_COLLEGE && students >= 10) chips.unshift(["👥", students + " students"]);
+  if (!NO_COLLEGE && posts >= 25) chips.splice(1, 0, ["💬", posts + " posts"]);
+  bar.replaceChildren(...chips.map(([i, t]) => el("span", { class: "trust-chip" }, i + " " + t)), el("a", { class: "trust-link", href: "privacy.html", target: "_blank", rel: "noopener" }, "Privacy"));
+}
 function renderHeader() {
+  renderTrust();
   const t = TABS[state.tab];
   document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === state.tab)));
 
@@ -6754,6 +6766,15 @@ $("quizBtn").addEventListener("click", () => showPanel("quiz"));
 $("learnBtn").addEventListener("click", () => showPanel("learn"));
 $("studyBtn").addEventListener("click", () => showPanel("resources"));
 $("focusBtn") && $("focusBtn").addEventListener("click", toggleFocus);
+// Phones: the tool tiles fold away behind one button so the board is visible right away.
+(() => {
+  const acts = document.querySelector(".hdr-actions"); if (!acts) return;
+  let open = false; try { open = localStorage.getItem("dd-tools-open") === "1"; } catch (_) {}
+  const b = el("button", { type: "button", class: "chip tools-toggle", "aria-expanded": String(open) }, "");
+  const paint = () => { acts.classList.toggle("tools-closed", !open); b.setAttribute("aria-expanded", String(open)); b.textContent = open ? "🧰 Fewer tools ▴" : "🧰 More tools ▾"; };
+  b.addEventListener("click", () => { open = !open; try { localStorage.setItem("dd-tools-open", open ? "1" : "0"); } catch (_) {} paint(); });
+  acts.prepend(b); paint();
+})();
 $("filterToggle").addEventListener("click", () => { document.querySelector("header.top").classList.toggle("filters-open"); renderHeader(); });
 $("botBtn").addEventListener("click", () => { if (window.sparkBotToggle) window.sparkBotToggle(); });
 $("alumniBtn").addEventListener("click", () => { alumniView = "dir"; showPanel("alumni"); });
