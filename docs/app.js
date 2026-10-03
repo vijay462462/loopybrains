@@ -308,7 +308,7 @@ const fileExt = (name) => (String(name || "").split(".").pop() || "").toLowerCas
 
 const state = {
   tab: "doubts", group: "All", query: "", filter: "all",
-  doubts: [], ideas: [], clubs: [], gate: [], jobs: [], challenges: [], chalScores: [], market: [], marketReports: [], marketRatings: [], marketInterests: [], replies: [], likes: [], plan: { plus: false, until: 0 }, papers: [], notices: [], blocked: [], profiles: [], stories: [], storyViews: [], storyAnswers: [], loaded: false,
+  doubts: [], ideas: [], clubs: [], gate: [], jobs: [], challenges: [], chalScores: [], market: [], marketReports: [], marketRatings: [], marketInterests: [], replies: [], likes: [], plan: { plus: false, until: 0 }, papers: [], notices: [], drives: [], blocked: [], profiles: [], stories: [], storyViews: [], storyAnswers: [], loaded: false,
   selected: null, mode: "intro", // intro | view | ask | edit | name | campus
   afterName: null,
   replyPages: [], replyAnon: false,
@@ -498,6 +498,8 @@ async function firebaseStore(conf, prefix = "") {
     account: () => { const u = auth && auth.currentUser; return { email: (u && u.email) || "", verified: !!(u && u.email && u.emailVerified) }; },
     subscribe: (coll, cb, onErr, since) => fs.onSnapshot(since ? fs.query(fs.collection(db, prefix + coll), fs.where("createdAt", ">", since)) : fs.collection(db, prefix + coll), snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))), onErr),
     newId: (coll) => fs.doc(fs.collection(db, prefix + coll)).id,
+    getRoomDoc: async (coll, id) => { const d = await fs.getDoc(fs.doc(db, prefix + coll, id)); return d.exists() ? d.data() : null; },
+    delRoomDoc: (coll, id) => fs.deleteDoc(fs.doc(db, prefix + coll, id)),
     // New posts, replies, stories and listings are stamped with the author's sign-in id so only they can change them.
     set: (coll, id, data) => fs.setDoc(fs.doc(db, prefix + coll, id), cleanDoc(OWNED_COLLS.has(coll) && auth && auth.currentUser ? { ...data, ownerUid: auth.currentUser.uid } : data)),
     setTop: (coll, id, data) => fs.setDoc(fs.doc(db, coll, id), cleanDoc(data)),
@@ -1274,7 +1276,7 @@ function renderToday() {
   const hr = new Date().getHours(), hello = hr < 12 ? "Good morning" : hr < 17 ? "Good afternoon" : "Good evening", name = (getName() || "").trim().split(/\s+/)[0] || "",
     streak = state.myStreak || 0, quizDone = QUIZ.length ? !!myQuizAnswer(dayNum()) : true, plan = readJSON("dd-exam-plan", null),
     left = plan && plan.date ? Math.ceil((new Date(plan.date + "T00:00:00").getTime() - new Date().setHours(0, 0, 0, 0)) / 864e5) : null;
-  const key = [hello, name, streak, quizDone, left, dayNum()].join("|"); if (key === todayKey && !bar.hidden) return; todayKey = key;
+  const key = [hello, name, streak, quizDone, left, dayNum(), openDrives().length].join("|"); if (key === todayKey && !bar.hidden) return; todayKey = key;
   const chip = (txt, cls, fn) => el("button", { class: "today-chip " + (cls || ""), type: "button", onclick: fn }, txt);
   const WORDS = ["Welcome to the " + BRAND + " family 💙", "Respect your teachers, help your juniors. 🙏", "Every question is welcome here.", "Kind words build a strong campus. 🌱", "Thank you for being part of our family.", "Learn together, grow together. 🚀", "Our teachers and staff work hard for you. Say thank you today. 🙏"];
   bar.replaceChildren(el("strong", { class: "today-hello" }, hello + (name ? ", " + name : "") + " 👋"), el("small", { class: "today-words" }, WORDS[dayNum() % WORDS.length]),
@@ -1282,8 +1284,43 @@ function renderToday() {
       chip(streak ? "🔥 " + streak + "-day streak" : "🔥 Start your streak", streak && !(state.myDays && state.myDays.has(dayNum())) ? "warn" : "", () => showPanel("me")),
       QUIZ.length ? chip(quizDone ? "✅ Quiz done" : "🧠 Today's quiz", quizDone ? "" : "pulse", () => showPanel("quiz")) : null,
       left != null && left >= 0 && left <= 60 ? chip("⏳ " + (left === 0 ? "Exam today" : left + " days to exam"), left <= 7 ? "warn" : "", () => showPanel("planner")) : null,
+      openDrives().length ? chip("🏢 " + openDrives().length + " campus drive" + (openDrives().length === 1 ? "" : "s"), "", () => showPanel("drives")) : null,
       chip("❓ Ask a doubt", "", () => { const b = $("askBtn"); if (b) b.click(); }))); 
   bar.hidden = false;
+}
+// Placement drives: posted by the placement cell (admin or staff). Students check eligibility and register interest; the cell sees the list.
+const openDrives = () => state.drives.filter(d => d.lastDate > Date.now()).sort((a, b) => a.lastDate - b.lastDate);
+const drivesMine = {};
+function renderDrives() {
+  const back = el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back"), list = openDrives(), uid = store && store.authUid ? store.authUid() : "";
+  const note = el("p", { class: "hint", role: "status" }, "");
+  const days = (t) => { const d = Math.ceil((t - Date.now()) / 864e5); return d <= 0 ? "closes today" : d + " day" + (d === 1 ? "" : "s") + " left"; };
+  const card = (d) => {
+    const mine = drivesMine[d.id]; if (mine === undefined && uid && store.getRoomDoc) { drivesMine[d.id] = null; store.getRoomDoc("driveInterest", d.id + "_" + uid).then(x => { drivesMine[d.id] = x || false; if (state.mode === "drives") render(); }).catch(() => { drivesMine[d.id] = false; }); }
+    const body = el("div", { class: "learn-card plus-list" }, el("strong", {}, "🏢 " + d.company + " · " + d.role), el("p", { class: "hint" }, [d.package ? "💰 " + d.package : "", d.branches && d.branches.length ? "🎓 " + d.branches.join(", ") : "All branches", d.minCgpa ? "📊 Min CGPA " + d.minCgpa : "", "⏳ " + days(d.lastDate)].filter(Boolean).join(" · ")),
+      d.driveDate ? el("p", { class: "hint" }, "📅 Drive on " + new Date(d.driveDate).toLocaleDateString()) : null, d.details ? el("p", {}, d.details) : null);
+    const actions = el("div", { class: "rowbtns" });
+    if (/^https:\/\//.test(d.link || "")) actions.append(el("button", { class: "btn sm", type: "button", onclick: () => { try { window.open(d.link, "_blank", "noopener"); } catch (_) {} } }, "Company link"));
+    if (mine) actions.append(el("span", { class: "hint" }, "✔ You are registered"), el("button", { class: "btn sm", type: "button", onclick: async () => { try { await store.delRoomDoc("driveInterest", d.id + "_" + uid); drivesMine[d.id] = false; render(); } catch (_) { note.textContent = "Could not withdraw. Try again."; } } }, "Withdraw"));
+    else actions.append(el("button", { class: "btn sm primary", type: "button", onclick: () => { state.driveForm = d.id; render(); } }, "I am interested"));
+    body.append(actions);
+    if (state.driveForm === d.id && !mine) {
+      const name = el("input", { maxlength: "50", value: getName(), placeholder: "Your name", "aria-label": "Your name" }), branch = el("input", { maxlength: "24", placeholder: "Branch, e.g. CSE", "aria-label": "Branch" }), cgpa = el("input", { type: "number", step: "0.01", min: "0", max: "10", placeholder: "CGPA", "aria-label": "CGPA" }), phone = el("input", { type: "tel", maxlength: "15", placeholder: "Phone (optional)", "aria-label": "Phone" });
+      body.append(el("div", { class: "form" }, name, el("div", { class: "two" }, branch, cgpa), phone, el("p", { class: "hint" }, "🔒 These details are shared only with the placement cell of " + COLLEGE + ". You can withdraw any time."),
+        el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", onclick: async (e) => {
+          const g = parseFloat(cgpa.value); if (!name.value.trim()) { note.textContent = "Write your name."; return; }
+          if (d.minCgpa && !(g >= d.minCgpa)) { note.textContent = "This drive needs a CGPA of at least " + d.minCgpa + "."; return; }
+          if (d.branches && d.branches.length && branch.value.trim() && !d.branches.some(b => b.toLowerCase() === branch.value.trim().toLowerCase())) { note.textContent = "This drive is for " + d.branches.join(", ") + "."; return; }
+          e.currentTarget.disabled = true;
+          try { const rec = { driveId: d.id, uid, name: name.value.trim().slice(0, 50), createdAt: Date.now() }; if (branch.value.trim()) rec.branch = branch.value.trim().slice(0, 24); if (g >= 0 && g <= 10) rec.cgpa = g; if (phone.value.trim()) rec.phone = phone.value.trim().slice(0, 15); await store.set("driveInterest", d.id + "_" + uid, rec); drivesMine[d.id] = rec; state.driveForm = null; render(); }
+          catch (err) { note.textContent = "Could not save. Check your internet and try again."; e.currentTarget.disabled = false; }
+        } }, "Register"), el("button", { class: "btn sm", type: "button", onclick: () => { state.driveForm = null; render(); } }, "Cancel"))));
+    }
+    return body;
+  };
+  return [el("h2", {}, "🏢 Campus drives"), el("p", { class: "hint" }, "Posted by the placement cell of " + COLLEGE + ". Check the eligibility, then tap I am interested."),
+    ...(list.length ? list.map(card) : [el("p", { class: "hint" }, "No open drives right now. The placement cell posts new ones here. Keep your resume ready!")]), note,
+    el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: () => showPanel("resume") }, "📄 Build my resume"), back)];
 }
 // Trust strip under the tagline: honest promises plus real numbers from this college (shown only once they are big enough to mean something).
 let trustKey = "";
@@ -6827,6 +6864,7 @@ function render() {
       state.mode === "planner" ? renderPlanner() :
       state.mode === "papers" ? renderPapers() :
       state.mode === "notices" ? renderNotices() :
+      state.mode === "drives" ? renderDrives() :
       state.mode === "ai" ? renderAI() :
       state.mode === "goals" ? renderGoals() :
       state.mode === "resume" ? renderResume() :
@@ -6894,6 +6932,7 @@ $("focusBtn") && $("focusBtn").addEventListener("click", toggleFocus);
 maybeWelcome();
 $("filterToggle").addEventListener("click", () => { document.querySelector("header.top").classList.toggle("filters-open"); renderHeader(); });
 $("botBtn").addEventListener("click", () => { if (window.sparkBotToggle) window.sparkBotToggle(); });
+$("drivesBtn").addEventListener("click", () => showPanel("drives"));
 $("alumniBtn").addEventListener("click", () => { alumniView = "dir"; showPanel("alumni"); });
 $("funBtn").addEventListener("click", () => showPanel("fun"));
 $("labBtn").addEventListener("click", () => showPanel("lab"));
@@ -6997,6 +7036,7 @@ render();
   store.subscribe("stories", rows => { state.stories = rows.filter(x => !x.deleted); renderStoryBar(); }, e => {}, since);
   store.subscribe("storyViews", rows => { state.storyViews = rows; }, e => {}, since);
   store.subscribe("storyAnswers", rows => { state.storyAnswers = rows; update(); }, e => {}, Date.now() - 7 * 86400000);
+  store.subscribe("drives", rows => { state.drives = rows.filter(d => !d.deleted && typeof d.company === "string"); renderHeader(); if (state.mode === "drives") render(); }, e => {});
   store.subscribe("notices", rows => { state.notices = rows.filter(n => !n.deleted && typeof n.title === "string"); renderOfficial(); }, e => {});
   store.subscribe("papers", rows => { state.papers = rows.filter(p => !p.deleted && typeof p.title === "string" && /^https:\/\//.test(p.link || "")); if (state.mode === "papers") render(); }, e => {});
   store.subscribe("jobs", rows => { const live_ = live(rows); trackNew("jobs", live_); state.jobs = live_; update(); }, e => {});

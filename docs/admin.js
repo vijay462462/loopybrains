@@ -447,6 +447,47 @@ function mailView() {
     } }, "Send a test now")), msg), box);
 }
 
+// Placement cell: post campus drives, see who is interested, download the list as CSV.
+function drivesView() {
+  const p = roomPath(), msg = h("p", { class: "msg" }), box = h("div", {});
+  const f = { company: h("input", { placeholder: "Company, e.g. Infosys", maxlength: "60" }), role: h("input", { placeholder: "Role, e.g. Systems Engineer", maxlength: "80" }), pkg: h("input", { placeholder: "Package, e.g. 3.6 LPA", maxlength: "40" }),
+    branches: h("input", { placeholder: "Eligible branches, comma separated (empty = all)", maxlength: "200" }), cgpa: h("input", { type: "number", step: "0.1", min: "0", max: "10", placeholder: "Minimum CGPA (optional)" }),
+    last: h("input", { type: "date", "aria-label": "Last date to register" }), when: h("input", { type: "date", "aria-label": "Drive date (optional)" }), link: h("input", { placeholder: "https:// company or apply link (optional)", maxlength: "290" }), details: h("textarea", { placeholder: "Details: rounds, documents to carry, venue…", maxlength: "800" }) };
+  const csv = (rows) => rows.map(r => r.map(x => '"' + String(x == null ? "" : x).replace(/"/g, '""').replace(/^([=+@-])/, "'$1") + '"').join(",")).join("\n");
+  const load = async () => {
+    try {
+      const snap = await fs.getDocs(fs.query(fs.collection(db, p, "drives"), fs.limit(200)));
+      const rows = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.lastDate || 0) - (a.lastDate || 0));
+      box.replaceChildren(h("h3", {}, rows.length + " drive" + (rows.length === 1 ? "" : "s")), ...rows.map(r => {
+        const open = r.lastDate > Date.now() && !r.deleted, app = h("div", {});
+        return h("div", { class: "card item" + (open ? "" : " hidden") }, h("div", { class: "row" }, h("b", {}, r.company + " · " + r.role), open ? h("span", { class: "tag ok" }, "open") : h("span", { class: "tag bad" }, r.deleted ? "removed" : "closed")),
+          h("p", { class: "mono" }, [r.package, (r.branches || []).join("/"), r.minCgpa ? "CGPA ≥ " + r.minCgpa : "", "closes " + new Date(r.lastDate).toLocaleDateString()].filter(Boolean).join(" · ")),
+          h("div", { class: "row" }, h("button", { class: "b sm", onclick: async (e) => {
+            e.currentTarget.disabled = true;
+            try { const s2 = await fs.getDocs(fs.query(fs.collection(db, p, "driveInterest"), fs.where("driveId", "==", r.id), fs.limit(1000))), list = s2.docs.map(d => d.data()).sort((x, y) => x.createdAt - y.createdAt);
+              app.replaceChildren(h("p", { class: "adm-hint" }, list.length + " interested"), ...list.slice(0, 50).map(x => h("p", { class: "mono" }, x.name + " · " + (x.branch || "-") + " · CGPA " + (x.cgpa == null ? "-" : x.cgpa) + (x.phone ? " · " + x.phone : ""))),
+                list.length ? h("button", { class: "b sm pri", onclick: () => { const blob = new Blob([csv([["Name", "Branch", "CGPA", "Phone", "Registered"], ...list.map(x => [x.name, x.branch, x.cgpa, x.phone, new Date(x.createdAt).toLocaleString()])])], { type: "text/csv" }), u = URL.createObjectURL(blob), el2 = document.createElement("a"); el2.href = u; el2.download = (r.company + "-applicants").replace(/[^A-Za-z0-9-]+/g, "_") + ".csv"; el2.click(); setTimeout(() => URL.revokeObjectURL(u), 2000); } }, "Download CSV") : null); }
+            catch (er) { msg.className = "msg err"; msg.textContent = "Could not load (" + (er.code || "error") + ")."; }
+            e.currentTarget.disabled = false; } }, "Interested students"),
+            h("button", { class: "b sm bad", onclick: async (e) => { if (!confirm("Remove this drive for students?")) return; e.currentTarget.disabled = true; try { const { id, ...data } = r; await fs.setDoc(fs.doc(db, p, "drives", id), { ...data, deleted: true }); await logAction("remove-drive", "drives/" + id, r.company); load(); } catch (er) { msg.className = "msg err"; msg.textContent = "Not allowed (" + (er.code || "error") + ")."; } } }, "Remove")), app); }));
+    } catch (e) { box.replaceChildren(h("p", { class: "msg err" }, "Could not load (" + (e.code || "error") + ").")); }
+  };
+  load();
+  return h("div", {}, h("div", { class: "card" }, h("h3", {}, "Post a campus drive"), h("p", { class: "adm-hint" }, "Students see it under Campus Drives, check their eligibility and tap I am interested. You see their name, branch, CGPA and optional phone, and can download the list."),
+    f.company, f.role, f.pkg, f.branches, f.cgpa, h("label", {}, "Last date to register", f.last), h("label", {}, "Drive date (optional)", f.when), f.link, f.details,
+    h("div", { class: "row" }, h("button", { class: "b pri", onclick: async (e) => {
+      const link = f.link.value.trim(), cg = parseFloat(f.cgpa.value), last = f.last.value ? new Date(f.last.value + "T23:59:59").getTime() : 0;
+      if (clean(f.company.value, 60).length < 2 || clean(f.role.value, 80).length < 2) { msg.className = "msg err"; msg.textContent = "Write the company and the role."; return; }
+      if (!last || last < Date.now()) { msg.className = "msg err"; msg.textContent = "Pick a last date in the future."; return; }
+      if (link && !/^https:\/\/[^\s]{4,290}$/.test(link)) { msg.className = "msg err"; msg.textContent = "The link must start with https://"; return; }
+      e.currentTarget.disabled = true;
+      try { const data = { company: clean(f.company.value, 60), role: clean(f.role.value, 80), package: clean(f.pkg.value, 40), branches: list(f.branches.value, 20, 12), lastDate: last, link, details: clean(f.details.value, 800), createdAt: Date.now() }; if (cg >= 0 && cg <= 10) data.minCgpa = cg; if (f.when.value) data.driveDate = new Date(f.when.value + "T09:00:00").getTime();
+        const ref = fs.doc(fs.collection(db, p, "drives")); await fs.setDoc(ref, data); await logAction("post-drive", "drives/" + ref.id, data.company); msg.className = "msg ok"; msg.textContent = "Posted."; for (const k of ["company", "role", "pkg", "branches", "cgpa", "link", "details"]) f[k].value = ""; load(); }
+      catch (er) { msg.className = "msg err"; msg.textContent = "Not saved (" + (er.code || "error") + "). Publish the latest rules."; }
+      e.currentTarget.disabled = false;
+    } }, "Post drive")), msg), box);
+}
+
 const EXAMS = ["Mid", "End", "Supplementary", "Model", "Other"];
 function papersView() {
   const p = roomPath(), msg = h("p", { class: "msg" }), box = h("div", {});
@@ -476,11 +517,11 @@ function papersView() {
 }
 
 // ---------- shell ----------
-const TABS = [["overview", "Overview", true], ["report", "Weekly report", true], ["mail", "Report emails", true], ["moderation", "Moderation", true], ["blocked", "Blocked devices", true], ["staff", "College staff", false], ["sale", "Flash sale", false], ["promos", "Promo codes", false], ["notices", "Notices", true], ["papers", "Papers", true], ["colleges", "Colleges", false], ["requests", "Requests and survey", false], ["log", "Log", false]];
-const VIEWS = { mail: mailView, report: reportView, staff: staffView, sale: saleView, promos: promosView, notices: noticesView, papers: papersView, overview: overviewView, moderation: moderationView, blocked: blockedView, colleges: collegesView, requests: requestsView, log: logView };
+const TABS = [["overview", "Overview", true], ["report", "Weekly report", true], ["mail", "Report emails", true], ["moderation", "Moderation", true], ["blocked", "Blocked devices", true], ["staff", "College staff", false], ["sale", "Flash sale", false], ["promos", "Promo codes", false], ["drives", "Placement drives", true], ["notices", "Notices", true], ["papers", "Papers", true], ["colleges", "Colleges", false], ["requests", "Requests and survey", false], ["log", "Log", false]];
+const VIEWS = { drives: drivesView, mail: mailView, report: reportView, staff: staffView, sale: saleView, promos: promosView, notices: noticesView, papers: papersView, overview: overviewView, moderation: moderationView, blocked: blockedView, colleges: collegesView, requests: requestsView, log: logView };
 function draw() {
   const u = auth.currentUser;
-  const STAFF_TABS = ["report", "notices", "moderation", "blocked", "papers"], shownTabs = S.staffOnly ? TABS.filter(t => STAFF_TABS.includes(t[0])) : TABS;
+  const STAFF_TABS = ["drives", "report", "notices", "moderation", "blocked", "papers"], shownTabs = S.staffOnly ? TABS.filter(t => STAFF_TABS.includes(t[0])) : TABS;
   if (S.staffOnly && !STAFF_TABS.includes(S.tab)) S.tab = "notices";
   const tabs = h("div", { class: "adm-tabs" }, ...shownTabs.map(([k, label]) => h("button", { class: S.tab === k ? "on" : "", onclick: () => { S.tab = k; draw(); } }, label)));
   const needs = TABS.find(t => t[0] === S.tab)[2];

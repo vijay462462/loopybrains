@@ -355,6 +355,36 @@ service cloud.firestore {
         allow create, update: if (isAdmin() || isStaff(room)) && validNotice();
         allow delete: if isAdmin() || isStaff(room);
       }
+      // ---------- placement cell: campus drives posted by admins/staff, students register interest ----------
+      match /drives/{id} {
+        function validDrive() {
+          let d = request.resource.data;
+          return d.keys().hasOnly(['company', 'role', 'package', 'branches', 'minCgpa', 'lastDate', 'driveDate', 'link', 'details', 'createdAt', 'deleted'])
+            && str(d.company, 2, 60) && str(d.role, 2, 80) && optStr(d, 'package', 40) && optStr(d, 'details', 800)
+            && d.branches is list && d.branches.size() <= 12
+            && (!('minCgpa' in d) || ((d.minCgpa is int || d.minCgpa is float) && d.minCgpa >= 0 && d.minCgpa <= 10))
+            && d.lastDate is int && (!('driveDate' in d) || d.driveDate is int)
+            && (!('link' in d) || d.link == '' || (d.link is string && d.link.matches('https://[^ ]{4,290}')))
+            && d.createdAt is int && optBool(d, 'deleted');
+        }
+        allow read: if member();
+        allow create, update: if (isAdmin() || isStaff(room)) && validDrive();
+        allow delete: if isAdmin() || isStaff(room);
+      }
+      // A student's interest in a drive. The id is <driveId>_<their uid>. Placement staff and admins read them all; a student reads only their own.
+      match /driveInterest/{id} {
+        function validInterest() {
+          let d = request.resource.data;
+          return d.keys().hasOnly(['driveId', 'uid', 'name', 'branch', 'cgpa', 'phone', 'createdAt'])
+            && d.uid == request.auth.uid && id == d.driveId + '_' + request.auth.uid
+            && exists(/databases/$(database)/documents/rooms/$(room)/drives/$(d.driveId))
+            && str(d.name, 1, 50) && optStr(d, 'branch', 24) && optStr(d, 'phone', 15)
+            && (!('cgpa' in d) || ((d.cgpa is int || d.cgpa is float) && d.cgpa >= 0 && d.cgpa <= 10)) && d.createdAt is int;
+        }
+        allow read: if isAdmin() || isStaff(room) || (signedIn() && resource.data.uid == request.auth.uid);
+        allow create, update: if member() && validInterest();
+        allow delete: if isAdmin() || isStaff(room) || (signedIn() && resource.data.uid == request.auth.uid);
+      }
       // ---------- previous-year paper vault: only admins add papers (links to files), everyone signed in can read ----------
       match /papers/{id} {
         function validPaper() {

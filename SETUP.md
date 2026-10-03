@@ -140,3 +140,7 @@ A college's own staff (exam cell, placement cell, principal's office) can run th
 2. In `/admin.html` open **College staff**, paste the id, pick their college, add a role label, and tap **Add staff**.
 3. They reload `/admin.html`. They now see only **Notices, Moderation, Blocked devices and Papers**, and only for their own college. They cannot touch other colleges, colleges' settings, promo codes, sales or the staff list. Remove them from the same tab any time.
 Staff need a verified email (the email link does that). Their actions are not written to the audit log yet.
+
+## Placement cell (campus drives)
+
+Platform admins and college staff (see "College staff accounts") open `/admin.html` › **Placement drives**: company, role, package, eligible branches, minimum CGPA, last date, optional link and details. Students see **🏢 Campus Drives** (under More tools, and a chip on the Today card) and tap **I am interested**; they enter name, branch, CGPA and an optional phone, with a note that only the placement cell sees it. The cell opens **Interested students** on a drive and can download a CSV. Students can withdraw any time. Publish the latest `firestore.rules` first. Add a line about this to your Privacy Policy before using it with real students.
