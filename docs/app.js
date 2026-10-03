@@ -306,7 +306,7 @@ const fileExt = (name) => (String(name || "").split(".").pop() || "").toLowerCas
 
 const state = {
   tab: "doubts", group: "All", query: "", filter: "all",
-  doubts: [], ideas: [], clubs: [], gate: [], jobs: [], challenges: [], chalScores: [], market: [], marketReports: [], marketRatings: [], marketInterests: [], replies: [], likes: [], plan: { plus: false, until: 0 }, blocked: [], profiles: [], stories: [], storyViews: [], storyAnswers: [], loaded: false,
+  doubts: [], ideas: [], clubs: [], gate: [], jobs: [], challenges: [], chalScores: [], market: [], marketReports: [], marketRatings: [], marketInterests: [], replies: [], likes: [], plan: { plus: false, until: 0 }, papers: [], blocked: [], profiles: [], stories: [], storyViews: [], storyAnswers: [], loaded: false,
   selected: null, mode: "intro", // intro | view | ask | edit | name | campus
   afterName: null,
   replyPages: [], replyAnon: false,
@@ -2636,6 +2636,7 @@ function renderPlus() {
       el("p", {}, "📝 Timed mock tests for your subjects and for placements, with a topic-wise report and progress chart."),
       el("p", {}, "📓 A mistake notebook that brings back the questions you missed."),
       el("p", {}, "🗓️ An exam planner with spaced revision."),
+      el("p", {}, "📚 A previous-year paper vault with solutions, filtered by subject and year."),
       el("p", {}, "🎨 Profile colour themes."),
       el("p", { class: "hint" }, "Coming next: AI doubt helper, Previous-year paper vault with solutions" + ". Tell us below which you want first.")),
     PLUS.enabled && !has ? el("div", { class: "learn-card" }, el("strong", {}, "Choose a plan"),
@@ -2646,7 +2647,8 @@ function renderPlus() {
     el("div", { class: "rowbtns" },
       el("button", { class: "btn primary", type: "button", onclick: () => { state.mock = null; showPanel("mock"); } }, "📝 Mock tests"),
       el("button", { class: "btn", type: "button", onclick: () => { state.mist = null; showPanel("mistakes"); } }, "📓 Mistakes (" + mistakeList().length + ")"),
-      el("button", { class: "btn", type: "button", onclick: () => showPanel("planner") }, "🗓️ Exam planner")),
+      el("button", { class: "btn", type: "button", onclick: () => showPanel("planner") }, "🗓️ Exam planner"),
+      el("button", { class: "btn", type: "button", onclick: () => showPanel("papers") }, "📚 Paper vault (" + state.papers.length + ")")),
     el("div", { class: "label" }, "🎨 Theme"),
     (PLUS.enabled && !has) ? el("p", { class: "hint" }, "Themes are part of the paid plan.") : el("div", { class: "rowbtns" }, ...THEMES.map(([n, c]) => el("button", { class: "btn sm", type: "button", onclick: () => { try { if (c) localStorage.setItem("dd-theme", c); else localStorage.removeItem("dd-theme"); } catch (_) {} if (!c) { const b = BRAND_COLORS || ["#4f46e5", "#7c3aed"]; document.documentElement.style.setProperty("--accent", b[0]); document.documentElement.style.setProperty("--brand-a", b[0]); document.documentElement.style.setProperty("--brand-b", b[1]); } else applyTheme(); } }, n))),
     el("div", { class: "label" }, "☁️ Backup"),
@@ -2750,6 +2752,27 @@ function coachCard() {
   return el("div", { class: "coach" },
     el("div", { class: "coach-top" }, ring, el("div", {}, el("strong", {}, "Your readiness"), el("p", { class: "coach-sub" }, ready == null ? "Take a mock test to see it." : ready >= 80 ? "Wow, amazing! You are exam ready." : ready >= 60 ? "Good progress. Keep going." : "Let's build it up together."), el("span", { class: "coach-level" }, "Level " + level + " · " + names[level - 1]))),
     el("div", { class: "coach-next" }, el("strong", {}, "Best next step"), ...tips.slice(0, 3).map(([text, mode], i) => el("button", { class: "coach-tip" + (i === 0 ? " first" : ""), type: "button", onclick: () => { state.mock = null; state.mist = null; showPanel(mode); } }, text))));
+}
+// Previous-year paper vault (Plus): papers are added by the admin as links; students filter, open and tick off what they have practised.
+function renderPapers() {
+  const back = el("button", { class: "btn", type: "button", onclick: () => showPanel("plus") }, "Back");
+  if (plusLocked()) return [el("h2", {}, "📚 Paper vault"), el("p", { class: "hint" }, "The previous-year paper vault is part of CampusLoop Plus."), el("div", { class: "rowbtns" }, back)];
+  const all = state.papers.slice().sort((a, b) => (b.year - a.year) || String(a.subject).localeCompare(b.subject)), done = new Set(readJSON("dd-papers-done", []));
+  if (!all.length) return [el("h2", {}, "📚 Paper vault"), el("p", { class: "hint" }, "No papers have been added for " + COLLEGE + " yet. Your admin adds them from the admin dashboard."), el("div", { class: "rowbtns" }, back)];
+  const f = state.paperFilter || (state.paperFilter = { subject: "", year: "", q: "" });
+  const subjects = [...new Set(all.map(p => p.subject))].sort(), years = [...new Set(all.map(p => p.year))].sort((a, b) => b - a);
+  const rows = all.filter(p => (!f.subject || p.subject === f.subject) && (!f.year || String(p.year) === f.year) && (!f.q || (p.title + " " + p.subject).toLowerCase().includes(f.q.toLowerCase())));
+  const sel = (label, key, opts) => el("select", { "aria-label": label, onchange: (e) => { f[key] = e.target.value; render(); } }, el("option", { value: "" }, label), ...opts.map(o => el("option", { value: String(o), selected: f[key] === String(o) ? "" : null }, String(o))));
+  const search = el("input", { type: "search", maxlength: "40", placeholder: "Search papers", "aria-label": "Search papers", value: f.q, oninput: (e) => { f.q = e.target.value; clearTimeout(f.t); f.t = setTimeout(render, 250); } });
+  const open = (u) => { try { window.open(u, "_blank", "noopener"); } catch (_) {} };
+  const pct = Math.round(all.filter(p => done.has(p.id)).length * 100 / all.length);
+  return [el("h2", {}, "📚 Paper vault (" + all.length + ")"), el("p", { class: "hint" }, "Practised " + all.filter(p => done.has(p.id)).length + " of " + all.length + " (" + pct + "%). Tip: attempt a paper under exam time, then check the solution."),
+    search, el("div", { class: "rowbtns" }, sel("All subjects", "subject", subjects), sel("All years", "year", years)),
+    ...(rows.length ? rows.map(p => el("div", { class: "learn-card plus-list" }, el("strong", {}, p.title), el("p", { class: "hint" }, p.subject + " · " + p.year + " · " + p.exam + (p.note ? " · " + p.note : "")),
+      el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => open(p.link) }, "📄 Open paper"),
+        /^https:\/\//.test(p.solution || "") ? el("button", { class: "btn sm", type: "button", onclick: () => open(p.solution) }, "✅ Solution") : null,
+        el("button", { class: "btn sm", type: "button", onclick: () => { if (done.has(p.id)) done.delete(p.id); else done.add(p.id); writeJSON("dd-papers-done", [...done].slice(-500)); render(); } }, done.has(p.id) ? "✔ Practised" : "Mark practised")))) : [el("p", { class: "hint" }, "No papers match.")]),
+    el("div", { class: "rowbtns" }, back)].filter(Boolean);
 }
 // Mistake notebook: questions you missed come back until you answer them right.
 function renderMistakes() {
@@ -6458,6 +6481,7 @@ function render() {
       state.mode === "mock" ? renderMock() :
       state.mode === "mistakes" ? renderMistakes() :
       state.mode === "planner" ? renderPlanner() :
+      state.mode === "papers" ? renderPapers() :
       state.mode === "college" ? renderCollege() :
       state.mode === "about" ? renderAbout() :
       state.mode === "lab" ? renderLab() :
@@ -6613,6 +6637,7 @@ render();
   store.subscribe("stories", rows => { state.stories = rows.filter(x => !x.deleted); renderStoryBar(); }, e => {}, since);
   store.subscribe("storyViews", rows => { state.storyViews = rows; }, e => {}, since);
   store.subscribe("storyAnswers", rows => { state.storyAnswers = rows; update(); }, e => {}, Date.now() - 7 * 86400000);
+  store.subscribe("papers", rows => { state.papers = rows.filter(p => !p.deleted && typeof p.title === "string" && /^https:\/\//.test(p.link || "")); if (state.mode === "papers") render(); }, e => {});
   store.subscribe("jobs", rows => { const live_ = live(rows); trackNew("jobs", live_); state.jobs = live_; update(); }, e => {});
   store.subscribe("challenges", rows => { const live_ = live(rows); trackNew("challenges", live_); state.challenges = live_; update(); }, e => {});
   store.subscribe("chal_scores", rows => { state.chalScores = rows.filter(r => !r.deleted); update(); }, e => {});

@@ -282,9 +282,38 @@ function logView() {
   return box;
 }
 
+
+const EXAMS = ["Mid", "End", "Supplementary", "Model", "Other"];
+function papersView() {
+  const p = roomPath(), msg = h("p", { class: "msg" }), box = h("div", {});
+  const f = { title: h("input", { placeholder: "Title, e.g. Data Structures End Sem 2023", maxlength: "120" }), subject: h("input", { placeholder: "Subject", maxlength: "40" }), year: h("input", { type: "number", placeholder: "Year", value: String(new Date().getFullYear()) }),
+    exam: h("select", {}, ...EXAMS.map(x => h("option", { value: x }, x))), link: h("input", { placeholder: "https:// link to the paper (Google Drive, PDF...)", maxlength: "290" }), solution: h("input", { placeholder: "https:// link to the solution (optional)", maxlength: "290" }), note: h("input", { placeholder: "Note (optional)", maxlength: "200" }) };
+  const load = async () => {
+    try {
+      const snap = await fs.getDocs(fs.query(fs.collection(db, p, "papers"), fs.limit(500)));
+      const rows = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.year || 0) - (a.year || 0));
+      box.replaceChildren(h("h3", {}, rows.length + " paper" + (rows.length === 1 ? "" : "s")), ...rows.map(r => h("div", { class: "card" }, h("b", {}, r.title), h("p", { class: "mono" }, r.subject + " · " + r.year + " · " + r.exam),
+        h("div", { class: "row" }, h("button", { class: "b sm bad", onclick: async (e) => { if (!confirm("Remove this paper?")) return; e.currentTarget.disabled = true; try { await fs.deleteDoc(fs.doc(db, p, "papers", r.id)); await logAction("delete-paper", "papers/" + r.id, r.title); load(); } catch (er) { msg.className = "msg err"; msg.textContent = "Not allowed (" + (er.code || "error") + ")."; } } }, "Remove")))));
+    } catch (e) { box.replaceChildren(h("p", { class: "msg err" }, "Could not load (" + (e.code || "error") + ").")); }
+  };
+  load();
+  return h("div", {}, h("div", { class: "card" }, h("h3", {}, "Add a previous-year paper"), h("p", { class: "adm-hint" }, "Add only papers you may share (your college's own, or with permission). Upload the file to Google Drive (anyone with the link can view) and paste the link."),
+    f.title, f.subject, h("div", { class: "cols" }, f.year, f.exam), f.link, f.solution, f.note,
+    h("div", { class: "row" }, h("button", { class: "b pri", onclick: async (e) => {
+      const year = parseInt(f.year.value, 10), link = f.link.value.trim(), sol = f.solution.value.trim(), ok = (u) => /^https:\/\/[^\s]{4,290}$/.test(u);
+      if (clean(f.title.value, 120).length < 3 || clean(f.subject.value, 40).length < 2) { msg.className = "msg err"; msg.textContent = "Write a title and a subject."; return; }
+      if (!(year >= 1990 && year <= 2100)) { msg.className = "msg err"; msg.textContent = "Enter a valid year."; return; }
+      if (!ok(link) || (sol && !ok(sol))) { msg.className = "msg err"; msg.textContent = "Links must start with https://"; return; }
+      e.currentTarget.disabled = true;
+      try { const ref = fs.doc(fs.collection(db, p, "papers")); await fs.setDoc(ref, { title: clean(f.title.value, 120), subject: clean(f.subject.value, 40), year, exam: f.exam.value, link, solution: sol, note: clean(f.note.value, 200), createdAt: Date.now() }); await logAction("add-paper", "papers/" + ref.id, f.title.value); msg.className = "msg ok"; msg.textContent = "Added."; for (const k of ["title", "link", "solution", "note"]) f[k].value = ""; load(); }
+      catch (er) { msg.className = "msg err"; msg.textContent = "Not saved (" + (er.code || "error") + "). Publish the latest rules."; }
+      e.currentTarget.disabled = false;
+    } }, "Add paper")), msg), box);
+}
+
 // ---------- shell ----------
-const TABS = [["overview", "Overview", true], ["moderation", "Moderation", true], ["blocked", "Blocked devices", true], ["colleges", "Colleges", false], ["requests", "Requests and survey", false], ["log", "Log", false]];
-const VIEWS = { overview: overviewView, moderation: moderationView, blocked: blockedView, colleges: collegesView, requests: requestsView, log: logView };
+const TABS = [["overview", "Overview", true], ["moderation", "Moderation", true], ["blocked", "Blocked devices", true], ["papers", "Papers", true], ["colleges", "Colleges", false], ["requests", "Requests and survey", false], ["log", "Log", false]];
+const VIEWS = { papers: papersView, overview: overviewView, moderation: moderationView, blocked: blockedView, colleges: collegesView, requests: requestsView, log: logView };
 function draw() {
   const u = auth.currentUser;
   const tabs = h("div", { class: "adm-tabs" }, ...TABS.map(([k, label]) => h("button", { class: S.tab === k ? "on" : "", onclick: () => { S.tab = k; draw(); } }, label)));

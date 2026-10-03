@@ -282,6 +282,21 @@ service cloud.firestore {
         allow update: if adminMod() || reportOnly() || member() && isOwner() && sameOwner() && notBlocked(room, request.resource.data.authorId) && validPost('type') && unchanged() && postEdit('type');
         allow delete: if false;
       }
+      // ---------- previous-year paper vault: only admins add papers (links to files), everyone signed in can read ----------
+      match /papers/{id} {
+        function validPaper() {
+          let d = request.resource.data;
+          return d.keys().hasOnly(['title', 'subject', 'year', 'exam', 'link', 'solution', 'note', 'createdAt', 'deleted'])
+            && str(d.title, 3, 120) && str(d.subject, 2, 40) && d.year is int && d.year >= 1990 && d.year <= 2100
+            && d.exam in ['Mid', 'End', 'Supplementary', 'Model', 'Other']
+            && d.link is string && d.link.matches('https://[^ ]{4,290}')
+            && (!('solution' in d) || d.solution == '' || (d.solution is string && d.solution.matches('https://[^ ]{4,290}')))
+            && optStr(d, 'note', 200) && d.createdAt is int && optBool(d, 'deleted');
+        }
+        allow read: if member();
+        allow create, update: if isAdmin() && validPaper();
+        allow delete: if isAdmin();
+      }
       // ---------- profile photos and 24-hour stories ----------
       match /profiles/{id} {
         function validProfile() {

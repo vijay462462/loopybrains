@@ -52,5 +52,17 @@ await t("audit entries cannot be edited or removed", async () => { await assertF
 await t("students cannot read or write the audit log", async () => { await assertFails(getDoc(doc(student, "adminLog/l1"))); await assertFails(setDoc(doc(student, "adminLog/l2"), { by: "s", action: "x", at: now() })); });
 await t("admin sets config/plus.required", () => assertSucceeds(setDoc(doc(admin, "config/plus"), { required: true })));
 await t("student cannot read config", () => assertFails(getDoc(doc(student, "config/plus"))));
+console.log("paper vault");
+const paper = (extra = {}) => ({ title: "Data Structures End 2023", subject: "DSA", year: 2023, exam: "End", link: "https://drive.google.com/file/d/abc/view", solution: "", note: "", createdAt: now(), ...extra });
+await t("admin adds a paper", () => assertSucceeds(setDoc(doc(admin, R + "/papers/p1"), paper())));
+await t("student can read papers", () => assertSucceeds(getDocs(collection(student, R + "/papers"))));
+await t("student cannot add a paper", () => assertFails(setDoc(doc(student, R + "/papers/p2"), paper())));
+await t("student cannot delete a paper", () => assertFails(deleteDoc(doc(student, R + "/papers/p1"))));
+await t("paper with a non-https link is refused", () => assertFails(setDoc(doc(admin, R + "/papers/p3"), paper({ link: "http://x.com/a.pdf" }))));
+await t("paper with a javascript link is refused", () => assertFails(setDoc(doc(admin, R + "/papers/p4"), paper({ link: "javascript:alert(1)" }))));
+await t("paper with a bad year is refused", () => assertFails(setDoc(doc(admin, R + "/papers/p5"), paper({ year: 1800 }))));
+await t("paper with an unknown field is refused", () => assertFails(setDoc(doc(admin, R + "/papers/p6"), paper({ hack: 1 }))));
+await t("paper with a solution link is accepted", () => assertSucceeds(setDoc(doc(admin, R + "/papers/p7"), paper({ solution: "https://example.com/sol.pdf" }))));
+await t("admin removes a paper", () => assertSucceeds(deleteDoc(doc(admin, R + "/papers/p7"))));
 console.log(`\n${pass} passed, ${fail} failed`);
 await env.cleanup(); process.exit(fail ? 1 : 0);
