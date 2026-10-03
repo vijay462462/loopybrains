@@ -1949,7 +1949,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 .splash { position: fixed; inset: 0; z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 24px; text-align: center; color: #fff;
   background: radial-gradient(90% 70% at 80% 10%, color-mix(in srgb, var(--brand-a, #9333ea) 55%, transparent), transparent 60%), radial-gradient(80% 70% at 10% 100%, color-mix(in srgb, var(--brand-b, #db2777) 40%, transparent), transparent 60%), linear-gradient(155deg, #151238, #1e1757 55%, #2a1a63);
   animation: splashAuto .45s ease 4s forwards; }
-.splash-logo { border-radius: 24px; box-shadow: 0 18px 40px -12px rgb(0 0 0 / .6); animation: splashPop .7s cubic-bezier(.2, .9, .3, 1.2) both; }
+.splash-logo-unused { border-radius: 24px; box-shadow: 0 18px 40px -12px rgb(0 0 0 / .6); animation: splashPop .7s cubic-bezier(.2, .9, .3, 1.2) both; }
 .splash-title { margin: 8px 0 0; font-family: var(--f-display); font-size: clamp(1.7rem, 7vw, 2.6rem); line-height: 1.1; letter-spacing: -0.02em; animation: riseIn .6s ease .15s both; }
 .splash-langs { margin: 0; font-size: 1.05rem; font-weight: 700; color: #fde68a; animation: riseIn .6s ease .35s both; }
 .splash-sub { margin: 0; opacity: .85; max-width: 22em; animation: riseIn .6s ease .5s both; }
@@ -1963,3 +1963,20 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 .today-note .of-x { position: absolute; top: 6px; right: 6px; border: 0; background: transparent; color: inherit; opacity: .7; }
 .splash-note { max-width: 24em; margin: 6px 0 0; padding: 10px 14px; border-radius: 14px; background: rgb(255 255 255 / .12); border: 1px solid rgb(255 255 255 / .18); font-size: .95rem; animation: riseIn .6s ease .75s both; }
 .splash-note small { display: block; margin-top: 4px; color: #fde68a; font-weight: 700; }
+
+/* ---- Loopy, the CampusLoop robot ---- */
+.loopy { width: 150px; height: auto; filter: drop-shadow(0 18px 24px rgb(0 0 0 / .45)); animation: splashPop .7s cubic-bezier(.2, .9, .3, 1.2) both; }
+.lp-float { animation: lpFloat 3s ease-in-out infinite; transform-origin: 100px 120px; }
+.lp-shadow { animation: lpShadow 3s ease-in-out infinite; transform-origin: 100px 212px; }
+.lp-wave { transform-origin: 139px 144px; animation: lpWave 1.1s ease-in-out .5s 4; }
+.lp-eyes { transform-origin: 100px 88px; animation: lpBlink 4s infinite; }
+.lp-ant { animation: lpGlow 1.4s ease-in-out infinite; transform-origin: 100px 24px; }
+.splash-bubble { position: relative; min-height: 3.4em; max-width: 22em; margin-top: 4px; padding: 12px 16px; border-radius: 18px; background: #fff; color: #1e1757; font-weight: 600; line-height: 1.4; box-shadow: 0 14px 30px -14px rgb(0 0 0 / .6); animation: riseIn .5s ease .3s both; }
+.splash-bubble::before { content: ""; position: absolute; top: -8px; left: 50%; width: 16px; height: 16px; background: #fff; transform: translateX(-50%) rotate(45deg); border-radius: 3px; }
+@keyframes lpFloat { 50% { transform: translateY(-8px); } }
+@keyframes lpShadow { 50% { transform: scaleX(.82); opacity: .15; } }
+@keyframes lpWave { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-38deg); } }
+@keyframes lpBlink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.08); } }
+@keyframes lpGlow { 50% { transform: scale(1.35); filter: drop-shadow(0 0 8px #fde047); } }
+@media (prefers-reduced-motion: reduce) { .lp-float, .lp-shadow, .lp-wave, .lp-eyes, .lp-ant, .loopy, .splash-bubble { animation: none; } }
+.today-hello::before { content: "🤖 "; }
