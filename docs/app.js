@@ -1146,7 +1146,9 @@ async function copyLink(btn, link) {
 let _pwaPrompt = null;
 window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault(); _pwaPrompt = e;
-  const banner = $('installBanner'); if (banner) banner.hidden = false;
+  // Not on the first days: new students should see the welcome and home screen first, not an install pop-up.
+  let days = 0; try { days = (JSON.parse(localStorage.getItem('dd-visits') || '{}').n) || 0; } catch (_) {}
+  const banner = $('installBanner'); if (banner) banner.hidden = !(days >= 4);
 });
 window.addEventListener('appinstalled', () => {
   _pwaPrompt = null;
@@ -1529,11 +1531,11 @@ const EXPLORE = [
   ["Study", [["quizBtn", "🧠", "Daily Quiz"], ["labBtn", "🧪", "Study Lab"], ["studyBtn", "📖", "Study Tools"], ["learnBtn", "📚", "Learn from IIT"], ["focusBtn", "🎯", "Focus mode"]]],
   ["Campus", [["eventsBtn", "🎉", "Events"], ["drivesBtn", "🏢", "Campus Drives"], ["leadersBtn", "🏆", "Top Helpers"], ["alumniBtn", "🎓", "Alumni", "alumni"]]],
   ["Career", [["careerBtn", "🚀", "Career Guide"], ["__resume", "📄", "Resume builder"]]],
-  ["More", [["__stickers", "🎴", "Sticker book"], ["__plus", "⭐", "CampusLoop Plus"], ["botBtn", "🤖", "Loop Bot", "bot"], ["funBtn", "🎉", "Entertainment", "fun"], ["aboutBtn", "ℹ️", "About Us"]]],
+  ["More", [["__stickers", "🎴", "Sticker book"], ["__install", "📲", "Install app"], ["__plus", "⭐", "CampusLoop Plus"], ["botBtn", "🤖", "Loop Bot", "bot"], ["funBtn", "🎉", "Entertainment", "fun"], ["aboutBtn", "ℹ️", "About Us"]]],
 ];
 function renderExplore() {
   const back = el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back");
-  const go = (id) => { if (id === "__plus") { showPanel("plus"); return; } if (id === "__resume") { showPanel("resume"); return; } if (id === "__stickers") { showPanel("stickers"); return; } const b = $(id); if (b) b.click(); };
+  const go = (id) => { if (id === "__plus") { showPanel("plus"); return; } if (id === "__resume") { showPanel("resume"); return; } if (id === "__stickers") { showPanel("stickers"); return; } if (id === "__install") { const ib = $("installBtn"); if (_pwaPrompt && ib) ib.click(); else showNotice("To install: open your browser menu and tap Add to Home screen.", ""); return; } const b = $(id); if (b) b.click(); };
   return [el("h2", {}, "🧰 Explore"), el("p", { class: "hint" }, "Everything in " + BRAND + ", in one place."),
     ...EXPLORE.flatMap(([title, items]) => [el("div", { class: "label" }, title), el("div", { class: "plus-tiles" }, ...items.filter(it => !it[3] || !document.body.classList.contains("no-" + it[3])).map(([id, icon, label]) => el("button", { class: "plus-tile", type: "button", onclick: () => go(id) }, el("span", { class: "pt-i", "aria-hidden": "true" }, icon), el("strong", {}, label))))]),
     el("div", { class: "rowbtns" }, back)];
