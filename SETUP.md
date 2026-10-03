@@ -42,3 +42,12 @@ Edit the `subjects` list in `docs/config.js` on GitHub and commit. The site upda
 ## Removing a post
 Students can edit and delete their own posts from the same phone they posted on. There is no login, so the site trusts each phone's device id; share the link only with your class. To remove anyone's post, open
 **Firestore Database > Data** in the Firebase console, find it and delete it.
+
+## Blocking a device that breaks the rules
+
+1. Open a bad post in the Firebase console (Firestore Database > Data > rooms > your room > doubts, replies, etc.) and copy its `authorId` field. Anonymous posts also keep `authorId`.
+2. In the same room, create a collection called `blocked` (once). Add a document whose **Document ID is that authorId**. The fields can be empty, or put a note such as `reason: "abuse"`.
+3. From then on the security rules refuse every new post, reply, story, listing and profile update from that device, and the app tells the student the device is blocked.
+4. To unblock, delete that document.
+
+A blocked person can get a new device id by clearing the browser data, so treat this as a deterrent. The app also pauses posting for 24 hours (72 hours from 4 hidden posts) when two or more of a device's posts have been hidden by classmates' reports.

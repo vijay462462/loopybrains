@@ -27,6 +27,8 @@ service cloud.firestore {
     // ---------- helpers ----------
     function signedIn() { return request.auth != null; }
     function member() { return signedIn(); }
+    // Device block list: an admin adds a document whose id is the device id to rooms/<room>/blocked in the console.
+    function notBlocked(room, id) { return !(id is string) || !exists(/databases/$(database)/documents/rooms/$(room)/blocked/$(id)); }
 
     function str(v, min, max) { return v is string && v.size() >= min && v.size() <= max; }
     function optStr(d, k, max) { return !(k in d) || (d[k] is string && d[k].size() <= max); }
@@ -91,32 +93,32 @@ service cloud.firestore {
 
       match /doubts/{id} {
         allow read: if member();
-        allow create: if member() && newPost('subject');
-        allow update: if member() && validPost('subject') && unchanged() && postEdit('subject');
+        allow create: if member() && notBlocked(room, request.resource.data.authorId) && newPost('subject');
+        allow update: if member() && notBlocked(room, request.resource.data.authorId) && validPost('subject') && unchanged() && postEdit('subject');
         allow delete: if false;
       }
       match /ideas/{id} {
         allow read: if member();
-        allow create: if member() && newPost('category');
-        allow update: if member() && validPost('category') && unchanged() && postEdit('category');
+        allow create: if member() && notBlocked(room, request.resource.data.authorId) && newPost('category');
+        allow update: if member() && notBlocked(room, request.resource.data.authorId) && validPost('category') && unchanged() && postEdit('category');
         allow delete: if false;
       }
       match /clubs/{id} {
         allow read: if member();
-        allow create: if member() && newPost('club');
-        allow update: if member() && validPost('club') && unchanged() && postEdit('club');
+        allow create: if member() && notBlocked(room, request.resource.data.authorId) && newPost('club');
+        allow update: if member() && notBlocked(room, request.resource.data.authorId) && validPost('club') && unchanged() && postEdit('club');
         allow delete: if false;
       }
       match /gate/{id} {
         allow read: if member();
-        allow create: if member() && newPost('subject');
-        allow update: if member() && validPost('subject') && unchanged() && postEdit('subject');
+        allow create: if member() && notBlocked(room, request.resource.data.authorId) && newPost('subject');
+        allow update: if member() && notBlocked(room, request.resource.data.authorId) && validPost('subject') && unchanged() && postEdit('subject');
         allow delete: if false;
       }
       match /jobs/{id} {
         allow read: if member();
-        allow create: if member() && newPost('type');
-        allow update: if member() && validPost('type') && unchanged() && postEdit('type');
+        allow create: if member() && notBlocked(room, request.resource.data.authorId) && newPost('type');
+        allow update: if member() && notBlocked(room, request.resource.data.authorId) && validPost('type') && unchanged() && postEdit('type');
         allow delete: if false;
       }
       // ---------- profile photos and 24-hour stories ----------
@@ -127,7 +129,7 @@ service cloud.firestore {
             && d.dp is string && d.dp.size() <= 40000 && (d.dp == '' || d.dp.matches('data:image/jpeg;base64,.*'));
         }
         allow read: if member();
-        allow create, update: if member() && validProfile() && str(id, 8, 80);
+        allow create, update: if member() && notBlocked(room, id) && validProfile() && str(id, 8, 80);
         allow delete: if false;
       }
       match /stories/{id} {
@@ -139,7 +141,7 @@ service cloud.firestore {
             && optStr(d, 'caption', 140) && optStr(d, 'bg', 3) && optBool(d, 'deleted') && optList(d, 'reports', 100);
         }
         allow read: if member();
-        allow create: if member() && validStory() && recent(request.resource.data.createdAt)
+        allow create: if member() && notBlocked(room, request.resource.data.authorId) && validStory() && recent(request.resource.data.createdAt)
           && request.resource.data.get('deleted', false) == false && !('reports' in request.resource.data);
         allow update: if member() && validStory() && unchanged() && changes(['deleted', 'reports']);
         allow delete: if false;
@@ -153,10 +155,15 @@ service cloud.firestore {
           && id == request.resource.data.storyId + '_' + request.resource.data.uid;
         allow update, delete: if false;
       }
+      // Device block list. Only the Firebase console can write here (rules deny everyone else).
+      match /blocked/{id} {
+        allow read: if member();
+        allow write: if false;
+      }
       match /challenges/{id} {
         allow read: if member();
-        allow create: if member() && newPost('type');
-        allow update: if member() && validPost('type') && unchanged() && postEdit('type');
+        allow create: if member() && notBlocked(room, request.resource.data.authorId) && newPost('type');
+        allow update: if member() && notBlocked(room, request.resource.data.authorId) && validPost('type') && unchanged() && postEdit('type');
         allow delete: if false;
       }
 
@@ -173,7 +180,7 @@ service cloud.firestore {
             && optList(d, 'pages', 5) && optList(d, 'fileAttachments', 5) && optList(d, 'reports', 100);
         }
         allow read: if member();
-        allow create: if member() && validReply() && recent(request.resource.data.createdAt)
+        allow create: if member() && notBlocked(room, request.resource.data.authorId) && validReply() && recent(request.resource.data.createdAt)
           && request.resource.data.get('deleted', false) == false && !('reports' in request.resource.data);
         // A reply can only be hidden (deleted) or reported after posting.
         allow update: if member() && validReply() && unchanged() && changes(['deleted', 'reports']);
@@ -207,7 +214,7 @@ service cloud.firestore {
       // ---------- market ----------
       match /market/{id} {
         allow read: if member();
-        allow create: if member() && validListing() && recent(request.resource.data.createdAt)
+        allow create: if member() && notBlocked(room, request.resource.data.authorId) && validListing() && recent(request.resource.data.createdAt)
           && request.resource.data.get('deleted', false) == false && !('reports' in request.resource.data);
         allow update: if member() && validListing() && unchanged()
           && changes(['title', 'body', 'category', 'price', 'condition', 'whatsapp', 'sold', 'deleted', 'reports']);

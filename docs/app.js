@@ -150,7 +150,7 @@ const fileExt = (name) => (String(name || "").split(".").pop() || "").toLowerCas
 
 const state = {
   tab: "doubts", group: "All", query: "", filter: "all",
-  doubts: [], ideas: [], clubs: [], gate: [], jobs: [], challenges: [], chalScores: [], market: [], marketReports: [], marketRatings: [], marketInterests: [], replies: [], likes: [], profiles: [], stories: [], storyViews: [], loaded: false,
+  doubts: [], ideas: [], clubs: [], gate: [], jobs: [], challenges: [], chalScores: [], market: [], marketReports: [], marketRatings: [], marketInterests: [], replies: [], likes: [], blocked: [], profiles: [], stories: [], storyViews: [], loaded: false,
   selected: null, mode: "intro", // intro | view | ask | edit | name | campus
   afterName: null,
   replyPages: [], replyAnon: false,
@@ -427,16 +427,41 @@ const cleanCode = (v) => String(v || "").trim().toUpperCase().replace(/\s+/g, ""
 // Words that block a post. Matching ignores case and common symbol swaps (@ for a, 0 for o, and so on).
 const BLOCKED = ["fuck", "fucker", "fucking", "motherfucker", "shit", "bitch", "bastard", "asshole", "dick", "pussy", "slut", "whore", "cunt", "nigga", "nigger",
   "madarchod", "behenchod", "bhenchod", "bhosdike", "bhosdi", "chutiya", "chutiye", "gandu", "lund", "randi", "harami", "kamina", "kutta",
-  "lanja", "lanjakodaka", "dengu", "dengey", "puku", "modda", "pooku", "naayala", "nayala", "sulli", "otha", "punda", "thevidiya"];
+  "lanja", "lanjakodaka", "lanjakoduku", "dengu", "dengey", "puku", "modda", "pooku", "erripuku", "erripooku", "naayala", "nayala", "sulli", "otha", "punda", "thevidiya",
+  "bsdk", "chod", "chodu", "gaand", "gand", "bhadwa", "bhadwe", "madharchod", "mkc", "fck", "fuk", "fuker", "dickhead", "wanker", "bloody fool"];
+const BLOCKED_SQUASH = BLOCKED.map(w => w.replace(/(.)\1+/g, "$1"));
 function hasBadWords(text) {
   const t = " " + String(text || "").toLowerCase().replace(/[@4]/g, "a").replace(/[0]/g, "o").replace(/[1!|]/g, "i").replace(/[3]/g, "e").replace(/[$5]/g, "s").replace(/[^a-z\u0900-\u0d7f]+/g, " ") + " ";
   const joined = t.replace(/ /g, "");
-  return BLOCKED.some(w => t.includes(" " + w + " ") || t.includes(" " + w + "s ") || (w.length >= 8 && joined.includes(w)));
+  const hit = (txt, list) => list.some(w => txt.includes(" " + w + " ") || txt.includes(" " + w + "s ") || (w.length >= 8 && txt.replace(/ /g, "").includes(w)));
+  // second pass squeezes stretched letters ("fuuuck" -> "fuck") and stray separators ("f u c k")
+  const squash = t.replace(/(.)\1+/g, "$1");
+  const spaced = " " + t.replace(/\b([a-z]) (?=[a-z]\b)/g, "$1").replace(/\s+/g, " ") + " ";
+  return hit(t, BLOCKED) || hit(squash, BLOCKED_SQUASH) || hit(spaced, BLOCKED);
 }
 const LANGUAGE_MSG = "Please keep it respectful. Remove abusive words and try again.";
 
 // At most one post every 15 seconds and 15 posts an hour from one phone or computer.
+// Device block (set by an admin in the console) and automatic pause after repeated reports.
+const isBlockedDevice = () => { const ids = allMyIds(); return state.blocked.some(id => ids.has(id)); };
+function myHiddenCount() {
+  const ids = allMyIds(); let n = 0;
+  for (const k of [...CAMPUS_COLLS, "replies"]) for (const x of state[k] || []) {
+    if (!ids.has(x.authorId) || x.deleted) continue;
+    const r = x.reports || []; if (r.length >= REPORT_LIMIT || r.filter(v => String(v).endsWith("|o")).length >= 2) n++;
+  }
+  return n;
+}
+function postingBlocked() {
+  if (isBlockedDevice()) return "🚫 This device has been blocked from posting for breaking the class rules. Contact the admin to appeal.";
+  let st = {}; try { st = JSON.parse(localStorage.getItem("dd-restrict") || "{}"); } catch (_) {}
+  const n = myHiddenCount();
+  if (n >= 2 && n > (st.n || 0)) { st = { n, until: Date.now() + (n >= 4 ? 72 : 24) * 3600000 }; try { localStorage.setItem("dd-restrict", JSON.stringify(st)); } catch (_) {} }
+  if (st.until && Date.now() < st.until) return "⏳ Several of your posts were hidden after reports from classmates, so posting is paused for about " + Math.ceil((st.until - Date.now()) / 3600000) + " more hour(s). Please keep posts academic and respectful.";
+  return "";
+}
 function spamCheck() {
+  const blockedMsg = postingBlocked(); if (blockedMsg) return blockedMsg;
   let times = [];
   try { times = JSON.parse(localStorage.getItem("dd-post-times") || "[]"); } catch (_) {}
   const now = Date.now(), recent = times.filter(t => now - t < 3600000);
@@ -455,7 +480,7 @@ function notePosted() {
 const REPORT_LIMIT = 3;
 // A report is the reporter's id, optionally with a reason: "<id>|o" off-topic, "|a" abuse, "|s" spam.
 // Two off-topic reports (or three of any kind) hide a post for everyone.
-const isHidden = (x) => { const r = x.reports || []; return (r.length >= REPORT_LIMIT || r.filter(v => String(v).endsWith("|o")).length >= 2) && !mine(x); };
+const isHidden = (x) => { const r = x.reports || []; return (r.length >= REPORT_LIMIT || r.filter(v => String(v).endsWith("|o")).length >= 2 || reportedByMe(x)) && !mine(x); };
 const reportedByMe = (x) => store && (x.reports || []).some(v => String(v).split("|")[0] === store.uid);
 // Academic tabs only: blocks greetings and one-word chatter, and asks for a real question or answer.
 const CHATTER = /^(hi+|hello+|hey+|hii+|hlo|ok+|okay|k|hmm+|lol|haha+|bro|anyone|any ?one( there)?|yes|no|yo|sup|wassup|good (morning|night|evening|afternoon)|gm|gn|how are you|test|testing|\.+|\?+)[\s!.?,]*$/i;
@@ -5431,6 +5456,7 @@ function renderStoryBar() {
 }
 function openStoryAdd() {
   if (!store) return;
+  { const pb = postingBlocked(); if (pb) { alert(pb); return; } }
   if (!getName()) { showPanel("name"); showNotice("Set your name first, then add your story."); return; }
   if (state.stories.filter(s => allMyIds().has(s.authorId) && Date.now() - s.createdAt < STORY_MS).length >= STORY_DAILY_MAX) { showNotice("You can add up to " + STORY_DAILY_MAX + " stories a day."); return; }
   let kind = "photo", img = "", bg = 0;
@@ -5689,6 +5715,7 @@ render();
   store.subscribe("likes", rows => { state.likes = rows; update(); }, onErr);
   store.subscribe("clubs", rows => { const live_ = live(rows); trackNew("clubs", live_); state.clubs = live_; update(); }, e => {});
   store.subscribe("gate", rows => { const live_ = live(rows); trackNew("gate", live_); state.gate = live_; update(); }, e => {});
+  store.subscribe("blocked", rows => { state.blocked = rows.map(r => r.id); }, e => {});
   let dpChecked = false;
   store.subscribe("profiles", rows => {
     state.profiles = rows.filter(p => typeof p.name === "string" && (!p.dp || DP_OK.test(p.dp))).map(p => ({ ...p, status: String(p.status || "").slice(0, 60) })); update();
