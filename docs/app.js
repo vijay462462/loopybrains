@@ -299,18 +299,18 @@ async function firebaseStore(conf, prefix = "") {
   // Anonymous sign-in: no account, no password. It gives every browser a verified session so the
   // security rules can refuse requests that do not come from this app. If it fails (for example
   // the provider is not enabled yet) the app keeps working while the rules still allow it.
-  let signedIn = false, authP = null;
+  let signedIn = false, authP = null, authError = "";
   try {
     // initializeAuth with an in-memory fallback also works in private/incognito tabs.
     const auth = (() => { try { return au.initializeAuth(app, { persistence: [au.indexedDBLocalPersistence, au.browserLocalPersistence, au.inMemoryPersistence] }); } catch (_) { return au.getAuth(app); } })();
     if (auth.authStateReady) await auth.authStateReady();   // reuse the saved anonymous user instead of creating a new one
     if (!auth.currentUser) { authP = au.signInAnonymously(auth); await Promise.race([authP, new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 15000))]); }
     signedIn = !!auth.currentUser;
-  } catch (e) { console.warn("Anonymous sign-in unavailable:", e && e.code || e && e.message); }
+  } catch (e) { authError = (e && (e.code || e.message)) || "unknown"; console.warn("Anonymous sign-in unavailable:", authError); }
   // On a very slow connection sign-in can finish late. Reload once so the board loads with it.
   if (!signedIn && authP) authP.then(() => { try { if (!sessionStorage.getItem("dd-auth-reload")) { sessionStorage.setItem("dd-auth-reload", "1"); location.reload(); } } catch (_) {} }).catch(() => {});
   return {
-    uid: deviceId(), demo: false, authed: signedIn,
+    uid: deviceId(), demo: false, authed: signedIn, authError,
     subscribe: (coll, cb, onErr, since) => fs.onSnapshot(since ? fs.query(fs.collection(db, prefix + coll), fs.where("createdAt", ">", since)) : fs.collection(db, prefix + coll), snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))), onErr),
     newId: (coll) => fs.doc(fs.collection(db, prefix + coll)).id,
     set: (coll, id, data) => fs.setDoc(fs.doc(db, prefix + coll, id), cleanDoc(data)),
@@ -5702,7 +5702,7 @@ render();
   const onErr = (e) => {
     const code = (e && e.code) || (e && e.message) || "unknown";
     showNotice(code === "permission-denied" && store && store.authed === false
-      ? "Could not sign in to the class board (slow internet or a blocked browser setting). Check your connection and reload. If it keeps happening, open the site in a normal Chrome tab."
+      ? "Could not sign in to the class board (slow internet or a blocked browser setting). Check your connection and reload. If it keeps happening, tell the admin this code: " + (store.authError || "no-reply") + "."
       : "Database error: " + code + " — reload or check internet.");
   };
   const update = () => {
