@@ -5380,11 +5380,12 @@ function render() {
 
 // ---------- events ----------
 document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => {
-  if (state.tab === b.dataset.tab) { openAsk(); return; }
+  const toJobs = b.dataset.tab === "jobs";   // the Jobs tab opens the board itself, not the post form
+  if (state.tab === b.dataset.tab) { if (toJobs) { $("rail").scrollIntoView({ behavior: "smooth", block: "start" }); return; } openAsk(); return; }
   state.tab = b.dataset.tab; state.group = "All"; state.filter = "all"; state.query = "";
   state.selected = null; state.mode = "intro"; $("search").value = "";
   try { history.replaceState(null, "", "#" + state.tab); } catch (_) {}
-  render(); openAsk();
+  render(); if (toJobs) { $("rail").scrollIntoView({ block: "start" }); return; } openAsk();
 }));
 $("askBtn").addEventListener("click", openAsk);
 const showPanel = (mode) => { state.mode = mode; render(); if (innerWidth <= 1000) $("sheet").scrollIntoView({ behavior: "smooth" }); };
