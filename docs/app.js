@@ -1951,6 +1951,7 @@ async function answerQuiz(day, opt) {
   const doc = { ideaId: "quiz~" + day + "~" + qidx + "~" + opt, uid: store.uid, name: getName() || "A student", createdAt: Date.now() };
   state.likes = [...state.likes, { id, ...doc }];
   render();
+  const q = quizFor(day);
   if (q && q.a === opt) celebrate();
   try { await store.set("likes", id, doc); }
   catch (e) { state.likes = state.likes.filter(l => l.id !== id); render(); showNotice(errText(e)); }
@@ -1975,6 +1976,11 @@ function renderQuiz() {
   if (mine) {
     out.push(el("p", { class: "quiz-result " + (mine.opt === q.a ? "right" : "wrong") }, mine.opt === q.a ? "✅ Correct! +3 points." : "❌ Not quite. The answer is " + "ABCD"[q.a] + "."));
     out.push(el("p", { class: "body" }, "💡 " + q.e));
+    out.push(el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: async (e) => {
+      const b = e.currentTarget; b.disabled = true;
+      const ok = await shareToStory({ kind: "quiz", text: String(q.q).slice(0, 200), opts: q.o.map(o => String(o).slice(0, 60)), ans: q.a, expl: String(q.e || "").slice(0, 200) || undefined });
+      b.disabled = false; b.textContent = ok ? "✅ Shared to your story" : "📣 Share this quiz to my story";
+    } }, "📣 Share this quiz to my story")));
     out.push(el("p", { class: "hint" }, total + (total === 1 ? " classmate has" : " classmates have") + " answered today. " + (total ? Math.round(correctCount * 100 / total) + "% got it right." : "")));
   } else out.push(el("p", { class: "hint" }, "Pick one answer — one try only. Each student gets a different question today. Correct answer earns +3 points."));
   const y = quizFor(day - 1), ya = myQuizAnswer(day - 1);
@@ -5305,6 +5311,13 @@ function renderView() {
       state.selected = null; state.mode = "intro"; render();
     }) }, "Delete"));
   }
+  if (!d.anonymous && !isHidden(d) && ["doubts", "ideas", "clubs", "gate", "challenges", "jobs"].includes(t.coll)) {
+    actions.push(el("button", { class: "btn sm", type: "button", onclick: async (e) => {
+      const b = e.currentTarget; b.disabled = true;
+      const ok = await shareToStory({ kind: "share", text: String(d.title || "").slice(0, 200), caption: String(d.body || "").slice(0, 300) || undefined, ref: t.coll + "/" + d.id });
+      b.disabled = false; b.textContent = ok ? "✅ Shared to your story" : "📖 Share to my story";
+    } }, "📖 Share to my story"));
+  }
   const rep = reportButton(t.coll, d);
   if (rep) actions.push(rep);
   if (actions.length) out.push(el("div", { class: "rowbtns" }, actions));
@@ -5505,6 +5518,22 @@ function renderStoryBar() {
   bar.replaceChildren(me, ...groups.filter(g => !g.own).map(bub));
   bar.hidden = false;
 }
+const STORY_CARDS = new Set(["idea", "innovation", "share"]);
+const STORY_TAG = { idea: "💡 BEST IDEA", innovation: "🚀 INNOVATION" };
+const REF_TAG = { doubts: "❓ DOUBT", ideas: "💡 IDEA", clubs: "🏛 CLUB", gate: "🎯 GATE", challenges: "🎮 CHALLENGE", jobs: "💼 OPENING" };
+// One-tap sharing of a post or today's quiz to your own story (study content only, same checks as the add screen).
+async function shareToStory(fields) {
+  if (!store) return false;
+  const pb = postingBlocked(); if (pb) { alert(pb); return false; }
+  if (!getName()) { showPanel("name"); showNotice("Set your name first, then share to your story."); return false; }
+  if (state.stories.filter(x => allMyIds().has(x.authorId) && Date.now() - x.createdAt < STORY_MS).length >= STORY_DAILY_MAX) { alert("You can add up to " + STORY_DAILY_MAX + " stories a day."); return false; }
+  if (hasBadWords([fields.text, fields.caption || "", fields.expl || "", ...(fields.opts || [])].join(" "))) { alert(LANGUAGE_MSG); return false; }
+  const id = store.newId("stories"), doc = { authorId: store.uid, authorName: getName().slice(0, 40), bg: "4", ...fields, createdAt: Date.now() };
+  for (const k of Object.keys(doc)) if (doc[k] === undefined) delete doc[k];
+  state.stories = [...state.stories, { id, ...doc }];
+  try { await store.set("stories", id, doc); } catch (e) { state.stories = state.stories.filter(x => x.id !== id); alert(errText(e)); return false; }
+  renderStoryBar(); return true;
+}
 function openStoryAdd() {
   if (!store) return;
   { const pb = postingBlocked(); if (pb) { alert(pb); return; } }
@@ -5518,6 +5547,7 @@ function openStoryAdd() {
   const txt = el("textarea", { maxlength: "200", rows: "4", placeholder: "Type a study tip, a formula or a quiz question…", "aria-label": "Story text" });
   const qopts = [0, 1, 2, 3].map(i => el("input", { type: "text", maxlength: "60", placeholder: "Option " + "ABCD"[i] + (i < 2 ? "" : " (optional)"), "aria-label": "Option " + "ABCD"[i] }));
   const qans = el("select", { "aria-label": "Correct option" }, "ABCD".split("").map((l, i) => el("option", { value: String(i) }, "Correct answer: " + l)));
+  const det = el("textarea", { maxlength: "300", rows: "3", "aria-label": "Details" });
   const qexpl = el("input", { type: "text", maxlength: "200", placeholder: "Why is it correct? (optional, shown after answering)", "aria-label": "Explanation" });
   const quizBox = el("div", { class: "st-quiz-form" }, ...qopts, qans, qexpl);
   const file = el("input", { type: "file", accept: "image/*", "aria-label": "Choose a photo" });
@@ -5534,7 +5564,8 @@ function openStoryAdd() {
   const post = el("button", { type: "button", class: "btn primary", onclick: async () => {
     err.textContent = "";
     if (kind === "photo" && !img) { err.textContent = "Choose a photo first."; return; }
-    const t = txt.value.trim(); if ((kind === "text" || kind === "quiz") && !t) { err.textContent = kind === "quiz" ? "Type your quiz question first." : "Type something first."; return; }
+    const t = txt.value.trim(); if ((kind === "idea" || kind === "innovation") && !t) { err.textContent = "Write your " + (kind === "idea" ? "idea" : "innovation") + " in one line first."; return; }
+    if ((kind === "text" || kind === "quiz") && !t) { err.textContent = kind === "quiz" ? "Type your quiz question first." : "Type something first."; return; }
     let qo = [], qa = 0;
     if (kind === "quiz") {
       const filled = qopts.map((o, i) => ({ v: o.value.trim().slice(0, 60), i })).filter(x => x.v);
@@ -5543,12 +5574,13 @@ function openStoryAdd() {
       if (pos < 0) { err.textContent = "The correct answer must be one of the options you filled in."; return; }
       qo = filled.map(x => x.v); qa = pos;
     }
-    if (hasBadWords([t, cap.value, qexpl.value, ...qo].join(" "))) { err.textContent = LANGUAGE_MSG; return; }
+    if (hasBadWords([t, cap.value, det.value, qexpl.value, ...qo].join(" "))) { err.textContent = LANGUAGE_MSG; return; }
     post.disabled = true; post.textContent = "Posting…";
     try {
       const id = store.newId("stories"), now = Date.now(), doc = { authorId: store.uid, authorName: getName().slice(0, 40), kind, createdAt: now };
       if (kind === "photo") { const pid = store.newId("pages"); await store.set("pages", pid, { data: img, parentId: id, createdAt: now }); doc.pageId = pid; storyImgCache.set(pid, img); const c = cap.value.trim(); if (c) doc.caption = c.slice(0, 140); }
-      else { doc.text = t.slice(0, 200); doc.bg = String(bg); if (kind === "quiz") { doc.opts = qo; doc.ans = qa; const ex = qexpl.value.trim(); if (ex) doc.expl = ex.slice(0, 200); } }
+      else { doc.text = t.slice(0, 200); doc.bg = String(bg); if (kind === "idea" || kind === "innovation") { const dt = det.value.trim(); if (dt) doc.caption = dt.slice(0, 300); }
+        if (kind === "quiz") { doc.opts = qo; doc.ans = qa; const ex = qexpl.value.trim(); if (ex) doc.expl = ex.slice(0, 200); } }
       state.stories = [...state.stories, { id, ...doc }];
       await store.set("stories", id, doc);
       close(); renderStoryBar(); showNotice("Story posted for 24 hours ✅"); setTimeout(() => showNotice(""), 2500);
@@ -5558,16 +5590,17 @@ function openStoryAdd() {
     prev.replaceChildren(kind === "photo"
       ? (img ? el("img", { class: "st-previmg", src: img, alt: "Preview" }) : el("div", { class: "st-ph" }, "📄 Choose a photo of your notes, a diagram or a question. Personal photos are not allowed."))
       : el("div", { class: "st-textcard st-small" }, txt));
-    txt.placeholder = kind === "quiz" ? "Type your quiz question…" : "Type a study tip, a formula or a quick note…";
+    txt.placeholder = ({ quiz: "Type your quiz question…", idea: "Your best idea in one line…", innovation: "Name your innovation or project…" })[kind] || "Type a study tip, a formula or a quick note…";
+    det.placeholder = kind === "idea" ? "Why is it good? Who does it help? (optional)" : "What problem does it solve? How does it work? (optional)";
     if (kind !== "photo") { const g = STORY_BG[bg]; prev.firstChild.style.setProperty("background", "linear-gradient(135deg," + g[0] + "," + g[1] + ")"); }
-    tabs.replaceChildren(...[["text", "✍️ Tip / note"], ["quiz", "🧠 Quiz"], ["photo", "📄 Notes photo"]].map(([k, l]) => el("button", { type: "button", class: "btn sm" + (kind === k ? " primary" : ""), onclick: () => { kind = k; draw(); } }, l)));
-    sw.hidden = kind === "photo"; file.hidden = kind !== "photo"; cap.hidden = kind !== "photo"; quizBox.hidden = kind !== "quiz";
+    tabs.replaceChildren(...[["text", "✍️ Tip / note"], ["quiz", "🧠 Quiz"], ["idea", "💡 Best idea"], ["innovation", "🚀 Innovation"], ["photo", "📄 Notes photo"]].map(([k, l]) => el("button", { type: "button", class: "btn sm" + (kind === k ? " primary" : ""), onclick: () => { kind = k; draw(); } }, l)));
+    sw.hidden = kind === "photo"; file.hidden = kind !== "photo"; cap.hidden = kind !== "photo"; quizBox.hidden = kind !== "quiz"; det.hidden = !(kind === "idea" || kind === "innovation");
   };
   const tabs = el("div", { class: "rowbtns" });
   const sw = el("div", { class: "st-sw" }, STORY_BG.map((g, i) => { const b = el("button", { type: "button", class: "st-swb", "aria-label": "Colour " + (i + 1), onclick: () => { bg = i; draw(); } }); b.style.setProperty("background", "linear-gradient(135deg," + g[0] + "," + g[1] + ")"); return b; }));
   ov.append(el("div", { class: "st-card" }, el("div", { class: "st-head" }, el("strong", {}, "Add to your story"), el("button", { type: "button", class: "st-x", "aria-label": "Close", onclick: close }, "✕")),
-    el("p", { class: "hint" }, "Stories are for study content only: tips, quizzes, and photos of notes, diagrams or questions. Personal photos are not allowed. Everyone on RGUKT Spark can see it for 24 hours. Reported stories are hidden. Viewers see their own name faintly over your story, so screenshots can be traced."),
-    tabs, prev, quizBox, sw, file, cap, err, post));
+    el("p", { class: "hint" }, "Stories are for study content only: tips, quizzes, best ideas, innovations, and photos of notes, diagrams or questions. Personal photos are not allowed. Everyone on RGUKT Spark can see it for 24 hours. Reported stories are hidden. Viewers see their own name faintly over your story, so screenshots can be traced."),
+    tabs, prev, quizBox, det, sw, file, cap, err, post));
   document.body.append(ov); document.body.classList.add("st-open"); draw();
 }
 const storyImgCache = new Map();
@@ -5648,6 +5681,15 @@ function openStories(authorId) {
       if (ownS) { note.textContent = "Your quiz. Viewers can answer it."; reveal(-1); run(20000); }
       else if (earlier) { answered = true; note.textContent = earlier.ok ? "✅ You answered this correctly." : "❌ You answered this already."; reveal(earlier.pick); run(8000); }
       else { note.textContent = "Tap your answer"; run(30000); }
+    } else if (STORY_CARDS.has(s.kind)) {
+      const c = STORY_BG[Number(s.bg)] || STORY_BG[4], card = el("div", { class: "st-textcard st-sharecard" });
+      card.style.setProperty("background", "linear-gradient(135deg," + c[0] + "," + c[1] + ")");
+      const ref = String(s.ref || "").split("/"), refColl = ref[0], refId = ref[1];
+      const tag = s.kind === "share" ? (REF_TAG[refColl] || "📖 SHARED POST") : STORY_TAG[s.kind];
+      const target = s.kind === "share" && REF_TAG[refColl] && (state[refColl] || []).find(x => x.id === refId && !x.deleted && !isHidden(x));
+      card.append(el("span", { class: "st-tagbadge" }, tag), el("p", { class: "st-q" }, s.text), s.caption ? el("p", { class: "st-detail" }, s.caption) : null,
+        target ? el("button", { type: "button", class: "st-opt st-open", onclick: () => { close(); openPost(refColl, refId); } }, "Open the full post ↗") : null);
+      body.append(card); run(10000);
     } else if (s.kind === "text") {
       const c = STORY_BG[Number(s.bg)] || STORY_BG[0], card = el("div", { class: "st-textcard" }, s.text); card.style.setProperty("background", "linear-gradient(135deg," + c[0] + "," + c[1] + ")"); body.append(card); run(STORY_SHOW + 1500);
     } else {

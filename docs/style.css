@@ -1656,3 +1656,8 @@ body.priv-blur > * { filter: blur(22px); }
 .st-save { text-align: center; background: rgb(255 255 255 / .22); }
 .st-extra { display: grid; gap: 6px; }
 .st-quiz-form input[type=text], .st-quiz-form select { width: 100%; }
+
+.st-sharecard { position: relative; z-index: 4; display: grid; align-content: center; gap: 12px; text-align: left; padding: 22px; }
+.st-tagbadge { justify-self: start; padding: 4px 10px; border-radius: 999px; background: rgb(255 255 255 / .25); font: 800 .75rem system-ui; letter-spacing: .06em; }
+.st-detail { margin: 0; font: 500 1rem/1.45 system-ui; opacity: .95; overflow-wrap: anywhere; white-space: pre-wrap; }
+.st-open { text-align: center; background: rgb(255 255 255 / .22); }
