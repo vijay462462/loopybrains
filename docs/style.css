@@ -1632,3 +1632,13 @@ header.top .st-name { text-shadow: 0 1px 2px rgb(0 0 0 / .35); }
 header.top .st-ring:not(.new):not(.add) { background: rgb(255 255 255 / .45); }
 header.top .st-ring.add { border-color: rgb(255 255 255 / .7); }
 header.top .st-plus { border-color: transparent; }
+
+/* screenshot deterrents */
+body.priv-blur > * { filter: blur(22px); }
+.st-view, .st-img, .st-textcard { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.st-img { -webkit-user-drag: none; pointer-events: none; }
+.st-wm { position: absolute; inset: 90px 0 0 0; z-index: 1; display: grid; grid-template-columns: repeat(3, 1fr); align-content: space-around; justify-items: center; overflow: hidden; pointer-events: none; transform: rotate(-22deg) scale(1.35); opacity: .2; }
+.st-wm span { font: 700 15px/1 system-ui; color: #fff; text-shadow: 0 0 3px #000; white-space: nowrap; padding: 22px 0; }
+.st-note { position: absolute; z-index: 1; left: 0; right: 0; top: 88px; margin: 0; padding: 3px 12px; text-align: center; font-size: 10.5px; color: rgb(255 255 255 / .8); background: rgb(0 0 0 / .35); pointer-events: none; }
+.st-view { overflow: hidden; }
+.st-bars, .st-top { position: relative; z-index: 3; background: #000; }

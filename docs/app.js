@@ -5499,7 +5499,7 @@ function openStoryAdd() {
   const tabs = el("div", { class: "rowbtns" });
   const sw = el("div", { class: "st-sw" }, STORY_BG.map((g, i) => { const b = el("button", { type: "button", class: "st-swb", "aria-label": "Colour " + (i + 1), onclick: () => { bg = i; draw(); } }); b.style.setProperty("background", "linear-gradient(135deg," + g[0] + "," + g[1] + ")"); return b; }));
   ov.append(el("div", { class: "st-card" }, el("div", { class: "st-head" }, el("strong", {}, "Add to your story"), el("button", { type: "button", class: "st-x", "aria-label": "Close", onclick: close }, "✕")),
-    el("p", { class: "hint" }, "Everyone on RGUKT Spark can see it for 24 hours. Keep it friendly. Reported stories are hidden."),
+    el("p", { class: "hint" }, "Everyone on RGUKT Spark can see it for 24 hours. Keep it friendly. Reported stories are hidden. Viewers see their own name faintly over your story, so screenshots can be traced."),
     tabs, prev, sw, file, cap, err, post));
   document.body.append(ov); document.body.classList.add("st-open"); draw();
 }
@@ -5534,23 +5534,31 @@ function openStories(authorId) {
       ? [el("button", { type: "button", class: "st-x", "aria-label": "Who saw this", onclick: () => { vlist.hidden = !vlist.hidden; } }, "👁 " + viewers.length),
          el("button", { type: "button", class: "st-x", "aria-label": "Delete story", onclick: async () => { if (!confirm("Delete this story?")) return; try { await softDelete("stories", s.id); state.stories = state.stories.filter(x => x.id !== s.id); close(); } catch (e) { showNotice(errText(e)); } } }, "🗑")]
       : [el("button", { type: "button", class: "st-x", "aria-label": "Report story", onclick: async () => { if (!confirm("Report this story as inappropriate?")) return; try { const reports = [...new Set([...(s.reports || []), store.uid])].slice(0, 100); s.reports = reports; await store.update("stories", s.id, { reports }); showNotice("Reported. Thank you."); setTimeout(() => showNotice(""), 2500); } catch (e) { showNotice(errText(e)); } next(); } }, "🚩")];
+    // Deterrent only (a website cannot block screenshots): the viewer's own name is tiled faintly over others' stories.
+    const wmName = (getName() || "RGUKT Spark").slice(0, 20);
+    const wm = ownS ? null : el("div", { class: "st-wm", "aria-hidden": "true" }, Array.from({ length: 24 }, () => el("span", {}, wmName)));
+    ov.oncontextmenu = (ev) => { ev.preventDefault(); };
     ov.replaceChildren(
       el("div", { class: "st-bars" }, segs),
       el("div", { class: "st-top" }, avatarEl(dpOfId(g.authorId, g.name), "av st-av sm"), el("div", { class: "st-who" }, el("strong", {}, ownS ? "Your story" : g.name), el("small", {}, ago(s.createdAt) + (statusOfId(g.authorId) ? " · " + statusOfId(g.authorId) : ""))), ...actions, el("button", { type: "button", class: "st-x", "aria-label": "Close", onclick: close }, "✕")),
-      body, vlist,
+      body, wm, ownS ? null : el("p", { class: "st-note" }, "📸 Screenshots can be traced to your name. Please don't share others' stories."), vlist,
       el("button", { type: "button", class: "st-tap l", "aria-label": "Previous", onclick: prev }), el("button", { type: "button", class: "st-tap r", "aria-label": "Next", onclick: next }));
     const run = (ms) => { if (my !== gen) return; fill.style.setProperty("animation-duration", ms + "ms"); fill.classList.add("run"); timer = setTimeout(next, ms); };
     if (s.kind === "text") {
       const c = STORY_BG[Number(s.bg)] || STORY_BG[0], card = el("div", { class: "st-textcard" }, s.text); card.style.setProperty("background", "linear-gradient(135deg," + c[0] + "," + c[1] + ")"); body.append(card); run(STORY_SHOW + 1500);
     } else {
       body.append(el("p", { class: "st-load" }, "Loading…"));
-      storyImage(s.pageId).then(u => { if (my !== gen) return; body.replaceChildren(el("img", { class: "st-img", src: u, alt: "Story photo" }), s.caption ? el("p", { class: "st-cap" }, s.caption) : null); run(STORY_SHOW); })
+      storyImage(s.pageId).then(u => { if (my !== gen) return; body.replaceChildren(el("img", { class: "st-img", src: u, alt: "Story photo", draggable: "false" }), s.caption ? el("p", { class: "st-cap" }, s.caption) : null); run(STORY_SHOW); })
         .catch(() => { if (my !== gen) return; body.replaceChildren(el("p", { class: "st-load" }, "Could not load this photo.")); run(2500); });
     }
   }
   show();
 }
 
+// Privacy: blur the app while it is in the background so the recent-apps preview does not show posts or stories.
+document.addEventListener("visibilitychange", () => { document.body.classList.toggle("priv-blur", document.visibilityState === "hidden"); });
+window.addEventListener("pagehide", () => { document.body.classList.add("priv-blur"); });
+window.addEventListener("pageshow", () => { if (document.visibilityState === "visible") document.body.classList.remove("priv-blur"); });
 // Focus mode: hides everything that is not academic (Ideas, Clubs, Challenges, Market, Jobs, stories, Entertainment).
 const focusOn = () => { try { return localStorage.getItem("dd-focus") === "1"; } catch (_) { return false; } };
 function applyFocus() {
