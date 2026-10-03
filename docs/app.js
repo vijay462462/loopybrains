@@ -2249,6 +2249,11 @@ function campusHub() {
 function renderList() {
   if (state.tab === "market") { renderMarketList(); return; }
   const t = TABS[state.tab], rows = visible(), all = state[t.coll];
+  if (!rows.length && store && !state.dataReady && !state.loadTimeout) {
+    $("list").replaceChildren(...Array.from({ length: 4 }, () => el("div", { class: "item sk-card", "aria-hidden": "true" }, el("div", { class: "skeleton sk-line sk-w40" }), el("div", { class: "skeleton sk-line sk-w90" }), el("div", { class: "skeleton sk-line sk-w70" }))));
+    $("list").setAttribute("aria-busy", "true"); return;
+  }
+  $("list").removeAttribute("aria-busy");
   if (!rows.length) {
     const noun = state.tab === "doubts" || state.tab === "gate" ? "subject" : state.tab === "clubs" ? "club" : state.tab === "challenges" ? "type" : "category";
     const emptyMsg = state.tab === "doubts" ? "No doubts yet" : state.tab === "clubs" ? "No club posts yet" : state.tab === "gate" ? "No GATE discussions yet" : state.tab === "challenges" ? "No challenges yet" : state.tab === "jobs" ? "No openings yet" : "No ideas yet";
@@ -7075,6 +7080,29 @@ $("focusBtn") && $("focusBtn").addEventListener("click", toggleFocus);
 })();
 // A tiny tap vibration on buttons gives the app a native feel (phones that support it).
 document.addEventListener("click", (e) => { const b = e.target.closest && e.target.closest(".btn, .tabs button, .bnav-btn, .today-chip, .plus-tile"); if (b) { try { navigator.vibrate && navigator.vibrate(6); } catch (_) {} } }, { passive: true });
+// Pull to refresh: drag down from the top of the page. Refreshes plan, sale, notes and checks for a new app version.
+(() => {
+  setTimeout(() => { state.loadTimeout = true; try { render(); } catch (_) {} }, 7000);
+  const ind = el("div", { class: "ptr", "aria-hidden": "true", hidden: true }, el("span", { class: "ptr-ico" }, "↓"), el("span", { class: "ptr-txt" }, "Pull to refresh"));
+  document.body.append(ind);
+  let y0 = 0, dy = 0, on = false, busy = false;
+  const show = (txt, ico, pull) => { ind.hidden = false; ind.querySelector(".ptr-txt").textContent = txt; ind.querySelector(".ptr-ico").textContent = ico; ind.style.setProperty("--pull", Math.min(pull, 90) + "px"); };
+  const hide = () => { ind.hidden = true; ind.style.setProperty("--pull", "0px"); };
+  async function refresh() {
+    if (busy) return; busy = true; show(navigator.onLine === false ? "You are offline" : "Refreshing…", navigator.onLine === false ? "📵" : "⟳", 56); ind.classList.add("spin");
+    try {
+      if (navigator.onLine !== false) {
+        const reg = "serviceWorker" in navigator ? await navigator.serviceWorker.getRegistration() : null; if (reg) { try { await reg.update(); } catch (_) {} }
+        await Promise.all([loadPlan().catch(() => {}), loadSale(), loadWelcomeNote()]);
+        todayKey = ""; renderHeader(); render();
+      }
+    } catch (_) {}
+    ind.classList.remove("spin"); show(navigator.onLine === false ? "You are offline" : "Up to date ✓", navigator.onLine === false ? "📵" : "✓", 56); setTimeout(() => { hide(); busy = false; }, 900);
+  }
+  addEventListener("touchstart", (e) => { if (busy || window.scrollY > 0 || e.touches.length !== 1 || document.querySelector(".welcome, .splash, dialog[open]")) { on = false; return; } y0 = e.touches[0].clientY; dy = 0; on = true; ind.dataset.x = String(e.touches[0].clientX); }, { passive: true });
+  addEventListener("touchmove", (e) => { if (!on) return; dy = e.touches[0].clientY - y0; const dx = Math.abs(e.touches[0].clientX - Number(ind.dataset.x || 0)); if (dy < 8 || dx > dy) { if (dy < 0) on = false; return; } show(dy > 70 ? "Release to refresh" : "Pull to refresh", dy > 70 ? "↑" : "↓", dy * 0.6); }, { passive: true });
+  addEventListener("touchend", () => { if (!on) return; on = false; if (dy > 70) refresh(); else hide(); }, { passive: true });
+})();
 maybeWelcome();
 maybeMilestone();
 $("filterToggle").addEventListener("click", () => { document.querySelector("header.top").classList.toggle("filters-open"); renderHeader(); });
@@ -7169,8 +7197,8 @@ render();
     if (!opened && deep && deep[2] && state[TABS[state.tab].coll].some(x => x.id === deep[2])) { opened = true; openItem(deep[2]); return; }
     render();
   };
-  store.subscribe("doubts", rows => { const live_ = live(rows); trackNew("doubts", live_); state.doubts = live_; update(); }, onErr);
-  store.subscribe("ideas", rows => { const live_ = live(rows); trackNew("ideas", live_); state.ideas = live_; update(); }, onErr);
+  store.subscribe("doubts", rows => { state.dataReady = true; const live_ = live(rows); trackNew("doubts", live_); state.doubts = live_; update(); }, onErr);
+  store.subscribe("ideas", rows => { state.dataReady = true; const live_ = live(rows); trackNew("ideas", live_); state.ideas = live_; update(); }, onErr);
   store.subscribe("replies", rows => { state.replies = live(rows); update(); }, onErr);
   store.subscribe("likes", rows => { state.likes = rows; update(); }, onErr);
   store.subscribe("clubs", rows => { const live_ = live(rows); trackNew("clubs", live_); state.clubs = live_; update(); }, e => {});

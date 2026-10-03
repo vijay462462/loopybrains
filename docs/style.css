@@ -1997,3 +1997,13 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 .today-ask { width: 100%; justify-self: stretch; padding: 13px 18px; font-size: 16px; border-radius: 16px; }
 @media (prefers-reduced-motion: reduce) { .loopy-mini, .today-stat.pulse { animation: none; } }
 .today-chips .today-chip:last-child:nth-child(odd) { grid-column: 1 / -1; } .today-hello { font-size: 18px; }
+
+/* ---- skeleton loading and pull to refresh ---- */
+.sk-card { display: grid; gap: 10px; pointer-events: none; }
+.sk-line { height: 14px; } .sk-w40 { width: 40%; } .sk-w70 { width: 70%; } .sk-w90 { width: 90%; }
+.ptr { position: fixed; top: 0; left: 50%; z-index: 1500; display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 999px; background: var(--sheet); color: var(--ink); border: 1px solid var(--line); font-weight: 700; font-size: 13px;
+  box-shadow: 0 10px 24px -10px rgb(20 12 70 / .5); transform: translate(-50%, calc(var(--pull, 0px) - 40px)); transition: transform .15s ease; }
+.ptr[hidden] { display: none; }
+.ptr-ico { display: inline-block; font-size: 16px; } .ptr.spin .ptr-ico { animation: ptrSpin .8s linear infinite; }
+@keyframes ptrSpin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .ptr.spin .ptr-ico { animation: none; } .ptr { transition: none; } }
