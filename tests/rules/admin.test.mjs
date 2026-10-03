@@ -67,6 +67,8 @@ await t("admin removes a paper", () => assertSucceeds(deleteDoc(doc(admin, R + "
 console.log("official notices");
 const notice = (extra = {}) => ({ title: "Exam timetable out", body: "Check the portal.", pinned: true, createdAt: now(), ...extra });
 await t("admin posts a notice", () => assertSucceeds(setDoc(doc(admin, R + "/notices/n1"), notice())));
+await t("notice with a posted-by label is accepted", () => assertSucceeds(setDoc(doc(admin, R + "/notices/n5"), notice({ from: "Exam cell" }))));
+await t("notice with a very long posted-by label is refused", () => assertFails(setDoc(doc(admin, R + "/notices/n6"), notice({ from: "x".repeat(60) }))));
 await t("student reads notices", () => assertSucceeds(getDocs(collection(student, R + "/notices"))));
 await t("student cannot post a notice", () => assertFails(setDoc(doc(student, R + "/notices/n2"), notice())));
 await t("notice with a non-https link is refused", () => assertFails(setDoc(doc(admin, R + "/notices/n3"), notice({ link: "javascript:alert(1)" }))));

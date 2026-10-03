@@ -285,7 +285,7 @@ function logView() {
 
 function noticesView() {
   const p = roomPath(), msg = h("p", { class: "msg" }), box = h("div", {});
-  const f = { title: h("input", { placeholder: "Title, e.g. Mid-sem timetable released", maxlength: "100" }), body: h("textarea", { placeholder: "Details (optional)", maxlength: "600" }), link: h("input", { placeholder: "https:// link (optional)", maxlength: "290" }),
+  const f = { title: h("input", { placeholder: "Title, e.g. Mid-sem timetable released", maxlength: "100" }), body: h("textarea", { placeholder: "Details (optional)", maxlength: "600" }), from: h("input", { placeholder: "Posted by, e.g. Exam cell, Principal's office, Placement cell", maxlength: "40" }), link: h("input", { placeholder: "https:// link (optional)", maxlength: "290" }),
     days: h("input", { type: "number", min: "0", max: "365", value: "7", "aria-label": "Show for how many days (0 = until removed)" }), pinned: h("input", { type: "checkbox", checked: true }) };
   const load = async () => {
     try {
@@ -298,13 +298,13 @@ function noticesView() {
   };
   load();
   return h("div", {}, h("div", { class: "card" }, h("h3", {}, "Post an official notice"), h("p", { class: "adm-hint" }, "Students see it as a gold banner at the top of the board until they dismiss it or it expires."),
-    f.title, f.body, f.link, h("label", {}, "Show for days (0 = until archived)", f.days), h("label", { class: "check" }, f.pinned, "Pin to the top"),
+    f.title, f.body, f.from, f.link, h("label", {}, "Show for days (0 = until archived)", f.days), h("label", { class: "check" }, f.pinned, "Pin to the top"),
     h("div", { class: "row" }, h("button", { class: "b pri", onclick: async (e) => {
       const link = f.link.value.trim(), days = Math.max(0, Math.min(365, parseInt(f.days.value, 10) || 0));
       if (clean(f.title.value, 100).length < 3) { msg.className = "msg err"; msg.textContent = "Write a title."; return; }
       if (link && !/^https:\/\/[^\s]{4,290}$/.test(link)) { msg.className = "msg err"; msg.textContent = "The link must start with https://"; return; }
       e.currentTarget.disabled = true;
-      try { const ref = fs.doc(fs.collection(db, p, "notices")), data = { title: clean(f.title.value, 100), body: clean(f.body.value, 600), link, pinned: f.pinned.checked, createdAt: Date.now() }; if (days) data.expiresAt = Date.now() + days * 864e5; await fs.setDoc(ref, data); await logAction("post-notice", "notices/" + ref.id, data.title); msg.className = "msg ok"; msg.textContent = "Posted."; f.title.value = ""; f.body.value = ""; f.link.value = ""; load(); }
+      try { const ref = fs.doc(fs.collection(db, p, "notices")), data = { title: clean(f.title.value, 100), body: clean(f.body.value, 600), from: clean(f.from.value, 40), link, pinned: f.pinned.checked, createdAt: Date.now() }; if (days) data.expiresAt = Date.now() + days * 864e5; await fs.setDoc(ref, data); await logAction("post-notice", "notices/" + ref.id, data.title); msg.className = "msg ok"; msg.textContent = "Posted."; f.title.value = ""; f.body.value = ""; f.from.value = ""; f.link.value = ""; load(); }
       catch (er) { msg.className = "msg err"; msg.textContent = "Not saved (" + (er.code || "error") + "). Publish the latest rules."; }
       e.currentTarget.disabled = false;
     } }, "Post notice")), msg), box);

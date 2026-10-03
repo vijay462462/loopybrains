@@ -317,8 +317,8 @@ service cloud.firestore {
       match /notices/{id} {
         function validNotice() {
           let d = request.resource.data;
-          return d.keys().hasOnly(['title', 'body', 'link', 'pinned', 'expiresAt', 'createdAt', 'deleted'])
-            && str(d.title, 3, 100) && str(d.body, 0, 600)
+          return d.keys().hasOnly(['title', 'body', 'from', 'link', 'pinned', 'expiresAt', 'createdAt', 'deleted'])
+            && str(d.title, 3, 100) && str(d.body, 0, 600) && optStr(d, 'from', 40)
             && (!('link' in d) || d.link == '' || (d.link is string && d.link.matches('https://[^ ]{4,290}')))
             && optBool(d, 'pinned') && optBool(d, 'deleted')
             && (!('expiresAt' in d) || d.expiresAt is int) && d.createdAt is int;

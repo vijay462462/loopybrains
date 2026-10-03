@@ -6493,17 +6493,30 @@ function renderSale() {
 }
 async function loadSale() { try { const d = store && store.getTop ? await store.getTop("sales", "current") : null; SALE = d && typeof d.title === "string" ? d : null; } catch (_) { SALE = null; } renderSale(); }
 // Official notices from the college admin: shown as a pinned banner above the board until dismissed or expired.
+function noticeAgo(t) { const m = Math.max(0, Math.round((Date.now() - (t || 0)) / 6e4)); return m < 60 ? Math.max(1, m) + " min ago" : m < 1440 ? Math.floor(m / 60) + " h ago" : Math.floor(m / 1440) + " d ago"; }
+function liveNotices() {
+  const gone = new Set(readJSON("dd-notice-gone", [])), now = Date.now();
+  return state.notices.filter(n => !gone.has(n.id) && (!n.expiresAt || n.expiresAt > now)).sort((a, b) => (b.pinned === true) - (a.pinned === true) || (b.createdAt || 0) - (a.createdAt || 0));
+}
 function renderOfficial() {
   const bar = $("officialBar"); if (!bar) return;
-  const gone = new Set(readJSON("dd-notice-gone", [])), now = Date.now();
-  const live = state.notices.filter(n => !gone.has(n.id) && (!n.expiresAt || n.expiresAt > now)).sort((a, b) => (b.pinned === true) - (a.pinned === true) || (b.createdAt || 0) - (a.createdAt || 0));
+  const live = liveNotices();
   if (!live.length) { bar.hidden = true; bar.replaceChildren(); return; }
-  const n = live[0], link = /^https:\/\//.test(n.link || "") ? n.link : "";
-  bar.replaceChildren(el("span", { class: "of-tag" }, n.pinned ? "📌 Official" : "📢 Official"), el("div", { class: "of-body" }, el("strong", {}, n.title), n.body ? el("span", {}, " " + n.body) : null),
-    link ? el("button", { class: "btn sm primary", type: "button", onclick: () => { try { window.open(link, "_blank", "noopener"); } catch (_) {} } }, "Open") : null,
+  const n = live[0], by = (n.from || "").trim();
+  bar.replaceChildren(el("span", { class: "of-tag" }, "✔ Official"),
+    el("button", { class: "of-body of-open", type: "button", "aria-label": "Open official notices", onclick: () => showPanel("notices") }, el("strong", {}, (n.pinned ? "📌 " : "") + n.title), el("small", {}, (by ? by + " · " : "") + noticeAgo(n.createdAt))),
     live.length > 1 ? el("span", { class: "of-more" }, "+" + (live.length - 1)) : null,
-    el("button", { class: "of-x", type: "button", "aria-label": "Dismiss notice", onclick: () => { writeJSON("dd-notice-gone", [...gone, n.id].slice(-100)); renderOfficial(); } }, "✕"));
+    el("button", { class: "of-x", type: "button", "aria-label": "Dismiss notice", onclick: () => { writeJSON("dd-notice-gone", [...(readJSON("dd-notice-gone", [])), n.id].slice(-100)); renderOfficial(); } }, "✕"));
   bar.hidden = false;
+}
+// Full list of official notices (opened by tapping the banner).
+function renderNotices() {
+  const all = state.notices.filter(n => !n.expiresAt || n.expiresAt > Date.now()).sort((a, b) => (b.pinned === true) - (a.pinned === true) || (b.createdAt || 0) - (a.createdAt || 0));
+  const back = el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back");
+  return [el("h2", {}, "✔ Official notices"), el("p", { class: "hint" }, "Posted by the college admin for " + COLLEGE + ". Only admins can post here."),
+    ...(all.length ? all.map(n => el("div", { class: "learn-card plus-list notice-card" }, el("strong", {}, (n.pinned ? "📌 " : "") + n.title), el("p", { class: "hint" }, ((n.from || "").trim() ? "✔ " + n.from.trim() + " · " : "✔ College admin · ") + noticeAgo(n.createdAt)), n.body ? el("p", {}, n.body) : null,
+      /^https:\/\//.test(n.link || "") ? el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => { try { window.open(n.link, "_blank", "noopener"); } catch (_) {} } }, "Open link")) : null)) : [el("p", { class: "hint" }, "No notices right now.")]),
+    el("div", { class: "rowbtns" }, back)];
 }
 function renderStoryBar() {
   const bar = $("storyBar"); if (!bar) return;
@@ -6747,6 +6760,7 @@ function render() {
       state.mode === "mistakes" ? renderMistakes() :
       state.mode === "planner" ? renderPlanner() :
       state.mode === "papers" ? renderPapers() :
+      state.mode === "notices" ? renderNotices() :
       state.mode === "ai" ? renderAI() :
       state.mode === "goals" ? renderGoals() :
       state.mode === "focusplus" ? renderFocusPlus() :
