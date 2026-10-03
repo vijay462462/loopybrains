@@ -20,6 +20,8 @@ const SITE_URL = defineString("SITE_URL");            // e.g. https://campusloop
 
 // Prices in paise (1 rupee = 100 paise). Keep in step with `plus` in docs/config.js.
 const PLANS = {
+  weekly: { amount: 1900, days: 7, label: "CampusLoop Plus - 1 week (exam pass)" },
+  semester: { amount: 14900, days: 130, label: "CampusLoop Plus - semester (about 4 months)" },
   monthly: { amount: 4900, days: 31, label: "CampusLoop Plus - 1 month" },
   yearly: { amount: 39900, days: 366, label: "CampusLoop Plus - 1 year" },
 };
@@ -123,5 +125,41 @@ exports.askAI = onRequest({ secrets: [ANTHROPIC_KEY], cors: true, region: "asia-
   } catch (e) {
     console.error("askAI", e);
     return res.status(500).json({ error: "Something went wrong. Please try again." });
+  }
+});
+
+// ---------- Referral rewards ----------
+// A student shares ?ref=<first 10 characters of their sign-in id>. When the friend has a VERIFIED email and calls claimReferral
+// once, the referrer gets +7 days of Plus (up to 8 friends = 56 days) and the friend gets +3 days. Everything is checked here.
+const REF_REFERRER_DAYS = 7, REF_FRIEND_DAYS = 3, REF_MAX = 8;
+exports.claimReferral = onRequest({ cors: true, region: "asia-south1", maxInstances: 5 }, async (req, res) => {
+  try {
+    if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
+    const m = /^Bearer (.+)$/.exec(req.get("Authorization") || "");
+    if (!m) return res.status(401).json({ error: "Please sign in first." });
+    const user = await admin.auth().verifyIdToken(m[1]);
+    if (!user.email || user.email_verified !== true) return res.status(403).json({ error: "Verify your email first." });
+    const code = String((req.body || {}).code || "");
+    if (!/^[A-Za-z0-9_-]{10}$/.test(code)) return res.status(400).json({ error: "That invite code is not valid." });
+    const codeSnap = await db.collection("refCodes").doc(code).get();
+    if (!codeSnap.exists) return res.status(404).json({ error: "That invite code was not found." });
+    const referrer = codeSnap.data().uid;
+    if (referrer === user.uid) return res.status(400).json({ error: "You cannot use your own invite." });
+    const result = await db.runTransaction(async (tx) => {
+      const claimRef = db.collection("referrals").doc(user.uid), statRef = db.collection("refStats").doc(referrer);
+      const [claim, stat, entF, entR] = await Promise.all([tx.get(claimRef), tx.get(statRef), tx.get(db.collection("entitlements").doc(user.uid)), tx.get(db.collection("entitlements").doc(referrer))]);
+      if (claim.exists) return "already";
+      const n = stat.exists ? Number(stat.data().n) || 0 : 0, now = Date.now();
+      const grant = (snap, days) => { const from = Math.max(now, snap.exists ? Number(snap.data().until) || 0 : 0); return { plan: "plus", until: from + days * DAY, updatedAt: now }; };
+      tx.set(claimRef, { referrer, code, createdAt: now });
+      tx.set(db.collection("entitlements").doc(user.uid), grant(entF, REF_FRIEND_DAYS));
+      if (n < REF_MAX) { tx.set(db.collection("entitlements").doc(referrer), grant(entR, REF_REFERRER_DAYS)); tx.set(statRef, { n: n + 1, updatedAt: now }); }
+      return "ok";
+    });
+    if (result === "already") return res.status(409).json({ error: "You have already used an invite." });
+    return res.json({ ok: true, days: REF_FRIEND_DAYS });
+  } catch (e) {
+    console.error("claimReferral", e);
+    return res.status(500).json({ error: "Could not apply the invite. Please try again." });
   }
 });

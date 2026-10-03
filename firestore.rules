@@ -195,6 +195,14 @@ service cloud.firestore {
       allow read: if isAdmin();
       allow write: if isAdmin();
     }
+    // Referral codes: a student registers their own code (the first 10 characters of their sign-in id) so friends can use it.
+    // Only the server reads these and gives the rewards.
+    match /refCodes/{code} {
+      allow read: if false;
+      allow create: if signedIn() && request.resource.data.keys().hasOnly(['uid', 'createdAt'])
+        && request.resource.data.uid == request.auth.uid && code == request.auth.uid[0:10] && request.resource.data.createdAt is int;
+      allow update, delete: if false;
+    }
     // "Which Plus features would you pay for?" answers: anyone signed in can add one, only the owner reads them in the console.
     match /plusInterest/{id} {
       allow read: if isAdmin();

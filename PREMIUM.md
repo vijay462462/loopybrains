@@ -70,3 +70,9 @@ A paid plan sold inside a Play Store app must normally use Google Play Billing (
 - **Founding student offer:** yearly plan ₹299 (instead of ₹399) until 31 Dec 2026. Set in `plus.offer` in `docs/config.js` **and** `OFFER` in `functions/index.js` (the server charges the real amount; keep both the same, set `offer: null` and move `until` into the past to end it). The webhook accepts both the normal and the offer price.
 - **Free trial:** `plus.trialDays: 7` unlocks the Plus studio for 7 days once payments are on (stored on the phone, so it is easy to reset; that is fine because the studio costs nothing to run). The AI helper is not part of the trial because every question costs money.
 - Add more later: referral weeks, college bundles, exam-season discounts.
+
+## 9. More plans and referral rewards
+
+- **Plans:** Exam week ₹19 (7 days), Monthly ₹49, Semester ₹149 (130 days, about ₹35 a month), Yearly ₹399 (₹299 with the founding offer). Prices live in `docs/config.js` (`weekly`, `semester`, `monthly`, `yearly`) and in `PLANS` in `functions/index.js`; keep both the same.
+- **Referral:** every student has an invite link (`?ref=` plus the first 10 characters of their sign-in id), registered by the app in `refCodes`. A friend with a verified email who opens the link gets +3 days of Plus, and the inviter gets +7 days for each friend, up to 8 friends (56 days). The `claimReferral` function checks everything and each friend can claim only once. It is **written but not deployed or tested**: deploy it with the other functions and publish the latest rules.
+- Rewards include the AI helper, which costs money per question (capped at 40 a day). Lower `REF_MAX` or the reward days in the function if costs grow.

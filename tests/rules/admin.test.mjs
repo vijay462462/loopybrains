@@ -72,5 +72,11 @@ await t("student cannot post a notice", () => assertFails(setDoc(doc(student, R 
 await t("notice with a non-https link is refused", () => assertFails(setDoc(doc(admin, R + "/notices/n3"), notice({ link: "javascript:alert(1)" }))));
 await t("notice with an unknown field is refused", () => assertFails(setDoc(doc(admin, R + "/notices/n4"), notice({ hack: 1 }))));
 await t("admin archives a notice", () => assertSucceeds(setDoc(doc(admin, R + "/notices/n1"), notice({ deleted: true }))));
+console.log("referral codes");
+const longUid = "abcdefghijklmnopqrstuvwxyz12", rc = env.authenticatedContext(longUid).firestore();
+await t("student registers own referral code", () => assertSucceeds(setDoc(doc(rc, "refCodes/abcdefghij"), { uid: longUid, createdAt: now() })));
+await t("student cannot register someone else's code", () => assertFails(setDoc(doc(rc, "refCodes/zzzzzzzzzz"), { uid: longUid, createdAt: now() })));
+await t("student cannot claim a code for another uid", () => assertFails(setDoc(doc(rc, "refCodes/abcdefghij2"), { uid: "other", createdAt: now() })));
+await t("nobody can read or change codes from the app", async () => { await assertFails(getDoc(doc(rc, "refCodes/abcdefghij"))); await assertFails(updateDoc(doc(rc, "refCodes/abcdefghij"), { uid: "x" })); await assertFails(deleteDoc(doc(rc, "refCodes/abcdefghij"))); });
 console.log(`\n${pass} passed, ${fail} failed`);
 await env.cleanup(); process.exit(fail ? 1 : 0);

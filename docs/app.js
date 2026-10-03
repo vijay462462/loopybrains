@@ -36,6 +36,7 @@ function pickCollege() {
   try { if (["dd-name", "dd-avatar", "dd-campus", "dd-post-times", "dd-seen"].some(k => localStorage.getItem(k) !== null)) { localStorage.setItem("dd-college", "rgukt"); return "rgukt"; } } catch (_) {}
   return "";
 }
+try { const r = new URLSearchParams(location.search).get("ref"); if (r && /^[A-Za-z0-9_-]{10}$/.test(r) && !localStorage.getItem("dd-ref")) localStorage.setItem("dd-ref", r); } catch (_) {}
 const SEL = pickCollege(), NO_COLLEGE = SEL === "", IS_RGUKT = SEL === "rgukt";
 const BRAND = BASE_CFG.brand || "CampusLoop";
 // CampusLoop Plus (optional paid plan). enabled:false = free early access and a waitlist; see PREMIUM.md to go live.
@@ -2645,13 +2646,16 @@ function renderPlus() {
     catch (_) { say("We could not save that right now. Please try again later."); }
   };
   const plansBlock = () => {
-    const offer = offerOn(), save = Math.max(0, Math.round(100 - (offer ? offer.yearly : PLUS.yearly) * 100 / (PLUS.monthly * 12))), card = (key, name, price, per, note, best) => el("div", { class: "plan-card" + (best ? " best" : "") },
-      best ? el("span", { class: "plan-badge" }, offer ? offer.label : "Best value") : null, el("strong", {}, name),
-      el("div", { class: "plan-price" }, best && offer ? [el("s", { class: "plan-was" }, "₹" + price), " ₹" + offer.yearly] : "₹" + price, el("small", {}, " " + per)),
-      best && offer ? el("p", { class: "plan-deal" }, "Ends in " + offer.days + " day" + (offer.days === 1 ? "" : "s") + ". Lock this price for your first year.") : null, el("p", { class: "hint" }, note),
-      has ? (PLUS.enabled ? buy(key, "Renew") : el("span", { class: "hint" }, "Active ✔")) : PLUS.enabled ? buy(key, "Upgrade") : el("button", { class: "btn" + (best ? " primary" : ""), type: "button", onclick: () => wait(key) }, "Notify me"));
+    const offer = offerOn(), perMonth = (price, days) => Math.round(price / (days / 30.5)), yearlyNow = offer ? offer.yearly : PLUS.yearly, card = (key, name, price, per, note, badge, shown) => el("div", { class: "plan-card" + (badge ? " best" : "") },
+      badge ? el("span", { class: "plan-badge" }, badge) : null, el("strong", {}, name),
+      el("div", { class: "plan-price" }, shown ? [el("s", { class: "plan-was" }, "₹" + price), " ₹" + shown] : "₹" + price, el("small", {}, " " + per)),
+      key === "yearly" && offer ? el("p", { class: "plan-deal" }, "Ends in " + offer.days + " day" + (offer.days === 1 ? "" : "s") + ". Lock this price for your first year.") : null, el("p", { class: "hint" }, note),
+      has ? (PLUS.enabled ? buy(key, "Renew") : el("span", { class: "hint" }, "Active ✔")) : PLUS.enabled ? buy(key, "Upgrade") : el("button", { class: "btn" + (badge ? " primary" : ""), type: "button", onclick: () => wait(key) }, "Notify me"));
+    const cards = [card("weekly", "Exam week", PLUS.weekly || 19, "/ 7 days", "Cram before an exam. Cheapest way to try Plus.", "", 0), card("monthly", "Monthly", PLUS.monthly, "/ month", "Cancel any time. Pay again when you want.", "", 0),
+      card("semester", "Semester", PLUS.semester || 149, "/ 4 months", "About ₹" + perMonth(PLUS.semester || 149, 130) + " a month. Covers a whole semester.", "Popular", 0),
+      card("yearly", "Yearly", PLUS.yearly, "/ year", "About ₹" + perMonth(yearlyNow, 366) + " a month. Save " + Math.max(0, Math.round(100 - yearlyNow * 100 / (PLUS.monthly * 12))) + "% vs monthly.", offer ? offer.label : "Best value", offer ? offer.yearly : 0)];
     return el("div", {}, el("div", { class: "label" }, has ? "Your plan" : "Plans"),
-      el("div", { class: "plan-grid" }, card("monthly", "Monthly", PLUS.monthly, "/ month", "Cancel any time. Pay again when you want.", false), card("yearly", "Yearly", PLUS.yearly, "/ year", "Save " + save + "% compared with monthly.", true)),
+      el("div", { class: "plan-grid" }, ...cards),
       (PLUS.enabled && !has && PLUS.trialDays) ? (trialLeft() ? el("p", { class: "plan-deal" }, "🎁 Free trial active: " + trialLeft() + " day" + (trialLeft() === 1 ? "" : "s") + " left (AI helper needs a paid plan).") : (readJSON("dd-trial-start", 0) ? null : el("button", { class: "btn", type: "button", onclick: () => { writeJSON("dd-trial-start", Date.now()); render(); } }, "🎁 Start " + PLUS.trialDays + "-day free trial"))) : null,
       PLUS.enabled ? el("p", { class: "hint" }, "Pay safely by UPI, card or net banking (Razorpay). Your plan switches on within a minute of paying." + (verified ? "" : " Verify your email first (Profile › Verify your college email) so we can attach the plan to you.")) : el("div", {}, el("p", { class: "hint" }, "Payments open soon. Everything below is free while we build Plus. Tap Notify me and we will tell you the day it opens" + (offerOn() ? ", and you get the " + offerOn().label.toLowerCase() + " price of ₹" + offerOn().yearly + " for the first year." : ".")), wemail));
   };
@@ -2662,6 +2666,7 @@ function renderPlus() {
     (!plusLocked() ? coachCard() : null),
     plansBlock(),
     msg,
+    refInviteCard(),
     el("div", { class: "label" }, "What you get"),
     el("div", { class: "plus-tiles" }, ...PLUS_TILES.map(([icon, title, text, mode]) => el("button", { class: "plus-tile", type: "button", onclick: () => { if (mode) { state.mock = null; state.mist = null; showPanel(mode); } } }, el("span", { class: "pt-i", "aria-hidden": "true" }, icon), el("strong", {}, title), el("span", {}, text)))),
     el("div", { class: "label" }, "Free vs Plus"),
@@ -2830,6 +2835,34 @@ function renderAI() {
     chat.busy ? el("p", { class: "hint", role: "status" }, "Thinking…") : null,
     box, chat.note ? el("p", { class: "hint", role: "status" }, chat.note) : null,
     el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", disabled: chat.busy ? "" : null, onclick: send }, "Ask"), chat.msgs.length ? el("button", { class: "btn sm", type: "button", onclick: () => { state.ai = null; render(); } }, "New chat") : null, back)].filter(Boolean);
+}
+// Invite friends: share your link; when a friend verifies their email you get +7 days of Plus and they get +3 (rewards are given by the server).
+function myRefCode() { const uid = store && store.authUid ? store.authUid() : ""; return uid && uid.length >= 10 ? uid.slice(0, 10) : ""; }
+function refLink() { const c = myRefCode(); return c ? location.origin + location.pathname + "?c=" + encodeURIComponent(SEL) + "&ref=" + c : ""; }
+async function registerRefCode() {
+  const c = myRefCode(); if (!c || !store || !store.setTop || readJSON("dd-ref-reg", "") === c) return;
+  try { await store.setTop("refCodes", c, { uid: store.authUid(), createdAt: Date.now() }); writeJSON("dd-ref-reg", c); } catch (_) {}
+}
+async function claimRef() {
+  const code = (() => { try { return localStorage.getItem("dd-ref") || ""; } catch (_) { return ""; } })();
+  if (!code || !PLUS.functionsUrl || !store || !store.idToken || !myVerified() || readJSON("dd-ref-done", false)) return;
+  try {
+    const tok = await store.idToken(); if (!tok) return;
+    const r = await fetch(PLUS.functionsUrl.replace(/\/$/, "") + "/claimReferral", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + tok }, body: JSON.stringify({ code }) });
+    if (r.ok || r.status === 409 || r.status === 400 || r.status === 404) { writeJSON("dd-ref-done", true); if (r.ok) { await loadPlan(); render(); } }
+  } catch (_) {}
+}
+function refInviteCard() {
+  registerRefCode();
+  const link = refLink(), say = el("p", { class: "hint", role: "status" }, "");
+  if (!link) return el("div", { class: "learn-card plus-list" }, el("strong", {}, "🎁 Invite friends, earn free Plus"), el("p", { class: "hint" }, "Connect to the internet to get your invite link."));
+  return el("div", { class: "learn-card plus-list" }, el("strong", {}, "🎁 Invite friends, earn free Plus"),
+    el("p", { class: "hint" }, "When a friend joins with your link and verifies their college email, you get 7 free days of Plus (up to 8 friends) and they get 3 days."),
+    el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", onclick: async () => {
+      const text = "Join me on " + BRAND + ", the free study community for our college: " + link;
+      try { if (navigator.share) { await navigator.share({ title: BRAND, text, url: link }); return; } } catch (_) { return; }
+      try { await navigator.clipboard.writeText(text); say.textContent = "✅ Link copied. Paste it in WhatsApp."; } catch (_) { say.textContent = link; }
+    } }, "📤 Share my invite"), el("button", { class: "btn sm", type: "button", onclick: async () => { try { await navigator.clipboard.writeText(link); say.textContent = "✅ Link copied."; } catch (_) { say.textContent = link; } } }, "Copy link")), say);
 }
 const GOAL_DEFS = [["tests", "📝 Take 3 mock tests", 3], ["cleared", "📓 Clear 10 mistakes", 10], ["papers", "📚 Practise 2 papers", 2]];
 const PLUS_BADGES = [["🥉", "First mock", l => l.tests >= 1], ["🥈", "5 mocks done", l => l.tests >= 5], ["🏆", "Ace: 90%+ in a test", l => l.best >= 90], ["🧹", "Mistake slayer (20)", l => l.cleared >= 20], ["📚", "Paper warrior (10)", l => l.papers >= 10], ["🗓️", "Planner set", () => !!readJSON("dd-exam-plan", null)]];
@@ -6687,7 +6720,7 @@ render();
     return;
   }
   if (NO_COLLEGE) { render(); return; }   // nothing to load until a college is chosen
-  loadPlan().then(() => render());
+  loadPlan().then(() => { render(); claimRef(); });
   if (store.linkResult === "ok") { showNotice(myVerified() ? "✅ Email verified. Welcome, verified student!" : "Email confirmed, but it is not a " + COLLEGE + " address, so you are not marked as verified."); setTimeout(() => showNotice(""), 6000); }
   else if (store.linkResult && store.linkResult.startsWith("error:")) showNotice("Could not finish email verification (" + store.linkResult.slice(6) + "). Open the link on the same phone you asked from, or ask for a new one.");
   if (store.demo) showNotice("Demo mode: posts are saved only in this browser. Add your Firebase settings to config.js so the whole class shares one board.", "demo");
