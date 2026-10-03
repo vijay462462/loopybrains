@@ -3176,6 +3176,7 @@ function renderGoals() {
   const g = goalStats(), l = lifeStats(), allDone = GOAL_DEFS.every(([k, , n]) => (g[k] || 0) >= n), got = PLUS_BADGES.filter(b => b[2](l)).length;
   return [el("h2", {}, "🎯 Goals and badges"), allDone ? el("div", { class: "wow", role: "status" }, el("span", { class: "wow-conf", "aria-hidden": "true" }, "🎉 ✨ 🎊"), el("strong", {}, "Wow, all weekly goals done!")) : el("p", { class: "hint" }, "Weekly goals reset every Monday."),
     el("div", { class: "learn-card plus-list" }, el("strong", {}, "This week"), ...GOAL_DEFS.map(([k, label, n]) => { const v = Math.min(n, g[k] || 0), bar = el("div", { class: "mock-bar" }, el("span", {})); bar.firstChild.style.setProperty("width", Math.round(v * 100 / n) + "%"); return el("div", {}, el("div", { class: "rowbtns" }, el("span", {}, label), el("b", {}, v + "/" + n)), bar); })),
+    el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", onclick: () => shareResult({ kicker: "My week on " + BRAND, emoji: "🔥", big: weekPoints() + " points", line: (g.mins || 0) + " focus minutes · " + (g.tests || 0) + " tests · " + (g.cleared || 0) + " mistakes fixed" }) }, "📤 Share my week")),
     el("div", { class: "label" }, "Badges (" + got + "/" + PLUS_BADGES.length + ")"),
     el("div", { class: "plus-tiles" }, ...PLUS_BADGES.map(([ic, name, ok]) => el("div", { class: "plus-tile badge" + (ok(l) ? " on" : ""), "aria-label": name + (ok(l) ? " unlocked" : " locked") }, el("span", { class: "pt-i", "aria-hidden": "true" }, ok(l) ? ic : "🔒"), el("strong", {}, name)))),
     el("div", { class: "rowbtns" }, back)];
@@ -7078,6 +7079,7 @@ render();
   }
   if (NO_COLLEGE) { render(); return; }   // nothing to load until a college is chosen
   loadPlan().then(() => { render(); claimRef(); redeemPendingGift(); });
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && PLUS.enabled) loadPlan().then(() => { if (state.mode === "plus") render(); }); });
   loadSale(); setInterval(loadSale, 600000);
   if (store.linkResult === "ok") { showNotice(myVerified() ? "✅ Email verified. Welcome, verified student!" : "Email confirmed, but it is not a " + COLLEGE + " address, so you are not marked as verified."); setTimeout(() => showNotice(""), 6000); }
   else if (store.linkResult && store.linkResult.startsWith("error:")) showNotice("Could not finish email verification (" + store.linkResult.slice(6) + "). Open the link on the same phone you asked from, or ask for a new one.");
