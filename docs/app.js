@@ -3032,7 +3032,7 @@ function renderFun() {
 function renderLab() {
   return [
     el("h2", {}, "🧪 Study Lab"),
-    el("p", { class: "hint" }, "Power tools for students. Everything is saved only on this phone, and the focus timer keeps running while you use other parts of Spark."),
+    el("p", { class: "hint" }, "Power tools for students. Everything is saved only on this phone, and the focus timer keeps running while you use other parts of CampusLoop."),
     window.SparkLab ? window.SparkLab.mount() : el("p", { class: "hint" }, "The Study Lab could not load. Reload the page and try again."),
     el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")),
   ];
