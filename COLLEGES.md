@@ -9,7 +9,7 @@ What colleges pay for (in the order I would build and sell it). Prices are guess
 | 3 | **Moderation tools**: reports, hide/restore, device blocking, audit log | **Built** |
 | 4 | **Paper vault** curated by the college | **Built** (admin dashboard › Papers) |
 | 5 | **Own colours, subjects, clubs, branding** per college | **Built** |
-| 6 | **Engagement report** (weekly active students, posts, doubts answered) emailed to the principal | Next |
+| 6 | **Weekly engagement report** for the principal | **Built** (admin dashboard › Weekly report: copy summary or print as PDF) |
 | 7 | **College staff accounts** (a staff member who manages only their college) | **Built** (admin dashboard › College staff) |
 | 8 | **Placement cell tools**: drives, eligibility, applicant list | Next |
 | 9 | **Club and event management** with RSVP | Later |

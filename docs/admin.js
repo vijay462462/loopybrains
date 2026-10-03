@@ -388,6 +388,41 @@ function staffView() {
     } }, "Add staff")), msg), box);
 }
 
+// Weekly engagement report: counts for the last 7 days against the 7 days before, computed from the board itself.
+function reportView() {
+  const p = roomPath(), out = h("div", {}), W = 7 * 864e5, now = Date.now();
+  const POSTS = [["doubts", "Doubts"], ["ideas", "Ideas"], ["clubs", "Club posts"], ["gate", "GATE"], ["jobs", "Jobs"], ["challenges", "Challenges"], ["market", "Market"]];
+  const count = async (coll, from, to) => { try { return (await fs.getCountFromServer(fs.query(fs.collection(db, p, coll), fs.where("createdAt", ">=", from), fs.where("createdAt", "<", to)))).data().count; } catch (_) { return 0; } };
+  const docs = async (coll, from) => { try { return (await fs.getDocs(fs.query(fs.collection(db, p, coll), fs.where("createdAt", ">=", from), fs.limit(1000)))).docs.map(d => ({ id: d.id, ...d.data() })); } catch (_) { return []; } };
+  const delta = (cur, prev) => prev ? Math.round((cur - prev) * 100 / prev) : (cur ? 100 : 0);
+  const arrow = (d) => d > 0 ? "▲ " + d + "%" : d < 0 ? "▼ " + Math.abs(d) + "%" : "–";
+  const run = async (btn) => {
+    if (btn) btn.disabled = true; out.replaceChildren(h("p", { class: "adm-hint" }, "Building the report…"));
+    const t0 = now - W, t1 = now - 2 * W;
+    const rows = {};
+    await Promise.all([...POSTS.map(([c]) => c), "replies", "stories"].map(async c => { rows[c] = [await count(c, t0, now + 1), await count(c, t1, t0)]; }));
+    const [recent, replies, profiles] = await Promise.all([Promise.all(POSTS.map(([c]) => docs(c, t0))), docs("replies", t0), fs.getCountFromServer(fs.collection(db, p, "profiles")).then(s => s.data().count).catch(() => 0)]);
+    const all = recent.flat(), active = new Set([...all, ...replies].map(x => x.authorId).filter(Boolean)), doubts = recent[0] || [];
+    const answered = new Set(replies.filter(r => r.parentColl === "doubts").map(r => r.parentId)), doubtsAnswered = doubts.filter(d => answered.has(d.id)).length;
+    const subjects = {}; for (const d of doubts) subjects[d.subject || "Other"] = (subjects[d.subject || "Other"] || 0) + 1;
+    const top = Object.entries(subjects).sort((a, b) => b[1] - a[1]).slice(0, 5), flagged = all.filter(x => x.deleted || (x.reports || []).length >= 2).length;
+    const totalPosts = POSTS.reduce((n, [c]) => n + rows[c][0], 0), prevPosts = POSTS.reduce((n, [c]) => n + rows[c][1], 0);
+    const tile = (label, v, d) => h("div", { class: "stat" }, h("b", {}, String(v)), h("span", {}, label + (d == null ? "" : " · " + arrow(d))));
+    const name = S.room ? S.room.name : "College", from = new Date(t0).toLocaleDateString(), to = new Date(now).toLocaleDateString();
+    const summary = name + " on CampusLoop, " + from + " to " + to + ":\n- " + active.size + " active students (of " + profiles + " with a profile)\n- " + totalPosts + " new posts (" + arrow(delta(totalPosts, prevPosts)) + " vs last week) and " + rows.replies[0] + " replies\n- " + doubts.length + " doubts asked, " + doubtsAnswered + " answered" + (doubts.length ? " (" + Math.round(doubtsAnswered * 100 / doubts.length) + "%)" : "") + "\n- " + rows.stories[0] + " stories shared\n- Top subjects: " + (top.map(t => t[0] + " (" + t[1] + ")").join(", ") || "none yet") + "\n- " + flagged + " items reported or hidden by moderators" + (all.length >= 1000 ? "\n(Large board: counts of students are from the latest 1000 posts per section.)" : "");
+    const max = Math.max(1, ...top.map(t => t[1]));
+    out.replaceChildren(
+      h("div", { class: "card report" }, h("h3", {}, name + " · weekly report"), h("p", { class: "adm-hint" }, from + " to " + to + ", compared with the 7 days before."),
+        h("div", { class: "grid" }, tile("Active students", active.size), tile("Profiles in total", profiles), tile("New posts", totalPosts, delta(totalPosts, prevPosts)), tile("Replies", rows.replies[0], delta(rows.replies[0], rows.replies[1])), tile("Doubts asked", doubts.length, delta(rows.doubts[0], rows.doubts[1])), tile("Doubts answered", doubtsAnswered), tile("Stories", rows.stories[0], delta(rows.stories[0], rows.stories[1])), tile("Reported or hidden", flagged))),
+      h("div", { class: "card report" }, h("h3", {}, "Posts by section"), ...POSTS.map(([c, label]) => h("div", { class: "row" }, h("span", {}, label), h("b", {}, String(rows[c][0])), h("span", { class: "tag" }, arrow(delta(rows[c][0], rows[c][1])))))),
+      h("div", { class: "card report" }, h("h3", {}, "Most asked subjects"), ...(top.length ? top.map(([s, n]) => { const sp = h("span", {}); sp.style.setProperty("width", Math.round(n * 100 / max) + "%"); return h("div", {}, h("div", { class: "row" }, h("span", {}, s), h("b", {}, String(n))), h("div", { class: "bar" }, sp)); }) : [h("p", { class: "adm-hint" }, "No doubts this week.")])),
+      h("div", { class: "card no-print" }, h("div", { class: "row" }, h("button", { class: "b pri", onclick: (e) => { navigator.clipboard && navigator.clipboard.writeText(summary); e.currentTarget.textContent = "Copied"; } }, "Copy summary for WhatsApp/email"), h("button", { class: "b", onclick: () => window.print() }, "Print / Save as PDF"), h("button", { class: "b", onclick: (e) => run(e.currentTarget) }, "↻ Refresh")), h("pre", { class: "mono rep-sum" }, summary)));
+    if (btn) btn.disabled = false;
+  };
+  run();
+  return h("div", {}, h("div", { class: "card no-print" }, h("h3", {}, "Weekly engagement report"), h("p", { class: "adm-hint" }, "Share this with the principal or head of department every Monday. It uses only counts and subjects, never names or posts.")), out);
+}
+
 const EXAMS = ["Mid", "End", "Supplementary", "Model", "Other"];
 function papersView() {
   const p = roomPath(), msg = h("p", { class: "msg" }), box = h("div", {});
@@ -417,11 +452,11 @@ function papersView() {
 }
 
 // ---------- shell ----------
-const TABS = [["overview", "Overview", true], ["moderation", "Moderation", true], ["blocked", "Blocked devices", true], ["staff", "College staff", false], ["sale", "Flash sale", false], ["promos", "Promo codes", false], ["notices", "Notices", true], ["papers", "Papers", true], ["colleges", "Colleges", false], ["requests", "Requests and survey", false], ["log", "Log", false]];
-const VIEWS = { staff: staffView, sale: saleView, promos: promosView, notices: noticesView, papers: papersView, overview: overviewView, moderation: moderationView, blocked: blockedView, colleges: collegesView, requests: requestsView, log: logView };
+const TABS = [["overview", "Overview", true], ["report", "Weekly report", true], ["moderation", "Moderation", true], ["blocked", "Blocked devices", true], ["staff", "College staff", false], ["sale", "Flash sale", false], ["promos", "Promo codes", false], ["notices", "Notices", true], ["papers", "Papers", true], ["colleges", "Colleges", false], ["requests", "Requests and survey", false], ["log", "Log", false]];
+const VIEWS = { report: reportView, staff: staffView, sale: saleView, promos: promosView, notices: noticesView, papers: papersView, overview: overviewView, moderation: moderationView, blocked: blockedView, colleges: collegesView, requests: requestsView, log: logView };
 function draw() {
   const u = auth.currentUser;
-  const STAFF_TABS = ["notices", "moderation", "blocked", "papers"], shownTabs = S.staffOnly ? TABS.filter(t => STAFF_TABS.includes(t[0])) : TABS;
+  const STAFF_TABS = ["report", "notices", "moderation", "blocked", "papers"], shownTabs = S.staffOnly ? TABS.filter(t => STAFF_TABS.includes(t[0])) : TABS;
   if (S.staffOnly && !STAFF_TABS.includes(S.tab)) S.tab = "notices";
   const tabs = h("div", { class: "adm-tabs" }, ...shownTabs.map(([k, label]) => h("button", { class: S.tab === k ? "on" : "", onclick: () => { S.tab = k; draw(); } }, label)));
   const needs = TABS.find(t => t[0] === S.tab)[2];

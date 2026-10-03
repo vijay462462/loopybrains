@@ -36,3 +36,5 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.45 syst
 .msg.err { color: var(--bad); } .msg.ok { color: var(--ok); }
 .cols { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
 .bar { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; } .bar > span { display: block; height: 100%; background: linear-gradient(90deg, var(--acc), var(--acc2)); }
+.rep-sum { white-space: pre-wrap; font-size: 13px; }
+@media print { .adm-head, .adm-tabs, .no-print, button { display: none !important; } body, .adm { background: #fff !important; color: #000 !important; } .card { border: 1px solid #ccc !important; break-inside: avoid; } }
