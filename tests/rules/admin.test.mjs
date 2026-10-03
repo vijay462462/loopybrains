@@ -146,6 +146,15 @@ await t("absurd points are refused", () => assertFails(setDoc(doc(student, R + "
 await t("an old week row cannot be faked into this week (createdAt too old)", () => assertFails(setDoc(doc(student, R + "/weekly/w2900_stud"), wk({ createdAt: now() - 864e5 * 40 }))));
 await t("everyone signed in reads the board", () => assertSucceeds(getDocs(collection(anon, R + "/weekly"))));
 await t("student removes only their own row", async () => { await assertSucceeds(deleteDoc(doc(student, R + "/weekly/w2900_stud"))); await env.withSecurityRulesDisabled(async (c) => { await setDoc(doc(c.firestore(), R + "/weekly/w2900_zed"), wk({ uid: "zed" })); }); await assertFails(deleteDoc(doc(student, R + "/weekly/w2900_zed"))); });
+console.log("events and RSVP");
+await env.withSecurityRulesDisabled(async (c) => { await setDoc(doc(c.firestore(), "staff/r00m-Abc123xy_" + staffUid), staffDoc); });
+const ev = (extra = {}) => ({ title: "Hackathon kickoff", club: "Coding Club", venue: "Main hall", details: "Bring a laptop.", startAt: now() + 864e5 * 3, capacity: 100, link: "https://example.com/e", createdAt: now(), ...extra });
+await t("staff posts an event", () => assertSucceeds(setDoc(doc(sctx, R + "/events/e1"), ev())));
+await t("student cannot post an event", () => assertFails(setDoc(doc(student, R + "/events/e2"), ev())));
+await t("event with a bad link or capacity is refused", async () => { await assertFails(setDoc(doc(sctx, R + "/events/e3"), ev({ link: "javascript:x" }))); await assertFails(setDoc(doc(sctx, R + "/events/e4"), ev({ capacity: -1 }))); });
+await t("student RSVPs and everyone can read RSVPs", async () => { await assertSucceeds(setDoc(doc(student, R + "/eventRsvp/e1_stud"), { eventId: "e1", uid: "stud", name: "Revi", createdAt: now() })); await assertSucceeds(getDocs(collection(anon, R + "/eventRsvp"))); });
+await t("student cannot RSVP as someone else or to a missing event", async () => { await assertFails(setDoc(doc(student, R + "/eventRsvp/e1_other"), { eventId: "e1", uid: "other", name: "X", createdAt: now() })); await assertFails(setDoc(doc(student, R + "/eventRsvp/nope_stud"), { eventId: "nope", uid: "stud", name: "Revi", createdAt: now() })); });
+await t("student cancels own RSVP but not another's", async () => { await env.withSecurityRulesDisabled(async (c) => { await setDoc(doc(c.firestore(), R + "/eventRsvp/e1_zed"), { eventId: "e1", uid: "zed", name: "Z", createdAt: now() }); }); await assertFails(deleteDoc(doc(student, R + "/eventRsvp/e1_zed"))); await assertSucceeds(deleteDoc(doc(student, R + "/eventRsvp/e1_stud"))); });
 console.log("server-only collections");
 await t("gifts, referrals, entitlements and payments cannot be read or written from the app", async () => { for (const p of ["gifts/ABCDEFGHJKLM", "referrals/x", "refStats/x", "payments/p1", "aiUsage/u_1"]) { await assertFails(getDoc(doc(student, p))); await assertFails(setDoc(doc(student, p), { x: 1 })); } await assertFails(setDoc(doc(student, "entitlements/stud"), { plan: "plus", until: now() + 1e10 })); });
 console.log(`\n${pass} passed, ${fail} failed`);

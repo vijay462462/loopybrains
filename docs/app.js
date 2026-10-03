@@ -308,7 +308,7 @@ const fileExt = (name) => (String(name || "").split(".").pop() || "").toLowerCas
 
 const state = {
   tab: "doubts", group: "All", query: "", filter: "all",
-  doubts: [], ideas: [], clubs: [], gate: [], jobs: [], challenges: [], chalScores: [], market: [], marketReports: [], marketRatings: [], marketInterests: [], replies: [], likes: [], plan: { plus: false, until: 0 }, papers: [], notices: [], drives: [], weekly: [], blocked: [], profiles: [], stories: [], storyViews: [], storyAnswers: [], loaded: false,
+  doubts: [], ideas: [], clubs: [], gate: [], jobs: [], challenges: [], chalScores: [], market: [], marketReports: [], marketRatings: [], marketInterests: [], replies: [], likes: [], plan: { plus: false, until: 0 }, papers: [], notices: [], drives: [], weekly: [], events: [], rsvps: [], blocked: [], profiles: [], stories: [], storyViews: [], storyAnswers: [], loaded: false,
   selected: null, mode: "intro", // intro | view | ask | edit | name | campus
   afterName: null,
   replyPages: [], replyAnon: false,
@@ -1276,7 +1276,7 @@ function renderToday() {
   const hr = new Date().getHours(), hello = hr < 12 ? "Good morning" : hr < 17 ? "Good afternoon" : "Good evening", name = (getName() || "").trim().split(/\s+/)[0] || "",
     streak = state.myStreak || 0, quizDone = QUIZ.length ? !!myQuizAnswer(dayNum()) : true, plan = readJSON("dd-exam-plan", null),
     left = plan && plan.date ? Math.ceil((new Date(plan.date + "T00:00:00").getTime() - new Date().setHours(0, 0, 0, 0)) / 864e5) : null;
-  const key = [hello, name, streak, quizDone, left, dayNum(), openDrives().length].join("|"); if (key === todayKey && !bar.hidden) return; todayKey = key;
+  const key = [hello, name, streak, quizDone, left, dayNum(), openDrives().length, upcomingEvents().length].join("|"); if (key === todayKey && !bar.hidden) return; todayKey = key;
   const chip = (txt, cls, fn) => el("button", { class: "today-chip " + (cls || ""), type: "button", onclick: fn }, txt);
   const WORDS = ["Welcome to the " + BRAND + " family 💙", "Respect your teachers, help your juniors. 🙏", "Every question is welcome here.", "Kind words build a strong campus. 🌱", "Thank you for being part of our family.", "Learn together, grow together. 🚀", "Our teachers and staff work hard for you. Say thank you today. 🙏"];
   bar.replaceChildren(el("strong", { class: "today-hello" }, hello + (name ? ", " + name : "") + " 👋"), el("small", { class: "today-words" }, WORDS[dayNum() % WORDS.length]),
@@ -1284,6 +1284,7 @@ function renderToday() {
       chip(streak ? "🔥 " + streak + "-day streak" : "🔥 Start your streak", streak && !(state.myDays && state.myDays.has(dayNum())) ? "warn" : "", () => showPanel("me")),
       QUIZ.length ? chip(quizDone ? "✅ Quiz done" : "🧠 Today's quiz", quizDone ? "" : "pulse", () => showPanel("quiz")) : null,
       left != null && left >= 0 && left <= 60 ? chip("⏳ " + (left === 0 ? "Exam today" : left + " days to exam"), left <= 7 ? "warn" : "", () => showPanel("planner")) : null,
+      upcomingEvents().filter(e => e.startAt < Date.now() + 7 * 864e5).length ? chip("🎉 " + upcomingEvents().filter(e => e.startAt < Date.now() + 7 * 864e5).length + " event" + (upcomingEvents().filter(e => e.startAt < Date.now() + 7 * 864e5).length === 1 ? "" : "s") + " this week", "", () => showPanel("events")) : null,
       openDrives().length ? chip("🏢 " + openDrives().length + " campus drive" + (openDrives().length === 1 ? "" : "s"), "", () => showPanel("drives")) : null,
       chip("❓ Ask a doubt", "", () => { const b = $("askBtn"); if (b) b.click(); }))); 
   bar.hidden = false;
@@ -1321,6 +1322,29 @@ function renderDrives() {
   return [el("h2", {}, "🏢 Campus drives"), el("p", { class: "hint" }, "Posted by the placement cell of " + COLLEGE + ". Check the eligibility, then tap I am interested."),
     ...(list.length ? list.map(card) : [el("p", { class: "hint" }, "No open drives right now. The placement cell posts new ones here. Keep your resume ready!")]), note,
     el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: () => showPanel("resume") }, "📄 Build my resume"), back)];
+}
+// Club and campus events: posted by admins/staff (a club coordinator can be a staff member). Students RSVP and can add the event to their calendar.
+const upcomingEvents = () => state.events.filter(e => (e.endAt || e.startAt + 3 * 36e5) > Date.now()).sort((a, b) => a.startAt - b.startAt);
+function icsFor(e) {
+  const f = (t) => new Date(t).toISOString().replace(/[-:]/g, "").replace(/\.\d+/, ""), esc = (x) => String(x || "").replace(/([,;\\])/g, "\\$1").replace(/\n/g, "\\n");
+  return ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//CampusLoop//EN", "BEGIN:VEVENT", "UID:" + e.id + "@campusloop", "DTSTAMP:" + f(Date.now()), "DTSTART:" + f(e.startAt), "DTEND:" + f(e.endAt || e.startAt + 2 * 36e5), "SUMMARY:" + esc(e.title), "LOCATION:" + esc(e.venue), "DESCRIPTION:" + esc((e.club ? e.club + ". " : "") + (e.details || "")), "END:VEVENT", "END:VCALENDAR"].join("\r\n");
+}
+function renderEvents() {
+  const back = el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back"), uid = store && store.authUid ? store.authUid() : "", note = el("p", { class: "hint", role: "status" }, "");
+  const going = (e) => state.rsvps.filter(r => r.eventId === e.id), card = (e) => {
+    const list = going(e), mine = list.some(r => r.uid === uid), full = e.capacity && list.length >= e.capacity && !mine;
+    const when = new Date(e.startAt).toLocaleString(undefined, { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
+    return el("div", { class: "learn-card plus-list" }, el("strong", {}, "🎉 " + e.title), el("p", { class: "hint" }, ["📅 " + when, e.venue ? "📍 " + e.venue : "", e.club ? "🏛️ " + e.club : ""].filter(Boolean).join(" · ")), e.details ? el("p", {}, e.details) : null,
+      el("p", { class: "hint" }, "👥 " + list.length + " going" + (e.capacity ? " of " + e.capacity : "") + (list.length ? ": " + list.slice(0, 4).map(r => r.name).join(", ") + (list.length > 4 ? " and " + (list.length - 4) + " more" : "") : "")),
+      el("div", { class: "rowbtns" },
+        mine ? el("button", { class: "btn sm", type: "button", onclick: async () => { try { await store.delRoomDoc("eventRsvp", e.id + "_" + uid); state.rsvps = state.rsvps.filter(r => !(r.eventId === e.id && r.uid === uid)); render(); } catch (_) { note.textContent = "Could not cancel. Try again."; } } }, "✔ Going · cancel")
+          : el("button", { class: "btn sm primary", type: "button", disabled: full ? "" : null, onclick: async () => { if (!uid) { note.textContent = "Connect to the internet to RSVP."; return; } try { const rec = { eventId: e.id, uid, name: (getName() || "Student").slice(0, 50), createdAt: Date.now() }; await store.set("eventRsvp", e.id + "_" + uid, rec); state.rsvps = [...state.rsvps.filter(r => !(r.eventId === e.id && r.uid === uid)), rec]; render(); } catch (_) { note.textContent = "Could not RSVP. Try again."; } } }, full ? "Full" : "I am going"),
+        el("button", { class: "btn sm", type: "button", onclick: () => { const u = URL.createObjectURL(new Blob([icsFor(e)], { type: "text/calendar" })), a = document.createElement("a"); a.href = u; a.download = "event.ics"; a.click(); setTimeout(() => URL.revokeObjectURL(u), 2000); } }, "📆 Add to calendar"),
+        /^https:\/\//.test(e.link || "") ? el("button", { class: "btn sm", type: "button", onclick: () => { try { window.open(e.link, "_blank", "noopener"); } catch (_) {} } }, "More info") : null));
+  };
+  const list = upcomingEvents();
+  return [el("h2", {}, "🎉 Events"), el("p", { class: "hint" }, "Club and campus events for " + COLLEGE + ". Tap I am going so the organisers can plan."),
+    ...(list.length ? list.map(card) : [el("p", { class: "hint" }, "No upcoming events yet. Club coordinators and the college admin post them here.")]), note, el("div", { class: "rowbtns" }, back)];
 }
 // Trust strip under the tagline: honest promises plus real numbers from this college (shown only once they are big enough to mean something).
 let trustKey = "";
@@ -6895,6 +6919,7 @@ function render() {
       state.mode === "papers" ? renderPapers() :
       state.mode === "notices" ? renderNotices() :
       state.mode === "drives" ? renderDrives() :
+      state.mode === "events" ? renderEvents() :
       state.mode === "ai" ? renderAI() :
       state.mode === "goals" ? renderGoals() :
       state.mode === "wboard" ? renderWeeklyBoard() :
@@ -6964,6 +6989,7 @@ maybeWelcome();
 $("filterToggle").addEventListener("click", () => { document.querySelector("header.top").classList.toggle("filters-open"); renderHeader(); });
 $("botBtn").addEventListener("click", () => { if (window.sparkBotToggle) window.sparkBotToggle(); });
 $("drivesBtn").addEventListener("click", () => showPanel("drives"));
+$("eventsBtn").addEventListener("click", () => showPanel("events"));
 $("alumniBtn").addEventListener("click", () => { alumniView = "dir"; showPanel("alumni"); });
 $("funBtn").addEventListener("click", () => showPanel("fun"));
 $("labBtn").addEventListener("click", () => showPanel("lab"));
@@ -7069,6 +7095,8 @@ render();
   store.subscribe("storyAnswers", rows => { state.storyAnswers = rows; update(); }, e => {}, Date.now() - 7 * 86400000);
   store.subscribe("drives", rows => { state.drives = rows.filter(d => !d.deleted && typeof d.company === "string"); renderHeader(); if (state.mode === "drives") render(); }, e => {});
   store.subscribe("weekly", rows => { state.weekly = rows.filter(r => r.week === weekKey() && typeof r.points === "number"); if (state.mode === "wboard") render(); }, e => {}, weekStartMs() - 1);
+  store.subscribe("events", rows => { state.events = rows.filter(e => !e.deleted && typeof e.title === "string"); renderHeader(); if (state.mode === "events") render(); }, e => {});
+  store.subscribe("eventRsvp", rows => { state.rsvps = rows; if (state.mode === "events") render(); }, e => {}, Date.now() - 90 * 864e5);
   store.subscribe("notices", rows => { state.notices = rows.filter(n => !n.deleted && typeof n.title === "string"); renderOfficial(); }, e => {});
   store.subscribe("papers", rows => { state.papers = rows.filter(p => !p.deleted && typeof p.title === "string" && /^https:\/\//.test(p.link || "")); if (state.mode === "papers") render(); }, e => {});
   store.subscribe("jobs", rows => { const live_ = live(rows); trackNew("jobs", live_); state.jobs = live_; update(); }, e => {});

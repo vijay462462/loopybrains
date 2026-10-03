@@ -488,6 +488,38 @@ function drivesView() {
     } }, "Post drive")), msg), box);
 }
 
+// Events: club coordinators (staff) and admins post events; students RSVP in the app.
+function eventsView() {
+  const p = roomPath(), msg = h("p", { class: "msg" }), box = h("div", {});
+  const f = { title: h("input", { placeholder: "Event title, e.g. Hackathon kickoff", maxlength: "100" }), club: h("input", { placeholder: "Club (optional)", maxlength: "40" }), venue: h("input", { placeholder: "Venue", maxlength: "80" }), start: h("input", { type: "datetime-local", "aria-label": "Starts" }), end: h("input", { type: "datetime-local", "aria-label": "Ends (optional)" }),
+    cap: h("input", { type: "number", min: "0", max: "5000", placeholder: "Capacity (optional)" }), link: h("input", { placeholder: "https:// more info link (optional)", maxlength: "290" }), details: h("textarea", { placeholder: "What to expect, what to bring…", maxlength: "600" }) };
+  const load = async () => {
+    try {
+      const [es, rs] = await Promise.all([fs.getDocs(fs.query(fs.collection(db, p, "events"), fs.limit(200))), fs.getDocs(fs.query(fs.collection(db, p, "eventRsvp"), fs.limit(2000)))]);
+      const rsvps = rs.docs.map(d => d.data()), rows = es.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => b.startAt - a.startAt);
+      box.replaceChildren(h("h3", {}, rows.length + " event" + (rows.length === 1 ? "" : "s")), ...rows.map(r => { const n = rsvps.filter(x => x.eventId === r.id);
+        return h("div", { class: "card item" + (r.deleted ? " hidden" : "") }, h("div", { class: "row" }, h("b", {}, r.title), r.deleted ? h("span", { class: "tag bad" }, "removed") : null, h("span", { class: "tag ok" }, n.length + " going")), h("p", { class: "mono" }, new Date(r.startAt).toLocaleString() + (r.venue ? " · " + r.venue : "") + (r.club ? " · " + r.club : "")),
+          h("p", { class: "adm-hint" }, n.slice(0, 30).map(x => x.name).join(", ")),
+          h("div", { class: "row" }, h("button", { class: "b sm bad", onclick: async (e) => { if (!confirm("Remove this event for students?")) return; e.currentTarget.disabled = true; try { const { id, ...data } = r; await fs.setDoc(fs.doc(db, p, "events", id), { ...data, deleted: !r.deleted }); await logAction(r.deleted ? "restore-event" : "remove-event", "events/" + id, r.title); load(); } catch (er) { msg.className = "msg err"; msg.textContent = "Not allowed (" + (er.code || "error") + ")."; } } }, r.deleted ? "Restore" : "Remove"))); }));
+    } catch (e) { box.replaceChildren(h("p", { class: "msg err" }, "Could not load (" + (e.code || "error") + ").")); }
+  };
+  load();
+  return h("div", {}, h("div", { class: "card" }, h("h3", {}, "Post an event"), h("p", { class: "adm-hint" }, "Students see it under Events and on the Today card, tap I am going, and can add it to their phone calendar."),
+    f.title, f.club, f.venue, h("label", {}, "Starts", f.start), h("label", {}, "Ends (optional)", f.end), f.cap, f.link, f.details,
+    h("div", { class: "row" }, h("button", { class: "b pri", onclick: async (e) => {
+      const link = f.link.value.trim(), start = f.start.value ? new Date(f.start.value).getTime() : 0, end = f.end.value ? new Date(f.end.value).getTime() : 0, cap = parseInt(f.cap.value, 10);
+      if (clean(f.title.value, 100).length < 3) { msg.className = "msg err"; msg.textContent = "Write a title."; return; }
+      if (!start || start < Date.now() - 36e5) { msg.className = "msg err"; msg.textContent = "Pick a start time in the future."; return; }
+      if (end && end <= start) { msg.className = "msg err"; msg.textContent = "The end must be after the start."; return; }
+      if (link && !/^https:\/\/[^\s]{4,290}$/.test(link)) { msg.className = "msg err"; msg.textContent = "The link must start with https://"; return; }
+      e.currentTarget.disabled = true;
+      try { const data = { title: clean(f.title.value, 100), club: clean(f.club.value, 40), venue: clean(f.venue.value, 80), details: clean(f.details.value, 600), startAt: start, link, createdAt: Date.now() }; if (end) data.endAt = end; if (cap >= 0 && cap <= 5000) data.capacity = cap;
+        const ref = fs.doc(fs.collection(db, p, "events")); await fs.setDoc(ref, data); await logAction("post-event", "events/" + ref.id, data.title); msg.className = "msg ok"; msg.textContent = "Posted."; for (const k of ["title", "club", "venue", "start", "end", "cap", "link", "details"]) f[k].value = ""; load(); }
+      catch (er) { msg.className = "msg err"; msg.textContent = "Not saved (" + (er.code || "error") + "). Publish the latest rules."; }
+      e.currentTarget.disabled = false;
+    } }, "Post event")), msg), box);
+}
+
 const EXAMS = ["Mid", "End", "Supplementary", "Model", "Other"];
 function papersView() {
   const p = roomPath(), msg = h("p", { class: "msg" }), box = h("div", {});
@@ -517,11 +549,11 @@ function papersView() {
 }
 
 // ---------- shell ----------
-const TABS = [["overview", "Overview", true], ["report", "Weekly report", true], ["mail", "Report emails", true], ["moderation", "Moderation", true], ["blocked", "Blocked devices", true], ["staff", "College staff", false], ["sale", "Flash sale", false], ["promos", "Promo codes", false], ["drives", "Placement drives", true], ["notices", "Notices", true], ["papers", "Papers", true], ["colleges", "Colleges", false], ["requests", "Requests and survey", false], ["log", "Log", false]];
-const VIEWS = { drives: drivesView, mail: mailView, report: reportView, staff: staffView, sale: saleView, promos: promosView, notices: noticesView, papers: papersView, overview: overviewView, moderation: moderationView, blocked: blockedView, colleges: collegesView, requests: requestsView, log: logView };
+const TABS = [["overview", "Overview", true], ["report", "Weekly report", true], ["mail", "Report emails", true], ["moderation", "Moderation", true], ["blocked", "Blocked devices", true], ["staff", "College staff", false], ["sale", "Flash sale", false], ["promos", "Promo codes", false], ["events", "Events", true], ["drives", "Placement drives", true], ["notices", "Notices", true], ["papers", "Papers", true], ["colleges", "Colleges", false], ["requests", "Requests and survey", false], ["log", "Log", false]];
+const VIEWS = { events: eventsView, drives: drivesView, mail: mailView, report: reportView, staff: staffView, sale: saleView, promos: promosView, notices: noticesView, papers: papersView, overview: overviewView, moderation: moderationView, blocked: blockedView, colleges: collegesView, requests: requestsView, log: logView };
 function draw() {
   const u = auth.currentUser;
-  const STAFF_TABS = ["drives", "report", "notices", "moderation", "blocked", "papers"], shownTabs = S.staffOnly ? TABS.filter(t => STAFF_TABS.includes(t[0])) : TABS;
+  const STAFF_TABS = ["events", "drives", "report", "notices", "moderation", "blocked", "papers"], shownTabs = S.staffOnly ? TABS.filter(t => STAFF_TABS.includes(t[0])) : TABS;
   if (S.staffOnly && !STAFF_TABS.includes(S.tab)) S.tab = "notices";
   const tabs = h("div", { class: "adm-tabs" }, ...shownTabs.map(([k, label]) => h("button", { class: S.tab === k ? "on" : "", onclick: () => { S.tab = k; draw(); } }, label)));
   const needs = TABS.find(t => t[0] === S.tab)[2];

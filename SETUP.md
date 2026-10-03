@@ -144,3 +144,7 @@ Staff need a verified email (the email link does that). Their actions are not wr
 ## Placement cell (campus drives)
 
 Platform admins and college staff (see "College staff accounts") open `/admin.html` › **Placement drives**: company, role, package, eligible branches, minimum CGPA, last date, optional link and details. Students see **🏢 Campus Drives** (under More tools, and a chip on the Today card) and tap **I am interested**; they enter name, branch, CGPA and an optional phone, with a note that only the placement cell sees it. The cell opens **Interested students** on a drive and can download a CSV. Students can withdraw any time. Publish the latest `firestore.rules` first. Add a line about this to your Privacy Policy before using it with real students.
+
+## Club and campus events
+
+Admins and staff (a club coordinator can be added as a staff member with their club as the role label) open `/admin.html` › **Events**: title, club, venue, start/end time, optional capacity and link. Students see **🎉 Events** (and a Today-card chip for events within 7 days), tap **I am going**, and can **Add to calendar** (.ics file). The organiser sees the names of those going. A full event shows "Full". Publish the latest `firestore.rules` first.

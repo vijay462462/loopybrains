@@ -12,7 +12,7 @@ What colleges pay for (in the order I would build and sell it). Prices are guess
 | 6 | **Weekly engagement report** for the principal | **Built** (dashboard tab, plus automatic Monday e-mail once the functions are deployed) |
 | 7 | **College staff accounts** (a staff member who manages only their college) | **Built** (admin dashboard › College staff) |
 | 8 | **Placement cell tools**: drives, eligibility, interested-student list with CSV | **Built** (dashboard › Placement drives; students: Campus Drives) |
-| 9 | **Club and event management** with RSVP | Later |
+| 9 | **Club and event management** with RSVP | **Built** (dashboard › Events; students: Events, add to calendar) |
 | 10 | **Bulk email-domain verification** and a student count against the licence | Later |
 
 ## How to sell it
