@@ -107,4 +107,4 @@ Per-college fields in `colleges/<slug>` (all optional):
 
 Limits: Firebase limits how many sign-in emails it sends per day on the free plan; the link opens in the phone's browser (not inside the Android app); a student who changes phone must verify again.
 
-`docs/colleges-ap2.js` adds 60 engineering, medical and degree colleges of Andhra Pradesh to the picker. They were listed from public knowledge: please check the names and add the ones that are missing.
+`docs/colleges-ap2.js` adds 60 (and `docs/colleges-ap3.js` another 75) engineering, medical and degree colleges of Andhra Pradesh to the picker. They were listed from public knowledge: please check the names and add the ones that are missing.
