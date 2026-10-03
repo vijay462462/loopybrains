@@ -8,6 +8,7 @@
 const { onRequest } = require("firebase-functions/v2/https");
 const { defineSecret, defineString } = require("firebase-functions/params");
 const admin = require("firebase-admin");
+const crypto = require("crypto");
 const Razorpay = require("razorpay");
 
 admin.initializeApp();
@@ -26,6 +27,7 @@ const PLANS = {
   yearly: { amount: 39900, days: 366, label: "CampusLoop Plus - 1 year" },
 };
 const DAY = 86400000;
+const GIFT_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 // Launch offer: the yearly plan costs less until this date (India time). Keep in step with `plus.offer` in docs/config.js.
 const OFFER = { plan: "yearly", amount: 29900, until: Date.parse("2026-12-31T23:59:59+05:30") };
 const amountFor = (key, now) => (OFFER.plan === key && now <= OFFER.until ? OFFER.amount : PLANS[key].amount);
@@ -71,10 +73,10 @@ exports.createPaymentLink = onRequest({ secrets: [KEY_ID, KEY_SECRET], cors: tru
     }
     const rz = new Razorpay({ key_id: KEY_ID.value(), key_secret: KEY_SECRET.value() });
     const link = await rz.paymentLink.create({
-      amount, currency: "INR", description: plan.label,
+      amount, currency: "INR", description: (req.body.gift ? "Gift: " : "") + plan.label,
       reference_id: (user.uid.slice(0, 20) + "-" + Date.now()).slice(0, 40),
       customer: { email: user.email }, notify: { email: true, sms: false },
-      notes: { uid: user.uid, plan: req.body.plan, amount: String(amount), code },
+      notes: { uid: user.uid, plan: req.body.plan, amount: String(amount), code, gift: req.body.gift ? "1" : "" },
       callback_url: SITE_URL.value(), callback_method: "get",
     });
     return res.json({ url: link.short_url });
@@ -99,8 +101,13 @@ exports.razorpayWebhook = onRequest({ secrets: [WEBHOOK_SECRET], region: "asia-s
     await db.runTransaction(async (tx) => {
       if ((await tx.get(payRef)).exists) return;                                // Razorpay may send the same event twice
       const cur = await tx.get(entRef), now = Date.now();
-      const from = Math.max(now, cur.exists ? Number(cur.data().until) || 0 : 0);   // renewing early adds time on top
-      tx.set(entRef, { plan: "plus", until: from + plan.days * DAY, updatedAt: now });
+      if (notes.gift === "1") {                                                  // a gift: make a redeemable code instead of upgrading the payer
+        const giftCode = Array.from(crypto.randomBytes(12), b => GIFT_ALPHABET[b % GIFT_ALPHABET.length]).join("");
+        tx.set(db.collection("gifts").doc(giftCode), { from: notes.uid, plan: notes.plan, days: plan.days, redeemedBy: "", createdAt: now });
+      } else {
+        const from = Math.max(now, cur.exists ? Number(cur.data().until) || 0 : 0);   // renewing early adds time on top
+        tx.set(entRef, { plan: "plus", until: from + plan.days * DAY, updatedAt: now });
+      }
       tx.set(payRef, { uid: notes.uid, plan: notes.plan, amount: link.amount_paid, linkId: link.id, code: notes.code || "", createdAt: now });
       if (notes.code) tx.set(db.collection("promoCodes").doc(notes.code), { used: admin.firestore.FieldValue.increment(1) }, { merge: true });
     });
@@ -192,4 +199,45 @@ exports.claimReferral = onRequest({ cors: true, region: "asia-south1", maxInstan
     console.error("claimReferral", e);
     return res.status(500).json({ error: "Could not apply the invite. Please try again." });
   }
+});
+
+// ---------- Plus gifts ----------
+// A student pays for a gift (createPaymentLink with gift:true); the webhook then creates gifts/<CODE>. The gift link is
+// ?gift=<CODE>. A friend with a verified email redeems it once with redeemGift and gets the plan days.
+const bearerUser = async (req, res) => {
+  const m = /^Bearer (.+)$/.exec(req.get("Authorization") || "");
+  if (!m) { res.status(401).json({ error: "Please sign in first." }); return null; }
+  const user = await admin.auth().verifyIdToken(m[1]);
+  if (!user.email || user.email_verified !== true) { res.status(403).json({ error: "Verify your email first." }); return null; }
+  return user;
+};
+exports.listGifts = onRequest({ cors: true, region: "asia-south1", maxInstances: 5 }, async (req, res) => {
+  try {
+    if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
+    const user = await bearerUser(req, res); if (!user) return;
+    const snap = await db.collection("gifts").where("from", "==", user.uid).limit(30).get();
+    const gifts = snap.docs.map(d => ({ code: d.id, plan: d.data().plan, days: d.data().days, redeemed: !!d.data().redeemedBy, createdAt: d.data().createdAt })).sort((a, b) => b.createdAt - a.createdAt);
+    return res.json({ gifts });
+  } catch (e) { console.error("listGifts", e); return res.status(500).json({ error: "Could not load your gifts." }); }
+});
+exports.redeemGift = onRequest({ cors: true, region: "asia-south1", maxInstances: 5 }, async (req, res) => {
+  try {
+    if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
+    const user = await bearerUser(req, res); if (!user) return;
+    const code = String((req.body || {}).code || "").toUpperCase();
+    if (!/^[A-HJ-NP-Z2-9]{12}$/.test(code)) return res.status(400).json({ error: "That gift code is not valid." });
+    const out = await db.runTransaction(async (tx) => {
+      const gRef = db.collection("gifts").doc(code), eRef = db.collection("entitlements").doc(user.uid);
+      const [g, e] = await Promise.all([tx.get(gRef), tx.get(eRef)]);
+      if (!g.exists) return { status: 404, error: "That gift was not found." };
+      const d = g.data();
+      if (d.redeemedBy) return { status: 409, error: "This gift has already been used." };
+      if (d.from === user.uid) return { status: 400, error: "You cannot redeem your own gift. Send the link to a friend." };
+      const now = Date.now(), from = Math.max(now, e.exists ? Number(e.data().until) || 0 : 0);
+      tx.set(eRef, { plan: "plus", until: from + d.days * DAY, updatedAt: now });
+      tx.update(gRef, { redeemedBy: user.uid, redeemedAt: now });
+      return { days: d.days };
+    });
+    return out.error ? res.status(out.status).json({ error: out.error }) : res.json({ ok: true, days: out.days });
+  } catch (e) { console.error("redeemGift", e); return res.status(500).json({ error: "Could not redeem the gift. Please try again." }); }
 });

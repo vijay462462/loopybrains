@@ -94,5 +94,7 @@ await t("student cannot change the flash sale", () => assertFails(setDoc(doc(stu
 await t("only the document 'current' is allowed", () => assertFails(setDoc(doc(admin, "sales/other"), sale())));
 await t("a bad code or extra field is refused", async () => { await assertFails(setDoc(doc(admin, "sales/current"), sale({ code: "bad code!" }))); await assertFails(setDoc(doc(admin, "sales/current"), sale({ hack: 1 }))); });
 await t("admin switches the sale off", () => assertSucceeds(setDoc(doc(admin, "sales/current"), sale({ active: false }))));
+console.log("server-only collections");
+await t("gifts, referrals, entitlements and payments cannot be read or written from the app", async () => { for (const p of ["gifts/ABCDEFGHJKLM", "referrals/x", "refStats/x", "payments/p1", "aiUsage/u_1"]) { await assertFails(getDoc(doc(student, p))); await assertFails(setDoc(doc(student, p), { x: 1 })); } await assertFails(setDoc(doc(student, "entitlements/stud"), { plan: "plus", until: now() + 1e10 })); });
 console.log(`\n${pass} passed, ${fail} failed`);
 await env.cleanup(); process.exit(fail ? 1 : 0);

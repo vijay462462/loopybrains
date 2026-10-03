@@ -85,3 +85,7 @@ Admin dashboard › **Promo codes**: create a code (3-20 capitals/digits), perce
 
 - **Flash sale:** admin dashboard › **Flash sale**. Type a title, optional text and an existing promo code, and how many hours it runs. Every student sees a red banner with a live countdown and a See Plus button; the code is pre-filled in the promo box. Switch it off any time. The banner is stored in `sales/current` (needs the latest `firestore.rules`).
 - **Focus timer (Plus):** 25-minute rounds with 5-minute breaks, a 7-day study chart, and a weekly goal of 120 focus minutes. It runs on the phone and costs nothing.
+
+## 12. Plus gifts
+
+A student pays for a gift (1 week ₹19, 1 month ₹49 or a semester ₹149) from the Plus screen. After the payment the webhook creates `gifts/<CODE>` (12 characters, server-side only) and the gifter sees a **Share link** (`?gift=CODE`) under "Refresh my gifts". The friend opens the link, verifies their college email, and the app calls `redeemGift`: the friend gets the plan days, the gift is marked used and cannot be redeemed twice or by the gifter. Functions `listGifts` and `redeemGift` and the gift branch of the webhook are in `functions/index.js`: **written but not deployed or tested**. Test the whole flow with Razorpay TEST keys: pay for a gift, share the link, redeem it with a second account, and try redeeming twice.

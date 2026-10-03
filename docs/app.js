@@ -37,6 +37,7 @@ function pickCollege() {
   return "";
 }
 try { const r = new URLSearchParams(location.search).get("ref"); if (r && /^[A-Za-z0-9_-]{10}$/.test(r) && !localStorage.getItem("dd-ref")) localStorage.setItem("dd-ref", r); } catch (_) {}
+try { const g = new URLSearchParams(location.search).get("gift"); if (g && /^[A-HJ-NP-Z2-9]{12}$/i.test(g)) localStorage.setItem("dd-gift", g.toUpperCase()); } catch (_) {}
 const SEL = pickCollege(), NO_COLLEGE = SEL === "", IS_RGUKT = SEL === "rgukt";
 const BRAND = BASE_CFG.brand || "CampusLoop";
 // CampusLoop Plus (optional paid plan). enabled:false = free early access and a waitlist; see PREMIUM.md to go live.
@@ -2574,10 +2575,10 @@ function collectBackup() {
   try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (LAB_KEY.test(k)) items[k] = localStorage.getItem(k); } } catch (_) {}
   return JSON.stringify({ v: 1, items });
 }
-async function startCheckout(planKey) {
+async function startCheckout(planKey, gift) {
   if (!PLUS.functionsUrl) throw new Error("Payments are not switched on yet.");
   const tok = store.idToken ? await store.idToken() : "";
-  const r = await fetch(PLUS.functionsUrl.replace(/\/$/, "") + "/createPaymentLink", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + tok }, body: JSON.stringify({ plan: planKey, code: state.promo && (state.promo.plan === "any" || state.promo.plan === planKey) ? state.promo.code : "" }) });
+  const r = await fetch(PLUS.functionsUrl.replace(/\/$/, "") + "/createPaymentLink", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + tok }, body: JSON.stringify({ plan: planKey, code: state.promo && (state.promo.plan === "any" || state.promo.plan === planKey) ? state.promo.code : "", gift: !!gift }) });
   const j = await r.json().catch(() => ({}));
   const url = safeHttp(j.url || "");
   if (!r.ok || !url || !/^https:\/\/(rzp\.io|razorpay\.com|[a-z0-9-]+\.razorpay\.com)\//.test(url)) throw new Error(j.error || "Could not start the payment.");
@@ -2685,6 +2686,8 @@ function renderPlus() {
     plansBlock(),
     msg,
     (!plusLocked() ? dailyCard() : null),
+    state.giftMsg ? el("div", { class: "wow", role: "status" }, el("strong", {}, state.giftMsg)) : null,
+    giftCard(),
     refInviteCard(),
     el("div", { class: "label" }, "What you get"),
     el("div", { class: "plus-tiles" }, ...PLUS_TILES.map(([icon, title, text, mode]) => el("button", { class: "plus-tile", type: "button", onclick: () => { if (mode) { state.mock = null; state.mist = null; showPanel(mode); } } }, el("span", { class: "pt-i", "aria-hidden": "true" }, icon), el("strong", {}, title), el("span", {}, text)))),
@@ -2915,6 +2918,38 @@ function dailyCard() {
   const d = dailyStats(), items = [["⏱️", "One focus round", (d.mins || 0) >= 25], ["📓", "Clear 3 mistakes", (d.cleared || 0) >= 3], ["📝", "Take a mock test", (d.tests || 0) >= 1]], n = items.filter(x => x[2]).length;
   return el("div", { class: "learn-card plus-list" }, el("strong", {}, "✅ Daily 3 · " + n + "/3" + (n === 3 ? " · Wow, amazing day! 🎉" : "")),
     ...items.map(([ic, t, ok]) => el("p", { class: ok ? "daily-done" : "" }, (ok ? "✔ " : "○ ") + ic + " " + t)));
+}
+// Plus gifts: pay for a gift, get a link, send it to a friend. The friend redeems it once (verified email).
+const giftsState = { list: null, loading: false };
+async function loadGifts() {
+  if (giftsState.loading || !PLUS.functionsUrl || !store || !store.idToken) return;
+  giftsState.loading = true;
+  try { const tok = await store.idToken(); if (tok) { const r = await fetch(PLUS.functionsUrl.replace(/\/$/, "") + "/listGifts", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + tok }, body: "{}" }); if (r.ok) { giftsState.list = (await r.json()).gifts || []; if (state.mode === "plus") render(); } } } catch (_) {}
+  giftsState.loading = false;
+}
+async function redeemPendingGift() {
+  const code = (() => { try { return localStorage.getItem("dd-gift") || ""; } catch (_) { return ""; } })();
+  if (!code || !PLUS.functionsUrl || !store || !store.idToken || !myVerified()) return;
+  try {
+    const tok = await store.idToken(); if (!tok) return;
+    const r = await fetch(PLUS.functionsUrl.replace(/\/$/, "") + "/redeemGift", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + tok }, body: JSON.stringify({ code }) }), d = await r.json().catch(() => ({}));
+    try { localStorage.removeItem("dd-gift"); } catch (_) {}
+    state.giftMsg = r.ok ? "🎁 A friend gifted you " + d.days + " days of Plus. Enjoy!" : (d.error || "That gift could not be used.");
+    await loadPlan(); showPanel("plus");
+  } catch (_) {}
+}
+function giftCard() {
+  const has = state.plan.plus, say = el("p", { class: "hint", role: "status" }, "");
+  const link = (c) => location.origin + location.pathname + "?c=" + encodeURIComponent(SEL) + "&gift=" + c;
+  const share = async (c) => { const text = "I gifted you CampusLoop Plus! Open this link to claim it: " + link(c); try { if (navigator.share) { await navigator.share({ title: BRAND, text, url: link(c) }); return; } } catch (_) { return; } try { await navigator.clipboard.writeText(text); say.textContent = "✅ Gift link copied. Paste it in WhatsApp."; } catch (_) { say.textContent = link(c); } };
+  if (!PLUS.enabled) return el("div", { class: "learn-card plus-list" }, el("strong", {}, "🎁 Gift Plus to a friend"), el("p", { class: "hint" }, "Gifts open when payments open. You will pay once, get a link, and your friend gets the days."));
+  if (giftsState.list === null) loadGifts();
+  const buyGift = (key, label) => el("button", { class: "btn sm", type: "button", onclick: async (e) => { e.currentTarget.disabled = true; try { await startCheckout(key, true); say.textContent = "The payment page opened. After you pay, come back here (tap Refresh) to get the gift link."; } catch (err) { say.textContent = err.message || "Could not start the payment."; } e.currentTarget.disabled = false; } }, label);
+  return el("div", { class: "learn-card plus-list" }, el("strong", {}, "🎁 Gift Plus to a friend"),
+    el("p", { class: "hint" }, "Pay once and send a link. Your friend gets the days after verifying their college email. You can gift a week, a month or a semester."),
+    el("div", { class: "rowbtns" }, buyGift("weekly", "Gift 1 week · ₹" + (PLUS.weekly || 19)), buyGift("monthly", "Gift 1 month · ₹" + PLUS.monthly), buyGift("semester", "Gift a semester · ₹" + (PLUS.semester || 149))),
+    ...((giftsState.list || []).map(g => el("div", { class: "rowbtns" }, el("span", { class: "hint" }, "🎁 " + g.days + " days · " + (g.redeemed ? "claimed ✔" : "not claimed yet")), g.redeemed ? null : el("button", { class: "btn sm primary", type: "button", onclick: () => share(g.code) }, "Share link")))),
+    el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: () => { giftsState.list = null; giftsState.loading = false; loadGifts(); } }, "↻ Refresh my gifts")), say);
 }
 const GOAL_DEFS = [["tests", "📝 Take 3 mock tests", 3], ["cleared", "📓 Clear 10 mistakes", 10], ["papers", "📚 Practise 2 papers", 2], ["mins", "⏱️ Focus for 120 minutes", 120]];
 const PLUS_BADGES = [["🥉", "First mock", l => l.tests >= 1], ["🥈", "5 mocks done", l => l.tests >= 5], ["🏆", "Ace: 90%+ in a test", l => l.best >= 90], ["🧹", "Mistake slayer (20)", l => l.cleared >= 20], ["📚", "Paper warrior (10)", l => l.papers >= 10], ["🗓️", "Planner set", () => !!readJSON("dd-exam-plan", null)], ["⏱️", "Focused: 10 hours", l => (l.mins || 0) >= 600]];
@@ -6788,7 +6823,7 @@ render();
     return;
   }
   if (NO_COLLEGE) { render(); return; }   // nothing to load until a college is chosen
-  loadPlan().then(() => { render(); claimRef(); }); loadSale(); setInterval(loadSale, 600000);
+  loadPlan().then(() => { render(); claimRef(); redeemPendingGift(); }); loadSale(); setInterval(loadSale, 600000);
   if (store.linkResult === "ok") { showNotice(myVerified() ? "✅ Email verified. Welcome, verified student!" : "Email confirmed, but it is not a " + COLLEGE + " address, so you are not marked as verified."); setTimeout(() => showNotice(""), 6000); }
   else if (store.linkResult && store.linkResult.startsWith("error:")) showNotice("Could not finish email verification (" + store.linkResult.slice(6) + "). Open the link on the same phone you asked from, or ask for a new one.");
   if (store.demo) showNotice("Demo mode: posts are saved only in this browser. Add your Firebase settings to config.js so the whole class shares one board.", "demo");
