@@ -721,8 +721,8 @@ function spamCheck() {
   if (recent.length >= 15) return "You have posted 15 times in the last hour. Take a short break and try again later.";
   return "";
 }
-// At most 20 new doubts per student per day (counted on this device, resets at midnight).
-const DOUBT_DAILY_MAX = 20;
+// At most 30 new doubts per student per day (counted on this device, resets at midnight).
+const DOUBT_DAILY_MAX = 30;
 const doubtsToday = () => { const st = readJSON("dd-doubt-day", {}); return st.day === dayStr() ? (st.n || 0) : 0; };
 const noteDoubt = () => writeJSON("dd-doubt-day", { day: dayStr(), n: doubtsToday() + 1 });
 function notePosted() {
