@@ -13,7 +13,7 @@ Only the standard library is used. JavaScript files are evaluated by `node` in a
 context (no network, no file access) and handed back as JSON.
 """
 from __future__ import annotations
-import json, re, subprocess, sys
+import ast, json, math, operator, re, subprocess, sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from urllib.parse import urlparse
@@ -116,6 +116,31 @@ def audit_units(rep: Report) -> int:
     return len(u)
 
 
+_OPS = {ast.Add: operator.add, ast.Sub: operator.sub, ast.Mult: operator.mul, ast.Div: operator.truediv, ast.FloorDiv: operator.floordiv, ast.Mod: operator.mod, ast.Pow: operator.pow}
+_FUNCS = {"sum": sum, "range": range, "int": int, "bin": bin, "abs": abs, "min": min, "max": max, "ceil": math.ceil, "floor": math.floor, "log": math.log, "sqrt": math.sqrt, "len": len}
+
+
+def safe_eval(expr: str):
+    """Evaluate a tiny arithmetic expression without eval(): numbers, + - * / // % **, slices and a short allow-list of functions.
+    Anything else (names, attributes, imports, lambdas, comprehensions) is rejected, so a data file cannot run code."""
+    def go(n):
+        if isinstance(n, ast.Expression): return go(n.body)
+        if isinstance(n, ast.Constant) and isinstance(n.value, (int, float, str)): return n.value
+        if isinstance(n, ast.BinOp) and type(n.op) in _OPS:
+            l, r = go(n.left), go(n.right)
+            if isinstance(n.op, ast.Pow) and abs(r) > 64: raise ValueError("exponent too large")
+            return _OPS[type(n.op)](l, r)
+        if isinstance(n, ast.UnaryOp) and isinstance(n.op, (ast.USub, ast.UAdd)):
+            return -go(n.operand) if isinstance(n.op, ast.USub) else go(n.operand)
+        if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id in _FUNCS and not n.keywords:
+            return _FUNCS[n.func.id](*[go(a) for a in n.args])
+        if isinstance(n, ast.Subscript) and isinstance(n.slice, ast.Slice):
+            sl = n.slice
+            return go(n.value)[slice(*(go(x) if x is not None else None for x in (sl.lower, sl.upper, sl.step)))]
+        raise ValueError(f"not allowed: {type(n).__name__}")
+    return go(ast.parse(expr.strip(), mode="eval"))
+
+
 def audit_curiosity(rep: Report) -> int:
     c = load_js(ROOT / "docs/curiosity.js", "CURIO")
     if not c:
@@ -124,19 +149,57 @@ def audit_curiosity(rep: Report) -> int:
     def text(v, lim, tag):
         if not isinstance(v, str) or not 3 <= len(v) <= lim or UNSAFE.search(v):
             rep.err(f"curiosity {tag}: bad text {str(v)[:40]!r}")
+    def years(item, tag):
+        y = item.get("y")
+        if y is not None and (not isinstance(y, list) or not y or not all(isinstance(k, int) and 1 <= k <= 4 for k in y)):
+            rep.err(f"curiosity {tag}: y must be a list of years 1-4")
+        if item.get("t") is not None and item["t"] not in tags:
+            rep.err(f"curiosity {tag}: unknown tag {item['t']!r}")
     for i, f in enumerate(c.get("facts", [])):
+        years(f, f"fact {i}")
         text(f.get("q"), 300, f"fact {i}"); text(f.get("ask"), 80, f"fact {i} ask")
         if f.get("t") not in tags: rep.err(f"curiosity fact {i}: unknown tag {f.get('t')!r}")
     for i, w in enumerate(c.get("whys", [])):
+        years(w, f"why {i}")
         text(w.get("q"), 160, f"why {i}"); text(w.get("x"), 400, f"why {i} explanation")
         o = w.get("o", [])
         if not (2 <= len(o) <= 4) or not isinstance(w.get("a"), int) or not 0 <= w["a"] < len(o):
             rep.err(f"curiosity why {i}: answer index must point at one of 2-4 options")
         for t in o: text(t, 120, f"why {i} option")
     for i, m in enumerate(c.get("mysteries", [])):
-        text(m.get("t"), 60, f"mystery {i}"); text(m.get("h"), 160, f"mystery {i} hint"); text(m.get("x"), 600, f"mystery {i} text")
-    for i, t in enumerate(c.get("tips", [])): text(t, 260, f"tip {i}")
-    return sum(len(c.get(k, [])) for k in ("facts", "whys", "mysteries", "tips"))
+        years(m, f"mystery {i}") if "n" in m else None
+        text(m.get("n") or m.get("t"), 60, f"mystery {i}"); text(m.get("h"), 160, f"mystery {i} hint"); text(m.get("x"), 600, f"mystery {i} text")
+    for i, t in enumerate(c.get("tips", [])):
+        if isinstance(t, dict): years(t, f"tip {i}"); text(t.get("q"), 260, f"tip {i}")
+        else: text(t, 260, f"tip {i}")
+    by_year = {y: sum(1 for k in ("facts", "whys", "mysteries") for it in c.get(k, []) if y in (it.get("y") or [1, 2, 3, 4])) for y in (1, 2, 3, 4)}
+    for y, n in by_year.items():
+        if n < 12: rep.warn(f"curiosity: only {n} items for year {y}")
+    for i, m in enumerate(c.get("maps", [])):
+        text(m.get("c"), 40, f"map {i}")
+        if not 4 <= len(m.get("l", [])) <= 8: rep.err(f"curiosity map {i}: use 4 to 8 links")
+        for lab, kind in m.get("l", []):
+            text(lab, 40, f"map {i} link")
+            if kind not in ("subject", "job", "use"): rep.err(f"curiosity map {i}: bad kind {kind!r}")
+    for i, u in enumerate(c.get("uses", [])):
+        text(u[0], 30, f"use {i} key"); text(u[1], 240, f"use {i}")
+    for i, t in enumerate(c.get("sparks", [])): text(t, 220, f"spark {i}")
+    for i, n in enumerate(c.get("now", [])):
+        text(n[0], 60, f"explore {i}"); text(n[2], 200, f"explore {i} note")
+        host = urlparse(n[1]).hostname or ""
+        if urlparse(n[1]).scheme != "https" or not re.search(r"(^|\.)(isro\.gov\.in|nptel\.ac\.in|arxiv\.org|cern|ieee\.org|drdo\.gov\.in|kaggle\.com|nasa\.gov)$", host):
+            rep.err(f"curiosity explore {i}: link must be https on a known site ({n[1]})")
+    for i, z in enumerate(c.get("puzzles", [])):
+        text(z.get("q"), 300, f"puzzle {i}"); text(z.get("x"), 300, f"puzzle {i} explanation")
+        if len(z.get("h", [])) != 3: rep.err(f"curiosity puzzle {i}: needs exactly 3 hints")
+        for t in z.get("h", []): text(t, 200, f"puzzle {i} hint")
+        try:
+            got = safe_eval(z["py"])
+            if str(int(got) if float(got).is_integer() else got) not in [str(a) for a in z["a"]]:
+                rep.err(f"curiosity puzzle {i}: stored answer {z['a']} does not match Python result {got}")
+        except Exception as e:
+            rep.err(f"curiosity puzzle {i}: py check failed ({e})")
+    return sum(len(c.get(k, [])) for k in ("facts", "whys", "mysteries", "tips", "maps", "uses", "puzzles", "sparks", "now"))
 
 
 def main() -> int:

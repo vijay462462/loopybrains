@@ -49,3 +49,126 @@ window.CURIO = {
     "Sleep well before an exam. Memory is stored during sleep, so an all-nighter costs you marks.",
   ],
 };
+
+// ---- Year-wise content. y = the years it suits (1 to 4); leave y out for every year. t = branch family. ----
+window.CURIO.facts.push(
+  { y: [2], t: "cs", q: "A hash table finds a key in O(1) average time. That is why Python dictionaries and database hash indexes feel instant.", ask: "hash table O(1) average lookup" },
+  { y: [2], t: "cs", q: "Edsger Dijkstra said he designed his shortest-path algorithm in about twenty minutes, without pen and paper, in 1956.", ask: "Dijkstra shortest path algorithm history" },
+  { y: [2], t: "ece", q: "A capacitor charges to about 63 percent of its final voltage after one time constant, RC.", ask: "RC time constant 63 percent" },
+  { y: [2], t: "ece", q: "To capture a signal without losing information you must sample at more than twice its highest frequency. CD audio uses 44.1 kHz because we hear up to about 20 kHz.", ask: "Nyquist sampling theorem" },
+  { y: [2], t: "mech", q: "Stainless steel resists rust because chromium forms a thin invisible oxide layer that heals itself when scratched.", ask: "stainless steel chromium oxide passive layer" },
+  { y: [2], t: "civil", q: "Steel and concrete expand by almost the same amount when heated, which is why reinforced concrete does not tear itself apart.", ask: "thermal expansion steel concrete reinforced" },
+  { y: [2], t: "math", q: "Euler's identity, e to the power i pi plus 1 equals 0, links five of the most important constants in mathematics.", ask: "Euler identity" },
+  { y: [2], t: "chem", q: "A catalyst speeds up a reaction by lowering its activation energy, and it is not used up in the process.", ask: "catalyst activation energy" },
+  { y: [3], t: "cs", q: "Your operating system gives every program the illusion of its own private memory using virtual memory and page tables.", ask: "virtual memory page table" },
+  { y: [3], t: "cs", q: "A database index is usually a B-tree, which finds a row among millions in only a few disk reads.", ask: "B-tree database index" },
+  { y: [3], t: "cs", q: "Training a neural network uses backpropagation, which is the chain rule from calculus applied again and again.", ask: "backpropagation chain rule" },
+  { y: [3], t: "ece", q: "Radio and phone signals ride on a high-frequency carrier because antenna size scales with wavelength, so low frequencies would need huge antennas.", ask: "modulation carrier antenna size wavelength" },
+  { y: [3], t: "ece", q: "PID controllers are among the most widely used controllers in industry, from ovens to cruise control.", ask: "PID controller explained" },
+  { y: [3], t: "mech", q: "Fatigue can break a metal part under a load far below its yield strength if the load repeats millions of times.", ask: "metal fatigue S-N curve" },
+  { y: [3], t: "civil", q: "A beam's stiffness depends on its depth cubed. Doubling the depth makes it about eight times stiffer.", ask: "beam moment of inertia depth cubed" },
+  { y: [3], t: "chem", q: "The Haber process turns nitrogen and hydrogen into ammonia for fertiliser and is often estimated to support about half of the world's food production.", ask: "Haber process ammonia" },
+  { y: [4], t: "cs", q: "The CAP theorem says that when a network splits, a distributed database must choose between staying consistent and staying available.", ask: "CAP theorem explained" },
+  { y: [4], t: "ece", q: "5G can use millimetre waves that carry much more data but are blocked by walls, so networks need many small cells.", ask: "5G millimetre wave small cells" },
+  { y: [4], t: "mech", q: "In a modern turbofan engine, most of the thrust comes from air that bypasses the hot core and is pushed by the big fan.", ask: "turbofan bypass ratio thrust" },
+  { y: [4], t: "civil", q: "Earthquake design lets a building bend and absorb energy (ductility) instead of resisting the shaking rigidly.", ask: "ductility seismic design" },
+  { y: [4], t: "general", q: "A GATE score is valid for three years, so a good score keeps your options for M.Tech and some PSU jobs open.", ask: "GATE score validity" },
+);
+window.CURIO.whys.push(
+  { y: [2], t: "mech", q: "Why does every heat engine have to reject some heat?", o: ["Because of friction only", "The second law forbids turning all heat from a hot source into work", "Because metals leak heat"], a: 1, x: "Even a frictionless engine must dump heat to a colder reservoir. The Carnot limit, 1 minus Tc over Th, gives the best possible efficiency." },
+  { y: [2], t: "ece", q: "Why does sampling a signal too slowly create false frequencies?", o: ["The ADC overheats", "Aliasing: fast changes between samples look like a slower signal", "The sampling clock drifts"], a: 1, x: "If you sample below twice the highest frequency, high frequencies fold back as lower ones. Anti-aliasing filters remove them before sampling." },
+  { y: [2], t: "cs", q: "Why is searching a balanced binary search tree faster than a linked list?", o: ["It stores less data", "Each step halves the remaining items, giving O(log n) instead of O(n)", "Trees are stored in cache"], a: 1, x: "A list must be walked item by item. A balanced tree discards half of the remaining items at every comparison." },
+  { y: [3], t: "cs", q: "Why do operating systems use virtual memory?", o: ["To make RAM cheaper", "To isolate programs and let each use more address space than RAM", "To make disks faster"], a: 1, x: "Each process sees its own address space. The OS maps pages to RAM or disk, so one program cannot read another's memory and big programs still run." },
+  { y: [3], t: "ece", q: "Why does negative feedback make an amplifier more stable?", o: ["It increases the gain", "It trades gain for less sensitivity to component and temperature changes", "It removes all noise"], a: 1, x: "With negative feedback the gain depends mostly on the feedback network, which is made of precise passive parts, so it varies far less." },
+  { y: [3], t: "cs", q: "Why do we normalise database tables?", o: ["To use more tables", "To reduce repeated data and avoid update anomalies", "To make queries shorter"], a: 1, x: "Storing a fact once means one update fixes it everywhere. Repeated data lets copies disagree." },
+  { y: [3], t: "civil", q: "Why does a longer beam deflect so much more under the same load?", o: ["It weighs more", "For a point load, deflection grows with the cube of the length", "Long beams are weaker material"], a: 1, x: "For a simply supported beam with a central load the deflection is proportional to L cubed. Doubling the span makes it about eight times larger." },
+  { y: [4], t: "cs", q: "Why do systems use caching so much?", o: ["Memory is free", "Programs reuse recent data, so a small fast store avoids slow repeated work", "It makes code shorter"], a: 1, x: "Because of locality, recently used data is likely to be needed again. A cache hit costs a fraction of going to disk or the network." },
+  { y: [4], t: "civil", q: "Why prefer ductile materials in earthquake-resistant frames?", o: ["They are cheaper", "They deform and absorb energy and warn before failing", "They are lighter than concrete"], a: 1, x: "A ductile member bends and dissipates energy instead of snapping suddenly, which protects the people inside." },
+  { y: [4], t: "cs", q: "Why is overfitting a problem in machine learning?", o: ["The model trains too slowly", "The model memorises noise and does badly on new data", "It needs more GPUs"], a: 1, x: "A model that fits training noise has low training error but high error on unseen data. Validation sets, regularisation and more data help." },
+);
+window.CURIO.mysteries.push(
+  { y: [2], t: "ece", n: "Fourier series", h: "Any repeating wave is a sum of simple sines.", x: "A periodic signal can be written as a sum of sines and cosines of different frequencies and sizes. This lets engineers study a complicated signal one frequency at a time, which is the basis of filters, audio compression and communication systems." },
+  { y: [2], t: "cs", n: "Dijkstra's algorithm", h: "How a map app finds the shortest route.", x: "Dijkstra's algorithm repeatedly picks the unvisited place with the smallest known distance and relaxes its neighbours. With a priority queue it runs in O((V plus E) log V). It needs edge weights that are not negative." },
+  { y: [2], t: "math", n: "Laplace transform", h: "A trick that turns calculus into algebra.", x: "The Laplace transform converts differential equations into algebraic ones in a new variable s. Solve there, then convert back. Circuit and control engineers use it daily." },
+  { y: [3], t: "cs", n: "Page tables", h: "How one RAM serves hundreds of programs.", x: "A page table maps a program's virtual addresses to physical memory in fixed-size pages. The CPU's TLB caches recent mappings so the lookup is fast. A missing page triggers a page fault, and the OS loads it." },
+  { y: [3], t: "ece", n: "Kalman filter", h: "How GPS stays accurate with noisy signals.", x: "A Kalman filter combines a prediction from a model with a noisy measurement, weighting each by how uncertain it is. It is used in navigation, robotics and tracking, and was part of the Apollo program's guidance." },
+  { y: [3], t: "cs", n: "Normal forms", h: "The rules that keep a database tidy.", x: "Normalisation organises tables so each fact is stored once. First normal form removes repeating groups, second removes partial dependencies, and third removes transitive ones. Fewer copies mean fewer inconsistencies." },
+  { y: [4], t: "cs", n: "Attention in neural networks", h: "How a model decides which words matter.", x: "Attention lets a model weigh every part of its input when producing each output. Transformer models use it in place of step-by-step reading, which makes training parallel and handles long-range links between words." },
+  { y: [4], t: "mech", n: "Finite element method", h: "How engineers test a bridge before building it.", x: "The finite element method splits a structure into many small elements, writes simple equations for each, and solves them together to estimate stress, heat or vibration. It is the core of most engineering simulation software." },
+  { y: [4], t: "cs", n: "CAP theorem", h: "Why distributed databases must make a hard choice.", x: "When a network partition happens, a distributed system must choose between consistency (everyone sees the same data) and availability (every request gets an answer). Real systems pick a balance for each use case." },
+);
+window.CURIO.tips.push(
+  { y: [2], q: "Second year builds the base for your branch. When a subject feels hard, revise the first-year maths behind it for one evening before asking for help." },
+  { y: [2], q: "Start a small notes repository or notebook now. A year of tidy notes becomes your best revision and interview material." },
+  { y: [3], q: "Pick one domain (web, machine learning, embedded, structures) and build two small projects in it before the placement season." },
+  { y: [3], q: "Look for an internship or a research mentor early in third year. Mail five people with a short, specific message, and follow up once." },
+  { y: [4], q: "Decide early between placements, GATE and higher studies, then plan backwards from the exam and interview dates." },
+  { y: [4], q: "Practise explaining your final-year project in two minutes to a non-expert. Interviewers often start there." },
+  { y: [4], q: "Update your resume after every project or course, not the night before a drive." },
+);
+
+// ---- More curiosity: topic maps, real-world uses, puzzles with hint ladders, idea sparks, explore links ----
+// Puzzle `py` is a tiny Python expression that must equal `a[0]`. scripts/audit_data.py and tests/test_tools.py evaluate it in a restricted
+// sandbox, so a wrong answer cannot be published by mistake.
+window.CURIO.maps = [
+  { c: "Probability", y: [2], l: [["Statistics", "subject"], ["Machine learning", "subject"], ["Communication systems", "subject"], ["Spam filters", "use"], ["Insurance", "job"], ["Quality control", "job"]] },
+  { c: "Linear algebra", y: [1, 2], l: [["Computer graphics", "use"], ["Machine learning", "subject"], ["Signal processing", "subject"], ["PageRank", "use"], ["Data scientist", "job"], ["Structural analysis", "subject"]] },
+  { c: "Data structures", y: [2], l: [["Algorithms", "subject"], ["Databases", "subject"], ["Operating systems", "subject"], ["Maps and routing", "use"], ["Software engineer", "job"], ["Game developer", "job"]] },
+  { c: "Signals and systems", y: [2, 3], l: [["Communication systems", "subject"], ["Control systems", "subject"], ["Audio and video coding", "use"], ["Radar", "use"], ["RF engineer", "job"], ["DSP engineer", "job"]] },
+  { c: "Thermodynamics", y: [2], l: [["Heat transfer", "subject"], ["Power plants", "use"], ["Refrigeration", "use"], ["IC engines", "subject"], ["Energy engineer", "job"], ["HVAC designer", "job"]] },
+  { c: "Operating systems", y: [3], l: [["Computer architecture", "subject"], ["Computer networks", "subject"], ["Embedded systems", "subject"], ["Android and Linux", "use"], ["Systems programmer", "job"], ["Cloud engineer", "job"]] },
+  { c: "Machine learning", y: [3, 4], l: [["Probability", "subject"], ["Linear algebra", "subject"], ["Optimisation", "subject"], ["Medical imaging", "use"], ["ML engineer", "job"], ["Research scientist", "job"]] },
+  { c: "Control systems", y: [3], l: [["Signals and systems", "subject"], ["Robotics", "subject"], ["Cruise control", "use"], ["Drones", "use"], ["Automation engineer", "job"], ["Aerospace engineer", "job"]] },
+];
+window.CURIO.uses = [
+  ["probab", "Spam filters, weather forecasts, insurance pricing and quality control all rest on probability."],
+  ["calculus", "Calculus describes change: it is used to design curves of roads, model population growth and train neural networks."],
+  ["linear algebra", "Every image filter, 3D game and recommendation system runs on matrices and vectors."],
+  ["differential equations", "Circuits, springs, heat flow and spreading diseases are all modelled with differential equations."],
+  ["data structures", "Your contacts search, map routes and game worlds depend on the right data structure."],
+  ["programming", "Every app starts as a program: the same ideas run phones, rockets and bank systems."],
+  ["digital", "Digital logic is the foundation of every processor in your phone and laptop."],
+  ["signal", "Signal processing cleans your calls, compresses your music and reads your heartbeat in a smartwatch."],
+  ["thermo", "Thermodynamics sets the limits for engines, power plants, refrigerators and air conditioners."],
+  ["fluid", "Fluid mechanics designs aircraft wings, pipelines, pumps and even blood-flow devices."],
+  ["electromagnetic", "Wireless networks, radar, MRI and every antenna depend on electromagnetic waves."],
+  ["chemistry", "Chemistry explains batteries, corrosion, medicines and the materials in your phone."],
+  ["physics", "Physics ideas power lasers, GPS, solar cells and the sensors in your phone."],
+  ["operating", "The operating system runs all your apps at once while keeping them from interfering with each other."],
+  ["database", "Banks, railways and online shops store and search their records with databases."],
+  ["network", "Computer networks carry every message, video and payment across the world."],
+  ["machine", "Machine learning powers photo tagging, translation, fraud detection and medical image reading."],
+  ["control", "Control systems keep drones level, lifts smooth and factory machines precise."],
+  ["structur", "Structural analysis keeps bridges, buildings and aircraft safe under load."],
+  ["material", "Materials science chooses the metals, plastics and ceramics in everything from implants to engines."],
+];
+window.CURIO.puzzles = [
+  { q: "A bat and a ball cost 110 rupees together. The bat costs 100 rupees more than the ball. How many rupees does the ball cost?", h: ["Do not say 10. Check it: would the bat then cost 100 more?", "Let the ball cost b. The bat costs b + 100.", "b + (b + 100) = 110, so 2b = 10."], a: ["5"], py: "(110-100)/2", x: "The ball costs 5 rupees and the bat 105. The quick answer 10 fails the check: the bat would then cost only 90 more." },
+  { q: "A lily patch doubles in size every day and covers a pond completely on day 30. On which day was the pond half covered?", h: ["Think backwards from day 30.", "What happens to the patch between day 29 and day 30?", "It doubles, so one day earlier it was half."], a: ["29"], py: "30-1", x: "Doubling means half the size one day before. Exponential growth hides how late the big jump comes." },
+  { q: "What is the sum of all whole numbers from 1 to 100?", h: ["Pair the first and last numbers: 1 + 100.", "Every pair like 2 + 99 also gives 101.", "There are 50 such pairs."], a: ["5050"], py: "sum(range(1, 101))", x: "50 pairs of 101 make 5050. Young Gauss is said to have found this trick in school." },
+  { q: "How many handshakes happen if 10 people each shake hands once with everyone else?", h: ["Each person shakes 9 hands.", "That counts every handshake twice.", "Divide 10 times 9 by 2."], a: ["45"], py: "10*9//2", x: "The count is n(n-1)/2, which is 45. The same formula counts links in a network." },
+  { q: "How many times do the hour and minute hands of a clock overlap between 12:00 noon and 12:00 midnight, counting only once at the end?", h: ["Think of the minute hand lapping the hour hand.", "In 12 hours the minute hand makes 12 laps and the hour hand makes 1.", "So the minute hand gains 11 laps, which gives 11 meetings."], a: ["11"], py: "12-1", x: "The hands overlap 11 times in 12 hours. The minute hand gains 11 laps on the hour hand, and the last overlap is at 12:00." },
+  { q: "Write the decimal number 13 in binary. What digits do you get?", h: ["Powers of two: 8, 4, 2, 1.", "13 = 8 + 4 + 1.", "Put 1 where a power is used and 0 where it is not."], a: ["1101"], py: "int(bin(13)[2:])", x: "13 = 8 + 4 + 0 + 1, which is 1101 in binary." },
+  { q: "You have 9 coins that look identical. One is lighter. With a balance scale, what is the smallest number of weighings that always finds it?", h: ["Split the coins in groups, not one by one.", "Each weighing has 3 outcomes: left, right or equal.", "Three outcomes per weighing give 3 times 3 = 9 cases."], a: ["2"], py: "ceil(log(9, 3))", x: "Weigh 3 against 3 to find the group of 3, then weigh 1 against 1 to find the coin. Two weighings suffice." },
+  { q: "If 5 machines make 5 widgets in 5 minutes, how many minutes do 100 machines need to make 100 widgets?", h: ["Find how long one machine takes for one widget.", "One machine makes one widget in 5 minutes.", "100 machines make 100 widgets in the same time."], a: ["5"], py: "5", x: "Each machine takes 5 minutes per widget. With 100 machines working at once, 100 widgets take the same 5 minutes." },
+];
+window.CURIO.sparks = [
+  "What if every lab experiment in your branch could also be a small start-up idea? Pick one and describe it.",
+  "What if your college had no printed notices at all? Design how students would find out everything.",
+  "What if one subject you study had to be taught in 10 minutes with a game? Which subject and what game?",
+  "What if a bus, a canteen and a library were run with one simple app? Which problem would you solve first?",
+  "What if you could add one sensor to your hostel room? What would it measure and what would it change?",
+  "What if two branches built one project together? Pick two branches and propose it.",
+  "What if you had to explain your favourite topic to a ten-year-old? Write your idea for the best way.",
+  "What if waste on campus could be turned into something useful? Describe one small experiment.",
+];
+window.CURIO.now = [
+  ["Space and ISRO missions", "https://www.isro.gov.in/", "Read the mission pages and pick one to explain to a friend."],
+  ["Free IIT and IISc courses", "https://nptel.ac.in/", "Open a course in your subject and watch the first lecture."],
+  ["New research papers", "https://arxiv.org/", "Browse a category in your branch and read one abstract."],
+  ["Particle physics at CERN", "https://home.cern/", "Find one experiment and ask how it measures things."],
+  ["Engineering news and explainers", "https://spectrum.ieee.org/", "Read one article from your branch and share one line about it."],
+  ["Defence research in India", "https://www.drdo.gov.in/", "Pick one technology and find what subject it uses."],
+  ["Datasets and ML contests", "https://www.kaggle.com/", "Open a beginner competition and read how the problem is framed."],
+  ["Space science explainers", "https://www.nasa.gov/", "Pick a mission page and note one number that surprised you."],
+];

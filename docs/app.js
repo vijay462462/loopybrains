@@ -2130,29 +2130,91 @@ function loadCurio() {
   const sc = document.createElement("script"); sc.src = "curiosity.js?v=" + ((document.querySelector('script[src^="app.js"]') || {}).src || "").split("v=")[1];
   sc.onload = () => { if (state.mode === "curious") render(); }; sc.onerror = () => { window.CURIO = { facts: [], whys: [], mysteries: [], tips: [] }; }; document.head.append(sc);
 }
-const curioStore = () => { const o = readJSON("dd-curio", {}); return { fact: o.fact || {}, why: o.why || {}, myst: o.myst || {} }; };
+const curioStore = () => { const o = readJSON("dd-curio", {}); return { fact: o.fact || {}, why: o.why || {}, myst: o.myst || {}, puz: o.puz || {} }; };
 const curioSave = (o) => writeJSON("dd-curio", o);
-const curioPoints = (o = curioStore()) => Object.keys(o.fact).length + 2 * Object.keys(o.why).length + 3 * Object.keys(o.myst).length;
+const curioPoints = (o = curioStore()) => Object.keys(o.fact).length + 2 * Object.keys(o.why).length + 3 * Object.keys(o.myst).length + Object.values(o.puz).reduce((a, p) => a + (p && p.ok ? Math.max(1, Math.min(4, Number(p.pts) || 1)) : 0), 0);
 function curioStreak(o = curioStore()) {
-  const days = new Set([...Object.keys(o.fact), ...Object.keys(o.why), ...Object.keys(o.myst)].map(Number)); let d = dayNum(), n = 0;
+  const days = new Set([...Object.keys(o.fact), ...Object.keys(o.why), ...Object.keys(o.myst), ...Object.keys(o.puz).filter(k => o.puz[k] && o.puz[k].ok)].map(Number)); let d = dayNum(), n = 0;
   if (!days.has(d)) d -= 1; while (days.has(d)) { n++; d--; } return n;
 }
 const BRANCH_TAGS = { CSE: ["cs", "math"], "AI&ML": ["cs", "math"], ECE: ["ece", "physics"], EEE: ["ece", "physics"], ME: ["mech", "physics"], CE: ["civil"], CHE: ["chem"], MME: ["chem", "mech"] };
-function curioPick(list, key) {
+// Content is shown for the student's year and branch: year-specific items most days, general ones in between.
+const curioProf = () => { const o = readJSON("dd-curio-prof", {}) || {}; return { year: [1, 2, 3, 4].includes(o.year) ? o.year : null, branch: typeof o.branch === "string" && BRANCH_TAGS[o.branch] ? o.branch : "" }; };
+function curioNorm(C) {
+  if (C._n) return C; C._n = true;
+  C.mysteries = C.mysteries.map(m => m.n ? { y: m.y, t: m.t, title: m.n, h: m.h, x: m.x } : { y: m.y, title: m.t, h: m.h, x: m.x });
+  C.tips = C.tips.map(t => typeof t === "string" ? { q: t } : t);
+  return C;
+}
+function curioPick(list, salt = 0) {
   if (!list.length) return null;
-  const tags = BRANCH_TAGS[curState.branch] || null, pool = tags ? list.filter(x => x[key] === "general" || tags.includes(x[key])) : list;
-  const use = pool.length ? pool : list; return use[dayNum() % use.length];
+  const prof = curioProf(), tags = BRANCH_TAGS[prof.branch] || null;
+  const ok = list.filter(x => (!x.y || !prof.year || x.y.includes(prof.year)) && (!tags || !x.t || x.t === "general" || tags.includes(x.t)));
+  const pool = ok.length ? ok : list, spec = prof.year ? pool.filter(x => x.y) : [], gen = pool.filter(x => !x.y);
+  const use = spec.length && (gen.length === 0 || (dayNum() + salt) % 3 !== 0) ? spec : (gen.length ? gen : pool);
+  return use[(dayNum() + salt) % use.length];
 }
 function bestQuestion() {
   const week = Date.now() - 7 * 86400000, mine = store ? allMyIds() : new Set();
   return state.doubts.filter(d => !d.deleted && !d.anonymous && (d.createdAt || 0) > week).map(d => ({ d, v: likesFor(d.id).filter(l => l.uid !== d.authorId).length })).filter(x => x.v >= 1).sort((a, b) => b.v - a.v || b.d.createdAt - a.d.createdAt)[0] || null;
 }
+// Extra curiosity sections: puzzle with a hint ladder, topic map, idea spark, question buddy, explore links, shareable card.
+const normAns = (v) => String(v || "").toLowerCase().replace(/[\s,]/g, "").slice(0, 40);
+function curioPuzzle(C, o, redo, today) {
+  const pz = C.puzzles && C.puzzles.length ? C.puzzles[dayNum() % C.puzzles.length] : null; if (!pz) return null;
+  const rec = o.puz[today] || { hints: 0, ok: false }, say = el("p", { class: "hint", role: "status" }, "");
+  const input = el("input", { type: "text", inputmode: "text", maxlength: "30", autocomplete: "off", placeholder: "Your answer", "aria-label": "Your answer", disabled: rec.ok ? "" : null });
+  const save = (r) => { const s = curioStore(); s.puz[today] = r; curioSave(s); redo(); };
+  const check = () => { if (rec.ok) return; const v = normAns(input.value); if (!v) { say.textContent = "Type your answer first."; return; } if (pz.a.map(normAns).includes(v)) { save({ hints: rec.hints, ok: true, pts: 4 - rec.hints }); try { if (navigator.vibrate) navigator.vibrate([12, 40, 12]); } catch (_) {} } else { say.textContent = "Not yet. Think again, or reveal a hint."; try { if (navigator.vibrate) navigator.vibrate(30); } catch (_) {} } };
+  input.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); check(); } });
+  return el("div", { class: "learn-card curio-card" }, el("small", { class: "tag" }, "\u{1F9E9} PUZZLE OF THE DAY"), el("strong", {}, pz.q),
+    ...pz.h.slice(0, rec.hints).map((t, i) => el("p", { class: "curio-hint" }, el("b", {}, "Hint " + (i + 1) + ": "), t)),
+    rec.ok ? el("p", {}, el("b", {}, "✅ Solved (+" + Math.max(1, 4 - rec.hints) + " points). "), pz.x) : el("div", { class: "ls-bar" }, input, el("button", { class: "btn primary", type: "button", onclick: check }, "Check")),
+    rec.ok ? null : el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", disabled: rec.hints >= pz.h.length ? "" : null, onclick: () => save({ hints: Math.min(pz.h.length, rec.hints + 1), ok: false }) }, rec.hints >= pz.h.length ? "No more hints" : "\u{1F4A1} Show hint " + (rec.hints + 1)), el("small", { class: "hint" }, "Fewer hints, more points (up to 4).")), say);
+}
+function curioMap(C) {
+  const pr = curioProf(), list = (C.maps || []).filter(m => !pr.year || !m.y || m.y.includes(pr.year)), m = list.length ? list[Math.floor(dayNum() / 1) % list.length] : null; if (!m) return null;
+  const NS = "http://www.w3.org/2000/svg", W = 320, H = 260, cx = W / 2, cy = H / 2, R = 96, col = { subject: "#7c3aed", job: "#f97316", use: "#16a34a" };
+  const mk = (t, a, kids) => { const n = document.createElementNS(NS, t); for (const k in a) n.setAttribute(k, a[k]); (kids || []).forEach(c => n.append(c)); return n; };
+  const svg = mk("svg", { viewBox: "0 0 " + W + " " + H, role: "img", "aria-label": "Map of " + m.c + " and what it connects to", class: "curio-svg" });
+  m.l.forEach(([label, kind], i) => {
+    const ang = (i / m.l.length) * Math.PI * 2 - Math.PI / 2, x = cx + R * 1.18 * Math.cos(ang), y = cy + R * 0.92 * Math.sin(ang), c = col[kind] || "#7c3aed";
+    svg.append(mk("line", { x1: cx, y1: cy, x2: x, y2: y, stroke: c, "stroke-width": "2", opacity: ".5" }));
+    const g = mk("g", { tabindex: "0", role: "button", "aria-label": "Search " + label, class: "curio-node" }), w = Math.max(70, label.length * 6.4 + 16);
+    g.append(mk("rect", { x: x - w / 2, y: y - 13, width: w, height: 26, rx: 13, fill: c }), (() => { const t = mk("text", { x, y: y + 4.5, "text-anchor": "middle", fill: "#fff", "font-size": "11", "font-weight": "700" }); t.textContent = label; return t; })());
+    const go = () => openLoopySearch(label, "curious"); g.addEventListener("click", go); g.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+    svg.append(g);
+  });
+  svg.append(mk("circle", { cx, cy, r: 38, fill: "#1e1b4b" }), (() => { const t = mk("text", { x: cx, y: cy + 4, "text-anchor": "middle", fill: "#fff", "font-size": "11", "font-weight": "800" }); t.textContent = m.c.length > 15 ? m.c.slice(0, 14) + "…" : m.c; return t; })());
+  return el("div", { class: "learn-card curio-card" }, el("small", { class: "tag" }, "\u{1F5FA}️ TOPIC MAP"), el("strong", {}, m.c + " connects to"), svg, el("small", { class: "hint" }, "Purple: subjects · Orange: careers · Green: real uses. Tap any bubble to search it."));
+}
+function curioBuddy(redo) {
+  if (!store) return null;
+  const mine = allMyIds(), bud = readJSON("dd-curio-buddy", null), stats = allStats();
+  const daysOf = (ids) => new Set(state.doubts.filter(d => !d.deleted && !d.anonymous && ids.has(d.authorId) && d.createdAt).map(d => dayNum(d.createdAt)));
+  const box = el("div", { class: "learn-card curio-card" }, el("small", { class: "tag" }, "\u{1F91D} QUESTION BUDDY"));
+  if (bud && bud.id) {
+    const a = daysOf(mine), b = daysOf(new Set([bud.id])), t = dayNum(); let d = a.has(t) && b.has(t) ? t : t - 1, n = 0; while (a.has(d) && b.has(d)) { n++; d--; }
+    box.append(el("strong", {}, "You and " + String(bud.name || "your buddy").slice(0, 30)), el("p", {}, el("b", {}, n + "-day streak"), " of both asking a question"), el("small", { class: "hint" }, (a.has(t) ? "You asked today. " : "You have not asked today. ") + (b.has(t) ? "Your buddy asked today." : "Your buddy has not asked today.")),
+      el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => openAsk() }, "❓ Ask today’s question"), el("button", { class: "btn sm", type: "button", onclick: () => { try { localStorage.removeItem("dd-curio-buddy"); } catch (_) {} redo(); } }, "Change buddy")));
+    return box;
+  }
+  const input = el("input", { type: "search", maxlength: "30", placeholder: "Search a classmate by nickname", "aria-label": "Search a buddy", autocomplete: "off" }), res = el("div", { class: "ls-people" });
+  const draw = () => { const nd = input.value.trim().toLowerCase(); const rows = nd.length < 2 ? [] : [...stats.values()].filter(p => p.name && p.id !== (store && store.uid) && p.name.toLowerCase().includes(nd)).slice(0, 5); res.replaceChildren(...rows.map(p => el("button", { class: "btn sm", type: "button", onclick: () => { writeJSON("dd-curio-buddy", { id: p.id, name: p.name.slice(0, 40) }); redo(); } }, "\u{1F91D} " + p.name))); };
+  input.addEventListener("input", draw);
+  box.append(el("strong", {}, "Ask one question a day with a friend"), el("p", { class: "hint" }, "Pick a classmate. Your streak grows each day that both of you ask a question on the board. It uses only public, non-anonymous questions."), input, res);
+  return box;
+}
+function curioShare() {
+  const o = curioStore(), names = Object.keys(o.myst).length, p = (store && allStats().get(store.uid)) || { asked: 0, likes: 0 };
+  return el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => shareResult({ kicker: "MY CURIOSITY", emoji: "\u{1F50E}", big: String(curioPoints(o)), line: "curiosity points · " + curioStreak(o) + "-day streak · " + names + " mystery topics · " + (p.asked || 0) + " questions asked" }) }, "\u{1F4E4} Share my curiosity card"));
+}
 function renderCurious() {
   loadCurio();
-  const C = window.CURIO, back = el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back");
+  const C0 = window.CURIO, C = C0 ? curioNorm(C0) : null, back = el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back");
   if (!C) return [el("h2", {}, "\u{1F50E} Curiosity corner"), el("p", { class: "hint", role: "status" }, "Loading…"), el("div", { class: "rowbtns" }, back)];
   const o = curioStore(), today = String(dayNum()), streak = curioStreak(o), pts = curioPoints(o), week = Math.floor((dayNum() + 3) / 7);
-  const fact = curioPick(C.facts, "t"), why = C.whys.length ? C.whys[dayNum() % C.whys.length] : null, myst = C.mysteries.length ? C.mysteries[dayNum() % C.mysteries.length] : null, tip = C.tips.length ? C.tips[week % C.tips.length] : "";
+  const fact = curioPick(C.facts, 0), why = curioPick(C.whys, 1), myst = curioPick(C.mysteries, 2), tipObj = (() => { const pr = curioProf(), pool = C.tips.filter(t => !t.y || !pr.year || t.y.includes(pr.year)), sp = pool.filter(t => t.y); const use = pr.year && sp.length && week % 2 === 0 ? sp : (pool.length ? pool : C.tips); return use.length ? use[week % use.length] : null; })(), tip = tipObj ? tipObj.q : "";
   const redo = () => { state.mode = "curious"; render(); };
   const sec = (icon, kicker, ...kids) => el("div", { class: "learn-card curio-card" }, el("small", { class: "tag" }, icon + " " + kicker), ...kids);
   // Why of the day: guess first, then the answer
@@ -2162,8 +2224,8 @@ function renderCurious() {
     chosen != null ? el("p", {}, el("b", {}, chosen === why.a ? "✅ Right! " : "Good try. "), why.x) : el("p", { class: "hint" }, "Pick one before you read the answer. Guessing makes you remember it (+2 points).")) : null;
   // Mystery topic: locked until tapped
   const open = !!o.myst[today];
-  const mystCard = myst ? sec("\u{1F512}", "MYSTERY TOPIC", open ? el("strong", {}, myst.t) : el("strong", {}, "A topic you may not have seen yet"), el("p", { class: open ? "" : "hint" }, open ? myst.x : myst.h),
-    open ? el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: () => openLoopySearch(myst.t, "curious") }, "\u{1F50E} Search more on " + myst.t)) : el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => { const s = curioStore(); s.myst[today] = 1; curioSave(s); try { if (navigator.vibrate) navigator.vibrate(20); } catch (_) {} redo(); } }, "\u{1F513} Unlock it (+3 points)"))) : null;
+  const mystCard = myst ? sec("\u{1F512}", "MYSTERY TOPIC", open ? el("strong", {}, myst.title) : el("strong", {}, "A topic you may not have seen yet"), el("p", { class: open ? "" : "hint" }, open ? myst.x : myst.h),
+    open ? el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: () => openLoopySearch(myst.title, "curious") }, "\u{1F50E} Search more on " + myst.title)) : el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => { const s = curioStore(); s.myst[today] = 1; curioSave(s); try { if (navigator.vibrate) navigator.vibrate(20); } catch (_) {} redo(); } }, "\u{1F513} Unlock it (+3 points)"))) : null;
   // Fact of the day
   const learned = !!o.fact[today];
   const factCard = fact ? sec("\u{1F4A1}", "DID YOU KNOW?", el("p", { class: "curio-fact" }, fact.q),
@@ -2173,10 +2235,19 @@ function renderCurious() {
   const bqCard = sec("\u{1F31F}", "BEST QUESTION THIS WEEK", bq ? el("strong", {}, String(bq.d.title || "").slice(0, 120)) : el("strong", {}, "No winner yet"), bq ? el("small", { class: "hint" }, bq.d.subject + " · " + bq.v + " vote" + (bq.v === 1 ? "" : "s") + " · asked by " + (bq.d.authorName || "a classmate")) : el("p", { class: "hint" }, "Ask a good question and ask classmates to vote for it."),
     el("p", { class: "hint" }, "Every vote on your question earns you 1 point (up to 10 a question). Vote for the questions that made you think."), bq ? el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: () => { state.tab = "doubts"; openItem(bq.d.id); } }, "Open the question")) : el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => openAsk() }, "❓ Ask a question")));
   const tipCard = tip ? sec("\u{1F9ED}", "TIP OF THE WEEK", el("p", {}, tip), el("small", { class: "hint" }, "Written by the " + BRAND + " team. Seniors: share your own tip as an idea."), el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: () => { state.tab = "ideas"; openAsk(); } }, "\u{1F4A1} Share my tip"))) : null;
+  const prof = curioProf(), setProf = (k, v) => { const o2 = readJSON("dd-curio-prof", {}) || {}; o2[k] = v; writeJSON("dd-curio-prof", o2); redo(); };
+  const BR = [["CSE", "CSE"], ["AI&ML", "AI&ML"], ["ECE", "ECE"], ["EEE", "EEE"], ["ME", "Mech"], ["CE", "Civil"], ["CHE", "Chem"], ["MME", "Metal"]];
+  const picker = el("div", { class: "curio-pick" }, el("small", { class: "hint" }, prof.year ? "Showing content for Year " + prof.year + (prof.branch ? " " + prof.branch : "") : "Choose your year and branch for content made for you"),
+    el("div", { class: "rowbtns", role: "group", "aria-label": "Your year" }, ...[1, 2, 3, 4].map(y => el("button", { class: "btn sm" + (prof.year === y ? " primary" : ""), type: "button", "aria-pressed": String(prof.year === y), onclick: () => setProf("year", y) }, "Year " + y))),
+    el("div", { class: "rowbtns", role: "group", "aria-label": "Your branch" }, ...BR.map(([k, t]) => el("button", { class: "btn sm" + (prof.branch === k ? " primary" : ""), type: "button", "aria-pressed": String(prof.branch === k), onclick: () => setProf("branch", prof.branch === k ? "" : k) }, t))));
   return [
-    el("h2", {}, "\u{1F50E} Curiosity corner"),
+    el("h2", {}, "\u{1F50E} Curiosity corner"), picker,
     el("div", { class: "curio-stats" }, el("div", {}, el("b", {}, String(streak)), el("span", {}, "day curiosity streak \u{1F525}")), el("div", {}, el("b", {}, String(pts)), el("span", {}, "curiosity points"))),
-    factCard, whyCard, mystCard, bqCard, tipCard,
+    factCard, whyCard, mystCard, curioPuzzle(C, o, redo, today), curioMap(C),
+    sec("\u{1F4A5}", "IDEA SPARK THIS WEEK", el("strong", {}, (C.sparks && C.sparks.length ? C.sparks[week % C.sparks.length] : "What if...?")), el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => { state.tab = "ideas"; openAsk(); } }, "\u{1F4A1} Share my idea"))),
+    bqCard, curioBuddy(redo),
+    (() => { const n = C.now && C.now.length ? C.now[week % C.now.length] : null; return n ? sec("\u{1F30D}", "EXPLORE THIS WEEK", el("strong", {}, n[0]), el("p", { class: "hint" }, n[2]), el("div", { class: "rowbtns" }, outLink(n[1], "Open the official site", "btn sm"))) : null; })(),
+    tipCard, curioShare(),
     el("div", { class: "rowbtns" }, back),
   ].filter(Boolean);
 }
@@ -4037,6 +4108,7 @@ function lsAiCard(ls) {
     a.example ? el("p", { class: "hint" }, el("b", {}, "Example: "), a.example) : null,
     a.videoQueries.length ? el("div", { class: "rowbtns" }, ...a.videoQueries.map(t => outLink(yt(t), "\u25B6 " + t, "btn sm"))) : null,
     a.diagramQueries.length || a.pdfQueries.length ? el("div", { class: "rowbtns" }, ...a.diagramQueries.map(t => outLink(gg(t, true), "\u{1F5BC} " + t, "btn sm")), ...a.pdfQueries.map(t => outLink(gg(t + " filetype:pdf"), "\u{1F4C4} " + t, "btn sm"))) : null,
+    a.followUp ? el("div", { class: "curio-ask" }, el("small", { class: "tag" }, "\u{1F914} LOOPY ASKS YOU"), el("p", {}, a.followUp), el("button", { class: "btn sm primary", type: "button", onclick: () => { state.ai = state.ai || { msgs: [], busy: false, note: "" }; state.ai.prefill = "You asked me: " + a.followUp + "\nMy answer is: "; showPanel("ai"); } }, "\u270D\uFE0F Answer and get feedback")) : null,
     a.related.length ? el("div", { class: "rowbtns" }, el("small", { class: "hint" }, "Related:"), ...a.related.map(t => el("button", { class: "linkbtn", type: "button", onclick: () => lsRun(lsClean(t)) }, t))) : null,
     el("p", { class: "hint" }, "AI answers can contain mistakes. Check important facts with your book or teacher." + (ls.aiLeft != null ? " " + ls.aiLeft + " AI questions left today." : "")));
 }
@@ -4519,6 +4591,7 @@ function renderSubject(C, r) {
       el("div", { class: "rowbtns" }, pdf ? outLink(pdf[0], "\u{1F4C4} " + pdf[1], "btn sm primary") : null, ...(pdf ? [] : RGUKT_SYLLABUS_PAGES.map(([u, t]) => outLink(u, "\u{1F517} " + t, "btn sm primary")))),
       pdf ? null : el("p", { class: "hint" }, "The syllabus file for this branch is not published as one PDF. Use these official curriculum pages."),
       el("p", { class: "guide-safe" }, el("b", {}, "Stay safe: "), "Download syllabus files only from the official RGUKT links above. Links open in a new tab.")),
+    (() => { const lc = name.toLowerCase(), hit = (window.CURIO && window.CURIO.uses || []).find(u => lc.includes(u[0])); if (!window.CURIO) loadCurio(); return hit ? el("div", { class: "learn-card curio-card" }, el("small", { class: "tag" }, "\u{1F30D} WHERE IS THIS USED?"), el("p", {}, hit[1])) : null; })(),
     el("div", { class: "label" }, "Your unit tracker (" + done.length + " of 6 done)"),
     el("div", { class: "pq-bar", role: "progressbar", "aria-valuemin": "0", "aria-valuemax": "6", "aria-valuenow": String(done.length) }, el("i", { style: "width:" + Math.round(done.length / 6 * 100) + "%" })),
     ...mids.map(([label, units]) => el("div", { class: "learn" }, el("small", { class: "hint" }, label + " covers units " + units.join(" and ")), ...units.map(n => el("div", { class: "learn-card" },

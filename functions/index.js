@@ -151,7 +151,7 @@ const AI_SYSTEM = "You are The Campus Loop's study helper for Indian college stu
 const AI_SEARCH_SYSTEM = "You are Loopy AI, the study search engine of The Campus Loop for Indian college students. Given a topic, reply with ONLY a JSON object, no other text, with these keys: " +
   "\"summary\" (plain text, 60 to 110 words, accurate and simple), \"keyPoints\" (3 to 6 short strings), \"example\" (one short worked example or analogy), " +
   "\"videoQueries\" (3 to 5 short YouTube search phrases for the best lectures, prefer NPTEL, IIT, MIT OCW and well known teachers), " +
-  "\"diagramQueries\" (2 or 3 short image search phrases), \"pdfQueries\" (2 or 3 short phrases for lecture notes or previous papers), \"related\" (3 to 5 related topic names). " +
+  "\"diagramQueries\" (2 or 3 short image search phrases), \"pdfQueries\" (2 or 3 short phrases for lecture notes or previous papers), \"related\" (3 to 5 related topic names), \"followUp\" (one short question that checks whether the student understood, answerable in one or two sentences). " +
   "Only academic topics. If the topic is not academic, return {\"summary\":\"Loopy AI only searches study topics.\",\"keyPoints\":[],\"example\":\"\",\"videoQueries\":[],\"diagramQueries\":[],\"pdfQueries\":[],\"related\":[]}. If unsure, say so in the summary instead of guessing.";
 const strList = (a, n, len) => (Array.isArray(a) ? a : []).filter(x => typeof x === "string" && x.trim()).slice(0, n).map(x => x.replace(/[\u0000-\u001F<>]/g, " ").trim().slice(0, len));
 exports.askAI = onRequest({ secrets: [ANTHROPIC_KEY], cors: ALLOWED_ORIGINS, region: "asia-south1", timeoutSeconds: 60, memory: "256MiB", maxInstances: 5 }, async (req, res) => {
@@ -199,7 +199,7 @@ exports.askAI = onRequest({ secrets: [ANTHROPIC_KEY], cors: ALLOWED_ORIGINS, reg
     if (searchMode) {
       let o = {}; try { const j = reply.slice(reply.indexOf("{"), reply.lastIndexOf("}") + 1); o = JSON.parse(j); } catch (_) {}
       const card = { summary: String(o.summary || "").replace(/[\u0000-\u001F<>]/g, " ").trim().slice(0, 900), keyPoints: strList(o.keyPoints, 6, 160), example: String(o.example || "").replace(/[\u0000-\u001F<>]/g, " ").trim().slice(0, 400),
-        videoQueries: strList(o.videoQueries, 5, 80), diagramQueries: strList(o.diagramQueries, 3, 80), pdfQueries: strList(o.pdfQueries, 3, 80), related: strList(o.related, 5, 60) };
+        videoQueries: strList(o.videoQueries, 5, 80), diagramQueries: strList(o.diagramQueries, 3, 80), pdfQueries: strList(o.pdfQueries, 3, 80), related: strList(o.related, 5, 60), followUp: String(o.followUp || "").replace(/[\u0000-\u001F<>]/g, " ").trim().slice(0, 200) };
       if (!card.summary) return res.status(502).json({ error: "Loopy AI could not answer that. Try rephrasing." });
       return res.json({ search: card, left: AI_DAILY_LIMIT - used });
     }

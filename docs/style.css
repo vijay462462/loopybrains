@@ -2497,3 +2497,10 @@ body.simple .tabs button[aria-selected="true"] { display: inline-flex; }
 .curio-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 6px 0 10px; }
 .curio-stats > div { display: grid; padding: 12px; border-radius: 16px; border: 1px solid var(--line); background: color-mix(in srgb, var(--accent) 8%, var(--sheet)); }
 .curio-stats b { font-size: 24px; } .curio-stats span { font-size: 12.5px; color: color-mix(in srgb, currentColor 70%, transparent); }
+
+.curio-pick { display: grid; gap: 6px; margin: 4px 0 10px; padding: 12px; border-radius: 16px; border: 1px dashed color-mix(in srgb, var(--accent) 45%, var(--line)); }
+
+.curio-svg { width: 100%; height: auto; max-height: 280px; }
+.curio-node { cursor: pointer; } .curio-node:focus-visible rect { stroke: #fff; stroke-width: 3; }
+.curio-hint { margin: 0; padding: 8px 10px; border-radius: 12px; background: color-mix(in srgb, #f59e0b 12%, transparent); font-size: 13.5px; }
+.curio-ask { display: grid; gap: 6px; padding: 10px; border-radius: 14px; border: 1px dashed color-mix(in srgb, var(--accent) 50%, var(--line)); }

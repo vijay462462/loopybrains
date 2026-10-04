@@ -9,7 +9,7 @@ def load(name):
     import sys; m = importlib.util.module_from_spec(spec); sys.modules[name] = m; spec.loader.exec_module(m); return m
 
 
-syl, rep = load("extract_syllabus"), load("pilot_report")
+syl, rep, aud = load("extract_syllabus"), load("pilot_report"), load("audit_data")
 H = 3600_000
 
 
@@ -50,6 +50,22 @@ class Pilot(unittest.TestCase):
     def test_retention_lag(self):
         ev = [rep.Event("x", 10, 0), rep.Event("x", 11, 0), rep.Event("y", 10, 0), rep.Event("z", 20, 0)]
         self.assertEqual(rep.retention(ev, 20, 1), (1, 2))              # z is too new to measure
+
+
+class SafeEval(unittest.TestCase):
+    def test_arithmetic(self):
+        self.assertEqual(aud.safe_eval("sum(range(1, 101))"), 5050)
+        self.assertEqual(aud.safe_eval("int(bin(13)[2:])"), 1101)
+        self.assertEqual(aud.safe_eval("ceil(log(9, 3))"), 2)
+
+    def test_dangerous_input_is_rejected(self):
+        for bad in ("__import__('os').system('id')", "open('/etc/passwd')", "(1).__class__", "[x for x in range(9)]", "lambda: 1", "2 ** 9999", "len.__call__"):
+            with self.assertRaises(Exception, msg=bad):
+                aud.safe_eval(bad)
+
+    def test_published_puzzle_answers_match_python(self):
+        rep_ = aud.Report(); aud.audit_curiosity(rep_)
+        self.assertEqual(rep_.errors, [])
 
 
 if __name__ == "__main__":
