@@ -1248,7 +1248,7 @@ function showWelcome(force) {
   const picked = new Set(readJSON("dd-interests", []));
   let step = 0, nameVal = (getName() || "").trim();
   const STEPS = ["about", "name", "interests", "ready"], TOTAL = STEPS.length, box = el("div", { id: "welcome", class: "welcome", role: "dialog", "aria-modal": "true", "aria-label": "Welcome to " + BRAND });
-  const finish = () => { try { localStorage.setItem("dd-welcome-done", "1"); } catch (_) {} document.removeEventListener("keydown", onKey); box.remove(); todayKey = ""; try { renderHeader(); } catch (_) {} };
+  const finish = () => { try { localStorage.setItem("dd-welcome-done", "1"); if (!localStorage.getItem("dd-launch-gone")) { localStorage.setItem("dd-launch", "1"); } } catch (_) {} if (STEPS[step] === "ready") setTimeout(() => confetti(130), 250); document.removeEventListener("keydown", onKey); box.remove(); todayKey = ""; try { renderHeader(); } catch (_) {} };
   const onKey = (e) => { if (e.key === "Escape") finish(); };
   const saveStep = () => { if (STEPS[step] === "name") { const v = nameVal.trim().slice(0, 30); if (v) setName(v); } if (STEPS[step] === "interests") writeJSON("dd-interests", [...picked]); };
   const go = (d) => { saveStep(); step = Math.max(0, Math.min(TOTAL - 1, step + d)); paint(); };
@@ -1452,6 +1452,18 @@ function boxButton() {
   const done = boxToday();
   return el("button", { class: "boxbtn" + (done ? "" : " fresh"), type: "button", onclick: showBox }, el("span", { class: "boxbtn-ico", "aria-hidden": "true" }, done ? "📭" : "🎁"), el("span", {}, el("b", {}, done ? "Today's box opened" : "Mystery box"), el("small", {}, done ? "Come back tomorrow · tap to see it again" : "Tap to open today's surprise")));
 }
+// Launch banner: a premium welcome-aboard banner on top of the home screen right after the welcome steps, until the first 3 steps are done or it is closed.
+function launchBanner(name) {
+  if (!readJSON("dd-launch", false) || readJSON("dd-launch-gone", false)) return null;
+  const steps = questSteps(), n = steps.filter(s => s[2]).length;
+  if (n === 3) return null;
+  const who = (name || "").trim();
+  return el("div", { class: "launch" }, el("div", { class: "launch-in" },
+    el("div", { class: "launch-loopy" }, loopyMini()),
+    el("div", { class: "launch-text" }, el("small", {}, "✨ NEW MEMBER · " + COLLEGE), el("strong", {}, "Welcome aboard" + (who ? ", " + who : "") + "! 🎉"), el("span", {}, "You are now part of the " + BRAND + " family. Finish your first 3 steps and unlock a free gift 🎁")),
+    el("div", { class: "launch-go" }, el("b", {}, n + "/3"), el("button", { class: "launch-btn", type: "button", onclick: () => { const q = document.querySelector(".quest"); if (q) q.scrollIntoView({ behavior: "smooth", block: "center" }); } }, "Start →")),
+    el("button", { class: "launch-x", type: "button", "aria-label": "Close banner", onclick: () => { writeJSON("dd-launch-gone", true); todayKey = ""; renderToday(); } }, "✕")));
+}
 function renderToday() {
   const bar = $("todayBar"); if (!bar) return;
   if (NO_COLLEGE || !store) { bar.hidden = true; return; }
@@ -1459,13 +1471,13 @@ function renderToday() {
     streak = state.myStreak || 0, quizDone = QUIZ.length ? !!myQuizAnswer(dayNum()) : true, plan = readJSON("dd-exam-plan", null),
     left = plan && plan.date ? Math.ceil((new Date(plan.date + "T00:00:00").getTime() - new Date().setHours(0, 0, 0, 0)) / 864e5) : null;
   const note = state.welcomeNote && readJSON("dd-note-gone", 0) !== state.welcomeNote.updatedAt ? state.welcomeNote : null;
-  const key = [hello, name, streak, quizDone, left, storyGroups().length, state.dataReady ? 1 : 0, boxToday() ? 1 : 0, questSteps().filter(s => s[2]).length, state.replies.length, state.doubts.length, readJSON("dd-tip", {}).gone ? 1 : 0, mistakeList().length, state.weekly.length, dayNum(), (typeof weekPoints === "function" ? weekPoints() : 0), note ? note.updatedAt : 0, openDrives().length, upcomingEvents().length, unansweredDoubts().length].join("|"); if (key === todayKey && !bar.hidden) return; todayKey = key;
+  const key = [hello, name, streak, quizDone, left, storyGroups().length, readJSON("dd-launch", false) ? 1 : 0, readJSON("dd-launch-gone", false) ? 1 : 0, state.dataReady ? 1 : 0, boxToday() ? 1 : 0, questSteps().filter(s => s[2]).length, state.replies.length, state.doubts.length, readJSON("dd-tip", {}).gone ? 1 : 0, mistakeList().length, state.weekly.length, dayNum(), (typeof weekPoints === "function" ? weekPoints() : 0), note ? note.updatedAt : 0, openDrives().length, upcomingEvents().length, unansweredDoubts().length].join("|"); if (key === todayKey && !bar.hidden) return; todayKey = key;
   const chip = (txt, cls, fn) => el("button", { class: "today-chip " + (cls || ""), type: "button", onclick: fn }, txt);
   const WORDS = ["Welcome to the " + BRAND + " family 💙", "Respect your teachers, help your juniors. 🙏", "Every question is welcome here.", "Kind words build a strong campus. 🌱", "Thank you for being part of our family.", "Learn together, grow together. 🚀", "Our teachers and staff work hard for you. Say thank you today. 🙏"];
   const newbie = !readJSON("dd-quest-done", false) && (readJSON("dd-visits", { n: 1 }).n || 1) <= 21 && questSteps().filter(s => s[2]).length < 3;
   const stat = (num, label, cls, fn) => el("button", { class: "today-stat " + (cls || ""), type: "button", onclick: fn }, el("b", {}, String(num)), el("span", {}, label));
   const pts = typeof weekPoints === "function" ? weekPoints() : 0;
-  bar.replaceChildren(el("div", { class: "today-hero" }, el("div", { class: "hero-loopy" }, loopyMini()),
+  bar.replaceChildren(launchBanner(name), el("div", { class: "today-hero" }, el("div", { class: "hero-loopy" }, loopyMini()),
     el("div", { class: "hero-text" }, el("small", { class: "hero-kicker" }, "✨ " + COLLEGE), el("strong", { class: "today-hello" }, hello + (name ? ", " + name : "") + " 👋"), el("small", { class: "today-words" }, WORDS[dayNum() % WORDS.length])),
     el("button", { class: "hero-ask", type: "button", onclick: () => { const b = $("askBtn"); if (b) b.click(); } }, "❓ Ask a doubt")),
     (() => { if (newbie) return null; const t = loopyTip(), st = readJSON("dd-tip", {}); if (st.gone && st.day === dayStr()) return null;
