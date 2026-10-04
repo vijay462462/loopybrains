@@ -2541,3 +2541,7 @@ body.simple .tabs button[aria-selected="true"] { display: inline-flex; }
 .sp2-bname b { font-size: 19px; letter-spacing: .12em; color: #fff; }
 .sp2-bname i { font-style: normal; font-size: 12px; letter-spacing: .6em; font-weight: 700; background: linear-gradient(90deg, #fde68a, #f59e0b); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .ob-brand { display: grid; place-items: center; } .ob-brand svg { filter: drop-shadow(0 10px 18px rgba(99, 102, 241, .45)); }
+
+.id-card { display: grid; gap: 6px; }
+.id-code { font: 800 22px/1.2 ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace; letter-spacing: .06em; background: linear-gradient(90deg, var(--accent), #f97316); -webkit-background-clip: text; background-clip: text; color: transparent; width: fit-content; }
+.id-mini { font-family: ui-monospace, Menlo, Consolas, monospace; letter-spacing: .04em; }

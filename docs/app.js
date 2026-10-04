@@ -2285,6 +2285,32 @@ function showEligibility() {
     el("p", { class: "hint" }, "This is your own declaration. Please answer honestly. Details are in the ", el("a", { href: "terms.html", target: "_blank", rel: "noopener" }, "Terms"), ".")));
   document.body.append(ov);
 }
+// ---------- Short Campus Loop ID: STATE-COLLEGE-CODE, for example AP-RGUK-7K3F9 ----------
+// Made from the sign-in id with a fixed mix, so it is the same on every visit and needs no server. It is for sharing and support, never for signing in.
+const STATE_CODES = { "Andhra Pradesh": "AP", "Telangana": "TS", "Tamil Nadu": "TN", "Karnataka": "KA", "Kerala": "KL", "Maharashtra": "MH", "Delhi": "DL", "Uttar Pradesh": "UP", "West Bengal": "WB", "Gujarat": "GJ", "Rajasthan": "RJ", "Madhya Pradesh": "MP", "Punjab": "PB", "Odisha": "OD", "Bihar": "BR", "Assam": "AS", "Haryana": "HR", "Jammu and Kashmir": "JK", "Uttarakhand": "UK", "Jharkhand": "JH", "Chhattisgarh": "CG", "Himachal Pradesh": "HP", "Puducherry": "PY", "Goa": "GA", "Meghalaya": "ML", "Manipur": "MN", "Chandigarh": "CH", "Tripura": "TR", "Nagaland": "NL", "Arunachal Pradesh": "AR", "Mizoram": "MZ", "Sikkim": "SK", "Ladakh": "LA", "Andaman and Nicobar Islands": "AN", "Lakshadweep": "LD", "Dadra and Nagar Haveli and Daman and Diu": "DD" };
+function clCodes() {
+  const slug = NO_COLLEGE ? "" : (TENANT ? TENANT.slug : "rgukt"), d = DIRECTORY.find(x => x.slug === slug), st = IS_RGUKT ? "Andhra Pradesh" : (d && d.state) || (TENANT && TENANT.state) || "";
+  const parts = slug.split("-").filter(w => w && !/^(of|and|the|for|in)$/.test(w)), col = (parts.length > 1 ? parts.map(w => w[0]).join("") : slug).replace(/[^a-z0-9]/g, "").toUpperCase().slice(0, 4) || "CL";
+  return [STATE_CODES[st] || "IN", col];
+}
+function clHash(str) {   // cyrb53, a small fast 53-bit mixing function
+  let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+  for (let i = 0; i < str.length; i++) { const c = str.charCodeAt(i); h1 = Math.imul(h1 ^ c, 2654435761); h2 = Math.imul(h2 ^ c, 1597334677); }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909); h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return 4294967296 * (2097151 & h2) + (h1 >>> 0);
+}
+const CL_ALPHA = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";   // no I, L, O, U: easy to read and type
+function campusId(uid) {
+  if (!uid) return "";
+  let n = clHash("campusloop|" + uid), code = ""; for (let i = 0; i < 5; i++) { code += CL_ALPHA[n % 32]; n = Math.floor(n / 32); }
+  return clCodes().join("-") + "-" + code;
+}
+function idCard() {
+  const uid = store && store.uid; if (!uid) return null; const id = campusId(uid), say = el("small", { class: "hint", role: "status" }, "");
+  return el("div", { class: "learn-card id-card" }, el("small", { class: "tag" }, "\u{1F194} YOUR CAMPUS LOOP ID"), el("strong", { class: "id-code" }, id),
+    el("small", { class: "hint" }, "Share it with friends or quote it when you write to support. It is not a password."),
+    el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: async () => { try { await navigator.clipboard.writeText(id); say.textContent = "Copied."; } catch (_) { say.textContent = id; } } }, "\u{1F4CB} Copy")), say);
+}
 // ---------- Helper of the week and push opt-in ----------
 function helperOfWeek() {
   if (!store || !state.loaded) return null;
@@ -4139,12 +4165,12 @@ function openLoopySearch(q, back) {
 // Student search inside Loopy AI Search. Only public nicknames that already appear on the board are searchable. Anonymous posts and e-mail addresses are never included.
 const lsPerson = (p, extra) => el("div", { class: "learn-card ls-person" },
   avatarEl(avatarFor(p.name || ""), "av av-lg"),
-  el("div", { class: "ls-who" }, el("strong", {}, p.name + markOf(p.id)), el("small", { class: "hint" }, "Lv " + p.level.n + " " + titleOf(p.points) + " · " + plural(p.answers, "answer") + " · " + p.helpful + " helpful" + (p.streak > 1 ? " · \u{1F525}" + p.streak + "-day streak" : "")), (statusOfId(p.id) || "") ? el("small", {}, statusOfId(p.id)) : null, extra || null),
+  el("div", { class: "ls-who" }, el("strong", {}, p.name + markOf(p.id)), el("small", { class: "hint id-mini" }, campusId(p.id)), el("small", { class: "hint" }, "Lv " + p.level.n + " " + titleOf(p.points) + " · " + plural(p.answers, "answer") + " · " + p.helpful + " helpful" + (p.streak > 1 ? " · \u{1F525}" + p.streak + "-day streak" : "")), (statusOfId(p.id) || "") ? el("small", {}, statusOfId(p.id)) : null, extra || null),
   el("span", { class: "pts" }, p.points + " pts"));
 function lsStudents(box, q, sort) {
   const needle = lsClean(q).toLowerCase(), meId = store && store.uid;
   let rows = [...allStats().values()].filter(p => p.name && p.id !== meId);
-  if (needle) rows = rows.filter(p => p.name.toLowerCase().includes(needle));
+  if (needle) rows = rows.filter(p => p.name.toLowerCase().includes(needle) || campusId(p.id).toLowerCase().includes(needle));
   const by = { points: (a, b) => b.points - a.points, answers: (a, b) => b.answers - a.answers || b.helpful - a.helpful, streak: (a, b) => (b.streak || 0) - (a.streak || 0) || b.points - a.points }[sort] || ((a, b) => b.points - a.points);
   rows = rows.sort(by);
   box.replaceChildren(...(rows.length ? [el("p", { class: "hint", role: "status" }, rows.length + " student" + (rows.length === 1 ? "" : "s") + (rows.length > 20 ? " · showing the top 20" : "")), ...rows.slice(0, 20).map(p => lsPerson(p))] : [el("p", { class: "hint", role: "status" }, needle ? "No student with “" + needle + "” yet. Check the spelling or ask them to join." : "No students on the board yet. Answer a doubt to be the first.")]));
@@ -4182,7 +4208,7 @@ function renderLoopySearch() {
   const q = ls.q, suffix = LS_LEVELS[ls.level][1];
   const seg = el("div", { class: "ls-seg", role: "tablist" }, ...[["topic", "\u{1F4DA} Topics"], ["students", "\u{1F465} Students"]].map(([k, t]) => el("button", { type: "button", role: "tab", "aria-selected": String(ls.mode === k), class: ls.mode === k ? "on" : "", onclick: () => { ls.mode = k; render(); } }, t)));
   if (ls.mode === "students") {
-    const box = el("div", { class: "ls-people", "aria-live": "polite" }), sq = el("input", { type: "search", maxlength: "40", placeholder: "Search a student by nickname", "aria-label": "Search students", autocomplete: "off", value: ls.sq || "" });
+    const box = el("div", { class: "ls-people", "aria-live": "polite" }), sq = el("input", { type: "search", maxlength: "40", placeholder: "Search by nickname or ID", "aria-label": "Search students by nickname or ID", autocomplete: "off", value: ls.sq || "" });
     const sortKey = ls.sort || "points", draw = () => lsStudents(box, sq.value, ls.sort || "points");
     sq.addEventListener("input", () => { ls.sq = sq.value.slice(0, 40); draw(); }); draw();
     return [el("h2", {}, "\u{1F50E} Loopy AI Search"), seg,
@@ -4553,6 +4579,7 @@ function renderMe() {
       el("button", { class: "btn", type: "button", onclick: () => { state.afterName = "me"; state.mode = "name"; render(); } }, "Change name"),
       PRIVATE && el("button", { class: "btn", type: "button", onclick: () => { setCode(""); location.reload(); } }, "Change class code"),
       el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")),
+    idCard(),
     logoutBlock(),
   ];
 }
