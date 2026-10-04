@@ -1406,7 +1406,7 @@ function showWelcome(force, startId) {
       const pickBox = el("div", { class: "ob-pick", "aria-live": "polite" });
       const drawPick = () => {
         const c = pickSlug ? (all.find(x => x.slug === pickSlug) || { slug: pickSlug, name: pickName, state: "", sub: "", grp: "general" }) : null, show = !!c && !browsing;
-        pickBox.hidden = !show; [stSel, q, types, count, list, chosen].forEach(n => { if (n) n.hidden = show; });
+        pickBox.hidden = !show; [stSel, q, types, count, list].forEach(n => { if (n) n.hidden = show; }); chosen.hidden = show || !pickSlug;
         if (!show) return;
         const [c1, c2] = c.slug === "rgukt" ? STATE_COLORS["Andhra Pradesh"] : collegeColors(c.slug, c.state || "");
         pickBox.style.setProperty("--c1", c1); pickBox.style.setProperty("--c2", c2);

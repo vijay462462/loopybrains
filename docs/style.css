@@ -2419,3 +2419,9 @@ html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 @media (max-height: 820px) { .ob-s-college > .ob-say { display: none; } .ob-s-college > h2 { font-size: 21px; } .ob-s-college > .ob-count { display: none; } .ob-card { padding-top: 16px; } }
 @media (max-height: 640px) { .ob-s-college .ob-types { display: none; } .ob-s-college > .state-btn, .ob-s-college > input[type="search"] { min-height: 42px; } }
 .ob-card > .welcome-skip { position: static; align-self: flex-end; margin: 0 0 -4px; padding: 2px 4px; }
+
+/* Keyboard open: keep the title and Skip visible, only the long intro text steps aside */
+.welcome.kb .ob-card > .ob-step > h2 { display: block; font-size: 18px; line-height: 1.2; margin: 0; }
+.welcome.kb .welcome-skip { display: block; margin-bottom: -6px; }
+.welcome.kb .ob-card > .ob-step.ob-s-college { gap: 6px; }
+.welcome.kb .ob-s-college > .state-btn, .welcome.kb .ob-s-college > input[type="search"] { min-height: 40px; font-size: 15px; }
