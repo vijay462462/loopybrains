@@ -6949,14 +6949,41 @@ const STORY_BG = [["#7c3aed", "#2563eb"], ["#db2777", "#f97316"], ["#059669", "#
 const DP_OK = /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]{20,40000}$/;
 const IMG_OK = /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]{20,700000}$/;
 const getDp = () => { try { const v = localStorage.getItem("dd-dp"); return DP_OK.test(v || "") ? v : ""; } catch (_) { return ""; } };
+// Report a person's profile photo or status line. Sends a private report to the admin queue and hides that item for you at once.
+function openProfileReport(id, name) {
+  if (!store || !id || allMyIds().has(id)) return;
+  const text = statusOfId(id), close = () => box.remove(), say = el("p", { class: "hint", role: "status" });
+  let what = profHidden(id, "dp") && text ? "status" : "dp", reason = "";
+  const pick = (opts, cur, set) => el("div", { class: "rowbtns" }, ...opts.map(([k, l]) => { const b = el("button", { type: "button", class: "btn sm" + (cur() === k ? " primary" : ""), onclick: () => { set(k); b.parentNode.querySelectorAll("button").forEach(x => x.classList.remove("primary")); b.classList.add("primary"); } }, l); return b; }));
+  const send = async (e) => {
+    if (!reason) { say.textContent = "Pick a reason first."; return; }
+    e.currentTarget.disabled = true;
+    try {
+      const rec = { target: id, what, reason, reporter: store.authUid ? store.authUid() : store.uid, name: String(name || "").slice(0, 40), createdAt: Date.now() };
+      if (what === "status" && text) rec.text = text.slice(0, 60);
+      await store.set("profileReports", rec.reporter + "_" + id + "_" + what, rec);
+      const done = readJSON("dd-prof-rep", []); done.push(id + "|" + what); writeJSON("dd-prof-rep", done.slice(-200));
+      state.profiles = state.profiles.slice(); _dpSrc = null; try { render(); renderStoryBar(); } catch (_) {}
+      say.textContent = "Thank you. We hid it for you and sent it to the admin to review."; setTimeout(close, 1800);
+    } catch (er) { say.textContent = er && er.code === "permission-denied" ? "You can report once per item." : "Could not send. Check your internet and try again."; e.currentTarget.disabled = false; }
+  };
+  const box = el("div", { class: "welcome", role: "dialog", "aria-modal": "true" }, el("div", { class: "welcome-card" },
+    el("h2", {}, "Report " + (name || "this person")), el("p", { class: "hint" }, "What is the problem?"),
+    pick([["dp", "Profile photo"], ["status", "Status line"]], () => what, (k) => { what = k; }),
+    el("p", { class: "hint" }, "Why?"),
+    pick([["a", "Abuse"], ["b", "Bullying or unsafe"], ["p", "Personal info"], ["s", "Spam"]], () => reason, (k) => { reason = k; }),
+    say, el("div", { class: "rowbtns" }, el("button", { type: "button", class: "btn primary", onclick: send }, "Send report"), el("button", { type: "button", class: "btn", onclick: close }, "Cancel"))));
+  document.body.append(box);
+}
 let _dpSrc = null, _dpMap = new Map();
 function dpByName(name) {
-  if (_dpSrc !== state.profiles) { _dpSrc = state.profiles; _dpMap = new Map(); for (const p of [...state.profiles].sort((a, b) => (a.updatedAt || 0) - (b.updatedAt || 0))) if (p.name && p.dp) _dpMap.set(p.name, p.dp); }
+  if (_dpSrc !== state.profiles) { _dpSrc = state.profiles; _dpMap = new Map(); for (const p of [...state.profiles].sort((a, b) => (a.updatedAt || 0) - (b.updatedAt || 0))) if (p.name && p.dp && !profHidden(p.id, "dp")) _dpMap.set(p.name, p.dp); }
   return _dpMap.get(name) || "";
 }
 const getStatus = () => { try { return (localStorage.getItem("dd-status") || "").slice(0, 60); } catch (_) { return ""; } };
-const statusOfId = (id) => { if (allMyIds().has(id)) return getStatus(); const p = state.profiles.find(x => x.id === id); return (p && p.status) || ""; };
-const dpOfId = (id, name) => { const p = state.profiles.find(x => x.id === id); return (p && p.dp) || (allMyIds().has(id) && getDp()) || dbUrl(name || id); };
+const profHidden = (id, what) => { const h = (state.profileHidden || []).find(x => x.id === id); return !!(h && h[what] === true) || (readJSON("dd-prof-rep", []).includes(id + "|" + what)); };
+const statusOfId = (id) => { if (allMyIds().has(id)) return getStatus(); if (profHidden(id, "status")) return ""; const p = state.profiles.find(x => x.id === id); return (p && p.status) || ""; };
+const dpOfId = (id, name) => { const p = state.profiles.find(x => x.id === id); return (p && p.dp && !profHidden(id, "dp") && p.dp) || (allMyIds().has(id) && getDp()) || dbUrl(name || id); };
 // Academic-only images. Approximate, on-device check: personal photos (selfies, portraits) have a large share of
 // skin-coloured pixels and little paper/board background, while notes, diagrams and screenshots do not. The browser's
 // face detector is used too when the phone has one. Reports are the safety net for anything that slips through.
@@ -7227,7 +7254,7 @@ function openStories(authorId) {
     const actions = ownS
       ? [el("button", { type: "button", class: "st-x", "aria-label": "Who saw this", onclick: () => { vlist.hidden = !vlist.hidden; } }, "👁 " + viewers.length),
          el("button", { type: "button", class: "st-x", "aria-label": "Delete story", onclick: async () => { if (!confirm("Delete this story?")) return; try { await softDelete("stories", s.id); state.stories = state.stories.filter(x => x.id !== s.id); close(); } catch (e) { showNotice(errText(e)); } } }, "🗑")]
-      : [el("button", { type: "button", class: "st-x", "aria-label": "Report story", onclick: async () => { if (!confirm("Report this story as inappropriate?")) return; try { const reports = [...new Set([...(s.reports || []), store.uid])].slice(0, 100); s.reports = reports; await store.update("stories", s.id, { reports }); showNotice("Reported. Thank you."); setTimeout(() => showNotice(""), 2500); } catch (e) { showNotice(errText(e)); } next(); } }, "🚩")];
+      : [el("button", { type: "button", class: "st-x", "aria-label": "Report story", onclick: async () => { if (!confirm("Report this story as inappropriate?")) return; try { const reports = [...new Set([...(s.reports || []), store.uid])].slice(0, 100); s.reports = reports; await store.update("stories", s.id, { reports }); showNotice("Reported. Thank you."); setTimeout(() => showNotice(""), 2500); } catch (e) { showNotice(errText(e)); } next(); } }, "🚩"), el("button", { type: "button", class: "st-x", "aria-label": "Report this person\u2019s photo or status", title: "Report photo or status", onclick: () => openProfileReport(g.authorId, g.name) }, "\u{1F464}")];
     // Deterrent only (a website cannot block screenshots): the viewer's own name is tiled faintly over others' stories.
     const wmName = (getName() || BRAND).slice(0, 20);
     const wm = ownS ? null : el("div", { class: "st-wm", "aria-hidden": "true" }, Array.from({ length: 24 }, () => el("span", {}, wmName)));
@@ -7548,6 +7575,7 @@ render();
   const since = Date.now() - STORY_MS;
   store.subscribe("stories", rows => { state.stories = rows.filter(x => !x.deleted); renderStoryBar(); }, e => {}, since);
   store.subscribe("storyViews", rows => { state.storyViews = rows; }, e => {}, since);
+  store.subscribe("profileHidden", rows => { state.profileHidden = rows; _dpSrc = null; try { render(); renderStoryBar(); } catch (_) {} }, e => {});
   store.subscribe("storyAnswers", rows => { state.storyAnswers = rows; update(); }, e => {}, Date.now() - 7 * 86400000);
   store.subscribe("drives", rows => { state.drives = rows.filter(d => !d.deleted && typeof d.company === "string"); renderHeader(); if (state.mode === "drives") render(); }, e => {});
   store.subscribe("weekly", rows => { state.weekly = rows.filter(r => r.week === weekKey() && typeof r.points === "number"); if (state.mode === "wboard") render(); }, e => {}, weekStartMs() - 1);

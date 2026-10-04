@@ -485,6 +485,23 @@ service cloud.firestore {
         allow create, update: if member() && notBlocked(room, id) && validProfile() && str(id, 8, 80);
         allow delete: if false;
       }
+      // Reports against a profile photo or status line. One report per reporter, person and item. Only admins and staff read them.
+      match /profileReports/{id} {
+        allow read: if isAdmin() || isStaff(room);
+        allow create: if member() && request.resource.data.keys().hasOnly(['target', 'what', 'reason', 'reporter', 'name', 'text', 'createdAt'])
+          && request.resource.data.reporter == request.auth.uid && request.resource.data.what in ['dp', 'status'] && request.resource.data.reason in ['a', 'b', 'p', 's']
+          && str(request.resource.data.target, 8, 80) && optStr(request.resource.data, 'name', 40) && optStr(request.resource.data, 'text', 60)
+          && recent(request.resource.data.createdAt) && id == request.resource.data.reporter + '_' + request.resource.data.target + '_' + request.resource.data.what;
+        allow update: if false;
+        allow delete: if isAdmin() || isStaff(room);
+      }
+      // An admin or staff member hides someone's photo and/or status for everyone. Students read it to know what to hide.
+      match /profileHidden/{id} {
+        allow read: if member();
+        allow create, update: if (isAdmin() || isStaff(room)) && str(id, 8, 80) && request.resource.data.keys().hasOnly(['dp', 'status', 'by', 'at'])
+          && optBool(request.resource.data, 'dp') && optBool(request.resource.data, 'status') && request.resource.data.at is int;
+        allow delete: if isAdmin() || isStaff(room);
+      }
       match /stories/{id} {
         function validStory() {
           let d = request.resource.data;

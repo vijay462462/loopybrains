@@ -188,6 +188,45 @@ function moderationView() {
   return h("div", {}, h("div", { class: "card" }, h("h3", {}, "Reported and hidden items"), h("p", { class: "adm-hint" }, "Latest 300 of each kind. Serious reports (abuse, unsafe, personal info) come first. Hide removes it for students; Restore brings it back. Nothing is ever deleted for good."), h("div", { class: "row" }, refresh), chips), msg, out);
 }
 
+function profileReportsView() {
+  const p = roomPath(), out = h("div", {}), msg = h("p", { class: "msg" });
+  const WHY = { a: "abuse", b: "bullying or unsafe", p: "personal info", s: "spam" };
+  const hide = async (target, patch, note, btn) => {
+    btn.disabled = true;
+    try { const cur = await fs.getDoc(fs.doc(db, p, "profileHidden", target)); const base = cur.exists() ? cur.data() : {}; await fs.setDoc(fs.doc(db, p, "profileHidden", target), { dp: base.dp === true, status: base.status === true, ...patch, by: auth.currentUser.uid, at: Date.now() }); await logAction("profile-hide", target, note); msg.className = "msg ok"; msg.textContent = "Done: " + note; }
+    catch (e) { msg.className = "msg err"; msg.textContent = "Not allowed (" + (e.code || "error") + "). Publish the latest rules."; }
+    btn.disabled = false;
+  };
+  const load = async () => {
+    out.replaceChildren(h("p", { class: "adm-hint" }, "Loading…"));
+    try {
+      const snap = await fs.getDocs(fs.query(fs.collection(db, p, "profileReports"), fs.limit(300)));
+      const by = new Map();
+      for (const s of snap.docs) { const r = s.data(), k = r.target + "|" + r.what; const g = by.get(k) || { target: r.target, what: r.what, name: r.name, text: r.text, rs: [], ids: [] }; g.rs.push(r.reason); g.ids.push(s.id); if (r.text) g.text = r.text; by.get(k) || by.set(k, g); }
+      const groups = [...by.values()].sort((a, b) => b.rs.length - a.rs.length);
+      const cards = await Promise.all(groups.map(async (g) => {
+        let prof = null, hid = null;
+        try { const x = await fs.getDoc(fs.doc(db, p, "profiles", g.target)); prof = x.exists() ? x.data() : null; const y = await fs.getDoc(fs.doc(db, p, "profileHidden", g.target)); hid = y.exists() ? y.data() : null; } catch (_) {}
+        const isDp = g.what === "dp", hidden = !!(hid && hid[g.what] === true);
+        const counts = {}; g.rs.forEach(r => { counts[r] = (counts[r] || 0) + 1; });
+        const preview = isDp ? (prof && prof.dp && /^data:image\/jpeg;base64,/.test(prof.dp) ? h("img", { src: prof.dp, alt: "Reported profile photo", style: "width:96px;height:96px;border-radius:14px;object-fit:cover" }) : h("p", { class: "adm-hint" }, "No custom photo now.")) : h("p", {}, h("b", {}, "\u201C" + String((prof && prof.status) || g.text || "(empty)").slice(0, 60) + "\u201D"));
+        const box = h("div", { class: "card item" + (hidden ? " hidden" : "") });
+        box.append(h("div", { class: "row" }, h("span", { class: "tag" }, isDp ? "Photo" : "Status"), h("span", { class: "tag " + (g.rs.length >= 2 ? "bad" : "warn") }, g.rs.length + " report" + (g.rs.length === 1 ? "" : "s")), h("span", { class: "tag " + (hidden ? "bad" : "ok") }, hidden ? "hidden for everyone" : "visible")),
+          h("p", {}, h("b", {}, (prof && prof.name) || g.name || "?")), preview,
+          h("p", { class: "mono" }, "device " + g.target + " · " + Object.entries(counts).map(([k, n]) => (WHY[k] || k) + " " + n).join(", ")),
+          h("div", { class: "row" },
+            hidden ? h("button", { class: "b sm ok", onclick: async (e) => { await hide(g.target, { [g.what]: false }, "unhid " + g.what, e.currentTarget); load(); } }, "Show again") : h("button", { class: "b sm bad", onclick: async (e) => { await hide(g.target, { [g.what]: true }, "hid " + g.what, e.currentTarget); load(); } }, "Hide for everyone"),
+            h("button", { class: "b sm", onclick: async (e) => { const b = e.currentTarget; b.disabled = true; try { for (const id of g.ids) await fs.deleteDoc(fs.doc(db, p, "profileReports", id)); await logAction("profile-dismiss", g.target, g.what); load(); } catch (er) { msg.className = "msg err"; msg.textContent = "Not allowed (" + (er.code || "error") + ")."; b.disabled = false; } } }, "Dismiss reports"),
+            h("button", { class: "b sm", onclick: async (e) => { const b = e.currentTarget; if (!confirm("Block device " + g.target + "? It will not be able to post or reply.")) return; b.disabled = true; try { await fs.setDoc(fs.doc(db, p, "blocked", g.target), { reason: "profile report", by: auth.currentUser.uid, at: Date.now() }); await logAction("block-device", g.target, "profile report"); b.textContent = "Blocked"; } catch (er) { msg.className = "msg err"; msg.textContent = "Not allowed (" + (er.code || "error") + ")."; b.disabled = false; } } }, "Block device")));
+        return box;
+      }));
+      out.replaceChildren(...(cards.length ? cards : [h("p", { class: "adm-hint" }, "No profile reports. \u{1F389}")]));
+    } catch (e) { out.replaceChildren(h("p", { class: "msg err" }, "Could not load (" + (e.code || "error") + ").")); }
+  };
+  load();
+  return h("div", {}, h("div", { class: "card" }, h("h3", {}, "Profile photo and status reports"), h("p", { class: "adm-hint" }, "Students report a photo or status line from the story viewer. It is already hidden for the reporter. Hide it for everyone, dismiss the reports, or block the device."), h("div", { class: "row" }, h("button", { class: "b sm", onclick: load }, "\u21bb Refresh"))), msg, out);
+}
+
 function blockedView() {
   const p = roomPath(), out = h("div", { class: "card" }), msg = h("p", { class: "msg" });
   const id = h("input", { placeholder: "Device id (from a post's details)", "aria-label": "Device id" }), why = h("input", { placeholder: "Reason (optional)", "aria-label": "Reason" });
@@ -652,11 +691,11 @@ function papersView() {
 }
 
 // ---------- shell ----------
-const TABS = [["overview", "Overview", true], ["report", "Weekly report", true], ["mail", "Report emails", true], ["moderation", "Moderation", true], ["stories", "Recent stories", true], ["blocked", "Blocked devices", true], ["licences", "College licences", false], ["staff", "College staff", false], ["sale", "Flash sale", false], ["promos", "Promo codes", false], ["events", "Events", true], ["drives", "Placement drives", true], ["welcome", "Welcome note", true], ["notices", "Notices", true], ["papers", "Papers", true], ["colleges", "Colleges", false], ["requests", "Requests and survey", false], ["log", "Log", false]];
-const VIEWS = { stories: storiesView, welcome: welcomeView, events: eventsView, drives: drivesView, mail: mailView, report: reportView, staff: staffView, sale: saleView, promos: promosView, notices: noticesView, papers: papersView, overview: overviewView, moderation: moderationView, blocked: blockedView, colleges: collegesView, requests: requestsView, log: logView };
+const TABS = [["overview", "Overview", true], ["report", "Weekly report", true], ["mail", "Report emails", true], ["moderation", "Moderation", true], ["profreports", "Profile reports", true], ["stories", "Recent stories", true], ["blocked", "Blocked devices", true], ["licences", "College licences", false], ["staff", "College staff", false], ["sale", "Flash sale", false], ["promos", "Promo codes", false], ["events", "Events", true], ["drives", "Placement drives", true], ["welcome", "Welcome note", true], ["notices", "Notices", true], ["papers", "Papers", true], ["colleges", "Colleges", false], ["requests", "Requests and survey", false], ["log", "Log", false]];
+const VIEWS = { stories: storiesView, welcome: welcomeView, events: eventsView, drives: drivesView, mail: mailView, report: reportView, staff: staffView, sale: saleView, promos: promosView, notices: noticesView, papers: papersView, overview: overviewView, moderation: moderationView, profreports: profileReportsView, blocked: blockedView, colleges: collegesView, requests: requestsView, log: logView };
 function draw() {
   const u = auth.currentUser;
-  const STAFF_TABS = ["stories", "welcome", "events", "drives", "report", "notices", "moderation", "blocked", "papers"], shownTabs = S.staffOnly ? TABS.filter(t => STAFF_TABS.includes(t[0])) : TABS;
+  const STAFF_TABS = ["stories", "welcome", "events", "drives", "report", "notices", "moderation", "profreports", "blocked", "papers"], shownTabs = S.staffOnly ? TABS.filter(t => STAFF_TABS.includes(t[0])) : TABS;
   if (S.staffOnly && !STAFF_TABS.includes(S.tab)) S.tab = "notices";
   const tabs = h("div", { class: "adm-tabs" }, ...shownTabs.map(([k, label]) => h("button", { class: S.tab === k ? "on" : "", onclick: () => { S.tab = k; draw(); } }, label)));
   const needs = TABS.find(t => t[0] === S.tab)[2];

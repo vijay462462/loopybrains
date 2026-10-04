@@ -189,5 +189,18 @@ await t("switch on: reading stays open for anonymous", () => assertSucceeds(getD
 await t("only the 'posting' document with the right fields", async () => { await assertFails(setDoc(doc(admin, "settings/other"), { verifiedPosting: true, updatedAt: now() })); await assertFails(setDoc(doc(admin, "settings/posting"), { verifiedPosting: "yes", updatedAt: now() })); });
 await t("admin turns it off again", () => assertSucceeds(setDoc(doc(admin, "settings/posting"), { verifiedPosting: false, updatedAt: now() })));
 await t("switch off again: anonymous can post", () => assertSucceeds(setDoc(doc(anon, R + "/doubts/g5"), dpost("e"))));
+console.log("profile reports");
+const prep = (o = {}) => ({ target: "dev-target-1234", what: "dp", reason: "b", reporter: "stud", name: "T", createdAt: now(), ...o });
+await t("student reports a photo", () => assertSucceeds(setDoc(doc(student, R + "/profileReports/stud_dev-target-1234_dp"), prep())));
+await t("student reports a status line with its text", () => assertSucceeds(setDoc(doc(student, R + "/profileReports/stud_dev-target-1234_status"), prep({ what: "status", text: "bad words" }))));
+await t("cannot report as someone else", () => assertFails(setDoc(doc(student, R + "/profileReports/other_dev-target-1234_dp"), prep({ reporter: "other" }))));
+await t("id must match reporter, person and item", () => assertFails(setDoc(doc(student, R + "/profileReports/anything"), prep())));
+await t("bad reason or extra field is refused", async () => { await assertFails(setDoc(doc(student, R + "/profileReports/stud_dev-target-1234_dp"), prep({ reason: "zzz" }))); await assertFails(setDoc(doc(student, R + "/profileReports/stud_dev-target-1234_dp"), prep({ hack: 1 }))); });
+await t("students cannot read reports", () => assertFails(getDoc(doc(student, R + "/profileReports/stud_dev-target-1234_dp"))));
+await t("admin reads reports", () => assertSucceeds(getDoc(doc(admin, R + "/profileReports/stud_dev-target-1234_dp"))));
+await t("admin hides a photo", () => assertSucceeds(setDoc(doc(admin, R + "/profileHidden/dev-target-1234"), { dp: true, by: "boss", at: now() })));
+await t("students read the hidden list but cannot change it", async () => { await assertSucceeds(getDoc(doc(student, R + "/profileHidden/dev-target-1234"))); await assertFails(setDoc(doc(student, R + "/profileHidden/dev-target-1234"), { dp: false, by: "stud", at: now() })); });
+await t("admin dismisses a report", () => assertSucceeds(deleteDoc(doc(admin, R + "/profileReports/stud_dev-target-1234_dp"))));
+await t("student cannot dismiss a report", () => assertFails(deleteDoc(doc(student, R + "/profileReports/stud_dev-target-1234_status"))));
 console.log(`\n${pass} passed, ${fail} failed`);
 await env.cleanup(); process.exit(fail ? 1 : 0);
