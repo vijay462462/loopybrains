@@ -1271,6 +1271,27 @@ function trendingSubject() {
   return top && top[1] >= 2 ? top[0] : null;
 }
 
+// A styled state picker (the phone's own select list cannot be coloured): a button that opens a searchable bottom sheet.
+function stateSheet(getCur, setCur, getCount) {
+  const label = () => { const c = getCur(); return c === "All India" ? "\u{1F1EE}\u{1F1F3} All India (search by name)" : "\u{1F4CD} " + c; };
+  const btn = el("button", { type: "button", class: "state-btn", "aria-haspopup": "dialog", "aria-label": "State" }, el("span", {}, label()), el("i", { "aria-hidden": "true" }, "\u25BE"));
+  btn.sync = () => { btn.firstChild.textContent = label(); };
+  btn.onclick = () => {
+    const close = () => { sheet.remove(); document.removeEventListener("keydown", esc); }, esc = (e) => { if (e.key === "Escape") close(); };
+    const list = el("div", { class: "ss-list", role: "listbox", "aria-label": "States" });
+    const draw = (needle) => {
+      const n = (needle || "").trim().toLowerCase(), cur = getCur();
+      const opts = ["All India", ...INDIA_STATES].filter(s => !n || s.toLowerCase().includes(n));
+      list.replaceChildren(...(opts.length ? opts.map(s => el("button", { type: "button", role: "option", "aria-selected": String(s === cur), class: "ss-opt" + (s === cur ? " on" : ""), onclick: () => { setCur(s); btn.sync(); close(); } },
+        el("span", {}, s === "All India" ? "\u{1F1EE}\u{1F1F3} All India" : s), getCount && s !== "All India" ? el("small", {}, String(getCount(s))) : null, el("i", { "aria-hidden": "true" }, s === cur ? "\u2713" : ""))) : [el("p", { class: "hint" }, "No state found.")]));
+    };
+    const q = el("input", { type: "search", placeholder: "Search states\u2026", "aria-label": "Search states", autocomplete: "off" }); q.addEventListener("input", () => draw(q.value));
+    const sheet = el("div", { class: "ss-back", onclick: (e) => { if (e.target === sheet) close(); } }, el("div", { class: "ss-card", role: "dialog", "aria-modal": "true", "aria-label": "Choose your state" },
+      el("div", { class: "ss-grab" }), el("h3", {}, "Choose your state"), q, list, el("button", { type: "button", class: "btn ss-close", onclick: close }, "Close")));
+    document.body.append(sheet); document.addEventListener("keydown", esc); draw(""); setTimeout(() => { const s = list.querySelector(".on"); if (s) s.scrollIntoView({ block: "center" }); }, 30);
+  };
+  return btn;
+}
 // First-visit welcome: three short cards (safe, rewarding, smart). Shown once, only to brand-new visitors who already picked a college.
 const WELCOME = [
   ["🛡️", "Ask without fear", "Sign in is anonymous, you choose your name, and admins and students moderate every post. Bad posts are hidden fast and abusive devices are blocked."],
@@ -1304,8 +1325,7 @@ function showWelcome(force, startId) {
     } else if (sid === "college") {
       const badge = (slug, name, st) => { const [ca, cb] = slug === "rgukt" ? STATE_COLORS["Andhra Pradesh"] : collegeColors(slug, st || ""); const ini = name.replace(/\(.*?\)/g, "").split(/[\s-]+/).filter(w => /^[A-Za-z]/.test(w) && !/^(of|and|the|for|in)$/i.test(w)).slice(0, 2).map(w => w[0].toUpperCase()).join("") || "C"; const b = el("span", { class: "col-badge", "aria-hidden": "true" }, ini); b.style.setProperty("background", "linear-gradient(135deg," + ca + "," + cb + ")"); return b; };
       const all = [{ slug: "rgukt", name: "RGUKT", state: "Andhra Pradesh", sub: "Rajiv Gandhi University of Knowledge Technologies" }, ...DIRECTORY.filter(d => d.slug !== "rgukt").map(d => ({ slug: d.slug, name: d.name, state: d.state || "Andhra Pradesh", sub: [d.city, d.kind].filter(Boolean).join(" \u00B7 ") }))];
-      const list = el("div", { class: "ob-colist", role: "listbox", "aria-label": "Colleges" }), chosen = el("p", { class: "ob-chosen", role: "status" }, ""), stSel = el("select", { "aria-label": "State", onchange: (e) => { cst = e.target.value; fill(); } }, el("option", { value: "All India" }, "\u{1F1EE}\u{1F1F3} All India (search by name)"), ...INDIA_STATES.map(s => el("option", { value: s }, s)));
-      stSel.value = cst;
+      const list = el("div", { class: "ob-colist", role: "listbox", "aria-label": "Colleges" }), chosen = el("p", { class: "ob-chosen", role: "status" }, ""), stSel = stateSheet(() => cst, (v) => { cst = v; fill(); });
       const mark = () => { chosen.textContent = pickSlug ? "\u2705 " + pickName : "Pick your college to continue"; };
       const fill = () => {
         const needle = cq.trim().toLowerCase(); let rows = all.filter(c => (cst === "All India" || c.state === cst) && (!needle || (c.name + " " + c.sub).toLowerCase().includes(needle)));
@@ -4413,13 +4433,9 @@ function renderCollege() {
     return [...m.values()].sort((a, b) => a.name.localeCompare(b.name));
   };
   const rgukt = { slug: "rgukt", name: "RGUKT", state: "Andhra Pradesh", sub: "Rajiv Gandhi University of Knowledge Technologies" };
-  const stateSelect = el("select", { "aria-label": "State", onchange: (e) => { stateSel = e.target.value; try { localStorage.setItem("dd-state", stateSel); } catch (_) {} fill(); } });
-  const drawStates = () => {
-    const all = [rgukt, ...entries()], counts = {};
-    for (const c of all) counts[c.state] = (counts[c.state] || 0) + 1;
-    stateSelect.replaceChildren(el("option", { value: "All India", selected: stateSel === "All India" }, "🇮🇳 All India (search by name)"),
-      ...INDIA_STATES.map(st => el("option", { value: st, selected: st === stateSel }, st + " (" + (counts[st] || 0) + ")")));
-  };
+  const stCounts = () => { const c = {}; for (const x of [rgukt, ...entries()]) c[x.state] = (c[x.state] || 0) + 1; return c; };
+  const stateSelect = stateSheet(() => stateSel, (v) => { stateSel = v; try { localStorage.setItem("dd-state", stateSel); } catch (_) {} fill(); }, (s) => stCounts()[s] || 0);
+  const drawStates = () => { stateSelect.sync(); };
   const fill = () => {
     drawStates();
     const needle = q.trim().toLowerCase(), all = [rgukt, ...entries()];
