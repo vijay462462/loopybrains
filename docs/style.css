@@ -2545,3 +2545,12 @@ body.simple .tabs button[aria-selected="true"] { display: inline-flex; }
 .id-card { display: grid; gap: 6px; }
 .id-code { font: 800 22px/1.2 ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace; letter-spacing: .06em; background: linear-gradient(90deg, var(--accent), #f97316); -webkit-background-clip: text; background-clip: text; color: transparent; width: fit-content; }
 .id-mini { font-family: ui-monospace, Menlo, Consolas, monospace; letter-spacing: .04em; }
+
+.priv-box { border: 1px dashed color-mix(in srgb, var(--accent) 50%, var(--line)); border-radius: 18px; padding: 10px; }
+.priv-img { width: 100%; max-height: 320px; object-fit: contain; border-radius: 12px; background: color-mix(in srgb, currentColor 5%, transparent); margin: 6px 0; }
+.ai-check { margin: 6px 0; }
+.ai-verdict { display: grid; gap: 6px; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--line); }
+.ai-verdict.ok { border-color: #16a34a; background: color-mix(in srgb, #16a34a 9%, transparent); }
+.ai-verdict.mid { border-color: #f59e0b; background: color-mix(in srgb, #f59e0b 9%, transparent); }
+.ai-verdict.bad { border-color: #ef4444; background: color-mix(in srgb, #ef4444 9%, transparent); }
+.ai-verdict p, .ai-verdict ul { margin: 0; } .ai-verdict ul { padding-left: 18px; }

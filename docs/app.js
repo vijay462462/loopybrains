@@ -392,7 +392,7 @@ const state = {
   doubts: [], ideas: [], clubs: [], gate: [], jobs: [], challenges: [], chalScores: [], market: [], marketReports: [], marketRatings: [], marketInterests: [], replies: [], likes: [], plan: { plus: false, until: 0 }, papers: [], notices: [], drives: [], weekly: [], events: [], rsvps: [], blocked: [], profiles: [], stories: [], storyViews: [], storyAnswers: [], loaded: false,
   selected: null, mode: "intro", // intro | view | ask | edit | name | campus
   afterName: null,
-  replyPages: [], replyAnon: false,
+  replyPages: [], replyAnon: false, replyPriv: false, privAns: [],
   campusFilter: "all", // "all" | campus name
   mktChip: "all",     // quick filter chip in the market
   mktSort: "newest",   // "newest" | "price_asc" | "price_desc" | "popular"
@@ -615,6 +615,8 @@ async function firebaseStore(conf, prefix = "") {
       await b.commit(); return true;
     },
     battleBoard: async (week) => (await fs.getDocs(fs.query(fs.collection(db, "battleColleges"), fs.where("week", "==", week), fs.limit(400)))).docs.map(d => d.data()),
+    // Private answers: each student subscribes only to the documents addressed to or written by them (the rules require this).
+    subscribeWhere: (coll, field, value, cb, onErr) => fs.onSnapshot(fs.query(fs.collection(db, prefix + coll), fs.where(field, "==", value)), snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))), onErr),
     // Custom Loop IDs (@name): the name is the document id, so it is unique. A claim also writes the 30-day log in the same batch (the rules check both).
     handleCheck: async (name) => { const d = await fs.getDoc(fs.doc(db, "handles", name)); return d.exists() ? d.data().uid : null; },
     handleClaim: async (name, oldName) => {
@@ -2379,6 +2381,62 @@ function renderForgotId() {
     el("div", { class: "learn-card" }, el("strong", {}, "2. I only remember my nickname"), el("p", { class: "hint" }, "Search it here. Public Loop IDs of classmates are shown the same way."), q, found),
     el("div", { class: "learn-card" }, el("strong", {}, "3. New phone or cleared data"), el("p", { class: "hint" }, "Sign in with the email you verified. Your account, points and Loop ID come back. Without a verified email, a cleared browser cannot be recovered, so verify your email now."), el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => showPanel("me") }, "Verify my email"))),
     el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => showPanel("me") }, "Back"))];
+}
+// ---------- Private answers and the AI answer check ----------
+// Shrinks a photo so it fits inside a private answer (under about 340,000 characters).
+function shrinkJpeg(url) {
+  return new Promise((res, rej) => {
+    const img = new Image(); img.onload = () => {
+      let w = Math.min(1000, img.naturalWidth), q = 0.62;
+      for (let i = 0; i < 6; i++) {
+        const c = document.createElement("canvas"), r = w / img.naturalWidth; c.width = Math.round(img.naturalWidth * r); c.height = Math.round(img.naturalHeight * r);
+        const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
+        const out = c.toDataURL("image/jpeg", q); if (out.length <= 340000) return res(out); w = Math.round(w * 0.8); q = Math.max(0.4, q - 0.06);
+      }
+      rej(new Error("That photo is too big. Try a smaller one."));
+    }; img.onerror = () => rej(new Error("Could not read the photo.")); img.src = url;
+  });
+}
+const AI_VERDICT = { correct: ["✅", "Looks correct", "ok"], partly: ["\u{1F7E1}", "Partly correct", "mid"], wrong: ["❌", "Has a mistake", "bad"], unclear: ["❔", "Cannot tell", "mid"] };
+const aiChecks = new Map();   // answer id -> result, kept only while the page is open
+async function aiCheckAnswer(question, answer, img) {
+  if (!PLUS.functionsUrl || !store || !store.idToken) throw new Error("The AI check is not switched on yet.");
+  const tok = await store.idToken(); if (!tok) throw new Error("Connect to the internet and try again.");
+  const r = await fetch(PLUS.functionsUrl.replace(/\/$/, "") + "/askAI", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + tok }, body: JSON.stringify({ mode: "check", question: String(question || "").slice(0, 1500), answer: String(answer || "").slice(0, 3000), img: img || "" }) });
+  const d = await r.json().catch(() => ({})); if (!r.ok || !d.check) throw new Error(d.error || "The AI check is busy. Try again.");
+  return { ...d.check, left: typeof d.left === "number" ? d.left : null };
+}
+// A button plus the result card. `get` returns { answer, img } when pressed.
+function aiCheckBox(key, question, get) {
+  const box = el("div", { class: "ai-check" });
+  const draw = () => {
+    const c = aiChecks.get(key);
+    if (!c) { if (!PLUS.functionsUrl) { box.replaceChildren(); return; } box.replaceChildren(el("button", { class: "btn sm", type: "button", onclick: async (e) => { const b = e.currentTarget; b.disabled = true; b.textContent = "Checking…"; try { const { answer, img } = await get(); aiChecks.set(key, await aiCheckAnswer(question, answer, img)); } catch (er) { aiChecks.set(key, { error: (er && er.message) || "Could not check." }); } draw(); } }, "\u{1F916} Check with AI")); return; }
+    if (c.error) { box.replaceChildren(el("p", { class: "hint", role: "status" }, c.error), el("button", { class: "linkbtn", type: "button", onclick: () => { aiChecks.delete(key); draw(); } }, "Try again")); return; }
+    const [ic, label, cls] = AI_VERDICT[c.verdict] || AI_VERDICT.unclear;
+    box.replaceChildren(el("div", { class: "ai-verdict " + cls }, el("strong", {}, ic + " AI second opinion: " + label), el("p", {}, c.summary),
+      c.issues && c.issues.length ? el("ul", {}, ...c.issues.map(x => el("li", {}, x))) : null, c.corrected ? el("p", { class: "hint" }, el("b", {}, "Suggested correct answer: "), c.corrected) : null,
+      el("small", { class: "hint" }, "AI can be wrong. Check with your book or teacher." + (c.left != null ? " " + c.left + " AI questions left today." : ""))));
+  };
+  draw(); return box;
+}
+// What the asker sees: private answers for this doubt, with a way to share one with everyone.
+function privateAnswersFor(d) {
+  const rows = state.privAns.filter(x => x.doubtId === d.id && x.toUid === (store && store.uid)).sort((a, b) => a.createdAt - b.createdAt);
+  if (!rows.length) return null;
+  return el("div", { class: "answers priv-box" }, el("div", { class: "label" }, "\u{1F512} Private answers (only you can see these)"),
+    ...rows.map(r => el("div", { class: "ans priv" }, el("div", { class: "who" }, avatarEl(avatarFor(r.authorName || "")), el("strong", {}, r.anonymous ? "A classmate" : r.authorName), el("small", { class: "hint" }, ago(r.createdAt))),
+      r.body ? el("p", { class: "body" }, r.body) : null, ...(Array.isArray(r.imgs) ? r.imgs.filter(u => typeof u === "string" && u.startsWith("data:image/jpeg;base64,")).map((u, i) => el("img", { class: "priv-img", src: u, alt: "Photo " + (i + 1) + " from the answer", loading: "lazy" })) : []),
+      aiCheckBox("p" + r.id, d.title + (d.body ? ". " + d.body : ""), async () => ({ answer: r.body || "", img: Array.isArray(r.imgs) && r.imgs[0] && r.imgs[0].length <= 340000 ? r.imgs[0] : "" })),
+      el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: async (e) => {
+        if (!confirm("Share this answer with everyone on the board? Your classmates will see it with " + (r.anonymous ? "no name" : r.authorName) + ".")) return;
+        e.currentTarget.disabled = true;
+        try {
+          const id = store.newId("replies"), pages = (Array.isArray(r.imgs) ? r.imgs : []).slice(0, 2), pageIds = pages.map(u => { const pid = store.newId("pages"); pageCache.set(pid, u); return pid; });
+          const doc = { parentId: d.id, parentColl: "doubts", body: ("Answer from " + (r.anonymous ? "a classmate" : r.authorName) + ": " + (r.body || "(see the photo)")).slice(0, 5000), authorId: store.uid, authorName: getName(), anonymous: false, createdAt: Date.now(), pages: pageIds, fileAttachments: [] };
+          doc.pages = await trySavePages(pages, id, pageIds); await store.set("replies", id, doc); showNotice("Shared with everyone.");
+        } catch (er) { showNotice(errText(er)); }
+      } }, "\u{1F4E2} Share with everyone")))));
 }
 // ---------- Helper of the week and push opt-in ----------
 function helperOfWeek() {
@@ -7977,6 +8035,8 @@ function renderView() {
   if (state.tab === "doubts" && d.via) out.push(el("div", { class: "via-banner" }, "\u{1F30D} A student of " + d.via + " asked this. Your answer goes back to them. Be kind and clear."));
   if (state.tab === "doubts" && Array.isArray(d.sentTo) && d.sentTo.length && own) { out.push(otherCollegeAnswers(d)); }
   if (state.tab === "doubts") out.push(expertHelp(d));
+  if (state.tab === "doubts" && own) { const pv = privateAnswersFor(d); if (pv) out.push(pv); }
+  if (state.tab === "doubts" && !own && state.privAns.some(x => x.doubtId === d.id && x.ownerUid === (store && store.uid))) out.push(el("p", { class: "hint" }, "\u{1F512} You sent a private answer to the asker."));
   const list = el("div", { class: "answers" }, el("div", { class: "label" }, reps.length ? reps.length + " " + t.replyNoun + (reps.length === 1 ? "" : "s") : "No " + t.replyNoun + "s yet"));
   for (const r of reps) {
     if (isHidden(r)) { list.append(el("div", { class: "ans" }, el("p", { class: "hint" }, "🚩 This answer was hidden after reports from classmates."))); continue; }
@@ -7993,6 +8053,7 @@ function renderView() {
       r.body && r.body !== PAGE_ONLY && renderYtCards(r.body),
       r.pages && r.pages.length ? pagesView(r.pages) : null,
       r.fileAttachments && r.fileAttachments.length ? renderFileAttachments(r.fileAttachments) : null,
+      own && state.tab === "doubts" && !mine(r) && r.body && r.body !== PAGE_ONLY ? aiCheckBox("r" + r.id, d.title + (d.body ? ". " + d.body : ""), async () => ({ answer: r.body, img: "" })) : null,
       reactionBar(r)));
   }
   out.push(list);
@@ -8009,6 +8070,15 @@ function renderView() {
     if (replyFiles.some(f => f.pct !== undefined)) { showNotice("Please wait for uploads to finish."); return; }
     const wait = postingBlocked();   // answers have no daily or hourly limit; only blocked or paused students are stopped
     if (wait) { showNotice(wait); return; }
+    if (state.replyPriv && state.tab === "doubts" && d.ownerUid && !own) {
+      try {
+        const imgs = []; for (const u of pages.slice(0, 2)) imgs.push(await shrinkJpeg(u));
+        const pid = store.newId("privateAnswers");
+        await store.set("privateAnswers", pid, { doubtId: d.id, toUid: d.ownerUid, ownerUid: store.uid, authorId: store.uid, authorName: state.replyAnon ? ANON : getName(), anonymous: state.replyAnon, body: body.slice(0, 5000), ...(imgs.length ? { imgs } : {}), createdAt: Date.now() });
+        state.replyPages = []; state.replyPriv = false; form.reset(); showNotice("Sent privately. Only the asker can see it."); render();
+      } catch (er) { showNotice(errText(er)); }
+      return;
+    }
     const id = store.newId("replies");
     const pageIds = pages.map(u => { const pid = store.newId("pages"); pageCache.set(pid, u); return pid; });
     const anonymous = state.replyAnon;
@@ -8028,6 +8098,7 @@ function renderView() {
     el("p", { class: "hint st-err", id: "f-reply-msg", role: "alert", hidden: true }),
     attachPicker(state.replyPages, MAX_PAGES),
     store.uploadFile ? filePicker(replyFiles) : null,
+    state.tab === "doubts" && d.ownerUid && !own ? el("label", { class: "check" }, el("input", { type: "checkbox", id: "f-reply-priv", checked: state.replyPriv, onchange: (e) => { state.replyPriv = e.target.checked; } }), "\u{1F512} Send as a private answer (only the asker sees it)") : null,
     el("label", { class: "check" }, el("input", { type: "checkbox", id: "f-reply-anon", checked: state.replyAnon, onchange: (e) => { state.replyAnon = e.target.checked; } }), "🙈 Answer anonymously"),
     el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "submit" }, t.replyBtn)));
   out.push(form);
@@ -8734,6 +8805,7 @@ render();
   store.subscribe("clubs", rows => { const live_ = live(rows); trackNew("clubs", live_); state.clubs = live_; update(); }, e => {});
   store.subscribe("gate", rows => { const live_ = live(rows); trackNew("gate", live_); state.gate = live_; update(); }, e => {});
   store.subscribe("blocked", rows => { state.blocked = rows.map(r => r.id); }, e => {});
+  if (store.subscribeWhere && store.uid) { const keep = { to: [], from: [] }, merge = () => { state.privAns = [...keep.to, ...keep.from.filter(x => !keep.to.some(y => y.id === x.id))]; try { render(); } catch (_) {} }; store.subscribeWhere("privateAnswers", "toUid", store.uid, rows => { keep.to = rows; merge(); }, () => {}); store.subscribeWhere("privateAnswers", "ownerUid", store.uid, rows => { keep.from = rows; merge(); }, () => {}); }
   let dpChecked = false;
   store.subscribe("profiles", rows => {
     state.profiles = rows.filter(p => typeof p.name === "string" && (!p.dp || DP_OK.test(p.dp))).map(p => ({ ...p, status: String(p.status || "").slice(0, 60), verified: p.verified === true, plus: p.plus === true, curio: Number.isInteger(p.curio) && p.curio > 0 ? Math.min(p.curio, 100000) : 0, cid: typeof p.cid === "string" && CLID_OK.test(p.cid) ? p.cid : "", handle: typeof p.handle === "string" && /^[a-z0-9_]{3,15}$/.test(p.handle) ? p.handle : "", streak: Number.isInteger(p.streak) && p.streak > 0 ? p.streak : 0 })); update();

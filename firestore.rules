@@ -668,6 +668,26 @@ service cloud.firestore {
         allow delete: if false;
       }
 
+      // ---------- private answers: only the asker and the answerer can read them ----------
+      // A student can send a private answer to the OWNER of a doubt (checked against the doubt itself). Up to 2 photos are stored inside the document.
+      match /privateAnswers/{id} {
+        function validPrivate() {
+          let d = request.resource.data;
+          return d.keys().hasOnly(['doubtId', 'toUid', 'ownerUid', 'authorId', 'authorName', 'body', 'imgs', 'createdAt', 'anonymous'])
+            && str(d.doubtId, 1, 100) && str(d.toUid, 3, 80) && d.ownerUid == request.auth.uid && d.toUid != request.auth.uid
+            && str(d.authorId, 8, 80) && str(d.authorName, 1, 40) && str(d.body, 0, 5000) && d.createdAt is int && optBool(d, 'anonymous')
+            && (d.body.size() > 0 || ('imgs' in d && d.imgs.size() > 0))
+            && (!('imgs' in d) || (d.imgs is list && d.imgs.size() <= 2
+                && (d.imgs.size() < 1 || (d.imgs[0] is string && d.imgs[0].size() <= 350000 && d.imgs[0].matches('data:image/jpeg;base64,.*')))
+                && (d.imgs.size() < 2 || (d.imgs[1] is string && d.imgs[1].size() <= 350000 && d.imgs[1].matches('data:image/jpeg;base64,.*')))))
+            && exists(/databases/$(database)/documents/rooms/$(room)/doubts/$(d.doubtId))
+            && get(/databases/$(database)/documents/rooms/$(room)/doubts/$(d.doubtId)).data.get('ownerUid', '') == d.toUid;
+        }
+        allow read: if member() && (resource.data.ownerUid == request.auth.uid || resource.data.toUid == request.auth.uid);
+        allow create: if member() && notBlocked(room, request.resource.data.authorId) && validPrivate() && recent(request.resource.data.createdAt);
+        allow update, delete: if false;
+      }
+
       // ---------- notebook pages (compressed photos and handwriting) ----------
       match /pages/{id} {
         allow read: if member();
