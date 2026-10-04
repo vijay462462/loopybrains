@@ -70,10 +70,10 @@ service cloud.firestore {
                                'pages', 'fileAttachments', 'year', 'tags', 'pyqYear', 'marks', 'difficulty',
                                'resolvedReplyId', 'bounty', 'campus', 'chalType', 'timeLimit', 'questions', 'status',
                                'winner', 'winnerName', 'runnerUp', 'runnerUpName', 'deleted', 'reports', 'editedAt',
-                               'company', 'applyUrl', 'deadline', 'pay', 'ownerUid', 'aud', 'to', 'via', 'viaSlug', 'viaOf', 'sentTo'])
+                               'company', 'applyUrl', 'deadline', 'pay', 'ownerUid', 'aud', 'to', 'via', 'viaSlug', 'viaOf', 'sentTo', 'ansPrivate'])
         && optStr(d, 'ownerUid', 60) && str(d.title, 3, 200) && str(d.body, 0, 5000) && str(d[g], 1, 60)
         && str(d.authorName, 1, 40) && str(d.authorId, 8, 80) && d.createdAt is int
-        && optBool(d, 'anonymous') && optBool(d, 'urgent') && optBool(d, 'bounty') && optBool(d, 'deleted')
+        && optBool(d, 'anonymous') && optBool(d, 'urgent') && optBool(d, 'bounty') && optBool(d, 'deleted') && optBool(d, 'ansPrivate')
         && optList(d, 'pages', 5) && optList(d, 'fileAttachments', 5) && optList(d, 'reports', 100)
         && optList(d, 'questions', 10)
         && optStr(d, 'year', 12) && optStr(d, 'tags', 100) && optStr(d, 'pyqYear', 20) && optStr(d, 'marks', 4)
@@ -650,6 +650,13 @@ service cloud.firestore {
 
       // ---------- replies (answers, thoughts, inquiries) ----------
       match /replies/{id} {
+        // A doubt asked with "answers only for me" accepts public replies from its asker only; everyone else answers privately.
+        function noPublicAnswerToPrivate() {
+          let d = request.resource.data;
+          return d.parentColl != 'doubts' || !exists(/databases/$(database)/documents/rooms/$(room)/doubts/$(d.parentId))
+            || get(/databases/$(database)/documents/rooms/$(room)/doubts/$(d.parentId)).data.get('ansPrivate', false) != true
+            || get(/databases/$(database)/documents/rooms/$(room)/doubts/$(d.parentId)).data.get('ownerUid', '') == request.auth.uid;
+        }
         function validReply() {
           let d = request.resource.data;
           return d.keys().hasOnly(['parentId', 'parentColl', 'body', 'authorId', 'authorName', 'anonymous', 'createdAt',
@@ -662,7 +669,8 @@ service cloud.firestore {
         }
         allow read: if member();
         allow create: if member() && ownerOk(request.resource.data) && notBlocked(room, request.resource.data.authorId) && validReply() && recent(request.resource.data.createdAt)
-          && request.resource.data.get('deleted', false) == false && !('reports' in request.resource.data);
+          && request.resource.data.get('deleted', false) == false && !('reports' in request.resource.data)
+          && noPublicAnswerToPrivate();
         // A reply can only be hidden (deleted) or reported after posting.
         allow update: if adminMod() || staffMod(room) || reportOnly() || member() && isOwner() && sameOwner() && validReply() && unchanged() && changes(['deleted', 'reports']);
         allow delete: if false;
@@ -684,8 +692,31 @@ service cloud.firestore {
             && get(/databases/$(database)/documents/rooms/$(room)/doubts/$(d.doubtId)).data.get('ownerUid', '') == d.toUid;
         }
         allow read: if member() && (resource.data.ownerUid == request.auth.uid || resource.data.toUid == request.auth.uid);
-        allow create: if member() && notBlocked(room, request.resource.data.authorId) && validPrivate() && recent(request.resource.data.createdAt);
-        allow update, delete: if false;
+        // One answer per helper per doubt (the id says so), so nobody can flood an asker.
+        allow create: if member() && notBlocked(room, request.resource.data.authorId) && validPrivate() && recent(request.resource.data.createdAt)
+          && id == request.resource.data.doubtId + '_' + request.auth.uid;
+        // The asker can rate an answer. Nothing else can change.
+        allow update: if member() && request.auth.uid == resource.data.toUid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rating']) && request.resource.data.rating in ['helpful', 'best'];
+        allow delete: if false;
+      }
+
+      // ---------- thanks: the asker credits a private answer (public, so the helper earns points and a notification) ----------
+      match /thanks/{id} {
+        function validThanks() {
+          let d = request.resource.data;
+          return d.keys().hasOnly(['doubtId', 'toUid', 'toAuthorId', 'toName', 'level', 'byUid', 'createdAt'])
+            && str(d.doubtId, 1, 100) && str(d.toUid, 3, 80) && str(d.toAuthorId, 8, 80) && str(d.toName, 1, 40) && d.level in ['helpful', 'best']
+            && d.byUid == request.auth.uid && d.createdAt is int && id == d.doubtId + '_' + d.toUid
+            && get(/databases/$(database)/documents/rooms/$(room)/doubts/$(d.doubtId)).data.get('ownerUid', '') == request.auth.uid
+            && exists(/databases/$(database)/documents/rooms/$(room)/privateAnswers/$(id))
+            && get(/databases/$(database)/documents/rooms/$(room)/privateAnswers/$(id)).data.ownerUid == d.toUid;
+        }
+        allow read: if member();
+        allow create: if member() && validThanks() && recent(request.resource.data.createdAt);
+        allow update: if member() && validThanks() && resource.data.level == 'helpful' && request.resource.data.level == 'best'
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['level', 'createdAt']);
+        allow delete: if false;
       }
 
       // ---------- notebook pages (compressed photos and handwriting) ----------

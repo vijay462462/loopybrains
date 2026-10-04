@@ -1,6 +1,6 @@
 import { initializeTestEnvironment, assertSucceeds, assertFails } from "@firebase/rules-unit-testing";
 import { readFileSync } from "fs";
-import { doc, setDoc, getDoc, writeBatch, increment, collection, getDocs, query, where } from "firebase/firestore";
+import { doc, setDoc, getDoc, updateDoc, writeBatch, increment, collection, getDocs, query, where } from "firebase/firestore";
 const env = await initializeTestEnvironment({ projectId: "demo-test", firestore: { rules: readFileSync("../../firestore.rules", "utf8"), host: "127.0.0.1", port: 8081 } });
 await env.clearFirestore();
 let pass = 0, fail = 0;
@@ -92,16 +92,27 @@ await t("handle: profile can publish only a name the user owns", async () => { a
 // ---- private answers ----
 const R = "rooms/r00m-Abc123xy";
 await env.withSecurityRulesDisabled(async (ctx) => { await setDoc(doc(ctx.firestore(), R + "/doubts", "dq1"), { title: "q", ownerUid: "alice", authorId: "alice-device-1" }); await setDoc(doc(ctx.firestore(), R + "/doubts", "dq2"), { title: "old", authorId: "old-device-1" }); });
-const pa = (db, uid, to, extra = {}, id = "pa_" + Math.random().toString(36).slice(2)) => setDoc(doc(db, R + "/privateAnswers", id), { doubtId: "dq1", toUid: to, ownerUid: uid, authorId: uid + "-device-1", authorName: "Helper", body: "Use Bayes theorem.", createdAt: Date.now(), ...extra });
-await t("private: a helper sends a private answer to the asker", () => assertSucceeds(pa(bob, "bob", "alice", {}, "pa1")));
-await t("private: asker and answerer can read it", async () => { await assertSucceeds(getDoc(doc(alice, R + "/privateAnswers", "pa1"))); await assertSucceeds(getDoc(doc(bob, R + "/privateAnswers", "pa1"))); });
-await t("private: another student cannot read it", async () => { const carl = env.authenticatedContext("carl").firestore(); await assertFails(getDoc(doc(carl, R + "/privateAnswers", "pa1"))); });
+const pa = (db, uid, to, extra = {}, id = null) => setDoc(doc(db, R + "/privateAnswers", id || ((extra.doubtId || "dq1") + "_" + uid)), { doubtId: "dq1", toUid: to, ownerUid: uid, authorId: uid + "-device-1", authorName: "Helper", body: "Use Bayes theorem.", createdAt: Date.now(), ...extra });
+await t("private: a helper sends a private answer to the asker", () => assertSucceeds(pa(bob, "bob", "alice", {}, "dq1_bob")));
+await t("private: asker and answerer can read it", async () => { await assertSucceeds(getDoc(doc(alice, R + "/privateAnswers", "dq1_bob"))); await assertSucceeds(getDoc(doc(bob, R + "/privateAnswers", "dq1_bob"))); });
+await t("private: another student cannot read it", async () => { const carl = env.authenticatedContext("carl").firestore(); await assertFails(getDoc(doc(carl, R + "/privateAnswers", "dq1_bob"))); });
 await t("private: lists must be limited to your own (asker query ok, open list refused)", async () => { await assertSucceeds(getDocs(query(collection(alice, R + "/privateAnswers"), where("toUid", "==", "alice")))); await assertFails(getDocs(collection(alice, R + "/privateAnswers"))); });
 await t("private: cannot send to someone who does not own the doubt", () => assertFails(pa(bob, "bob", "carl")));
 await t("private: cannot send to yourself or for an old doubt without an owner", async () => { await assertFails(pa(alice, "alice", "alice")); await assertFails(pa(bob, "bob", "alice", { doubtId: "dq2" })); });
 await t("private: cannot pretend to be another user (ownerUid must be you)", () => assertFails(pa(bob, "alice", "alice")));
 await t("private: oversized or non-jpeg images and extra fields are refused", async () => { await assertFails(pa(bob, "bob", "alice", { imgs: ["data:image/jpeg;base64," + "A".repeat(360000)] })); await assertFails(pa(bob, "bob", "alice", { imgs: ["data:text/html;base64,AAAA"] })); await assertFails(pa(bob, "bob", "alice", { admin: true })); });
-await t("private: a small jpeg photo and no text is accepted; empty answer refused", async () => { await assertSucceeds(pa(bob, "bob", "alice", { body: "", imgs: ["data:image/jpeg;base64,/9j/4AAQ"] })); await assertFails(pa(bob, "bob", "alice", { body: "" })); });
-await t("private: cannot be edited or deleted", async () => { await assertFails(setDoc(doc(bob, R + "/privateAnswers", "pa1"), { doubtId: "dq1", toUid: "alice", ownerUid: "bob", authorId: "bob-device-1", authorName: "H", body: "changed", createdAt: Date.now() })); });
+await t("private: a small jpeg photo and no text is accepted; empty answer refused", async () => { const dan = env.authenticatedContext("dan").firestore(); await assertSucceeds(pa(dan, "dan", "alice", { body: "", imgs: ["data:image/jpeg;base64,/9j/4AAQ"] })); const eve = env.authenticatedContext("eve").firestore(); await assertFails(pa(eve, "eve", "alice", { body: "" })); });
+await t("private: cannot be edited or deleted", async () => { await assertFails(setDoc(doc(bob, R + "/privateAnswers", "dq1_bob"), { doubtId: "dq1", toUid: "alice", ownerUid: "bob", authorId: "bob-device-1", authorName: "H", body: "changed", createdAt: Date.now() })); });
+// ---- private-answer mode, one answer per helper, ratings and thanks ----
+await env.withSecurityRulesDisabled(async (ctx) => { await setDoc(doc(ctx.firestore(), R + "/doubts", "dq3"), { title: "private q", ownerUid: "alice", authorId: "alice-device-1", ansPrivate: true }); });
+const reply = (db, uid, parent) => setDoc(doc(db, R + "/replies", "rp_" + uid + parent), { parentId: parent, parentColl: "doubts", body: "answer", authorId: uid + "-device-1", authorName: "H", createdAt: Date.now(), ownerUid: uid });
+await t("private mode: others cannot answer publicly", () => assertFails(reply(bob, "bob", "dq3")));
+await t("private mode: the asker can still reply publicly, and normal doubts stay open", async () => { await assertSucceeds(reply(alice, "alice", "dq3")); await assertSucceeds(reply(bob, "bob", "dq1")); });
+await t("private answers: a second answer id for the same helper is refused (id must be doubt_uid)", () => assertFails(pa(bob, "bob", "alice", {}, "dq1_other")));
+await t("private answers: the asker rates, nobody else can", async () => { await assertSucceeds(updateDoc(doc(alice, R + "/privateAnswers", "dq1_bob"), { rating: "helpful" })); await assertFails(updateDoc(doc(bob, R + "/privateAnswers", "dq1_bob"), { rating: "best" })); await assertFails(updateDoc(doc(alice, R + "/privateAnswers", "dq1_bob"), { rating: "amazing" })); await assertFails(updateDoc(doc(alice, R + "/privateAnswers", "dq1_bob"), { body: "edited" })); });
+const thx = (db, by, toUid, level = "helpful", doubt = "dq1") => setDoc(doc(db, R + "/thanks", doubt + "_" + toUid), { doubtId: doubt, toUid, toAuthorId: toUid + "-device-1", toName: "Bob", level, byUid: by, createdAt: Date.now() });
+await t("thanks: the asker credits a real private answer", () => assertSucceeds(thx(alice, "alice", "bob")));
+await t("thanks: others cannot credit, and made-up answers cannot be credited", async () => { await assertFails(thx(bob, "bob", "bob")); await assertFails(thx(alice, "alice", "carl")); });
+await t("thanks: helpful can be upgraded to best, not downgraded", async () => { await assertSucceeds(thx(alice, "alice", "bob", "best")); await assertFails(thx(alice, "alice", "bob", "helpful")); });
 console.log(`\n${pass} passed, ${fail} failed`);
 await env.cleanup(); process.exit(fail ? 1 : 0);

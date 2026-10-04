@@ -392,7 +392,7 @@ const state = {
   doubts: [], ideas: [], clubs: [], gate: [], jobs: [], challenges: [], chalScores: [], market: [], marketReports: [], marketRatings: [], marketInterests: [], replies: [], likes: [], plan: { plus: false, until: 0 }, papers: [], notices: [], drives: [], weekly: [], events: [], rsvps: [], blocked: [], profiles: [], stories: [], storyViews: [], storyAnswers: [], loaded: false,
   selected: null, mode: "intro", // intro | view | ask | edit | name | campus
   afterName: null,
-  replyPages: [], replyAnon: false, replyPriv: false, privAns: [],
+  replyPages: [], replyAnon: false, replyPriv: false, privAns: [], thanks: [],
   campusFilter: "all", // "all" | campus name
   mktChip: "all",     // quick filter chip in the market
   mktSort: "newest",   // "newest" | "price_asc" | "price_desc" | "popular"
@@ -2423,21 +2423,38 @@ function aiCheckBox(key, question, get) {
 }
 // What the asker sees: private answers for this doubt, with a way to share one with everyone.
 function privateAnswersFor(d) {
-  const rows = state.privAns.filter(x => x.doubtId === d.id && x.toUid === (store && store.uid)).sort((a, b) => a.createdAt - b.createdAt);
-  if (!rows.length) return null;
-  return el("div", { class: "answers priv-box" }, el("div", { class: "label" }, "\u{1F512} Private answers (only you can see these)"),
-    ...rows.map(r => el("div", { class: "ans priv" }, el("div", { class: "who" }, avatarEl(avatarFor(r.authorName || "")), el("strong", {}, r.anonymous ? "A classmate" : r.authorName), el("small", { class: "hint" }, ago(r.createdAt))),
+  const uid = store && store.uid, rankOf = (r) => r.rating === "best" ? 0 : r.rating === "helpful" ? 1 : (aiChecks.get("p" + r.id) || {}).verdict === "correct" ? 2 : 3;
+  const rows = state.privAns.filter(x => x.doubtId === d.id && x.toUid === uid).sort((a, b) => rankOf(a) - rankOf(b) || a.createdAt - b.createdAt);
+  if (!rows.length) return d.ansPrivate ? el("p", { class: "hint" }, "\u{1F512} Answers to this question are private. They will appear here, only for you.") : null;
+  const hasBest = rows.some(r => r.rating === "best"), name = (r) => r.anonymous ? "A classmate" : r.authorName;
+  const rate = async (r, level, btn) => {
+    btn.disabled = true;
+    try {
+      await store.update("privateAnswers", r.id, { rating: level });
+      await store.set("thanks", d.id + "_" + r.ownerUid, { doubtId: d.id, toUid: r.ownerUid, toAuthorId: r.authorId, toName: name(r).slice(0, 40), level, byUid: uid, createdAt: Date.now() });
+      if (level === "best") { celebrate(); try { await store.update("doubts", d.id, { resolvedReplyId: "priv_" + r.ownerUid.slice(0, 60) }); } catch (_) {} }
+      state.privAns = state.privAns.map(x => x.id === r.id ? { ...x, rating: level } : x); render();
+    } catch (er) { btn.disabled = false; showNotice(er && er.code === "permission-denied" ? "Could not save the rating. Publish the latest rules." : errText(er)); }
+  };
+  const open = rows.filter(r => !r.rating).length;
+  return el("div", { class: "answers priv-box" }, el("div", { class: "label" }, "\u{1F512} " + rows.length + " private answer" + (rows.length === 1 ? "" : "s") + " (only you can see these)"),
+    rows.length > 1 && !hasBest ? el("p", { class: "hint" }, "Several students answered. Read them all, use the AI check if you want, then pick the best one. Best earns the helper 7 points, helpful earns 2.") : null,
+    ...rows.map(r => el("div", { class: "ans priv" + (r.rating === "best" ? " best" : "") }, el("div", { class: "who" }, avatarEl(avatarFor(r.authorName || "")), el("strong", {}, name(r)), r.rating === "best" ? el("span", { class: "pill open" }, "⭐ Best") : r.rating === "helpful" ? el("span", { class: "pill" }, "\u{1F44D} Helpful") : null, el("small", { class: "hint" }, ago(r.createdAt))),
       r.body ? el("p", { class: "body" }, r.body) : null, ...(Array.isArray(r.imgs) ? r.imgs.filter(u => typeof u === "string" && u.startsWith("data:image/jpeg;base64,")).map((u, i) => el("img", { class: "priv-img", src: u, alt: "Photo " + (i + 1) + " from the answer", loading: "lazy" })) : []),
       aiCheckBox("p" + r.id, d.title + (d.body ? ". " + d.body : ""), async () => ({ answer: r.body || "", img: Array.isArray(r.imgs) && r.imgs[0] && r.imgs[0].length <= 340000 ? r.imgs[0] : "" })),
-      el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: async (e) => {
-        if (!confirm("Share this answer with everyone on the board? Your classmates will see it with " + (r.anonymous ? "no name" : r.authorName) + ".")) return;
-        e.currentTarget.disabled = true;
-        try {
-          const id = store.newId("replies"), pages = (Array.isArray(r.imgs) ? r.imgs : []).slice(0, 2), pageIds = pages.map(u => { const pid = store.newId("pages"); pageCache.set(pid, u); return pid; });
-          const doc = { parentId: d.id, parentColl: "doubts", body: ("Answer from " + (r.anonymous ? "a classmate" : r.authorName) + ": " + (r.body || "(see the photo)")).slice(0, 5000), authorId: store.uid, authorName: getName(), anonymous: false, createdAt: Date.now(), pages: pageIds, fileAttachments: [] };
-          doc.pages = await trySavePages(pages, id, pageIds); await store.set("replies", id, doc); showNotice("Shared with everyone.");
-        } catch (er) { showNotice(errText(er)); }
-      } }, "\u{1F4E2} Share with everyone")))));
+      el("div", { class: "rowbtns" },
+        r.rating !== "best" && !hasBest ? el("button", { class: "btn sm primary", type: "button", onclick: (e) => rate(r, "best", e.currentTarget) }, "⭐ Best answer") : null,
+        !r.rating ? el("button", { class: "btn sm", type: "button", onclick: (e) => rate(r, "helpful", e.currentTarget) }, "\u{1F44D} Helpful") : null,
+        el("button", { class: "btn sm", type: "button", onclick: async (e) => {
+          if (!confirm("Share this answer with everyone on the board? Your classmates will see it with " + (r.anonymous ? "no name" : r.authorName) + ".")) return;
+          e.currentTarget.disabled = true;
+          try {
+            const id = store.newId("replies"), pages = (Array.isArray(r.imgs) ? r.imgs : []).slice(0, 2), pageIds = pages.map(u => { const pid = store.newId("pages"); pageCache.set(pid, u); return pid; });
+            const doc = { parentId: d.id, parentColl: "doubts", body: ("Answer from " + (r.anonymous ? "a classmate" : r.authorName) + ": " + (r.body || "(see the photo)")).slice(0, 5000), authorId: store.uid, authorName: getName(), anonymous: false, createdAt: Date.now(), pages: pageIds, fileAttachments: [] };
+            doc.pages = await trySavePages(pages, id, pageIds); await store.set("replies", id, doc); showNotice("Shared with everyone.");
+          } catch (er) { showNotice(errText(er)); }
+        } }, "\u{1F4E2} Share with everyone")))),
+    hasBest && open > 0 ? el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: async (e) => { e.currentTarget.disabled = true; for (const r of rows.filter(x => !x.rating)) { try { await store.update("privateAnswers", r.id, { rating: "helpful" }); await store.set("thanks", d.id + "_" + r.ownerUid, { doubtId: d.id, toUid: r.ownerUid, toAuthorId: r.authorId, toName: name(r).slice(0, 40), level: "helpful", byUid: uid, createdAt: Date.now() }); } catch (_) {} } render(); } }, "\u{1F64F} Thank everyone else (+2 each)")) : null);
 }
 // ---------- After choosing a nickname: create the Loop ID and keep both safe ----------
 function saveIdsCard() {
@@ -2550,6 +2567,7 @@ function notifItems() {
     const d = myD.get(r.parentId); if (!d || r.parentColl !== "doubts" || mine.has(r.authorId) || (r.createdAt || 0) < week) continue;
     items.push({ id: "a" + r.id, at: r.createdAt || 0, icon: "\u{1F4AC}", text: (r.anonymous ? "Someone" : r.authorName || "A classmate") + " answered your doubt: " + String(d.title || "").slice(0, 70), go: () => { state.tab = "doubts"; openItem(d.id); }, fresh: (r.createdAt || 0) > seen });
   }
+  for (const th of state.thanks) { if (!mine.has(th.toAuthorId) || (th.createdAt || 0) < week) continue; items.push({ id: "th" + th.id, at: th.createdAt || 0, icon: th.level === "best" ? "\u2B50" : "\u{1F44D}", text: th.level === "best" ? "Your private answer was picked as the best answer! +7 points" : "Your private answer was marked helpful. +2 points", go: () => showPanel("me"), fresh: (th.createdAt || 0) > seen }); }
   for (const d of waitingDoubts()) items.push({ id: "w" + d.id, at: d.createdAt || 0, icon: "\u{1F64B}", text: "Waiting for a first answer in " + d.subject + ": " + String(d.title || "").slice(0, 60), go: () => { state.tab = "doubts"; openItem(d.id); }, fresh: true, todo: true });
   const me = allStats().get(store.uid);
   if (me && me.streak > 0 && me.days && !me.days.has(dayNum()) && new Date().getHours() >= 17) items.push({ id: "streak" + dayNum(), at: Date.now(), icon: "\u{1F525}", text: "Your " + me.streak + "-day streak ends tonight. Answer one doubt or take the quiz to keep it.", go: () => showUnanswered(), fresh: true, todo: true });
@@ -3607,6 +3625,7 @@ function allStats() {
   };
   const active = (id, t) => { const p = get(id); if (p && t) p.days.add(dayNum(t)); };
   const helpfulIds = new Set(state.doubts.map(d => d.resolvedReplyId).filter(Boolean));
+  for (const th of state.thanks) { if (th.toName === "A classmate") continue; active(th.toAuthorId, th.createdAt); const p = get(th.toAuthorId, th.toName, th.createdAt); p.answers++; p.points += 2; if (th.level === "best") { p.helpful++; p.points += 5; } }
   const replyAuthor = new Map(state.replies.map(r => [r.id, r]));
   for (const d of state.doubts) { active(d.authorId, d.createdAt); if (d.anonymous) continue; const p = get(d.authorId, d.authorName, d.createdAt); p.asked++; p.points += 1; let vv = 0; for (const l of likesFor(d.id)) if (l.uid !== d.authorId && vv < 10) { vv++; p.likes++; p.points += 1; } }
   for (const i of state.ideas) {
@@ -5075,6 +5094,7 @@ function alumniForm(kind) {
     try {
       const id = store.newId("clubs");
       const doc = { title, body, club: ALUMNI_GROUP, authorId: store.uid, authorName: isJob ? (getName() || "Alumnus") : val("name").slice(0, 40), anonymous: false, urgent: false, createdAt: Date.now(), pages: [], fileAttachments: [] };
+      if (state.tab === "doubts" && form.elements.ansp && form.elements.ansp.checked) doc.ansPrivate = true;
       const myC = getCampus(); if (myC) doc.campus = myC;
       state.clubs = [{ id, ...doc }, ...state.clubs.filter(x => x.id !== id)];
       notePosted();
@@ -7807,6 +7827,7 @@ function renderAsk(existing) {
     store.uploadFile ? filePicker(newFileLinks) : null,
     el("div", { class: "checks" },
       el("label", { class: "check" }, el("input", { type: "checkbox", id: "f-anon", name: "anon", checked: !!(existing && existing.anonymous) }), "🙈 Post anonymously (classmates won't see your name)"),
+      state.tab === "doubts" ? el("label", { class: "check" }, el("input", { type: "checkbox", id: "f-ansp", name: "ansp", checked: !!(existing && existing.ansPrivate), disabled: existing ? "" : null }), "\u{1F512} Only I can see the answers (helpers reply privately; I pick the best one)") : null,
       state.tab === "doubts" && el("label", { class: "check" }, el("input", { type: "checkbox", id: "f-urgent", name: "urgent", checked: !!(existing && existing.urgent) }), "🔥 Urgent: exam or deadline soon"),
       state.tab === "doubts" && el("label", { class: "check" }, el("input", { type: "checkbox", id: "f-bounty", name: "bounty", checked: !!(existing && existing.bounty) }), "🎁 Bounty: whoever solves this gets +5 bonus points")),
     state.tab === "challenges" && (() => {
@@ -7907,6 +7928,7 @@ function renderView() {
     el("div", { class: "meta" },
       el("span", { class: "tag", ...colorAttrs(g) }, g),
       d.year && el("span", { class: "pill year-pill" }, yl(d.year)),
+      d.ansPrivate && el("span", { class: "pill" }, "\u{1F512} private answers"),
       state.tab === "doubts" && isUrgent(d) && el("span", { class: "pill urgent" }, "🔥 Urgent"),
       state.tab === "doubts" && el("span", { class: "pill " + (d.resolvedReplyId ? "done" : "open") }, d.resolvedReplyId ? "Resolved" : "Open"),
       state.tab === "doubts" && d.bounty && !d.resolvedReplyId && el("span", { class: "pill bounty" }, "🎁 Bounty"),
@@ -8082,6 +8104,7 @@ function renderView() {
   }
   out.push(list);
 
+  if (state.tab === "doubts" && d.ansPrivate && !own && state.privAns.some(x => x.doubtId === d.id && x.ownerUid === (store && store.uid))) { const sent = state.privAns.find(x => x.doubtId === d.id && x.ownerUid === store.uid); out.push(el("div", { class: "learn-card" }, el("strong", {}, "\u{1F512} You sent your private answer"), el("p", { class: "hint" }, sent.rating === "best" ? "\u2B50 The asker picked it as the best answer. Thank you!" : sent.rating === "helpful" ? "\u{1F44D} The asker marked it helpful." : "The asker will pick the best answer. Helpful answers earn 2 points and the best answer earns 7.")));  return out; }
   const replyFiles = [];
   const form = el("form", { class: "form", onsubmit: async (e) => {
     e.preventDefault();
@@ -8094,13 +8117,13 @@ function renderView() {
     if (replyFiles.some(f => f.pct !== undefined)) { showNotice("Please wait for uploads to finish."); return; }
     const wait = postingBlocked();   // answers have no daily or hourly limit; only blocked or paused students are stopped
     if (wait) { showNotice(wait); return; }
-    if (state.replyPriv && state.tab === "doubts" && d.ownerUid && !own) {
+    if ((state.replyPriv || d.ansPrivate) && state.tab === "doubts" && d.ownerUid && !own) {
       try {
         const imgs = []; for (const u of pages.slice(0, 2)) imgs.push(await shrinkJpeg(u));
-        const pid = store.newId("privateAnswers");
+        const pid = d.id + "_" + store.uid;
         await store.set("privateAnswers", pid, { doubtId: d.id, toUid: d.ownerUid, ownerUid: store.uid, authorId: store.uid, authorName: state.replyAnon ? ANON : getName(), anonymous: state.replyAnon, body: body.slice(0, 5000), ...(imgs.length ? { imgs } : {}), createdAt: Date.now() });
         state.replyPages = []; state.replyPriv = false; form.reset(); showNotice("Sent privately. Only the asker can see it."); render();
-      } catch (er) { showNotice(errText(er)); }
+      } catch (er) { showNotice(er && er.code === "permission-denied" ? "You already sent a private answer to this doubt." : errText(er)); }
       return;
     }
     const id = store.newId("replies");
@@ -8122,7 +8145,7 @@ function renderView() {
     el("p", { class: "hint st-err", id: "f-reply-msg", role: "alert", hidden: true }),
     attachPicker(state.replyPages, MAX_PAGES),
     store.uploadFile ? filePicker(replyFiles) : null,
-    state.tab === "doubts" && d.ownerUid && !own ? el("label", { class: "check" }, el("input", { type: "checkbox", id: "f-reply-priv", checked: state.replyPriv, onchange: (e) => { state.replyPriv = e.target.checked; } }), "\u{1F512} Send as a private answer (only the asker sees it)") : null,
+    state.tab === "doubts" && d.ansPrivate && !own ? el("p", { class: "hint" }, "\u{1F512} The asker chose private answers. Yours goes only to them.") : state.tab === "doubts" && d.ownerUid && !own ? el("label", { class: "check" }, el("input", { type: "checkbox", id: "f-reply-priv", checked: state.replyPriv, onchange: (e) => { state.replyPriv = e.target.checked; } }), "\u{1F512} Send as a private answer (only the asker sees it)") : null,
     el("label", { class: "check" }, el("input", { type: "checkbox", id: "f-reply-anon", checked: state.replyAnon, onchange: (e) => { state.replyAnon = e.target.checked; } }), "🙈 Answer anonymously"),
     el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "submit" }, t.replyBtn)));
   out.push(form);
@@ -8830,6 +8853,7 @@ render();
   store.subscribe("clubs", rows => { const live_ = live(rows); trackNew("clubs", live_); state.clubs = live_; update(); }, e => {});
   store.subscribe("gate", rows => { const live_ = live(rows); trackNew("gate", live_); state.gate = live_; update(); }, e => {});
   store.subscribe("blocked", rows => { state.blocked = rows.map(r => r.id); }, e => {});
+  store.subscribe("thanks", rows => { state.thanks = rows.filter(x => x && typeof x.toAuthorId === "string" && (x.level === "helpful" || x.level === "best")); try { render(); } catch (_) {} }, e => {});
   if (store.subscribeWhere && store.uid) { const keep = { to: [], from: [] }, merge = () => { state.privAns = [...keep.to, ...keep.from.filter(x => !keep.to.some(y => y.id === x.id))]; try { render(); } catch (_) {} }; store.subscribeWhere("privateAnswers", "toUid", store.uid, rows => { keep.to = rows; merge(); }, () => {}); store.subscribeWhere("privateAnswers", "ownerUid", store.uid, rows => { keep.from = rows; merge(); }, () => {}); }
   let dpChecked = false;
   store.subscribe("profiles", rows => {
