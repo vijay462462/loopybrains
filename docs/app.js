@@ -4567,7 +4567,7 @@ function logoutBlock() {
       el("div", { class: "rowbtns" }, el("button", { class: "btn danger", type: "button", onclick: go }, "Yes, log out"), el("button", { class: "btn primary", type: "button", onclick: close }, "Stay signed in"))));
     document.body.append(ov);
   };
-  return el("div", { class: "logout-block" }, el("div", { class: "label" }, "Account"),
+  return el("div", { class: "logout-block" }, el("div", { class: "acct-head" }, el("span", { class: "acct-ic", "aria-hidden": "true" }, "\u{1F464}"), el("div", {}, el("strong", { class: "acct-title" }, "Account"), el("small", { class: "acct-sub" }, acc.verified ? "Signed in as " + acc.email + " \u2714 verified" : "This device only. Verify your college email to keep your points safe."))),
     el("button", { class: "btn logout-btn", type: "button", onclick: ask }, "\u{1F6AA} Log out"), msg);
 }
 

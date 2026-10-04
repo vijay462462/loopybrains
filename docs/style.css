@@ -2525,3 +2525,12 @@ body.simple .tabs button[aria-selected="true"] { display: inline-flex; }
 
 .hotw-card { border-color: color-mix(in srgb, #fbbf24 60%, var(--line)); background: linear-gradient(150deg, color-mix(in srgb, #fbbf24 16%, var(--sheet)), var(--sheet)); display: grid; gap: 6px; }
 .push-ask { display: grid; gap: 6px; border-style: dashed; }
+
+.acct-head { display: flex; align-items: center; gap: 12px; margin: 2px 0 4px; }
+.acct-ic { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 14px; font-size: 20px; background: linear-gradient(135deg, var(--accent), #f97316); box-shadow: 0 10px 20px -12px var(--accent); flex: none; }
+.acct-head > div { display: grid; gap: 2px; min-width: 0; }
+.acct-title { font-size: 20px; font-weight: 900; letter-spacing: -.01em; background: linear-gradient(90deg, var(--accent), #f97316); -webkit-background-clip: text; background-clip: text; color: transparent; width: fit-content; }
+.acct-sub { font-size: 12.5px; line-height: 1.35; overflow-wrap: anywhere; color: color-mix(in srgb, currentColor 70%, transparent); }
+.logout-btn { color: #ef4444 !important; border-color: color-mix(in srgb, #ef4444 55%, transparent) !important; background: color-mix(in srgb, #ef4444 9%, transparent) !important; font-weight: 800; }
+.logout-btn:hover, .logout-btn:focus-visible { background: color-mix(in srgb, #ef4444 18%, transparent) !important; }
+.acct-head, .acct-head > div { text-align: left; }
