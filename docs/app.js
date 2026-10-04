@@ -1362,7 +1362,7 @@ function showWelcome(force, startId) {
       const fill = () => {
         const needle = cq.trim().toLowerCase(); let rows = all.filter(c => (cst === "All India" || c.state === cst) && (!needle || (c.name + " " + c.sub).toLowerCase().includes(needle)));
         if (cst === "All India" && !needle) { list.replaceChildren(el("p", { class: "hint" }, "Type your college or city to search all of India, or pick a state above.")); return; }
-        list.replaceChildren(...(rows.length ? rows.slice(0, 60).map(c => el("button", { class: "ob-col" + (pickSlug === c.slug ? " on" : ""), type: "button", role: "option", "aria-selected": String(pickSlug === c.slug), onclick: () => { pickSlug = c.slug; pickName = c.name; try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch (_) {} mark(); fill(); const nb = box.querySelector(".rowbtns .btn.primary"); if (nb) nb.textContent = pickSlug !== curSlug ? "Continue with " + (pickName.length > 16 ? pickName.slice(0, 15) + "\u2026" : pickName) : "Continue"; } }, badge(c.slug, c.name, c.state), el("span", { class: "col-text" }, el("strong", {}, c.name), c.sub ? el("small", {}, c.sub) : null))) : [el("p", { class: "hint" }, "No match. Try another spelling, or pick All India and search by name.")]));
+        list.replaceChildren(...(rows.length ? rows.slice(0, 60).map(c => el("button", { class: "ob-col" + (pickSlug === c.slug ? " on" : ""), type: "button", role: "option", "aria-selected": String(pickSlug === c.slug), onclick: () => { pickSlug = c.slug; pickName = c.name; try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); if (navigator.vibrate) navigator.vibrate(12); } catch (_) {} mark(); fill(); const nb = box.querySelector(".rowbtns .btn.primary"); if (nb) nb.textContent = pickSlug !== curSlug ? "Continue with " + (pickName.length > 16 ? pickName.slice(0, 15) + "\u2026" : pickName) : "Continue"; } }, badge(c.slug, c.name, c.state), el("span", { class: "col-text" }, el("strong", {}, c.name), c.sub ? el("small", {}, c.sub) : null))) : [el("p", { class: "hint" }, "No match. Try another spelling, or pick All India and search by name.")]));
       };
       const q = el("input", { type: "search", enterkeyhint: "done", placeholder: "Search your college or city\u2026", "aria-label": "Search colleges", autocomplete: "off", value: cq }); q.addEventListener("keydown", (ev) => { if (ev.key === "Enter") { ev.preventDefault(); q.blur(); } }); q.addEventListener("input", () => { cq = q.value; fill(); });
       body = [el("h2", {}, "Choose your college \u{1F3EB}"), el("p", { class: "ob-say" }, "Each college has its own private board, subjects and clubs. Pick yours and I will set everything up."), stSel, q, list, chosen];
@@ -1397,9 +1397,10 @@ function showWelcome(force, startId) {
   }
   // Keyboard-aware: when the on-screen keyboard opens, fit the card into the space that is really visible and tuck away the long text.
   const vv = window.visualViewport, fit = () => {
-    if (!box.isConnected) { if (vv) vv.removeEventListener("resize", fit); return; }
-    const h = vv ? vv.height : innerHeight, kb = !!vv && h < innerHeight * 0.78;
-    box.style.setProperty("--vvh", Math.round(h) + "px"); box.classList.toggle("kb", kb);
+    if (!box.isConnected) { if (vv) { vv.removeEventListener("resize", fit); vv.removeEventListener("scroll", fit); } return; }
+    // Space taken by the on-screen keyboard = layout height minus what is really visible. The dark overlay still covers the whole screen; only the card moves up.
+    const kbh = vv ? Math.max(0, Math.round(innerHeight - vv.height - vv.offsetTop)) : 0, kb = kbh > 120;
+    box.style.setProperty("--kbh", (kb ? kbh : 0) + "px"); box.classList.toggle("kb", kb);
     if (kb) { const act = document.activeElement; if (act && act.scrollIntoView && box.contains(act)) setTimeout(() => act.scrollIntoView({ block: "nearest" }), 60); }
   };
   if (vv) { vv.addEventListener("resize", fit); vv.addEventListener("scroll", fit); }
