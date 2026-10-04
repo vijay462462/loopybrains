@@ -73,5 +73,48 @@ window.COLLEGE_DATA = {
     source: "https://www.rgukt.ac.in/",
     subjects: ["Computer Science", "Electronics and Communication", "Electrical and Electronics", "Mechanical", "Civil", "Chemical Engineering", "Metallurgical and Materials", "Maths", "Physics", "Chemistry", "English", "Other"],
     clubs: ["Coding Club", "Robotics", "Cultural", "Sports", "NSS", "Literary", "Other"], exam: "GATE", bot: false
+  },
+  // ---- batch 3 (official sites, via search limited to each official domain; branch lists as published there) ----
+  // JNTU Kakinada: B.Tech in Civil, EEE, Mechanical, ECE, CSE, CSE (AI and ML), Petroleum, Chemical, Food Engineering; B.Pharmacy.
+  "jntuk": {
+    source: "https://dfur.jntuk.edu.in/courses",
+    subjects: ["Civil", "Electrical and Electronics", "Mechanical", "Electronics and Communication", "Computer Science", "CSE (AI and ML)", "Petroleum Engineering", "Chemical Engineering", "Food Engineering", "Pharmacy", "Other"],
+    exam: "GATE", bot: false
+  },
+  // JNTU Anantapur: constituent colleges offer Civil, EEE, Mechanical, ECE, CSE, Chemical (Anantapur), Biotechnology (Pulivendula); other branches exist at other campuses.
+  "jntua": {
+    source: "https://www.jntua.ac.in/b-tech/",
+    subjects: ["Civil", "Electrical and Electronics", "Mechanical", "Electronics and Communication", "Computer Science", "Chemical Engineering", "Biotechnology", "Information Technology", "Aeronautical", "Other"],
+    exam: "GATE", bot: false
+  },
+  // Sri Krishnadevaraya University: College of Engineering and Technology (Civil, CSE, EEE, ECE, Mechanical) plus Arts and Sciences departments.
+  "sku": {
+    source: "http://www.skuniversity.ac.in/academics-faculties.html",
+    subjects: ["Civil", "Computer Science", "Electrical and Electronics", "Electronics and Communication", "Mechanical", "Mathematics", "Physics", "Chemistry", "Botany", "Zoology", "Economics", "English", "Telugu", "Commerce", "Pharmacy", "Other"],
+    exam: "Competitive exams", bot: false
+  },
+  // IIT Tirupati B.Tech: Chemical, Civil, CSE, Electrical, Engineering Physics (from 2024-25), Mechanical.
+  "iit-tirupati": {
+    source: "https://iittp.ac.in/admissions",
+    subjects: ["Chemical Engineering", "Civil", "Computer Science", "Electrical", "Engineering Physics", "Mechanical", "Maths", "Physics", "Chemistry", "Other"],
+    exam: "GATE", bot: false
+  },
+  // NIT Andhra Pradesh departments: CSE, Mechanical, Electrical, ECE, Metallurgical and Materials, Biotechnology, Chemical, Civil.
+  "nit-andhra-pradesh": {
+    source: "https://nitandhra.ac.in/",
+    subjects: ["Computer Science", "Mechanical", "Electrical", "Electronics and Communication", "Metallurgical and Materials", "Biotechnology", "Chemical Engineering", "Civil", "Maths", "Physics", "Chemistry", "Other"],
+    exam: "GATE", bot: false
+  },
+  // IIIT Sri City B.Tech: CSE, ECE, AI and Data Science.
+  "iiit-sricity": {
+    source: "https://iiits.ac.in/",
+    subjects: ["Computer Science", "Electronics and Communication", "AI and Data Science", "Maths", "Physics", "Other"],
+    exam: "GATE", bot: false
+  },
+  // VIT-AP: schools of Computer Science, Electronics, Mechanical, Advanced Sciences, Bio Sciences, Business, Law, Social Sciences and Humanities.
+  "vit-ap": {
+    source: "https://www.vitap.ac.in/allprograms",
+    subjects: ["Computer Science", "CSE (AI and ML)", "CSE (Cyber Security)", "CSE (Data Analytics)", "Electronics and Communication", "Electrical and Electronics", "Mechanical", "Biotechnology", "Business", "Law", "Other"],
+    exam: "GATE", bot: false
   }
 };
