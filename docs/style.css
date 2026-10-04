@@ -2056,3 +2056,4 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 .ab-meta { margin: 0; font-size: 12.5px; opacity: .8; } .ab-meta a { color: var(--accent); font-weight: 700; }
 .ob-card { max-height: 92vh; overflow-y: auto; }
 .splash[data-live] { animation: none; }
+.story-bar[hidden], .today-bar[hidden], .sale-bar[hidden], .official-bar[hidden] { display: none !important; }
