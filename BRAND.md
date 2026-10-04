@@ -5,6 +5,9 @@
 **Founder:** Vijay M, Visakhapatnam, India
 **Mascot:** Loopy, the friendly guide robot (used inside the app)
 
+## Final share banner (locked)
+The approved banner is saved in `docs/brand/final/` (`the-campus-loop-banner-FINAL.png`, with its HTML source). Change it only on purpose; the live copy used for link previews is `docs/brand/the-campus-loop-banner-1200x630.png`.
+
 ## Files (in `docs/brand/` and `docs/`)
 - App icon, monogram C: `docs/icon.svg`, `docs/brand/icon-1024.svg`, `docs/brand/the-campus-loop-icon-1024.png`
 - Maskable icon (Android): `docs/brand/maskable.svg`
