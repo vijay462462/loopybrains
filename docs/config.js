@@ -10,6 +10,9 @@ window.DOUBT_DESK_CONFIG = {
     offer: { label: "Founding student offer", yearly: 299, until: "2026-12-31" },
     trialDays: 7 },
 
+  // Shown on the About screen when someone joins. Fill these in: they build trust. Leave a value empty to hide it.
+  about: { founder: "", college: "", email: "" },
+
   // Site title shown in the header
   title: "CampusLoop",
 

@@ -1247,35 +1247,39 @@ function showWelcome(force) {
   const INTERESTS = [["❓", "Clear my doubts", "doubts"], ["📝", "Prepare for exams", "exams"], ["💼", "Placements and jobs", "placements"], ["🎉", "Clubs and friends", "friends"], ["🔎", "Just exploring", "explore"]];
   const picked = new Set(readJSON("dd-interests", []));
   let step = 0, nameVal = (getName() || "").trim();
-  const TOTAL = 4, box = el("div", { id: "welcome", class: "welcome", role: "dialog", "aria-modal": "true", "aria-label": "Welcome to " + BRAND });
+  const STEPS = ["about", "name", "interests", "ready"], TOTAL = STEPS.length, box = el("div", { id: "welcome", class: "welcome", role: "dialog", "aria-modal": "true", "aria-label": "Welcome to " + BRAND });
   const finish = () => { try { localStorage.setItem("dd-welcome-done", "1"); } catch (_) {} document.removeEventListener("keydown", onKey); box.remove(); todayKey = ""; try { renderHeader(); } catch (_) {} };
   const onKey = (e) => { if (e.key === "Escape") finish(); };
-  const saveStep = () => { if (step === 0) { const v = nameVal.trim().slice(0, 30); if (v) setName(v); } if (step === 1) writeJSON("dd-interests", [...picked]); };
+  const saveStep = () => { if (STEPS[step] === "name") { const v = nameVal.trim().slice(0, 30); if (v) setName(v); } if (STEPS[step] === "interests") writeJSON("dd-interests", [...picked]); };
   const go = (d) => { saveStep(); step = Math.max(0, Math.min(TOTAL - 1, step + d)); paint(); };
   const start = (fn) => () => { saveStep(); finish(); setTimeout(fn, 120); };
   function paint() {
     const last = step === TOTAL - 1, who = nameVal.trim() ? nameVal.trim().split(/\s+/)[0] : "";
     const bar = el("div", { class: "ob-bar", "aria-hidden": "true" }, ...Array.from({ length: TOTAL }, (_, k) => el("span", { class: k <= step ? "on" : "" })));
     let body;
-    if (step === 0) {
+    const sid = STEPS[step];
+    if (sid === "about") {
+      const ab = (window.DOUBT_DESK_CONFIG && window.DOUBT_DESK_CONFIG.about) || {}, line = (icon, t, d) => el("div", { class: "ab-pillar" }, el("span", { "aria-hidden": "true" }, icon), el("div", {}, el("b", {}, t), el("small", {}, d)));
+      body = [el("div", { class: "ob-loopy" }, loopyMini()), el("h2", {}, "About " + BRAND), el("p", { class: "ob-say" }, "We are a team of students and teachers who wanted one safe, friendly place for every campus to ask, answer and grow together. " + BRAND + " is built by students, for students, and we promise to earn your trust every day."),
+        el("div", { class: "ab-list" }, line("🛡️", "Safe and moderated", "Anonymous sign-in, reported posts hidden fast, abusive devices blocked."), line("🔒", "Private by design", "No ads. We never sell your data. Only your chosen name is shown."), line("🙏", "Respect for everyone", "Students, teachers and staff are honoured here."), line("🆓", "Free to learn", "The board, quizzes and Study Lab are free forever. Plus is optional.")),
+        el("p", { class: "ab-meta" }, [ab.founder ? "Founded by " + ab.founder : "", ab.college ? ab.college : "", "Made with ❤️ in India"].filter(Boolean).join(" · ")),
+        el("p", { class: "ab-meta" }, ab.email ? el("a", { href: "mailto:" + ab.email }, "Write to us: " + ab.email) : null, ab.email ? " · " : "", el("a", { href: "about.html", target: "_blank", rel: "noopener" }, "Our full story"), " · ", el("a", { href: "privacy.html", target: "_blank", rel: "noopener" }, "Privacy"), " · ", el("a", { href: "terms.html", target: "_blank", rel: "noopener" }, "Terms"))];
+    } else if (sid === "name") {
       const inp = el("input", { type: "text", maxlength: "30", placeholder: "Your first name", "aria-label": "Your name", autocomplete: "given-name", value: nameVal });
       inp.addEventListener("input", () => { nameVal = inp.value; });
       inp.addEventListener("keydown", (e) => { if (e.key === "Enter") go(1); });
       body = [el("div", { class: "ob-loopy" }, loopyMini()), el("h2", {}, "Welcome to the " + BRAND + " family"), el("p", { class: "ob-say" }, "Hi, I\u2019m Loopy \u{1F916}. Ask boldly, answer together, and grow with your whole campus. What should I call you?"), inp];
-    } else if (step === 1) {
+    } else if (sid === "interests") {
       body = [el("div", { class: "ob-loopy" }, loopyMini()), el("h2", {}, (who ? "Nice to meet you, " + who : "Nice to meet you") + "! \u{1F44B}"), el("p", { class: "ob-say" }, "What brings you here? Pick any. I will tailor your home screen."),
         el("div", { class: "ob-chips" }, ...INTERESTS.map(([ic, t, k]) => el("button", { class: "ob-chip" + (picked.has(k) ? " on" : ""), type: "button", "aria-pressed": String(picked.has(k)), onclick: (e) => { if (picked.has(k)) picked.delete(k); else picked.add(k); e.currentTarget.classList.toggle("on", picked.has(k)); e.currentTarget.setAttribute("aria-pressed", String(picked.has(k))); } }, ic + " " + t)))];
-    } else if (step === 2) {
-      body = [el("div", { class: "ob-loopy" }, el("span", { class: "welcome-icon", "aria-hidden": "true" }, "\u{1F64F}")), el("h2", {}, "Our family promise"),
-        el("ul", { class: "ob-list" }, el("li", {}, "\u{1F6E1}\uFE0F Safe: anonymous sign-in, moderated posts, no ads."), el("li", {}, "\u{1F64F} Respect: we honour every student, teacher and staff member."), el("li", {}, "\u{1F91D} Help: answer a classmate and earn points and badges."), el("li", {}, "\u{1F193} Free: the board, quizzes and Study Lab stay free."))];
     } else {
       const wantsJobs = picked.has("placements"), starters = [["\u2753 Ask my first doubt", () => { const b = $("askBtn"); if (b) b.click(); }, true], ["\u{1F9E0} Try today\u2019s quiz", () => showPanel("quiz"), false], [wantsJobs ? "\u{1F4C4} Build my resume" : "\u{1F9F0} Explore everything", () => showPanel(wantsJobs ? "resume" : "explore"), false]];
       body = [el("div", { class: "ob-loopy" }, loopyMini()), el("h2", {}, "You\u2019re all set" + (who ? ", " + who : "") + "! \u{1F389}"), el("p", { class: "ob-say" }, "Welcome to the family. Finish your first 3 steps on the home screen to unlock a free gift. \u{1F381}"),
         el("div", { class: "ob-start" }, ...starters.map(([t, fn, pri]) => el("button", { class: "btn" + (pri ? " primary" : ""), type: "button", onclick: start(fn) }, t)))];
     }
     box.replaceChildren(el("div", { class: "welcome-card ob-card" }, el("button", { class: "welcome-skip", type: "button", onclick: finish }, "Skip"), bar, el("div", { class: "ob-step" }, ...body),
-      el("div", { class: "rowbtns" }, step > 0 ? el("button", { class: "btn", type: "button", onclick: () => go(-1) }, "Back") : null, last ? el("button", { class: "btn", type: "button", onclick: finish }, "Close") : el("button", { class: "btn primary", type: "button", onclick: () => go(1) }, step === 0 && !nameVal.trim() ? "Skip for now" : "Next"))));
-    const f = box.querySelector("input") || box.querySelector(".btn.primary"); if (f && step !== 0) f.focus();
+      el("div", { class: "rowbtns" }, step > 0 ? el("button", { class: "btn", type: "button", onclick: () => go(-1) }, "Back") : null, last ? el("button", { class: "btn", type: "button", onclick: finish }, "Close") : el("button", { class: "btn primary", type: "button", onclick: () => go(1) }, sid === "name" && !nameVal.trim() ? "Skip for now" : sid === "about" ? "Continue" : "Next"))));
+    const f = box.querySelector("input") || box.querySelector(".btn.primary"); if (f && sid !== "about") f.focus();
   }
   document.addEventListener("keydown", onKey); paint(); document.body.append(box);
 }
@@ -4287,6 +4291,7 @@ function renderAbout() {
   const feature = (icon, title, text) => el("div", { class: "learn-card" }, el("strong", {}, icon + " " + title), el("p", { class: "hint" }, text));
   return [
     el("h2", {}, "ℹ️ About " + BRAND),
+    el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => { try { window.open("about.html", "_blank", "noopener"); } catch (_) {} } }, "📄 Read our full story")),
     el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: () => showWelcome(true) }, "👋 Show the welcome tour")),
     el("p", { class: "hint" }, el("a", { href: "terms.html", target: "_blank", rel: "noopener" }, "Terms"), " · ", el("a", { href: "privacy.html", target: "_blank", rel: "noopener" }, "Privacy"), " · ", el("a", { href: "refund.html", target: "_blank", rel: "noopener" }, "Refunds")),
     el("p", { class: "hint" }, "One free place to ask doubts, share ideas, prepare for GATE, plan your career and help your juniors."),
