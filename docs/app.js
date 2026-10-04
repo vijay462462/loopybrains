@@ -1837,7 +1837,7 @@ function renderToday() {
     streak = state.myStreak || 0, quizDone = QUIZ.length ? !!myQuizAnswer(dayNum()) : true, plan = readJSON("dd-exam-plan", null),
     left = plan && plan.date ? Math.ceil((new Date(plan.date + "T00:00:00").getTime() - new Date().setHours(0, 0, 0, 0)) / 864e5) : null;
   const note = state.welcomeNote && readJSON("dd-note-gone", 0) !== state.welcomeNote.updatedAt ? state.welcomeNote : null;
-  const key = [hello, name, streak, quizDone, left, equippedCostume(), storyGroups().length, readJSON("dd-launch", false) ? 1 : 0, readJSON("dd-launch-gone", false) ? 1 : 0, state.dataReady ? 1 : 0, boxToday() ? 1 : 0, questSteps().filter(s => s[2]).length, state.replies.length, state.doubts.length, readJSON("dd-tip", {}).gone ? 1 : 0, mistakeList().length, state.weekly.length, dayNum(), (typeof weekPoints === "function" ? weekPoints() : 0), note ? note.updatedAt : 0, openDrives().length, upcomingEvents().length, unansweredDoubts().length, readJSON("dd-today-closed", "") === dayStr() ? 1 : 0, (doubtOfDay() || {}).id || "", fbDone() ? 1 : 0].join("|"); if (key === todayKey && !bar.hidden) return; todayKey = key;
+  const key = [hello, name, streak, quizDone, left, equippedCostume(), storyGroups().length, readJSON("dd-launch", false) ? 1 : 0, readJSON("dd-launch-gone", false) ? 1 : 0, state.dataReady ? 1 : 0, boxToday() ? 1 : 0, questSteps().filter(s => s[2]).length, state.replies.length, state.doubts.length, readJSON("dd-tip", {}).gone ? 1 : 0, mistakeList().length, state.weekly.length, dayNum(), (typeof weekPoints === "function" ? weekPoints() : 0), note ? note.updatedAt : 0, openDrives().length, upcomingEvents().length, unansweredDoubts().length, readJSON("dd-today-closed", "") === dayStr() ? 1 : 0, (doubtOfDay() || {}).id || "", fbDone() ? 1 : 0, curioPoints()].join("|"); if (key === todayKey && !bar.hidden) return; todayKey = key;
   if (readJSON("dd-today-closed", "") === dayStr()) { bar.hidden = false; bar.replaceChildren(el("button", { class: "today-reopen", type: "button", onclick: () => { writeJSON("dd-today-closed", ""); todayKey = ""; renderToday(); } }, "Show today\u2019s card")); return; }
   const chip = (txt, cls, fn) => el("button", { class: "today-chip " + (cls || ""), type: "button", onclick: fn }, txt);
   const WORDS = ["Welcome to " + BRAND + " family", "Respect your teachers, help your juniors. 🙏", "Every question is welcome here.", "Kind words build a strong campus. 🌱", "Thank you for being part of our family.", "Learn together, grow together.", "Our teachers and staff work hard for you. Say thank you today. 🙏"];
@@ -1864,6 +1864,7 @@ function renderToday() {
       unansweredDoubts().length ? chip("🙋 " + unansweredDoubts().length + " doubt" + (unansweredDoubts().length === 1 ? "" : "s") + " need an answer", "pulse", showUnanswered) : null,
       openDrives().length ? chip("🏢 " + openDrives().length + " campus drive" + (openDrives().length === 1 ? "" : "s"), "", () => showPanel("drives")) : null,
       storyGroups().length < STORY_ROW_MIN ? chip("📸 Add a story", "", () => openStoryAdd()) : null,
+      chip("\u{1F50E} Curiosity" + (curioStreak() ? " \u{1F525}" + curioStreak() : ""), Object.keys(curioStore().why).includes(String(dayNum())) ? "" : "pulse", () => showPanel("curious")),
       (readJSON("dd-visits", { n: 1 }).n || 1) >= 3 && !fbDone() ? chip("\u{1F4AC} Give feedback", "", () => showPanel("feedback")) : null,
       left == null && (readJSON("dd-visits", { n: 1 }).n || 1) >= 2 ? chip("\u23F3 Set your exam date", "", () => showPanel("planner")) : null,
       chip("🧰 Explore", "", () => showPanel("explore")))); 
@@ -2122,6 +2123,63 @@ function showHowTo() {
     el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", onclick: close }, "Got it"))));
   document.body.append(ov);
 }
+// ---------- Curiosity corner: fact of the day, Why guess, mystery topic, best question, weekly tip ----------
+let _curioLoading = false;
+function loadCurio() {
+  if (window.CURIO || _curioLoading) return; _curioLoading = true;
+  const sc = document.createElement("script"); sc.src = "curiosity.js?v=" + ((document.querySelector('script[src^="app.js"]') || {}).src || "").split("v=")[1];
+  sc.onload = () => { if (state.mode === "curious") render(); }; sc.onerror = () => { window.CURIO = { facts: [], whys: [], mysteries: [], tips: [] }; }; document.head.append(sc);
+}
+const curioStore = () => { const o = readJSON("dd-curio", {}); return { fact: o.fact || {}, why: o.why || {}, myst: o.myst || {} }; };
+const curioSave = (o) => writeJSON("dd-curio", o);
+const curioPoints = (o = curioStore()) => Object.keys(o.fact).length + 2 * Object.keys(o.why).length + 3 * Object.keys(o.myst).length;
+function curioStreak(o = curioStore()) {
+  const days = new Set([...Object.keys(o.fact), ...Object.keys(o.why), ...Object.keys(o.myst)].map(Number)); let d = dayNum(), n = 0;
+  if (!days.has(d)) d -= 1; while (days.has(d)) { n++; d--; } return n;
+}
+const BRANCH_TAGS = { CSE: ["cs", "math"], "AI&ML": ["cs", "math"], ECE: ["ece", "physics"], EEE: ["ece", "physics"], ME: ["mech", "physics"], CE: ["civil"], CHE: ["chem"], MME: ["chem", "mech"] };
+function curioPick(list, key) {
+  if (!list.length) return null;
+  const tags = BRANCH_TAGS[curState.branch] || null, pool = tags ? list.filter(x => x[key] === "general" || tags.includes(x[key])) : list;
+  const use = pool.length ? pool : list; return use[dayNum() % use.length];
+}
+function bestQuestion() {
+  const week = Date.now() - 7 * 86400000, mine = store ? allMyIds() : new Set();
+  return state.doubts.filter(d => !d.deleted && !d.anonymous && (d.createdAt || 0) > week).map(d => ({ d, v: likesFor(d.id).filter(l => l.uid !== d.authorId).length })).filter(x => x.v >= 1).sort((a, b) => b.v - a.v || b.d.createdAt - a.d.createdAt)[0] || null;
+}
+function renderCurious() {
+  loadCurio();
+  const C = window.CURIO, back = el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back");
+  if (!C) return [el("h2", {}, "\u{1F50E} Curiosity corner"), el("p", { class: "hint", role: "status" }, "Loading…"), el("div", { class: "rowbtns" }, back)];
+  const o = curioStore(), today = String(dayNum()), streak = curioStreak(o), pts = curioPoints(o), week = Math.floor((dayNum() + 3) / 7);
+  const fact = curioPick(C.facts, "t"), why = C.whys.length ? C.whys[dayNum() % C.whys.length] : null, myst = C.mysteries.length ? C.mysteries[dayNum() % C.mysteries.length] : null, tip = C.tips.length ? C.tips[week % C.tips.length] : "";
+  const redo = () => { state.mode = "curious"; render(); };
+  const sec = (icon, kicker, ...kids) => el("div", { class: "learn-card curio-card" }, el("small", { class: "tag" }, icon + " " + kicker), ...kids);
+  // Why of the day: guess first, then the answer
+  const chosen = why ? o.why[today] : undefined;
+  const whyCard = why ? sec("❓", "WHY? GUESS FIRST", el("strong", {}, why.q),
+    el("div", { class: "curio-opts", role: "group", "aria-label": "Your guess" }, ...why.o.map((t, i) => el("button", { type: "button", class: "btn" + (chosen === i ? " primary" : "") + (chosen != null && i === why.a ? " right" : ""), disabled: chosen != null ? "" : null, onclick: () => { const s = curioStore(); if (s.why[today] != null) return; s.why[today] = i; curioSave(s); try { if (navigator.vibrate) navigator.vibrate(i === why.a ? [12, 40, 12] : 12); } catch (_) {} redo(); } }, t))),
+    chosen != null ? el("p", {}, el("b", {}, chosen === why.a ? "✅ Right! " : "Good try. "), why.x) : el("p", { class: "hint" }, "Pick one before you read the answer. Guessing makes you remember it (+2 points).")) : null;
+  // Mystery topic: locked until tapped
+  const open = !!o.myst[today];
+  const mystCard = myst ? sec("\u{1F512}", "MYSTERY TOPIC", open ? el("strong", {}, myst.t) : el("strong", {}, "A topic you may not have seen yet"), el("p", { class: open ? "" : "hint" }, open ? myst.x : myst.h),
+    open ? el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: () => openLoopySearch(myst.t, "curious") }, "\u{1F50E} Search more on " + myst.t)) : el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => { const s = curioStore(); s.myst[today] = 1; curioSave(s); try { if (navigator.vibrate) navigator.vibrate(20); } catch (_) {} redo(); } }, "\u{1F513} Unlock it (+3 points)"))) : null;
+  // Fact of the day
+  const learned = !!o.fact[today];
+  const factCard = fact ? sec("\u{1F4A1}", "DID YOU KNOW?", el("p", { class: "curio-fact" }, fact.q),
+    el("div", { class: "rowbtns" }, el("button", { class: "btn sm" + (learned ? "" : " primary"), type: "button", disabled: learned ? "" : null, onclick: () => { const s = curioStore(); s.fact[today] = 1; curioSave(s); redo(); } }, learned ? "✓ Learned (+1)" : "\u{1F44D} I learned this (+1)"), el("button", { class: "btn sm", type: "button", onclick: () => openLoopySearch(fact.ask, "curious") }, "\u{1F50E} Ask more"))) : null;
+  // Best question of the week
+  const bq = bestQuestion();
+  const bqCard = sec("\u{1F31F}", "BEST QUESTION THIS WEEK", bq ? el("strong", {}, String(bq.d.title || "").slice(0, 120)) : el("strong", {}, "No winner yet"), bq ? el("small", { class: "hint" }, bq.d.subject + " · " + bq.v + " vote" + (bq.v === 1 ? "" : "s") + " · asked by " + (bq.d.authorName || "a classmate")) : el("p", { class: "hint" }, "Ask a good question and ask classmates to vote for it."),
+    el("p", { class: "hint" }, "Every vote on your question earns you 1 point (up to 10 a question). Vote for the questions that made you think."), bq ? el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: () => { state.tab = "doubts"; openItem(bq.d.id); } }, "Open the question")) : el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => openAsk() }, "❓ Ask a question")));
+  const tipCard = tip ? sec("\u{1F9ED}", "TIP OF THE WEEK", el("p", {}, tip), el("small", { class: "hint" }, "Written by the " + BRAND + " team. Seniors: share your own tip as an idea."), el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: () => { state.tab = "ideas"; openAsk(); } }, "\u{1F4A1} Share my tip"))) : null;
+  return [
+    el("h2", {}, "\u{1F50E} Curiosity corner"),
+    el("div", { class: "curio-stats" }, el("div", {}, el("b", {}, String(streak)), el("span", {}, "day curiosity streak \u{1F525}")), el("div", {}, el("b", {}, String(pts)), el("span", {}, "curiosity points"))),
+    factCard, whyCard, mystCard, bqCard, tipCard,
+    el("div", { class: "rowbtns" }, back),
+  ].filter(Boolean);
+}
 // ---------- Pilot feedback, doubt of the day ----------
 const FB_PAY = [["no", "No"], ["29", "₹29"], ["49", "₹49"], ["99", "₹99"], ["later", "Ask me later"]];
 const fbDone = () => readJSON("dd-fb-" + weekKey(), false);
@@ -2190,6 +2248,7 @@ function notifItems() {
   const me = allStats().get(store.uid);
   if (me && me.streak > 0 && me.days && !me.days.has(dayNum()) && new Date().getHours() >= 17) items.push({ id: "streak" + dayNum(), at: Date.now(), icon: "\u{1F525}", text: "Your " + me.streak + "-day streak ends tonight. Answer one doubt or take the quiz to keep it.", go: () => showUnanswered(), fresh: true, todo: true });
   if (QUIZ.length && !myQuizAnswer(dayNum())) items.push({ id: "quiz" + dayNum(), at: Date.now() - 1, icon: "\u{1F9E0}", text: "Today's quiz is waiting. It takes one minute.", go: () => showPanel("quiz"), fresh: true, todo: true });
+  if (!curioStore().why[String(dayNum())]) items.push({ id: "cur" + dayNum(), at: Date.now() - 3, icon: "\u{1F50E}", text: "Today\u2019s Why question is waiting. Guess first, then see the answer.", go: () => showPanel("curious"), fresh: true, todo: true });
   if ((readJSON("dd-visits", { n: 1 }).n || 1) >= 3 && !fbDone()) items.push({ id: "fb" + weekKey(), at: Date.now() - 2, icon: "\u{1F4AC}", text: "Tell us how to improve " + BRAND + ". It takes 30 seconds.", go: () => showPanel("feedback"), fresh: true, todo: true });
   return items.sort((a, b) => b.at - a.at).slice(0, 25);
 }
@@ -2247,6 +2306,7 @@ const MODE_GUIDE = {
   explore: { icon: "\u{1F9ED}", purpose: "Discover what is happening across the app.", steps: ["Browse the cards.", "Open one that interests you.", "Come back for new things daily."], safe: SAFE_COMMON, next: ["❓ Ask a doubt", "ask"] },
   drives: { icon: "\u{1F3E2}", purpose: "Campus drives and company visits with dates and links.", steps: ["Check the date and eligibility.", "Open the official link to register.", "Prepare using the resume tool."], safe: "A real drive never asks you to pay. Report any post that does.", next: ["\u{1F4C4} Build my resume", "resume"] },
   events: { icon: "\u{1F4C5}", purpose: "Events, fests and workshops on your campus.", steps: ["Pick an event.", "Check the date and place.", "Invite a friend."], safe: "Meet in public places on campus.", next: ["\u{1F4E2} Notices", "notices"] },
+  curious: { icon: "\u{1F50E}", purpose: "A few minutes of wonder every day: a fact, a Why guess, a mystery topic and the best question of the week.", steps: ["Read the fact and tap I learned this.", "Guess the Why before you see the answer.", "Unlock the mystery topic and search more on anything that excites you."], safe: SAFE_COMMON, next: ["\u2753 Ask a question", "ask"] },
   feedback: { icon: "\u{1F4AC}", purpose: "Tell the team what works and what to fix. It shapes the next version.", steps: ["Give a rating from 1 to 5.", "Say whether you would pay and how much.", "Write one thing you like and one thing to improve."], safe: "Do not write phone numbers or passwords. Feedback is private and not shown with your name.", next: null },
   notifs: { icon: "\u{1F514}", purpose: "Everything that needs you: answers to your doubts, doubts waiting for a first answer, and streak reminders.", steps: ["Tap a line to open it.", "Answer a waiting doubt to be the first helper.", "Turn on phone alerts if you want a ping while the app is in the background."], safe: "Alerts show only the title of a post. Nothing private is sent anywhere.", next: ["\u{1F64B} See open doubts", "intro"] },
   loopysearch: { icon: "\u{1F50E}", purpose: "Search any topic and see it: a quick answer, a picture, then videos, diagrams and PDFs.", steps: ["Type a topic or a unit name.", "Pick Quick idea, Deep lecture or Exam prep.", "Open a video, diagram or PDF, or ask Loopy to explain."], safe: "Results open other websites. Download only from trusted sites.", next: ["\u2753 Ask classmates", "ask"] },
@@ -3239,7 +3299,7 @@ function allStats() {
   const active = (id, t) => { const p = get(id); if (p && t) p.days.add(dayNum(t)); };
   const helpfulIds = new Set(state.doubts.map(d => d.resolvedReplyId).filter(Boolean));
   const replyAuthor = new Map(state.replies.map(r => [r.id, r]));
-  for (const d of state.doubts) { active(d.authorId, d.createdAt); if (d.anonymous) continue; const p = get(d.authorId, d.authorName, d.createdAt); p.asked++; p.points += 1; }
+  for (const d of state.doubts) { active(d.authorId, d.createdAt); if (d.anonymous) continue; const p = get(d.authorId, d.authorName, d.createdAt); p.asked++; p.points += 1; let vv = 0; for (const l of likesFor(d.id)) if (l.uid !== d.authorId && vv < 10) { vv++; p.likes++; p.points += 1; } }
   for (const i of state.ideas) {
     active(i.authorId, i.createdAt); if (i.anonymous) continue;
     const p = get(i.authorId, i.authorName, i.createdAt); p.ideas++; p.points += 2;
@@ -8235,6 +8295,7 @@ function render() {
       state.mode === "wardrobe" ? renderWardrobe() :
       state.mode === "drives" ? renderDrives() :
       state.mode === "events" ? renderEvents() :
+      state.mode === "curious" ? renderCurious() :
       state.mode === "feedback" ? renderFeedback() :
       state.mode === "notifs" ? renderNotifs() :
       state.mode === "loopysearch" ? renderLoopySearch() :

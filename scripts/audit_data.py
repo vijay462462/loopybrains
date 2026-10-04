@@ -116,10 +116,33 @@ def audit_units(rep: Report) -> int:
     return len(u)
 
 
+def audit_curiosity(rep: Report) -> int:
+    c = load_js(ROOT / "docs/curiosity.js", "CURIO")
+    if not c:
+        rep.err("curiosity.js did not load"); return 0
+    tags = {"general", "math", "cs", "ece", "physics", "chem", "mech", "civil"}
+    def text(v, lim, tag):
+        if not isinstance(v, str) or not 3 <= len(v) <= lim or UNSAFE.search(v):
+            rep.err(f"curiosity {tag}: bad text {str(v)[:40]!r}")
+    for i, f in enumerate(c.get("facts", [])):
+        text(f.get("q"), 300, f"fact {i}"); text(f.get("ask"), 80, f"fact {i} ask")
+        if f.get("t") not in tags: rep.err(f"curiosity fact {i}: unknown tag {f.get('t')!r}")
+    for i, w in enumerate(c.get("whys", [])):
+        text(w.get("q"), 160, f"why {i}"); text(w.get("x"), 400, f"why {i} explanation")
+        o = w.get("o", [])
+        if not (2 <= len(o) <= 4) or not isinstance(w.get("a"), int) or not 0 <= w["a"] < len(o):
+            rep.err(f"curiosity why {i}: answer index must point at one of 2-4 options")
+        for t in o: text(t, 120, f"why {i} option")
+    for i, m in enumerate(c.get("mysteries", [])):
+        text(m.get("t"), 60, f"mystery {i}"); text(m.get("h"), 160, f"mystery {i} hint"); text(m.get("x"), 600, f"mystery {i} text")
+    for i, t in enumerate(c.get("tips", [])): text(t, 260, f"tip {i}")
+    return sum(len(c.get(k, [])) for k in ("facts", "whys", "mysteries", "tips"))
+
+
 def main() -> int:
     rep = Report()
-    n_col, n_rows, n_units = audit_colleges(rep), audit_curriculum(rep), audit_units(rep)
-    print(f"audited {n_col} college entries, {n_rows} curriculum rows, {n_units} syllabus entries")
+    n_col, n_rows, n_units, n_cur = audit_colleges(rep), audit_curriculum(rep), audit_units(rep), audit_curiosity(rep)
+    print(f"audited {n_col} college entries, {n_rows} curriculum rows, {n_units} syllabus entries, {n_cur} curiosity items")
     for w in rep.warnings: print("  WARN ", w)
     for e in rep.errors: print("  ERROR", e)
     print("data audit:", "FAILED" if rep.errors else "ok")
