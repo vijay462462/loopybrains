@@ -570,6 +570,32 @@ function welcomeView() {
     } }, "Save")), msg));
 }
 
+// Recent stories: everything posted in the last 48 hours, newest first, with Hide / Restore / Block device. Stories vanish for students after 24 hours anyway.
+function storiesView() {
+  const p = roomPath(), out = h("div", {}), msg = h("p", { class: "msg" });
+  const card = (s) => {
+    const left = Math.max(0, Math.round((s.createdAt + 864e5 - Date.now()) / 36e5)), box = h("div", { class: "card item" + (s.deleted ? " hidden" : "") });
+    const photo = h("div", {});
+    const act = async (name, data, btn) => { btn.disabled = true; try { await fs.updateDoc(fs.doc(db, p, "stories", s.id), data); Object.assign(s, data); await logAction(name, "stories/" + s.id, s.authorName || ""); box.replaceWith(card(s)); } catch (e) { msg.className = "msg err"; msg.textContent = "Not allowed (" + (e.code || "error") + ")."; btn.disabled = false; } };
+    box.append(h("div", { class: "row" }, h("span", { class: "tag" }, s.kind), h("b", {}, s.authorName || "Student"), s.deleted ? h("span", { class: "tag bad" }, "hidden") : h("span", { class: "tag ok" }, left ? left + " h left" : "expired"), (s.reports || []).length ? h("span", { class: "tag warn" }, (s.reports || []).length + " reports") : null, h("span", { class: "mono" }, ago(s.createdAt))),
+      s.kind === "photo" ? h("div", { class: "row" }, h("button", { class: "b sm", onclick: async (e) => { e.currentTarget.disabled = true; try { const d = await fs.getDoc(fs.doc(db, p, "pages", s.pageId)); const src = d.exists() ? d.data().data : ""; if (/^data:image\/jpeg;base64,/.test(src)) { const im = h("img", { class: "st-thumb", alt: "Story photo", src }); photo.replaceChildren(im); } else photo.replaceChildren(h("p", { class: "adm-hint" }, "Photo not available.")); } catch (er) { photo.replaceChildren(h("p", { class: "msg err" }, "Could not load the photo.")); } } }, "Show photo")) : h("p", {}, h("b", {}, String(s.text || "").slice(0, 200))),
+      photo, s.caption ? h("p", { class: "adm-hint" }, String(s.caption).slice(0, 200)) : null,
+      h("div", { class: "row" }, s.deleted ? h("button", { class: "b sm ok", onclick: (e) => act("restore-story", { deleted: false }, e.currentTarget) }, "Restore") : h("button", { class: "b sm bad", onclick: (e) => act("hide-story", { deleted: true }, e.currentTarget) }, "Hide"),
+        s.authorId ? h("button", { class: "b sm", onclick: async (e) => { const b = e.currentTarget; if (!confirm("Block device " + s.authorId + "?")) return; b.disabled = true; try { await fs.setDoc(fs.doc(db, p, "blocked", s.authorId), { reason: "story", by: auth.currentUser.uid, at: Date.now() }); await logAction("block-device", s.authorId, "from story " + s.id); b.textContent = "Blocked"; } catch (er) { msg.className = "msg err"; msg.textContent = "Not allowed (" + (er.code || "error") + ")."; b.disabled = false; } } }, "Block device") : null));
+    return box;
+  };
+  const load = async (btn) => {
+    if (btn) btn.disabled = true; out.replaceChildren(h("p", { class: "adm-hint" }, "Loading…"));
+    try { const snap = await fs.getDocs(fs.query(fs.collection(db, p, "stories"), fs.where("createdAt", ">", Date.now() - 2 * 864e5), fs.orderBy("createdAt", "desc"), fs.limit(100)));
+      const rows = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      out.replaceChildren(h("p", { class: "adm-hint" }, rows.length + " stor" + (rows.length === 1 ? "y" : "ies") + " in the last 48 hours."), ...(rows.length ? rows.map(card) : [h("p", { class: "adm-hint" }, "No recent stories.")])); }
+    catch (e) { out.replaceChildren(h("p", { class: "msg err" }, "Could not load (" + (e.code || "error") + ").")); }
+    if (btn) btn.disabled = false;
+  };
+  load();
+  return h("div", {}, h("div", { class: "card" }, h("h3", {}, "Recent stories"), h("p", { class: "adm-hint" }, "Hide a story that should not be shown (test posts, off-topic or abusive). Students stop seeing it at once. Photos load only when you tap Show photo."), h("div", { class: "row" }, h("button", { class: "b sm", onclick: (e) => load(e.currentTarget) }, "↻ Refresh"))), msg, out);
+}
+
 const EXAMS = ["Mid", "End", "Supplementary", "Model", "Other"];
 function papersView() {
   const p = roomPath(), msg = h("p", { class: "msg" }), box = h("div", {});
@@ -599,11 +625,11 @@ function papersView() {
 }
 
 // ---------- shell ----------
-const TABS = [["overview", "Overview", true], ["report", "Weekly report", true], ["mail", "Report emails", true], ["moderation", "Moderation", true], ["blocked", "Blocked devices", true], ["licences", "College licences", false], ["staff", "College staff", false], ["sale", "Flash sale", false], ["promos", "Promo codes", false], ["events", "Events", true], ["drives", "Placement drives", true], ["welcome", "Welcome note", true], ["notices", "Notices", true], ["papers", "Papers", true], ["colleges", "Colleges", false], ["requests", "Requests and survey", false], ["log", "Log", false]];
-const VIEWS = { welcome: welcomeView, events: eventsView, drives: drivesView, mail: mailView, report: reportView, staff: staffView, sale: saleView, promos: promosView, notices: noticesView, papers: papersView, overview: overviewView, moderation: moderationView, blocked: blockedView, colleges: collegesView, requests: requestsView, log: logView };
+const TABS = [["overview", "Overview", true], ["report", "Weekly report", true], ["mail", "Report emails", true], ["moderation", "Moderation", true], ["stories", "Recent stories", true], ["blocked", "Blocked devices", true], ["licences", "College licences", false], ["staff", "College staff", false], ["sale", "Flash sale", false], ["promos", "Promo codes", false], ["events", "Events", true], ["drives", "Placement drives", true], ["welcome", "Welcome note", true], ["notices", "Notices", true], ["papers", "Papers", true], ["colleges", "Colleges", false], ["requests", "Requests and survey", false], ["log", "Log", false]];
+const VIEWS = { stories: storiesView, welcome: welcomeView, events: eventsView, drives: drivesView, mail: mailView, report: reportView, staff: staffView, sale: saleView, promos: promosView, notices: noticesView, papers: papersView, overview: overviewView, moderation: moderationView, blocked: blockedView, colleges: collegesView, requests: requestsView, log: logView };
 function draw() {
   const u = auth.currentUser;
-  const STAFF_TABS = ["welcome", "events", "drives", "report", "notices", "moderation", "blocked", "papers"], shownTabs = S.staffOnly ? TABS.filter(t => STAFF_TABS.includes(t[0])) : TABS;
+  const STAFF_TABS = ["stories", "welcome", "events", "drives", "report", "notices", "moderation", "blocked", "papers"], shownTabs = S.staffOnly ? TABS.filter(t => STAFF_TABS.includes(t[0])) : TABS;
   if (S.staffOnly && !STAFF_TABS.includes(S.tab)) S.tab = "notices";
   const tabs = h("div", { class: "adm-tabs" }, ...shownTabs.map(([k, label]) => h("button", { class: S.tab === k ? "on" : "", onclick: () => { S.tab = k; draw(); } }, label)));
   const needs = TABS.find(t => t[0] === S.tab)[2];
