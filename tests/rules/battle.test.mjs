@@ -91,7 +91,7 @@ await t("handle: the owner can release, others cannot", async () => { await asse
 await t("handle: profile can publish only a name the user owns", async () => { await env.withSecurityRulesDisabled(async (ctx) => { await setDoc(doc(ctx.firestore(), "handles", "bob_name"), { uid: "bob", createdAt: Date.now() }); }); await assertSucceeds(prof(bob, "bob", { handle: "bob_name" })); await assertFails(prof(alice, "alice", { handle: "bob_name" })); await assertFails(prof(alice, "alice", { handle: "nobody_owns" })); });
 // ---- private answers ----
 const R = "rooms/r00m-Abc123xy";
-await env.withSecurityRulesDisabled(async (ctx) => { await setDoc(doc(ctx.firestore(), R + "/doubts", "dq1"), { title: "q", ownerUid: "alice", authorId: "alice-device-1" }); await setDoc(doc(ctx.firestore(), R + "/doubts", "dq2"), { title: "old", authorId: "old-device-1" }); });
+await env.withSecurityRulesDisabled(async (ctx) => { const adb = ctx.firestore(); await setDoc(doc(adb, R + "/doubts", "dq1"), { title: "q", ownerUid: "alice", authorId: "alice-device-1" }); await setDoc(doc(adb, R + "/doubts", "dq2"), { title: "old", authorId: "old-device-1" }); });
 const pa = (db, uid, to, extra = {}, id = null) => setDoc(doc(db, R + "/privateAnswers", id || ((extra.doubtId || "dq1") + "_" + uid)), { doubtId: "dq1", toUid: to, ownerUid: uid, authorId: uid + "-device-1", authorName: "Helper", body: "Use Bayes theorem.", createdAt: Date.now(), ...extra });
 await t("private: a helper sends a private answer to the asker", () => assertSucceeds(pa(bob, "bob", "alice", {}, "dq1_bob")));
 await t("private: asker and answerer can read it", async () => { await assertSucceeds(getDoc(doc(alice, R + "/privateAnswers", "dq1_bob"))); await assertSucceeds(getDoc(doc(bob, R + "/privateAnswers", "dq1_bob"))); });
@@ -115,7 +115,7 @@ await t("thanks: the asker credits a real private answer", () => assertSucceeds(
 await t("thanks: others cannot credit, and made-up answers cannot be credited", async () => { await assertFails(thx(bob, "bob", "bob")); await assertFails(thx(alice, "alice", "carl")); });
 await t("thanks: helpful can be upgraded to best, not downgraded", async () => { await assertSucceeds(thx(alice, "alice", "bob", "best")); await assertFails(thx(alice, "alice", "bob", "helpful")); });
 // ---- duplicate links and teacher verification ----
-await env.withSecurityRulesDisabled(async (ctx) => { await setDoc(doc(ctx.firestore(), "staff", "r00m-Abc123xy_tess"), { uid: "tess", name: "Tess" }); await setDoc(doc(ctx.firestore(), R + "/replies", "rv1"), { parentId: "dq1", parentColl: "doubts", body: "good answer", authorId: "bob-device-1", authorName: "Bob", createdAt: Date.now() }); });
+await env.withSecurityRulesDisabled(async (ctx) => { const adb = ctx.firestore(); await setDoc(doc(adb, "staff", "r00m-Abc123xy_tess"), { uid: "tess", name: "Tess" }); await setDoc(doc(adb, R + "/replies", "rv1"), { parentId: "dq1", parentColl: "doubts", body: "good answer", authorId: "bob-device-1", authorName: "Bob", createdAt: Date.now() }); });
 const tess = env.authenticatedContext("tess", { email_verified: true, email: "t@x.edu" }).firestore();
 const ver = (db, uid, rid = "rv1") => setDoc(doc(db, R + "/verified", rid), { replyId: rid, doubtId: "dq1", by: uid, byName: "Tess", at: Date.now() });
 await t("verified: staff can verify a real public answer", () => assertSucceeds(ver(tess, "tess")));
