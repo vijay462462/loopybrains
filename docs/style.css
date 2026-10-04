@@ -2443,3 +2443,6 @@ html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 
 .pk-src, .cr-src { margin: 0; font-size: 12.5px; line-height: 1.4; opacity: .85; } .pk-src b, .cr-src b { font-weight: 800; } .pk-src.ok b, .cr-src.ok b { color: #4ade80; }
 .cr-src { padding: 0 6px; }
+
+.guide-safe { margin: 0; padding: 9px 11px; border-radius: 12px; font-size: 12.5px; line-height: 1.4; background: color-mix(in srgb, #16a34a 12%, transparent); border: 1px solid color-mix(in srgb, #16a34a 30%, var(--line)); }
+.mode-guide { margin: 0 0 12px; }

@@ -2043,13 +2043,13 @@ function renderHeader() {
 
 // Every tab says what it is for, how to use it in three steps, and the next step to take. Students can close it; a small link brings it back.
 const TAB_GUIDE = {
-  doubts: { icon: "\u2753", purpose: "Stuck on a problem? Ask it here and classmates and seniors will answer.", steps: ["Pick your branch and subject on the left (or leave it on All).", "Tap Ask a doubt, write your question and add a photo if it helps.", "Open your doubt later to read answers. Thank the helpful ones with a reaction."], next: () => { const mine = store ? allMyIds() : new Set(); const asked = state.doubts.some(d => mine.has(d.authorId)); return asked ? ["\u{1F64B} Answer a classmate\u2019s doubt", () => showUnanswered()] : ["\u2753 Ask your first doubt", () => openAsk()]; } },
-  ideas: { icon: "\u{1F4A1}", purpose: "Share project, startup and campus ideas. Find people to build them with.", steps: ["Choose a category, such as Project or Startup.", "Tap Share an idea and say what you want to build and who you need.", "Read the comments, then team up with the people who reply."], next: () => ["\u{1F4A1} Share an idea", () => openAsk()] },
-  clubs: { icon: "\u{1F3DB}", purpose: "Find your club, see what it is doing and post updates for its members.", steps: ["Pick a club on the left.", "Read its latest posts and events.", "Post a meeting, a result or a call for new members."], next: () => ["\u{1F4E3} Post in a club", () => openAsk()] },
-  challenges: { icon: "\u{1F3AE}", purpose: "Quizzes, puzzles and contests. Win points for yourself and your college.", steps: ["Take the daily quiz. It takes one minute.", "Try a puzzle or an innovation challenge.", "Check the Board to see how your college is doing this week."], next: () => ["\u{1F9E0} Take today\u2019s quiz", () => showPanel("quiz")] },
-  jobs: { icon: "\u{1F4BC}", purpose: "Internships, jobs, off-campus drives and interview experiences in one place.", steps: ["Pick a type, such as Internship or Interview experience.", "Open a post for the details and the official link.", "Never pay for a job. Report anything that asks for money."], next: () => ["\u{1F3E2} See campus drives", () => showPanel("drives")] },
-  market: { icon: "\u{1F6D2}", purpose: "Buy and sell books, notes, electronics and hostel items with your college mates.", steps: ["Pick a category, or search for what you need.", "Message the seller and meet in a public place on campus.", "Selling? Tap Post an item with a clear photo and price."], next: () => ["\u{1F3F7}\uFE0F Sell something", () => openAsk()] },
-  gate: { icon: "\u{1F3AF}", purpose: "Exam preparation: previous papers, tips and discussions for your exam.", steps: ["Pick your branch and subject.", "Open the previous papers and try them with a timer.", "Stuck on a question? Post it in the discussion."], next: () => ["\u{1F4DD} Open previous papers", () => { const b = document.querySelector(".pyq-panel, .subj-chip"); if (b) b.scrollIntoView({ behavior: "smooth" }); }] },
+  doubts: { icon: "\u2753", purpose: "Stuck on a problem? Ask it here and classmates and seniors will answer.", steps: ["Pick your branch and subject on the left (or leave it on All).", "Tap Ask a doubt, write your question and add a photo if it helps.", "Open your doubt later to read answers. Thank the helpful ones with a reaction."], safe: "Do not post phone numbers, passwords or photos of other people.", next: () => { const mine = store ? allMyIds() : new Set(); const asked = state.doubts.some(d => mine.has(d.authorId)); return asked ? ["\u{1F64B} Answer a classmate\u2019s doubt", () => showUnanswered()] : ["\u2753 Ask your first doubt", () => openAsk()]; } },
+  ideas: { safe: "Share the idea, not private data or secrets you must protect.", icon: "\u{1F4A1}", purpose: "Share project, startup and campus ideas. Find people to build them with.", steps: ["Choose a category, such as Project or Startup.", "Tap Share an idea and say what you want to build and who you need.", "Read the comments, then team up with the people who reply."], next: () => ["\u{1F4A1} Share an idea", () => openAsk()] },
+  clubs: { safe: "Meet club members on campus and in groups you can verify.", icon: "\u{1F3DB}", purpose: "Find your club, see what it is doing and post updates for its members.", steps: ["Pick a club on the left.", "Read its latest posts and events.", "Post a meeting, a result or a call for new members."], next: () => ["\u{1F4E3} Post in a club", () => openAsk()] },
+  challenges: { safe: "Points come only from playing. Nobody can sell or give you points.", icon: "\u{1F3AE}", purpose: "Quizzes, puzzles and contests. Win points for yourself and your college.", steps: ["Take the daily quiz. It takes one minute.", "Try a puzzle or an innovation challenge.", "Check the Board to see how your college is doing this week."], next: () => ["\u{1F9E0} Take today\u2019s quiz", () => showPanel("quiz")] },
+  jobs: { safe: "A real job or internship never asks you to pay. Report it if it does.", icon: "\u{1F4BC}", purpose: "Internships, jobs, off-campus drives and interview experiences in one place.", steps: ["Pick a type, such as Internship or Interview experience.", "Open a post for the details and the official link.", "Never pay for a job. Report anything that asks for money."], next: () => ["\u{1F3E2} See campus drives", () => showPanel("drives")] },
+  market: { safe: "Meet in a public place on campus. Do not pay in advance.", icon: "\u{1F6D2}", purpose: "Buy and sell books, notes, electronics and hostel items with your college mates.", steps: ["Pick a category, or search for what you need.", "Message the seller and meet in a public place on campus.", "Selling? Tap Post an item with a clear photo and price."], next: () => ["\u{1F3F7}\uFE0F Sell something", () => openAsk()] },
+  gate: { safe: "Use papers from official or trusted sources.", icon: "\u{1F3AF}", purpose: "Exam preparation: previous papers, tips and discussions for your exam.", steps: ["Pick your branch and subject.", "Open the previous papers and try them with a timer.", "Stuck on a question? Post it in the discussion."], next: () => ["\u{1F4DD} Open previous papers", () => { const b = document.querySelector(".pyq-panel, .subj-chip"); if (b) b.scrollIntoView({ behavior: "smooth" }); }] },
 };
 function renderGuide() {
   const box = $("guideBar"); if (!box) return;
@@ -2063,6 +2063,7 @@ function renderGuide() {
     el("button", { class: "guide-x", type: "button", "aria-label": "Close this guide", onclick: () => { writeJSON(key, true); renderGuide(); } }, "\u2715"),
     el("div", { class: "guide-head" }, el("span", { class: "guide-ic", "aria-hidden": "true" }, g.icon), el("div", {}, el("small", {}, "WHAT THIS IS FOR"), el("strong", {}, g.purpose))),
     el("ol", { class: "guide-steps" }, ...g.steps.map(s => el("li", {}, s))),
+    g.safe ? el("p", { class: "guide-safe" }, el("b", {}, "Stay safe: "), g.safe) : null,
     el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", onclick: nx[1] }, nx[0]), el("button", { class: "btn sm", type: "button", onclick: () => showHowTo() }, "\u{1F4D6} Full guide")));
 }
 // The full guide: the path from joining to getting the most out of the app, with ticks for the steps you have already done.
@@ -2083,6 +2084,60 @@ function showHowTo() {
     el("h2", {}, "\u{1F4D6} How to use " + BRAND), el("p", { class: "ob-say" }, "Follow these steps. Tick marks show what you have already done."), el("ol", { class: "hw-list" }, ...steps),
     el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", onclick: close }, "Got it"))));
   document.body.append(ov);
+}
+// Every screen opened from a tab or a button explains itself: what it is for, how to use it, how to stay safe and the next step. It can be closed (and brought back) without redrawing, so a half-written form is never lost.
+const SAFE_COMMON = "Never share your password, OTP or bank details with anyone here. Staff will never ask for them.";
+const MODE_GUIDE = {
+  me: { icon: "\u{1F464}", purpose: "Your own page: points, streak, badges and the things you have posted.", steps: ["Check your streak and points at the top.", "Open your posts to edit or delete them.", "Collect badges by helping others."], safe: "Only your nickname and college are shown to others. Your email stays private.", next: ["❓ Ask a doubt", "ask"] },
+  quiz: { icon: "\u{1F9E0}", purpose: "One question a day on your subjects and on current affairs.", steps: ["Read the question and tap an answer.", "See the right answer and the reason.", "Come back tomorrow to keep your streak."], safe: "Answers are checked on the server side of the app logic, so there is no way to buy or share points.", next: ["\u{1F3C6} See the board", "leaders"] },
+  leaders: { icon: "\u{1F3C6}", purpose: "The college board: who helped the most this week.", steps: ["Switch between this week and all time.", "Tap a name to see what they helped with.", "Answer doubts to climb the board."], safe: "Only nicknames appear on the board.", next: ["\u{1F64B} Answer a doubt", "intro"] },
+  curriculum: { icon: "\u{1F4D8}", purpose: "The subjects of your year and branch, as published by your college.", steps: ["Pick your year and branch.", "Tap a subject to see its code and credits.", "Use the subject to filter doubts."], safe: "Subject lists are for reference. Your college’s notice board is the final word.", next: ["❓ Ask about a subject", "ask"] },
+  learn: { icon: "\u{1F4DA}", purpose: "Study material grouped by subject.", steps: ["Choose your subject.", "Open a topic and read it.", "Save what you need and test yourself in the quiz."], safe: "Open links only from the official sources shown inside the app.", next: ["\u{1F9E0} Take the quiz", "quiz"] },
+  resources: { icon: "\u{1F5C2}", purpose: "Notes, previous papers and useful links collected for your branch.", steps: ["Pick your branch.", "Open a resource.", "Report a wrong or broken link with the Report button."], safe: "Do not download files from unknown links. Report them instead.", next: ["\u{1F4DD} Previous papers", "papers"] },
+  career: { icon: "\u{1F9ED}", purpose: "Plan your career: skills, roadmaps and what to learn next.", steps: ["Choose a goal.", "Follow the roadmap one step a day.", "Tick off each step to see your progress."], safe: "Never pay anyone to promise a job.", next: ["\u{1F4C4} Build my resume", "resume"] },
+  battle: { icon: "⚔️", purpose: "A quick quiz duel with a classmate.", steps: ["Start a battle or join with a code.", "Answer before the timer runs out.", "Winner takes the points."], safe: "Share a battle code only with people you trust.", next: ["\u{1F3C6} See the board", "leaders"] },
+  plus: { icon: "✨", purpose: "Extra tools: mock tests, planner, goals and more.", steps: ["Pick a tool.", "Use it for a few minutes.", "Come back for a daily habit."], safe: SAFE_COMMON, next: ["\u{1F4DD} Try a mock test", "mock"] },
+  mock: { icon: "⏱️", purpose: "A timed practice test to find your weak spots.", steps: ["Choose a subject and length.", "Answer within the timer.", "Review the mistakes afterward."], safe: "Practice results stay on your device and your account only.", next: ["\u{1F4C9} Review my mistakes", "mistakes"] },
+  mistakes: { icon: "\u{1F4C9}", purpose: "Questions you got wrong, so you can fix them.", steps: ["Open a mistake.", "Read the correct answer and reason.", "Practise it again until it is right."], safe: SAFE_COMMON, next: ["\u{1F4DD} Another mock test", "mock"] },
+  planner: { icon: "\u{1F5D3}", purpose: "A simple study plan for the week.", steps: ["Add a task and a time.", "Tick it off when done.", "Check the week at a glance."], safe: "Your plan is private to you.", next: ["\u{1F3AF} Set a goal", "goals"] },
+  goals: { icon: "\u{1F3AF}", purpose: "Set a small goal and track it daily.", steps: ["Write one clear goal.", "Check it off each day.", "Celebrate your streak."], safe: "Your goals are private to you.", next: ["\u{1F5D3} Plan the week", "planner"] },
+  papers: { icon: "\u{1F4DD}", purpose: "Previous year question papers to practise with.", steps: ["Pick a subject and year.", "Try the paper with a timer.", "Post a doubt on any question you cannot solve."], safe: "Use papers from official or trusted sources only.", next: ["❓ Ask about a question", "ask"] },
+  notices: { icon: "\u{1F4E2}", purpose: "Official notices for your college in one place.", steps: ["Read the newest first.", "Open a notice for details.", "Report anything that looks fake."], safe: "Always confirm important notices on the official college website.", next: ["\u{1F4C5} See events", "events"] },
+  explore: { icon: "\u{1F9ED}", purpose: "Discover what is happening across the app.", steps: ["Browse the cards.", "Open one that interests you.", "Come back for new things daily."], safe: SAFE_COMMON, next: ["❓ Ask a doubt", "ask"] },
+  drives: { icon: "\u{1F3E2}", purpose: "Campus drives and company visits with dates and links.", steps: ["Check the date and eligibility.", "Open the official link to register.", "Prepare using the resume tool."], safe: "A real drive never asks you to pay. Report any post that does.", next: ["\u{1F4C4} Build my resume", "resume"] },
+  events: { icon: "\u{1F4C5}", purpose: "Events, fests and workshops on your campus.", steps: ["Pick an event.", "Check the date and place.", "Invite a friend."], safe: "Meet in public places on campus.", next: ["\u{1F4E2} Notices", "notices"] },
+  ai: { icon: "\u{1F916}", purpose: "Ask Loopy for study help.", steps: ["Type a clear question.", "Read the answer.", "Check important facts in your textbook."], safe: "Loopy can make mistakes. Do not type personal details into it.", next: ["❓ Ask classmates", "ask"] },
+  resume: { icon: "\u{1F4C4}", purpose: "Build a one-page resume from what you have done.", steps: ["Fill in your details.", "Review the preview.", "Save or print it."], safe: "Your resume stays on your device. Share it only with companies you have verified.", next: ["\u{1F3E2} See drives", "drives"] },
+  wboard: { icon: "\u{1F4CA}", purpose: "This week’s progress for you and your college.", steps: ["See your points.", "Compare with last week.", "Pick one thing to improve."], safe: "Only nicknames are shown.", next: ["\u{1F3AF} Set a goal", "goals"] },
+  focusplus: { icon: "\u{1F9D8}", purpose: "A focus timer for study sessions.", steps: ["Set the minutes.", "Start and stay off your phone.", "Take a short break when it ends."], safe: SAFE_COMMON, next: ["\u{1F5D3} Plan the week", "planner"] },
+  stickers: { icon: "\u{1F3F7}", purpose: "Stickers you can use in posts and replies.", steps: ["Open a pack.", "Tap a sticker to use it.", "Earn more by keeping your streak."], safe: SAFE_COMMON, next: ["\u{1F457} Dress Loopy", "wardrobe"] },
+  wardrobe: { icon: "\u{1F457}", purpose: "Dress Loopy with what you have unlocked.", steps: ["Pick a costume.", "See it on Loopy.", "Unlock more with your daily streak."], safe: SAFE_COMMON, next: ["\u{1F3F7} Stickers", "stickers"] },
+  fun: { icon: "\u{1F389}", purpose: "A break between studies: light games and trivia.", steps: ["Pick a game.", "Play for a few minutes.", "Return to study."], safe: SAFE_COMMON, next: ["\u{1F9E0} Daily quiz", "quiz"] },
+  lab: { icon: "\u{1F9EA}", purpose: "Experiments and calculators for your subjects.", steps: ["Pick an experiment.", "Change the numbers.", "See what changes."], safe: SAFE_COMMON, next: ["❓ Ask a doubt", "ask"] },
+  college: { icon: "\u{1F3EB}", purpose: "Facts about your college and who it is for.", steps: ["Read the verified facts.", "Check the source link.", "Report anything that is wrong."], safe: "This app is not affiliated with any college. Facts come from public websites.", next: ["\u{1F4E2} Notices", "notices"] },
+  alumni: { icon: "\u{1F393}", purpose: "Seniors and alumni who can guide you.", steps: ["Browse profiles.", "Read how they can help.", "Ask politely and do not share private details."], safe: "Meet people in public places. Report anyone who asks for money.", next: ["\u{1F9ED} Career help", "career"] },
+  network: { icon: "\u{1F310}", purpose: "See which campuses and colleges you can reach.", steps: ["Pick a campus or college.", "Send a doubt there.", "Read the answers when they arrive."], safe: "You can send to at most 3 colleges and 5 posts a day. This protects everyone from spam.", next: ["❓ Ask a doubt", "ask"] },
+  name: { icon: "✏️", purpose: "Choose the name shown with your posts.", steps: ["Type a nickname.", "Avoid your phone number or address.", "Save."], safe: "Use a nickname. Real names are not required.", next: null },
+  campus: { icon: "\u{1F4CD}", purpose: "Choose your campus so classmates find you.", steps: ["Pick your campus.", "Browse its posts.", "Send a post to other campuses too."], safe: "You can change it later.", next: null },
+  ask: { icon: "✍️", purpose: "Write your post. Pick who should see it before you send.", steps: ["Choose a subject.", "Write clearly and add a photo if it helps.", "Choose who can see it, then post."], safe: "Do not post phone numbers, addresses, passwords or photos of other people.", next: null },
+  view: { icon: "\u{1F4AC}", purpose: "Read the post and its answers.", steps: ["Read the question.", "Add an answer or a reaction.", "Report anything unsafe with the Report button."], safe: "Be kind. Reported posts are reviewed by the admin.", next: null },
+};
+function modeGuide(mode) {
+  const g = MODE_GUIDE[mode]; if (!g) return null;
+  const key = "dd-mg-" + mode, box = el("section", { class: "guide-card mode-guide", "aria-label": "How this works" });
+  const draw = () => {
+    const closed = readJSON(key, false);
+    box.classList.toggle("mini", closed);
+    if (closed) { box.replaceChildren(el("button", { class: "guide-reopen", type: "button", onclick: () => { writeJSON(key, false); draw(); } }, "ℹ️ How this works")); return; }
+    const nx = g.next;
+    box.replaceChildren(
+      el("button", { class: "guide-x", type: "button", "aria-label": "Close this guide", onclick: () => { writeJSON(key, true); draw(); } }, "✕"),
+      el("div", { class: "guide-head" }, el("span", { class: "guide-ic", "aria-hidden": "true" }, g.icon), el("div", {}, el("small", {}, "WHAT THIS IS FOR"), el("strong", {}, g.purpose))),
+      el("ol", { class: "guide-steps" }, ...g.steps.map(t => el("li", {}, t))),
+      g.safe ? el("p", { class: "guide-safe" }, el("b", {}, "Stay safe: "), g.safe) : null,
+      nx ? el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => { if (nx[1] === "ask") openAsk(); else if (nx[1] === "intro") showUnanswered(); else if (MODE_GUIDE[nx[1]] || ["intro"].includes(nx[1])) { state.mock = null; state.mist = null; showPanel(nx[1]); } } }, nx[0])) : null);
+  };
+  draw(); return box;
 }
 // Tapping a subject: the chip lights up at once, then only the feed is redrawn (not the whole screen).
 let _pickTimer = 0;
@@ -7841,6 +7896,7 @@ function render() {
       state.mode === "ask" ? renderAsk() :
       state.mode === "edit" && cur ? renderAsk(cur) :
       state.mode === "view" || state.mode === "edit" ? renderView() : renderIntro()));
+    try { const gd = modeGuide(state.mode === "edit" ? "ask" : state.mode); if (gd) sheet.prepend(gd); } catch (_) {}
     if (draft && $("f-reply")) $("f-reply").value = draft;
   } catch(err) {
     console.error("render error:", err);
