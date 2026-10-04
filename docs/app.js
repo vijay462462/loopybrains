@@ -243,7 +243,7 @@ if (!CLUBS.includes("Alumni")) CLUBS.push("Alumni");
 
 const PALETTE = ["#6366f1", "#0ea5e9", "#10b981", "#f59e0b", "#a855f7", "#ec4899", "#ef4444", "#14b8a6", "#84cc16", "#f97316", "#64748b"];
 const FB_VERSION = "10.12.2";
-const MOTTO = CFG.tagline || "Ask boldly. Answer together. Innovate endlessly.";
+const MOTTO = CFG.tagline || "Ask. Learn. Grow together.";
 // Captions that rotate under the title. Edit them in config.js under `captions`.
 const CAPTIONS = (CFG.captions && CFG.captions.length) ? CFG.captions : [
   MOTTO,
