@@ -192,7 +192,16 @@ if (BRAND_COLORS) {
 const THEMES = [["Default", ""], ["Ocean", "#0ea5e9"], ["Forest", "#16a34a"], ["Sunset", "#f97316"], ["Rose", "#e11d48"], ["Violet", "#7c3aed"], ["Gold", "#ca8a04"]];
 const applyTheme = () => { try { const c = localStorage.getItem("dd-theme") || ""; if (/^#[0-9a-f]{6}$/i.test(c)) { document.documentElement.style.setProperty("--accent", c); document.documentElement.style.setProperty("--brand-a", c); document.documentElement.style.setProperty("--brand-b", shiftColor(c, 28, 0)); } } catch (_) {} };
 applyTheme();
-const SUBJECTS = (CFG.subjects && CFG.subjects.length) ? CFG.subjects : ["Maths", "Physics", "Chemistry", "Other"];
+// RGUKT: doubt subjects are the real subject names from the RGUKT timetable, grouped by branch (see rgukt-curriculum.js).
+const RGUKT_DEPTS = (() => {
+  const C = window.RGUKT_CURRICULUM; if (!C || SEL !== "rgukt") return null;
+  const short = (n) => n.replace(/ and /g, " & ").replace(/Engineering/g, "Eng.").replace(/Introduction to/g, "Intro to").replace(/Multivariable/g, "Multivar.").replace(/Organizational Behavior/g, "Org. Behavior").replace(/Intellectual Property Rights/g, "IPR").replace(/Differential Equations & Multivar\. Calculus/, "Diff. Equations & Multivar. Calculus").replace(/ \/ .*$/, "");
+  const names = { "AI&ML": "AI & ML", CSE: "CSE", ECE: "ECE", EEE: "EEE", ME: "Mech", CE: "Civil", CHE: "Chemical", MME: "MME" };
+  const order = ["ECE", "CSE", "CE", "ME", "EEE", "AI&ML", "CHE", "MME"], out = {};
+  for (const b of order) { const seen = new Set(); for (const y of Object.keys(C.data)) for (const r of (C.data[y][b] || [])) { if (r[2] === 0 && /Constitution|Aptitude|Environmental Science|Universal Human|Indian Knowledge/.test(r[0])) continue; seen.add(short(r[0])); } out[names[b]] = [...seen]; }
+  return out;
+})();
+const SUBJECTS = RGUKT_DEPTS ? [...new Set([...Object.values(RGUKT_DEPTS).flat(), "Other"])] : (CFG.subjects && CFG.subjects.length) ? CFG.subjects : ["Maths", "Physics", "Chemistry", "Other"];
 const CATS = (CFG.ideaCategories && CFG.ideaCategories.length) ? CFG.ideaCategories : ["Project", "Other"];
 const CLUBS = [...((CFG.clubs && CFG.clubs.length) ? CFG.clubs : ["Coding Club", "Other"])];
 if (!CLUBS.includes("Alumni")) CLUBS.push("Alumni");
@@ -309,7 +318,7 @@ function jobsHub() {
 }
 
 // ---------- department filter ----------
-const DEPT_MAP = TENANT ? (TENANT.departments || {}) : {
+const DEPT_MAP = TENANT ? (TENANT.departments || {}) : RGUKT_DEPTS ? RGUKT_DEPTS : {
   ECE:   ["DLD","CS","DSP","PRV","AEC","CN","CO & D","CS-2","RFME"],
   CSE:   ["DS & A","OS","DBMS","OOP","TOC","CD","SE","Python","Maths"],
   Civil: ["SOM","FM","Struct","Geo","Trans","Env","Survey"],
@@ -322,6 +331,9 @@ const DEPT_VISUAL = {
   Civil: { bg: "linear-gradient(135deg,#f59e0b 0%,#10b981 100%)", art: "🏗️🏛️📐🔩🌉", label: "Civil Engineering", sub: "Structures · Fluid · Geo · Transport · Env" },
   Mech:  { bg: "linear-gradient(135deg,#ef4444 0%,#f97316 100%)", art: "⚙️🔩🔧🛠️💨", label: "Mechanical Engineering", sub: "Thermo · Fluid · Design · Manufacturing · HT" },
   EEE:   { bg: "linear-gradient(135deg,#f59e0b 0%,#ef4444 100%)", art: "⚡💡🔋🔌🌡️", label: "Electrical & Electronics", sub: "Machines · Power Systems · Control · Electronics" },
+  "AI & ML": { bg: "linear-gradient(135deg,#6366f1 0%,#ec4899 100%)", art: "🤖🧠📊🔮💡", label: "Artificial Intelligence & Machine Learning", sub: "Algorithms · Statistics · Databases · Compilers" },
+  Chemical:  { bg: "linear-gradient(135deg,#10b981 0%,#0ea5e9 100%)", art: "🧪⚗️🏭🔥💧", label: "Chemical Engineering", sub: "Process · Heat & Mass Transfer · Reactions" },
+  MME:       { bg: "linear-gradient(135deg,#64748b 0%,#f59e0b 100%)", art: "🔩🧲🔬⛏️🪙", label: "Metallurgical & Materials", sub: "Extraction · Materials · Testing · Casting" },
 };
 
 // ---------- security helpers ----------
@@ -6638,7 +6650,7 @@ function renderAsk(existing) {
   } },
     el("div", { class: "two" },
       el("label", {}, ({ doubts: "Your question", ideas: "Your idea", clubs: "Post title", gate: "Discussion title", challenges: "Challenge title", market: "Item title", jobs: "Opening or experience" })[state.tab] || "Title", el("input", { id: "f-title", name: "title", maxlength: "200", required: true, placeholder: t.placeholder })),
-      el("label", {}, state.tab === "doubts" ? "Subject" : "Category", el("select", { id: "f-group", name: "group" }, groups.map(s => el("option", { selected: s === current }, s))))),
+      el("label", {}, state.tab === "doubts" ? "Subject" : "Category", el("select", { id: "f-group", name: "group" }, ...(RGUKT_DEPTS && (state.tab === "doubts" || state.tab === "gate") ? (() => { const seen = new Set(); const og = Object.entries(RGUKT_DEPTS).map(([d, list]) => el("optgroup", { label: d }, ...list.filter(s => !seen.has(s) && seen.add(s)).map(s => el("option", { selected: s === current }, s)))); const rest = groups.filter(s => !seen.has(s)); return [...og, ...(rest.length ? [el("optgroup", { label: "Other" }, ...rest.map(s => el("option", { selected: s === current }, s)))] : [])]; })() : groups.map(s => el("option", { selected: s === current }, s)))))),
     state.tab === "jobs" && el("div", { class: "two" },
       el("label", {}, "Company / organisation", el("input", { name: "company", maxlength: "60", placeholder: "e.g. TCS", value: existing && existing.company || "" })),
       el("label", {}, "Pay / stipend (optional)", el("input", { name: "pay", maxlength: "40", placeholder: "e.g. ₹15,000 per month", value: existing && existing.pay || "" }))),
