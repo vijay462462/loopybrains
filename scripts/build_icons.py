@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Rebuild the app icon files with a chosen wordmark layout.
 
-    python3 scripts/build_icons.py            # writes the default model (A)
+    python3 scripts/build_icons.py            # writes the default model (D)
     python3 scripts/build_icons.py --model B  # pill style
-    python3 scripts/build_icons.py --previews # also writes docs/brand/models/wordmark-A|B|C.svg
+    python3 scripts/build_icons.py --previews # also writes docs/brand/models/wordmark-A to F.svg
 
 It edits only the text block at the bottom of docs/icon.svg, docs/brand/icon-1024.svg and docs/brand/maskable.svg
 (the mascot and ring are left untouched), then you run scripts/render_icons.mjs to refresh the PNG files.
@@ -22,6 +22,17 @@ MODELS = {
     # C: THE CAMPUS big, LOOP small between two thin lines
     "C": f'<g {FONT}>\n  <text x="512" y="838" font-size="112" letter-spacing="5" fill="#ffffff">THE CAMPUS</text>\n  <rect x="120" y="918" width="215" height="5" rx="2.5" fill="url(#ring)"/>\n  <rect x="689" y="918" width="215" height="5" rx="2.5" fill="url(#ring)"/>\n  <text x="512" y="942" font-size="64" letter-spacing="30" fill="url(#ring)">LOOP</text>\n</g>',
 }
+FONT_LIGHT = FONT.replace('font-weight="900"', 'font-weight="400"')
+GOLD = '<defs><linearGradient id="gold" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fde68a"/><stop offset=".5" stop-color="#f59e0b"/><stop offset="1" stop-color="#fcd34d"/></linearGradient></defs>'
+SERIF = "font-family=\"'Bitstream Charter','Georgia','Times New Roman',serif\" text-anchor=\"middle\""
+MODELS.update({
+    # D: serif headline with a gold hairline and a small gold LOOP (classic, premium)
+    "D": f'<g {SERIF} font-weight="700">{GOLD}\n  <text x="512" y="842" font-size="116" letter-spacing="4" fill="#ffffff">THE CAMPUS</text>\n  <rect x="262" y="880" width="215" height="3" rx="1.5" fill="url(#gold)"/><rect x="547" y="880" width="215" height="3" rx="1.5" fill="url(#gold)"/>\n  <path d="M512 868 l13 14 -13 14 -13 -14z" fill="url(#gold)"/>\n  <text x="512" y="958" font-size="58" letter-spacing="46" font-weight="600" fill="url(#gold)">LOOP</text>\n</g>',
+    # E: light, wide-tracked headline with a thin outlined LOOP tag (minimal, modern luxury)
+    "E": f'<g {FONT_LIGHT}>{GOLD}\n  <text x="512" y="836" font-size="92" letter-spacing="16" fill="#ffffff">THE CAMPUS</text>\n  <rect x="372" y="880" width="280" height="68" rx="34" fill="none" stroke="url(#gold)" stroke-width="3.5"/>\n  <text x="512" y="930" font-size="44" letter-spacing="22" font-weight="700" fill="url(#gold)">LOOP</text>\n</g>',
+    # F: frosted glass plate holding the name, gold diamonds around LOOP (stylish, app-store look)
+    "F": f'<g {FONT}>{GOLD}\n  <rect x="96" y="768" width="832" height="196" rx="48" fill="#ffffff" fill-opacity=".08" stroke="#ffffff" stroke-opacity=".28" stroke-width="2.5"/>\n  <text x="512" y="868" font-size="104" letter-spacing="8" fill="#ffffff">THE CAMPUS</text>\n  <path d="M318 924 l9 10 -9 10 -9 -10z M706 924 l9 10 -9 10 -9 -10z" fill="url(#gold)"/>\n  <text x="512" y="948" font-size="46" letter-spacing="30" fill="url(#gold)">LOOP</text>\n</g>',
+})
 TEXT_BLOCK = re.compile(r"<g font-family=.*?</g>(?=(?:</g>)*</svg>)", re.S)
 
 
@@ -33,7 +44,7 @@ def apply(svg: str, model: str) -> str:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--model", choices=sorted(MODELS), default="A")
+    ap.add_argument("--model", choices=sorted(MODELS), default="D")
     ap.add_argument("--previews", action="store_true")
     a = ap.parse_args()
     base = (ROOT / "docs/brand/icon-1024.svg").read_text(encoding="utf-8")
