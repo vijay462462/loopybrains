@@ -2554,3 +2554,6 @@ body.simple .tabs button[aria-selected="true"] { display: inline-flex; }
 .ai-verdict.mid { border-color: #f59e0b; background: color-mix(in srgb, #f59e0b 9%, transparent); }
 .ai-verdict.bad { border-color: #ef4444; background: color-mix(in srgb, #ef4444 9%, transparent); }
 .ai-verdict p, .ai-verdict ul { margin: 0; } .ai-verdict ul { padding-left: 18px; }
+
+.sim-box { display: grid; gap: 4px; padding: 10px 12px; margin: 4px 0 8px; border-radius: 14px; border: 1px solid color-mix(in srgb, #16a34a 45%, var(--line)); background: color-mix(in srgb, #16a34a 8%, transparent); }
+.sim-row { text-align: left; white-space: normal; }

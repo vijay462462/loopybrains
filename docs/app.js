@@ -2435,6 +2435,7 @@ function privateAnswersFor(d) {
       await store.set("thanks", d.id + "_" + r.ownerUid, { doubtId: d.id, toUid: r.ownerUid, toAuthorId: r.authorId, toName: name(r).slice(0, 40), level, byUid: uid, createdAt: Date.now() });
       if (level === "best") { celebrate(); try { await store.update("doubts", d.id, { resolvedReplyId: "priv_" + r.ownerUid.slice(0, 60) }); } catch (_) {} }
       state.privAns = state.privAns.map(x => x.id === r.id ? { ...x, rating: level } : x); render();
+      if (level === "best" && confirm("Solved! Share this solution with everyone as a study note? Your name stays on your question, and the helper's name is kept.")) { try { await sharePrivateAnswer(d, r); showNotice("Shared. Thank you for helping others learn."); } catch (er) { showNotice(errText(er)); } }
     } catch (er) { btn.disabled = false; showNotice(er && er.code === "permission-denied" ? "Could not save the rating. Publish the latest rules." : errText(er)); }
   };
   const open = rows.filter(r => !r.rating).length;
@@ -2448,12 +2449,7 @@ function privateAnswersFor(d) {
         !r.rating ? el("button", { class: "btn sm", type: "button", onclick: (e) => rate(r, "helpful", e.currentTarget) }, "\u{1F44D} Helpful") : null,
         el("button", { class: "btn sm", type: "button", onclick: async (e) => {
           if (!confirm("Share this answer with everyone on the board? Your classmates will see it with " + (r.anonymous ? "no name" : r.authorName) + ".")) return;
-          e.currentTarget.disabled = true;
-          try {
-            const id = store.newId("replies"), pages = (Array.isArray(r.imgs) ? r.imgs : []).slice(0, 2), pageIds = pages.map(u => { const pid = store.newId("pages"); pageCache.set(pid, u); return pid; });
-            const doc = { parentId: d.id, parentColl: "doubts", body: ("Answer from " + (r.anonymous ? "a classmate" : r.authorName) + ": " + (r.body || "(see the photo)")).slice(0, 5000), authorId: store.uid, authorName: getName(), anonymous: false, createdAt: Date.now(), pages: pageIds, fileAttachments: [] };
-            doc.pages = await trySavePages(pages, id, pageIds); await store.set("replies", id, doc); showNotice("Shared with everyone.");
-          } catch (er) { showNotice(errText(er)); }
+          e.currentTarget.disabled = true; try { await sharePrivateAnswer(d, r); showNotice("Shared with everyone."); } catch (er) { showNotice(errText(er)); }
         } }, "\u{1F4E2} Share with everyone")))),
     hasBest && open > 0 ? el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: async (e) => { e.currentTarget.disabled = true; for (const r of rows.filter(x => !x.rating)) { try { await store.update("privateAnswers", r.id, { rating: "helpful" }); await store.set("thanks", d.id + "_" + r.ownerUid, { doubtId: d.id, toUid: r.ownerUid, toAuthorId: r.authorId, toName: name(r).slice(0, 40), level: "helpful", byUid: uid, createdAt: Date.now() }); } catch (_) {} } render(); } }, "\u{1F64F} Thank everyone else (+2 each)")) : null);
 }
@@ -2497,6 +2493,29 @@ function mailIdsCard() {
   const acc = myAccount(), say = el("p", { class: "hint", role: "status" }, ""), masked = acc.email.replace(/^(.).*(@.*)$/, "$1•••$2");
   return el("div", { class: "learn-card" }, el("strong", {}, "\u{1F4E7} Your IDs go to your email"), el("p", { class: "hint" }, "Your nickname and Loop ID are sent to " + masked + ", so you can find them if you forget."),
     el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: async (e) => { const b = e.currentTarget; b.disabled = true; say.textContent = "Sending…"; try { await mailMyIds(); say.textContent = "✅ Sent. Check your inbox and spam folder."; } catch (er) { say.textContent = (er && er.message) || "Could not send."; } b.disabled = false; } }, "✉️ Email my IDs now")), say);
+}
+// ---------- Similar solved doubts, share-after-solved, and the pair limit on points ----------
+const SIM_STOP = new Set("the a an is are was were to of in on for and or what how why when which who whom this that it as at by with from be can do does did not no yes i my me we you your please help question solve find".split(" "));
+const simTokens = (t) => new Set(String(t || "").toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter(w => w.length > 2 && !SIM_STOP.has(w)));
+function similarSolved(title, limit = 3) {
+  const a = simTokens(title); if (a.size < 2) return [];
+  return state.doubts.filter(d => !d.deleted && d.resolvedReplyId).map(d => { const b = simTokens(d.title + " " + (d.subject || "")); let hit = 0; for (const w of a) if (b.has(w)) hit++; return { d, score: hit / Math.max(2, Math.min(a.size, b.size)), hit }; })
+    .filter(x => x.hit >= 2 && x.score >= 0.5).sort((x, y) => y.score - x.score).slice(0, limit).map(x => x.d);
+}
+function similarBox() {
+  const box = el("div", { class: "sim-box", "aria-live": "polite" });
+  box.draw = (title) => {
+    const rows = similarSolved(title); box.hidden = !rows.length; if (!rows.length) { box.replaceChildren(); return; }
+    box.replaceChildren(el("strong", {}, "✅ Already solved on the board"), el("small", { class: "hint" }, "Check these first. Your answer may already be here."),
+      ...rows.map(d => el("button", { class: "linkbtn sim-row", type: "button", onclick: () => { state.mode = "view"; state.selected = d.id; state.tab = "doubts"; render(); } }, d.title.slice(0, 90) + " · " + d.subject)));
+  };
+  box.hidden = true; return box;
+}
+// Shares one private answer with everyone as a public reply from the asker (the answerer's name is kept).
+async function sharePrivateAnswer(d, r) {
+  const id = store.newId("replies"), pages = (Array.isArray(r.imgs) ? r.imgs : []).slice(0, 2), pageIds = pages.map(u => { const pid = store.newId("pages"); pageCache.set(pid, u); return pid; });
+  const doc = { parentId: d.id, parentColl: "doubts", body: ("Solution (from " + (r.anonymous ? "a classmate" : r.authorName) + "): " + (r.body || "(see the photo)")).slice(0, 5000), authorId: store.uid, authorName: getName(), anonymous: false, createdAt: Date.now(), pages: pageIds, fileAttachments: [] };
+  doc.pages = await trySavePages(pages, id, pageIds); await store.set("replies", id, doc);
 }
 // ---------- Helper of the week and push opt-in ----------
 function helperOfWeek() {
@@ -3647,7 +3666,8 @@ function allStats() {
   };
   const active = (id, t) => { const p = get(id); if (p && t) p.days.add(dayNum(t)); };
   const helpfulIds = new Set(state.doubts.map(d => d.resolvedReplyId).filter(Boolean));
-  for (const th of state.thanks) { if (th.toName === "A classmate") continue; active(th.toAuthorId, th.createdAt); const p = get(th.toAuthorId, th.toName, th.createdAt); p.answers++; p.points += 2; if (th.level === "best") { p.helpful++; p.points += 5; } }
+  const pairCount = new Map();   // at most 3 credited thank-yous per asker and helper pair per week, so friends cannot farm points
+  for (const th of state.thanks) { if (th.toName === "A classmate") continue; const pk = th.byUid + "|" + th.toUid + "|" + Math.floor(((th.createdAt || 0) / 86400000 + 3) / 7); const nn = (pairCount.get(pk) || 0) + 1; pairCount.set(pk, nn); if (nn > 3) continue; active(th.toAuthorId, th.createdAt); const p = get(th.toAuthorId, th.toName, th.createdAt); p.answers++; p.points += 2; if (th.level === "best") { p.helpful++; p.points += 5; } }
   const replyAuthor = new Map(state.replies.map(r => [r.id, r]));
   for (const d of state.doubts) { active(d.authorId, d.createdAt); if (d.anonymous) continue; const p = get(d.authorId, d.authorName, d.createdAt); p.asked++; p.points += 1; let vv = 0; for (const l of likesFor(d.id)) if (l.uid !== d.authorId && vv < 10) { vv++; p.likes++; p.points += 1; } }
   for (const i of state.ideas) {
@@ -7717,6 +7737,7 @@ function renderAsk(existing) {
   const groups = t.groups.includes(current) ? t.groups : [...t.groups, current];
   const newPages = []; // data URLs added in this form
   const newFileLinks = []; // {name, url, size} uploaded via Firebase Storage
+  const simBox = state.tab === "doubts" && !existing ? similarBox() : null;
   const form = el("form", { class: "form", onsubmit: async (e) => {
     e.preventDefault();
     const title = form.elements.title.value.trim(), body = form.elements.body.value.trim(), group = form.elements.group.value;
@@ -7808,6 +7829,7 @@ function renderAsk(existing) {
   } },
     el("div", { class: "two" },
       el("label", {}, ({ doubts: "Your question", ideas: "Your idea", clubs: "Post title", gate: "Discussion title", challenges: "Challenge title", market: "Item title", jobs: "Opening or experience" })[state.tab] || "Title", el("input", { id: "f-title", name: "title", maxlength: "200", required: true, placeholder: t.placeholder })),
+      simBox,
       el("label", {}, state.tab === "doubts" ? "Subject" : "Category", el("select", { id: "f-group", name: "group" }, ...(RGUKT_DEPTS && (state.tab === "doubts" || state.tab === "gate") ? (() => { const seen = new Set(); const og = Object.entries(RGUKT_DEPTS).map(([d, list]) => el("optgroup", { label: d }, ...list.filter(s => !seen.has(s) && seen.add(s)).map(s => el("option", { selected: s === current }, s)))); const rest = groups.filter(s => !seen.has(s)); return [...og, ...(rest.length ? [el("optgroup", { label: "Other" }, ...rest.map(s => el("option", { selected: s === current }, s)))] : [])]; })() : groups.map(s => el("option", { selected: s === current }, s)))))),
     state.tab === "jobs" && el("div", { class: "two" },
       el("label", {}, "Company / organisation", el("input", { name: "company", maxlength: "60", placeholder: "e.g. TCS", value: existing && existing.company || "" })),
@@ -7911,6 +7933,7 @@ function renderAsk(existing) {
       });
     }, 0);
   }
+  if (simBox) form.addEventListener("input", (e) => { if (e.target && e.target.id === "f-title") simBox.draw(e.target.value); });
   setTimeout(() => form.elements.title.focus(), 0);
   return [el("h2", {}, existing ? "Edit " + t.noun : t.ask), form];
 }
@@ -7950,7 +7973,7 @@ function renderView() {
     el("div", { class: "meta" },
       el("span", { class: "tag", ...colorAttrs(g) }, g),
       d.year && el("span", { class: "pill year-pill" }, yl(d.year)),
-      d.ansPrivate && el("span", { class: "pill" }, "\u{1F512} private answers"),
+      d.ansPrivate && el("span", { class: "pill" }, d.resolvedReplyId ? "\u2705 solved privately" : "\u{1F512} private answers"),
       state.tab === "doubts" && isUrgent(d) && el("span", { class: "pill urgent" }, "🔥 Urgent"),
       state.tab === "doubts" && el("span", { class: "pill " + (d.resolvedReplyId ? "done" : "open") }, d.resolvedReplyId ? "Resolved" : "Open"),
       state.tab === "doubts" && d.bounty && !d.resolvedReplyId && el("span", { class: "pill bounty" }, "🎁 Bounty"),
