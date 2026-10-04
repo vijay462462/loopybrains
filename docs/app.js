@@ -1395,11 +1395,7 @@ function showWelcome(force, startId) {
       const GRP = { all: "All", engineering: "Engineering", medical: "Medical", agri: "Agriculture", law: "Law", degree: "Degree", design: "Design", general: "Other" };
       const all = [{ slug: "rgukt", name: "RGUKT AP", state: "Andhra Pradesh", sub: "Rajiv Gandhi University of Knowledge Technologies, Andhra Pradesh", grp: "engineering" }, ...DIRECTORY.filter(d => d.slug !== "rgukt").map(d => ({ slug: d.slug, name: d.name, state: d.state || "Andhra Pradesh", sub: [d.city, d.kind].filter(Boolean).join(" \u00B7 "), grp: kindGroup(d.kind) }))];
       const hl = (text, needle) => { if (!needle) return text; const k = text.toLowerCase().indexOf(needle); return k < 0 ? text : [text.slice(0, k), el("mark", {}, text.slice(k, k + needle.length)), text.slice(k + needle.length)]; };
-      const peek = (c) => {
-        if (c.slug === "rgukt") return ["\u{1F4DA} " + (RGUKT_DEPTS ? Object.keys(RGUKT_DEPTS).length : 8) + " branches", "\u{1F3DB} " + Math.max(0, ((BASE_CFG.clubs || []).length || 12) - 1) + " clubs", "\u{1F3AF} GATE", "\u{1F3EB} 4 campuses"];
-        const cd = (window.COLLEGE_DATA || {})[c.slug] || {}, pr = KIND_PRESETS[c.grp] || KIND_PRESETS.general;
-        return ["\u{1F4DA} " + (cd.subjects || pr.subjects || []).filter(s => s !== "Other").length + " subjects", "\u{1F3DB} " + (cd.clubs || pr.clubs || []).filter(s => s !== "Other").length + " clubs", "\u{1F3AF} " + (cd.exam || pr.exam || "Exams")];
-      };
+      const peek = (c) => collegeFacts(c.slug, c.grp).chips;
       const list = el("div", { class: "ob-colist", role: "listbox", "aria-label": "Colleges" }), chosen = el("p", { class: "ob-chosen", role: "status" }, ""), count = el("p", { class: "ob-count", "aria-live": "polite" }, ""), types = el("div", { class: "ob-types", role: "tablist", "aria-label": "College type" });
       const letters = el("div", { class: "ob-letters", role: "group", "aria-label": "Jump to a letter" }); let cl = "";
       const stSel = stateSheet(() => cst, (v) => { cst = v; cl = ""; browsing = true; fill(); });
@@ -1414,7 +1410,8 @@ function showWelcome(force, startId) {
         pickBox.style.setProperty("--c1", c1); pickBox.style.setProperty("--c2", c2);
         pickBox.replaceChildren(el("div", { class: "pk-top" }, badge(c.slug, c.name, c.state), el("div", { class: "pk-name" }, el("small", {}, "Your college"), el("strong", {}, c.name), c.sub ? el("span", {}, c.sub) : null)),
           el("div", { class: "pk-chips" }, ...peek(c).map(t => el("i", {}, t))),
-          el("p", { class: "pk-line" }, "I will set up your private board, subjects and clubs for " + c.name + "."),
+          (() => { const f = collegeFacts(c.slug, c.grp); return el("p", { class: "pk-src" + (f.verified ? " ok" : "") }, el("b", {}, f.verified ? "Verified source" : "Standard setup"), " " + f.note); })(),
+          el("p", { class: "pk-line" }, "Your own private board for " + c.name + ", with its own subjects and clubs."),
           el("button", { type: "button", class: "pk-change", onclick: () => { browsing = true; fill(); try { q.focus(); } catch (_) {} } }, "\u21BA Change college"));
       };
       const mark = () => { chosen.textContent = pickSlug ? "\u2705 " + pickName : ""; chosen.hidden = !pickSlug; };
@@ -1499,6 +1496,19 @@ function showWelcome(force, startId) {
   if (vv) { vv.addEventListener("resize", fit); vv.addEventListener("scroll", fit); }
   document.addEventListener("keydown", onKey); paint(); document.body.append(box); fit();
 }
+// What we can honestly say about a college. Numbers are shown only when they come from a checked source; everything else says "standard setup".
+const GRP_NAME = { engineering: "engineering", medical: "medical", agri: "agriculture", law: "law", degree: "degree", design: "design", general: "general" };
+function collegeFacts(slug, grp) {
+  if (slug === "rgukt") {
+    const C = window.RGUKT_CURRICULUM, chips = [];
+    if (C && C.branches) chips.push(Object.keys(C.branches).length + " branches");
+    if (CAMPUSES.length) chips.push(CAMPUSES.length + " campuses");
+    return { chips, note: "Branches and subject codes come from the RGUKT timetable.", verified: true };
+  }
+  const cd = (window.COLLEGE_DATA || {})[slug];
+  if (cd && cd.source) { let host = ""; try { host = new URL(cd.source).hostname.replace(/^www\./, ""); } catch (_) {} return { chips: ["Subjects from the official website"], note: "Subject names are taken from " + (host || "the official website") + ".", verified: true }; }
+  return { chips: ["Standard subject list for " + (GRP_NAME[grp] || "general") + " colleges"], note: "Not yet checked against the college\u2019s own website. Staff can customise it.", verified: false };
+}
 // The "welcome to your college" reveal: a premium brand card shown once after a college is chosen or changed.
 function showCollegeReveal() {
   if (NO_COLLEGE || !SEL) return;
@@ -1509,7 +1519,6 @@ function showCollegeReveal() {
   const [c1, c2] = IS_RGUKT ? STATE_COLORS["Andhra Pradesh"] : collegeColors(SEL, st);
   const full = IS_RGUKT ? "Rajiv Gandhi University of Knowledge Technologies, Andhra Pradesh" : SEL === "rgukt-basara" ? "Rajiv Gandhi University of Knowledge Technologies, Basara, Telangana" : (TENANT && TENANT.name) || dir.name || COLLEGE;
   const place = IS_RGUKT ? "Nuzvid \u00B7 RK Valley \u00B7 Ongole \u00B7 Srikakulam" : [dir.city, dir.kind, st].filter(Boolean).join(" \u00B7 ");
-  const nSub = RGUKT_DEPTS ? Object.keys(RGUKT_DEPTS).length + " branches" : SUBJECTS.filter(s => s !== "Other").length + " subjects";
   const NS = "http://www.w3.org/2000/svg", mk = (t, at) => { const n = document.createElementNS(NS, t); for (const k in at) n.setAttribute(k, at[k]); return n; };
   const sky = mk("svg", { viewBox: "0 0 400 120", class: "cr-sky", "aria-hidden": "true", preserveAspectRatio: "xMidYMax slice" });
   sky.append(mk("path", { d: "M0 120 L0 92 Q60 70 120 88 T240 84 T400 80 L400 120Z", fill: "rgb(0 0 0 / .22)" }),
@@ -1524,7 +1533,7 @@ function showCollegeReveal() {
         el("div", { class: "cr-ring" }, el("div", { class: "cr-crest" }, (TENANT && TENANT.crest) ? crestEl(92) : /^[A-Z0-9]{2,6}( [A-Z0-9]{2,6})?$/.test(String(COLLEGE).trim()) ? el("span", { class: "cr-mono cr-acr" }, ...String(COLLEGE).trim().split(" ").map((w, i) => el("b", { class: i ? "sub" : "" }, w))) : el("span", { class: "cr-mono" }, (() => { const w = String(COLLEGE).replace(/\(.*?\)/g, " ").split(/[^A-Za-z0-9]+/).filter(x => x && !/^(of|and|the|for|in)$/i.test(x)); return (w.length === 1 ? w[0].slice(0, 5) : w.slice(0, 3).map(x => x[0]).join("")).toUpperCase(); })()))), el("span", { class: "cr-chip" }, "Welcome to")),
       el("div", { class: "cr-body" },
         el("h2", {}, COLLEGE), el("p", { class: "cr-full" }, full), place ? el("p", { class: "cr-place" }, "\u{1F4CD} " + place) : null,
-        el("div", { class: "cr-stats" }, el("span", {}, "\u{1F4DA} " + nSub), el("span", {}, "\u{1F3DB} " + CLUBS.filter(s => s !== "Other").length + " clubs"), el("span", {}, "\u{1F91D} Your own private board")),
+        ...(() => { const f = collegeFacts(SEL, kindGroup(dir.kind || (IS_RGUKT ? "Engineering university" : ""))); return [el("div", { class: "cr-stats" }, ...f.chips.map(t => el("span", {}, t)), el("span", {}, "Private board for your college")), el("p", { class: "cr-src" + (f.verified ? " ok" : "") }, el("b", {}, f.verified ? "Verified source: " : "Standard setup: "), f.note)]; })(),
         el("p", { class: "cr-disc" }, "Independent student community. Not run or endorsed by the college."),
         el("button", { class: "btn primary cr-go", type: "button", onclick: close }, "Enter " + (COLLEGE.length > 22 ? "my college" : COLLEGE) + " \u2192"))));
   ov.style.setProperty("--c1", c1); ov.style.setProperty("--c2", c2);

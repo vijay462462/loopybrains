@@ -2440,3 +2440,6 @@ html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 /* Post form: a sensible text box, not a screen-high one */
 .form textarea#f-body { min-height: 150px; max-height: 42vh; height: auto; field-sizing: content; align-self: start; resize: vertical; }
 .form > label { align-self: start; }
+
+.pk-src, .cr-src { margin: 0; font-size: 12.5px; line-height: 1.4; opacity: .85; } .pk-src b, .cr-src b { font-weight: 800; } .pk-src.ok b, .cr-src.ok b { color: #4ade80; }
+.cr-src { padding: 0 6px; }
