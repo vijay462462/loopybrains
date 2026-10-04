@@ -529,6 +529,7 @@ async function firebaseStore(conf, prefix = "") {
       await au.sendSignInLinkToEmail(auth, email, { url: location.origin + location.pathname + (SEL ? "?c=" + encodeURIComponent(SEL) : ""), handleCodeInApp: true });
       try { localStorage.setItem("dd-email-pending", email); } catch (_) {}
     },
+    signOutAll: async () => { try { if (auth) await au.signOut(auth); } catch (_) {} },
     account: () => { const u = auth && auth.currentUser; return { email: (u && u.email) || "", verified: !!(u && u.email && u.emailVerified) }; },
     subscribe: (coll, cb, onErr, since) => fs.onSnapshot(since ? fs.query(fs.collection(db, prefix + coll), fs.where("createdAt", ">", since)) : fs.collection(db, prefix + coll), snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))), onErr),
     newId: (coll) => fs.doc(fs.collection(db, prefix + coll)).id,
@@ -3699,7 +3700,23 @@ function renderMe() {
       el("button", { class: "btn", type: "button", onclick: () => { state.afterName = "me"; state.mode = "name"; render(); } }, "Change name"),
       PRIVATE && el("button", { class: "btn", type: "button", onclick: () => { setCode(""); location.reload(); } }, "Change class code"),
       el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")),
+    logoutBlock(),
   ];
+}
+// Log out: signs out of the email account (if any) and clears this device, so the next person starts fresh.
+function logoutBlock() {
+  const acc = store && store.account ? store.account() : { email: "", verified: false };
+  const msg = el("p", { class: "hint", role: "status" });
+  const go = async () => {
+    try { if (store && store.signOutAll) await store.signOutAll(); } catch (_) {}
+    try { Object.keys(localStorage).filter(k => k.startsWith("dd-") || k === "spark-theme").forEach(k => localStorage.removeItem(k)); sessionStorage.clear(); } catch (_) {}
+    try { if (window.indexedDB && indexedDB.databases) (await indexedDB.databases()).forEach(d => d.name && /firebase/i.test(d.name) && indexedDB.deleteDatabase(d.name)); } catch (_) {}
+    location.replace(location.origin + location.pathname);
+  };
+  const confirm = el("div", { class: "logout-confirm", hidden: "" }, el("p", {}, acc.verified ? "You will be signed out of " + acc.email + " and this device will be cleared. Sign in again with the same email to get your points back." : "This clears your name, college and progress from this device. Without a verified email your points cannot be restored."),
+    el("div", { class: "rowbtns" }, el("button", { class: "btn danger", type: "button", onclick: go }, "Yes, log out"), el("button", { class: "btn", type: "button", onclick: () => { confirm.hidden = true; } }, "Stay signed in")));
+  return el("div", { class: "logout-block" }, el("div", { class: "label" }, "Account"),
+    el("button", { class: "btn logout-btn", type: "button", onclick: () => { confirm.hidden = !confirm.hidden; } }, "\u{1F6AA} Log out"), confirm, msg);
 }
 
 // ---------- confetti ----------

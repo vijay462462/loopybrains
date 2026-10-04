@@ -2139,3 +2139,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 @keyframes lpPing { 70% { box-shadow: 0 0 0 8px rgb(74 222 128 / 0); } 100% { box-shadow: 0 0 0 0 rgb(74 222 128 / 0); } }
 .hero-say:active { transform: scale(.98); }
 @media (prefers-reduced-motion: reduce) { .loopy-mini .lp-eyes, .loopy-mini.lp-hop, .hero-loopy::before, .hero-say-dot { animation: none; } }
+
+.logout-block { display: grid; gap: 8px; margin-top: 8px; } .logout-btn { justify-self: start; border-color: #fca5a5; color: #b91c1c; }
+.logout-confirm { padding: 12px; border: 1px dashed #fca5a5; border-radius: 14px; background: color-mix(in srgb, #ef4444 7%, var(--sheet)); } .logout-confirm[hidden] { display: none; } .logout-confirm p { margin: 0 0 8px; }
+.btn.danger { background: #dc2626; border-color: #dc2626; color: #fff; }
