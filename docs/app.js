@@ -479,11 +479,27 @@ const mine = (x) => {
   return !x.anonymous && !!n && x.authorName === n;
 };
 const who = (x) => mine(x) ? "You" : (x.authorName || "A student");
-const repliesFor = (id) => state.replies.filter(r => r.parentId === id).sort((a, b) => (isMentor(b) - isMentor(a)) || (a.createdAt - b.createdAt));
+// Replies and likes are indexed once per update (not searched for every card), so long feeds stay fast.
+const EMPTY_LIST = Object.freeze([]);
+let _repSrc = null, _repLen = -1, _repMap = new Map(), _likeSrc = null, _likeLen = -1, _likeMap = new Map();
+const repliesFor = (id) => {
+  if (_repSrc !== state.replies || _repLen !== state.replies.length) {
+    _repSrc = state.replies; _repLen = state.replies.length; _repMap = new Map();
+    for (const r of state.replies) { let b = _repMap.get(r.parentId); if (!b) _repMap.set(r.parentId, b = []); b.push(r); }
+    for (const b of _repMap.values()) b.sort((x, y) => (isMentor(y) - isMentor(x)) || (x.createdAt - y.createdAt));
+  }
+  return _repMap.get(id) || EMPTY_LIST;
+};
 // Verified mentors are listed by device ID in config.js; their answers get a badge and go first.
 const MENTORS = new Map((CFG.mentors || []).filter(m => m && m.id).map(m => [m.id, m.name || "Mentor"]));
 const isMentor = (x) => (x && !x.anonymous && MENTORS.has(x.authorId)) ? 1 : 0;
-const likesFor = (id) => state.likes.filter(l => l.ideaId === id);
+const likesFor = (id) => {
+  if (_likeSrc !== state.likes || _likeLen !== state.likes.length) {
+    _likeSrc = state.likes; _likeLen = state.likes.length; _likeMap = new Map();
+    for (const l of state.likes) { let b = _likeMap.get(l.ideaId); if (!b) _likeMap.set(l.ideaId, b = []); b.push(l); }
+  }
+  return _likeMap.get(id) || EMPTY_LIST;
+};
 const liked = (id) => store && state.likes.some(l => l.ideaId === id && l.uid === store.uid);
 function showNotice(text, cls) { const n = $("notice"); n.textContent = text; n.hidden = !text; n.className = "notice" + (cls ? " " + cls : ""); }
 function errText(e) {
@@ -2039,6 +2055,25 @@ function showHowTo() {
     el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", onclick: close }, "Got it"))));
   document.body.append(ov);
 }
+// Tapping a subject: the chip lights up at once, then only the feed is redrawn (not the whole screen).
+let _pickTimer = 0;
+function pickSubject(s, btn) {
+  const t = TABS[state.tab];
+  if (typeof s !== "string" || s.length > 60 || (!t.groups.includes(s) && !state[t.coll].some(d => d[t.field] === s))) return;   // only subjects that really exist
+  const next = state.group === s ? "All" : s;
+  state.group = next;
+  try { if (navigator.vibrate) navigator.vibrate(8); } catch (_) {}
+  document.querySelectorAll("#rail .subj-chip").forEach(c => c.classList.toggle("active", next !== "All" && c === btn));
+  const list = $("list"); if (list) list.classList.add("filtering");
+  cancelAnimationFrame(_pickTimer);
+  _pickTimer = requestAnimationFrame(() => {
+    _pickTimer = requestAnimationFrame(() => {
+      try { renderList(); renderGuide(); renderHeader(); } catch (_) { render(); }
+      if (list) list.classList.remove("filtering");
+      if (innerWidth <= 1000 && next !== "All" && list) list.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
+}
 function renderRail() {
   const t = TABS[state.tab], rows = state[t.coll];
   const counts = {};
@@ -2062,7 +2097,7 @@ function renderRail() {
   const subjGrid = visibleSubjects.length > 0 ? el("div", { class: "subj-grid" },
     ...visibleSubjects.map(s => el("button", {
       type: "button", class: "subj-chip" + (state.group === s ? " active" : ""), ...colorAttrs(s),
-      onclick: () => { state.group = state.group === s ? "All" : s; render(); if (innerWidth <= 1000 && state.group !== "All") setTimeout(() => { const l = $("list"); if (l) l.scrollIntoView({ behavior: "smooth", block: "start" }); }, 60); },
+      onclick: (e) => pickSubject(s, e.currentTarget),
     }, el("span", {}, s), el("span", { class: "n" }, counts[s] || 0)))
   ) : null;
   if (state.tab === "jobs") {
@@ -2771,6 +2806,7 @@ function campusHub() {
   return card;
 }
 
+const LIST_PAGE = 24; let _listLimit = LIST_PAGE, _listKey = "";
 function renderList() {
   if (state.tab === "market") { renderMarketList(); return; }
   const t = TABS[state.tab], rows = visible(), all = state[t.coll];
@@ -2793,7 +2829,11 @@ function renderList() {
     el("span", { class: "spot-k" }, "⭐ Doubt of the Day"),
     el("strong", {}, spot.d.title),
     el("span", { class: "spot-why" }, spot.why + " Can you solve it?"));
-  $("list").replaceChildren(...[deptBanner(), campusHub(), yearHub(), subjectHub(rows.length), spotCard].filter(Boolean), ...rows.map(d => {
+  // Show the first cards at once and load the rest as the student scrolls: opening a busy subject feels instant.
+  const lk = [state.tab, state.group, state.campusFilter, state.yearFilter, state.filter, state.query, state.gateYearPick].join("|");
+  if (lk !== _listKey) { _listKey = lk; _listLimit = LIST_PAGE; }
+  const shown = rows.slice(0, _listLimit);
+  $("list").replaceChildren(...[deptBanner(), campusHub(), yearHub(), subjectHub(rows.length), spotCard].filter(Boolean), ...shown.map(d => {
     const n = repliesFor(d.id).length, g = d[t.field];
     const meta = [el("span", { class: "tag", ...colorAttrs(g) }, g)];
     const votes = likesFor(d.id).length;
@@ -2834,6 +2874,12 @@ function renderList() {
       }, el("h3", {}, d.title), el("div", { class: "meta" }, meta)),
       delBtn);
   }));
+  if (rows.length > _listLimit) {
+    const left = rows.length - _listLimit, more = el("button", { type: "button", class: "more-btn" }, "Show " + Math.min(LIST_PAGE, left) + " more (" + left + " left)");
+    const load = () => { const y = window.scrollY; _listLimit += LIST_PAGE; renderList(); window.scrollTo(0, y); };
+    more.onclick = load; $("list").append(more);
+    if ("IntersectionObserver" in window) { const io = new IntersectionObserver((en) => { if (en[0].isIntersecting) { io.disconnect(); load(); } }, { rootMargin: "700px" }); io.observe(more); }
+  }
 }
 
 // The open doubt most classmates share; otherwise the oldest unanswered one from the last week.

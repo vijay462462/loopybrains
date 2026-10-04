@@ -12,7 +12,7 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://api.dicebear.com https://img.youtube.com data: blob:; media-src 'self' blob: https:; connect-src 'self' https://asia-south1-doubt-desk-e6f39.cloudfunctions.net https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com wss://*.firebaseio.com https://*.supabase.co wss://*.supabase.co; frame-src https://www.youtube.com; object-src 'none'; base-uri 'none'; form-action 'self'; worker-src 'self'; manifest-src 'self'; upgrade-insecure-requests;">
 
 <!-- PWA -->
-<link rel="manifest" href="manifest.json?v=300">
+<link rel="manifest" href="manifest.json?v=302">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -27,14 +27,30 @@
 <!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@500&display=swap">
-<link rel="stylesheet" href="style.css?v=300">
-<link rel="stylesheet" href="sparkbot.css?v=300">
-<link rel="stylesheet" href="player.css?v=300">
-<link rel="stylesheet" href="lab.css?v=300">
+<link rel="stylesheet" href="style.css?v=302">
+<link rel="stylesheet" href="sparkbot.css?v=302">
+<link rel="stylesheet" href="player.css?v=302">
+<link rel="stylesheet" href="lab.css?v=302">
 </head>
 <body>
-<div id="splash" class="splash" role="status" aria-live="polite">
-  <svg class="loopy" viewBox="0 0 200 220" width="150" height="165" role="img" aria-label="Loopy, The Campus Loop robot, waving hello">
+<div id="splash" class="splash sp2" role="status" aria-live="polite">
+  <div class="sp2-bg" aria-hidden="true"><i class="b1"></i><i class="b2"></i><i class="b3"></i></div>
+  <div class="sp2-main">
+    <small class="sp2-kicker">✨ THE CAMPUS LOOP</small>
+    <h1 class="splash-title sp2-h" id="splashTitle">Stuck? <span>Someone on your campus has the answer.</span></h1>
+    <p class="splash-sub sp2-sub" id="splashSub">Ask boldly. Answer together. Innovate endlessly.</p>
+    <div class="sp2-crest-slot" id="splashCrestSlot"></div>
+  </div>
+  <div class="sp2-chips" id="splashChips" role="group" aria-label="What you can do">
+    <button type="button" class="sp2-chip c1" data-t="Post a doubt and get answers from classmates and seniors."><b>❓</b> Ask a doubt</button>
+    <button type="button" class="sp2-chip c2" data-t="One quiz question a day that counts for your college."><b>🧠</b> Daily quiz</button>
+    <button type="button" class="sp2-chip c3" data-t="Come back every day to grow your streak and unlock costumes."><b>🔥</b> Streaks</button>
+    <button type="button" class="sp2-chip c4" data-t="Join your college clubs and see what they are doing."><b>🏛</b> Clubs</button>
+    <button type="button" class="sp2-chip c5" data-t="Notices, placement drives and events from your college."><b>📢</b> Notices</button>
+    <button type="button" class="sp2-chip c6" data-t="Free previous papers and exam preparation."><b>📝</b> Papers</button>
+  </div>
+  <div class="sp2-guide">
+    <svg class="loopy" viewBox="0 0 200 220" width="92" height="101" role="img" aria-label="Loopy, The Campus Loop robot, waving hello">
     <defs>
       <linearGradient id="lpBody" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8b7cff"/><stop offset="1" stop-color="#d946ef"/></linearGradient>
       <linearGradient id="lpHead" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e6e0ff"/></linearGradient>
@@ -58,13 +74,11 @@
       <circle cx="66" cy="104" r="6" fill="#f472b6" opacity=".6"/><circle cx="134" cy="104" r="6" fill="#f472b6" opacity=".6"/><path d="M34 54 L100 20 L166 54 L100 78 Z" fill="#4c1d95" stroke="#f9a8d4" stroke-width="3"/><rect x="68" y="56" width="64" height="14" rx="7" fill="#6d28d9"/><path d="M166 54 L166 92" stroke="#f9a8d4" stroke-width="3.5" stroke-linecap="round"/><circle cx="166" cy="96" r="6" fill="#f9a8d4"/>
     </g>
   </svg>
-  <div class="splash-bubble" id="splashBubble" aria-live="polite"></div>
-  <h1 class="splash-title" id="splashTitle">Welcome to The Campus Loop family</h1>
-  <p class="splash-langs">స్వాగతం · स्वागत है · Welcome</p>
-  <p class="splash-sub" id="splashSub">Ask boldly. Answer together. Innovate endlessly.</p>
-  <button type="button" class="btn primary splash-go" id="splashGo">Continue →</button>
+    <div class="splash-bubble sp2-bubble" id="splashBubble" aria-live="polite"></div>
+  </div>
+  <button type="button" class="btn primary splash-go sp2-go" id="splashGo">Join my campus →</button>
 </div>
-<script src="splash.js?v=300"></script>
+<script src="splash.js?v=302"></script>
 
 <!-- offline indicator -->
 <div id="offlineBar" class="offline-bar" hidden>📵 You're offline — showing cached posts</div>
@@ -153,16 +167,16 @@
 <!-- bottom navigation (mobile only) -->
 <nav class="bottom-nav" id="bottomNav" aria-label="Main navigation"></nav>
 
-<script src="config.js?v=300"></script>
-<script src="quiz.js?v=300"></script>
-<script src="plus-data.js?v=300"></script>
-<script src="colleges-ap.js?v=300"></script>
-<script src="colleges-ap2.js?v=300"></script>
-<script src="colleges-ap3.js?v=300"></script>
-<script src="college-data.js?v=300"></script>
-<script src="rgukt-curriculum.js?v=300"></script>
-<script src="colleges-india.js?v=300"></script>
-<script type="module" src="app.js?v=300"></script>
-<script src="lazy.js?v=300"></script>
+<script src="config.js?v=302"></script>
+<script src="quiz.js?v=302"></script>
+<script src="plus-data.js?v=302"></script>
+<script src="colleges-ap.js?v=302"></script>
+<script src="colleges-ap2.js?v=302"></script>
+<script src="colleges-ap3.js?v=302"></script>
+<script src="college-data.js?v=302"></script>
+<script src="rgukt-curriculum.js?v=302"></script>
+<script src="colleges-india.js?v=302"></script>
+<script type="module" src="app.js?v=302"></script>
+<script src="lazy.js?v=302"></script>
 </body>
 </html>
