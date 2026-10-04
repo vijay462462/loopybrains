@@ -8,9 +8,9 @@
   <filter id="drop" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="14" stdDeviation="14" flood-color="#000" flood-opacity=".45"/></filter>
 </defs>
 
-<rect width="1024" height="1024" rx="230" fill="url(#bg)"/><rect width="1024" height="1024" rx="230" fill="url(#glowA)"/><rect width="1024" height="1024" rx="230" fill="url(#glowB)"/>
+<rect width="1024" height="1024" rx="0" fill="url(#bg)"/><rect width="1024" height="1024" rx="0" fill="url(#glowA)"/><rect width="1024" height="1024" rx="0" fill="url(#glowB)"/>
 
-<g id="mark">
+<g transform="translate(102.4 102.4) scale(.8)"><g id="mark">
   <!-- loop ring with a gap, glowing -->
   <circle cx="512" cy="520" r="318" fill="none" stroke="url(#ring)" stroke-width="64" stroke-linecap="round" stroke-dasharray="1700 300" transform="rotate(-62 512 520)" filter="url(#soft)" opacity=".7"/>
   <circle cx="512" cy="520" r="318" fill="none" stroke="url(#ring)" stroke-width="56" stroke-linecap="round" stroke-dasharray="1700 300" transform="rotate(-62 512 520)"/>
@@ -29,4 +29,4 @@
   <!-- sparkles -->
   <path d="M236 250 l12 30 30 12 -30 12 -12 30 -12 -30 -30 -12 30 -12z" fill="#fde68a"/>
   <path d="M800 740 l9 22 22 9 -22 9 -9 22 -9 -22 -22 -9 22 -9z" fill="#67e8f9"/>
-</g></svg>
+</g></g></svg>
