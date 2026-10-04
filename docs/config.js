@@ -16,7 +16,7 @@ window.DOUBT_DESK_CONFIG = {
     trialDays: 7 },
 
   // true = show the About and welcome steps after the opening screen on EVERY visit (good for testing). Set to false before launch.
-  welcomeEveryVisit: true,
+  welcomeEveryVisit: false,
 
   // Shown on the About screen when someone joins. Fill these in: they build trust. Leave a value empty to hide it.
   about: { founder: "Vijay M", college: "", email: "v.bhaskar462@gmail.com" },
