@@ -8183,6 +8183,8 @@ function renderView() {
 
   const actions = [];
   const on = liked(d.id), votes = likesFor(d.id).length;
+  // The answer box is at the bottom of a long page, so this button jumps straight to it.
+  if (state.tab === "doubts" && !own) actions.push(el("button", { class: "btn sm primary", type: "button", onclick: () => { const f = $("f-reply"); if (f) { f.scrollIntoView({ behavior: "smooth", block: "center" }); setTimeout(() => { try { f.focus({ preventScroll: true }); } catch (_) {} }, 350); } } }, "\u270D\uFE0F Answer this doubt"));
   if (state.tab === "ideas") actions.push(el("button", { class: "like", type: "button", "aria-pressed": String(on), onclick: () => toggleLike(d) }, "♥ " + (on ? "Liked" : "Like") + " · " + votes));
   else if (!own) actions.push(el("button", { class: "like", type: "button", "aria-pressed": String(on), onclick: () => toggleLike(d) }, "🙋 " + (on ? "You have this doubt too" : "I have this doubt too") + " · " + votes));
   else if (votes) actions.push(el("span", { class: "likes" }, "🙋 " + votes + (votes === 1 ? " classmate has" : " classmates have") + " this doubt too"));
