@@ -2405,3 +2405,17 @@ html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 @keyframes pkPop { from { opacity: 0; transform: translateY(14px) scale(.96); } } @keyframes pkChip { from { opacity: 0; transform: translateY(6px); } }
 @media (prefers-reduced-motion: reduce) { .ob-pick, .pk-chips i { animation: none; } }
 .ob-step [hidden], .ob-step > [hidden] { display: none !important; }
+
+/* ---- College step: the list takes every spare pixel, and the extras give way on small screens ---- */
+.ob-card:has(.ob-s-college) { height: calc(var(--vvh, 100dvh) - 24px); }
+.welcome.kb .ob-card:has(.ob-s-college) { height: calc(var(--vvh, 100dvh) - 16px); }
+.ob-card > .ob-step.ob-s-college { display: flex; flex-direction: column; align-items: stretch; gap: 8px; overflow: hidden; -webkit-mask-image: none; mask-image: none; padding-bottom: 4px; }
+.ob-s-college > * { flex: none; }
+.ob-s-college > .ob-colist { flex: 1 1 auto; min-height: 96px; max-height: none; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+.ob-s-college > .ob-pick { flex: 1 1 auto; overflow-y: auto; align-content: start; }
+.ob-s-college > h2 { font-size: 24px; margin: 0; } .ob-s-college > .ob-chosen { align-self: center; padding: 6px 14px; }
+.ob-s-college > .state-btn { min-height: 46px; } .ob-s-college > input[type="search"] { min-height: 46px; }
+.ob-s-college .ob-types { padding-bottom: 2px; }
+@media (max-height: 820px) { .ob-s-college > .ob-say { display: none; } .ob-s-college > h2 { font-size: 21px; } .ob-s-college > .ob-count { display: none; } .ob-card { padding-top: 16px; } }
+@media (max-height: 640px) { .ob-s-college .ob-types { display: none; } .ob-s-college > .state-btn, .ob-s-college > input[type="search"] { min-height: 42px; } }
+.ob-card > .welcome-skip { position: static; align-self: flex-end; margin: 0 0 -4px; padding: 2px 4px; }

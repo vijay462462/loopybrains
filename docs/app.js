@@ -1415,7 +1415,7 @@ function showWelcome(force, startId) {
           el("p", { class: "pk-line" }, "I will set up your private board, subjects and clubs for " + c.name + "."),
           el("button", { type: "button", class: "pk-change", onclick: () => { browsing = true; fill(); try { q.focus(); } catch (_) {} } }, "\u21BA Change college"));
       };
-      const mark = () => { chosen.textContent = pickSlug ? "\u2705 " + pickName : "Pick your college to continue"; };
+      const mark = () => { chosen.textContent = pickSlug ? "\u2705 " + pickName : ""; chosen.hidden = !pickSlug; };
       const pick = (c) => {
         pickSlug = c.slug; pickName = c.name; browsing = false;
         try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); if (navigator.vibrate) navigator.vibrate(12); } catch (_) {}
@@ -1466,7 +1466,7 @@ function showWelcome(force, startId) {
       body = [el("div", { class: "ob-loopy" }, loopyMini()), el("h2", {}, "You\u2019re all set" + (who ? ", " + who : "") + "! \u{1F389}"), el("p", { class: "ob-say" }, "Welcome to the family. Finish your first 3 steps on the home screen to unlock a free gift. \u{1F381}"),
         el("div", { class: "ob-start" }, ...starters.map(([t, fn, pri]) => el("button", { class: "btn" + (pri ? " primary" : ""), type: "button", onclick: start(fn) }, t)))];
     }
-    box.replaceChildren(el("div", { class: "welcome-card ob-card" }, el("button", { class: "welcome-skip", type: "button", onclick: finish }, "Skip"), bar, el("div", { class: "ob-step" }, ...body),
+    box.replaceChildren(el("div", { class: "welcome-card ob-card" }, el("button", { class: "welcome-skip", type: "button", onclick: finish }, "Skip"), bar, el("div", { class: "ob-step ob-s-" + sid }, ...body),
       el("div", { class: "rowbtns" }, step > 0 ? el("button", { class: "btn", type: "button", onclick: () => go(-1) }, "Back") : null, last ? el("button", { class: "btn", type: "button", onclick: finish }, "Close") : el("button", { class: "btn primary", type: "button", onclick: () => go(1) }, sid === "about" ? "Continue" : sid === "college" ? (pickSlug && pickSlug !== curSlug ? "Continue with " + (pickName.length > 16 ? pickName.slice(0, 15) + "\u2026" : pickName) : "Continue") : "Next"))));
     const f = box.querySelector("input") || box.querySelector(".btn.primary"); if (f && sid !== "about") f.focus();
     // The About step asks the student to read it all: Continue switches on once the whole text has been scrolled through.
