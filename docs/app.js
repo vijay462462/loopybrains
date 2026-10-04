@@ -1336,7 +1336,7 @@ function showWelcome(force, startId) {
   const STEPS = ["about", "college", "name", "interests", "ready"], curSlug = TENANT ? TENANT.slug : IS_RGUKT ? "rgukt" : "";
   const INTERESTS = [["❓", "Clear my doubts", "doubts"], ["📝", "Prepare for exams", "exams"], ["💼", "Placements and jobs", "placements"], ["🎉", "Clubs and friends", "friends"], ["🔎", "Just exploring", "explore"]];
   const picked = new Set(readJSON("dd-interests", []));
-  let step = Math.max(0, STEPS.indexOf(startId || "about")), nameVal = (getName() || "").trim(), pickSlug = curSlug, pickName = curSlug ? COLLEGE : "", cq = "", cst = (() => { try { return localStorage.getItem("dd-state") || ""; } catch (_) { return ""; } })() || (curSlug && curSlug !== "rgukt" ? ((DIRECTORY.find(c => c.slug === curSlug) || {}).state || "") : "") || "Andhra Pradesh";
+  let step = Math.max(0, STEPS.indexOf(startId || "about")), nameVal = (getName() || "").trim(), pickSlug = curSlug, pickName = curSlug ? COLLEGE : "", cq = "", ctype = "all", cst = (() => { try { return localStorage.getItem("dd-state") || ""; } catch (_) { return ""; } })() || (curSlug && curSlug !== "rgukt" ? ((DIRECTORY.find(c => c.slug === curSlug) || {}).state || "") : "") || "Andhra Pradesh";
   const TOTAL = STEPS.length, box = el("div", { id: "welcome", class: "welcome", role: "dialog", "aria-modal": "true", "aria-label": "Welcome to " + BRAND });
   const finish = () => { try { localStorage.setItem("dd-welcome-done", "1"); if (!localStorage.getItem("dd-launch-gone")) { localStorage.setItem("dd-launch", "1"); } } catch (_) {} if (STEPS[step] === "ready") setTimeout(() => confetti(130), 250); document.removeEventListener("keydown", onKey); box.remove(); todayKey = ""; try { renderHeader(); } catch (_) {} };
   const onKey = (e) => { if (e.key === "Escape") finish(); };
@@ -1356,16 +1356,46 @@ function showWelcome(force, startId) {
         el("p", { class: "ab-meta" }, ab.email ? el("a", { href: "mailto:" + ab.email }, "Write to us: " + ab.email) : null, ab.email ? " · " : "", el("a", { href: "about.html", target: "_blank", rel: "noopener" }, "Our full story"), " · ", el("a", { href: "privacy.html", target: "_blank", rel: "noopener" }, "Privacy"), " · ", el("a", { href: "terms.html", target: "_blank", rel: "noopener" }, "Terms"))];
     } else if (sid === "college") {
       const badge = (slug, name, st) => { const [ca, cb] = slug === "rgukt" ? STATE_COLORS["Andhra Pradesh"] : collegeColors(slug, st || ""); const ini = name.replace(/\(.*?\)/g, "").split(/[\s-]+/).filter(w => /^[A-Za-z]/.test(w) && !/^(of|and|the|for|in)$/i.test(w)).slice(0, 2).map(w => w[0].toUpperCase()).join("") || "C"; const b = el("span", { class: "col-badge", "aria-hidden": "true" }, ini); b.style.setProperty("background", "linear-gradient(135deg," + ca + "," + cb + ")"); return b; };
-      const all = [{ slug: "rgukt", name: "RGUKT AP", state: "Andhra Pradesh", sub: "Rajiv Gandhi University of Knowledge Technologies, Andhra Pradesh" }, ...DIRECTORY.filter(d => d.slug !== "rgukt").map(d => ({ slug: d.slug, name: d.name, state: d.state || "Andhra Pradesh", sub: [d.city, d.kind].filter(Boolean).join(" \u00B7 ") }))];
-      const list = el("div", { class: "ob-colist", role: "listbox", "aria-label": "Colleges" }), chosen = el("p", { class: "ob-chosen", role: "status" }, ""), stSel = stateSheet(() => cst, (v) => { cst = v; fill(); });
-      const mark = () => { chosen.textContent = pickSlug ? "\u2705 " + pickName : "Pick your college to continue"; };
-      const fill = () => {
-        const needle = cq.trim().toLowerCase(); let rows = all.filter(c => (cst === "All India" || c.state === cst) && (!needle || (c.name + " " + c.sub).toLowerCase().includes(needle)));
-        if (cst === "All India" && !needle) { list.replaceChildren(el("p", { class: "hint" }, "Type your college or city to search all of India, or pick a state above.")); return; }
-        list.replaceChildren(...(rows.length ? rows.slice(0, 60).map(c => el("button", { class: "ob-col" + (pickSlug === c.slug ? " on" : ""), type: "button", role: "option", "aria-selected": String(pickSlug === c.slug), onclick: () => { pickSlug = c.slug; pickName = c.name; try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); if (navigator.vibrate) navigator.vibrate(12); } catch (_) {} mark(); fill(); const nb = box.querySelector(".rowbtns .btn.primary"); if (nb) nb.textContent = pickSlug !== curSlug ? "Continue with " + (pickName.length > 16 ? pickName.slice(0, 15) + "\u2026" : pickName) : "Continue"; } }, badge(c.slug, c.name, c.state), el("span", { class: "col-text" }, el("strong", {}, c.name), c.sub ? el("small", {}, c.sub) : null))) : [el("p", { class: "hint" }, "No match. Try another spelling, or pick All India and search by name.")]));
+      const GRP = { all: "All", engineering: "Engineering", medical: "Medical", agri: "Agriculture", law: "Law", degree: "Degree", design: "Design", general: "Other" };
+      const all = [{ slug: "rgukt", name: "RGUKT AP", state: "Andhra Pradesh", sub: "Rajiv Gandhi University of Knowledge Technologies, Andhra Pradesh", grp: "engineering" }, ...DIRECTORY.filter(d => d.slug !== "rgukt").map(d => ({ slug: d.slug, name: d.name, state: d.state || "Andhra Pradesh", sub: [d.city, d.kind].filter(Boolean).join(" \u00B7 "), grp: kindGroup(d.kind) }))];
+      const hl = (text, needle) => { if (!needle) return text; const k = text.toLowerCase().indexOf(needle); return k < 0 ? text : [text.slice(0, k), el("mark", {}, text.slice(k, k + needle.length)), text.slice(k + needle.length)]; };
+      const peek = (c) => {
+        if (c.slug === "rgukt") return ["\u{1F4DA} " + (RGUKT_DEPTS ? Object.keys(RGUKT_DEPTS).length : 8) + " branches", "\u{1F3DB} " + Math.max(0, ((BASE_CFG.clubs || []).length || 12) - 1) + " clubs", "\u{1F3AF} GATE", "\u{1F3EB} 4 campuses"];
+        const cd = (window.COLLEGE_DATA || {})[c.slug] || {}, pr = KIND_PRESETS[c.grp] || KIND_PRESETS.general;
+        return ["\u{1F4DA} " + (cd.subjects || pr.subjects || []).filter(s => s !== "Other").length + " subjects", "\u{1F3DB} " + (cd.clubs || pr.clubs || []).filter(s => s !== "Other").length + " clubs", "\u{1F3AF} " + (cd.exam || pr.exam || "Exams")];
       };
-      const q = el("input", { type: "search", enterkeyhint: "done", placeholder: "Search your college or city\u2026", "aria-label": "Search colleges", autocomplete: "off", value: cq }); q.addEventListener("keydown", (ev) => { if (ev.key === "Enter") { ev.preventDefault(); q.blur(); } }); q.addEventListener("input", () => { cq = q.value; fill(); });
-      body = [el("h2", {}, "Choose your college \u{1F3EB}"), el("p", { class: "ob-say" }, "Each college has its own private board, subjects and clubs. Pick yours and I will set everything up."), stSel, q, list, chosen];
+      const list = el("div", { class: "ob-colist", role: "listbox", "aria-label": "Colleges" }), chosen = el("p", { class: "ob-chosen", role: "status" }, ""), count = el("p", { class: "ob-count", "aria-live": "polite" }, ""), types = el("div", { class: "ob-types", role: "tablist", "aria-label": "College type" });
+      const stSel = stateSheet(() => cst, (v) => { cst = v; fill(); });
+      const mark = () => { chosen.textContent = pickSlug ? "\u2705 " + pickName : "Pick your college to continue"; };
+      const pick = (c) => {
+        pickSlug = c.slug; pickName = c.name;
+        try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); if (navigator.vibrate) navigator.vibrate(12); } catch (_) {}
+        mark(); fill(); const nb = box.querySelector(".rowbtns .btn.primary"); if (nb) nb.textContent = pickSlug !== curSlug ? "Continue with " + (pickName.length > 16 ? pickName.slice(0, 15) + "\u2026" : pickName) : "Continue";
+        setTimeout(() => { const on = list.querySelector(".ob-col.on"); if (on) on.scrollIntoView({ block: "nearest", behavior: "smooth" }); }, 40);
+      };
+      const drawTypes = (pool) => {
+        const present = ["all", ...Object.keys(GRP).filter(k => k !== "all" && pool.some(c => c.grp === k))];
+        types.replaceChildren(...present.map(k => el("button", { type: "button", role: "tab", "aria-selected": String(ctype === k), class: "ob-type" + (ctype === k ? " on" : ""), onclick: () => { ctype = k; fill(); } }, GRP[k] + (k === "all" ? "" : " \u00B7 " + pool.filter(c => c.grp === k).length))));
+      };
+      const fill = () => {
+        const needle = cq.trim().toLowerCase(), inState = all.filter(c => (cst === "All India" || c.state === cst) && (!needle || (c.name + " " + c.sub).toLowerCase().includes(needle)));
+        if (cst === "All India" && !needle) { types.replaceChildren(); count.textContent = ""; list.replaceChildren(el("p", { class: "hint" }, "Type your college or city to search all of India, or pick a state above.")); return; }
+        if (ctype !== "all" && !inState.some(c => c.grp === ctype)) ctype = "all";
+        drawTypes(inState);
+        const rows = inState.filter(c => ctype === "all" || c.grp === ctype);
+        count.textContent = rows.length + " college" + (rows.length === 1 ? "" : "s") + (cst === "All India" ? "" : " in " + cst);
+        list.replaceChildren(...(rows.length ? rows.slice(0, 60).map(c => { const on = pickSlug === c.slug;
+          return el("button", { class: "ob-col" + (on ? " on" : ""), type: "button", role: "option", "aria-selected": String(on), onclick: () => pick(c),
+            onkeydown: (ev) => { const b = ev.currentTarget; if (ev.key === "ArrowDown" && b.nextElementSibling) { ev.preventDefault(); b.nextElementSibling.focus(); } else if (ev.key === "ArrowUp") { ev.preventDefault(); (b.previousElementSibling || q).focus(); } } },
+            badge(c.slug, c.name, c.state), el("span", { class: "col-text" }, el("strong", {}, ...[].concat(hl(c.name, needle))), c.sub ? el("small", {}, ...[].concat(hl(c.sub, needle))) : null,
+              on ? el("span", { class: "col-peek" }, ...peek(c).map(t => el("i", {}, t))) : null)); }) : [el("p", { class: "hint" }, "No match. Try another spelling, or pick All India and search by name.")]));
+      };
+      const q = el("input", { type: "search", enterkeyhint: "done", placeholder: "Search your college or city\u2026", "aria-label": "Search colleges", autocomplete: "off", value: cq });
+      q.addEventListener("keydown", (ev) => { if (ev.key === "Enter") { ev.preventDefault(); const first = list.querySelector(".ob-col"); if (first && cq.trim()) { first.click(); } else q.blur(); } else if (ev.key === "ArrowDown") { ev.preventDefault(); const f = list.querySelector(".ob-col"); if (f) f.focus(); } });
+      q.addEventListener("input", () => { cq = q.value; fill(); });
+      let last = ""; try { last = localStorage.getItem("dd-college-name") || ""; } catch (_) {}
+      const lastSlug = curSlug, lastBtn = last && lastSlug && !pickSlug ? el("button", { type: "button", class: "ob-last", onclick: () => { const c = all.find(x => x.slug === lastSlug); if (c) { cst = c.state || cst; pick(c); } } }, "\u21A9 Continue with " + last) : null;
+      body = [el("h2", {}, "Choose your college \u{1F3EB}"), el("p", { class: "ob-say" }, "Each college has its own private board, subjects and clubs. Pick yours and I will set everything up."), lastBtn, stSel, q, types, count, list, chosen];
       mark(); fill();
     } else if (sid === "name") {
       const inp = el("input", { type: "text", maxlength: "30", placeholder: "Your first name", "aria-label": "Your name", autocomplete: "given-name", value: nameVal });
@@ -1405,9 +1435,9 @@ function showWelcome(force, startId) {
   // Keyboard-aware: when the on-screen keyboard opens, fit the card into the space that is really visible and tuck away the long text.
   const vv = window.visualViewport, fit = () => {
     if (!box.isConnected) { if (vv) { vv.removeEventListener("resize", fit); vv.removeEventListener("scroll", fit); } return; }
-    // Space taken by the on-screen keyboard = layout height minus what is really visible. The dark overlay still covers the whole screen; only the card moves up.
-    const kbh = vv ? Math.max(0, Math.round(innerHeight - vv.height - vv.offsetTop)) : 0, kb = kbh > 120;
-    box.style.setProperty("--kbh", (kb ? kbh : 0) + "px"); box.classList.toggle("kb", kb);
+    // Fit the card to what is really visible (browser bars and keyboard excluded). The dark overlay still covers the whole screen.
+    const vh = vv ? vv.height : innerHeight, top = vv ? Math.max(0, vv.offsetTop) : 0, bottom = vv ? Math.max(0, Math.round(innerHeight - vv.height - vv.offsetTop)) : 0, kb = bottom > 120;
+    box.style.setProperty("--vvh", Math.round(vh) + "px"); box.style.setProperty("--vvt", Math.round(top) + "px"); box.style.setProperty("--vvb", bottom + "px"); box.style.setProperty("--kbh", (kb ? bottom : 0) + "px"); box.classList.toggle("kb", kb);
     if (kb) { const act = document.activeElement; if (act && act.scrollIntoView && box.contains(act)) setTimeout(() => act.scrollIntoView({ block: "nearest" }), 60); }
   };
   if (vv) { vv.addEventListener("resize", fit); vv.addEventListener("scroll", fit); }
