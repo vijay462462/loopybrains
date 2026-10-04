@@ -2299,14 +2299,31 @@ function clHash(str) {   // cyrb53, a small fast 53-bit mixing function
   h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909); h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
   return 4294967296 * (2097151 & h2) + (h1 >>> 0);
 }
+const CLID_OK = /^[A-Z]{2}-[A-Z0-9]{1,4}-\d{4,6}$/;
+// A number issued by the server is final. Until it arrives (or if the push/functions server is off) a temporary number made from the sign-in id is shown to the student only.
+function tempCampusId(uid) { return clCodes().join("-") + "-" + String(clHash("campusloop|" + uid) % 10000).padStart(4, "0"); }
 function campusId(uid) {
   if (!uid) return "";
-  return clCodes().join("-") + "-" + String(clHash("campusloop|" + uid) % 10000).padStart(4, "0");
+  if (store && uid === store.uid) { const c = readJSON("dd-clid", ""); return typeof c === "string" && CLID_OK.test(c) ? c : tempCampusId(uid); }
+  const p = state.profiles.find(x => x.id === uid); return p && typeof p.cid === "string" && CLID_OK.test(p.cid) ? p.cid : "";
+}
+let _claimingId = false;
+async function claimStudentIdOnce() {
+  if (_claimingId || !store || !store.idToken || !PLUS.functionsUrl || NO_COLLEGE || !state.loaded) return;
+  const have = readJSON("dd-clid", ""); if (typeof have === "string" && CLID_OK.test(have)) return;
+  _claimingId = true;
+  try {
+    const tok = await store.idToken(); if (!tok) return;
+    const [st] = clCodes(), slug = TENANT ? TENANT.slug : "rgukt";
+    const r = await fetch(PLUS.functionsUrl.replace(/\/$/, "") + "/claimStudentId", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + tok }, body: JSON.stringify({ slug, st }) });
+    const d = await r.json().catch(() => ({}));
+    if (r.ok && typeof d.id === "string" && CLID_OK.test(d.id)) { writeJSON("dd-clid", d.id); syncProfile().catch(() => {}); if (state.mode === "me") render(); }
+  } catch (_) {} finally { _claimingId = false; }
 }
 function idCard() {
-  const uid = store && store.uid; if (!uid) return null; const id = campusId(uid), say = el("small", { class: "hint", role: "status" }, "");
+  const uid = store && store.uid; if (!uid) return null; const id = campusId(uid), final = id === readJSON("dd-clid", ""), say = el("small", { class: "hint", role: "status" }, "");
   return el("div", { class: "learn-card id-card" }, el("small", { class: "tag" }, "\u{1F194} YOUR CAMPUS LOOP ID"), el("strong", { class: "id-code" }, id),
-    el("small", { class: "hint" }, "Share it with friends or quote it when you write to support. It is not a password. If two students ever share a number, the nickname tells them apart."),
+    el("small", { class: "hint" }, final ? "Your own number, never reused. Share it with friends or quote it when you write to support. It is not a password." : "Temporary number. Your final number is issued when the server is connected. It is not a password."),
     el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: async () => { try { await navigator.clipboard.writeText(id); say.textContent = "Copied."; } catch (_) { say.textContent = id; } } }, "\u{1F4CB} Copy")), say);
 }
 // ---------- Helper of the week and push opt-in ----------
@@ -4163,7 +4180,7 @@ function openLoopySearch(q, back) {
 // Student search inside Loopy AI Search. Only public nicknames that already appear on the board are searchable. Anonymous posts and e-mail addresses are never included.
 const lsPerson = (p, extra) => el("div", { class: "learn-card ls-person" },
   avatarEl(avatarFor(p.name || ""), "av av-lg"),
-  el("div", { class: "ls-who" }, el("strong", {}, p.name + markOf(p.id)), el("small", { class: "hint id-mini" }, campusId(p.id)), el("small", { class: "hint" }, "Lv " + p.level.n + " " + titleOf(p.points) + " · " + plural(p.answers, "answer") + " · " + p.helpful + " helpful" + (p.streak > 1 ? " · \u{1F525}" + p.streak + "-day streak" : "")), (statusOfId(p.id) || "") ? el("small", {}, statusOfId(p.id)) : null, extra || null),
+  el("div", { class: "ls-who" }, el("strong", {}, p.name + markOf(p.id)), campusId(p.id) ? el("small", { class: "hint id-mini" }, campusId(p.id)) : null, el("small", { class: "hint" }, "Lv " + p.level.n + " " + titleOf(p.points) + " · " + plural(p.answers, "answer") + " · " + p.helpful + " helpful" + (p.streak > 1 ? " · \u{1F525}" + p.streak + "-day streak" : "")), (statusOfId(p.id) || "") ? el("small", {}, statusOfId(p.id)) : null, extra || null),
   el("span", { class: "pts" }, p.points + " pts"));
 function lsStudents(box, q, sort) {
   const needle = lsClean(q).toLowerCase(), meId = store && store.uid;
@@ -8138,6 +8155,7 @@ async function syncProfile() {
   if (!dp && !status && !verified && !plus && !cp && !state.profiles.some(p => p.id === store.uid)) return;
   const rec = { name: (getName() || "Student").slice(0, 40), dp, status, verified, plus, streak: Math.min(3650, state.myStreak || 0), updatedAt: Date.now() };
   if (cp > 0) rec.curio = cp;
+  { const c = readJSON("dd-clid", ""); if (typeof c === "string" && CLID_OK.test(c)) rec.cid = c; }
   await store.set("profiles", store.uid, rec);
 }
 function pickDp() {
@@ -8428,7 +8446,7 @@ function toggleFocus() {
 function render() {
   try {
     document.body.dataset.tab = state.tab; applyFocus();
-    renderHeader(); renderTrendBar(); renderStoryBar(); renderRail(); try { renderGuide(); } catch (_) {} renderList(); renderBottomNav(); try { if (IS_RGUKT && !readJSON("dd-rgukt-year", null) && !document.querySelector(".welcome")) showEligibility(); } catch (_) {} try { document.body.classList.toggle("simple", isSimple()); renderBell(); notifPing(); } catch (_) {}
+    renderHeader(); renderTrendBar(); renderStoryBar(); renderRail(); try { renderGuide(); } catch (_) {} renderList(); renderBottomNav(); try { if (IS_RGUKT && !readJSON("dd-rgukt-year", null) && !document.querySelector(".welcome")) showEligibility(); } catch (_) {} try { document.body.classList.toggle("simple", isSimple()); renderBell(); notifPing(); claimStudentIdOnce(); } catch (_) {}
     // Forms keep what the student is typing while live updates arrive.
     const key = ["ask", "edit", "name", "alumniJoin", "alumniJob", "fun", "lab", "college", "plus"].includes(state.mode) ? state.mode + state.tab : "";
     if (key && key === sheetKey) return;
@@ -8662,7 +8680,7 @@ render();
   store.subscribe("blocked", rows => { state.blocked = rows.map(r => r.id); }, e => {});
   let dpChecked = false;
   store.subscribe("profiles", rows => {
-    state.profiles = rows.filter(p => typeof p.name === "string" && (!p.dp || DP_OK.test(p.dp))).map(p => ({ ...p, status: String(p.status || "").slice(0, 60), verified: p.verified === true, plus: p.plus === true, curio: Number.isInteger(p.curio) && p.curio > 0 ? Math.min(p.curio, 100000) : 0, streak: Number.isInteger(p.streak) && p.streak > 0 ? p.streak : 0 })); update();
+    state.profiles = rows.filter(p => typeof p.name === "string" && (!p.dp || DP_OK.test(p.dp))).map(p => ({ ...p, status: String(p.status || "").slice(0, 60), verified: p.verified === true, plus: p.plus === true, curio: Number.isInteger(p.curio) && p.curio > 0 ? Math.min(p.curio, 100000) : 0, cid: typeof p.cid === "string" && CLID_OK.test(p.cid) ? p.cid : "", streak: Number.isInteger(p.streak) && p.streak > 0 ? p.streak : 0 })); update();
     if (!dpChecked && (getDp() || getStatus() || myVerified() || state.plan.plus)) { dpChecked = true; const me = rows.find(p => p.id === store.uid); if (!me || (me.dp || "") !== getDp() || me.name !== getName() || (me.status || "") !== getStatus() || (me.verified === true) !== myVerified() || (me.plus === true) !== !!state.plan.plus) syncProfile().catch(() => {}); }
   }, e => {});
   const since = Date.now() - STORY_MS;

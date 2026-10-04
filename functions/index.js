@@ -230,6 +230,32 @@ exports.notifyOnReply = onDocumentCreated({ document: "rooms/{room}/replies/{id}
   } catch (e) { console.error("notifyOnReply", e); }
 });
 
+
+// ---------- Student IDs: STATE-COLLEGE-0001 (numbers handed out one by one, so they never repeat) ----------
+// One ID per sign-in id, issued once. The counter is per STATE-COLLEGE prefix, 4 digits up to 9999 and 5 digits after that (room for lakhs of students).
+// studentIds/<uid> can only be written here. The profile rule makes sure a student can only publish the ID that was issued to them.
+const clCollegeCode = (slug) => { const parts = slug.split("-").filter(w => w && !/^(of|and|the|for|in)$/.test(w)); return ((parts.length > 1 ? parts.map(w => w[0]).join("") : slug).replace(/[^a-z0-9]/g, "").toUpperCase().slice(0, 3)) || "CL"; };
+exports.claimStudentId = onRequest({ cors: ALLOWED_ORIGINS, region: "asia-south1", maxInstances: 5 }, async (req, res) => {
+  try {
+    if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
+    const m = /^Bearer (.+)$/.exec(req.get("Authorization") || "");
+    if (!m) return res.status(401).json({ error: "Please sign in first." });
+    const user = await admin.auth().verifyIdToken(m[1]);
+    const slug = String((req.body || {}).slug || ""), st = String((req.body || {}).st || "");
+    if (!/^[a-z0-9-]{2,40}$/.test(slug) || !/^[A-Z]{2}$/.test(st)) return res.status(400).json({ error: "Bad request." });
+    if (!(await allow(user.uid, "claimId", 10, 86400000))) return res.status(429).json({ error: "Too many tries today." });
+    const mine = db.collection("studentIds").doc(user.uid), prefix = st + "-" + clCollegeCode(slug), counter = db.collection("idCounters").doc(prefix);
+    const id = await db.runTransaction(async (tx) => {
+      const have = await tx.get(mine); if (have.exists) return have.data().id;
+      const c = await tx.get(counter), n = (c.exists ? Number(c.data().n) || 0 : 0) + 1;
+      const out = prefix + "-" + String(n).padStart(n > 9999 ? 5 : 4, "0");
+      tx.set(counter, { n, updatedAt: Date.now() }); tx.set(mine, { id: out, slug, n, createdAt: Date.now() });
+      return out;
+    });
+    return res.json({ id });
+  } catch (e) { console.error("claimStudentId", e); return res.status(500).json({ error: "Something went wrong. Please try again." }); }
+});
+
 // ---------- Referral rewards ----------
 // A student shares ?ref=<first 10 characters of their sign-in id>. When the friend has a VERIFIED email and calls claimReferral
 // once, the referrer gets +7 days of Plus (up to 8 friends = 56 days) and the friend gets +3 days. Everything is checked here.

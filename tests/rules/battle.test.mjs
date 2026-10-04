@@ -71,5 +71,12 @@ await t("profile with streak 99999 is refused", () => assertFails(prof(alice, "a
 await t("profile with a non-number streak is refused", () => assertFails(prof(alice, "alice", { streak: "x" })));
 await t("profile with curiosity points is accepted", () => assertSucceeds(prof(alice, "alice", { curio: 40 })));
 await t("profile with negative or oversized curiosity is refused", async () => { await assertFails(prof(alice, "alice", { curio: -1 })); await assertFails(prof(alice, "alice", { curio: 999999 })); await assertFails(prof(alice, "alice", { curio: "x" })); });
+// ---- student IDs ----
+await env.withSecurityRulesDisabled(async (ctx) => { await setDoc(doc(ctx.firestore(), "studentIds", "alice"), { id: "AP-RGU-0001", slug: "rgukt", n: 1, createdAt: Date.now() }); });
+await t("studentIds: a student reads only their own", async () => { await assertSucceeds(getDoc(doc(alice, "studentIds", "alice"))); await assertFails(getDoc(doc(alice, "studentIds", "bob"))); });
+await t("studentIds: students cannot write or list", async () => { await assertFails(setDoc(doc(alice, "studentIds", "alice"), { id: "AP-RGU-0002" })); await assertFails(setDoc(doc(bob, "studentIds", "bob"), { id: "AP-RGU-0003" })); await assertFails(getDocs(collection(alice, "studentIds"))); });
+await t("studentIds: counters are closed", () => assertFails(getDoc(doc(alice, "idCounters", "AP-RGU"))));
+await t("profile: own issued cid is accepted", () => assertSucceeds(prof(alice, "alice", { cid: "AP-RGU-0001" })));
+await t("profile: someone else's or made-up cid is refused", async () => { await assertFails(prof(alice, "alice", { cid: "AP-RGU-0002" })); await assertFails(prof(bob, "bob", { cid: "AP-RGU-0001" })); });
 console.log(`\n${pass} passed, ${fail} failed`);
 await env.cleanup(); process.exit(fail ? 1 : 0);
