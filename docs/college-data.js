@@ -116,5 +116,60 @@ window.COLLEGE_DATA = {
     source: "https://www.vitap.ac.in/allprograms",
     subjects: ["Computer Science", "CSE (AI and ML)", "CSE (Cyber Security)", "CSE (Data Analytics)", "Electronics and Communication", "Electrical and Electronics", "Mechanical", "Biotechnology", "Business", "Law", "Other"],
     exam: "GATE", bot: false
+  },
+  // ---- batch 4 (official sites; branch and department lists as published there) ----
+  // JNTU-GV: B.Tech Civil, EEE, Mechanical, ECE, CSE, CST, CS and IT, CSE (IoT), ME (Robotics), AI and Data Science, Food Engineering, Pharmaceutical Engineering, Aerospace.
+  "jntugv": {
+    source: "https://daa.jntugv.edu.in/coursesoffered/",
+    subjects: ["Civil", "Electrical and Electronics", "Mechanical", "Electronics and Communication", "Computer Science", "AI and Data Science", "Food Engineering", "Pharmaceutical Engineering", "Aerospace", "Other"],
+    exam: "GATE", bot: false
+  },
+  // Rayalaseema University: colleges of Arts-Commerce-Management, Engineering (AI, CS, ECE, Civil, Mechanical) and Science.
+  "rayalaseema-university": {
+    source: "https://www.rayalaseemauniversity.ac.in/about-ruk.php",
+    subjects: ["Computer Science", "Artificial Intelligence", "Electronics and Communication", "Civil", "Mechanical", "Biochemistry", "Biotechnology", "Botany", "Chemistry", "Mathematics", "Physics", "Zoology", "Statistics", "Commerce", "Economics", "English", "Telugu", "Business Management", "Other"],
+    exam: "Competitive exams", bot: false
+  },
+  // Dravidian University (Kuppam): departments as listed; engineering college is described as being established (CSE, CSE AI and ML).
+  "dravidian-university": {
+    source: "https://www.dravidianuniversity.ac.in/engineering-college-2/",
+    subjects: ["Biotechnology", "Chemistry", "Commerce and Management", "Computer Science", "Linguistics", "Education", "English", "Folklore and Tribal Studies", "History", "Kannada", "Library Science", "Tamil", "Telugu", "Tulu", "Other"],
+    exam: "Competitive exams", bot: false
+  },
+  // SPMVV (women's university): Schools of Sciences, Social Sciences-Humanities-Management, Nursing, and Engineering and Technology.
+  "spmvv": {
+    source: "https://www.spmvv.ac.in/spmvv/",
+    subjects: ["Home Science", "Psychology", "Biotechnology", "Bio Sciences and Sericulture", "Computer Applications (MCA)", "Education", "Nursing", "Engineering", "Management", "Other"],
+    exam: "Competitive exams", bot: false
+  },
+  // SRM University AP: B.Tech in CSE, ECE, Mechanical, EEE, Civil; AI (AiTI) and Quantum Computing (QuTI) programmes.
+  "srm-ap": {
+    source: "https://www.srmap.edu.in/admission/seas-programmes/",
+    subjects: ["Computer Science", "Electronics and Communication", "Mechanical", "Electrical and Electronics", "Civil", "Artificial Intelligence", "Quantum Computing", "Other"],
+    exam: "GATE", bot: false
+  },
+  // GITAM Visakhapatnam School of Technology: AI and Data Science, Biotechnology, Civil, CSE, Electrical-Electronics-Communication, Mechanical, Robotics and AI.
+  "gitam": {
+    source: "https://www.gitam.edu/visakhapatnam/gitam-school-of-technology",
+    subjects: ["Computer Science", "CSE (AI and ML)", "AI and Data Science", "Electronics and Communication", "Electrical and Computer", "VLSI Design", "Mechanical", "Robotics and AI", "Civil", "Biotechnology", "Biomedical", "Other"],
+    exam: "GATE", bot: false
+  },
+  // KL University: B.Tech AI and DS, CSE, CSIT, ECE, EEE, IoT, Mechanical, Biotechnology, Civil.
+  "klef": {
+    source: "https://www.kluniversity.in/admissions/engineering-college/",
+    subjects: ["AI and Data Science", "Computer Science", "Computer Science and IT", "Electronics and Communication", "Electrical and Electronics", "Internet of Things", "Mechanical", "Biotechnology", "Civil", "Other"],
+    exam: "GATE", bot: false
+  },
+  // Vignan University (Vadlamudi) B.Tech list as published at vignan.ac.in/ug.php.
+  "vignan": {
+    source: "https://vignan.ac.in/ug.php",
+    subjects: ["Computer Science", "CSE (AI and ML)", "CSE (Cyber Security)", "Information Technology", "Electronics and Communication", "Electrical and Electronics", "Mechanical", "Civil", "Chemical Engineering", "Biotechnology", "Biomedical", "Agricultural Engineering", "Food Processing", "Textile Technology", "Robotics and Automation", "Pharmacy", "Other"],
+    exam: "GATE", bot: false
+  },
+  // Vikrama Simhapuri University (Nellore): Arts-Commerce-Management and Science and Technology faculties as listed on the official site.
+  "vsu": {
+    source: "http://www.simhapuriuniv.ac.in/",
+    subjects: ["Education", "Business Management", "Tourism Management", "English", "Political Science", "Social Work", "Telugu", "Commerce", "Mathematics", "Physics", "Chemistry", "Biotechnology", "Computer Science", "Food Technology", "Marine Biology", "Microbiology", "Statistics", "Other"],
+    exam: "Competitive exams", bot: false
   }
 };
