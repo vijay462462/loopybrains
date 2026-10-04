@@ -8,9 +8,9 @@
   <filter id="drop" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="14" stdDeviation="14" flood-color="#000" flood-opacity=".45"/></filter>
 </defs>
 
-<rect width="1024" height="1024" rx="0" fill="url(#bg)"/><rect width="1024" height="1024" rx="0" fill="url(#glowA)"/><rect width="1024" height="1024" rx="0" fill="url(#glowB)"/>
+<rect width="1024" height="1024" rx="230" fill="url(#bg)"/><rect width="1024" height="1024" rx="230" fill="url(#glowA)"/><rect width="1024" height="1024" rx="230" fill="url(#glowB)"/>
 
-<g transform="translate(102.4 102.4) scale(.8)"><g transform="translate(512 392) scale(.8) translate(-512 -440)"><g id="mark">
+<g transform="translate(512 392) scale(.8) translate(-512 -440)"><g id="mark">
   <!-- loop ring with a gap, glowing -->
   <circle cx="512" cy="520" r="318" fill="none" stroke="url(#ring)" stroke-width="64" stroke-linecap="round" stroke-dasharray="1700 300" transform="rotate(-62 512 520)" filter="url(#soft)" opacity=".7"/>
   <circle cx="512" cy="520" r="318" fill="none" stroke="url(#ring)" stroke-width="56" stroke-linecap="round" stroke-dasharray="1700 300" transform="rotate(-62 512 520)"/>
@@ -26,6 +26,8 @@
   <path d="M236 250 l12 30 30 12 -30 12 -12 30 -12 -30 -30 -12 30 -12z" fill="#fde68a"/>
   <path d="M800 740 l9 22 22 9 -22 9 -9 22 -9 -22 -22 -9 22 -9z" fill="#67e8f9"/>
 </g></g><g font-family="'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" text-anchor="middle" font-weight="900">
-  <text x="512" y="846" font-size="118" letter-spacing="5" fill="#ffffff">THE CAMPUS</text>
-  <text x="512" y="948" font-size="72" letter-spacing="38" fill="url(#ring)">LOOP</text>
-</g></g></svg>
+  <text x="512" y="838" font-size="112" letter-spacing="5" fill="#ffffff">THE CAMPUS</text>
+  <rect x="120" y="918" width="215" height="5" rx="2.5" fill="url(#ring)"/>
+  <rect x="689" y="918" width="215" height="5" rx="2.5" fill="url(#ring)"/>
+  <text x="512" y="942" font-size="64" letter-spacing="30" fill="url(#ring)">LOOP</text>
+</g></svg>
