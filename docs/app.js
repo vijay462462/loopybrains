@@ -1412,7 +1412,7 @@ function showWelcome(force, startId) {
     const sid = STEPS[step];
     if (sid === "about") {
       const ab = (window.DOUBT_DESK_CONFIG && window.DOUBT_DESK_CONFIG.about) || {}, line = (icon, t, d) => el("div", { class: "ab-pillar" }, el("span", { "aria-hidden": "true" }, icon), el("div", {}, el("b", {}, t), el("small", {}, d)));
-      body = [el("div", { class: "ob-loopy" }, loopyMini()), el("h2", {}, "About " + BRAND), el("p", { class: "ob-say" }, "We are a team of students and teachers who wanted one safe, friendly place for every campus to ask, answer and grow together. " + BRAND + " is built by students, for students, and we promise to earn your trust every day."),
+      body = [el("div", { class: "ob-loopy ob-brand" }, brandMark(84)), el("h2", {}, "About " + BRAND), el("p", { class: "ob-say" }, "We are a team of students and teachers who wanted one safe, friendly place for every campus to ask, answer and grow together. " + BRAND + " is built by students, for students, and we promise to earn your trust every day."),
         el("div", { class: "ab-list" }, line("🛡️", "Safe and moderated", "Anonymous sign-in, reported posts hidden fast, abusive devices blocked."), line("🔒", "Private by design", "No ads. We never sell your data. Only your chosen name is shown."), line("🙏", "Respect for everyone", "Students, teachers and staff are honoured here."), line("🆓", "Free to learn", "The board, quizzes and Study Lab are free forever. Plus is optional.")),
         el("p", { class: "ab-meta" }, [ab.founder ? "Founded by " + ab.founder : "", ab.college ? ab.college : "", "Made with ❤️ in India"].filter(Boolean).join(" · ")),
         el("p", { class: "ab-meta" }, ab.email ? el("a", { href: "mailto:" + ab.email }, "Write to us: " + ab.email) : null, ab.email ? " · " : "", el("a", { href: "about.html", target: "_blank", rel: "noopener" }, "Our full story"), " · ", el("a", { href: "privacy.html", target: "_blank", rel: "noopener" }, "Privacy"), " · ", el("a", { href: "terms.html", target: "_blank", rel: "noopener" }, "Terms")),
@@ -1658,6 +1658,12 @@ document.addEventListener("pointermove", (e) => {
     s.style.setProperty("--ex", (dx / d * 1.6).toFixed(2) + "px"); s.style.setProperty("--ey", (dy / d * 1.2).toFixed(2) + "px");
   });
 }, { passive: true });
+// The Campus Loop brand mark: a C-shaped loop wearing a graduation cap (trusted static markup, parsed as SVG).
+let _bmN = 0;
+function brandMark(size = 64) {
+  const doc = new DOMParser().parseFromString("<svg class=\"bmark\" viewBox=\"220 120 584 580\" width=\""+size+"\" height=\""+size+"\" role=\"img\" aria-label=\"The Campus Loop\"><defs><linearGradient id=\"bmRing"+(++_bmN)+"\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0\" stop-color=\"#22d3ee\"/><stop offset=\".35\" stop-color=\"#6366f1\"/><stop offset=\".7\" stop-color=\"#d946ef\"/><stop offset=\"1\" stop-color=\"#fb923c\"/></linearGradient><linearGradient id=\"bmGold"+(++_bmN)+"\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0\" stop-color=\"#fde68a\"/><stop offset=\".5\" stop-color=\"#f59e0b\"/><stop offset=\"1\" stop-color=\"#fcd34d\"/></linearGradient></defs><circle cx=\"512\" cy=\"410\" r=\"238\" fill=\"none\" stroke=\"url(#bmRing"+(++_bmN)+")\" stroke-width=\"72\" stroke-linecap=\"round\" stroke-dasharray=\"1100 396\" transform=\"rotate(45 512 410)\"/><path d=\"M330 400 L512 322 L694 400 L512 478 Z\" fill=\"#ffffff\"/><path d=\"M404 448 v70 q108 58 216 0 v-70\" fill=\"none\" stroke=\"#e0e7ff\" stroke-width=\"22\" stroke-linejoin=\"round\"/><path d=\"M694 400 v96\" stroke=\"url(#bmGold"+(++_bmN)+")\" stroke-width=\"10\" stroke-linecap=\"round\"/><circle cx=\"694\" cy=\"508\" r=\"17\" fill=\"url(#bmGold"+(++_bmN)+")\"/></svg>", "image/svg+xml");
+  const n = document.importNode(doc.documentElement, true); n.setAttribute("aria-hidden", "true"); n.removeAttribute("role"); n.removeAttribute("aria-label"); return n;
+}
 function loopyMini(costume) {
   const NS = "http://www.w3.org/2000/svg", mk = (t, at) => { const n = document.createElementNS(NS, t); for (const k in at) n.setAttribute(k, at[k]); return n; };
   const id = costume || equippedCostume();
@@ -2273,7 +2279,7 @@ function showEligibility() {
     try { curState.year = k; const o = readJSON("dd-curio-prof", {}) || {}; o.year = Number(k[1]) || o.year; writeJSON("dd-curio-prof", o); } catch (_) {}
     ov.remove(); render();
   };
-  ov.append(el("div", { class: "welcome-card ob-card" }, el("div", { class: "ob-loopy" }, loopyMini()), el("h2", {}, "Which year are you in?"),
+  ov.append(el("div", { class: "welcome-card ob-card" }, el("div", { class: "ob-loopy ob-brand" }, brandMark(72)), el("h2", {}, "Which year are you in?"),
     el("p", { class: "ob-say" }, "RGUKT is a six-year integrated course. " + BRAND + " is for B.Tech 2nd year students and above."),
     el("div", { class: "rg-opts", role: "group", "aria-label": "Your year" }, ...RG_YEARS.map(([k, t, ok]) => el("button", { class: "rg-opt" + (ok ? " ok" : ""), type: "button", onclick: () => choose(k, ok) }, el("span", { class: "rg-name" }, t), el("small", {}, ok ? "Open \u2713" : "Not yet")))), msg,
     el("p", { class: "hint" }, "This is your own declaration. Please answer honestly. Details are in the ", el("a", { href: "terms.html", target: "_blank", rel: "noopener" }, "Terms"), ".")));

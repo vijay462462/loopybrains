@@ -2534,3 +2534,10 @@ body.simple .tabs button[aria-selected="true"] { display: inline-flex; }
 .logout-btn { color: #ef4444 !important; border-color: color-mix(in srgb, #ef4444 55%, transparent) !important; background: color-mix(in srgb, #ef4444 9%, transparent) !important; font-weight: 800; }
 .logout-btn:hover, .logout-btn:focus-visible { background: color-mix(in srgb, #ef4444 18%, transparent) !important; }
 .acct-head, .acct-head > div { text-align: left; }
+
+.sp2-brand { display: inline-flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+.sp2-bmark svg { display: block; filter: drop-shadow(0 8px 14px rgba(99, 102, 241, .45)); }
+.sp2-bname { display: grid; text-align: left; line-height: 1.05; font-family: 'Bitstream Charter', Georgia, 'Times New Roman', serif; }
+.sp2-bname b { font-size: 19px; letter-spacing: .12em; color: #fff; }
+.sp2-bname i { font-style: normal; font-size: 12px; letter-spacing: .6em; font-weight: 700; background: linear-gradient(90deg, #fde68a, #f59e0b); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.ob-brand { display: grid; place-items: center; } .ob-brand svg { filter: drop-shadow(0 10px 18px rgba(99, 102, 241, .45)); }
