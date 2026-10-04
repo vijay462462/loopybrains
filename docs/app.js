@@ -987,7 +987,7 @@ function loadImage(file) {
 }
 // Shrinks a photo or drawing to a JPEG small enough for one database document (about 500 KB).
 function toJpeg(src, w, h, limit = 700000) {
-  let scale = Math.min(1, 1400 / Math.max(w, h)), q = 0.78;
+  let scale = Math.min(1, 2400 / Math.max(w, h)), q = 0.86;   // phone screenshots are about 2400 px tall; keep the text sharp
   for (let i = 0; i < 8; i++) {
     const c = document.createElement("canvas");
     c.width = Math.max(1, Math.round(w * scale)); c.height = Math.max(1, Math.round(h * scale));
@@ -996,7 +996,7 @@ function toJpeg(src, w, h, limit = 700000) {
     x.drawImage(src, 0, 0, c.width, c.height);
     const url = c.toDataURL("image/jpeg", q);
     if (url.length <= limit) return url;
-    if (q > 0.5) q -= 0.1; else scale *= 0.8;
+    if (q > 0.6) q -= 0.08; else scale *= 0.85;
   }
   throw new Error("image too large");
 }
@@ -1179,8 +1179,40 @@ function renderYtCards(text) {
   );
 }
 
+// Saving a page: the same picture that was posted, as JPEG or as a PDF page, or opened full size in a new tab. The PDF is built here, so no outside library is used.
+const dataUrlBytes = (u) => { const m = /^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$/.exec(u || ""); if (!m) return null; const bin = atob(m[2]), a = new Uint8Array(bin.length); for (let k = 0; k < bin.length; k++) a[k] = bin.charCodeAt(k); return { type: "image/" + m[1], bytes: a }; };
+const saveBlob = (blob, name) => { const u = URL.createObjectURL(blob), a = document.createElement("a"); a.href = u; a.download = name; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000); };
+const openBlob = (blob) => { const u = URL.createObjectURL(blob), a = document.createElement("a"); a.href = u; a.target = "_blank"; a.rel = "noopener"; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 60000); };
+async function jpegOf(url) {   // returns { bytes, w, h } with a baseline JPEG, converting PNG or WebP pages when needed
+  const img = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = url; });
+  const d = dataUrlBytes(url);
+  if (d && d.type === "image/jpeg") return { bytes: d.bytes, w: img.naturalWidth, h: img.naturalHeight };
+  const c = document.createElement("canvas"); c.width = img.naturalWidth; c.height = img.naturalHeight;
+  const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0);
+  return { bytes: dataUrlBytes(c.toDataURL("image/jpeg", 0.95)).bytes, w: c.width, h: c.height };
+}
+function pdfFromJpegs(pages) {
+  const enc = new TextEncoder(), parts = [], offs = []; let len = 0;
+  const put = (x) => { const b = typeof x === "string" ? enc.encode(x) : x; parts.push(b); len += b.length; };
+  const obj = (n, body) => { offs[n] = len; put(n + " 0 obj\n"); put(body); put("\nendobj\n"); };
+  put("%PDF-1.4\n"); const kids = pages.map((_, k) => (3 + k * 3) + " 0 R").join(" ");
+  obj(1, "<< /Type /Catalog /Pages 2 0 R >>"); obj(2, "<< /Type /Pages /Kids [" + kids + "] /Count " + pages.length + " >>");
+  pages.forEach((pg, k) => {
+    const n = 3 + k * 3, W = (pg.w * 0.75).toFixed(2), H = (pg.h * 0.75).toFixed(2), content = "q " + W + " 0 0 " + H + " 0 0 cm /Im0 Do Q";
+    obj(n, "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 " + W + " " + H + "] /Resources << /XObject << /Im0 " + (n + 2) + " 0 R >> >> /Contents " + (n + 1) + " 0 R >>");
+    obj(n + 1, "<< /Length " + content.length + " >>\nstream\n" + content + "\nendstream");
+    offs[n + 2] = len; put((n + 2) + " 0 obj\n<< /Type /XObject /Subtype /Image /Width " + pg.w + " /Height " + pg.h + " /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length " + pg.bytes.length + " >>\nstream\n"); put(pg.bytes); put("\nendstream\nendobj\n");
+  });
+  const total = 3 + pages.length * 3, xref = len; put("xref\n0 " + total + "\n0000000000 65535 f \n");
+  for (let n = 1; n < total; n++) put(String(offs[n]).padStart(10, "0") + " 00000 n \n");
+  put("trailer\n<< /Size " + total + " /Root 1 0 R >>\nstartxref\n" + xref + "\n%%EOF");
+  return new Blob(parts, { type: "application/pdf" });
+}
 function openViewer(ids, start) {
-  let i = start;
+  let i = start, cur = "";
+  const say = (t) => { cap.textContent = t; };
+  const getUrls = async (all) => { const list = all ? ids : [ids[i]], out = []; for (const id of list) { const u = await loadPage(id); if (u) out.push(u); } return out; };
+  const act = (label, fn) => el("button", { type: "button", class: "btn sm", onclick: async (e) => { const b = e.currentTarget, old = b.textContent; b.disabled = true; b.textContent = "Please wait..."; try { await fn(); } catch (_) { say("Could not prepare the file. Try again."); } finally { b.disabled = false; b.textContent = old; } } }, label);
   const img = el("img", { alt: "" });
   const cap = el("span", { class: "ovcap" });
   const body = el("div", { class: "ovbody" }, img);
@@ -1194,6 +1226,10 @@ function openViewer(ids, start) {
   const onKey = (e) => { if (e.key === "Escape") close(); else if (e.key === "ArrowRight") step(1); else if (e.key === "ArrowLeft") step(-1); };
   const ov = el("div", { class: "overlay", role: "dialog", "aria-modal": "true", "aria-label": "Notebook page" },
     el("div", { class: "ovbar" }, cap,
+      act("\u{1F50D} Open full size", async () => { const d = dataUrlBytes((await getUrls())[0]); if (d) openBlob(new Blob([d.bytes], { type: d.type })); }),
+      act("\u2B07 JPEG", async () => { const j = await jpegOf((await getUrls())[0]); saveBlob(new Blob([j.bytes], { type: "image/jpeg" }), "campusloop-page-" + (i + 1) + ".jpg"); }),
+      act("\u2B07 PDF", async () => { const j = await jpegOf((await getUrls())[0]); saveBlob(pdfFromJpegs([j]), "campusloop-page-" + (i + 1) + ".pdf"); }),
+      ids.length > 1 && act("\u2B07 All pages (PDF)", async () => { const js = []; for (const u of await getUrls(true)) js.push(await jpegOf(u)); if (js.length) saveBlob(pdfFromJpegs(js), "campusloop-pages.pdf"); }),
       ids.length > 1 && el("button", { type: "button", class: "btn sm", onclick: () => step(-1) }, "‹ Prev"),
       ids.length > 1 && el("button", { type: "button", class: "btn sm", onclick: () => step(1) }, "Next ›"),
       el("button", { type: "button", class: "btn sm primary", onclick: close }, "Close")),
