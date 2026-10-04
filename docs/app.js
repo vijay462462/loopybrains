@@ -615,6 +615,15 @@ async function firebaseStore(conf, prefix = "") {
       await b.commit(); return true;
     },
     battleBoard: async (week) => (await fs.getDocs(fs.query(fs.collection(db, "battleColleges"), fs.where("week", "==", week), fs.limit(400)))).docs.map(d => d.data()),
+    // Custom Loop IDs (@name): the name is the document id, so it is unique. A claim also writes the 30-day log in the same batch (the rules check both).
+    handleCheck: async (name) => { const d = await fs.getDoc(fs.doc(db, "handles", name)); return d.exists() ? d.data().uid : null; },
+    handleClaim: async (name, oldName) => {
+      if (!auth || !auth.currentUser) throw new Error("Connect to the internet and try again.");
+      const uid = auth.currentUser.uid, at = Date.now(), b = fs.writeBatch(db);
+      if (oldName) b.delete(fs.doc(db, "handles", oldName));
+      b.set(fs.doc(db, "handleLog", uid), { at }); b.set(fs.doc(db, "handles", name), { uid, createdAt: at }); await b.commit(); return at;
+    },
+    handleRelease: async (name) => { await fs.deleteDoc(fs.doc(db, "handles", name)); },
     // Weekly Showdown: one student action moves the student's counter and the college counter together (the rules check it).
     showdownHit: async (week, slug, kind) => {
       if (!auth || !auth.currentUser || !["idea", "answer"].includes(kind)) return false;
@@ -2326,6 +2335,51 @@ function idCard() {
     el("small", { class: "hint" }, final ? "Your own number, never reused. Share it with friends or quote it when you write to support. It is not a password." : "Temporary number. Your final number is issued when the server is connected. It is not a password."),
     el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: async () => { try { await navigator.clipboard.writeText(id); say.textContent = "Copied."; } catch (_) { say.textContent = id; } } }, "\u{1F4CB} Copy")), say);
 }
+// ---------- Custom Loop ID (@name): easy to pick, easy to find again ----------
+const HANDLE_OK = /^[a-z0-9_]{3,15}$/, HANDLE_RESERVED = /^(admin|official|support|staff|moderator|campusloop|loop|rgukt|help|team|mod)/;
+const handleOf = (id) => { if (store && id === store.uid) return myHandle(); const p = state.profiles.find(x => x.id === id); return p && p.handle ? p.handle : ""; };
+function myHandle() { const p = store && state.profiles.find(x => x.id === store.uid), l = readJSON("dd-handle", null); const h = (p && p.handle) || (l && l.name) || ""; return HANDLE_OK.test(h) ? h : ""; }
+const handleDaysLeft = () => { const l = readJSON("dd-handle", null); return l && l.at ? Math.max(0, Math.ceil((l.at + 30 * 86400000 - Date.now()) / 86400000)) : 0; };
+function handleSuggestions() {
+  const base = (getName() || "student").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 8) || "student", [, col] = clCodes(), yr = String(new Date().getFullYear()).slice(2), r = () => Math.floor(Math.random() * 90 + 10);
+  return [...new Set([base + "_" + col.toLowerCase(), base + yr, base + "_" + r(), base + r() + "x", "the_" + base].map(x => x.slice(0, 15)).filter(x => HANDLE_OK.test(x) && !HANDLE_RESERVED.test(x)))].slice(0, 4);
+}
+function handleCard() {
+  if (!store || !store.handleClaim) return null;
+  const cur = myHandle(), say = el("p", { class: "hint", role: "status" }, ""), left = handleDaysLeft();
+  const input = el("input", { type: "text", maxlength: "15", placeholder: "choose a name, e.g. vijay_rgu", "aria-label": "Choose your Loop ID name", autocomplete: "off", autocapitalize: "none", spellcheck: "false" }), claim = el("button", { class: "btn sm primary", type: "button", disabled: "" }, "Claim it");
+  let status = "", timer = 0, tries = 0;
+  const check = () => {
+    const v = input.value.trim().toLowerCase().replace(/^@/, ""); input.value = v; claim.disabled = true; status = "";
+    if (!v) { say.textContent = ""; return; }
+    if (!HANDLE_OK.test(v)) { say.textContent = "Use 3 to 15 letters, numbers or underscore."; return; }
+    if (HANDLE_RESERVED.test(v)) { say.textContent = "That name is reserved. Try another."; return; }
+    say.textContent = "Checking…"; const mine = ++tries;
+    store.handleCheck(v).then(u => { if (mine !== tries) return; if (u && u === store.uid) { say.textContent = "✅ This is already your name."; } else if (u) { say.textContent = "❌ Taken. Try one of the ideas below."; } else { say.textContent = "✅ @" + v + " is free."; claim.disabled = left > 0 && !!cur; status = "free"; claim.disabled = !(status === "free") || (left > 0 && !!cur); } }).catch(() => { if (mine === tries) say.textContent = "Could not check. Connect to the internet and try again."; });
+  };
+  input.addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(check, 350); });
+  claim.onclick = async () => {
+    const v = input.value.trim().toLowerCase(); claim.disabled = true; say.textContent = "Saving…";
+    try { const at = await store.handleClaim(v, cur || ""); writeJSON("dd-handle", { name: v, at }); syncProfile().catch(() => {}); say.textContent = "✅ Done. Your Loop ID is @" + v + "."; state.profiles = state.profiles.map(x => store && x.id === store.uid ? { ...x, handle: v } : x); setTimeout(() => render(), 600); }
+    catch (e) { say.textContent = (e && e.code === "permission-denied") ? "That name is taken, reserved, or you changed it in the last 30 days." : ((e && e.message) || "Could not save. Try again."); claim.disabled = false; }
+  };
+  const chips = el("div", { class: "rowbtns", role: "group", "aria-label": "Name ideas" }, ...handleSuggestions().map(n => el("button", { class: "btn sm", type: "button", onclick: () => { input.value = n; check(); } }, "@" + n)));
+  return el("div", { class: "learn-card id-card" }, el("small", { class: "tag" }, "\u{1F3F7}️ YOUR LOOP ID NAME"),
+    cur ? el("strong", { class: "id-code" }, "@" + cur) : el("strong", {}, "Pick a short name friends can remember"),
+    cur ? el("small", { class: "hint" }, left > 0 ? "You can change it in " + left + " day" + (left === 1 ? "" : "s") + "." : "You can change it now.") : el("small", { class: "hint" }, "Optional. 3 to 15 letters, numbers or underscore. First come, first served."),
+    cur && left > 0 ? null : el("div", { class: "ls-bar" }, input, claim), cur && left > 0 ? null : chips, say,
+    el("div", { class: "rowbtns" }, el("button", { class: "linkbtn", type: "button", onclick: () => showPanel("forgotid") }, "Forgot my Loop ID?"), cur ? el("button", { class: "linkbtn", type: "button", onclick: async (e) => { if (!confirm("Release @" + cur + "? Anyone can take it, and you cannot pick a new name for 30 days.")) return; try { await store.handleRelease(cur); try { localStorage.removeItem("dd-handle"); } catch (_) {} const rec = state.profiles.find(x => x.id === store.uid); if (rec) delete rec.handle; render(); } catch (_) { say.textContent = "Could not release it."; } } }, "Release my name") : null));
+}
+function renderForgotId() {
+  const found = el("div", { class: "ls-people", "aria-live": "polite" }), q = el("input", { type: "search", maxlength: "30", placeholder: "Type your nickname", "aria-label": "Your nickname", autocomplete: "off" });
+  const draw = () => { const nd = q.value.trim().toLowerCase(); const rows = nd.length < 2 ? [] : state.profiles.filter(p => p.name && p.name.toLowerCase().includes(nd)).slice(0, 6); found.replaceChildren(...(nd.length < 2 ? [] : rows.length ? rows.map(p => el("div", { class: "learn-card ls-person" }, el("div", { class: "ls-who" }, el("strong", {}, p.name), el("small", { class: "hint id-mini" }, [p.handle ? "@" + p.handle : "", campusId(p.id)].filter(Boolean).join("  ·  ") || "No Loop ID yet")))) : [el("p", { class: "hint" }, "No one with that nickname. Check the spelling.")])); };
+  q.addEventListener("input", draw);
+  return [el("h2", {}, "\u{1F511} Forgot my Loop ID"), el("p", { class: "hint" }, "Your Loop ID belongs to your account, so it comes back with your account. Pick the case that fits you."),
+    el("div", { class: "learn-card" }, el("strong", {}, "1. I am on my own phone"), el("p", { class: "hint" }, "Open Me. Your number ID and @name are shown there."), el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => showPanel("me") }, "Open Me"))),
+    el("div", { class: "learn-card" }, el("strong", {}, "2. I only remember my nickname"), el("p", { class: "hint" }, "Search it here. Public Loop IDs of classmates are shown the same way."), q, found),
+    el("div", { class: "learn-card" }, el("strong", {}, "3. New phone or cleared data"), el("p", { class: "hint" }, "Sign in with the email you verified. Your account, points and Loop ID come back. Without a verified email, a cleared browser cannot be recovered, so verify your email now."), el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => showPanel("me") }, "Verify my email"))),
+    el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => showPanel("me") }, "Back"))];
+}
 // ---------- Helper of the week and push opt-in ----------
 function helperOfWeek() {
   if (!store || !state.loaded) return null;
@@ -2480,6 +2534,7 @@ const MODE_GUIDE = {
   explore: { icon: "\u{1F9ED}", purpose: "Discover what is happening across the app.", steps: ["Browse the cards.", "Open one that interests you.", "Come back for new things daily."], safe: SAFE_COMMON, next: ["❓ Ask a doubt", "ask"] },
   drives: { icon: "\u{1F3E2}", purpose: "Campus drives and company visits with dates and links.", steps: ["Check the date and eligibility.", "Open the official link to register.", "Prepare using the resume tool."], safe: "A real drive never asks you to pay. Report any post that does.", next: ["\u{1F4C4} Build my resume", "resume"] },
   events: { icon: "\u{1F4C5}", purpose: "Events, fests and workshops on your campus.", steps: ["Pick an event.", "Check the date and place.", "Invite a friend."], safe: "Meet in public places on campus.", next: ["\u{1F4E2} Notices", "notices"] },
+  forgotid: { icon: "\u{1F511}", purpose: "Find your Loop ID again, or get it back on a new phone.", steps: ["Look on the Me page if you are on your own phone.", "Search your nickname if you only remember that.", "Verify your email so a new phone can bring your account back."], safe: "Your Loop ID is not a password. Nobody can sign in with it.", next: null },
   curious: { icon: "\u{1F50E}", purpose: "A few minutes of wonder every day: a fact, a Why guess, a mystery topic and the best question of the week.", steps: ["Read the fact and tap I learned this.", "Guess the Why before you see the answer.", "Unlock the mystery topic and search more on anything that excites you."], safe: SAFE_COMMON, next: ["\u2753 Ask a question", "ask"] },
   feedback: { icon: "\u{1F4AC}", purpose: "Tell the team what works and what to fix. It shapes the next version.", steps: ["Give a rating from 1 to 5.", "Say whether you would pay and how much.", "Write one thing you like and one thing to improve."], safe: "Do not write phone numbers or passwords. Feedback is private and not shown with your name.", next: null },
   notifs: { icon: "\u{1F514}", purpose: "Everything that needs you: answers to your doubts, doubts waiting for a first answer, and streak reminders.", steps: ["Tap a line to open it.", "Answer a waiting doubt to be the first helper.", "Turn on phone alerts if you want a ping while the app is in the background."], safe: "Alerts show only the title of a post. Nothing private is sent anywhere.", next: ["\u{1F64B} See open doubts", "intro"] },
@@ -4180,12 +4235,12 @@ function openLoopySearch(q, back) {
 // Student search inside Loopy AI Search. Only public nicknames that already appear on the board are searchable. Anonymous posts and e-mail addresses are never included.
 const lsPerson = (p, extra) => el("div", { class: "learn-card ls-person" },
   avatarEl(avatarFor(p.name || ""), "av av-lg"),
-  el("div", { class: "ls-who" }, el("strong", {}, p.name + markOf(p.id)), campusId(p.id) ? el("small", { class: "hint id-mini" }, campusId(p.id)) : null, el("small", { class: "hint" }, "Lv " + p.level.n + " " + titleOf(p.points) + " · " + plural(p.answers, "answer") + " · " + p.helpful + " helpful" + (p.streak > 1 ? " · \u{1F525}" + p.streak + "-day streak" : "")), (statusOfId(p.id) || "") ? el("small", {}, statusOfId(p.id)) : null, extra || null),
+  el("div", { class: "ls-who" }, el("strong", {}, p.name + markOf(p.id)), (campusId(p.id) || handleOf(p.id)) ? el("small", { class: "hint id-mini" }, [handleOf(p.id) ? "@" + handleOf(p.id) : "", campusId(p.id)].filter(Boolean).join("  \u00B7  ")) : null, el("small", { class: "hint" }, "Lv " + p.level.n + " " + titleOf(p.points) + " · " + plural(p.answers, "answer") + " · " + p.helpful + " helpful" + (p.streak > 1 ? " · \u{1F525}" + p.streak + "-day streak" : "")), (statusOfId(p.id) || "") ? el("small", {}, statusOfId(p.id)) : null, extra || null),
   el("span", { class: "pts" }, p.points + " pts"));
 function lsStudents(box, q, sort) {
   const needle = lsClean(q).toLowerCase(), meId = store && store.uid;
   let rows = [...allStats().values()].filter(p => p.name && p.id !== meId);
-  if (needle) rows = rows.filter(p => p.name.toLowerCase().includes(needle) || campusId(p.id).toLowerCase().includes(needle));
+  if (needle) rows = rows.filter(p => p.name.toLowerCase().includes(needle) || campusId(p.id).toLowerCase().includes(needle) || handleOf(p.id).includes(needle.replace(/^@/, "")));
   const by = { points: (a, b) => b.points - a.points, answers: (a, b) => b.answers - a.answers || b.helpful - a.helpful, streak: (a, b) => (b.streak || 0) - (a.streak || 0) || b.points - a.points }[sort] || ((a, b) => b.points - a.points);
   rows = rows.sort(by);
   box.replaceChildren(...(rows.length ? [el("p", { class: "hint", role: "status" }, rows.length + " student" + (rows.length === 1 ? "" : "s") + (rows.length > 20 ? " · showing the top 20" : "")), ...rows.slice(0, 20).map(p => lsPerson(p))] : [el("p", { class: "hint", role: "status" }, needle ? "No student with “" + needle + "” yet. Check the spelling or ask them to join." : "No students on the board yet. Answer a doubt to be the first.")]));
@@ -4594,7 +4649,7 @@ function renderMe() {
       el("button", { class: "btn", type: "button", onclick: () => { state.afterName = "me"; state.mode = "name"; render(); } }, "Change name"),
       PRIVATE && el("button", { class: "btn", type: "button", onclick: () => { setCode(""); location.reload(); } }, "Change class code"),
       el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")),
-    idCard(),
+    idCard(), handleCard(),
     logoutBlock(),
   ];
 }
@@ -8155,7 +8210,7 @@ async function syncProfile() {
   if (!dp && !status && !verified && !plus && !cp && !state.profiles.some(p => p.id === store.uid)) return;
   const rec = { name: (getName() || "Student").slice(0, 40), dp, status, verified, plus, streak: Math.min(3650, state.myStreak || 0), updatedAt: Date.now() };
   if (cp > 0) rec.curio = cp;
-  { const c = readJSON("dd-clid", ""); if (typeof c === "string" && CLID_OK.test(c)) rec.cid = c; }
+  { const c = readJSON("dd-clid", ""); if (typeof c === "string" && CLID_OK.test(c)) rec.cid = c; const hh = readJSON("dd-handle", null); if (hh && HANDLE_OK.test(hh.name || "")) rec.handle = hh.name; }
   await store.set("profiles", store.uid, rec);
 }
 function pickDp() {
@@ -8478,6 +8533,7 @@ function render() {
       state.mode === "wardrobe" ? renderWardrobe() :
       state.mode === "drives" ? renderDrives() :
       state.mode === "events" ? renderEvents() :
+      state.mode === "forgotid" ? renderForgotId() :
       state.mode === "curious" ? renderCurious() :
       state.mode === "feedback" ? renderFeedback() :
       state.mode === "notifs" ? renderNotifs() :
@@ -8680,7 +8736,7 @@ render();
   store.subscribe("blocked", rows => { state.blocked = rows.map(r => r.id); }, e => {});
   let dpChecked = false;
   store.subscribe("profiles", rows => {
-    state.profiles = rows.filter(p => typeof p.name === "string" && (!p.dp || DP_OK.test(p.dp))).map(p => ({ ...p, status: String(p.status || "").slice(0, 60), verified: p.verified === true, plus: p.plus === true, curio: Number.isInteger(p.curio) && p.curio > 0 ? Math.min(p.curio, 100000) : 0, cid: typeof p.cid === "string" && CLID_OK.test(p.cid) ? p.cid : "", streak: Number.isInteger(p.streak) && p.streak > 0 ? p.streak : 0 })); update();
+    state.profiles = rows.filter(p => typeof p.name === "string" && (!p.dp || DP_OK.test(p.dp))).map(p => ({ ...p, status: String(p.status || "").slice(0, 60), verified: p.verified === true, plus: p.plus === true, curio: Number.isInteger(p.curio) && p.curio > 0 ? Math.min(p.curio, 100000) : 0, cid: typeof p.cid === "string" && CLID_OK.test(p.cid) ? p.cid : "", handle: typeof p.handle === "string" && /^[a-z0-9_]{3,15}$/.test(p.handle) ? p.handle : "", streak: Number.isInteger(p.streak) && p.streak > 0 ? p.streak : 0 })); update();
     if (!dpChecked && (getDp() || getStatus() || myVerified() || state.plan.plus)) { dpChecked = true; const me = rows.find(p => p.id === store.uid); if (!me || (me.dp || "") !== getDp() || me.name !== getName() || (me.status || "") !== getStatus() || (me.verified === true) !== myVerified() || (me.plus === true) !== !!state.plan.plus) syncProfile().catch(() => {}); }
   }, e => {});
   const since = Date.now() - STORY_MS;

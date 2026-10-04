@@ -78,5 +78,16 @@ await t("studentIds: students cannot write or list", async () => { await assertF
 await t("studentIds: counters are closed", () => assertFails(getDoc(doc(alice, "idCounters", "AP-RGU"))));
 await t("profile: own issued cid is accepted", () => assertSucceeds(prof(alice, "alice", { cid: "AP-RGU-0001" })));
 await t("profile: someone else's or made-up cid is refused", async () => { await assertFails(prof(alice, "alice", { cid: "AP-RGU-0002" })); await assertFails(prof(bob, "bob", { cid: "AP-RGU-0001" })); });
+// ---- custom Loop IDs ----
+const claim = (db, uid, name, at = Date.now()) => { const b = writeBatch(db); b.set(doc(db, "handleLog", uid), { at }); b.set(doc(db, "handles", name), { uid, createdAt: at }); return b.commit(); };
+await t("handle: a student claims a free name", () => assertSucceeds(claim(alice, "alice", "vijay_rgu")));
+await t("handle: a taken name is refused", () => assertFails(claim(bob, "bob", "vijay_rgu")));
+await t("handle: anyone signed in can check a name, nobody can list", async () => { await assertSucceeds(getDoc(doc(bob, "handles", "vijay_rgu"))); await assertFails(getDocs(collection(bob, "handles"))); await assertFails(getDoc(doc(anon, "handles", "vijay_rgu"))); });
+await t("handle: reserved and look-alike staff names are refused", async () => { for (const n of ["admin", "official_help", "support1", "campusloop", "rgukt_ap"]) await assertFails(claim(bob, "bob", n)); });
+await t("handle: bad characters or length are refused", async () => { for (const n of ["ab", "Has Space", "UPPER", "this_name_is_way_too_long", "a-b-c"]) await assertFails(claim(bob, "bob", n)); });
+await t("handle: cannot claim for another user's id", () => assertFails((async () => { const b = writeBatch(bob); b.set(doc(bob, "handleLog", "bob"), { at: Date.now() }); b.set(doc(bob, "handles", "sneaky_one"), { uid: "alice", createdAt: Date.now() }); await b.commit(); })()));
+await t("handle: a second name within 30 days is refused", () => assertFails(claim(alice, "alice", "another_name")));
+await t("handle: the owner can release, others cannot", async () => { await assertFails((async () => { const { deleteDoc } = await import("firebase/firestore"); await deleteDoc(doc(bob, "handles", "vijay_rgu")); })()); const { deleteDoc } = await import("firebase/firestore"); await assertSucceeds(deleteDoc(doc(alice, "handles", "vijay_rgu"))); });
+await t("handle: profile can publish only a name the user owns", async () => { await env.withSecurityRulesDisabled(async (ctx) => { await setDoc(doc(ctx.firestore(), "handles", "bob_name"), { uid: "bob", createdAt: Date.now() }); }); await assertSucceeds(prof(bob, "bob", { handle: "bob_name" })); await assertFails(prof(alice, "alice", { handle: "bob_name" })); await assertFails(prof(alice, "alice", { handle: "nobody_owns" })); });
 console.log(`\n${pass} passed, ${fail} failed`);
 await env.cleanup(); process.exit(fail ? 1 : 0);

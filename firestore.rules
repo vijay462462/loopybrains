@@ -337,6 +337,25 @@ service cloud.firestore {
       allow write: if false;
     }
     match /idCounters/{id} { allow read, write: if false; }
+    // Custom Loop IDs (@name). Each name is a document id, so two students can never hold the same one. A student may take a new name at most once
+    // every 30 days (handleLog/<uid> is written in the same batch), may release their own name, and cannot take reserved or look-alike staff names.
+    match /handleLog/{uid} {
+      allow get: if request.auth != null && request.auth.uid == uid;
+      allow list: if false;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['at']) && request.resource.data.at is int && recent(request.resource.data.at)
+        && (resource == null || resource.data.at < request.time.toMillis() - 2592000000);
+      allow delete: if false;
+    }
+    match /handles/{h} {
+      allow get: if request.auth != null;
+      allow list: if false;
+      allow create: if request.auth != null && h.matches('[a-z0-9_]{3,15}') && !h.matches('(admin|official|support|staff|moderator|campusloop|loop|rgukt|help|team|mod)[a-z0-9_]*')
+        && request.resource.data.keys().hasOnly(['uid', 'createdAt']) && request.resource.data.uid == request.auth.uid && recent(request.resource.data.createdAt)
+        && getAfter(/databases/$(database)/documents/handleLog/$(request.auth.uid)).data.at == request.resource.data.createdAt;
+      allow update: if false;
+      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+    }
     // Pilot feedback: one short form per student per week (document id = <uid>_<week>). Students can only add their own; only admins read it.
     match /pilotFeedback/{id} {
       allow read: if isAdmin();
@@ -549,8 +568,9 @@ service cloud.firestore {
       match /profiles/{id} {
         function validProfile() {
           let d = request.resource.data;
-          return d.keys().hasOnly(['name', 'dp', 'status', 'verified', 'plus', 'streak', 'curio', 'cid', 'updatedAt', 'ownerUid']) && optStr(d, 'ownerUid', 60) && (d.get('verified', false) == false || request.auth.token.email_verified == true) && str(d.name, 1, 40) && optStr(d, 'status', 60) && optBool(d, 'verified') && optBool(d, 'plus') && (!('streak' in d) || (d.streak is int && d.streak >= 0 && d.streak <= 3650)) && (!('curio' in d) || (d.curio is int && d.curio >= 0 && d.curio <= 100000))
-            && (!('cid' in d) || (d.cid is string && d.cid.size() <= 16 && exists(/databases/$(database)/documents/studentIds/$(request.auth.uid)) && get(/databases/$(database)/documents/studentIds/$(request.auth.uid)).data.id == d.cid)) && (d.get('plus', false) == false || plusActive(request.auth.uid)) && (d.get('verified', false) == false || request.auth.token.email_verified == true) && d.updatedAt is int
+          return d.keys().hasOnly(['name', 'dp', 'status', 'verified', 'plus', 'streak', 'curio', 'cid', 'handle', 'updatedAt', 'ownerUid']) && optStr(d, 'ownerUid', 60) && (d.get('verified', false) == false || request.auth.token.email_verified == true) && str(d.name, 1, 40) && optStr(d, 'status', 60) && optBool(d, 'verified') && optBool(d, 'plus') && (!('streak' in d) || (d.streak is int && d.streak >= 0 && d.streak <= 3650)) && (!('curio' in d) || (d.curio is int && d.curio >= 0 && d.curio <= 100000))
+            && (!('cid' in d) || (d.cid is string && d.cid.size() <= 16 && exists(/databases/$(database)/documents/studentIds/$(request.auth.uid)) && get(/databases/$(database)/documents/studentIds/$(request.auth.uid)).data.id == d.cid))
+            && (!('handle' in d) || (d.handle is string && d.handle.matches('[a-z0-9_]{3,15}') && exists(/databases/$(database)/documents/handles/$(d.handle)) && get(/databases/$(database)/documents/handles/$(d.handle)).data.uid == request.auth.uid)) && (d.get('plus', false) == false || plusActive(request.auth.uid)) && (d.get('verified', false) == false || request.auth.token.email_verified == true) && d.updatedAt is int
             && d.dp is string && d.dp.size() <= 40000 && (d.dp == '' || d.dp.matches('data:image/jpeg;base64,.*'));
         }
         allow read: if member();
