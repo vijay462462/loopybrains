@@ -2355,3 +2355,6 @@ html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 .ob-col:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 70%, #fff); outline-offset: 2px; }
 .welcome.kb .ob-types, .welcome.kb .ob-count { display: none; }
 .ob-step > input[type="search"] { text-align: left; }
+
+.update-bar { position: fixed; left: 12px; right: 12px; bottom: 84px; z-index: 14000; display: flex; align-items: center; gap: 10px; padding: 10px 12px 10px 16px; border-radius: 16px; color: #fff; font-weight: 800; font-size: 14px; background: linear-gradient(120deg, #4f46e5, #c026d3 60%, #f97316); box-shadow: 0 18px 40px -12px rgb(0 0 0 / .6); animation: ssUp .3s ease; }
+.update-bar span { flex: 1; } .update-bar button { padding: 8px 14px; border: 0; border-radius: 99px; background: #fff; color: #3b0764; font: inherit; font-weight: 900; font-size: 13px; } .update-bar .x { width: 30px; height: 30px; padding: 0; background: rgb(255 255 255 / .22); color: #fff; }

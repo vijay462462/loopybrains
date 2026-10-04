@@ -21,6 +21,26 @@ function fsVal(v) {
   return null;
 }
 const fsDoc = (d) => Object.fromEntries(Object.entries((d && d.fields) || {}).map(([k, x]) => [k, fsVal(x)]));
+// Update checker: when a newer version of the site has been published, show a "Refresh" bar so students are never stuck on an old copy.
+(function () {
+  const cur = ((document.querySelector('script[src*="app.js"]') || {}).src || "").match(/[?&]v=(\d+)/);
+  if (!cur) return; const mine = Number(cur[1]); let shown = false;
+  const check = async () => {
+    if (shown || !navigator.onLine) return;
+    try {
+      const r = await fetch(location.pathname.replace(/[^/]*$/, "") + "index.html?cb=" + Date.now(), { cache: "no-store" }); if (!r.ok) return;
+      const m = (await r.text()).match(/app\.js\?v=(\d+)/); if (!m || Number(m[1]) <= mine) return;
+      shown = true;
+      const bar = document.createElement("div"); bar.className = "update-bar"; bar.setAttribute("role", "status");
+      const t = document.createElement("span"); t.textContent = "\u2728 A new version is ready.";
+      const b = document.createElement("button"); b.type = "button"; b.textContent = "Refresh now";
+      b.onclick = async () => { try { if (navigator.serviceWorker) { const rs = await navigator.serviceWorker.getRegistrations(); await Promise.all(rs.map(x => x.update().catch(() => {}))); } if (window.caches) { const ks = await caches.keys(); await Promise.all(ks.map(k => caches.delete(k))); } } catch (_) {} location.replace(location.pathname + location.search.replace(/[?&]r=\d+/, "") + (location.search ? "&" : "?") + "r=" + m[1]); };
+      const x = document.createElement("button"); x.type = "button"; x.className = "x"; x.setAttribute("aria-label", "Later"); x.textContent = "\u2715"; x.onclick = () => bar.remove();
+      bar.append(t, b, x); document.body.append(bar);
+    } catch (_) {}
+  };
+  setTimeout(check, 4000); document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") check(); }); setInterval(check, 10 * 60 * 1000);
+})();
 // Remembers the last few errors on this phone so a student can send them with "Report a problem". Nothing is sent automatically.
 (function () {
   const keep = (msg) => { try { const l = JSON.parse(localStorage.getItem("dd-errlog") || "[]"); l.push({ t: new Date().toISOString().slice(0, 19), m: String(msg).slice(0, 200), v: document.querySelector("link[rel=manifest]")?.href.match(/v=(\d+)/)?.[1] || "" }); localStorage.setItem("dd-errlog", JSON.stringify(l.slice(-15))); } catch (_) {} };

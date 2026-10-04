@@ -17,4 +17,5 @@ jobs:
         working-directory: tests/rules
         run: |
           npm install --no-audit --no-fund
+          cp ../../firestore.rules firestore.rules
           npx firebase emulators:exec --only firestore --project demo-test "node admin.test.mjs && node app.test.mjs && node battle.test.mjs"
