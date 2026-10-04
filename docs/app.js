@@ -4117,7 +4117,43 @@ function expertHelp(d) {
 }
 
 // RGUKT subjects by year, branch and campus (from the RGUKT draft timetable: subject names and codes only, no exam dates).
-const curState = { year: "E1", branch: "", campus: "ALL" };
+const curState = { year: "E1", branch: "", campus: "ALL", open: null };
+// Official RGUKT syllabus documents (links found on the RGUKT websites). Branches with no published file point to the campus curriculum pages.
+const RGUKT_SYLLABUS = {
+  CSE: ["https://rguktsklm.ac.in/inti_main/uploads/media/bos/BoS%20CSE.pdf", "Computer Science syllabus (2023-24, RGUKT-AP)"],
+  ECE: ["https://rguktsklm.ac.in/inti_main/uploads/media/bos/ECE%20BoS.pdf", "Electronics and Communication syllabus (RGUKT-AP)"],
+  CE: ["https://rguktsklm.ac.in/inti_main/uploads/media/bos/Civil%20BoS.pdf", "Civil Engineering syllabus (2023-24, RGUKT-AP)"],
+  ME: ["https://www.rgukt.in/pdfdoc/BOS-2%20minutes/Mechanical/Curriculam-Final-AY%202023-24.pdf", "Mechanical syllabus (AY 2023-24, RGUKT-AP)"],
+};
+const RGUKT_SYLLABUS_PAGES = [["https://rguktsklm.ac.in/academics/cirriculums", "Srikakulam: all curriculums"], ["https://www.rguktrkv.ac.in/Academics.php?view=Curriculum", "RK Valley: curriculum"], ["https://rguktn.ac.in/academics/programmes/", "Nuzvid: programmes"]];
+const unitKey = (code) => "dd-units-" + String(code).replace(/[^A-Za-z0-9]/g, "").slice(0, 24);
+// One subject: its official syllabus, then six units (two per mid exam) with a tick list and study links for each unit.
+function renderSubject(C, r) {
+  const [name, code, credits, cat] = r, key = unitKey(code), done = readJSON(key, []).filter(n => Number.isInteger(n) && n >= 1 && n <= 6);
+  const pdf = RGUKT_SYLLABUS[curState.branch];
+  const unitUrl = (n, kind) => kind === "v" ? lectureUrl(name, "unit " + n) : "https://www.google.com/search?q=" + encodeURIComponent(name + " unit " + n + " notes filetype:pdf");
+  const toggle = (n) => { const cur = new Set(readJSON(key, [])); cur.has(n) ? cur.delete(n) : cur.add(n); writeJSON(key, [...cur]); render(); };
+  const mids = [["Mid 1", [1, 2]], ["Mid 2", [3, 4]], ["Mid 3", [5, 6]]];
+  return [
+    el("h2", {}, "\u{1F4D8} " + name),
+    el("p", { class: "hint" }, code + " · " + credits + " credit" + (credits === 1 ? "" : "s") + " · " + curState.year + " · " + (C.branches[curState.branch] || curState.branch)),
+    el("div", { class: "guide-card" },
+      el("div", { class: "guide-head" }, el("span", { class: "guide-ic", "aria-hidden": "true" }, "\u{1F4C4}"), el("div", {}, el("small", {}, "OFFICIAL SYLLABUS"), el("strong", {}, "Unit-wise topics are in the RGUKT document"))),
+      el("p", { class: "hint" }, "Open the syllabus PDF from the RGUKT website and look for " + code.split(" / ")[0] + ". It lists the topics of every unit."),
+      el("div", { class: "rowbtns" }, pdf ? outLink(pdf[0], "\u{1F4C4} " + pdf[1], "btn sm primary") : null, ...(pdf ? [] : RGUKT_SYLLABUS_PAGES.map(([u, t]) => outLink(u, "\u{1F517} " + t, "btn sm primary")))),
+      pdf ? null : el("p", { class: "hint" }, "The syllabus file for this branch is not published as one PDF. Use these official curriculum pages."),
+      el("p", { class: "guide-safe" }, el("b", {}, "Stay safe: "), "Download syllabus files only from the official RGUKT links above. Links open in a new tab.")),
+    el("div", { class: "label" }, "Your unit tracker (" + done.length + " of 6 done)"),
+    el("div", { class: "pq-bar", role: "progressbar", "aria-valuemin": "0", "aria-valuemax": "6", "aria-valuenow": String(done.length) }, el("i", { style: "width:" + Math.round(done.length / 6 * 100) + "%" })),
+    ...mids.map(([label, units]) => el("div", { class: "learn" }, el("small", { class: "hint" }, label + " covers units " + units.join(" and ")), ...units.map(n => el("div", { class: "learn-card" },
+      el("div", { class: "rowbtns" }, el("button", { class: "btn sm" + (done.includes(n) ? " primary" : ""), type: "button", "aria-pressed": String(done.includes(n)), onclick: () => toggle(n) }, (done.includes(n) ? "✓ " : "") + "Unit " + n), outLink(unitUrl(n, "v"), "▶ Videos", "linkbtn"), outLink(unitUrl(n, "p"), "\u{1F4C4} Notes PDF", "linkbtn")))))),
+    el("div", { class: "rowbtns" },
+      outLink(nptelUrl(name), "\u{1F393} Full IIT course", "btn sm"),
+      el("button", { class: "btn sm", type: "button", onclick: () => { state.tab = "doubts"; state.group = "All"; state.filter = "all"; state.query = name; state.selected = null; state.mode = "intro"; render(); } }, "\u{1F50E} Doubts on this"),
+      el("button", { class: "btn", type: "button", onclick: () => { curState.open = null; render(); } }, "Back to subjects")),
+    el("p", { class: "hint" }, "Video and notes buttons open a search for this subject and unit. Pick sources from IITs, NPTEL, university sites and well known teachers. Your ticks are saved on this device only."),
+  ];
+}
 function renderCurriculum() {
   const C = window.RGUKT_CURRICULUM;
   if (!C) return [el("h2", {}, "RGUKT subjects"), el("p", { class: "hint" }, "Not available right now."), el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")];
@@ -4126,22 +4162,23 @@ function renderCurriculum() {
   const rows = ((C.data[curState.year] || {})[curState.branch] || []).filter(r => curState.campus === "ALL" || r[4] === "ALL" || String(r[4]).split(",").includes(curState.campus));
   const chip = (label, on, fn) => el("button", { type: "button", class: "btn sm" + (on ? " primary" : ""), onclick: fn }, label);
   const camps = Object.entries(C.campuses);
+  if (curState.open != null && rows[curState.open]) return renderSubject(C, rows[curState.open]);
   const catName = { BSC: "Basic Science", ESC: "Engineering Science", PCC: "Core", PEC: "Professional Elective", OEC: "Open Elective", MC: "Mandatory", HSC: "Humanities", HSMC: "Humanities" };
   return [
     el("h2", {}, "\u{1F4D8} RGUKT subjects"),
     el("p", { class: "hint" }, "Subjects and subject codes by year, branch and campus, taken from the RGUKT timetable. Use it as a reference. Check the official RGUKT notices for the final list."),
     el("div", { class: "label" }, "Year"),
-    el("div", { class: "rowbtns" }, ...yrs.map(y => chip(y + " \u00B7 " + C.years[y], curState.year === y, () => { curState.year = y; render(); }))),
+    el("div", { class: "rowbtns" }, ...yrs.map(y => chip(y + " \u00B7 " + C.years[y], curState.year === y, () => { curState.year = y; curState.open = null; render(); }))),
     el("div", { class: "label" }, "Branch"),
-    el("div", { class: "rowbtns" }, ...brs.map(b => chip(b, curState.branch === b, () => { curState.branch = b; render(); }))),
+    el("div", { class: "rowbtns" }, ...brs.map(b => chip(b, curState.branch === b, () => { curState.branch = b; curState.open = null; render(); }))),
     curState.year === "E3" || curState.year === "E4" ? el("div", { class: "label" }, "Campus") : null,
-    curState.year === "E3" || curState.year === "E4" ? el("div", { class: "rowbtns" }, chip("All", curState.campus === "ALL", () => { curState.campus = "ALL"; render(); }), ...camps.map(([k, v]) => chip(v, curState.campus === k, () => { curState.campus = k; render(); }))) : el("p", { class: "hint" }, "Years E1 and E2 are the same on every campus."),
+    curState.year === "E3" || curState.year === "E4" ? el("div", { class: "rowbtns" }, chip("All", curState.campus === "ALL", () => { curState.campus = "ALL"; curState.open = null; render(); }), ...camps.map(([k, v]) => chip(v, curState.campus === k, () => { curState.campus = k; curState.open = null; render(); }))) : el("p", { class: "hint" }, "Years E1 and E2 are the same on every campus."),
     el("p", { class: "hint" }, rows.length + " subject" + (rows.length === 1 ? "" : "s") + " \u00B7 " + (C.branches[curState.branch] || curState.branch) + " \u00B7 " + curState.year),
-    el("div", { class: "learn" }, rows.length ? rows.map(r => el("div", { class: "learn-card" },
+    el("div", { class: "learn" }, rows.length ? rows.map((r, ri) => el("div", { class: "learn-card" },
       el("span", { class: "tag" }, r[1]),
       el("strong", {}, r[0]),
       el("small", { class: "hint" }, [r[2] + " credit" + (r[2] === 1 ? "" : "s"), catName[r[3]] || r[3], r[4] === "ALL" ? "All campuses" : String(r[4]).split(",").map(c => C.campuses[c] || c).join(", ")].join(" \u00B7 ")),
-      el("div", { class: "rowbtns" }, el("button", { class: "linkbtn", type: "button", onclick: () => { state.tab = "doubts"; state.group = "All"; state.filter = "all"; state.query = r[0]; state.selected = null; state.mode = "intro"; render(); } }, "\u{1F50E} Doubts on this"), outLink(lectureUrl(r[0]), "\u25B6 Lectures", "linkbtn"), outLink(nptelUrl(r[0]), "\u{1F393} IIT course", "linkbtn")))) : [el("p", { class: "hint" }, "No subjects listed here for this campus.")]),
+      el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => { curState.open = ri; render(); const sh = $("sheet"); if (sh) sh.scrollIntoView({ block: "start" }); } }, "\u{1F4D6} Syllabus and units"), el("button", { class: "linkbtn", type: "button", onclick: () => { state.tab = "doubts"; state.group = "All"; state.filter = "all"; state.query = r[0]; state.selected = null; state.mode = "intro"; render(); } }, "\u{1F50E} Doubts on this"), outLink(lectureUrl(r[0]), "\u25B6 Lectures", "linkbtn"), outLink(nptelUrl(r[0]), "\u{1F393} IIT course", "linkbtn")))) : [el("p", { class: "hint" }, "No subjects listed here for this campus.")]),
     el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")),
   ];
 }

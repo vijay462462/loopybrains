@@ -2446,3 +2446,5 @@ html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 
 .guide-safe { margin: 0; padding: 9px 11px; border-radius: 12px; font-size: 12.5px; line-height: 1.4; background: color-mix(in srgb, #16a34a 12%, transparent); border: 1px solid color-mix(in srgb, #16a34a 30%, var(--line)); }
 .mode-guide { margin: 0 0 12px; }
+.pq-bar { height: 9px; border-radius: 99px; background: color-mix(in srgb, var(--accent) 14%, transparent); overflow: hidden; margin: 4px 0 10px; }
+.pq-bar i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--accent), #f97316); transition: width .35s ease; }
