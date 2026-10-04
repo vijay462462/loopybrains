@@ -7032,18 +7032,37 @@ function openAsk() {
 }
 
 let sheetKey = "";
+// Which branches run on which RGUKT AP campus, worked out from the E3 and E4 rows of the RGUKT timetable (see rgukt-curriculum.js).
+const CAMPUS_CODE = { NUZVID: "NUZ", ONGOLE: "ONG", RKVALLEY: "RKV", SRIKAKULAM: "SKLM" };
+const CAMPUS_DISTRICT = { NUZVID: "Eluru district", ONGOLE: "Prakasam district", RKVALLEY: "YSR district", SRIKAKULAM: "Srikakulam district" };
+function branchesOnCampus(campus) {
+  const C = window.RGUKT_CURRICULUM, code = CAMPUS_CODE[campus]; if (!C || !code) return [];
+  const out = [];
+  for (const b of Object.keys(C.branches)) {
+    let anyAll = false, listed = false;
+    for (const y of ["E3", "E4"]) for (const r of ((C.data[y] || {})[b] || [])) { if (r[4] === "ALL") anyAll = true; else if (String(r[4]).split(",").includes(code)) listed = true; }
+    if (anyAll || listed) out.push(b);
+  }
+  return out;
+}
 function renderCampusPicker() {
+  const rich = IS_RGUKT && !!window.RGUKT_CURRICULUM;
   return [
-    el("h2", {}, "🏫 Welcome to " + BRAND),
-    el("p", { class: "body" }, "Connect with students from all " + COLLEGE + " campuses. Pick your campus to tag your posts — you'll still see doubts, ideas and clubs from everyone."),
+    el("h2", {}, "\u{1F3EB} Pick your campus"),
+    el("p", { class: "body" }, IS_RGUKT ? COLLEGE + " runs on four campuses: Nuzvid, Ongole, RK Valley and Srikakulam. Pick yours so your posts are tagged with it and your campus mates can find you. You still see doubts, ideas and clubs from everyone." : "Connect with students from all " + COLLEGE + " campuses. Pick your campus to tag your posts. You'll still see doubts, ideas and clubs from everyone."),
     el("div", { class: "campus-picker-grid" },
-      ...CAMPUSES.map(c => el("button", {
-        type: "button", class: "campus-pick-btn",
-        style: "--cc:" + campusColor(c),
-        onclick: () => { setCampus(c); state.mode = "intro"; render(); },
-      }, el("span", { class: "campus-pick-icon" }, CAMPUS_ICON[c] || "🏫"), el("span", { class: "campus-pick-name" }, c), el("span", { class: "campus-pick-sub" }, CAMPUS_FULL[c] || COLLEGE)))
+      ...CAMPUSES.map(c => {
+        const brs = rich ? branchesOnCampus(c) : [], n = campusPostCount(c), full = CAMPUS_FULL[c] || COLLEGE;
+        return el("button", { type: "button", class: "campus-pick-btn" + (rich ? " rich" : ""), style: "--cc:" + campusColor(c), onclick: () => { setCampus(c); state.mode = "intro"; render(); try { confetti(); } catch (_) {} } },
+          el("span", { class: "campus-pick-icon" }, CAMPUS_ICON[c] || "\u{1F3EB}"), el("span", { class: "campus-pick-name" }, c), el("span", { class: "campus-pick-sub" }, full),
+          rich ? el("span", { class: "cp-meta" }, "\u{1F4CD} " + (CAMPUS_DISTRICT[c] || "")) : null,
+          rich && brs.length ? el("span", { class: "cp-brs" }, ...brs.map(b => el("i", {}, b))) : null,
+          rich ? el("span", { class: "cp-live" }, n ? "\u{1F525} " + n + " post" + (n === 1 ? "" : "s") + " from this campus" : "\u2728 Be the first to post here") : null,
+          rich ? el("span", { class: "cp-go" }, "Choose " + (({ RKVALLEY: "RK Valley" })[c] || c.charAt(0) + c.slice(1).toLowerCase()) + " \u2192") : null);
+      })
     ),
-    el("p", { class: "hint" }, "You can change campus later from your name button."),
+    rich ? el("p", { class: "hint" }, "Branches are taken from the RGUKT timetable. Chemical and Metallurgical run only at Nuzvid and RK Valley.") : null,
+    el("p", { class: "hint" }, "You can change your campus anytime from the Campus bar above the feed."),
     el("button", { class: "btn", type: "button", onclick: () => { state.mode = "intro"; render(); } }, "Skip for now"),
   ];
 }

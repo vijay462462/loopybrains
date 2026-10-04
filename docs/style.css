@@ -2215,3 +2215,12 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 .cr-mono { font-family: var(--f-display); font-weight: 900; font-size: 34px; letter-spacing: -.02em; background: linear-gradient(135deg, var(--c1), var(--c2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .cr-disc { margin: 2px 0 6px; font-size: 11.5px; opacity: .6; }
 .cr-acr { display: grid; justify-items: center; line-height: 1; font-size: 26px; } .cr-acr b { font: inherit; display: block; } .cr-acr .sub { font-size: 20px; letter-spacing: .12em; margin-top: 4px; }
+
+/* ---- Rich campus cards ---- */
+.campus-pick-btn.rich { display: grid; gap: 6px; justify-items: center; padding: 18px 14px 16px; text-align: center; position: relative; overflow: hidden; }
+.campus-pick-btn.rich::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 70px; background: linear-gradient(135deg, var(--cc), color-mix(in srgb, var(--cc) 40%, #fff)); opacity: .22; }
+.campus-pick-btn.rich > * { position: relative; }
+.cp-meta { font-size: 12.5px; opacity: .75; font-weight: 600; }
+.cp-brs { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; } .cp-brs i { font-style: normal; font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 99px; background: color-mix(in srgb, var(--cc) 16%, transparent); color: var(--cc); }
+.cp-live { font-size: 12px; font-weight: 700; opacity: .8; }
+.cp-go { margin-top: 4px; padding: 8px 16px; border-radius: 99px; background: var(--cc); color: #fff; font-weight: 800; font-size: 13.5px; box-shadow: 0 10px 20px -10px var(--cc); }
