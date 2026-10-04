@@ -8889,6 +8889,7 @@ $("funBtn").addEventListener("click", () => showPanel("fun"));
 $("labBtn").addEventListener("click", () => showPanel("lab"));
 window.sparkOpenPlayer = () => { window.__funStart = "player"; sheetKey = ""; showPanel("fun"); };
 $("aboutBtn").addEventListener("click", () => showPanel("about"));
+{ const bl = $("siteTitle"); if (bl) { const go = () => showPanel("about"); bl.addEventListener("click", go); bl.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } }); } }
 $("careerBtn").addEventListener("click", () => { careerBranch = null; showPanel("career"); });
 $("nameBtn").addEventListener("click", () => { state.afterName = null; showPanel(getName() ? "me" : "name"); });
 $("search").addEventListener("input", (e) => { state.query = e.target.value; renderList(); });

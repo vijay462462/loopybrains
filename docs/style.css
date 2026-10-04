@@ -2562,3 +2562,7 @@ body.simple .tabs button[aria-selected="true"] { display: inline-flex; }
 .q-row { margin: 2px 0 4px; } .note-box ol { margin: 4px 0; padding-left: 20px; display: grid; gap: 3px; }
 .dup-card { display: grid; gap: 6px; border-style: dashed; } .exp-line { margin: 2px 0 8px; }
 .rev-card { display: grid; gap: 10px; } .rev-q { font-size: 18px; line-height: 1.35; } .rev-a { padding: 10px 12px; border-radius: 14px; background: color-mix(in srgb, #16a34a 9%, transparent); border: 1px solid color-mix(in srgb, #16a34a 35%, var(--line)); } .rev-a p { margin: 4px 0 0; white-space: pre-wrap; }
+
+.brand-link { cursor: pointer; -webkit-tap-highlight-color: transparent; transition: opacity .15s, transform .15s; }
+.brand-link:hover { opacity: .85; } .brand-link:active { transform: scale(.98); }
+.brand-link:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 60%, transparent); outline-offset: 4px; border-radius: 8px; }
