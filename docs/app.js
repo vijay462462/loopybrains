@@ -1383,6 +1383,17 @@ function showWelcome(force, startId) {
     box.replaceChildren(el("div", { class: "welcome-card ob-card" }, el("button", { class: "welcome-skip", type: "button", onclick: finish }, "Skip"), bar, el("div", { class: "ob-step" }, ...body),
       el("div", { class: "rowbtns" }, step > 0 ? el("button", { class: "btn", type: "button", onclick: () => go(-1) }, "Back") : null, last ? el("button", { class: "btn", type: "button", onclick: finish }, "Close") : el("button", { class: "btn primary", type: "button", onclick: () => go(1) }, sid === "about" ? "Continue" : sid === "college" ? (pickSlug && pickSlug !== curSlug ? "Continue with " + (pickName.length > 16 ? pickName.slice(0, 15) + "\u2026" : pickName) : "Continue") : "Next"))));
     const f = box.querySelector("input") || box.querySelector(".btn.primary"); if (f && sid !== "about") f.focus();
+    // The About step asks the student to read it all: Continue switches on once the whole text has been scrolled through.
+    if (sid === "about") {
+      const stepEl = box.querySelector(".ob-step"), nextBtn = box.querySelector(".ob-card > .rowbtns .btn.primary");
+      if (stepEl && nextBtn) {
+        const hint = el("p", { class: "ob-scrollhint", role: "status" }, "\u2193 Scroll to read everything");
+        const atEnd = () => stepEl.scrollTop + stepEl.clientHeight >= stepEl.scrollHeight - 12;
+        const lock = () => { nextBtn.disabled = true; nextBtn.classList.add("locked"); nextBtn.setAttribute("aria-disabled", "true"); stepEl.parentNode.insertBefore(hint, stepEl.nextSibling); };
+        const unlock = () => { nextBtn.disabled = false; nextBtn.classList.remove("locked"); nextBtn.removeAttribute("aria-disabled"); hint.remove(); stepEl.style.maskImage = stepEl.style.webkitMaskImage = "none"; };
+        requestAnimationFrame(() => { if (atEnd()) return; lock(); const chk = () => { if (atEnd()) { unlock(); stepEl.removeEventListener("scroll", chk); } }; stepEl.addEventListener("scroll", chk, { passive: true }); setTimeout(chk, 600); });
+      }
+    }
   }
   document.addEventListener("keydown", onKey); paint(); document.body.append(box);
 }
