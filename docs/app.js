@@ -1416,7 +1416,7 @@ function showWelcome(force, startId) {
         el("p", { class: "ab-meta" }, [ab.founder ? "Founded by " + ab.founder : "", ab.college ? ab.college : "", "Made with ❤️ in India"].filter(Boolean).join(" · ")),
         el("p", { class: "ab-meta" }, ab.email ? el("a", { href: "mailto:" + ab.email }, "Write to us: " + ab.email) : null, ab.email ? " · " : "", el("a", { href: "about.html", target: "_blank", rel: "noopener" }, "Our full story"), " · ", el("a", { href: "privacy.html", target: "_blank", rel: "noopener" }, "Privacy"), " · ", el("a", { href: "terms.html", target: "_blank", rel: "noopener" }, "Terms")),
         el("div", { class: "ab-terms" }, el("b", {}, "Terms in short"), el("ul", {}, el("li", {}, "Be kind. No abuse, cheating, fake posts or spam."), el("li", {}, "Never share anyone's private details, passwords or OTPs."), el("li", {}, "Posts that break the rules are hidden and devices can be blocked."), el("li", {}, BRAND + " is a student community app. It is not run by, or affiliated with, any college.")),
-          el("label", { class: "ab-agree" }, el("input", { type: "checkbox", id: "ob-terms", checked: readJSON("dd-terms", null) ? "" : null }), el("span", {}, "I have read and agree to the ", el("a", { href: "terms.html", target: "_blank", rel: "noopener" }, "Terms of Use"), " and the ", el("a", { href: "privacy.html", target: "_blank", rel: "noopener" }, "Privacy Policy"), ". I am at least 13 years old, or I have a parent's permission.")))];
+          el("label", { class: "ab-agree" }, el("input", { type: "checkbox", id: "ob-terms", checked: readJSON("dd-terms", null) ? "" : null }), el("span", {}, "I am at least 18 years old (at RGUKT: B.Tech 2nd year or above). I have read and agree to the ", el("a", { href: "terms.html", target: "_blank", rel: "noopener" }, "Terms of Use"), " and the ", el("a", { href: "privacy.html", target: "_blank", rel: "noopener" }, "Privacy Policy"), ".")))];
     } else if (sid === "college") {
       const badge = (slug, name, st) => { const [ca, cb] = slug === "rgukt" ? STATE_COLORS["Andhra Pradesh"] : collegeColors(slug, st || ""); const ini = name.replace(/\(.*?\)/g, "").split(/[\s-]+/).filter(w => /^[A-Za-z]/.test(w) && !/^(of|and|the|for|in)$/i.test(w)).slice(0, 2).map(w => w[0].toUpperCase()).join("") || "C"; const b = el("span", { class: "col-badge", "aria-hidden": "true" }, ini); b.style.setProperty("background", "linear-gradient(135deg," + ca + "," + cb + ")"); return b; };
       const GRP = { all: "All", engineering: "Engineering", medical: "Medical", agri: "Agriculture", law: "Law", degree: "Degree", design: "Design", general: "Other" };
@@ -2238,7 +2238,7 @@ function renderCurious() {
   const prof = curioProf(), setProf = (k, v) => { const o2 = readJSON("dd-curio-prof", {}) || {}; o2[k] = v; writeJSON("dd-curio-prof", o2); redo(); };
   const BR = [["CSE", "CSE"], ["AI&ML", "AI&ML"], ["ECE", "ECE"], ["EEE", "EEE"], ["ME", "Mech"], ["CE", "Civil"], ["CHE", "Chem"], ["MME", "Metal"]];
   const picker = el("div", { class: "curio-pick" }, el("small", { class: "hint" }, prof.year ? "Showing content for Year " + prof.year + (prof.branch ? " " + prof.branch : "") : "Choose your year and branch for content made for you"),
-    el("div", { class: "rowbtns", role: "group", "aria-label": "Your year" }, ...[1, 2, 3, 4].map(y => el("button", { class: "btn sm" + (prof.year === y ? " primary" : ""), type: "button", "aria-pressed": String(prof.year === y), onclick: () => setProf("year", y) }, "Year " + y))),
+    el("div", { class: "rowbtns", role: "group", "aria-label": "Your year" }, ...[1, 2, 3, 4].filter(y => !IS_RGUKT || y >= 2).map(y => el("button", { class: "btn sm" + (prof.year === y ? " primary" : ""), type: "button", "aria-pressed": String(prof.year === y), onclick: () => setProf("year", y) }, "Year " + y))),
     el("div", { class: "rowbtns", role: "group", "aria-label": "Your branch" }, ...BR.map(([k, t]) => el("button", { class: "btn sm" + (prof.branch === k ? " primary" : ""), type: "button", "aria-pressed": String(prof.branch === k), onclick: () => setProf("branch", prof.branch === k ? "" : k) }, t))));
   return [
     el("h2", {}, "\u{1F50E} Curiosity corner"), picker,
@@ -2250,6 +2250,24 @@ function renderCurious() {
     tipCard, curioShare(),
     el("div", { class: "rowbtns" }, back),
   ].filter(Boolean);
+}
+// RGUKT is open from B.Tech 2nd year (E2) onwards (the six-year integrated course starts with P1, P2 and E1). This is a self-declaration shown once on RGUKT.
+const RG_YEARS = [["P1", "Pre-University 1", false], ["P2", "Pre-University 2", false], ["E1", "B.Tech 1st year (E1)", false], ["E2", "B.Tech 2nd year (E2)", true], ["E3", "B.Tech 3rd year (E3)", true], ["E4", "B.Tech 4th year (E4)", true]];
+function showEligibility() {
+  if (document.getElementById("rgElig")) return;
+  const msg = el("p", { class: "ob-say", role: "status" }, "");
+  const ov = el("div", { class: "welcome", id: "rgElig", role: "dialog", "aria-modal": "true", "aria-label": "Which year are you in?" });
+  const choose = (k, ok) => {
+    if (!ok) { msg.textContent = "Thank you. " + BRAND + " is open to RGUKT B.Tech 2nd year (E2) students and above for now, because of the age policy. Please come back when you reach E2. Meanwhile you can read the About page."; return; }
+    writeJSON("dd-rgukt-year", { year: k, at: Date.now() });
+    try { curState.year = k; const o = readJSON("dd-curio-prof", {}) || {}; o.year = Number(k[1]) || o.year; writeJSON("dd-curio-prof", o); } catch (_) {}
+    ov.remove(); render();
+  };
+  ov.append(el("div", { class: "welcome-card ob-card" }, el("div", { class: "ob-loopy" }, loopyMini()), el("h2", {}, "Which year are you in?"),
+    el("p", { class: "ob-say" }, "RGUKT is a six-year integrated course. " + BRAND + " is for B.Tech 2nd year (E2) students and above."),
+    el("div", { class: "rowbtns", role: "group", "aria-label": "Your year" }, ...RG_YEARS.map(([k, t, ok]) => el("button", { class: "btn" + (ok ? "" : " sm"), type: "button", onclick: () => choose(k, ok) }, t))), msg,
+    el("p", { class: "hint" }, "This is your own declaration. Please answer honestly. Details are in the ", el("a", { href: "terms.html", target: "_blank", rel: "noopener" }, "Terms"), ".")));
+  document.body.append(ov);
 }
 // ---------- Pilot feedback, doubt of the day ----------
 const FB_PAY = [["no", "No"], ["29", "₹29"], ["49", "₹49"], ["99", "₹99"], ["later", "Ask me later"]];
@@ -8336,7 +8354,7 @@ function toggleFocus() {
 function render() {
   try {
     document.body.dataset.tab = state.tab; applyFocus();
-    renderHeader(); renderTrendBar(); renderStoryBar(); renderRail(); try { renderGuide(); } catch (_) {} renderList(); renderBottomNav(); try { document.body.classList.toggle("simple", isSimple()); renderBell(); notifPing(); } catch (_) {}
+    renderHeader(); renderTrendBar(); renderStoryBar(); renderRail(); try { renderGuide(); } catch (_) {} renderList(); renderBottomNav(); try { if (IS_RGUKT && !readJSON("dd-rgukt-year", null) && !document.querySelector(".welcome")) showEligibility(); } catch (_) {} try { document.body.classList.toggle("simple", isSimple()); renderBell(); notifPing(); } catch (_) {}
     // Forms keep what the student is typing while live updates arrive.
     const key = ["ask", "edit", "name", "alumniJoin", "alumniJob", "fun", "lab", "college", "plus"].includes(state.mode) ? state.mode + state.tab : "";
     if (key && key === sheetKey) return;
