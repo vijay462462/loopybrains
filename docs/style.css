@@ -2456,3 +2456,13 @@ html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 
 .ls-ai { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); background: linear-gradient(150deg, color-mix(in srgb, var(--accent) 14%, var(--sheet)), var(--sheet)); }
 .ls-points { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 14px; }
+
+.ls-seg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 16px; background: color-mix(in srgb, var(--accent) 10%, var(--sheet)); border: 1px solid var(--line); margin: 6px 0 10px; }
+.ls-seg button { border: 0; background: none; color: inherit; font: inherit; font-weight: 800; padding: 10px 8px; border-radius: 12px; cursor: pointer; transition: background .2s, color .2s, transform .15s; }
+.ls-seg button.on { background: linear-gradient(135deg, var(--accent), #f97316); color: #fff; box-shadow: 0 8px 18px -10px var(--accent); }
+.ls-seg button:active { transform: scale(.97); }
+.ls-person { display: flex; align-items: center; gap: 12px; }
+.ls-who { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.ls-people { display: grid; gap: 8px; margin: 8px 0; }
+.ls-bar input[type=search] { font-size: 16px; }
+@media (prefers-reduced-motion: reduce) { .ls-seg button { transition: none; } }

@@ -3762,8 +3762,33 @@ async function lsRun(q) {
   try { bump("search", 1); } catch (_) {}
 }
 function openLoopySearch(q, back) {
-  state.ls = Object.assign(state.ls || { level: "quick", q: "", res: null, busy: false, err: "" }, { q: lsClean(q), back: back || "plus" });
+  state.ls = Object.assign(state.ls || { level: "quick", mode: "topic", q: "", res: null, busy: false, err: "" }, { q: lsClean(q), back: back || "plus" });
   showPanel("loopysearch"); if (state.ls.q) lsRun(state.ls.q);
+}
+// Student search inside Loopy AI Search. Only public nicknames that already appear on the board are searchable. Anonymous posts and e-mail addresses are never included.
+const lsPerson = (p, extra) => el("div", { class: "learn-card ls-person" },
+  avatarEl(avatarFor(p.name || ""), "av av-lg"),
+  el("div", { class: "ls-who" }, el("strong", {}, p.name + markOf(p.id)), el("small", { class: "hint" }, "Lv " + p.level.n + " " + titleOf(p.points) + " · " + plural(p.answers, "answer") + " · " + p.helpful + " helpful" + (p.streak > 1 ? " · \u{1F525}" + p.streak + "-day streak" : "")), (statusOfId(p.id) || "") ? el("small", {}, statusOfId(p.id)) : null, extra || null),
+  el("span", { class: "pts" }, p.points + " pts"));
+function lsStudents(box, q, sort) {
+  const needle = lsClean(q).toLowerCase(), meId = store && store.uid;
+  let rows = [...allStats().values()].filter(p => p.name && p.id !== meId);
+  if (needle) rows = rows.filter(p => p.name.toLowerCase().includes(needle));
+  const by = { points: (a, b) => b.points - a.points, answers: (a, b) => b.answers - a.answers || b.helpful - a.helpful, streak: (a, b) => (b.streak || 0) - (a.streak || 0) || b.points - a.points }[sort] || ((a, b) => b.points - a.points);
+  rows = rows.sort(by);
+  box.replaceChildren(...(rows.length ? [el("p", { class: "hint", role: "status" }, rows.length + " student" + (rows.length === 1 ? "" : "s") + (rows.length > 20 ? " · showing the top 20" : "")), ...rows.slice(0, 20).map(p => lsPerson(p))] : [el("p", { class: "hint", role: "status" }, needle ? "No student with “" + needle + "” yet. Check the spelling or ask them to join." : "No students on the board yet. Answer a doubt to be the first.")]));
+}
+// Classmates who already answered doubts about this topic.
+function helpersFor(q) {
+  const words = lsClean(q).toLowerCase().split(" ").filter(w => w.length > 2); if (!words.length) return [];
+  const dmap = new Map(state.doubts.map(d => [d.id, d])), stats = allStats(), count = new Map();
+  for (const r of state.replies) {
+    if (r.parentColl !== "doubts" || r.anonymous || !r.authorId) continue;
+    const d = dmap.get(r.parentId); if (!d || d.authorId === r.authorId) continue;
+    const hay = ((d.subject || "") + " " + (d.title || "")).toLowerCase();
+    if (words.some(w => hay.includes(w))) count.set(r.authorId, (count.get(r.authorId) || 0) + 1);
+  }
+  return [...count].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([id, n]) => ({ p: stats.get(id), n })).filter(x => x.p && x.p.name && !(store && allMyIds().has(x.p.id)));
 }
 function lsAiCard(ls) {
   const a = ls.ai, yt = (t) => "https://www.youtube.com/results?search_query=" + encodeURIComponent(t), gg = (t, img) => "https://www.google.com/search?" + (img ? "tbm=isch&" : "") + "q=" + encodeURIComponent(t);
@@ -3778,16 +3803,27 @@ function lsAiCard(ls) {
     el("p", { class: "hint" }, "AI answers can contain mistakes. Check important facts with your book or teacher." + (ls.aiLeft != null ? " " + ls.aiLeft + " AI questions left today." : "")));
 }
 function renderLoopySearch() {
-  const ls = state.ls || (state.ls = { level: "quick", q: "", res: null, busy: false, err: "" });
+  const ls = state.ls || (state.ls = { level: "quick", mode: "topic", q: "", res: null, busy: false, err: "" });
   const input = el("input", { type: "search", maxlength: "80", placeholder: "Try: Bayes theorem, Dijkstra, transformer", "aria-label": "Topic to search", autocomplete: "off", value: ls.q });
   const go = () => { const q = lsClean(input.value); if (q.length < 2) { input.focus(); return; } lsRun(q); };
   input.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); go(); } });
   const q = ls.q, suffix = LS_LEVELS[ls.level][1];
+  const seg = el("div", { class: "ls-seg", role: "tablist" }, ...[["topic", "\u{1F4DA} Topics"], ["students", "\u{1F465} Students"]].map(([k, t]) => el("button", { type: "button", role: "tab", "aria-selected": String(ls.mode === k), class: ls.mode === k ? "on" : "", onclick: () => { ls.mode = k; render(); } }, t)));
+  if (ls.mode === "students") {
+    const box = el("div", { class: "ls-people", "aria-live": "polite" }), sq = el("input", { type: "search", maxlength: "40", placeholder: "Search a student by nickname", "aria-label": "Search students", autocomplete: "off", value: ls.sq || "" });
+    const sortKey = ls.sort || "points", draw = () => lsStudents(box, sq.value, ls.sort || "points");
+    sq.addEventListener("input", () => { ls.sq = sq.value.slice(0, 40); draw(); }); draw();
+    return [el("h2", {}, "\u{1F50E} Loopy AI Search"), seg,
+      el("p", { class: "hint" }, "Find classmates and top helpers by nickname. Only public nicknames from the board are searched. Anonymous posts are never included."),
+      el("div", { class: "ls-bar" }, sq),
+      el("div", { class: "rowbtns", role: "group", "aria-label": "Sort" }, ...[["points", "\u{1F3C6} Top points"], ["answers", "\u{1F4A1} Most answers"], ["streak", "\u{1F525} Streaks"]].map(([k, t]) => el("button", { class: "btn sm" + (sortKey === k ? " primary" : ""), type: "button", "aria-pressed": String(sortKey === k), onclick: () => { ls.sort = k; render(); } }, t))),
+      box, el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => showPanel(ls.back || "plus") }, "Back"))];
+  }
   const yt = (extra) => "https://www.youtube.com/results?search_query=" + encodeURIComponent(q + " " + extra);
   const gg = (extra, img) => "https://www.google.com/search?" + (img ? "tbm=isch&" : "") + "q=" + encodeURIComponent(q + " " + extra);
   const r = ls.res;
   return [
-    el("h2", {}, "\u{1F50E} Loopy AI Search"),
+    el("h2", {}, "\u{1F50E} Loopy AI Search"), seg,
     el("p", { class: "hint" }, "Type a topic. Loopy finds a quick answer with a picture, then the best videos, diagrams and PDFs for it."),
     el("div", { class: "ls-bar" }, input, el("button", { class: "btn primary", type: "button", disabled: ls.busy ? "" : null, onclick: go }, ls.busy ? "Searching…" : "Search")),
     el("div", { class: "rowbtns", role: "group", "aria-label": "How deep" }, ...Object.entries(LS_LEVELS).map(([k, v]) => el("button", { class: "btn sm" + (ls.level === k ? " primary" : ""), type: "button", "aria-pressed": String(ls.level === k), onclick: () => { ls.level = k; render(); } }, v[0]))),
@@ -3808,6 +3844,8 @@ function renderLoopySearch() {
     q ? el("div", { class: "rowbtns" }, outLink(gg("diagram explained", true), "Diagrams", "btn sm"), outLink("https://commons.wikimedia.org/w/index.php?search=" + encodeURIComponent(q) + "&ns6=1", "Free images (Wikimedia)", "btn sm"), outLink(yt("animation visualization"), "Animations", "btn sm")) : null,
     q ? el("div", { class: "label" }, "\u{1F4C4} Read and practise") : null,
     q ? el("div", { class: "rowbtns" }, outLink(gg("filetype:pdf lecture notes site:nptel.ac.in OR site:ocw.mit.edu OR site:ac.in"), "Official notes PDF", "btn sm"), outLink(gg("filetype:pdf previous year questions"), "Question papers", "btn sm"), outLink("https://www.geeksforgeeks.org/search/?q=" + encodeURIComponent(q), "GeeksforGeeks", "btn sm")) : null,
+    q && helpersFor(q).length ? el("div", { class: "label" }, "\u{1F465} Classmates who solved this") : null,
+    ...(q ? helpersFor(q).map(({ p, n }) => lsPerson(p, el("small", {}, "Answered " + plural(n, "doubt") + " on this topic"))) : []),
     q ? el("div", { class: "label" }, "\u{1F4AC} Ask for help") : null,
     q ? el("div", { class: "rowbtns" },
       PLUS.functionsUrl ? el("button", { class: "btn sm primary", type: "button", onclick: () => { state.ai = state.ai || { msgs: [], busy: false, note: "" }; state.ai.prefill = "Explain " + q + " for a B.Tech student, with a simple example."; showPanel("ai"); } }, "✨ Explain with Loopy AI") : null,
