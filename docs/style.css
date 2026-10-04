@@ -2603,3 +2603,17 @@ body.simple .tabs button[aria-selected="true"] { display: inline-flex; }
 .rt-k-idea { --c: #6366f1; } .rt-k-how { --c: #0ea5e9; } .rt-k-ex { --c: #10b981; } .rt-k-warn { --c: #ef4444; } .rt-k-try { --c: #f59e0b; } .rt-k-tip { --c: #a855f7; } .rt-k-formula { --c: #14b8a6; }
 .astudio { margin: 8px 0; }
 .as-prev { margin-top: 8px; padding: 10px; border: 1px dashed var(--line); border-radius: 14px; background: var(--sheet); }
+
+/* Colour symbols in answers */
+.rs-def::before { content: "\1F4D8\00a0"; }
+.rs-why::before { content: "\1F517\00a0"; }
+.rs-ex::before { content: "\1F4DD\00a0"; }
+.rs-warn::before { content: "\26A0\FE0F\00a0"; }
+.rt-ul { list-style: none; padding-left: 0; }
+.rt-ul li { position: relative; padding-left: 1.4rem; }
+.rt-ul li::before { content: "\25CF"; position: absolute; left: 0; font-size: .8em; top: .25em; color: var(--rt-key); }
+.rt-ul li:nth-child(4n+2)::before { color: var(--rt-term); } .rt-ul li:nth-child(4n+3)::before { color: var(--rt-num); } .rt-ul li:nth-child(4n)::before { color: var(--rt-eq); }
+.rt-ol li::marker { color: var(--rt-conn); font-weight: 800; }
+.as-sym { display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 6px; -webkit-overflow-scrolling: touch; }
+.as-sy { flex: 0 0 auto; min-width: 42px; min-height: 42px; font-size: 1.25rem; border: 1px solid var(--line); border-radius: 12px; background: var(--sheet); color: var(--ink); cursor: pointer; }
+.as-sy:active { transform: scale(.94); background: var(--accent-soft); }

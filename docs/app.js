@@ -8390,22 +8390,26 @@ function ahTidy(text) {
   return String(text || "").replace(/\r/g, "").split("\n").map(line => {
     let l = line.replace(/[ \t]+/g, " ").trim(); if (!l) return "";
     if (/https?:\/\//.test(l)) return l;
-    l = l.replace(/\s+([,.;:!?)])/g, "$1").replace(/([,;!?])(?=[A-Za-z])/g, "$1 ").replace(/\.(?=[A-Z][a-z])/g, ". ").replace(/\(\s+/g, "(").replace(/\s*->\s*/g, " → ").replace(/\bi'm\b/g, "I'm").replace(/\bi\b(?=\s+(?:am|was|think|know|have|will|can|would|had|do|did|use|see|need|want|got|get)\b)/g, "I");
+    l = l.replace(/\s+([,.;:!?)])/g, "$1").replace(/([,;!?])(?=[A-Za-z])/g, "$1 ").replace(/\.(?=[A-Z][a-z])/g, ". ").replace(/\(\s+/g, "(").replace(/\s*->\s*/g, " → ").replace(/\s*=>\s*/g, " ⇒ ").replace(/\s*<=\s*/g, " ≤ ").replace(/\s*>=\s*/g, " ≥ ").replace(/\s*!=\s*/g, " ≠ ").replace(/\^2\b/g, "²").replace(/\^3\b/g, "³").replace(/\bi'm\b/g, "I'm").replace(/\bi\b(?=\s+(?:am|was|think|know|have|will|can|would|had|do|did|use|see|need|want|got|get)\b)/g, "I");
     l = l.replace(/(^|[.!?]\s+|^[-*•\d.)\s]+)([a-z])/g, (m, a, b) => a + b.toUpperCase());
     if (l.split(" ").length >= 4 && /[A-Za-z0-9]$/.test(l)) l += ".";
     return l;
   }).join("\n").replace(/\n{3,}/g, "\n\n").trim();
 }
+const AS_SYMBOLS = ["\u2705", "\u274C", "\u26A1", "\u{1F50B}", "\u{1F525}", "\u2B50", "\u{1F3AF}", "\u{1F4CC}", "\u{1F4A1}", "\u{1F9EE}", "\u2192", "\u21D2", "\u2248", "\u2260", "\u2264", "\u2265", "\u00D7", "\u00F7", "\u221A", "\u03C0", "\u03A9", "\u00B5", "\u00B0", "\u00B2", "\u00B3", "\u0394", "\u03B8", "\u221E", "\u2211", "\u222B"];
 const AS_STARTERS = [["\u{1F4A1} Idea", "Idea: "], ["⚙️ How it works", "How it works: "], ["\u{1F30D} Real life", "Real life: "], ["⚠️ Common mistake", "Common mistake: "], ["❓ Try this", "Try this: "]];
 function answerStudio(d, ta) {
   const prev = el("div", { class: "as-prev", hidden: true }), topic = d.title + " " + (d.subject || ""); let t = 0;
   const upd = () => { const v = ta.value.trim(); prev.hidden = !v; prev.replaceChildren(...(v ? [el("small", { class: "hint" }, "✨ Preview: this is how your answer will look to others"), richAnswer(v, topic)] : [])); };
   ta.addEventListener("input", () => { clearTimeout(t); t = setTimeout(upd, 250); });
   const add = (txt) => { const pre = ta.value && !ta.value.endsWith("\n") ? "\n" : ""; ta.value = (ta.value + pre + txt).slice(0, 5000); ta.focus(); try { ta.setSelectionRange(ta.value.length, ta.value.length); } catch (_) {} upd(); };
+  const ins = (sy) => { const a = ta.selectionStart == null ? ta.value.length : ta.selectionStart, e = ta.selectionEnd == null ? a : ta.selectionEnd; ta.value = (ta.value.slice(0, a) + sy + ta.value.slice(e)).slice(0, 5000); ta.focus(); try { ta.setSelectionRange(a + sy.length, a + sy.length); } catch (_) {} upd(); };
   return el("div", { class: "astudio" },
     el("div", { class: "label" }, "Make your answer clear and interesting"),
     el("div", { class: "rowbtns" }, ...AS_STARTERS.map(([lab, txt]) => el("button", { type: "button", class: "btn sm", onclick: () => add(txt) }, lab)),
       el("button", { type: "button", class: "btn sm primary", onclick: () => { ta.value = ahTidy(ta.value); upd(); } }, "✨ Auto-format")),
+    el("div", { class: "label" }, "Colour symbols (tap to add)"),
+    el("div", { class: "as-sym", role: "group", "aria-label": "Symbols" }, ...AS_SYMBOLS.map(sy => el("button", { type: "button", class: "as-sy", "aria-label": "Insert " + sy, onclick: () => ins(sy) }, sy))),
     el("p", { class: "hint" }, "Tip: start with an Idea, show How it works, add a Real life example, warn about a Common mistake, and end with a Try this question. It keeps readers curious."),
     prev);
 }
