@@ -1370,6 +1370,37 @@ function showWelcome(force, startId) {
   }
   document.addEventListener("keydown", onKey); paint(); document.body.append(box);
 }
+// The "welcome to your college" reveal: a premium brand card shown once after a college is chosen or changed.
+function showCollegeReveal() {
+  if (NO_COLLEGE || !SEL) return;
+  let seen = ""; try { seen = localStorage.getItem("dd-revealed") || ""; } catch (_) {}
+  if (seen === SEL) return;
+  const dir = DIRECTORY.find(c => c.slug === SEL) || {};
+  const st = IS_RGUKT ? "Andhra Pradesh" : (dir.state || (TENANT && TENANT.state) || "");
+  const [c1, c2] = IS_RGUKT ? STATE_COLORS["Andhra Pradesh"] : collegeColors(SEL, st);
+  const full = IS_RGUKT ? "Rajiv Gandhi University of Knowledge Technologies" : (TENANT && TENANT.name) || dir.name || COLLEGE;
+  const place = IS_RGUKT ? "Nuzvid \u00B7 RK Valley \u00B7 Ongole \u00B7 Srikakulam" : [dir.city, dir.kind, st].filter(Boolean).join(" \u00B7 ");
+  const nSub = RGUKT_DEPTS ? Object.keys(RGUKT_DEPTS).length + " branches" : SUBJECTS.filter(s => s !== "Other").length + " subjects";
+  const NS = "http://www.w3.org/2000/svg", mk = (t, at) => { const n = document.createElementNS(NS, t); for (const k in at) n.setAttribute(k, at[k]); return n; };
+  const sky = mk("svg", { viewBox: "0 0 400 120", class: "cr-sky", "aria-hidden": "true", preserveAspectRatio: "xMidYMax slice" });
+  sky.append(mk("path", { d: "M0 120 L0 92 Q60 70 120 88 T240 84 T400 80 L400 120Z", fill: "rgb(0 0 0 / .22)" }),
+    mk("path", { d: "M150 120 V74 H160 V60 L200 38 L240 60 V74 H250 V120 Z", fill: "rgb(255 255 255 / .16)" }), mk("rect", { x: 188, y: 70, width: 24, height: 50, rx: 12, fill: "rgb(0 0 0 / .25)" }),
+    mk("path", { d: "M200 38 V22", stroke: "rgb(255 255 255 / .5)", "stroke-width": 2 }), mk("path", { d: "M200 22 l16 5 -16 5z", fill: "#fde68a" }),
+    mk("rect", { x: 96, y: 86, width: 48, height: 34, fill: "rgb(255 255 255 / .1)" }), mk("rect", { x: 256, y: 82, width: 52, height: 38, fill: "rgb(255 255 255 / .1)" }),
+    mk("circle", { cx: 70, cy: 100, r: 14, fill: "rgb(255 255 255 / .09)" }), mk("circle", { cx: 336, cy: 98, r: 16, fill: "rgb(255 255 255 / .09)" }));
+  const close = () => { try { localStorage.setItem("dd-revealed", SEL); } catch (_) {} ov.classList.add("out"); setTimeout(() => ov.remove(), 260); try { confetti(); } catch (_) {} };
+  const ov = el("div", { class: "cr", role: "dialog", "aria-modal": "true", "aria-label": "Welcome to " + COLLEGE },
+    el("div", { class: "cr-card" },
+      el("div", { class: "cr-art" }, el("i", { class: "cr-orb a" }), el("i", { class: "cr-orb b" }), el("i", { class: "cr-orb c" }), sky,
+        el("div", { class: "cr-ring" }, el("div", { class: "cr-crest" }, (TENANT && TENANT.crest) ? crestEl(92) : el("span", { class: "cr-mono" }, (() => { const w = String(COLLEGE).replace(/\(.*?\)/g, " ").split(/[^A-Za-z0-9]+/).filter(x => x && !/^(of|and|the|for|in)$/i.test(x)); return (w.length === 1 ? w[0].slice(0, 5) : w.slice(0, 3).map(x => x[0]).join("")).toUpperCase(); })()))), el("span", { class: "cr-chip" }, "\u2728 Welcome to")),
+      el("div", { class: "cr-body" },
+        el("h2", {}, COLLEGE), el("p", { class: "cr-full" }, full), place ? el("p", { class: "cr-place" }, "\u{1F4CD} " + place) : null,
+        el("div", { class: "cr-stats" }, el("span", {}, "\u{1F4DA} " + nSub), el("span", {}, "\u{1F3DB} " + CLUBS.filter(s => s !== "Other").length + " clubs"), el("span", {}, "\u{1F91D} Your own private board")),
+        el("button", { class: "btn primary cr-go", type: "button", onclick: close }, "Enter " + (COLLEGE.length > 22 ? "my college" : COLLEGE) + " \u2192"))));
+  ov.style.setProperty("--c1", c1); ov.style.setProperty("--c2", c2);
+  const open = () => document.body.append(ov);
+  if (document.getElementById("splash")) document.addEventListener("splash-closed", () => setTimeout(open, 200), { once: true }); else open();
+}
 function maybeWelcome() {
   let resume = ""; try { resume = sessionStorage.getItem("dd-ob-resume") || ""; sessionStorage.removeItem("dd-ob-resume"); } catch (_) {}
   const open = (start) => { const go = () => setTimeout(() => showWelcome(false, start), 250); if (document.getElementById("splash")) document.addEventListener("splash-closed", go, { once: true }); else go(); };
@@ -7540,6 +7571,7 @@ document.addEventListener("click", (e) => { const b = e.target.closest && e.targ
 })();
 try { const gt = document.querySelector('.tabs [data-tab="gate"]'); if (gt) gt.textContent = "🎯 " + EXAM_LABEL; } catch (_) {}
 maybeWelcome();
+try { showCollegeReveal(); } catch (_) {}
 maybeMilestone();
 $("filterToggle").addEventListener("click", () => { document.querySelector("header.top").classList.toggle("filters-open"); renderHeader(); });
 $("botBtn").addEventListener("click", () => { if (window.sparkBotToggle) window.sparkBotToggle(); });
