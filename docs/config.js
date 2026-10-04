@@ -8,6 +8,8 @@ window.DOUBT_DESK_CONFIG = {
   // Photos. To stop misuse the app is camera-only for photos in doubts, answers and stories, and profile photos are off (avatars are used).
   // Set gallery: true to allow choosing existing pictures, and profilePhoto: true to allow profile photos again.
   media: { gallery: false, profilePhoto: false },
+  // App Check: paste the reCAPTCHA v3 SITE key (public) from Firebase console > App Check. Leave empty until you have registered the app (steps in APPCHECK.md).
+  appCheck: { siteKey: "" },
   // Background push alerts (needs the push function deployed). Paste the Web Push certificate key from Firebase console > Project settings > Cloud Messaging. It is a public key, safe to publish.
   push: { vapidKey: "" },
   plus: { enabled: false, weekly: 19, semester: 149, monthly: 49, yearly: 399, functionsUrl: "",

@@ -551,6 +551,8 @@ async function firebaseStore(conf, prefix = "") {
   const base = "https://www.gstatic.com/firebasejs/" + FB_VERSION + "/";
   const [{ initializeApp }, fs, st, au] = await Promise.all([import(base + "firebase-app.js"), import(base + "firebase-firestore.js"), import(base + "firebase-storage.js"), import(base + "firebase-auth.js")]);
   const app = initializeApp(conf);
+  // App Check (optional): proves requests come from this real app and not from a script. Needs a reCAPTCHA v3 site key in config.js (see APPCHECK.md).
+  try { const ak = ((window.DOUBT_DESK_CONFIG || {}).appCheck || {}).siteKey; if (/^[A-Za-z0-9_-]{20,80}$/.test(ak || "")) { const ac = await import(base + "firebase-app-check.js"); ac.initializeAppCheck(app, { provider: new ac.ReCaptchaV3Provider(ak), isTokenAutoRefreshEnabled: true }); } } catch (e) { console.warn("App Check not started:", e && e.code || e); }
   const db = fs.getFirestore(app);
   const storage = st.getStorage(app);
   // Anonymous sign-in: no account, no password. It gives every browser a verified session so the
