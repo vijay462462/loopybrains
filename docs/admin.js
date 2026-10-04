@@ -118,6 +118,13 @@ function roomPicker(onPick) {
 const needRoom = (body) => S.room ? body() : h("p", { class: "adm-hint" }, "Choose a college above first.");
 
 // ---------- tabs ----------
+function safetyCard() {
+  const msg = h("p", { class: "msg" }), box = h("input", { type: "checkbox" }), card = h("div", { class: "card" }, h("h3", {}, "Student safety"), h("p", { class: "adm-hint" }, "Require a verified email before anyone can post, answer or react on any board. Reading stays open. Every post is then tied to a real email, so you can remove a bad actor for good."),
+    h("label", { class: "row" }, box, "Only verified students can post (all colleges)"), msg);
+  fs.getDoc(fs.doc(db, "settings", "posting")).then(s => { box.checked = s.exists() && s.data().verifiedPosting === true; }).catch(() => {});
+  box.onchange = async () => { box.disabled = true; try { await fs.setDoc(fs.doc(db, "settings", "posting"), { verifiedPosting: box.checked, updatedAt: Date.now() }); msg.className = "msg ok"; msg.textContent = box.checked ? "On. Students now need a verified email to post." : "Off. Anyone can post again."; } catch (e) { box.checked = !box.checked; msg.className = "msg err"; msg.textContent = "Not saved (" + (e.code || "error") + "). Publish the latest rules first."; } box.disabled = false; };
+  return card;
+}
 function overviewView() {
   const wrap = h("div", {});
   const stats = h("div", { class: "grid" });
@@ -132,6 +139,7 @@ function overviewView() {
     }
   })();
   wrap.append(h("div", { class: "card" }, h("h3", {}, "Overview"), h("p", { class: "adm-hint" }, S.room ? "Counts for " + S.room.name + " (room " + (S.room.private ? "private" : S.room.room) + ")." : "Pick a college to see its counts.")), stats);
+  if (!S.staffOnly) wrap.append(safetyCard());
   return wrap;
 }
 

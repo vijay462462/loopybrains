@@ -40,3 +40,6 @@ No critical problems were found. Rules deny everything that is not listed, secre
 
 ## Re-test after every rules change
 `cd tests/rules && ./node_modules/.bin/firebase emulators:exec --only firestore --project demo-test "node admin.test.mjs && node app.test.mjs && node battle.test.mjs"`
+
+## Verified email to post (global switch)
+Admin dashboard, Overview, "Student safety". When on (`settings/posting.verifiedPosting = true`), the rules refuse every post, answer, story and profile write unless the user has a verified email, on every board including RGUKT. Reading stays open. The per-college `requireVerified` and `domains` settings still apply on top. Publish the latest `firestore.rules` first, then flip the switch. Turn it off to roll back instantly, no redeploy.

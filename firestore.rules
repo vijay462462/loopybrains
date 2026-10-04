@@ -29,7 +29,13 @@ service cloud.firestore {
     function member() { return signedIn(); }
     // Device block list: an admin adds a document whose id is the device id to rooms/<room>/blocked in the console.
     function notBlocked(room, id) {
-      return (!(id is string) || !exists(/databases/$(database)/documents/rooms/$(room)/blocked/$(id))) && verifiedOk(room);
+      return (!(id is string) || !exists(/databases/$(database)/documents/rooms/$(room)/blocked/$(id))) && globalVerified() && verifiedOk(room);
+    }
+    // Global switch (settings/posting.verifiedPosting, set by an admin): when on, nobody posts without a verified email, on any board.
+    function globalVerified() {
+      return !exists(/databases/$(database)/documents/settings/posting)
+        || get(/databases/$(database)/documents/settings/posting).data.get('verifiedPosting', false) != true
+        || request.auth.token.email_verified == true;
     }
     // Boards of directory colleges live in the room 'college-<slug>'. If colleges/<slug> says requireVerified, only signed-in
     // users with a verified email (from one of its `domains`, when listed) may write. Everyone can still read.
@@ -238,6 +244,13 @@ service cloud.firestore {
         && id == request.resource.data.room + '_' + request.resource.data.uid
         && str(request.resource.data.name, 1, 60) && optStr(request.resource.data, 'label', 40) && request.resource.data.createdAt is int;
       allow delete: if isAdmin();
+    }
+    // App-wide settings. Everyone signed in can read (the app needs to know if posting needs a verified email); only admins write.
+    match /settings/{id} {
+      allow read: if signedIn();
+      allow create, update: if isAdmin() && id == 'posting' && request.resource.data.keys().hasOnly(['verifiedPosting', 'updatedAt'])
+        && request.resource.data.verifiedPosting is bool && request.resource.data.updatedAt is int;
+      allow delete: if false;
     }
     // Flash sale banner: one document, sales/current. Everyone signed in reads it; only admins change it.
     match /sales/{id} {

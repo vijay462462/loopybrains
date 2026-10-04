@@ -691,6 +691,7 @@ function myHiddenCount() {
   return n;
 }
 function postingBlocked() {
+  if (state.verifiedPosting && !myAccount().verified) return "\u{1F512} Posting needs a verified email, to keep students safe. Open Profile and tap \u201CVerify your college email\u201D. Reading is always open.";
   if (TENANT && TENANT.requireVerified && !myVerified()) return "🔒 This college board needs a verified college email to post. Open Profile and tap “Verify your college email”.";
   if (isBlockedDevice()) return "🚫 This device has been blocked from posting for breaking the class rules. Contact the admin to appeal.";
   let st = {}; try { st = JSON.parse(localStorage.getItem("dd-restrict") || "{}"); } catch (_) {}
@@ -7512,6 +7513,7 @@ render();
   if (NO_COLLEGE) { render(); return; }   // nothing to load until a college is chosen
   loadPlan().then(() => { render(); claimRef(); redeemPendingGift(); });
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && PLUS.enabled) loadPlan().then(() => { if (state.mode === "plus") render(); }); });
+  (async () => { try { const d = store.getTop ? await store.getTop("settings", "posting") : null; state.verifiedPosting = !!(d && d.verifiedPosting === true); } catch (_) {} })();
   loadSale(); setInterval(loadSale, 600000); loadWelcomeNote(); setInterval(loadWelcomeNote, 900000);
   if (store.linkResult === "ok") { showNotice(myVerified() ? "✅ Email verified. Welcome, verified student!" : "Email confirmed, but it is not a " + COLLEGE + " address, so you are not marked as verified."); setTimeout(() => showNotice(""), 6000); }
   else if (store.linkResult && store.linkResult.startsWith("error:")) showNotice("Could not finish email verification (" + store.linkResult.slice(6) + "). Open the link on the same phone you asked from, or ask for a new one.");
