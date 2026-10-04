@@ -29,6 +29,20 @@ const PLANS = {
   yearly: { amount: 39900, days: 366, label: "CampusLoop Plus - 1 year" },
 };
 const DAY = 86400000;
+// ---------- Security helpers ----------
+// Only our own site may call these functions from a browser (a token is also required, this is a second wall).
+const ALLOWED_ORIGINS = ["https://vijay462462.github.io", "http://localhost:8000", "http://127.0.0.1:8000"];
+// Per-student rate limit kept in Firestore (collection `rateLimits`, server-only). Returns false when the student has used up their allowance.
+async function allow(uid, key, max, windowMs) {
+  const ref = db.collection("rateLimits").doc(uid + "_" + key + "_" + Math.floor(Date.now() / windowMs));
+  return db.runTransaction(async (tx) => {
+    const s = await tx.get(ref), n = s.exists ? Number(s.data().n) || 0 : 0;
+    if (n >= max) return false;
+    tx.set(ref, { n: n + 1, uid, key, at: Date.now() });
+    return true;
+  }).catch(() => true);          // never block a real student if the limiter itself has a hiccup
+}
+
 const GIFT_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 // Launch offer: the yearly plan costs less until this date (India time). Keep in step with `plus.offer` in docs/config.js.
 const OFFER = { plan: "yearly", amount: 29900, until: Date.parse("2026-12-31T23:59:59+05:30") };
@@ -47,18 +61,19 @@ const promoFor = async (rawCode, planKey) => {
   if (planKey && d.plan !== "any" && d.plan !== planKey) return { error: "That code is for the " + d.plan + " plan." };
   return { code, plan: d.plan, percent: Math.min(90, Math.max(5, Number(d.percent) || 0)) };
 };
-exports.checkPromo = onRequest({ cors: true, region: "asia-south1", maxInstances: 5 }, async (req, res) => {
+exports.checkPromo = onRequest({ cors: ALLOWED_ORIGINS, region: "asia-south1", maxInstances: 5 }, async (req, res) => {
   try {
     if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
     const m = /^Bearer (.+)$/.exec(req.get("Authorization") || "");
     if (!m) return res.status(401).json({ error: "Please sign in first." });
-    await admin.auth().verifyIdToken(m[1]);
+    const pu = await admin.auth().verifyIdToken(m[1]);
+    if (!(await allow(pu.uid, "promo", 15, 3600000))) return res.status(429).json({ error: "Too many tries. Please wait a while and try again." });
     const b = req.body || {}, p = await promoFor(b.code, b.plan);
     return p.error ? res.status(400).json({ error: p.error }) : res.json({ code: p.code, percent: p.percent, plan: p.plan });
   } catch (e) { console.error("checkPromo", e); return res.status(500).json({ error: "Could not check the code." }); }
 });
 
-exports.createPaymentLink = onRequest({ secrets: [KEY_ID, KEY_SECRET], cors: true, region: "asia-south1" }, async (req, res) => {
+exports.createPaymentLink = onRequest({ secrets: [KEY_ID, KEY_SECRET], cors: ALLOWED_ORIGINS, region: "asia-south1" }, async (req, res) => {
   try {
     if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
     const m = /^Bearer (.+)$/.exec(req.get("Authorization") || "");
@@ -67,6 +82,7 @@ exports.createPaymentLink = onRequest({ secrets: [KEY_ID, KEY_SECRET], cors: tru
     if (!user.email || user.email_verified !== true) return res.status(403).json({ error: "Verify your email first." });
     const plan = PLANS[(req.body || {}).plan];
     if (!plan) return res.status(400).json({ error: "Unknown plan." });
+    if (!(await allow(user.uid, "paylink", 12, 3600000))) return res.status(429).json({ error: "Too many payment attempts. Please wait a while." });
     let amount = amountFor(req.body.plan, Date.now()), code = "";
     if (req.body.code) {
       const p = await promoFor(req.body.code, req.body.plan);
@@ -130,7 +146,7 @@ const AI_SYSTEM = "You are CampusLoop's study helper for Indian college students
   "exam and placement preparation, coding doubts, study plans, and interview practice. If asked about anything else, politely say you can only help with studies. " +
   "Be accurate and concise (under 250 words unless a derivation needs more). Show steps for calculations. If you are not sure, say so instead of guessing. " +
   "Never help with cheating on an exam in progress, and never write abusive or adult content. Use plain text, no markdown tables.";
-exports.askAI = onRequest({ secrets: [ANTHROPIC_KEY], cors: true, region: "asia-south1", timeoutSeconds: 60, memory: "256MiB", maxInstances: 5 }, async (req, res) => {
+exports.askAI = onRequest({ secrets: [ANTHROPIC_KEY], cors: ALLOWED_ORIGINS, region: "asia-south1", timeoutSeconds: 60, memory: "256MiB", maxInstances: 5 }, async (req, res) => {
   try {
     if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
     const m = /^Bearer (.+)$/.exec(req.get("Authorization") || "");
@@ -179,7 +195,7 @@ exports.askAI = onRequest({ secrets: [ANTHROPIC_KEY], cors: true, region: "asia-
 // A student shares ?ref=<first 10 characters of their sign-in id>. When the friend has a VERIFIED email and calls claimReferral
 // once, the referrer gets +7 days of Plus (up to 8 friends = 56 days) and the friend gets +3 days. Everything is checked here.
 const REF_REFERRER_DAYS = 7, REF_FRIEND_DAYS = 3, REF_MAX = 8;
-exports.claimReferral = onRequest({ cors: true, region: "asia-south1", maxInstances: 5 }, async (req, res) => {
+exports.claimReferral = onRequest({ cors: ALLOWED_ORIGINS, region: "asia-south1", maxInstances: 5 }, async (req, res) => {
   try {
     if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
     const m = /^Bearer (.+)$/.exec(req.get("Authorization") || "");
@@ -188,6 +204,7 @@ exports.claimReferral = onRequest({ cors: true, region: "asia-south1", maxInstan
     if (!user.email || user.email_verified !== true) return res.status(403).json({ error: "Verify your email first." });
     const code = String((req.body || {}).code || "");
     if (!/^[A-Za-z0-9_-]{10}$/.test(code)) return res.status(400).json({ error: "That invite code is not valid." });
+    if (!(await allow(user.uid, "referral", 10, 86400000))) return res.status(429).json({ error: "Too many tries today." });
     const codeSnap = await db.collection("refCodes").doc(code).get();
     if (!codeSnap.exists) return res.status(404).json({ error: "That invite code was not found." });
     const referrer = codeSnap.data().uid;
@@ -221,7 +238,7 @@ const bearerUser = async (req, res) => {
   if (!user.email || user.email_verified !== true) { res.status(403).json({ error: "Verify your email first." }); return null; }
   return user;
 };
-exports.listGifts = onRequest({ cors: true, region: "asia-south1", maxInstances: 5 }, async (req, res) => {
+exports.listGifts = onRequest({ cors: ALLOWED_ORIGINS, region: "asia-south1", maxInstances: 5 }, async (req, res) => {
   try {
     if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
     const user = await bearerUser(req, res); if (!user) return;
@@ -230,12 +247,13 @@ exports.listGifts = onRequest({ cors: true, region: "asia-south1", maxInstances:
     return res.json({ gifts });
   } catch (e) { console.error("listGifts", e); return res.status(500).json({ error: "Could not load your gifts." }); }
 });
-exports.redeemGift = onRequest({ cors: true, region: "asia-south1", maxInstances: 5 }, async (req, res) => {
+exports.redeemGift = onRequest({ cors: ALLOWED_ORIGINS, region: "asia-south1", maxInstances: 5 }, async (req, res) => {
   try {
     if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
     const user = await bearerUser(req, res); if (!user) return;
     const code = String((req.body || {}).code || "").toUpperCase();
     if (!/^[A-HJ-NP-Z2-9]{12}$/.test(code)) return res.status(400).json({ error: "That gift code is not valid." });
+    if (!(await allow(user.uid, "gift", 10, 3600000))) return res.status(429).json({ error: "Too many tries. Please wait a while." });
     const out = await db.runTransaction(async (tx) => {
       const gRef = db.collection("gifts").doc(code), eRef = db.collection("entitlements").doc(user.uid);
       const [g, e] = await Promise.all([tx.get(gRef), tx.get(eRef)]);
@@ -295,7 +313,7 @@ exports.weeklyReport = onSchedule({ schedule: "every monday 08:00", timeZone: "A
   for (const doc of snap.docs) { try { const d = doc.data(); if ((d.emails || []).length) await sendReportFor(doc.id, d, tx); } catch (e) { console.error("weeklyReport", doc.id, e); } }
 });
 // Admin button "Send test email now" in the dashboard.
-exports.sendReportNow = onRequest({ secrets: [SMTP_USER, SMTP_PASS], cors: true, region: "asia-south1", timeoutSeconds: 120, maxInstances: 2 }, async (req, res) => {
+exports.sendReportNow = onRequest({ secrets: [SMTP_USER, SMTP_PASS], cors: ALLOWED_ORIGINS, region: "asia-south1", timeoutSeconds: 120, maxInstances: 2 }, async (req, res) => {
   try {
     if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
     const m = /^Bearer (.+)$/.exec(req.get("Authorization") || "");
