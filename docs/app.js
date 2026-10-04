@@ -721,6 +721,10 @@ function spamCheck() {
   if (recent.length >= 15) return "You have posted 15 times in the last hour. Take a short break and try again later.";
   return "";
 }
+// At most 30 new doubts per student per day (counted on this device, resets at midnight).
+const DOUBT_DAILY_MAX = 30;
+const doubtsToday = () => { const st = readJSON("dd-doubt-day", {}); return st.day === dayStr() ? (st.n || 0) : 0; };
+const noteDoubt = () => writeJSON("dd-doubt-day", { day: dayStr(), n: doubtsToday() + 1 });
 function notePosted() {
   let times = [];
   try { times = JSON.parse(localStorage.getItem("dd-post-times") || "[]"); } catch (_) {}
@@ -6594,7 +6598,7 @@ function renderAsk(existing) {
       const prob = academicProblem("question", title + " " + body, true) || (title.length < 8 ? "Make the title a clear question (at least 8 characters)." : "") || (body.length < 20 && !hasAtt ? "Add details (at least 20 characters): the chapter, the full problem and what you tried. Or attach a photo or file." : "");
       if (prob) { err.textContent = prob; err.hidden = false; return; }
     }
-    const wait = existing ? "" : spamCheck();
+    const wait = existing ? "" : (state.tab === "doubts" && doubtsToday() >= DOUBT_DAILY_MAX ? "You have asked " + DOUBT_DAILY_MAX + " doubts today, which is the daily limit. Please come back tomorrow, and meanwhile try answering a classmate\u2019s doubt." : spamCheck());
     if (wait) { err.textContent = wait; err.hidden = false; return; }
     if (newFileLinks.some(f => f.pct !== undefined)) { err.textContent = "Please wait for uploads to finish."; err.hidden = false; return; }
     const btn = form.querySelector("button[type=submit]"); btn.disabled = true; btn.textContent = "Saving…";
@@ -6638,7 +6642,7 @@ function renderAsk(existing) {
       state[t.coll] = [{ id, ...doc }, ...state[t.coll].filter(x => x.id !== id)];
       state.group = "All"; state.query = ""; $("search").value = "";
       openItem(id);
-      notePosted();
+      notePosted(); if (state.tab === "doubts") noteDoubt();
       // Pages are saved first so classmates never see a post with missing pages.
       doc.pages = await trySavePages(newPages, id, pageIds);
       state[t.coll] = state[t.coll].map(x => x.id === id ? { ...x, pages: doc.pages } : x);
