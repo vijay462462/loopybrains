@@ -1242,16 +1242,17 @@ const WELCOME = [
   ["🙏", "Respect for everyone", "We honour our students, teachers and staff. Speak kindly, help your juniors, thank those who help you, and treat every person here the way you want your own family to be treated. Together we grow."],
   ["🚀", "Study smarter", "Daily quiz, Study Lab, flashcards, CGPA tools, jobs and papers, all in one place. Everything on the board is free. Plus adds extras like mock tests and an AI helper."],
 ];
-function showWelcome(force) {
+function showWelcome(force, startId) {
   if (document.getElementById("welcome")) return;
+  const STEPS = ["about", "college", "name", "interests", "ready"], curSlug = TENANT ? TENANT.slug : IS_RGUKT ? "rgukt" : "";
   const INTERESTS = [["❓", "Clear my doubts", "doubts"], ["📝", "Prepare for exams", "exams"], ["💼", "Placements and jobs", "placements"], ["🎉", "Clubs and friends", "friends"], ["🔎", "Just exploring", "explore"]];
   const picked = new Set(readJSON("dd-interests", []));
-  let step = 0, nameVal = (getName() || "").trim();
-  const STEPS = ["about", "name", "interests", "ready"], TOTAL = STEPS.length, box = el("div", { id: "welcome", class: "welcome", role: "dialog", "aria-modal": "true", "aria-label": "Welcome to " + BRAND });
+  let step = Math.max(0, STEPS.indexOf(startId || "about")), nameVal = (getName() || "").trim(), pickSlug = curSlug, pickName = curSlug ? COLLEGE : "", cq = "", cst = (() => { try { return localStorage.getItem("dd-state") || ""; } catch (_) { return ""; } })() || (curSlug && curSlug !== "rgukt" ? ((DIRECTORY.find(c => c.slug === curSlug) || {}).state || "") : "") || "Andhra Pradesh";
+  const TOTAL = STEPS.length, box = el("div", { id: "welcome", class: "welcome", role: "dialog", "aria-modal": "true", "aria-label": "Welcome to " + BRAND });
   const finish = () => { try { localStorage.setItem("dd-welcome-done", "1"); if (!localStorage.getItem("dd-launch-gone")) { localStorage.setItem("dd-launch", "1"); } } catch (_) {} if (STEPS[step] === "ready") setTimeout(() => confetti(130), 250); document.removeEventListener("keydown", onKey); box.remove(); todayKey = ""; try { renderHeader(); } catch (_) {} };
   const onKey = (e) => { if (e.key === "Escape") finish(); };
-  const saveStep = () => { if (STEPS[step] === "name") { const v = nameVal.trim().slice(0, 30); if (v) setName(v); } if (STEPS[step] === "interests") writeJSON("dd-interests", [...picked]); };
-  const go = (d) => { saveStep(); step = Math.max(0, Math.min(TOTAL - 1, step + d)); paint(); };
+  const saveStep = () => { if (STEPS[step] === "college" && pickSlug && pickSlug !== curSlug) { try { sessionStorage.setItem("dd-ob-resume", "name"); localStorage.setItem("dd-state", cst); } catch (_) {} document.removeEventListener("keydown", onKey); switchCollege(pickSlug); return; } if (STEPS[step] === "name") { const v = nameVal.trim().slice(0, 30); if (v) setName(v); } if (STEPS[step] === "interests") writeJSON("dd-interests", [...picked]); };
+  const go = (d) => { if (d > 0 && STEPS[step] === "college" && !pickSlug) { const c = box.querySelector(".ob-chosen"); if (c) { c.classList.remove("shake"); void c.offsetWidth; c.classList.add("shake"); } return; } saveStep(); step = Math.max(0, Math.min(TOTAL - 1, step + d)); paint(); };
   const start = (fn) => () => { saveStep(); finish(); setTimeout(fn, 120); };
   function paint() {
     const last = step === TOTAL - 1, who = nameVal.trim() ? nameVal.trim().split(/\s+/)[0] : "";
@@ -1264,6 +1265,20 @@ function showWelcome(force) {
         el("div", { class: "ab-list" }, line("🛡️", "Safe and moderated", "Anonymous sign-in, reported posts hidden fast, abusive devices blocked."), line("🔒", "Private by design", "No ads. We never sell your data. Only your chosen name is shown."), line("🙏", "Respect for everyone", "Students, teachers and staff are honoured here."), line("🆓", "Free to learn", "The board, quizzes and Study Lab are free forever. Plus is optional.")),
         el("p", { class: "ab-meta" }, [ab.founder ? "Founded by " + ab.founder : "", ab.college ? ab.college : "", "Made with ❤️ in India"].filter(Boolean).join(" · ")),
         el("p", { class: "ab-meta" }, ab.email ? el("a", { href: "mailto:" + ab.email }, "Write to us: " + ab.email) : null, ab.email ? " · " : "", el("a", { href: "about.html", target: "_blank", rel: "noopener" }, "Our full story"), " · ", el("a", { href: "privacy.html", target: "_blank", rel: "noopener" }, "Privacy"), " · ", el("a", { href: "terms.html", target: "_blank", rel: "noopener" }, "Terms"))];
+    } else if (sid === "college") {
+      const badge = (slug, name, st) => { const [ca, cb] = slug === "rgukt" ? STATE_COLORS["Andhra Pradesh"] : collegeColors(slug, st || ""); const ini = name.replace(/\(.*?\)/g, "").split(/[\s-]+/).filter(w => /^[A-Za-z]/.test(w) && !/^(of|and|the|for|in)$/i.test(w)).slice(0, 2).map(w => w[0].toUpperCase()).join("") || "C"; const b = el("span", { class: "col-badge", "aria-hidden": "true" }, ini); b.style.setProperty("background", "linear-gradient(135deg," + ca + "," + cb + ")"); return b; };
+      const all = [{ slug: "rgukt", name: "RGUKT", state: "Andhra Pradesh", sub: "Rajiv Gandhi University of Knowledge Technologies" }, ...DIRECTORY.filter(d => d.slug !== "rgukt").map(d => ({ slug: d.slug, name: d.name, state: d.state || "Andhra Pradesh", sub: [d.city, d.kind].filter(Boolean).join(" \u00B7 ") }))];
+      const list = el("div", { class: "ob-colist", role: "listbox", "aria-label": "Colleges" }), chosen = el("p", { class: "ob-chosen", role: "status" }, ""), stSel = el("select", { "aria-label": "State", onchange: (e) => { cst = e.target.value; fill(); } }, el("option", { value: "All India" }, "\u{1F1EE}\u{1F1F3} All India (search by name)"), ...INDIA_STATES.map(s => el("option", { value: s }, s)));
+      stSel.value = cst;
+      const mark = () => { chosen.textContent = pickSlug ? "\u2705 " + pickName : "Pick your college to continue"; };
+      const fill = () => {
+        const needle = cq.trim().toLowerCase(); let rows = all.filter(c => (cst === "All India" || c.state === cst) && (!needle || (c.name + " " + c.sub).toLowerCase().includes(needle)));
+        if (cst === "All India" && !needle) { list.replaceChildren(el("p", { class: "hint" }, "Type your college or city to search all of India, or pick a state above.")); return; }
+        list.replaceChildren(...(rows.length ? rows.slice(0, 60).map(c => el("button", { class: "ob-col" + (pickSlug === c.slug ? " on" : ""), type: "button", role: "option", "aria-selected": String(pickSlug === c.slug), onclick: () => { pickSlug = c.slug; pickName = c.name; mark(); fill(); const nb = box.querySelector(".rowbtns .btn.primary"); if (nb) nb.textContent = pickSlug !== curSlug ? "Continue with " + (pickName.length > 16 ? pickName.slice(0, 15) + "\u2026" : pickName) : "Continue"; } }, badge(c.slug, c.name, c.state), el("span", { class: "col-text" }, el("strong", {}, c.name), c.sub ? el("small", {}, c.sub) : null))) : [el("p", { class: "hint" }, "No match. Try another spelling, or pick All India and search by name.")]));
+      };
+      const q = el("input", { type: "search", placeholder: "Search your college or city\u2026", "aria-label": "Search colleges", autocomplete: "off", value: cq }); q.addEventListener("input", () => { cq = q.value; fill(); });
+      body = [el("h2", {}, "Choose your college \u{1F3EB}"), el("p", { class: "ob-say" }, "Each college has its own private board, subjects and clubs. Pick yours and I will set everything up."), stSel, q, list, chosen];
+      mark(); fill();
     } else if (sid === "name") {
       const inp = el("input", { type: "text", maxlength: "30", placeholder: "Your first name", "aria-label": "Your name", autocomplete: "given-name", value: nameVal });
       inp.addEventListener("input", () => { nameVal = inp.value; });
@@ -1278,27 +1293,27 @@ function showWelcome(force) {
         el("div", { class: "ob-start" }, ...starters.map(([t, fn, pri]) => el("button", { class: "btn" + (pri ? " primary" : ""), type: "button", onclick: start(fn) }, t)))];
     }
     box.replaceChildren(el("div", { class: "welcome-card ob-card" }, el("button", { class: "welcome-skip", type: "button", onclick: finish }, "Skip"), bar, el("div", { class: "ob-step" }, ...body),
-      el("div", { class: "rowbtns" }, step > 0 ? el("button", { class: "btn", type: "button", onclick: () => go(-1) }, "Back") : null, last ? el("button", { class: "btn", type: "button", onclick: finish }, "Close") : el("button", { class: "btn primary", type: "button", onclick: () => go(1) }, sid === "name" && !nameVal.trim() ? "Skip for now" : sid === "about" ? "Continue" : "Next"))));
+      el("div", { class: "rowbtns" }, step > 0 ? el("button", { class: "btn", type: "button", onclick: () => go(-1) }, "Back") : null, last ? el("button", { class: "btn", type: "button", onclick: finish }, "Close") : el("button", { class: "btn primary", type: "button", onclick: () => go(1) }, sid === "name" && !nameVal.trim() ? "Skip for now" : sid === "about" ? "Continue" : sid === "college" ? (pickSlug && pickSlug !== curSlug ? "Continue with " + (pickName.length > 16 ? pickName.slice(0, 15) + "\u2026" : pickName) : "Continue") : "Next"))));
     const f = box.querySelector("input") || box.querySelector(".btn.primary"); if (f && sid !== "about") f.focus();
   }
   document.addEventListener("keydown", onKey); paint(); document.body.append(box);
 }
 function maybeWelcome() {
-  if (NO_COLLEGE) return;
-  // welcomeEveryVisit (config.js): show the About + welcome steps after the opening screen on every visit (handy for testing). Set it to false before launch.
+  let resume = ""; try { resume = sessionStorage.getItem("dd-ob-resume") || ""; sessionStorage.removeItem("dd-ob-resume"); } catch (_) {}
+  const open = (start) => { const go = () => setTimeout(() => showWelcome(false, start), 250); if (document.getElementById("splash")) document.addEventListener("splash-closed", go, { once: true }); else go(); };
+  if (resume) { try { sessionStorage.setItem("dd-ob-shown", "1"); } catch (_) {} open(resume); return; }   // just picked a college: continue with the name step
+  if (NO_COLLEGE) { try { sessionStorage.setItem("dd-ob-shown", "1"); } catch (_) {} open(); return; }      // brand-new visitors choose their college first
+  // welcomeEveryVisit (config.js): show the welcome steps after the opening screen on every visit (handy for testing). Set it to false before launch.
   const every = !!(window.DOUBT_DESK_CONFIG && window.DOUBT_DESK_CONFIG.welcomeEveryVisit);
   if (every) {
-    const go = () => { try { if (sessionStorage.getItem("dd-ob-shown")) return; sessionStorage.setItem("dd-ob-shown", "1"); } catch (_) {} setTimeout(showWelcome, 250); };
-    if (document.getElementById("splash")) document.addEventListener("splash-closed", go, { once: true }); else go();
-    return;
+    try { if (sessionStorage.getItem("dd-ob-shown")) return; sessionStorage.setItem("dd-ob-shown", "1"); } catch (_) {}
+    open(); return;
   }
   try {
     if (localStorage.getItem("dd-welcome-done")) return;
-    // people who already used the app before this welcome existed do not need it
     if (["dd-name", "dd-avatar", "dd-post-times", "dd-seen"].some(k => localStorage.getItem(k) !== null)) { localStorage.setItem("dd-welcome-done", "1"); return; }
   } catch (_) { return; }
-  const go2 = () => setTimeout(showWelcome, 250);
-  if (document.getElementById("splash")) document.addEventListener("splash-closed", go2, { once: true }); else go2();
+  open();
 }
 // Doubts nobody has answered yet (not mine, last 14 days): the Today card nudges helpers to answer them, which keeps the board alive.
 const unansweredDoubts = () => { const mine = store ? allMyIds() : new Set(), since = Date.now() - 14 * 864e5; return state.doubts.filter(d => !d.deleted && !isHidden(d) && (d.createdAt || 0) > since && !mine.has(d.authorId) && !d.resolvedReplyId && !repliesFor(d.id).length); };
