@@ -1347,6 +1347,15 @@ function renderBottomNav() {
 }
 
 // ---------- rendering ----------
+// Opens one subject's doubts straight away: sets the department and subject, redraws, then scrolls the list into view.
+function openSubjectFeed(subject) {
+  if (typeof subject !== "string" || subject.length > 60) return;
+  state.tab = "doubts"; state.group = subject; state.selected = null; state.mode = "intro"; state.filter = "all"; state.query = "";
+  const dept = Object.keys(DEPT_MAP).find(d => DEPT_MAP[d].includes(subject));
+  if (dept) state.dept = dept;
+  render();
+  requestAnimationFrame(() => { const l = $("list"); if (l) l.scrollIntoView({ behavior: "smooth", block: "start" }); });
+}
 function renderTrendBar() {
   const bar = document.getElementById("trendBar");
   if (!bar) return;
@@ -1363,7 +1372,7 @@ function renderTrendBar() {
   bar.replaceChildren(
     el("span", { class: "trend-label" }, "🔥 Trending now"),
     ...hot.map(([s, n]) => el("button", { class: "trend-chip", type: "button",
-      onclick: () => { state.tab = "doubts"; state.group = s; state.selected = null; state.mode = "intro"; state.filter = "all"; state.query = ""; render(); }
+      onclick: () => openSubjectFeed(s)
     }, el("span", { ...colorAttrs(s, "doubts") }, s), el("span", { class: "trend-n" }, "+" + n)))
   );
 }
