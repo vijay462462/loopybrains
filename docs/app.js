@@ -545,6 +545,9 @@ async function firebaseStore(conf, prefix = "") {
     account: () => { const u = auth && auth.currentUser; return { email: (u && u.email) || "", verified: !!(u && u.email && u.emailVerified) }; },
     subscribe: (coll, cb, onErr, since) => fs.onSnapshot(since ? fs.query(fs.collection(db, prefix + coll), fs.where("createdAt", ">", since)) : fs.collection(db, prefix + coll), snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))), onErr),
     newId: (coll) => fs.doc(fs.collection(db, prefix + coll)).id,
+    // Ask other colleges: write a copy of a doubt into another college's room, and read the answers given there.
+    setIn: (room, coll, id, data) => fs.setDoc(fs.doc(db, "rooms/" + room + "/" + coll, id), cleanDoc(auth && auth.currentUser ? { ...data, ownerUid: auth.currentUser.uid } : data)),
+    repliesIn: async (room, parentId) => (await fs.getDocs(fs.query(fs.collection(db, "rooms/" + room + "/replies"), fs.where("parentId", "==", parentId), fs.limit(30)))).docs.map(d => ({ id: d.id, ...d.data() })),
     getRoomDoc: async (coll, id) => { const d = await fs.getDoc(fs.doc(db, prefix + coll, id)); return d.exists() ? d.data() : null; },
     delRoomDoc: (coll, id) => fs.deleteDoc(fs.doc(db, prefix + coll, id)),
     // New posts, replies, stories and listings are stamped with the author's sign-in id so only they can change them.
@@ -1984,7 +1987,7 @@ function visible() {
   let rows = state[t.coll].filter(d => !isHidden(d) &&
     (state.group === "All" || d[t.field] === state.group) &&
     (!q || ((d.title || "") + " " + (d.body || "")).toLowerCase().includes(q)));
-  if (state.campusFilter !== "all") rows = rows.filter(d => d.campus === state.campusFilter);
+  if (state.campusFilter !== "all") rows = rows.filter(d => d.campus === state.campusFilter || (d.aud === "all" && state.tab === "doubts"));
   if (state.yearFilter !== "All" && (state.tab === "doubts" || state.tab === "gate")) rows = rows.filter(d => d.year === state.yearFilter);
   if (state.tab === "doubts" && (state.filter === "open" || state.filter === "done")) rows = rows.filter(d => (state.filter === "done") === !!d.resolvedReplyId);
   if (state.tab === "doubts" && state.filter === "mentor") rows = rows.filter(needsMentor);
@@ -2719,6 +2722,8 @@ function renderList() {
     } else meta.push(el("span", { class: "likes" }, "♥ " + votes));
     if (d.year) meta.push(el("span", { class: "pill year-pill" }, d.year));
     if (d.campus && CAMPUSES.length > 0) meta.push(el("span", { class: "campus-badge", style: "--cc:" + campusColor(d.campus) }, d.campus));
+    if (d.via) meta.push(el("span", { class: "pill via-pill", title: "Asked by a student of " + d.via }, "\u{1F30D} From " + d.via));
+    else if (d.aud === "all" && state.tab === "doubts" && CAMPUSES.length > 0) meta.push(el("span", { class: "pill open", title: "Visible to every campus" }, "\u{1F310} All campuses"));
     if (d.pages && d.pages.length) meta.push(el("span", {}, "📎 " + d.pages.length + (d.pages.length === 1 ? " page" : " pages")));
     if (d.fileAttachments && d.fileAttachments.length) meta.push(el("span", {}, "📁 " + d.fileAttachments.length + (d.fileAttachments.length === 1 ? " file" : " files")));
     const av = d.anonymous ? avatarEl("👤") : avatarEl(mine(d) ? getAvatar() : avatarFor(d.authorName || ""));
@@ -6660,7 +6665,42 @@ function renderChalQuizBuilder(onUpdate) {
   return wrap;
 }
 
+// ---- Who should see a doubt: all campuses of the college, or my campus first, and optionally other colleges ----
+let askNet = [];   // colleges chosen for "also ask other colleges" in the open form
+const NET_MAX = 3, NET_DAILY = 5;
+const netToday = () => { const st = readJSON("dd-net-day", {}); return st.day === dayStr() ? (st.n || 0) : 0; };
+const roomOfCollege = async (slug) => {
+  if (slug === "rgukt") return DEFAULT_ROOM_PATH.replace(/^rooms\//, "").replace(/\/$/, "");
+  try { const d = store.getTop ? await store.getTop("colleges", slug) : null; if (d && typeof d.room === "string" && /^[A-Za-z0-9_-]{3,60}$/.test(d.room)) return d.room; } catch (_) {}
+  return "college-" + slug;
+};
+function audienceBlock() {
+  const myC = getCampus(), hasCampuses = CAMPUSES.length > 0, canNet = !!(store && store.setIn);
+  const box = el("div", { class: "aud-box" });
+  const opt = (value, icon, title, text, on) => el("label", { class: "aud-opt" }, el("input", { type: "radio", name: "aud", value, checked: on ? "" : null }), el("span", { class: "aud-txt" }, el("b", {}, icon + " " + title), el("small", {}, text)));
+  const chips = el("div", { class: "aud-chips" }), results = el("div", { class: "aud-results" }), note = el("p", { class: "hint" });
+  const drawChips = () => { chips.replaceChildren(...askNet.map(c => el("span", { class: "aud-chip" }, c.name, el("button", { type: "button", "aria-label": "Remove " + c.name, onclick: () => { askNet = askNet.filter(x => x.slug !== c.slug); drawChips(); drawResults(); } }, "\u2715")))); note.textContent = askNet.length ? "Your doubt will also be sent to " + askNet.length + " college" + (askNet.length === 1 ? "" : "s") + ". Answers come back to you here." : ""; };
+  const all = [...(SEL !== "rgukt" ? [{ slug: "rgukt", name: "RGUKT AP", state: "Andhra Pradesh" }] : []), ...DIRECTORY.filter(c => c.slug !== SEL && c.slug !== "rgukt").map(c => ({ slug: c.slug, name: c.name, state: c.state || "" }))];
+  const q = el("input", { type: "search", placeholder: "Search a college to ask\u2026", "aria-label": "Search colleges to ask", autocomplete: "off" });
+  const drawResults = () => {
+    const n = q.value.trim().toLowerCase();
+    if (!n) { results.replaceChildren(); return; }
+    const rows = all.filter(c => !askNet.some(x => x.slug === c.slug) && (c.name + " " + c.state).toLowerCase().includes(n)).slice(0, 6);
+    results.replaceChildren(...(rows.length ? rows.map(c => el("button", { type: "button", class: "aud-res", onclick: () => { if (askNet.length >= NET_MAX) { note.textContent = "You can pick up to " + NET_MAX + " colleges."; return; } askNet.push(c); q.value = ""; drawChips(); drawResults(); } }, el("b", {}, c.name), el("small", {}, c.state))) : [el("p", { class: "hint" }, "No college found.")]));
+  };
+  q.addEventListener("input", drawResults);
+  box.append(el("div", { class: "label" }, "Who should see your doubt?"),
+    hasCampuses ? el("div", { class: "aud-opts" },
+      opt("all", "\u{1F310}", "All " + COLLEGE + " campuses", "Fastest answers. Students of every campus can see it.", true),
+      opt("campus", "\u{1F3EB}", myC ? "My campus first (" + myC + ")" : "My campus first", myC ? "Your campus mates see it first. Everyone can still find it." : "Pick your campus first to use this option.", false)) : null,
+    canNet ? el("details", { class: "aud-net" }, el("summary", {}, "\u{1F30D} Also ask students of other colleges (optional)"),
+      el("p", { class: "hint" }, "Pick up to " + NET_MAX + " colleges. Their students will see your doubt with your first name and your college name. Do not share private details."),
+      q, results, chips, note) : null);
+  drawChips();
+  return box;
+}
 function renderAsk(existing) {
+  if (!existing) askNet = [];
   if (state.tab === "market") return renderMarketAsk(existing);
   const t = TABS[state.tab];
   const err = el("p", { class: "err", hidden: true });
@@ -6720,6 +6760,15 @@ function renderAsk(existing) {
         doc.status = "open";
       }
       const myC = getCampus(); if (myC) doc.campus = myC;
+      let netTargets = [];
+      if (state.tab === "doubts") {
+        const audEl = form.querySelector("input[name=aud]:checked"); if (CAMPUSES.length) doc.aud = audEl && audEl.value === "campus" && myC ? "campus" : "all";
+        if (askNet.length && store.setIn) {
+          if (netToday() >= NET_DAILY) { err.textContent = "You can ask other colleges " + NET_DAILY + " times a day. Remove the other colleges, or try again tomorrow."; err.hidden = false; btn.disabled = false; btn.textContent = label; return; }
+          for (const c of askNet.slice(0, NET_MAX)) { try { netTargets.push({ slug: c.slug, name: c.name, room: await roomOfCollege(c.slug), id: store.newId("doubts") }); } catch (_) {} }
+          if (netTargets.length) doc.sentTo = netTargets.map(x => ({ slug: x.slug, name: x.name, room: x.room, id: x.id }));
+        }
+      }
       // Show the new post straight away; the live update replaces it with the saved copy.
       state[t.coll] = [{ id, ...doc }, ...state[t.coll].filter(x => x.id !== id)];
       state.group = "All"; state.query = ""; $("search").value = "";
@@ -6729,6 +6778,14 @@ function renderAsk(existing) {
       doc.pages = await trySavePages(newPages, id, pageIds);
       state[t.coll] = state[t.coll].map(x => x.id === id ? { ...x, pages: doc.pages } : x);
       await store.set(t.coll, id, doc);
+      if (netTargets.length) {
+        const copy = { title: doc.title, body: doc.body + (pageIds.length || readyFiles.length ? "\n\n(This doubt has a photo or file on the " + COLLEGE + " board.)" : ""), [t.field]: group, authorId: store.uid, authorName: doc.authorName, anonymous, urgent, createdAt: Date.now(), via: COLLEGE.slice(0, 80), viaSlug: SEL, viaOf: id, resolvedReplyId: null };
+        if (doc.year) copy.year = doc.year; if (doc.tags) copy.tags = doc.tags;
+        const bad = [];
+        for (const tg of netTargets) { try { await store.setIn(tg.room, "doubts", tg.id, { ...copy, createdAt: Date.now() }); } catch (_) { bad.push(tg.name); } }
+        writeJSON("dd-net-day", { day: dayStr(), n: netToday() + 1 });
+        showNotice(bad.length ? "Sent to " + (netTargets.length - bad.length) + " other college(s). Could not send to " + bad.join(", ") + " (it may need a verified college email)." : "\u{1F30D} Also sent to " + netTargets.map(x => x.name).join(", ") + ". Answers will appear on your doubt.");
+      }
     } catch (e2) {
       state.mode = "ask"; render();
       showNotice(errText(e2));
@@ -6750,6 +6807,7 @@ function renderAsk(existing) {
         )
       ),
       el("label", {}, "Tags (optional)", el("input", { id: "f-tags", name: "tags", maxlength: "100", placeholder: "e.g. mid-1, unit-2, tricky" }))),
+    state.tab === "doubts" && !existing && audienceBlock(),
     state.tab === "gate" && el("div", { class: "gate-fields" },
       el("label", {}, "PYQ Year",
         el("select", { name: "pyqYear" },
@@ -6841,6 +6899,30 @@ function renderAsk(existing) {
   return [el("h2", {}, existing ? "Edit " + t.noun : t.ask), form];
 }
 
+// Answers given to a doubt in the other colleges it was sent to. Loaded on demand and shown read-only with the college name.
+const xAns = {};
+function otherCollegeAnswers(d) {
+  const box = el("div", { class: "x-ans" }), sent = d.sentTo.filter(x => x && x.room && x.id);
+  const draw = () => {
+    const st = xAns[d.id] || { rows: null };
+    box.replaceChildren(el("div", { class: "label" }, "\u{1F30D} Also asked in " + sent.map(x => x.name).join(", ")),
+      st.rows == null ? el("p", { class: "hint" }, st.err ? "Could not load answers from other colleges." : "Loading answers from other colleges\u2026")
+      : st.rows.length ? el("div", { class: "answers" }, ...st.rows.filter(r => !r.deleted).map(r => el("div", { class: "ans x" }, el("p", { class: "ans-body" }, r.body || ""), el("small", { class: "hint" }, "\u{1F30D} " + r.college + " \u00B7 " + (r.anonymous ? "Anonymous" : r.authorName || "Student") + " \u00B7 " + ago(r.createdAt)))))
+      : el("p", { class: "hint" }, "No answers from other colleges yet. They usually appear within a few hours."),
+      el("button", { class: "linkbtn", type: "button", onclick: () => { delete xAns[d.id]; load(true); } }, "\u21BB Refresh"));
+  };
+  const load = async (force) => {
+    const st = xAns[d.id];
+    if (st && st.rows && !force && Date.now() - st.at < 60000) { draw(); return; }
+    xAns[d.id] = { rows: null, at: Date.now() }; draw();
+    try {
+      const lists = await Promise.all(sent.map(async x => (await store.repliesIn(x.room, x.id)).map(r => ({ ...r, college: x.name }))));
+      xAns[d.id] = { rows: lists.flat().sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0)), at: Date.now() }; draw();
+    } catch (_) { xAns[d.id] = { rows: null, err: true, at: Date.now() }; draw(); }
+  };
+  draw(); if (store && store.repliesIn) load(false);
+  return box;
+}
 function renderView() {
   if (state.tab === "market") return renderMarketView();
   const t = TABS[state.tab];
@@ -6856,6 +6938,7 @@ function renderView() {
       state.tab === "doubts" && el("span", { class: "pill " + (d.resolvedReplyId ? "done" : "open") }, d.resolvedReplyId ? "Resolved" : "Open"),
       state.tab === "doubts" && d.bounty && !d.resolvedReplyId && el("span", { class: "pill bounty" }, "🎁 Bounty"),
       d.campus && CAMPUSES.length > 0 && el("span", { class: "campus-badge", style: "--cc:" + campusColor(d.campus) }, d.campus),
+      d.via && el("span", { class: "pill via-pill" }, "\u{1F30D} From " + d.via),
       el("span", { class: "author-row" }, d.anonymous ? avatarEl("👤") : avatarEl(mine(d) ? getAvatar() : avatarFor(d.authorName || "")), "By " + who(d) + " · " + ago(d.createdAt))),
     el("h2", {}, d.title),
     d.tags && el("div", { class: "post-tags" }, ...d.tags.split(",").map(tag => tag.trim()).filter(Boolean).map(tag => el("span", { class: "post-tag" }, "#" + tag))),
@@ -6993,6 +7076,8 @@ function renderView() {
   if (rep) actions.push(rep);
   if (actions.length) out.push(el("div", { class: "rowbtns" }, actions));
 
+  if (state.tab === "doubts" && d.via) out.push(el("div", { class: "via-banner" }, "\u{1F30D} A student of " + d.via + " asked this. Your answer goes back to them. Be kind and clear."));
+  if (state.tab === "doubts" && Array.isArray(d.sentTo) && d.sentTo.length && own) { out.push(otherCollegeAnswers(d)); }
   if (state.tab === "doubts") out.push(expertHelp(d));
   const list = el("div", { class: "answers" }, el("div", { class: "label" }, reps.length ? reps.length + " " + t.replyNoun + (reps.length === 1 ? "" : "s") : "No " + t.replyNoun + "s yet"));
   for (const r of reps) {

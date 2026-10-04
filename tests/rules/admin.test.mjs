@@ -202,5 +202,11 @@ await t("admin hides a photo", () => assertSucceeds(setDoc(doc(admin, R + "/prof
 await t("students read the hidden list but cannot change it", async () => { await assertSucceeds(getDoc(doc(student, R + "/profileHidden/dev-target-1234"))); await assertFails(setDoc(doc(student, R + "/profileHidden/dev-target-1234"), { dp: false, by: "stud", at: now() })); });
 await t("admin dismisses a report", () => assertSucceeds(deleteDoc(doc(admin, R + "/profileReports/stud_dev-target-1234_dp"))));
 await t("student cannot dismiss a report", () => assertFails(deleteDoc(doc(student, R + "/profileReports/stud_dev-target-1234_status"))));
+console.log("ask other colleges and all campuses");
+const xpost = (extra = {}) => ({ title: "Hello there", body: "x", subject: "DSP", authorId: "dev-x-12345678", authorName: "S", createdAt: now(), ...extra });
+await t("a doubt can carry the audience and the colleges it was sent to", () => assertSucceeds(setDoc(doc(anon, R + "/doubts/xa1"), xpost({ aud: "all", campus: "NUZVID", sentTo: [{ slug: "andhra-university", name: "Andhra University", room: "college-andhra-university", id: "abc" }] }))));
+await t("a copy in another college carries where it came from", () => assertSucceeds(setDoc(doc(anon, "rooms/college-andhra-university/doubts/xc1"), xpost({ via: "RGUKT AP", viaSlug: "rgukt", viaOf: "xa1" }))));
+await t("more than three target colleges is refused", () => assertFails(setDoc(doc(anon, R + "/doubts/xa2"), xpost({ sentTo: [1, 2, 3, 4] }))));
+await t("an unknown extra field is still refused", () => assertFails(setDoc(doc(anon, R + "/doubts/xa3"), xpost({ hack: 1 }))));
 console.log(`\n${pass} passed, ${fail} failed`);
 await env.cleanup(); process.exit(fail ? 1 : 0);

@@ -2241,3 +2241,17 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 .hw-tick { flex: none; width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; background: var(--grad); color: #fff; font-weight: 900; font-size: 13px; }
 .hw-list li.done .hw-tick { background: #16a34a; }
 .welcome-card.hw { max-height: 88vh; overflow-y: auto; }
+
+/* ---- Audience and other colleges ---- */
+.aud-box { display: grid; gap: 8px; margin: 4px 0; padding: 12px; border-radius: 16px; border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--line)); background: color-mix(in srgb, var(--accent) 7%, var(--sheet)); }
+.aud-opts { display: grid; gap: 8px; } .aud-opt { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 14px; border: 1.5px solid var(--line); background: var(--sheet); cursor: pointer; }
+.aud-opt:has(input:checked) { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--sheet)); box-shadow: 0 10px 22px -16px var(--accent); }
+.aud-opt input { margin-top: 4px; accent-color: var(--accent); } .aud-txt { display: grid; gap: 2px; } .aud-txt b { font-size: 14.5px; } .aud-txt small { opacity: .75; font-size: 12.5px; line-height: 1.35; }
+.aud-net summary { cursor: pointer; font-weight: 800; font-size: 14px; padding: 6px 0; } .aud-net[open] summary { margin-bottom: 4px; }
+.aud-results { display: grid; gap: 6px; margin-top: 6px; } .aud-res { display: flex; justify-content: space-between; gap: 8px; align-items: center; text-align: left; padding: 9px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--sheet); color: var(--ink); font: inherit; } .aud-res small { opacity: .65; }
+.aud-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; } .aud-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 6px 5px 12px; border-radius: 99px; background: var(--grad); color: #fff; font-weight: 800; font-size: 13px; } .aud-chip button { width: 22px; height: 22px; padding: 0; border: 0; border-radius: 50%; background: rgb(255 255 255 / .25); color: #fff; font-size: 11px; }
+.via-pill { background: color-mix(in srgb, #0ea5e9 18%, transparent); color: #0369a1; font-weight: 800; }
+.via-banner { padding: 10px 12px; border-radius: 14px; background: color-mix(in srgb, #0ea5e9 12%, var(--sheet)); border: 1px solid color-mix(in srgb, #0ea5e9 35%, var(--line)); font-weight: 700; font-size: 13.5px; }
+.x-ans { display: grid; gap: 8px; padding: 12px; border-radius: 16px; border: 1px dashed color-mix(in srgb, #0ea5e9 45%, var(--line)); background: color-mix(in srgb, #0ea5e9 6%, var(--sheet)); } .ans.x { border-left: 4px solid #0ea5e9; }
+.aud-opt input[type="radio"] { width: 18px; height: 18px; min-width: 18px; flex: none; margin: 3px 0 0; padding: 0; } .aud-opt { font-weight: 400; }
+.aud-box .label { font-family: inherit; text-transform: none; letter-spacing: 0; font-size: 14px; font-weight: 800; }
