@@ -28,7 +28,7 @@ await t("player docs cannot be listed", () => assertFails(getDocs(collection(ali
 await t("player can get own doc (even if missing)", () => assertSucceeds(getDoc(doc(alice, "battlePlayers", "w9_alice"))));
 await t("player cannot get someone else's doc", () => assertFails(getDoc(doc(alice, "battlePlayers", "w1_bob"))));
 // profile streak
-const prof = (db, uid, extra) => setDoc(doc(db, "rooms/r00m-Abc123xy/profiles", uid + "12345678"), { name: "A", dp: "", updatedAt: Date.now(), ...extra });
+const prof = (db, uid, extra) => setDoc(doc(db, "rooms/r00m-Abc123xy/profiles", uid + "12345678"), { name: "A", dp: "", updatedAt: Date.now(), ownerUid: uid, ...extra });
 await t("profile with streak 5 is accepted", () => assertSucceeds(prof(alice, "alice", { streak: 5 })));
 await t("profile with streak 99999 is refused", () => assertFails(prof(alice, "alice", { streak: 99999 })));
 await t("profile with a non-number streak is refused", () => assertFails(prof(alice, "alice", { streak: "x" })));

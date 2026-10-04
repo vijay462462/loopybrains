@@ -43,7 +43,7 @@ await t("photo story needs pageId", () => assertFails(setDoc(doc(anonU, R + "/st
 await t("story answer (id = story_uid)", () => assertSucceeds(setDoc(doc(anonU, R + "/storyAnswers/s2_" + me), { storyId: "s2", uid: me, name: "Ravi", to: "creator-id-1", campus: "MAIN", pick: 1, ok: true, createdAt: now() })));
 await t("story answer with wrong id is refused", () => assertFails(setDoc(doc(anonU, R + "/storyAnswers/zzz"), { storyId: "s2", uid: me, name: "Ravi", to: "creator-id-1", campus: "", pick: 1, ok: true, createdAt: now() })));
 await t("story view", () => assertSucceeds(setDoc(doc(anonU, R + "/storyViews/s2_" + me), { storyId: "s2", uid: me, name: "Ravi", createdAt: now() })));
-const prof = (db, extra) => setDoc(doc(db, R + "/profiles/" + me), { name: "Ravi", dp: "", status: "Studying", updatedAt: now(), ...extra });
+const prof = (db, extra) => setDoc(doc(db, R + "/profiles/" + me + (db === verU ? "-v" : "")), { name: "Ravi", dp: "", status: "Studying", updatedAt: now(), ownerUid: db === verU ? "u2" : "u1", ...extra });
 await t("profile with status and dp", () => assertSucceeds(prof(anonU, { dp: "data:image/jpeg;base64," + "A".repeat(100) })));
 await t("profile verified:true needs a verified email", () => assertFails(prof(anonU, { verified: true })));
 await t("profile verified:true with a verified email", () => assertSucceeds(prof(verU, { verified: true })));

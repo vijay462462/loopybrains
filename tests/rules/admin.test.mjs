@@ -208,5 +208,17 @@ await t("a doubt can carry the audience and the colleges it was sent to", () => 
 await t("a copy in another college carries where it came from", () => assertSucceeds(setDoc(doc(anon, "rooms/college-andhra-university/doubts/xc1"), xpost({ via: "RGUKT AP", viaSlug: "rgukt", viaOf: "xa1" }))));
 await t("more than three target colleges is refused", () => assertFails(setDoc(doc(anon, R + "/doubts/xa2"), xpost({ sentTo: [1, 2, 3, 4] }))));
 await t("an unknown extra field is still refused", () => assertFails(setDoc(doc(anon, R + "/doubts/xa3"), xpost({ hack: 1 }))));
+console.log("profiles belong to their owner");
+const other = env.authenticatedContext("other", { email: "o@x.com", email_verified: false }).firestore();
+const prof = (o = {}) => ({ name: "Ravi", dp: "", status: "hi", ownerUid: "stud", updatedAt: now(), ...o });
+await t("a student creates their own profile", () => assertSucceeds(setDoc(doc(student, R + "/profiles/dev-prof-1234"), prof())));
+await t("a student updates their own profile", () => assertSucceeds(setDoc(doc(student, R + "/profiles/dev-prof-1234"), prof({ status: "new" }))));
+await t("someone else cannot overwrite it", () => assertFails(setDoc(doc(other, R + "/profiles/dev-prof-1234"), prof({ ownerUid: "other", name: "Hacker" }))));
+await t("someone else cannot take it by claiming the same owner", () => assertFails(setDoc(doc(other, R + "/profiles/dev-prof-1234"), prof({ ownerUid: "stud" }))));
+await t("a profile cannot be written without the owner id", () => assertFails(setDoc(doc(student, R + "/profiles/dev-prof-5678"), { name: "No owner", dp: "", status: "", updatedAt: now() })));
+await t("the verified badge needs a verified email", async () => { await assertFails(setDoc(doc(other, R + "/profiles/dev-prof-9999"), prof({ ownerUid: "other", verified: true }))); await assertSucceeds(setDoc(doc(student, R + "/profiles/dev-prof-8888"), prof({ verified: true }))); });
+await env.withSecurityRulesDisabled(async (c) => { await setDoc(doc(c.firestore(), R + "/profiles/dev-legacy-1234"), { name: "Old", dp: "", status: "", updatedAt: now() }); });
+await t("an older profile without an owner can be claimed by its next saver", () => assertSucceeds(setDoc(doc(student, R + "/profiles/dev-legacy-1234"), prof({ name: "Old" }))));
+await t("...and then nobody else can take it", () => assertFails(setDoc(doc(other, R + "/profiles/dev-legacy-1234"), prof({ ownerUid: "other" }))));
 console.log(`\n${pass} passed, ${fail} failed`);
 await env.cleanup(); process.exit(fail ? 1 : 0);

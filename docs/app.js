@@ -21,6 +21,19 @@ function fsVal(v) {
   return null;
 }
 const fsDoc = (d) => Object.fromEntries(Object.entries((d && d.fields) || {}).map(([k, x]) => [k, fsVal(x)]));
+// Remembers the last few errors on this phone so a student can send them with "Report a problem". Nothing is sent automatically.
+(function () {
+  const keep = (msg) => { try { const l = JSON.parse(localStorage.getItem("dd-errlog") || "[]"); l.push({ t: new Date().toISOString().slice(0, 19), m: String(msg).slice(0, 200), v: document.querySelector("link[rel=manifest]")?.href.match(/v=(\d+)/)?.[1] || "" }); localStorage.setItem("dd-errlog", JSON.stringify(l.slice(-15))); } catch (_) {} };
+  addEventListener("error", (e) => keep((e.message || "error") + " @" + String(e.filename || "").split("/").pop() + ":" + (e.lineno || 0)));
+  addEventListener("unhandledrejection", (e) => keep("promise: " + ((e.reason && (e.reason.message || e.reason.code)) || e.reason || "rejected")));
+})();
+function reportProblem() {
+  let log = []; try { log = JSON.parse(localStorage.getItem("dd-errlog") || "[]"); } catch (_) {}
+  const info = ["App: " + BRAND, "College: " + COLLEGE, "Screen: " + innerWidth + "x" + innerHeight, "Browser: " + navigator.userAgent.slice(0, 120), "Recent errors:", ...(log.length ? log.map(x => "- " + x.t + " v" + x.v + " " + x.m) : ["- none"])].join("\n");
+  const to = (window.DOUBT_DESK_CONFIG && window.DOUBT_DESK_CONFIG.about && window.DOUBT_DESK_CONFIG.about.email) || "";
+  const url = "mailto:" + encodeURIComponent(to) + "?subject=" + encodeURIComponent(BRAND + " problem report") + "&body=" + encodeURIComponent("Please describe what went wrong:\n\n\n---\n" + info);
+  window.location.href = url;
+}
 // Which college is this visitor on? "" = not chosen yet, "rgukt" = the original built-in board, anything else = a tenant.
 function pickCollege() {
   const valid = (v) => /^[a-z0-9-]{2,40}$/.test(v);
@@ -494,7 +507,7 @@ function allMyIds() {
   if (typeof store !== "undefined" && store && store.uid) ids.add(store.uid);
   return ids;
 }
-const OWNED_COLLS = new Set(["doubts", "ideas", "clubs", "gate", "jobs", "challenges", "market", "replies", "stories"]);
+const OWNED_COLLS = new Set(["doubts", "ideas", "clubs", "gate", "jobs", "challenges", "market", "replies", "stories", "profiles"]);
 async function firebaseStore(conf, prefix = "") {
   const base = "https://www.gstatic.com/firebasejs/" + FB_VERSION + "/";
   const [{ initializeApp }, fs, st, au] = await Promise.all([import(base + "firebase-app.js"), import(base + "firebase-firestore.js"), import(base + "firebase-storage.js"), import(base + "firebase-auth.js")]);
@@ -1473,7 +1486,7 @@ function loopyTap(e) {
   const b = e && e.currentTarget, svg = b && b.querySelector ? b.querySelector(".loopy-mini") : null;
   if (svg) { svg.classList.remove("lp-hop"); void svg.getBoundingClientRect(); svg.classList.add("lp-hop"); }
   try { confetti && confetti(); } catch (_) {}
-  if (window.sparkBotAsk) window.sparkBotAsk(loopyPrompt().q);;
+  const q = loopyPrompt().q; if (window.sparkBotAsk) window.sparkBotAsk(q); else if (window.__lazy) { window.__lazy.now(); document.addEventListener("lazy-ready", () => { if (window.sparkBotAsk) window.sparkBotAsk(q); }, { once: true }); }
 }
 document.addEventListener("pointermove", (e) => {
   document.querySelectorAll(".hero-loopy .loopy-mini").forEach((s) => {
@@ -3821,6 +3834,7 @@ function renderMe() {
     el("div", { class: "rowbtns" },
       el("button", { class: "btn primary", type: "button", onclick: () => { state.mode = "quiz"; render(); } }, "🧠 Today's quiz"),
       el("button", { class: "btn", type: "button", onclick: () => showHowTo() }, "\u{1F4D6} How to use the app"),
+      el("button", { class: "btn", type: "button", onclick: reportProblem }, "\u{1F41E} Report a problem"),
       el("button", { class: "btn", type: "button", onclick: () => { state.mode = "learn"; render(); } }, "📚 Learn from IIT"),
       el("button", { class: "btn", type: "button", onclick: () => { state.afterName = "me"; state.mode = "name"; render(); } }, "Change name"),
       PRIVATE && el("button", { class: "btn", type: "button", onclick: () => { setCode(""); location.reload(); } }, "Change class code"),
@@ -4472,7 +4486,7 @@ function renderFun() {
   const draw = () => {
     bar.replaceChildren(...tabs.map(([id, label]) => el("button", { class: "btn sm" + (view === id ? " primary" : ""), type: "button", onclick: () => { view = id; draw(); } }, label)));
     window.__funStart = null;
-    if (view === "player") body.replaceChildren(window.SparkPlayer ? window.SparkPlayer.mount() : el("p", { class: "hint" }, "The music player could not load. Reload the page and try again."));
+    if (view === "player") body.replaceChildren(window.SparkPlayer ? window.SparkPlayer.mount() : (needLazy(), el("p", { class: "hint" }, "Loading the music player\u2026")));
     else if (view === "movies") body.replaceChildren(moviesView());
     else if (view === "music") {
       body.replaceChildren(
@@ -4532,7 +4546,7 @@ function renderLab() {
   return [
     el("h2", {}, "🧪 Study Lab"),
     el("p", { class: "hint" }, "Power tools for students. Everything is saved only on this phone, and the focus timer keeps running while you use other parts of CampusLoop."),
-    window.SparkLab ? window.SparkLab.mount() : el("p", { class: "hint" }, "The Study Lab could not load. Reload the page and try again."),
+    window.SparkLab ? window.SparkLab.mount() : (needLazy(), el("p", { class: "hint" }, "Loading the Study Lab\u2026")),
     el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")),
   ];
 }
@@ -7153,6 +7167,8 @@ function confirmDelete(btn, action) {
   setTimeout(() => { if (btn.isConnected) { delete btn.dataset.armed; btn.textContent = orig; } }, 3000);
 }
 
+// The optional tools load in the background (lazy.js). If a panel needs one before it has arrived, start loading and redraw when it is ready.
+function needLazy() { try { if (window.__lazy && !window.__lazy.isDone()) { window.__lazy.now(); document.addEventListener("lazy-ready", () => { try { render(); } catch (_) {} }, { once: true }); } } catch (_) {} }
 function openAsk() {
   state.mode = getName() ? "ask" : "name";
   if (!getName()) state.afterName = "ask";
@@ -7722,7 +7738,7 @@ maybeWelcome();
 try { showCollegeReveal(); } catch (_) {}
 maybeMilestone();
 $("filterToggle").addEventListener("click", () => { document.querySelector("header.top").classList.toggle("filters-open"); renderHeader(); });
-$("botBtn").addEventListener("click", () => { if (window.sparkBotToggle) window.sparkBotToggle(); });
+$("botBtn").addEventListener("click", () => { if (window.sparkBotToggle) window.sparkBotToggle(); else if (window.__lazy) { window.__lazy.now(); document.addEventListener("lazy-ready", () => { if (window.sparkBotToggle) window.sparkBotToggle(); }, { once: true }); } });
 $("drivesBtn").addEventListener("click", () => showPanel("drives"));
 $("eventsBtn").addEventListener("click", () => showPanel("events"));
 $("alumniBtn").addEventListener("click", () => { alumniView = "dir"; showPanel("alumni"); });

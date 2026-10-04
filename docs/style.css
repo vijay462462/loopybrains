@@ -2276,3 +2276,11 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 .ob-card > .welcome-skip, .ob-card > .ob-bar, .ob-card > .ob-progress { flex: none; }
 .ob-card > .ob-step { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding: 2px 2px 14px; mask-image: linear-gradient(to bottom, #000 calc(100% - 22px), transparent); -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 22px), transparent); }
 .ob-card > .rowbtns { position: static; flex: none; margin: 0; padding: 4px 0 0; background: none; }
+
+/* ---- Feel: instant taps, soft press, smoother long lists ---- */
+button, .btn, .chip, .item, .subj-chip, .dept-tab, .campus-chip, a { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+button:not(:disabled):active, .btn:not(:disabled):active, .chip:active, .subj-chip:active, .dept-tab:active, .campus-chip:active { transform: scale(.97); transition: transform .08s ease; }
+.item { content-visibility: auto; contain-intrinsic-size: auto 130px; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } button:active { transform: none !important; } }
+:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 70%, #fff); outline-offset: 2px; }
