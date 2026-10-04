@@ -70,10 +70,10 @@ service cloud.firestore {
                                'pages', 'fileAttachments', 'year', 'tags', 'pyqYear', 'marks', 'difficulty',
                                'resolvedReplyId', 'bounty', 'campus', 'chalType', 'timeLimit', 'questions', 'status',
                                'winner', 'winnerName', 'runnerUp', 'runnerUpName', 'deleted', 'reports', 'editedAt',
-                               'company', 'applyUrl', 'deadline', 'pay', 'ownerUid', 'aud', 'to', 'via', 'viaSlug', 'viaOf', 'sentTo', 'ansPrivate'])
+                               'company', 'applyUrl', 'deadline', 'pay', 'ownerUid', 'aud', 'to', 'via', 'viaSlug', 'viaOf', 'sentTo', 'ansPrivate', 'dupOf'])
         && optStr(d, 'ownerUid', 60) && str(d.title, 3, 200) && str(d.body, 0, 5000) && str(d[g], 1, 60)
         && str(d.authorName, 1, 40) && str(d.authorId, 8, 80) && d.createdAt is int
-        && optBool(d, 'anonymous') && optBool(d, 'urgent') && optBool(d, 'bounty') && optBool(d, 'deleted') && optBool(d, 'ansPrivate')
+        && optBool(d, 'anonymous') && optBool(d, 'urgent') && optBool(d, 'bounty') && optBool(d, 'deleted') && optBool(d, 'ansPrivate') && optStr(d, 'dupOf', 100)
         && optList(d, 'pages', 5) && optList(d, 'fileAttachments', 5) && optList(d, 'reports', 100)
         && optList(d, 'questions', 10)
         && optStr(d, 'year', 12) && optStr(d, 'tags', 100) && optStr(d, 'pyqYear', 20) && optStr(d, 'marks', 4)
@@ -94,7 +94,7 @@ service cloud.firestore {
     function postEdit(g) {
       return changes(['title', 'body', g, 'authorName', 'anonymous', 'urgent', 'pages', 'fileAttachments', 'year',
                       'tags', 'editedAt', 'deleted', 'reports', 'resolvedReplyId', 'bounty', 'status',
-                      'winner', 'winnerName', 'runnerUp', 'runnerUpName', 'pyqYear', 'marks', 'difficulty', 'campus', 'company', 'applyUrl', 'deadline', 'pay']);
+                      'winner', 'winnerName', 'runnerUp', 'runnerUpName', 'pyqYear', 'marks', 'difficulty', 'campus', 'company', 'applyUrl', 'deadline', 'pay', 'dupOf']);
     }
 
     // ---------- market listings ----------
@@ -699,6 +699,17 @@ service cloud.firestore {
         allow update: if member() && request.auth.uid == resource.data.toUid
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rating']) && request.resource.data.rating in ['helpful', 'best'];
         allow delete: if false;
+      }
+
+      // ---------- teacher / senior verification of a public answer (staff or admin only) ----------
+      match /verified/{id} {
+        allow read: if member();
+        allow create: if (isStaff(room) || isAdmin()) && request.resource.data.keys().hasOnly(['replyId', 'doubtId', 'by', 'byName', 'at'])
+          && id == request.resource.data.replyId && str(request.resource.data.doubtId, 1, 100) && request.resource.data.by == request.auth.uid
+          && str(request.resource.data.byName, 1, 40) && request.resource.data.at is int && recent(request.resource.data.at)
+          && exists(/databases/$(database)/documents/rooms/$(room)/replies/$(id));
+        allow update: if false;
+        allow delete: if isStaff(room) || isAdmin();
       }
 
       // ---------- thanks: the asker credits a private answer (public, so the helper earns points and a notification) ----------

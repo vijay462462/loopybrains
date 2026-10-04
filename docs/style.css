@@ -2557,3 +2557,8 @@ body.simple .tabs button[aria-selected="true"] { display: inline-flex; }
 
 .sim-box { display: grid; gap: 4px; padding: 10px 12px; margin: 4px 0 8px; border-radius: 14px; border: 1px solid color-mix(in srgb, #16a34a 45%, var(--line)); background: color-mix(in srgb, #16a34a 8%, transparent); }
 .sim-row { text-align: left; white-space: normal; }
+
+.pill.q-hi { background: color-mix(in srgb, #16a34a 18%, transparent); color: #16a34a; } .pill.q-mid { background: color-mix(in srgb, #f59e0b 18%, transparent); color: #b45309; } .pill.q-lo { background: color-mix(in srgb, #ef4444 14%, transparent); color: #ef4444; }
+.q-row { margin: 2px 0 4px; } .note-box ol { margin: 4px 0; padding-left: 20px; display: grid; gap: 3px; }
+.dup-card { display: grid; gap: 6px; border-style: dashed; } .exp-line { margin: 2px 0 8px; }
+.rev-card { display: grid; gap: 10px; } .rev-q { font-size: 18px; line-height: 1.35; } .rev-a { padding: 10px 12px; border-radius: 14px; background: color-mix(in srgb, #16a34a 9%, transparent); border: 1px solid color-mix(in srgb, #16a34a 35%, var(--line)); } .rev-a p { margin: 4px 0 0; white-space: pre-wrap; }

@@ -206,6 +206,22 @@ function feedbackView() {
   load();
   return h("div", {}, h("h2", {}, "Pilot feedback"), h("p", { class: "hint" }, "One form per student per week. Only admins can read this."), msg, out);
 }
+function verifyQueueView() {
+  const out = h("div", {}), msg = h("p", { class: "msg" }), p = roomPath();
+  const load = async () => {
+    out.replaceChildren(h("p", { class: "adm-hint" }, "Loading…"));
+    try {
+      const [ds, rs, vs] = await Promise.all([fs.getDocs(fs.query(fs.collection(db, p, "doubts"), fs.limit(400))), fs.getDocs(fs.query(fs.collection(db, p, "replies"), fs.limit(800))), fs.getDocs(fs.query(fs.collection(db, p, "verified"), fs.limit(800)))]);
+      const doubts = new Map(ds.docs.map(d => [d.id, d.data()])), done = new Set(vs.docs.map(d => d.id));
+      const rows = rs.docs.map(d => ({ id: d.id, ...d.data() })).filter(r => !r.deleted && r.parentColl === "doubts" && doubts.get(r.parentId) && doubts.get(r.parentId).resolvedReplyId === r.id && !done.has(r.id)).slice(0, 40);
+      if (!rows.length) { out.replaceChildren(h("p", { class: "adm-hint" }, "Nothing waiting. Best answers appear here after the asker picks them.")); return; }
+      out.replaceChildren(...rows.map(r => { const q = doubts.get(r.parentId); const b = h("div", { class: "card" }, h("div", { class: "row" }, h("span", { class: "tag" }, q.subject || "Doubt"), h("b", {}, String(q.title || "").slice(0, 120))), h("p", {}, String(r.body || "").slice(0, 600)), h("p", { class: "mono" }, "Answer by " + (r.authorName || "?") + (r.anonymous ? " (anonymous)" : "")),
+        h("div", { class: "row" }, h("button", { class: "b sm", onclick: async (e) => { e.currentTarget.disabled = true; try { await fs.setDoc(fs.doc(db, p, "verified", r.id), { replyId: r.id, doubtId: r.parentId, by: auth.currentUser.uid, byName: String((auth.currentUser.displayName || "Teacher").slice(0, 40)) || "Teacher", at: Date.now() }); await logAction("verify-answer", "replies/" + r.id, ""); b.remove(); } catch (er) { msg.className = "msg err"; msg.textContent = "Not allowed (" + (er.code || "error") + "). Publish the latest rules."; e.currentTarget.disabled = false; } } }, "✔ Verify as correct"))); return b; }));
+    } catch (e) { msg.className = "msg err"; msg.textContent = "Could not load (" + (e.code || "error") + ")."; out.replaceChildren(); }
+  };
+  load();
+  return h("div", {}, h("h2", {}, "Verify answers"), h("p", { class: "adm-hint" }, "Best answers that the asker picked. Verify only answers you have checked and know are correct. Students see a ✔ Verified badge."), msg, out);
+}
 function profileReportsView() {
   const p = roomPath(), out = h("div", {}), msg = h("p", { class: "msg" });
   const WHY = { a: "abuse", b: "bullying or unsafe", p: "personal info", s: "spam" };
@@ -709,8 +725,8 @@ function papersView() {
 }
 
 // ---------- shell ----------
-const TABS = [["overview", "Overview", true], ["report", "Weekly report", true], ["mail", "Report emails", true], ["moderation", "Moderation", true], ["profreports", "Profile reports", true], ["feedback", "Pilot feedback", false], ["stories", "Recent stories", true], ["blocked", "Blocked devices", true], ["licences", "College licences", false], ["staff", "College staff", false], ["sale", "Flash sale", false], ["promos", "Promo codes", false], ["events", "Events", true], ["drives", "Placement drives", true], ["welcome", "Welcome note", true], ["notices", "Notices", true], ["papers", "Papers", true], ["colleges", "Colleges", false], ["requests", "Requests and survey", false], ["log", "Log", false]];
-const VIEWS = { stories: storiesView, welcome: welcomeView, events: eventsView, drives: drivesView, mail: mailView, report: reportView, staff: staffView, sale: saleView, promos: promosView, notices: noticesView, papers: papersView, overview: overviewView, moderation: moderationView, profreports: profileReportsView, feedback: feedbackView, blocked: blockedView, colleges: collegesView, requests: requestsView, log: logView };
+const TABS = [["overview", "Overview", true], ["report", "Weekly report", true], ["mail", "Report emails", true], ["moderation", "Moderation", true], ["profreports", "Profile reports", true], ["verifyq", "Verify answers", true], ["feedback", "Pilot feedback", false], ["stories", "Recent stories", true], ["blocked", "Blocked devices", true], ["licences", "College licences", false], ["staff", "College staff", false], ["sale", "Flash sale", false], ["promos", "Promo codes", false], ["events", "Events", true], ["drives", "Placement drives", true], ["welcome", "Welcome note", true], ["notices", "Notices", true], ["papers", "Papers", true], ["colleges", "Colleges", false], ["requests", "Requests and survey", false], ["log", "Log", false]];
+const VIEWS = { stories: storiesView, welcome: welcomeView, events: eventsView, drives: drivesView, mail: mailView, report: reportView, staff: staffView, sale: saleView, promos: promosView, notices: noticesView, papers: papersView, overview: overviewView, moderation: moderationView, profreports: profileReportsView, verifyq: verifyQueueView, feedback: feedbackView, blocked: blockedView, colleges: collegesView, requests: requestsView, log: logView };
 function draw() {
   const u = auth.currentUser;
   const STAFF_TABS = ["stories", "welcome", "events", "drives", "report", "notices", "moderation", "profreports", "blocked", "papers"], shownTabs = S.staffOnly ? TABS.filter(t => STAFF_TABS.includes(t[0])) : TABS;

@@ -393,7 +393,7 @@ const state = {
   doubts: [], ideas: [], clubs: [], gate: [], jobs: [], challenges: [], chalScores: [], market: [], marketReports: [], marketRatings: [], marketInterests: [], replies: [], likes: [], plan: { plus: false, until: 0 }, papers: [], notices: [], drives: [], weekly: [], events: [], rsvps: [], blocked: [], profiles: [], stories: [], storyViews: [], storyAnswers: [], loaded: false,
   selected: null, mode: "intro", // intro | view | ask | edit | name | campus
   afterName: null,
-  replyPages: [], replyAnon: false, replyPriv: false, privAns: [], thanks: [],
+  replyPages: [], replyAnon: false, replyPriv: false, privAns: [], thanks: [], verified: {},
   campusFilter: "all", // "all" | campus name
   mktChip: "all",     // quick filter chip in the market
   mktSort: "newest",   // "newest" | "price_asc" | "price_desc" | "popular"
@@ -1866,7 +1866,7 @@ function renderToday() {
     streak = state.myStreak || 0, quizDone = QUIZ.length ? !!myQuizAnswer(dayNum()) : true, plan = readJSON("dd-exam-plan", null),
     left = plan && plan.date ? Math.ceil((new Date(plan.date + "T00:00:00").getTime() - new Date().setHours(0, 0, 0, 0)) / 864e5) : null;
   const note = state.welcomeNote && readJSON("dd-note-gone", 0) !== state.welcomeNote.updatedAt ? state.welcomeNote : null;
-  const key = [hello, name, streak, quizDone, left, equippedCostume(), storyGroups().length, readJSON("dd-launch", false) ? 1 : 0, readJSON("dd-launch-gone", false) ? 1 : 0, state.dataReady ? 1 : 0, boxToday() ? 1 : 0, questSteps().filter(s => s[2]).length, state.replies.length, state.doubts.length, readJSON("dd-tip", {}).gone ? 1 : 0, mistakeList().length, state.weekly.length, dayNum(), (typeof weekPoints === "function" ? weekPoints() : 0), note ? note.updatedAt : 0, openDrives().length, upcomingEvents().length, unansweredDoubts().length, readJSON("dd-today-closed", "") === dayStr() ? 1 : 0, (doubtOfDay() || {}).id || "", fbDone() ? 1 : 0, curioPoints(), (helperOfWeek() || {}).id || ""].join("|"); if (key === todayKey && !bar.hidden) return; todayKey = key;
+  const key = [hello, name, streak, quizDone, left, equippedCostume(), storyGroups().length, readJSON("dd-launch", false) ? 1 : 0, readJSON("dd-launch-gone", false) ? 1 : 0, state.dataReady ? 1 : 0, boxToday() ? 1 : 0, questSteps().filter(s => s[2]).length, state.replies.length, state.doubts.length, readJSON("dd-tip", {}).gone ? 1 : 0, mistakeList().length, state.weekly.length, dayNum(), (typeof weekPoints === "function" ? weekPoints() : 0), note ? note.updatedAt : 0, openDrives().length, upcomingEvents().length, unansweredDoubts().length, readJSON("dd-today-closed", "") === dayStr() ? 1 : 0, (doubtOfDay() || {}).id || "", fbDone() ? 1 : 0, curioPoints(), (helperOfWeek() || {}).id || "", reviseDueCount()].join("|"); if (key === todayKey && !bar.hidden) return; todayKey = key;
   if (readJSON("dd-today-closed", "") === dayStr()) { bar.hidden = false; bar.replaceChildren(el("button", { class: "today-reopen", type: "button", onclick: () => { writeJSON("dd-today-closed", ""); todayKey = ""; renderToday(); } }, "Show today\u2019s card")); return; }
   const chip = (txt, cls, fn) => el("button", { class: "today-chip " + (cls || ""), type: "button", onclick: fn }, txt);
   const WORDS = ["Welcome to " + BRAND + " family", "Respect your teachers, help your juniors. 🙏", "Every question is welcome here.", "Kind words build a strong campus. 🌱", "Thank you for being part of our family.", "Learn together, grow together.", "Our teachers and staff work hard for you. Say thank you today. 🙏"];
@@ -1894,6 +1894,7 @@ function renderToday() {
       openDrives().length ? chip("🏢 " + openDrives().length + " campus drive" + (openDrives().length === 1 ? "" : "s"), "", () => showPanel("drives")) : null,
       storyGroups().length < STORY_ROW_MIN ? chip("📸 Add a story", "", () => openStoryAdd()) : null,
       chip("\u{1F50E} Curiosity" + (curioStreak() ? " \u{1F525}" + curioStreak() : ""), Object.keys(curioStore().why).includes(String(dayNum())) ? "" : "pulse", () => showPanel("curious")),
+      reviseDueCount() > 0 ? chip("\u{1F0CF} Revise (" + reviseDueCount() + ")", "pulse", () => showPanel("revise")) : null,
       (readJSON("dd-visits", { n: 1 }).n || 1) >= 3 && !fbDone() ? chip("\u{1F4AC} Give feedback", "", () => showPanel("feedback")) : null,
       left == null && (readJSON("dd-visits", { n: 1 }).n || 1) >= 2 ? chip("\u23F3 Set your exam date", "", () => showPanel("planner")) : null,
       chip("🧰 Explore", "", () => showPanel("explore")))); 
@@ -2402,10 +2403,12 @@ function shrinkJpeg(url) {
 const AI_VERDICT = { correct: ["✅", "Looks correct", "ok"], partly: ["\u{1F7E1}", "Partly correct", "mid"], wrong: ["❌", "Has a mistake", "bad"], unclear: ["❔", "Cannot tell", "mid"] };
 const aiChecks = new Map();   // answer id -> result, kept only while the page is open
 async function aiCheckAnswer(question, answer, img) {
-  if (!PLUS.functionsUrl || !store || !store.idToken) throw new Error("The AI check is not switched on yet.");
+  if (!PLUS.functionsUrl || !store || !store.idToken) throw new Error("The premium verifier is not switched on yet.");
   const tok = await store.idToken(); if (!tok) throw new Error("Connect to the internet and try again.");
-  const r = await fetch(PLUS.functionsUrl.replace(/\/$/, "") + "/askAI", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + tok }, body: JSON.stringify({ mode: "check", question: String(question || "").slice(0, 1500), answer: String(answer || "").slice(0, 3000), img: img || "" }) });
-  const d = await r.json().catch(() => ({})); if (!r.ok || !d.check) throw new Error(d.error || "The AI check is busy. Try again.");
+  const base = PLUS.functionsUrl.replace(/\/$/, ""), hdr = { "Content-Type": "application/json", Authorization: "Bearer " + tok }, body = { question: String(question || "").slice(0, 1500), answer: String(answer || "").slice(0, 3000), img: img || "", college: SEL };
+  let r = await fetch(base + "/verifyAnswer", { method: "POST", headers: hdr, body: JSON.stringify(body) });
+  if (r.status === 404) r = await fetch(base + "/askAI", { method: "POST", headers: hdr, body: JSON.stringify({ ...body, mode: "check" }) });   // older server without the premium verifier
+  const d = await r.json().catch(() => ({})); if (!r.ok || !d.check) throw new Error(d.error || "The verifier is busy. Try again.");
   return { ...d.check, left: typeof d.left === "number" ? d.left : null };
 }
 // A button plus the result card. `get` returns { answer, img } when pressed.
@@ -2413,10 +2416,11 @@ function aiCheckBox(key, question, get) {
   const box = el("div", { class: "ai-check" });
   const draw = () => {
     const c = aiChecks.get(key);
-    if (!c) { if (!PLUS.functionsUrl) { box.replaceChildren(); return; } box.replaceChildren(el("button", { class: "btn sm", type: "button", onclick: async (e) => { const b = e.currentTarget; b.disabled = true; b.textContent = "Checking…"; try { const { answer, img } = await get(); aiChecks.set(key, await aiCheckAnswer(question, answer, img)); } catch (er) { aiChecks.set(key, { error: (er && er.message) || "Could not check." }); } draw(); } }, "\u{1F916} Check with AI")); return; }
+    if (!c) { if (!PLUS.functionsUrl) { box.replaceChildren(); return; } box.replaceChildren(el("button", { class: "btn sm", type: "button", onclick: async (e) => { const b = e.currentTarget; b.disabled = true; b.textContent = "Checking…"; try { const { answer, img } = await get(); aiChecks.set(key, await aiCheckAnswer(question, answer, img)); } catch (er) { aiChecks.set(key, { error: (er && er.message) || "Could not check." }); } draw(); } }, "\u{1F6E1}\uFE0F Premium verify")); return; }
     if (c.error) { box.replaceChildren(el("p", { class: "hint", role: "status" }, c.error), el("button", { class: "linkbtn", type: "button", onclick: () => { aiChecks.delete(key); draw(); } }, "Try again")); return; }
     const [ic, label, cls] = AI_VERDICT[c.verdict] || AI_VERDICT.unclear;
-    box.replaceChildren(el("div", { class: "ai-verdict " + cls }, el("strong", {}, ic + " AI second opinion: " + label), el("p", {}, c.summary),
+    box.replaceChildren(el("div", { class: "ai-verdict " + cls }, el("strong", {}, ic + (c.premium ? " Premium verifier: " : " AI second opinion: ") + label + (c.premium && c.confidence ? " (" + c.confidence + "% sure)" : "")), el("p", {}, c.summary),
+      c.premium ? el("small", { class: "hint" }, "\u{1F6E1}\uFE0F Solved independently first, then compared." + (c.referenceFinal ? " Reference answer: " + c.referenceFinal + (c.matchesReference ? " (matches)" : "") : "")) : null,
       c.issues && c.issues.length ? el("ul", {}, ...c.issues.map(x => el("li", {}, x))) : null, c.corrected ? el("p", { class: "hint" }, el("b", {}, "Suggested correct answer: "), c.corrected) : null,
       el("small", { class: "hint" }, "AI can be wrong. Check with your book or teacher." + (c.left != null ? " " + c.left + " AI questions left today." : ""))));
   };
@@ -2444,6 +2448,7 @@ function privateAnswersFor(d) {
     ...rows.map(r => el("div", { class: "ans priv" + (r.rating === "best" ? " best" : "") }, el("div", { class: "who" }, avatarEl(avatarFor(r.authorName || "")), el("strong", {}, name(r)), r.rating === "best" ? el("span", { class: "pill open" }, "⭐ Best") : r.rating === "helpful" ? el("span", { class: "pill" }, "\u{1F44D} Helpful") : null, el("small", { class: "hint" }, ago(r.createdAt))),
       r.body ? el("p", { class: "body" }, r.body) : null, ...(Array.isArray(r.imgs) ? r.imgs.filter(u => typeof u === "string" && u.startsWith("data:image/jpeg;base64,")).map((u, i) => el("img", { class: "priv-img", src: u, alt: "Photo " + (i + 1) + " from the answer", loading: "lazy" })) : []),
       aiCheckBox("p" + r.id, d.title + (d.body ? ". " + d.body : ""), async () => ({ answer: r.body || "", img: Array.isArray(r.imgs) && r.imgs[0] && r.imgs[0].length <= 340000 ? r.imgs[0] : "" })),
+      r.rating === "best" && r.body ? studyNoteBox(d, r.body) : null,
       el("div", { class: "rowbtns" },
         r.rating !== "best" && !hasBest ? el("button", { class: "btn sm primary", type: "button", onclick: (e) => rate(r, "best", e.currentTarget) }, "⭐ Best answer") : null,
         !r.rating ? el("button", { class: "btn sm", type: "button", onclick: (e) => rate(r, "helpful", e.currentTarget) }, "\u{1F44D} Helpful") : null,
@@ -2516,6 +2521,79 @@ async function sharePrivateAnswer(d, r) {
   const id = store.newId("replies"), pages = (Array.isArray(r.imgs) ? r.imgs : []).slice(0, 2), pageIds = pages.map(u => { const pid = store.newId("pages"); pageCache.set(pid, u); return pid; });
   const doc = { parentId: d.id, parentColl: "doubts", body: ("Solution (from " + (r.anonymous ? "a classmate" : r.authorName) + "): " + (r.body || "(see the photo)")).slice(0, 5000), authorId: store.uid, authorName: getName(), anonymous: false, createdAt: Date.now(), pages: pageIds, fileAttachments: [] };
   doc.pages = await trySavePages(pages, id, pageIds); await store.set("replies", id, doc);
+}
+// ---------- Answer quality, study notes, duplicate links, subject experts and revision cards ----------
+function answerQuality(r, key, rating) {
+  let q = 50; const reacts = REACTIONS.reduce((n, [k]) => n + likesFor(reactKey(r.id, k)).length, 0); q += Math.min(25, reacts * 5);
+  if (rating === "best") q += 30; else if (rating === "helpful") q += 20;
+  const ai = key ? (aiChecks.get(key) || {}).verdict : ""; if (ai === "correct") q += 20; else if (ai === "partly") q += 5; else if (ai === "wrong") q -= 30;
+  if (state.verified[r.id]) q += 25;
+  return Math.max(0, Math.min(100, q));
+}
+const qualityPill = (n) => el("span", { class: "pill q-" + (n >= 80 ? "hi" : n >= 55 ? "mid" : "lo"), title: "Quality score from ratings, reactions, the verifier and teacher checks" }, "Quality " + n);
+async function postFn(path, body) {
+  if (!PLUS.functionsUrl || !store || !store.idToken) throw new Error("This premium tool is not switched on yet.");
+  const tok = await store.idToken(); if (!tok) throw new Error("Connect to the internet and try again.");
+  const r = await fetch(PLUS.functionsUrl.replace(/\/$/, "") + "/" + path, { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + tok }, body: JSON.stringify({ ...body, college: SEL }) });
+  const d = await r.json().catch(() => ({})); if (!r.ok) throw new Error(d.error || "Something went wrong. Try again."); return d;
+}
+// AI study note from a solved doubt: preview, then the asker publishes it as a public reply.
+function studyNoteBox(d, answerText) {
+  if (!PLUS.functionsUrl || !answerText) return null;
+  const box = el("div", { class: "note-box" }), say = el("p", { class: "hint", role: "status" }, "");
+  const show = (n) => {
+    const text = "\u{1F4DD} Study note: " + n.title + "\n" + n.steps.map((x, i) => (i + 1) + ". " + x).join("\n") + (n.keyIdea ? "\nKey idea: " + n.keyIdea : "") + (n.formulas.length ? "\nFormulas: " + n.formulas.join("; ") : "") + (n.watchOut ? "\nWatch out: " + n.watchOut : "");
+    box.replaceChildren(el("div", { class: "learn-card" }, el("small", { class: "tag" }, "\u{1F4DD} STUDY NOTE (AI draft)"), el("strong", {}, n.title), el("ol", {}, ...n.steps.map(x => el("li", {}, x))), n.keyIdea ? el("p", {}, el("b", {}, "Key idea: "), n.keyIdea) : null, n.formulas.length ? el("p", {}, el("b", {}, "Formulas: "), n.formulas.join("; ")) : null, n.watchOut ? el("p", { class: "hint" }, el("b", {}, "Watch out: "), n.watchOut) : null,
+      el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: async (e) => { e.currentTarget.disabled = true; try { const id = store.newId("replies"); await store.set("replies", id, { parentId: d.id, parentColl: "doubts", body: text.slice(0, 5000), authorId: store.uid, authorName: getName(), anonymous: false, createdAt: Date.now(), pages: [], fileAttachments: [] }); showNotice("Study note published."); box.replaceChildren(); } catch (er) { showNotice(errText(er)); } } }, "\u{1F4E2} Publish for everyone"), el("button", { class: "btn sm", type: "button", onclick: () => box.replaceChildren() }, "Discard")), el("small", { class: "hint" }, "Check the note before you publish. AI can make mistakes.")));
+  };
+  box.append(el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: async (e) => { const b = e.currentTarget; b.disabled = true; say.textContent = "Writing the note…"; try { const r = await postFn("studyNote", { question: d.title + (d.body ? ". " + d.body : ""), answer: answerText }); say.textContent = ""; show(r.note); } catch (er) { say.textContent = (er && er.message) || "Could not write the note."; b.disabled = false; } } }, "\u{1F4DD} Make a study note")), say);
+  return box;
+}
+// "This is a repeat": the asker links the doubt to a solved one; everyone then sees the link.
+function dupCard(d) {
+  const target = d.dupOf && state.doubts.find(x => x.id === d.dupOf);
+  if (target) return el("div", { class: "learn-card dup-card" }, el("small", { class: "tag" }, "\u{1F517} SAME QUESTION AS"), el("strong", {}, target.title.slice(0, 110)), el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => { state.selected = target.id; state.mode = "view"; render(); } }, "Open the solved question")));
+  if (!(store && mine(d)) || state.tab !== "doubts") return null;
+  const rows = similarSolved(d.title + " " + (d.body || "")).filter(x => x.id !== d.id); if (!rows.length) return null;
+  return el("div", { class: "learn-card dup-card" }, el("small", { class: "tag" }, "\u{1F501} IS THIS A REPEAT?"), el("p", { class: "hint" }, "Solved questions like yours. Link one so classmates find the answer fast."),
+    ...rows.map(x => el("button", { class: "linkbtn sim-row", type: "button", onclick: async () => { try { await store.update("doubts", d.id, { dupOf: x.id }); showNotice("Linked."); } catch (er) { showNotice(errText(er)); } } }, "\u{1F517} " + x.title.slice(0, 80))));
+}
+function subjectExperts(subject, limit = 3) {
+  const tally = new Map(), add = (id, name, n) => { if (!id || !name || name === ANON || name === "A classmate") return; const t = tally.get(id) || { name, n: 0 }; t.n += n; tally.set(id, t); };
+  const byId = new Map(state.doubts.map(x => [x.id, x]));
+  for (const th of state.thanks) { const q = byId.get(th.doubtId); if (q && q.subject === subject) add(th.toAuthorId, th.toName, th.level === "best" ? 3 : 1); }
+  for (const q of state.doubts) if (q.subject === subject && q.resolvedReplyId) { const r = state.replies.find(x => x.id === q.resolvedReplyId && !x.anonymous); if (r) add(r.authorId, r.authorName, 3); }
+  return [...tally.values()].filter(t => t.n >= 3).sort((a, b) => b.n - a.n).slice(0, limit);
+}
+function expertsLine(d) {
+  const ex = d.subject ? subjectExperts(d.subject) : []; if (!ex.length) return null;
+  return el("p", { class: "hint exp-line" }, "\u{1F393} " + d.subject + " experts on this board: ", el("b", {}, ex.map(x => x.name).join(", ")));
+}
+// ---- Revision cards: my solved doubts, repeated with spacing ----
+const REV_GAPS = [1, 3, 7, 14, 30];
+function reviseItems() {
+  if (!store) return [];
+  const st = readJSON("dd-revise", {}), today = dayNum(), out = [];
+  for (const d of state.doubts) {
+    if (d.deleted || !d.resolvedReplyId || !mine(d)) continue;
+    let ans = "", rep = state.replies.find(r => r.id === d.resolvedReplyId && !r.deleted);
+    if (rep && rep.body && rep.body !== PAGE_ONLY) ans = rep.body; else { const pa = state.privAns.find(x => x.doubtId === d.id && x.rating === "best" && x.body); if (pa) ans = pa.body; }
+    if (!ans) continue; const s0 = st[d.id] || { box: 0, due: 0 }; out.push({ d, ans, box: s0.box, due: s0.due, isDue: s0.due <= today });
+  }
+  return out.sort((a, b) => a.due - b.due);
+}
+const reviseDueCount = () => { try { return reviseItems().filter(x => x.isDue).length; } catch (_) { return 0; } };
+function renderRevise() {
+  const all = reviseItems(), due = all.filter(x => x.isDue), back = el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back");
+  if (!all.length) return [el("h2", {}, "\u{1F0CF} Revision cards"), el("p", { class: "hint" }, "Your solved doubts become flashcards. Ask a doubt and pick the best answer, then come back here to revise it."), el("div", { class: "rowbtns" }, back)];
+  if (!due.length) return [el("h2", {}, "\u{1F0CF} Revision cards"), el("p", { class: "ob-say" }, "\u{1F389} All done for today. " + all.length + " card" + (all.length === 1 ? "" : "s") + " saved. Cards come back at the right time."), el("div", { class: "rowbtns" }, back)];
+  const cur = due[0], show = state.reviseShow === cur.d.id;
+  const grade = (ok) => { const st = readJSON("dd-revise", {}), b = ok ? Math.min(REV_GAPS.length - 1, cur.box + 1) : 0; st[cur.d.id] = { box: b, due: dayNum() + (ok ? REV_GAPS[b] : 0) }; writeJSON("dd-revise", st); state.reviseShow = null; if (ok) bump("revise", 1); render(); };
+  return [el("h2", {}, "\u{1F0CF} Revision cards"), el("p", { class: "hint" }, due.length + " to revise today · " + all.length + " in total"),
+    el("div", { class: "learn-card rev-card" }, el("small", { class: "tag" }, cur.d.subject || "QUESTION"), el("strong", { class: "rev-q" }, cur.d.title),
+      show ? el("div", { class: "rev-a" }, el("small", { class: "hint" }, "ANSWER"), el("p", {}, cur.ans.slice(0, 1200))) : el("p", { class: "hint" }, "Try to recall the answer first."),
+      el("div", { class: "rowbtns" }, show ? [el("button", { class: "btn primary", type: "button", onclick: () => grade(true) }, "✅ I got it"), el("button", { class: "btn", type: "button", onclick: () => grade(false) }, "\u{1F501} Again")] : [el("button", { class: "btn primary", type: "button", onclick: () => { state.reviseShow = cur.d.id; render(); } }, "Show answer")])),
+    el("div", { class: "rowbtns" }, back)];
 }
 // ---------- Helper of the week and push opt-in ----------
 function helperOfWeek() {
@@ -2672,6 +2750,7 @@ const MODE_GUIDE = {
   explore: { icon: "\u{1F9ED}", purpose: "Discover what is happening across the app.", steps: ["Browse the cards.", "Open one that interests you.", "Come back for new things daily."], safe: SAFE_COMMON, next: ["❓ Ask a doubt", "ask"] },
   drives: { icon: "\u{1F3E2}", purpose: "Campus drives and company visits with dates and links.", steps: ["Check the date and eligibility.", "Open the official link to register.", "Prepare using the resume tool."], safe: "A real drive never asks you to pay. Report any post that does.", next: ["\u{1F4C4} Build my resume", "resume"] },
   events: { icon: "\u{1F4C5}", purpose: "Events, fests and workshops on your campus.", steps: ["Pick an event.", "Check the date and place.", "Invite a friend."], safe: "Meet in public places on campus.", next: ["\u{1F4E2} Notices", "notices"] },
+  revise: { icon: "\u{1F0CF}", purpose: "Flashcards made from the doubts you solved, shown again just before you would forget them.", steps: ["Read the question and try to recall the answer.", "Tap Show answer.", "Tap I got it or Again. Cards you know come back later."], safe: SAFE_COMMON, next: null },
   loopid: { icon: "\u{1F3F7}\uFE0F", purpose: "Pick a short Loop ID and keep your IDs safe by email.", steps: ["Type a name or tap one of the ideas.", "Tap Claim it when it says free.", "Email your IDs to yourself, then continue."], safe: "Your Loop ID is not a password. Do not share your email password with anyone.", next: null },
   forgotid: { icon: "\u{1F511}", purpose: "Find your Loop ID again, or get it back on a new phone.", steps: ["Look on the Me page if you are on your own phone.", "Search your nickname if you only remember that.", "Verify your email so a new phone can bring your account back."], safe: "Your Loop ID is not a password. Nobody can sign in with it.", next: null },
   curious: { icon: "\u{1F50E}", purpose: "A few minutes of wonder every day: a fact, a Why guess, a mystery topic and the best question of the week.", steps: ["Read the fact and tap I learned this.", "Guess the Why before you see the answer.", "Unlock the mystery topic and search more on anything that excites you."], safe: SAFE_COMMON, next: ["\u2753 Ask a question", "ask"] },
@@ -8126,6 +8205,7 @@ function renderView() {
   if (state.tab === "doubts" && d.via) out.push(el("div", { class: "via-banner" }, "\u{1F30D} A student of " + d.via + " asked this. Your answer goes back to them. Be kind and clear."));
   if (state.tab === "doubts" && Array.isArray(d.sentTo) && d.sentTo.length && own) { out.push(otherCollegeAnswers(d)); }
   if (state.tab === "doubts") out.push(expertHelp(d));
+  if (state.tab === "doubts") { try { const dc = dupCard(d); if (dc) out.push(dc); const ex = expertsLine(d); if (ex) out.push(ex); } catch (_) {} }
   if (state.tab === "doubts" && own) { const pv = privateAnswersFor(d); if (pv) out.push(pv); }
   if (state.tab === "doubts" && !own && state.privAns.some(x => x.doubtId === d.id && x.ownerUid === (store && store.uid))) out.push(el("p", { class: "hint" }, "\u{1F512} You sent a private answer to the asker."));
   const list = el("div", { class: "answers" }, el("div", { class: "label" }, reps.length ? reps.length + " " + t.replyNoun + (reps.length === 1 ? "" : "s") : "No " + t.replyNoun + "s yet"));
@@ -8140,8 +8220,10 @@ function renderView() {
     }) }, "Delete"));
     list.append(el("div", { class: "ans" + (best ? " best" : "") + (isMentor(r) ? " mentor" : "") },
       el("div", { class: "who" }, r.anonymous ? avatarEl("👤") : avatarEl(mine(r) ? getAvatar() : avatarFor(r.authorName || "")), el("strong", {}, who(r)), isMentor(r) && el("span", { class: "pill mentor" }, "🎓 " + MENTORS.get(r.authorId)), el("span", {}, ago(r.createdAt)), best && el("span", { class: "pill done" }, "Helped"), ...tools, reportButton("replies", r)),
+      state.tab === "doubts" ? el("div", { class: "rowbtns q-row" }, qualityPill(answerQuality(r, "r" + r.id, best ? "best" : "")), state.verified[r.id] ? el("span", { class: "pill open" }, "\u2714 Verified by " + state.verified[r.id].byName) : null) : null,
       r.body && r.body !== PAGE_ONLY && el("p", { class: "body" }, r.body),
       r.body && r.body !== PAGE_ONLY && renderYtCards(r.body),
+      own && best && state.tab === "doubts" && r.body && !r.body.startsWith("\u{1F4DD} Study note") ? studyNoteBox(d, r.body) : null,
       r.pages && r.pages.length ? pagesView(r.pages) : null,
       r.fileAttachments && r.fileAttachments.length ? renderFileAttachments(r.fileAttachments) : null,
       own && state.tab === "doubts" && !mine(r) && r.body && r.body !== PAGE_ONLY ? aiCheckBox("r" + r.id, d.title + (d.body ? ". " + d.body : ""), async () => ({ answer: r.body, img: "" })) : null,
@@ -8696,6 +8778,7 @@ function render() {
       state.mode === "wardrobe" ? renderWardrobe() :
       state.mode === "drives" ? renderDrives() :
       state.mode === "events" ? renderEvents() :
+      state.mode === "revise" ? renderRevise() :
       state.mode === "loopid" ? renderLoopIdStep() :
       state.mode === "forgotid" ? renderForgotId() :
       state.mode === "curious" ? renderCurious() :
@@ -8898,6 +8981,7 @@ render();
   store.subscribe("clubs", rows => { const live_ = live(rows); trackNew("clubs", live_); state.clubs = live_; update(); }, e => {});
   store.subscribe("gate", rows => { const live_ = live(rows); trackNew("gate", live_); state.gate = live_; update(); }, e => {});
   store.subscribe("blocked", rows => { state.blocked = rows.map(r => r.id); }, e => {});
+  store.subscribe("verified", rows => { const m = {}; for (const x of rows) if (x && typeof x.replyId === "string" && typeof x.byName === "string") m[x.replyId] = { byName: x.byName.slice(0, 40) }; state.verified = m; try { render(); } catch (_) {} }, e => {});
   store.subscribe("thanks", rows => { state.thanks = rows.filter(x => x && typeof x.toAuthorId === "string" && (x.level === "helpful" || x.level === "best")); try { render(); } catch (_) {} }, e => {});
   if (store.subscribeWhere && store.uid) { const keep = { to: [], from: [] }, merge = () => { state.privAns = [...keep.to, ...keep.from.filter(x => !keep.to.some(y => y.id === x.id))]; try { render(); } catch (_) {} }; store.subscribeWhere("privateAnswers", "toUid", store.uid, rows => { keep.to = rows; merge(); }, () => {}); store.subscribeWhere("privateAnswers", "ownerUid", store.uid, rows => { keep.from = rows; merge(); }, () => {}); }
   let dpChecked = false;

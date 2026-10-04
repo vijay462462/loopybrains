@@ -114,5 +114,14 @@ const thx = (db, by, toUid, level = "helpful", doubt = "dq1") => setDoc(doc(db, 
 await t("thanks: the asker credits a real private answer", () => assertSucceeds(thx(alice, "alice", "bob")));
 await t("thanks: others cannot credit, and made-up answers cannot be credited", async () => { await assertFails(thx(bob, "bob", "bob")); await assertFails(thx(alice, "alice", "carl")); });
 await t("thanks: helpful can be upgraded to best, not downgraded", async () => { await assertSucceeds(thx(alice, "alice", "bob", "best")); await assertFails(thx(alice, "alice", "bob", "helpful")); });
+// ---- duplicate links and teacher verification ----
+await env.withSecurityRulesDisabled(async (ctx) => { await setDoc(doc(ctx.firestore(), "staff", "r00m-Abc123xy_tess"), { uid: "tess", name: "Tess" }); await setDoc(doc(ctx.firestore(), R + "/replies", "rv1"), { parentId: "dq1", parentColl: "doubts", body: "good answer", authorId: "bob-device-1", authorName: "Bob", createdAt: Date.now() }); });
+const tess = env.authenticatedContext("tess", { email_verified: true, email: "t@x.edu" }).firestore();
+const ver = (db, uid, rid = "rv1") => setDoc(doc(db, R + "/verified", rid), { replyId: rid, doubtId: "dq1", by: uid, byName: "Tess", at: Date.now() });
+await t("verified: staff can verify a real public answer", () => assertSucceeds(ver(tess, "tess")));
+await t("verified: students cannot verify, nor verify a missing answer", async () => { await assertFails(ver(alice, "alice")); await assertFails(ver(tess, "tess", "nope")); });
+await t("verified: everyone signed in can read it", () => assertSucceeds(getDoc(doc(bob, R + "/verified", "rv1"))));
+await t("verified: cannot be edited, staff can withdraw", async () => { await assertFails(setDoc(doc(tess, R + "/verified", "rv1"), { replyId: "rv1", doubtId: "dq9", by: "tess", byName: "T", at: Date.now() })); const { deleteDoc } = await import("firebase/firestore"); await assertFails(deleteDoc(doc(alice, R + "/verified", "rv1"))); await assertSucceeds(deleteDoc(doc(tess, R + "/verified", "rv1"))); });
+await t("dupOf: a doubt can carry a duplicate link (owner edit)", async () => { await env.withSecurityRulesDisabled(async (ctx) => { await setDoc(doc(ctx.firestore(), R + "/doubts", "dq9"), { title: "same thing again", subject: "Maths", ownerUid: "alice", authorId: "alice-device-1", authorName: "A", createdAt: Date.now(), body: "" }); }); await assertSucceeds(updateDoc(doc(alice, R + "/doubts", "dq9"), { dupOf: "dq1" })); await assertFails(updateDoc(doc(bob, R + "/doubts", "dq9"), { dupOf: "dq2" })); });
 console.log(`\n${pass} passed, ${fail} failed`);
 await env.cleanup(); process.exit(fail ? 1 : 0);
