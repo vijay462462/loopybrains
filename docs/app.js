@@ -261,7 +261,7 @@ const MAX_PAGES = 3;
 const TABS = {
   doubts: {
     coll: "doubts", field: "subject", groups: SUBJECTS, groupLabel: "Subjects", noun: "doubt",
-    ask: "Ask a doubt", tagline: "Stuck on a problem? Post your doubt, and classmates can answer it.",
+    ask: "Ask a doubt", tagline: "Got a problem? Post your doubt, and classmates can answer it.",
     replyNoun: "answer", replyLabel: "Your answer", replyBtn: "Post answer",
     placeholder: "e.g. How do I find the Z-transform of a delayed signal?",
     bodyHint: "Chapter, the full problem, and what you tried so far.",
@@ -2108,7 +2108,7 @@ function renderHeader() {
 
 // Every tab says what it is for, how to use it in three steps, and the next step to take. Students can close it; a small link brings it back.
 const TAB_GUIDE = {
-  doubts: { icon: "\u2753", purpose: "Stuck on a problem? Ask it here and classmates and seniors will answer.", steps: ["Pick your branch and subject on the left (or leave it on All).", "Tap Ask a doubt, write your question and add a photo if it helps.", "Open your doubt later to read answers. Thank the helpful ones with a reaction."], safe: "Do not post phone numbers, passwords or photos of other people.", next: () => { const mine = store ? allMyIds() : new Set(); const asked = state.doubts.some(d => mine.has(d.authorId)); return asked ? ["\u{1F64B} Answer a classmate\u2019s doubt", () => showUnanswered()] : ["\u2753 Ask your first doubt", () => openAsk()]; } },
+  doubts: { icon: "\u2753", purpose: "Got a problem? Ask it here and classmates and seniors will answer.", steps: ["Pick your branch and subject on the left (or leave it on All).", "Tap Ask a doubt, write your question and add a photo if it helps.", "Open your doubt later to read answers. Thank the helpful ones with a reaction."], safe: "Do not post phone numbers, passwords or photos of other people.", next: () => { const mine = store ? allMyIds() : new Set(); const asked = state.doubts.some(d => mine.has(d.authorId)); return asked ? ["\u{1F64B} Answer a classmate\u2019s doubt", () => showUnanswered()] : ["\u2753 Ask your first doubt", () => openAsk()]; } },
   ideas: { safe: "Share the idea, not private data or secrets you must protect.", icon: "\u{1F4A1}", purpose: "Share project, startup and campus ideas. Find people to build them with.", steps: ["Choose a category, such as Project or Startup.", "Tap Share an idea and say what you want to build and who you need.", "Read the comments, then team up with the people who reply."], next: () => ["\u{1F4A1} Share an idea", () => openAsk()] },
   clubs: { safe: "Meet club members on campus and in groups you can verify.", icon: "\u{1F3DB}", purpose: "Find your club, see what it is doing and post updates for its members.", steps: ["Pick a club on the left.", "Read its latest posts and events.", "Post a meeting, a result or a call for new members."], next: () => ["\u{1F4E3} Post in a club", () => openAsk()] },
   challenges: { safe: "Points come only from playing. Nobody can sell or give you points.", icon: "\u{1F3AE}", purpose: "Quizzes, puzzles and contests. Win points for yourself and your college.", steps: ["Take the daily quiz. It takes one minute.", "Try a puzzle or an innovation challenge.", "Check the Board to see how your college is doing this week."], next: () => ["\u{1F9E0} Take today\u2019s quiz", () => showPanel("quiz")] },
