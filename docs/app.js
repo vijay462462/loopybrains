@@ -1523,7 +1523,8 @@ function renderToday() {
   const newbie = !readJSON("dd-quest-done", false) && (readJSON("dd-visits", { n: 1 }).n || 1) <= 21 && questSteps().filter(s => s[2]).length < 3;
   const stat = (num, label, cls, fn) => el("button", { class: "today-stat " + (cls || ""), type: "button", onclick: fn }, el("b", {}, String(num)), el("span", {}, label));
   const pts = typeof weekPoints === "function" ? weekPoints() : 0;
-  bar.replaceChildren(launchBanner(name), el("div", { class: "today-hero" }, NO_COLLEGE ? null : el("div", { class: "hero-crest" }, crestEl(54)), el("div", { class: "hero-loopy" }, loopyMini()),
+  const lb = launchBanner(name);
+  bar.replaceChildren(lb, lb ? null : el("div", { class: "today-hero" }, NO_COLLEGE ? null : el("div", { class: "hero-crest" }, crestEl(54)), el("div", { class: "hero-loopy" }, loopyMini()),
     el("div", { class: "hero-text" }, el("small", { class: "hero-kicker" }, "✨ " + COLLEGE), el("strong", { class: "today-hello" }, hello + (name ? ", " + name : "") + " 👋"), el("small", { class: "today-words" }, WORDS[dayNum() % WORDS.length])),
     el("button", { class: "hero-ask", type: "button", onclick: () => { const b = $("askBtn"); if (b) b.click(); } }, "❓ Ask a doubt")),
     (() => { if (newbie) return null; const t = loopyTip(), st = readJSON("dd-tip", {}); if (st.gone && st.day === dayStr()) return null;
