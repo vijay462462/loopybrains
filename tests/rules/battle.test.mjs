@@ -69,5 +69,7 @@ const prof = (db, uid, extra) => setDoc(doc(db, "rooms/r00m-Abc123xy/profiles", 
 await t("profile with streak 5 is accepted", () => assertSucceeds(prof(alice, "alice", { streak: 5 })));
 await t("profile with streak 99999 is refused", () => assertFails(prof(alice, "alice", { streak: 99999 })));
 await t("profile with a non-number streak is refused", () => assertFails(prof(alice, "alice", { streak: "x" })));
+await t("profile with curiosity points is accepted", () => assertSucceeds(prof(alice, "alice", { curio: 40 })));
+await t("profile with negative or oversized curiosity is refused", async () => { await assertFails(prof(alice, "alice", { curio: -1 })); await assertFails(prof(alice, "alice", { curio: 999999 })); await assertFails(prof(alice, "alice", { curio: "x" })); });
 console.log(`\n${pass} passed, ${fail} failed`);
 await env.cleanup(); process.exit(fail ? 1 : 0);

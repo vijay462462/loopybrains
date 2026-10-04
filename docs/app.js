@@ -1621,13 +1621,19 @@ const COSTUMES = [
   ["mask", "Hero mask", 30, "Reach a 30-day streak"],
   ["crown", "Golden crown", 60, "Reach a 60-day streak"],
   ["legend", "Legend halo", 100, "Reach a 100-day streak"],
+  ["goggles", "Lab goggles", 20, "Earn 20 curiosity points", "curio"],
+  ["explorer", "Explorer monocle", 60, "Earn 60 curiosity points", "curio"],
+  ["helper", "Helper star", 5, "Give 5 answers to classmates", "help"],
 ];
+const myAnswers = () => { try { const me = store && state.loaded ? allStats().get(store.uid) : null; return me ? me.answers : 0; } catch (_) { return 0; } };
+const costumeOk = (c) => c[4] === "curio" ? curioPoints() >= c[2] : c[4] === "help" ? myAnswers() >= c[2] : bestStreakEver() >= c[2];
+const costumeWhy = (c) => c[4] === "curio" ? "Your curiosity points unlocked a new look." : c[4] === "help" ? "Your answers to classmates earned a new look." : "Your " + c[2] + "-day streak earned a new look.";
 function bestStreakEver() {
   const v = Math.max(state.myBest || 0, state.myStreak || 0, Number(readJSON("dd-best", 0)) || 0);
   if (v > (Number(readJSON("dd-best", 0)) || 0)) writeJSON("dd-best", v);
   return v;
 }
-const costumeUnlocked = (id) => { const c = COSTUMES.find(x => x[0] === id); return !!c && bestStreakEver() >= c[2]; };
+const costumeUnlocked = (id) => { const c = COSTUMES.find(x => x[0] === id); return !!c && costumeOk(c); };
 const equippedCostume = () => { const id = readJSON("dd-costume", "none"); return costumeUnlocked(id) ? id : "none"; };
 // Loopy comes alive: eyes follow your finger, a night mood, and a tap that opens the Loop Bot with a smart question.
 function loopyPrompt() {
@@ -1670,13 +1676,16 @@ function loopyMini(costume) {
   if (id === "mask") svg.append(mk("path", { d: "M10 24 h40 v9 q-20 6 -40 0 z", fill: "#ef4444" }), mk("ellipse", { cx: 23, cy: 28.5, rx: 4.6, ry: 4.4, fill: "#fff" }), mk("ellipse", { cx: 37, cy: 28.5, rx: 4.6, ry: 4.4, fill: "#fff" }), mk("ellipse", { cx: 23, cy: 28.5, rx: 2.6, ry: 3.4, fill: "#67e8f9", class: "lp-eyes" }), mk("ellipse", { cx: 37, cy: 28.5, rx: 2.6, ry: 3.4, fill: "#67e8f9", class: "lp-eyes" }));
   if (id === "crown") svg.append(mk("path", { d: "M14 14 L17 3 L24 9 L30 1.5 L36 9 L43 3 L46 14 Z", fill: "#fbbf24", stroke: "#b45309", "stroke-width": 1 }), mk("circle", { cx: 17, cy: 3.5, r: 1.8, fill: "#f43f5e" }), mk("circle", { cx: 30, cy: 2, r: 1.8, fill: "#38bdf8" }), mk("circle", { cx: 43, cy: 3.5, r: 1.8, fill: "#f43f5e" }));
   if (id === "legend") svg.append(mk("ellipse", { cx: 30, cy: 4, rx: 15, ry: 3.6, fill: "none", stroke: "#fde047", "stroke-width": 2.4 }), mk("path", { d: "M5 20 l1.6 3.4 3.6 .5 -2.6 2.5 .6 3.6 -3.2 -1.8 -3.2 1.8 .6 -3.6 -2.6 -2.5 3.6 -.5z", fill: "#fde047", transform: "scale(.7) translate(-2 4)" }), mk("path", { d: "M48 30 l1.6 3.4 3.6 .5 -2.6 2.5 .6 3.6 -3.2 -1.8 -3.2 1.8 .6 -3.6 -2.6 -2.5 3.6 -.5z", fill: "#fde047", transform: "scale(.7) translate(20 14)" }));
+  if (id === "goggles") svg.append(mk("path", { d: "M8 28 h6 M46 28 h6", stroke: "#22d3ee", "stroke-width": 3, "stroke-linecap": "round" }), mk("circle", { cx: 23, cy: 28, r: 7.6, fill: "rgba(103,232,249,.25)", stroke: "#22d3ee", "stroke-width": 2.6 }), mk("circle", { cx: 37, cy: 28, r: 7.6, fill: "rgba(103,232,249,.25)", stroke: "#22d3ee", "stroke-width": 2.6 }), mk("path", { d: "M30.6 28 h-1.2", stroke: "#22d3ee", "stroke-width": 2.6 }));
+  if (id === "explorer") svg.append(mk("circle", { cx: 37, cy: 28, r: 8.2, fill: "rgba(251,191,36,.14)", stroke: "#f59e0b", "stroke-width": 2.4 }), mk("path", { d: "M43 34 L51 47", stroke: "#f59e0b", "stroke-width": 2.6, "stroke-linecap": "round" }), mk("path", { d: "M33 24 q3 -3 7 -1", fill: "none", stroke: "#fff", "stroke-width": 1.4, "stroke-linecap": "round", opacity: ".8" }));
+  if (id === "helper") svg.append(mk("path", { d: "M30 46 l2.5 5 5.5 .8 -4 3.9 .9 5.5 -4.9 -2.6 -4.9 2.6 .9 -5.5 -4 -3.9 5.5 -.8z", fill: "#fbbf24", stroke: "#b45309", "stroke-width": 0.9, "stroke-linejoin": "round" }));
   return svg;
 }
 // Wardrobe screen and unlock celebration.
 function renderWardrobe() {
   const best = bestStreakEver(), eq = equippedCostume(), back = el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back");
-  return [el("h2", {}, "👗 Loopy\u2019s wardrobe"), el("p", { class: "hint" }, "Your best streak is " + best + " day" + (best === 1 ? "" : "s") + ". Keep your streak going to unlock new costumes for Loopy."),
-    el("div", { class: "plus-tiles" }, ...COSTUMES.map(([id, name, need, how]) => { const ok = best >= need, on = eq === id;
+  return [el("h2", {}, "👗 Loopy\u2019s wardrobe"), el("p", { class: "hint" }, "Your best streak is " + best + " day" + (best === 1 ? "" : "s") + ", you have " + curioPoints() + " curiosity points and " + myAnswers() + " answers. Streaks, curiosity and helping others unlock new costumes for Loopy."),
+    el("div", { class: "plus-tiles" }, ...COSTUMES.map((cc) => { const [id, name, need, how] = cc, ok = costumeOk(cc), on = eq === id;
       const tile = el("button", { class: "plus-tile costume" + (on ? " on" : "") + (ok ? "" : " locked"), type: "button", "aria-label": name + (ok ? (on ? ", worn" : ", unlocked") : ", locked: " + how), onclick: () => { if (!ok) return; writeJSON("dd-costume", id); todayKey = ""; try { renderHeader(); } catch (_) {} render(); } },
         el("span", { class: "cos-prev" }, loopyMini(id)), el("strong", {}, name), el("small", {}, ok ? (on ? "✔ Wearing" : "Tap to wear") : "🔒 " + how));
       const sv = tile.querySelector("svg"); if (sv) { sv.setAttribute("width", "64"); sv.setAttribute("height", "64"); } return tile; })),
@@ -1685,11 +1694,11 @@ function renderWardrobe() {
 let costumeChecked = false;
 function checkNewCostume() {
   if (costumeChecked || !state.dataReady) return; costumeChecked = true;
-  const best = bestStreakEver(), seen = readJSON("dd-costumes-seen", ["none"]), fresh = COSTUMES.filter(c => best >= c[2] && !seen.includes(c[0]));
+  const best = bestStreakEver(), seen = readJSON("dd-costumes-seen", ["none"]), fresh = COSTUMES.filter(c => costumeOk(c) && !seen.includes(c[0]));
   if (!fresh.length) return; writeJSON("dd-costumes-seen", [...seen, ...fresh.map(c => c[0])]);
   const c = fresh[fresh.length - 1]; writeJSON("dd-costume", c[0]);
   const box = el("div", { id: "costumeModal", class: "welcome", role: "dialog", "aria-modal": "true" }, el("div", { class: "welcome-card" }, el("div", { class: "ob-loopy" }, (() => { const s = loopyMini(c[0]); s.setAttribute("width", "110"); s.setAttribute("height", "110"); return s; })()),
-    el("h2", {}, "Loopy unlocked the " + c[1] + "! 🎉"), el("p", {}, "Your " + c[2] + "-day streak earned a new look. Loopy is wearing it now."),
+    el("h2", {}, "Loopy unlocked the " + c[1] + "! 🎉"), el("p", {}, costumeWhy(c) + " Loopy is wearing it now."),
     el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", onclick: () => { box.remove(); todayKey = ""; try { renderHeader(); } catch (_) {} } }, "Love it!"), el("button", { class: "btn", type: "button", onclick: () => { box.remove(); showPanel("wardrobe"); } }, "👗 Wardrobe"))));
   setTimeout(() => { if (!document.getElementById("welcome") && !document.getElementById("milestone")) { document.body.append(box); confetti(110); } }, 1500);
 }
@@ -1838,7 +1847,7 @@ function renderToday() {
     streak = state.myStreak || 0, quizDone = QUIZ.length ? !!myQuizAnswer(dayNum()) : true, plan = readJSON("dd-exam-plan", null),
     left = plan && plan.date ? Math.ceil((new Date(plan.date + "T00:00:00").getTime() - new Date().setHours(0, 0, 0, 0)) / 864e5) : null;
   const note = state.welcomeNote && readJSON("dd-note-gone", 0) !== state.welcomeNote.updatedAt ? state.welcomeNote : null;
-  const key = [hello, name, streak, quizDone, left, equippedCostume(), storyGroups().length, readJSON("dd-launch", false) ? 1 : 0, readJSON("dd-launch-gone", false) ? 1 : 0, state.dataReady ? 1 : 0, boxToday() ? 1 : 0, questSteps().filter(s => s[2]).length, state.replies.length, state.doubts.length, readJSON("dd-tip", {}).gone ? 1 : 0, mistakeList().length, state.weekly.length, dayNum(), (typeof weekPoints === "function" ? weekPoints() : 0), note ? note.updatedAt : 0, openDrives().length, upcomingEvents().length, unansweredDoubts().length, readJSON("dd-today-closed", "") === dayStr() ? 1 : 0, (doubtOfDay() || {}).id || "", fbDone() ? 1 : 0, curioPoints()].join("|"); if (key === todayKey && !bar.hidden) return; todayKey = key;
+  const key = [hello, name, streak, quizDone, left, equippedCostume(), storyGroups().length, readJSON("dd-launch", false) ? 1 : 0, readJSON("dd-launch-gone", false) ? 1 : 0, state.dataReady ? 1 : 0, boxToday() ? 1 : 0, questSteps().filter(s => s[2]).length, state.replies.length, state.doubts.length, readJSON("dd-tip", {}).gone ? 1 : 0, mistakeList().length, state.weekly.length, dayNum(), (typeof weekPoints === "function" ? weekPoints() : 0), note ? note.updatedAt : 0, openDrives().length, upcomingEvents().length, unansweredDoubts().length, readJSON("dd-today-closed", "") === dayStr() ? 1 : 0, (doubtOfDay() || {}).id || "", fbDone() ? 1 : 0, curioPoints(), (helperOfWeek() || {}).id || ""].join("|"); if (key === todayKey && !bar.hidden) return; todayKey = key;
   if (readJSON("dd-today-closed", "") === dayStr()) { bar.hidden = false; bar.replaceChildren(el("button", { class: "today-reopen", type: "button", onclick: () => { writeJSON("dd-today-closed", ""); todayKey = ""; renderToday(); } }, "Show today\u2019s card")); return; }
   const chip = (txt, cls, fn) => el("button", { class: "today-chip " + (cls || ""), type: "button", onclick: fn }, txt);
   const WORDS = ["Welcome to " + BRAND + " family", "Respect your teachers, help your juniors. 🙏", "Every question is welcome here.", "Kind words build a strong campus. 🌱", "Thank you for being part of our family.", "Learn together, grow together.", "Our teachers and staff work hard for you. Say thank you today. 🙏"];
@@ -1853,7 +1862,7 @@ function renderToday() {
     (() => { if (newbie) return null; const t = loopyTip(), st = readJSON("dd-tip", {}); if (st.gone && st.day === dayStr()) return null;
       return el("div", { class: "today-tip" }, el("small", {}, "💡 Loopy\u2019s tip for today"), el("p", {}, t.text), el("div", { class: "rowbtns" }, t.cta ? el("button", { class: "btn sm primary", type: "button", onclick: t.cta[1] }, t.cta[0]) : null, el("button", { class: "btn sm", type: "button", onclick: () => { writeJSON("dd-tip", { ...readJSON("dd-tip", {}), day: dayStr(), gone: true }); todayKey = ""; renderToday(); } }, "Got it"))); })(),
     note ? el("div", { class: "today-note" }, el("strong", {}, "💬 " + (note.from ? "A note from " + note.from : "A note from your college")), el("p", {}, note.text), el("button", { class: "of-x", type: "button", "aria-label": "Dismiss note", onclick: () => { writeJSON("dd-note-gone", note.updatedAt); todayKey = ""; renderToday(); } }, "✕")) : null, null, 
-    questCard(), boxButton(), quizTeaser(), dodCard(), latestHelp(),
+    questCard(), boxButton(), quizTeaser(), dodCard(), helperCard(), latestHelp(),
     newbie ? null : el("div", { class: "today-stats" },
       stat(streak, streak === 1 ? "day streak 🔥" : "day streak 🔥", streak && !(state.myDays && state.myDays.has(dayNum())) ? "warn" : "", () => showPanel("me")),
       stat(pts, "points this week ⚡", "", () => showPanel("wboard")),
@@ -2132,7 +2141,7 @@ function loadCurio() {
   sc.onload = () => { if (state.mode === "curious") render(); }; sc.onerror = () => { window.CURIO = { facts: [], whys: [], mysteries: [], tips: [] }; }; document.head.append(sc);
 }
 const curioStore = () => { const o = readJSON("dd-curio", {}); return { fact: o.fact || {}, why: o.why || {}, myst: o.myst || {}, puz: o.puz || {} }; };
-const curioSave = (o) => writeJSON("dd-curio", o);
+const curioSave = (o) => { writeJSON("dd-curio", o); try { clearTimeout(curioSave._t); curioSave._t = setTimeout(() => { try { syncProfile().catch(() => {}); } catch (_) {} }, 2000); } catch (_) {} };
 const curioPoints = (o = curioStore()) => Object.keys(o.fact).length + 2 * Object.keys(o.why).length + 3 * Object.keys(o.myst).length + Object.values(o.puz).reduce((a, p) => a + (p && p.ok ? Math.max(1, Math.min(4, Number(p.pts) || 1)) : 0), 0);
 function curioStreak(o = curioStore()) {
   const days = new Set([...Object.keys(o.fact), ...Object.keys(o.why), ...Object.keys(o.myst), ...Object.keys(o.puz).filter(k => o.puz[k] && o.puz[k].ok)].map(Number)); let d = dayNum(), n = 0;
@@ -2270,6 +2279,33 @@ function showEligibility() {
     el("p", { class: "hint" }, "This is your own declaration. Please answer honestly. Details are in the ", el("a", { href: "terms.html", target: "_blank", rel: "noopener" }, "Terms"), ".")));
   document.body.append(ov);
 }
+// ---------- Helper of the week and push opt-in ----------
+function helperOfWeek() {
+  if (!store || !state.loaded) return null;
+  const since = Date.now() - 7 * 86400000, byId = new Map(state.doubts.map(d => [d.id, d])), helpful = new Set(state.doubts.map(d => d.resolvedReplyId).filter(Boolean)), tally = new Map();
+  for (const r of state.replies) {
+    if (r.parentColl !== "doubts" || r.anonymous || r.deleted || !r.authorId || (r.createdAt || 0) < since) continue;
+    const d = byId.get(r.parentId); if (!d || d.authorId === r.authorId) continue;
+    const t = tally.get(r.authorId) || { id: r.authorId, name: "", n: 0, h: 0 }; t.n++; if (helpful.has(r.id)) t.h++; if (r.authorName && r.authorName !== ANON) t.name = r.authorName; tally.set(r.authorId, t);
+  }
+  const top = [...tally.values()].filter(t => t.name).sort((a, b) => (b.n + 3 * b.h) - (a.n + 3 * a.h) || a.id.localeCompare(b.id))[0];
+  return top && top.n >= 2 ? top : null;
+}
+function helperCard() {
+  const h = helperOfWeek(); if (!h) return null; const me = store && allMyIds().has(h.id);
+  return el("div", { class: "learn-card hotw-card" }, el("small", { class: "tag" }, "\u{1F3C5} HELPER OF THE WEEK"), el("strong", {}, h.name + (me ? " (you)" : "") + markOf(h.id)),
+    el("small", { class: "hint" }, plural(h.n, "answer") + " this week" + (h.h ? " · " + h.h + " marked helpful" : "")),
+    el("p", { class: "hint" }, me ? "Thank you for helping your classmates. This is the best way to earn the Helper star for Loopy." : "Say thanks with a reaction on their answers. Answer a doubt to be next week's helper."),
+    el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => showUnanswered() }, "\u{1F64B} Answer a doubt")));
+}
+// After someone asks a doubt, offer an alert for when it is answered.
+function pushAskCard(d) {
+  if (!store || !allMyIds().has(d.authorId) || repliesFor(d.id).length || readJSON("dd-push-asked", false) || !("Notification" in window) || Notification.permission === "denied" || readJSON("dd-push-on", false)) return null;
+  const say = el("small", { class: "hint", role: "status" }, "");
+  return el("div", { class: "learn-card push-ask" }, el("strong", {}, "\u{1F514} Get an alert when someone answers"), el("p", { class: "hint" }, PUSH.vapidKey ? "You will get a short alert even when the app is closed. It shows only a short title." : "You will get an alert while the app is open in the background."),
+    el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: async (e) => { e.currentTarget.disabled = true; writeJSON("dd-push-asked", true); try { if (PUSH.vapidKey && store.enablePush) { await store.enablePush(PUSH.vapidKey); writeJSON("dd-push-on", true); } else { await Notification.requestPermission(); } say.textContent = "Done. We will let you know."; } catch (er) { say.textContent = (er && er.message) || "Could not turn on alerts."; } } }, "Turn on alerts"),
+      el("button", { class: "btn sm", type: "button", onclick: (e) => { writeJSON("dd-push-asked", true); e.currentTarget.closest(".push-ask").remove(); } }, "Not now")), say);
+}
 // ---------- Pilot feedback, doubt of the day ----------
 const FB_PAY = [["no", "No"], ["29", "₹29"], ["49", "₹49"], ["99", "₹99"], ["later", "Ask me later"]];
 const fbDone = () => readJSON("dd-fb-" + weekKey(), false);
@@ -2338,6 +2374,7 @@ function notifItems() {
   const me = allStats().get(store.uid);
   if (me && me.streak > 0 && me.days && !me.days.has(dayNum()) && new Date().getHours() >= 17) items.push({ id: "streak" + dayNum(), at: Date.now(), icon: "\u{1F525}", text: "Your " + me.streak + "-day streak ends tonight. Answer one doubt or take the quiz to keep it.", go: () => showUnanswered(), fresh: true, todo: true });
   if (QUIZ.length && !myQuizAnswer(dayNum())) items.push({ id: "quiz" + dayNum(), at: Date.now() - 1, icon: "\u{1F9E0}", text: "Today's quiz is waiting. It takes one minute.", go: () => showPanel("quiz"), fresh: true, todo: true });
+  { const hw = helperOfWeek(); if (hw && mine.has(hw.id)) items.push({ id: "hotw" + weekKey(), at: Date.now() - 4, icon: "\u{1F3C5}", text: "You are Helper of the week with " + plural(hw.n, "answer") + ". Thank you!", go: () => showPanel("wardrobe"), fresh: !readJSON("dd-hotw-" + weekKey(), false) }); }
   if (!curioStore().why[String(dayNum())]) items.push({ id: "cur" + dayNum(), at: Date.now() - 3, icon: "\u{1F50E}", text: "Today\u2019s Why question is waiting. Guess first, then see the answer.", go: () => showPanel("curious"), fresh: true, todo: true });
   if ((readJSON("dd-visits", { n: 1 }).n || 1) >= 3 && !fbDone()) items.push({ id: "fb" + weekKey(), at: Date.now() - 2, icon: "\u{1F4AC}", text: "Tell us how to improve " + BRAND + ". It takes 30 seconds.", go: () => showPanel("feedback"), fresh: true, todo: true });
   return items.sort((a, b) => b.at - a.at).slice(0, 25);
@@ -7700,6 +7737,7 @@ function renderView() {
       : CAMPUSES.length ? "Visible to all campuses of " + COLLEGE + "." : "Visible to students of " + COLLEGE + ".";
     out.push(el("p", { class: "aud-line" }, el("b", {}, "Who can see this: "), aud + (Array.isArray(d.sentTo) && d.sentTo.length ? " Also sent to " + d.sentTo.map(x => x.name).join(", ") + "." : "") + " Students of other colleges cannot see it unless you chose to send it to them."));
   }
+  if (state.tab === "doubts") { try { const pk = pushAskCard(d); if (pk) out.push(pk); } catch (_) {} }
   if (state.tab === "jobs") {
     const dl = jobDaysLeft(d), link = safeHttp(d.applyUrl);
     out.push(el("div", { class: "learn-card" },
@@ -8057,15 +8095,19 @@ async function loadPlan() {
   } catch (_) { state.plan = { plus: false, until: 0 }; }
 }
 const isPlusId = (id) => { if (store && allMyIds().has(id)) return !!state.plan.plus; const p = state.profiles.find(x => x.id === id); return !!(p && p.plus); };
-const markOf = (id) => (isVerifiedId(id) ? " ✔" : "") + (isPlusId(id) ? " ⭐" : "");
+const curioBadge = (id) => { const p = state.profiles.find(x => x.id === id), n = store && allMyIds().has(id) ? curioPoints() : (p && p.curio) || 0; return n >= 100 ? " \u{1F52D}" : n >= 20 ? " \u{1F50E}" : ""; };
+const markOf = (id) => (isVerifiedId(id) ? " ✔" : "") + (isPlusId(id) ? " ⭐" : "") + curioBadge(id);
 const isVerifiedId = (id) => { if (store && allMyIds().has(id)) return myVerified(); const p = state.profiles.find(x => x.id === id); return !!(p && p.verified); };
 async function syncProfile() {
   if (!store) return;
   const dp = getDp();
   const status = getStatus();
   const verified = myVerified(), plus = !!state.plan.plus && !state.plan.college;
-  if (!dp && !status && !verified && !plus && !state.profiles.some(p => p.id === store.uid)) return;
-  await store.set("profiles", store.uid, { name: (getName() || "Student").slice(0, 40), dp, status, verified, plus, streak: Math.min(3650, state.myStreak || 0), updatedAt: Date.now() });
+  const cp = Math.min(100000, curioPoints());
+  if (!dp && !status && !verified && !plus && !cp && !state.profiles.some(p => p.id === store.uid)) return;
+  const rec = { name: (getName() || "Student").slice(0, 40), dp, status, verified, plus, streak: Math.min(3650, state.myStreak || 0), updatedAt: Date.now() };
+  if (cp > 0) rec.curio = cp;
+  await store.set("profiles", store.uid, rec);
 }
 function pickDp() {
   const inp = document.createElement("input"); inp.type = "file"; inp.accept = "image/*";
@@ -8589,7 +8631,7 @@ render();
   store.subscribe("blocked", rows => { state.blocked = rows.map(r => r.id); }, e => {});
   let dpChecked = false;
   store.subscribe("profiles", rows => {
-    state.profiles = rows.filter(p => typeof p.name === "string" && (!p.dp || DP_OK.test(p.dp))).map(p => ({ ...p, status: String(p.status || "").slice(0, 60), verified: p.verified === true, plus: p.plus === true, streak: Number.isInteger(p.streak) && p.streak > 0 ? p.streak : 0 })); update();
+    state.profiles = rows.filter(p => typeof p.name === "string" && (!p.dp || DP_OK.test(p.dp))).map(p => ({ ...p, status: String(p.status || "").slice(0, 60), verified: p.verified === true, plus: p.plus === true, curio: Number.isInteger(p.curio) && p.curio > 0 ? Math.min(p.curio, 100000) : 0, streak: Number.isInteger(p.streak) && p.streak > 0 ? p.streak : 0 })); update();
     if (!dpChecked && (getDp() || getStatus() || myVerified() || state.plan.plus)) { dpChecked = true; const me = rows.find(p => p.id === store.uid); if (!me || (me.dp || "") !== getDp() || me.name !== getName() || (me.status || "") !== getStatus() || (me.verified === true) !== myVerified() || (me.plus === true) !== !!state.plan.plus) syncProfile().catch(() => {}); }
   }, e => {});
   const since = Date.now() - STORY_MS;

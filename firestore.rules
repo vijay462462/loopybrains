@@ -542,7 +542,7 @@ service cloud.firestore {
       match /profiles/{id} {
         function validProfile() {
           let d = request.resource.data;
-          return d.keys().hasOnly(['name', 'dp', 'status', 'verified', 'plus', 'streak', 'updatedAt', 'ownerUid']) && optStr(d, 'ownerUid', 60) && (d.get('verified', false) == false || request.auth.token.email_verified == true) && str(d.name, 1, 40) && optStr(d, 'status', 60) && optBool(d, 'verified') && optBool(d, 'plus') && (!('streak' in d) || (d.streak is int && d.streak >= 0 && d.streak <= 3650)) && (d.get('plus', false) == false || plusActive(request.auth.uid)) && (d.get('verified', false) == false || request.auth.token.email_verified == true) && d.updatedAt is int
+          return d.keys().hasOnly(['name', 'dp', 'status', 'verified', 'plus', 'streak', 'curio', 'updatedAt', 'ownerUid']) && optStr(d, 'ownerUid', 60) && (d.get('verified', false) == false || request.auth.token.email_verified == true) && str(d.name, 1, 40) && optStr(d, 'status', 60) && optBool(d, 'verified') && optBool(d, 'plus') && (!('streak' in d) || (d.streak is int && d.streak >= 0 && d.streak <= 3650)) && (!('curio' in d) || (d.curio is int && d.curio >= 0 && d.curio <= 100000)) && (d.get('plus', false) == false || plusActive(request.auth.uid)) && (d.get('verified', false) == false || request.auth.token.email_verified == true) && d.updatedAt is int
             && d.dp is string && d.dp.size() <= 40000 && (d.dp == '' || d.dp.matches('data:image/jpeg;base64,.*'));
         }
         allow read: if member();

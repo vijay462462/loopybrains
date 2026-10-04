@@ -2522,3 +2522,6 @@ body.simple .tabs button[aria-selected="true"] { display: inline-flex; }
 @media (max-width: 700px) {
   header.top #notifBtn { position: absolute; top: 8px; right: 58px; padding: 4px 9px; font-size: 16px; border-radius: 999px; background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 25%, var(--line)); backdrop-filter: none; }
 }
+
+.hotw-card { border-color: color-mix(in srgb, #fbbf24 60%, var(--line)); background: linear-gradient(150deg, color-mix(in srgb, #fbbf24 16%, var(--sheet)), var(--sheet)); display: grid; gap: 6px; }
+.push-ask { display: grid; gap: 6px; border-style: dashed; }
