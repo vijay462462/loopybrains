@@ -2266,7 +2266,7 @@ function showEligibility() {
   };
   ov.append(el("div", { class: "welcome-card ob-card" }, el("div", { class: "ob-loopy" }, loopyMini()), el("h2", {}, "Which year are you in?"),
     el("p", { class: "ob-say" }, "RGUKT is a six-year integrated course. " + BRAND + " is for B.Tech 2nd year students and above."),
-    el("div", { class: "rowbtns", role: "group", "aria-label": "Your year" }, ...RG_YEARS.map(([k, t, ok]) => el("button", { class: "btn" + (ok ? "" : " sm"), type: "button", onclick: () => choose(k, ok) }, t))), msg,
+    el("div", { class: "rg-opts", role: "group", "aria-label": "Your year" }, ...RG_YEARS.map(([k, t, ok]) => el("button", { class: "rg-opt" + (ok ? " ok" : ""), type: "button", onclick: () => choose(k, ok) }, el("span", { class: "rg-name" }, t), el("small", {}, ok ? "Open \u2713" : "Not yet")))), msg,
     el("p", { class: "hint" }, "This is your own declaration. Please answer honestly. Details are in the ", el("a", { href: "terms.html", target: "_blank", rel: "noopener" }, "Terms"), ".")));
   document.body.append(ov);
 }
