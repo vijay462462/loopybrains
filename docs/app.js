@@ -686,7 +686,7 @@ function myHiddenCount() {
   const ids = allMyIds(); let n = 0;
   for (const k of [...CAMPUS_COLLS, "replies"]) for (const x of state[k] || []) {
     if (!ids.has(x.authorId) || x.deleted) continue;
-    const r = x.reports || []; if (r.length >= REPORT_LIMIT || r.filter(v => String(v).endsWith("|o")).length >= 2) n++;
+    const r = x.reports || []; if (r.length >= REPORT_LIMIT || r.filter(v => String(v).endsWith("|o")).length >= 2 || r.filter(v => /\|[bp]$/.test(String(v))).length >= 2) n++;
   }
   return n;
 }
@@ -719,8 +719,8 @@ function notePosted() {
 // Posts reported by this many classmates are hidden until the teacher checks them in Firebase.
 const REPORT_LIMIT = 3;
 // A report is the reporter's id, optionally with a reason: "<id>|o" off-topic, "|a" abuse, "|s" spam.
-// Two off-topic reports (or three of any kind) hide a post for everyone.
-const isHidden = (x) => { const r = x.reports || []; return (r.length >= REPORT_LIMIT || r.filter(v => String(v).endsWith("|o")).length >= 2 || reportedByMe(x)) && !mine(x); };
+// "|b" bullying or unsafe, "|p" personal info: two of these hide a post at once. Two off-topic reports (or three of any kind) hide a post for everyone.
+const isHidden = (x) => { const r = x.reports || []; return (r.length >= REPORT_LIMIT || r.filter(v => String(v).endsWith("|o")).length >= 2 || r.filter(v => /\|[bp]$/.test(String(v))).length >= 2 || reportedByMe(x)) && !mine(x); };
 const reportedByMe = (x) => store && (x.reports || []).some(v => String(v).split("|")[0] === store.uid);
 // Academic tabs only: blocks greetings and one-word chatter, and asks for a real question or answer.
 const CHATTER = /^(hi+|hello+|hey+|hii+|hlo|ok+|okay|k|hmm+|lol|haha+|bro|anyone|any ?one( there)?|yes|no|yo|sup|wassup|good (morning|night|evening|afternoon)|gm|gn|how are you|test|testing|\.+|\?+)[\s!.?,]*$/i;
@@ -743,7 +743,7 @@ function reportButton(coll, x) {
   const wrap = el("span", { class: "report-wrap" });
   const reset = () => wrap.replaceChildren(el("button", { class: "linkbtn danger", type: "button", title: "Report a post", onclick: choose }, "🚩 Report"));
   const choose = () => {
-    wrap.replaceChildren(el("small", { class: "hint" }, "Why? "), ...[["o", "Off-topic"], ["a", "Abuse"], ["s", "Spam"]].map(([code, label]) => el("button", { class: "linkbtn danger", type: "button", onclick: (e) => { e.currentTarget.disabled = true; reportPost(coll, x, code); wrap.replaceChildren(el("span", { class: "hint" }, "🚩 Reported")); } }, label)));
+    wrap.replaceChildren(el("small", { class: "hint" }, "Why? "), ...[["o", "Off-topic"], ["a", "Abuse"], ["s", "Spam"], ["b", "Bullying or unsafe"], ["p", "Personal info"]].map(([code, label]) => el("button", { class: "linkbtn danger", type: "button", onclick: (e) => { e.currentTarget.disabled = true; reportPost(coll, x, code); wrap.replaceChildren(el("span", { class: "hint" }, "🚩 Reported")); } }, label)));
     setTimeout(() => { if (wrap.isConnected && wrap.querySelector("button:not([disabled])")) reset(); }, 6000);
   };
   reset();

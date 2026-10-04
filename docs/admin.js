@@ -96,7 +96,7 @@ async function loadColleges() {
   return stateOfCollegeDocs.cache;
 }
 const COLLS = [["doubts", "Doubts"], ["ideas", "Ideas"], ["clubs", "Clubs"], ["gate", "GATE"], ["jobs", "Jobs"], ["challenges", "Challenges"], ["market", "Market"], ["replies", "Replies"], ["stories", "Stories"]];
-const reasons = (reports) => { const r = { o: 0, a: 0, s: 0, other: 0 }; for (const x of reports || []) { const t = String(x).split("|")[1]; if (t === "o" || t === "a" || t === "s") r[t]++; else r.other++; } return r; };
+const reasons = (reports) => { const r = { o: 0, a: 0, s: 0, b: 0, p: 0, other: 0 }; for (const x of reports || []) { const t = String(x).split("|")[1]; if (t === "o" || t === "a" || t === "s" || t === "b" || t === "p") r[t]++; else r.other++; } return r; };
 
 // ---------- room picker ----------
 function roomPicker(onPick) {
@@ -159,13 +159,15 @@ function moderationView() {
     const redraw = () => { const n = card(coll, label, item); box.replaceWith(n); };
     box.append(h("div", { class: "row" }, h("span", { class: "tag" }, label), status, h("span", { class: "tag " + (total >= 3 ? "bad" : "warn") }, total + " report" + (total === 1 ? "" : "s")), h("span", { class: "mono" }, ago(d.createdAt || 0))),
       h("p", {}, h("b", {}, String(text).slice(0, 160))), d.body && d.title ? h("p", { class: "adm-hint" }, String(d.body).slice(0, 220)) : null,
-      h("p", { class: "mono" }, "by " + who + " · device " + (d.authorId || "?") + (total ? " · off-topic " + r.o + ", abuse " + r.a + ", spam " + r.s + (r.other ? ", other " + r.other : "") : "")),
+      h("p", { class: "mono" }, "by " + who + " · device " + (d.authorId || "?") + (total ? " · off-topic " + r.o + ", abuse " + r.a + ", spam " + r.s + ", unsafe " + r.b + ", personal info " + r.p + (r.other ? ", other " + r.other : "") : "")),
       h("div", { class: "row" },
         hidden ? h("button", { class: "b sm ok", onclick: (e) => act("restore", { deleted: false }, "restored", e.currentTarget) }, "Restore") : h("button", { class: "b sm bad", onclick: (e) => act("hide", { deleted: true }, "hidden", e.currentTarget) }, "Hide"),
         total ? h("button", { class: "b sm", onclick: (e) => act("clear-reports", { reports: [] }, "reports cleared", e.currentTarget) }, "Clear reports") : null,
         d.authorId ? h("button", { class: "b sm", onclick: async (e) => { const b = e.currentTarget; if (!confirm("Block device " + d.authorId + "? It will not be able to post or reply.")) return; b.disabled = true; try { await fs.setDoc(fs.doc(db, p, "blocked", d.authorId), { reason: "moderation", by: auth.currentUser.uid, at: Date.now() }); await logAction("block-device", d.authorId, "from " + coll + "/" + item.id); b.textContent = "Blocked"; } catch (er) { msg.className = "msg err"; msg.textContent = "Not allowed (" + (er.code || "error") + ")."; b.disabled = false; } } }, "Block device") : null));
     return box;
   };
+  let FILTER = "serious";
+  const chips = h("div", { class: "row" }, ...[["serious", "Serious first"], ["open", "All still visible"], ["all", "Everything"]].map(([k, l]) => h("button", { class: "b sm", onclick: (e) => { FILTER = k; load(); } }, l)));
   const load = async (btn) => {
     out.replaceChildren(h("p", { class: "adm-hint" }, "Loading…")); if (btn) btn.disabled = true;
     try {
@@ -174,14 +176,16 @@ function moderationView() {
         const snap = await fs.getDocs(fs.query(fs.collection(db, p, c), fs.orderBy("createdAt", "desc"), fs.limit(300)));
         for (const s of snap.docs) { const d = s.data(); if ((d.reports || []).length || d.deleted) rows.push({ coll: c, label, item: { id: s.id, data: d } }); }
       }
-      rows.sort((a, b) => ((b.item.data.reports || []).length - (a.item.data.reports || []).length) || ((b.item.data.createdAt || 0) - (a.item.data.createdAt || 0)));
-      out.replaceChildren(...(rows.length ? rows.slice(0, 80).map(r => card(r.coll, r.label, r.item)) : [h("p", { class: "adm-hint" }, "Nothing reported or hidden in the latest posts. 🎉")]));
+      const sev = (x) => { const q = reasons(x.item.data.reports); return q.b + q.p + q.a; };
+      rows.sort((a, b) => (sev(b) - sev(a)) || ((b.item.data.reports || []).length - (a.item.data.reports || []).length) || ((b.item.data.createdAt || 0) - (a.item.data.createdAt || 0)));
+      const shown = rows.filter(r => FILTER === "all" || (FILTER === "serious" ? sev(r) > 0 : !r.item.data.deleted)); 
+      out.replaceChildren(h("p", { class: "adm-hint" }, rows.filter(r => sev(r) > 0 && !r.item.data.deleted).length + " serious (abuse, unsafe, personal info) still visible · " + rows.filter(r => !r.item.data.deleted).length + " reported and visible · " + rows.filter(r => r.item.data.deleted).length + " hidden"), ...(shown.length ? shown.slice(0, 80).map(r => card(r.coll, r.label, r.item)) : [h("p", { class: "adm-hint" }, "Nothing reported or hidden in the latest posts. 🎉")]));
     } catch (e) { out.replaceChildren(h("p", { class: "msg err" }, "Could not load (" + (e.code || "error") + ").")); }
     if (btn) btn.disabled = false;
   };
   const refresh = h("button", { class: "b sm", onclick: (e) => load(e.currentTarget) }, "↻ Refresh");
   load();
-  return h("div", {}, h("div", { class: "card" }, h("h3", {}, "Reported and hidden items"), h("p", { class: "adm-hint" }, "Latest 300 of each kind, most reported first. Hide removes it for students; Restore brings it back. Nothing is ever deleted for good."), h("div", { class: "row" }, refresh)), msg, out);
+  return h("div", {}, h("div", { class: "card" }, h("h3", {}, "Reported and hidden items"), h("p", { class: "adm-hint" }, "Latest 300 of each kind. Serious reports (abuse, unsafe, personal info) come first. Hide removes it for students; Restore brings it back. Nothing is ever deleted for good."), h("div", { class: "row" }, refresh), chips), msg, out);
 }
 
 function blockedView() {
