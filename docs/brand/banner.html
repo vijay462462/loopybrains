@@ -10,35 +10,5 @@ h1 span{background:linear-gradient(90deg,#22d3ee,#a78bfa 45%,#f472b6 75%,#fb923c
 p{margin-top:22px;font-size:30px;line-height:1.35;color:#e0e7ff;font-weight:500;max-width:560px}
 .pill{display:inline-block;margin-top:34px;padding:14px 28px;border-radius:99px;background:linear-gradient(90deg,#6366f1,#d946ef 60%,#fb923c);font-weight:800;font-size:24px;box-shadow:0 14px 40px -10px rgba(217,70,239,.7)}
 </style><div class="bg"></div><div class="dots"></div>
-<svg class="logo" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg"><defs>
-  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2a1a7a"/><stop offset=".55" stop-color="#150f4d"/><stop offset="1" stop-color="#0b0830"/></linearGradient>
-  <radialGradient id="glowA" cx=".2" cy=".1" r=".8"><stop offset="0" stop-color="#a855f7" stop-opacity=".55"/><stop offset="1" stop-color="#a855f7" stop-opacity="0"/></radialGradient>
-  <radialGradient id="glowB" cx=".9" cy=".95" r=".7"><stop offset="0" stop-color="#f97316" stop-opacity=".45"/><stop offset="1" stop-color="#f97316" stop-opacity="0"/></radialGradient>
-  <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset=".35" stop-color="#6366f1"/><stop offset=".7" stop-color="#d946ef"/><stop offset="1" stop-color="#fb923c"/></linearGradient>
-  <linearGradient id="head" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e0e7ff"/></linearGradient>
-  <filter id="soft" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="14"/></filter>
-  <filter id="drop" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="14" stdDeviation="14" flood-color="#000" flood-opacity=".45"/></filter>
-</defs>
-
-<rect x="0" y="0" width="1024" height="1024" rx="230" fill="url(#bg)"/><rect width="1024" height="1024" rx="230" fill="url(#glowA)"/><rect width="1024" height="1024" rx="230" fill="url(#glowB)"/>
-<g id="mark">
-  <!-- loop ring with a gap, glowing -->
-  <circle cx="512" cy="520" r="318" fill="none" stroke="url(#ring)" stroke-width="64" stroke-linecap="round" stroke-dasharray="1700 300" transform="rotate(-62 512 520)" filter="url(#soft)" opacity=".7"/>
-  <circle cx="512" cy="520" r="318" fill="none" stroke="url(#ring)" stroke-width="56" stroke-linecap="round" stroke-dasharray="1700 300" transform="rotate(-62 512 520)"/>
-  <!-- arrow head on the loop (the loop never ends) -->
-  <path d="M770 306 L842 262 L836 350 Z" fill="#fb923c" transform="rotate(8 806 306)"/>
-  <!-- Loopy -->
-  <g filter="url(#drop)">
-    <line x1="512" y1="300" x2="512" y2="352" stroke="#c4b5fd" stroke-width="16" stroke-linecap="round"/>
-    <circle cx="512" cy="292" r="26" fill="#fde047"/><circle cx="512" cy="292" r="12" fill="#fff7c2"/>
-    <rect x="352" y="352" width="320" height="288" rx="110" fill="url(#head)" stroke="#a78bfa" stroke-width="14"/>
-    <rect x="390" y="396" width="244" height="200" rx="84" fill="#1b1458"/>
-    <ellipse cx="456" cy="486" rx="26" ry="36" fill="#67e8f9"/><ellipse cx="568" cy="486" rx="26" ry="36" fill="#67e8f9"/>
-    <ellipse cx="447" cy="470" rx="8" ry="11" fill="#fff" opacity=".85"/><ellipse cx="559" cy="470" rx="8" ry="11" fill="#fff" opacity=".85"/>
-    <path d="M466 540 q46 40 92 0" fill="none" stroke="#fde68a" stroke-width="18" stroke-linecap="round"/>
-  </g>
-  <!-- sparkles -->
-  <path d="M236 250 l12 30 30 12 -30 12 -12 30 -12 -30 -30 -12 30 -12z" fill="#fde68a"/>
-  <path d="M800 740 l9 22 22 9 -22 9 -9 22 -9 -22 -22 -9 22 -9z" fill="#67e8f9"/>
-</g></svg>
+<img class="logo" src="icon-1024.svg">
 <div class="t"><div class="k">Ask · Answer · Grow</div><h1>The Campus<br><span>Loop</span></h1><p>One friendly, safe place for every college to ask doubts, share ideas and grow together.</p><div class="pill">Join the family →</div></div>

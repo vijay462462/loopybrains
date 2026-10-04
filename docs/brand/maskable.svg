@@ -10,7 +10,7 @@
 
 <rect width="1024" height="1024" rx="0" fill="url(#bg)"/><rect width="1024" height="1024" rx="0" fill="url(#glowA)"/><rect width="1024" height="1024" rx="0" fill="url(#glowB)"/>
 
-<g transform="translate(102.4 102.4) scale(.8)"><g id="mark">
+<g transform="translate(102.4 102.4) scale(.8)"><g transform="translate(512 392) scale(.8) translate(-512 -440)"><g id="mark">
   <!-- loop ring with a gap, glowing -->
   <circle cx="512" cy="520" r="318" fill="none" stroke="url(#ring)" stroke-width="64" stroke-linecap="round" stroke-dasharray="1700 300" transform="rotate(-62 512 520)" filter="url(#soft)" opacity=".7"/>
   <circle cx="512" cy="520" r="318" fill="none" stroke="url(#ring)" stroke-width="56" stroke-linecap="round" stroke-dasharray="1700 300" transform="rotate(-62 512 520)"/>
@@ -29,4 +29,7 @@
   <!-- sparkles -->
   <path d="M236 250 l12 30 30 12 -30 12 -12 30 -12 -30 -30 -12 30 -12z" fill="#fde68a"/>
   <path d="M800 740 l9 22 22 9 -22 9 -9 22 -9 -22 -22 -9 22 -9z" fill="#67e8f9"/>
+</g></g><g font-family="'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" text-anchor="middle" font-weight="900">
+  <text x="512" y="852" font-size="86" letter-spacing="14" fill="#ffffff">THE CAMPUS</text>
+  <text x="512" y="976" font-size="146" letter-spacing="10" fill="url(#ring)">LOOP</text>
 </g></g></svg>
