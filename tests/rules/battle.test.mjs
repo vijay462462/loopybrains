@@ -27,6 +27,28 @@ await t("leaderboard is public to read (list by week)", () => assertSucceeds(get
 await t("player docs cannot be listed", () => assertFails(getDocs(collection(alice, "battlePlayers"))));
 await t("player can get own doc (even if missing)", () => assertSucceeds(getDoc(doc(alice, "battlePlayers", "w9_alice"))));
 await t("player cannot get someone else's doc", () => assertFails(getDoc(doc(alice, "battlePlayers", "w1_bob"))));
+// ---- Weekly Showdown (ideas and answers) ----
+const va = env.authenticatedContext("vera", { email_verified: true, email: "v@x.edu" }).firestore(), vb = env.authenticatedContext("vik", { email_verified: true, email: "k@x.edu" }).firestore(), un = env.authenticatedContext("unv", { email_verified: false }).firestore();
+const sd = (db, week, slug, uid, kind, tweak = {}) => {
+  const now = Date.now(), b = writeBatch(db);
+  b.set(doc(db, "showdownPlayers", week + "_" + uid + "_" + kind), { week, uid, slug, kind, n: increment(1), updatedAt: now }, { merge: true });
+  b.set(doc(db, "showdownColleges", week + "_" + slug + "_" + kind), { week, slug, kind, n: increment(tweak.college ?? 1), players: increment(tweak.players ?? 0), updatedAt: now }, { merge: true });
+  return b.commit();
+};
+await t("showdown: verified student scores an idea", () => assertSucceeds(sd(va, "s1", "anu", "vera", "idea", { players: 1 })));
+await t("showdown: second idea by same student", () => assertSucceeds(sd(va, "s1", "anu", "vera", "idea")));
+await t("showdown: second student joins", () => assertSucceeds(sd(vb, "s1", "anu", "vik", "idea", { players: 1 })));
+await t("showdown: counts are right", async () => { const s = await assertSucceeds(getDoc(doc(anon, "showdownColleges", "s1_anu_idea"))); const d = s.data(); if (!(d.n === 3 && d.players === 2)) throw new Error("bad " + JSON.stringify(d)); });
+await t("showdown cheat: unverified e-mail cannot score", () => assertFails(sd(un, "s1", "anu", "unv", "idea", { players: 1 })));
+await t("showdown cheat: signed out cannot score", () => assertFails(sd(anon, "s1", "anu", "ghost", "idea", { players: 1 })));
+await t("showdown cheat: college +5 is refused", () => assertFails(sd(va, "s1", "anu", "vera", "idea", { college: 5 })));
+await t("showdown cheat: players +1 on repeat is refused", () => assertFails(sd(va, "s1", "anu", "vera", "idea", { players: 1 })));
+await t("showdown cheat: college counter alone is refused", () => assertFails(setDoc(doc(va, "showdownColleges", "s1_anu_idea"), { week: "s1", slug: "anu", kind: "idea", n: increment(1), players: increment(0), updatedAt: Date.now() }, { merge: true })));
+await t("showdown cheat: other student's player doc is refused", () => assertFails(setDoc(doc(va, "showdownPlayers", "s1_vik_idea"), { week: "s1", uid: "vik", slug: "anu", kind: "idea", n: 1, updatedAt: Date.now() })));
+await t("showdown cheat: jump a player to n=5 is refused", () => assertFails(setDoc(doc(va, "showdownPlayers", "s1_vera_idea"), { week: "s1", uid: "vera", slug: "anu", kind: "idea", n: 5, updatedAt: Date.now() })));
+await t("showdown cap: idea 6 in a week is refused", async () => { for (let i = 0; i < 3; i++) await sd(va, "s1", "anu", "vera", "idea"); await assertFails(sd(va, "s1", "anu", "vera", "idea")); });
+await t("showdown: unknown kind is refused", () => assertFails(sd(va, "s1", "anu", "vera", "hack", { players: 1 })));
+await t("showdown: board is public, player docs are not listable", async () => { await assertSucceeds(getDocs(query(collection(anon, "showdownColleges"), where("week", "==", "s1")))); await assertFails(getDocs(collection(va, "showdownPlayers"))); });
 // profile streak
 const prof = (db, uid, extra) => setDoc(doc(db, "rooms/r00m-Abc123xy/profiles", uid + "12345678"), { name: "A", dp: "", updatedAt: Date.now(), ownerUid: uid, ...extra });
 await t("profile with streak 5 is accepted", () => assertSucceeds(prof(alice, "alice", { streak: 5 })));

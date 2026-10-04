@@ -613,6 +613,18 @@ async function firebaseStore(conf, prefix = "") {
       await b.commit(); return true;
     },
     battleBoard: async (week) => (await fs.getDocs(fs.query(fs.collection(db, "battleColleges"), fs.where("week", "==", week), fs.limit(400)))).docs.map(d => d.data()),
+    // Weekly Showdown: one student action moves the student's counter and the college counter together (the rules check it).
+    showdownHit: async (week, slug, kind) => {
+      if (!auth || !auth.currentUser || !["idea", "answer"].includes(kind)) return false;
+      const uid = auth.currentUser.uid, now = Date.now(), pref = fs.doc(db, "showdownPlayers", week + "_" + uid + "_" + kind);
+      let exists = false;
+      try { const ps = await fs.getDoc(pref); exists = ps.exists(); if (exists && ps.data().n >= (kind === "idea" ? 5 : 20)) return false; } catch (_) {}
+      const b = fs.writeBatch(db);
+      b.set(pref, { week, uid, slug, kind, n: fs.increment(1), updatedAt: now }, { merge: true });
+      b.set(fs.doc(db, "showdownColleges", week + "_" + slug + "_" + kind), { week, slug, kind, n: fs.increment(1), players: fs.increment(exists ? 0 : 1), updatedAt: now }, { merge: true });
+      await b.commit(); return true;
+    },
+    showdownBoard: async (week, kind) => (await fs.getDocs(fs.query(fs.collection(db, "showdownColleges"), fs.where("week", "==", week), fs.where("kind", "==", kind), fs.limit(400)))).docs.map(d => d.data()),
     getTop: async (coll, id) => { const snap = await fs.getDoc(fs.doc(db, coll, id)); return snap.exists() ? snap.data() : null; },
     authUid: () => (auth && auth.currentUser ? auth.currentUser.uid : ""),
     idToken: async () => (auth && auth.currentUser ? auth.currentUser.getIdToken() : ""),
@@ -2095,7 +2107,7 @@ const MODE_GUIDE = {
   learn: { icon: "\u{1F4DA}", purpose: "Study material grouped by subject.", steps: ["Choose your subject.", "Open a topic and read it.", "Save what you need and test yourself in the quiz."], safe: "Open links only from the official sources shown inside the app.", next: ["\u{1F9E0} Take the quiz", "quiz"] },
   resources: { icon: "\u{1F5C2}", purpose: "Notes, previous papers and useful links collected for your branch.", steps: ["Pick your branch.", "Open a resource.", "Report a wrong or broken link with the Report button."], safe: "Do not download files from unknown links. Report them instead.", next: ["\u{1F4DD} Previous papers", "papers"] },
   career: { icon: "\u{1F9ED}", purpose: "Plan your career: skills, roadmaps and what to learn next.", steps: ["Choose a goal.", "Follow the roadmap one step a day.", "Tick off each step to see your progress."], safe: "Never pay anyone to promise a job.", next: ["\u{1F4C4} Build my resume", "resume"] },
-  battle: { icon: "⚔️", purpose: "A quick quiz duel with a classmate.", steps: ["Start a battle or join with a code.", "Answer before the timer runs out.", "Winner takes the points."], safe: "Share a battle code only with people you trust.", next: ["\u{1F3C6} See the board", "leaders"] },
+  battle: { icon: "\u2694\uFE0F", purpose: "Weekly contests: your college against other colleges in quizzes, ideas and answers.", steps: ["Pick Quiz, Ideas or Answers at the top.", "Do the activity: take the daily quiz, share an idea or answer a doubt.", "Watch your college climb the board. It restarts every Monday."], safe: "Only students with a verified email can score, and each student has a weekly cap, so nobody can cheat the board.", next: ["\u{1F3C6} See the board", "leaders"] },
   plus: { icon: "✨", purpose: "Extra tools: mock tests, planner, goals and more.", steps: ["Pick a tool.", "Use it for a few minutes.", "Come back for a daily habit."], safe: SAFE_COMMON, next: ["\u{1F4DD} Try a mock test", "mock"] },
   mock: { icon: "⏱️", purpose: "A timed practice test to find your weak spots.", steps: ["Choose a subject and length.", "Answer within the timer.", "Review the mistakes afterward."], safe: "Practice results stay on your device and your account only.", next: ["\u{1F4C9} Review my mistakes", "mistakes"] },
   mistakes: { icon: "\u{1F4C9}", purpose: "Questions you got wrong, so you can fix them.", steps: ["Open a mistake.", "Read the correct answer and reason.", "Practise it again until it is right."], safe: SAFE_COMMON, next: ["\u{1F4DD} Another mock test", "mock"] },
@@ -3384,6 +3396,38 @@ function battleCard() {
     el("p", { class: "hint" }, "Every right quiz answer scores for " + COLLEGE + ". See how your college ranks against others this week."),
     el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => showPanel("battle") }, "Open the scoreboard")));
 }
+// Weekly Showdown: ideas and answers per college. Only students with a verified e-mail can score, and the rules cap one student per week.
+const SD_KINDS = { quiz: ["\u{1F9E0}", "Quiz"], idea: ["\u{1F4A1}", "Ideas"], answer: ["\u{1F64B}", "Answers"] };
+const SD_PROMPTS = ["Explain a hard concept from your subject with a real-life example.", "Share a low-cost project idea that solves a problem on your campus.", "Suggest a way to use AI to help students study better.", "Design a tool that helps first-year students settle in.", "Share a sustainability idea for your college.", "Turn something you learned this semester into a mini project idea."];
+function showdownScore(kind) {
+  try {
+    const slug = battleSlug(); if (!slug || !store || !store.showdownHit || !myVerified()) return;
+    const key = "dd-sd-" + weekKey() + kind, n = readJSON(key, 0), cap = kind === "idea" ? 5 : 20; if (n >= cap) return;
+    store.showdownHit(weekKey(), slug, kind).then(ok => { if (ok) writeJSON(key, n + 1); }).catch(() => {});
+  } catch (_) {}
+}
+function renderShowdown(kind) {
+  const mine = battleSlug(), daysLeft = 7 - ((dayNum() + 3) % 7), [icon, label] = SD_KINDS[kind];
+  const list = el("div", { class: "college-list" }, el("p", { class: "hint" }, "Loading the scoreboard…"));
+  const verified = myVerified(), prompt = SD_PROMPTS[Math.floor((dayNum() + 3) / 7) % SD_PROMPTS.length];
+  const load = () => {
+    list.replaceChildren(el("p", { class: "hint" }, "Loading the scoreboard…"));
+    (store && store.showdownBoard ? store.showdownBoard(weekKey(), kind) : Promise.reject(new Error("offline"))).then(rows => {
+      const data = rows.filter(r => Number.isInteger(r.n) && Number.isInteger(r.players) && r.players > 0).map(r => ({ ...r, ...collegeInfo(r.slug), avg: r.n / r.players }));
+      const ranked = data.filter(r => r.players >= 3).sort((a, b) => b.avg - a.avg || b.n - a.n), warm = data.filter(r => r.players < 3).sort((a, b) => b.n - a.n);
+      const row = (r, i, isRank) => el("div", { class: "campus-link col-row" + (r.slug === mine ? " sel" : "") }, el("span", { class: "col-badge", "aria-hidden": "true" }, isRank ? (["\u{1F947}", "\u{1F948}", "\u{1F949}"][i] || String(i + 1)) : "·"), el("span", { class: "col-text" }, el("strong", {}, r.name || r.slug), el("small", {}, r.n + " " + label.toLowerCase() + " · " + plural(r.players, "student") + " · " + r.avg.toFixed(1) + " each")));
+      list.replaceChildren(...(data.length ? [...ranked.slice(0, 20).map((r, i) => row(r, i, true)), ...(warm.length ? [el("small", { class: "hint" }, "Warming up (fewer than 3 students)")] : []), ...warm.slice(0, 10).map((r, i) => row(r, i, false))] : [el("p", { class: "hint" }, "No " + label.toLowerCase() + " on the board yet. Be the first for " + COLLEGE + ".")]));
+    }).catch(() => list.replaceChildren(el("p", { class: "hint" }, "Could not load the scoreboard. Check your connection and try again.")));
+  };
+  load();
+  return [
+    el("h3", {}, icon + " " + label + " showdown"),
+    el("p", { class: "hint" }, "This week: " + daysLeft + (daysLeft === 1 ? " day" : " days") + " left. " + (kind === "idea" ? "Each idea you share scores 1 for your college (up to 5 a week per student)." : "Each answer you give to a classmate's doubt scores 1 for your college (up to 20 a week per student).") + " Score = per student, so small colleges compete fairly. A college needs 3 students to be ranked."),
+    kind === "idea" ? el("div", { class: "learn-card" }, el("small", { class: "tag" }, "THIS WEEK'S INNOVATION PROMPT"), el("strong", {}, prompt), el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => { state.tab = "ideas"; state.mode = "ask"; render(); } }, "\u{1F4A1} Share my idea"))) : el("div", { class: "learn-card" }, el("small", { class: "tag" }, "HOW TO SCORE"), el("strong", {}, "Answer a classmate's doubt"), el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => showUnanswered() }, "\u{1F64B} See open doubts"))),
+    verified ? null : el("p", { class: "guide-safe" }, el("b", {}, "Verify your email to score: "), "Only students with a verified email can add points. This stops fake accounts from cheating. Open Profile to verify."),
+    list, el("button", { class: "btn sm", type: "button", onclick: load }, "↻ Refresh"),
+  ];
+}
 function renderBattle() {
   const mine = battleSlug(), daysLeft = 7 - ((dayNum() + 3) % 7);
   const list = el("div", { class: "college-list" }, el("p", { class: "hint" }, "Loading the scoreboard…")), top = el("div", {});
@@ -3406,8 +3450,11 @@ function renderBattle() {
   };
   const renderBattleInto = () => { list.replaceChildren(el("p", { class: "hint" }, "Loading the scoreboard…")); loadBattle().then(draw).catch(() => list.replaceChildren(el("p", { class: "hint" }, "Could not load the scoreboard. Check your internet and try again."))); };
   renderBattleInto();
+  const bs = state.bsTab || "quiz";
+  const bseg = el("div", { class: "ls-seg bs-seg", role: "tablist", style: "grid-template-columns:repeat(3,1fr)" }, ...Object.entries(SD_KINDS).map(([k, [ic, lb]]) => el("button", { type: "button", role: "tab", "aria-selected": String(bs === k), class: bs === k ? "on" : "", onclick: () => { state.bsTab = k; render(); } }, ic + " " + lb)));
+  if (bs !== "quiz") return [el("h2", {}, "\u2694\uFE0F College vs College"), bseg, ...renderShowdown(bs), el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back"))];
   return [
-    el("h2", {}, "⚔️ College vs College"),
+    el("h2", {}, "⚔️ College vs College"), bseg,
     el("p", { class: "hint" }, "This week: " + daysLeft + (daysLeft === 1 ? " day" : " days") + " left. Every right answer to the daily quiz or a quiz story scores for your college (up to 10 a day per student)."),
     top, list,
     el("p", { class: "hint" }, "Score = right answers per player, so small colleges compete fairly. A college needs 3 players to be ranked. The board restarts every Monday."),
@@ -7190,6 +7237,7 @@ function renderAsk(existing) {
       doc.pages = await trySavePages(newPages, id, pageIds);
       state[t.coll] = state[t.coll].map(x => x.id === id ? { ...x, pages: doc.pages } : x);
       await store.set(t.coll, id, doc);
+      if (state.tab === "ideas") showdownScore("idea");
       if (netTargets.length) {
         const copy = { title: doc.title, body: doc.body + (pageIds.length || readyFiles.length ? "\n\n(This doubt has a photo or file on the " + COLLEGE + " board.)" : ""), [t.field]: group, authorId: store.uid, authorName: doc.authorName, anonymous, urgent, createdAt: Date.now(), via: COLLEGE.slice(0, 80), viaSlug: SEL, viaOf: id, resolvedReplyId: null };
         if (doc.year) copy.year = doc.year; if (doc.tags) copy.tags = doc.tags;
@@ -7539,6 +7587,7 @@ function renderView() {
     try {
       doc.pages = await trySavePages(pages, id, pageIds);
       await store.set("replies", id, doc);
+      if (t.coll === "doubts" && d.authorId !== store.uid) showdownScore("answer");
     }
     catch (e2) { state.replies = state.replies.filter(x => x.id !== id); render(); showNotice(errText(e2)); }
   } },

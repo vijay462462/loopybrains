@@ -319,6 +319,45 @@ service cloud.firestore {
         && battleOk(request.resource.data, resource == null ? {'correct': 0, 'total': 0, 'players': 0} : resource.data);
       allow delete: if false;
     }
+    // Weekly Showdown (ideas and answers). Same idea as the quiz battle, with two extra locks: only a verified e-mail can score, and one student
+    // is capped per week (5 ideas, 20 answers). A student's counter and their college's counter must move together by exactly 1.
+    function showOk(after, before) {
+      let pid = after.week + '_' + request.auth.uid + '_' + after.kind;
+      let pExists = exists(/databases/$(database)/documents/showdownPlayers/$(pid));
+      let pb = pExists ? get(/databases/$(database)/documents/showdownPlayers/$(pid)).data : {'n': 0};
+      let pa = getAfter(/databases/$(database)/documents/showdownPlayers/$(pid)).data;
+      return pa.slug == after.slug && pa.week == after.week && pa.kind == after.kind
+        && after.n - before.n == pa.n - pb.n && after.n - before.n == 1
+        && after.players - before.players == (pExists ? 0 : 1);
+    }
+    match /showdownColleges/{id} {
+      allow read: if true;
+      allow create, update: if request.auth != null && request.auth.token.email_verified == true
+        && request.resource.data.keys().hasOnly(['week', 'slug', 'kind', 'n', 'players', 'updatedAt'])
+        && str(request.resource.data.week, 2, 12) && str(request.resource.data.slug, 2, 40) && request.resource.data.kind in ['idea', 'answer']
+        && request.resource.data.n is int && request.resource.data.players is int && recent(request.resource.data.updatedAt)
+        && id == request.resource.data.week + '_' + request.resource.data.slug + '_' + request.resource.data.kind
+        && (resource == null || (resource.data.week == request.resource.data.week && resource.data.slug == request.resource.data.slug && resource.data.kind == request.resource.data.kind))
+        && showOk(request.resource.data, resource == null ? {'n': 0, 'players': 0} : resource.data);
+      allow delete: if false;
+    }
+    match /showdownPlayers/{id} {
+      allow get: if request.auth != null && id.matches('.*_' + request.auth.uid + '_(idea|answer)');
+      allow list: if false;
+      allow create, update: if request.auth != null && request.auth.token.email_verified == true
+        && request.resource.data.keys().hasOnly(['week', 'uid', 'slug', 'kind', 'n', 'updatedAt'])
+        && request.resource.data.uid == request.auth.uid && request.resource.data.kind in ['idea', 'answer']
+        && str(request.resource.data.week, 2, 12) && str(request.resource.data.slug, 2, 40)
+        && id == request.resource.data.week + '_' + request.auth.uid + '_' + request.resource.data.kind
+        && request.resource.data.n is int && request.resource.data.n >= 1
+        && request.resource.data.n <= (request.resource.data.kind == 'idea' ? 5 : 20)
+        && recent(request.resource.data.updatedAt)
+        && (resource == null
+            ? request.resource.data.n == 1
+            : (resource.data.slug == request.resource.data.slug && resource.data.week == request.resource.data.week && resource.data.kind == request.resource.data.kind
+               && request.resource.data.n == resource.data.n + 1));
+      allow delete: if false;
+    }
     match /battlePlayers/{id} {
       allow get: if request.auth != null && id.matches('.*_' + request.auth.uid);
       allow list: if false;
