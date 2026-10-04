@@ -1081,7 +1081,7 @@ function attachPicker(list, max) {
   };
   draw();
   if (max <= 0) return null;
-  return el("div", { class: "attach" },
+  const wrap = el("div", { class: "attach" },
     el("div", { class: "rowbtns" },
       el("button", { type: "button", class: "btn sm", onclick: () => pick(true) }, "📷 Take photo"),
       MEDIA.gallery ? el("button", { type: "button", class: "btn sm", onclick: () => pick(false) }, "🖼 Upload image") : null,
@@ -1090,6 +1090,8 @@ function attachPicker(list, max) {
         openNotebook((u) => { list.push(u); draw(); });
       } }, "✍ Write on notebook")),
     thumbs, msg);
+  wrap._draw = draw;   // lets the answer helper add a picture and refresh the thumbnails
+  return wrap;
 }
 
 const FILE_ICONS = { pdf: "📄", doc: "📝", docx: "📝", ppt: "📊", pptx: "📊", xls: "📈", xlsx: "📈", zip: "🗜", rar: "🗜", mp4: "🎬", mp3: "🎵", txt: "📃", csv: "📋" };
@@ -8246,6 +8248,7 @@ function renderView() {
 
   if (state.tab === "doubts" && d.ansPrivate && !own && state.privAns.some(x => x.doubtId === d.id && x.ownerUid === (store && store.uid))) { const sent = state.privAns.find(x => x.doubtId === d.id && x.ownerUid === store.uid); out.push(el("div", { class: "learn-card" }, el("strong", {}, "\u{1F512} You sent your private answer"), el("p", { class: "hint" }, sent.rating === "best" ? "\u2B50 The asker picked it as the best answer. Thank you!" : sent.rating === "helpful" ? "\u{1F44D} The asker marked it helpful." : "The asker will pick the best answer. Helpful answers earn 2 points and the best answer earns 7.")));  return out; }
   const replyFiles = [];
+  const replyTa = el("textarea", { id: "f-reply", name: "reply", maxlength: "5000", placeholder: state.tab === "doubts" ? "Explain step by step. Show the working, not only the result." : "Add a thought, an improvement, or offer to help build it." });
   const form = el("form", { class: "form", onsubmit: async (e) => {
     e.preventDefault();
     const body = form.elements.reply.value.trim();
@@ -8281,8 +8284,9 @@ function renderView() {
     catch (e2) { state.replies = state.replies.filter(x => x.id !== id); render(); showNotice(errText(e2)); }
   } },
     el("label", { for: "f-reply", class: "label" }, t.replyLabel),
-    el("textarea", { id: "f-reply", name: "reply", maxlength: "5000", placeholder: state.tab === "doubts" ? "Explain step by step. Show the working, not only the result." : "Add a thought, an improvement, or offer to help build it." }),
+    replyTa,
     el("p", { class: "hint st-err", id: "f-reply-msg", role: "alert", hidden: true }),
+    isAcademicTab(state.tab) ? answerHelper(d, replyTa) : null,
     attachPicker(state.replyPages, MAX_PAGES),
     store.uploadFile ? filePicker(replyFiles) : null,
     state.tab === "doubts" && d.ansPrivate && !own ? el("p", { class: "hint" }, "\u{1F512} The asker chose private answers. Yours goes only to them.") : state.tab === "doubts" && d.ownerUid && !own ? el("label", { class: "check" }, el("input", { type: "checkbox", id: "f-reply-priv", checked: state.replyPriv, onchange: (e) => { state.replyPriv = e.target.checked; } }), "\u{1F512} Send as a private answer (only the asker sees it)") : null,
@@ -8292,6 +8296,92 @@ function renderView() {
   return out;
 }
 
+// Answer helper: while a student writes an answer, suggest pictures and diagrams (Wikimedia Commons), a quick fact (Wikipedia) and video searches for the same topic.
+// It starts only when the student taps the button, sends only topic words (never the name or account), reads public pages, and shows text with textContent only.
+const AH_STOP = new Set("the a an and or of to in on for with is are was were be been being how what why when where which who whom this that these those it its as at by from into than then so such can could should would will may might do does did done not no yes you your we our they their them me my he she his her use used using also very more most some any all each other one two get got make made like just about over under between because therefore thus hence explain clearly please tell sir".split(" "));
+const ahWords = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9\s-]/g, " ").split(/\s+/).filter(w => w.length > 2 && !AH_STOP.has(w));
+function ahQuery(title, typed) {
+  const freq = new Map(); for (const w of ahWords(typed)) freq.set(w, (freq.get(w) || 0) + 1);
+  const top = [...freq.entries()].sort((a, b) => b[1] - a[1] || b[0].length - a[0].length).slice(0, 3).map(x => x[0]);
+  return [...new Set([...ahWords(title).slice(0, 3), ...top])].slice(0, 5).join(" ");
+}
+const ahCache = new Map();
+async function ahLookup(q) {
+  if (ahCache.has(q)) return ahCache.get(q);
+  const [com, wik] = await Promise.all([
+    lsFetch("https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&gsrlimit=8&prop=imageinfo&iiprop=url|mime&iiurlwidth=360&format=json&origin=*&gsrsearch=" + encodeURIComponent(q + " diagram")).catch(() => null),
+    lsFetch("https://en.wikipedia.org/w/api.php?action=query&list=search&srlimit=1&format=json&origin=*&srsearch=" + encodeURIComponent(q)).then(async f => {
+      const hit = f && f.query && f.query.search && f.query.search[0]; if (!hit || typeof hit.title !== "string") return null;
+      const sm = await lsFetch("https://en.wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(hit.title.replace(/ /g, "_")));
+      const page = sm.content_urls && sm.content_urls.desktop && String(sm.content_urls.desktop.page || "").startsWith("https://en.wikipedia.org/") ? sm.content_urls.desktop.page : "";
+      return { title: String(sm.title || hit.title).slice(0, 120), text: String(sm.extract || "").slice(0, 420), page };
+    }).catch(() => null),
+  ]);
+  const imgs = [];
+  const pages = com && com.query && com.query.pages ? Object.values(com.query.pages).sort((a, b) => (a.index || 0) - (b.index || 0)) : [];
+  for (const pg of pages) {
+    const ii = pg.imageinfo && pg.imageinfo[0]; if (!ii || !/^image\/(png|jpeg|svg\+xml)$/.test(ii.mime || "")) continue;
+    const thumb = String(ii.thumburl || ""), page = String(ii.descriptionurl || "");
+    if (!thumb.startsWith("https://upload.wikimedia.org/") || !page.startsWith("https://commons.wikimedia.org/")) continue;
+    imgs.push({ title: String(pg.title || "File").replace(/^File:/, "").replace(/\.[A-Za-z0-9]{2,4}$/, "").replace(/[_<>]/g, " ").slice(0, 80), thumb, page });
+    if (imgs.length >= 4) break;
+  }
+  const out = { imgs, wiki: wik }; ahCache.set(q, out); return out;
+}
+function answerHelper(d, ta) {
+  const box = el("div", { class: "ahelp" }), body = el("div", { class: "ah-body", hidden: true });
+  let open = false, timer = 0, seq = 0, last = "";
+  const yt = (q) => "https://www.youtube.com/results?search_query=" + encodeURIComponent(q);
+  const status = el("p", { class: "hint ah-status", role: "status" }, "");
+  const fact = el("div", { class: "ah-fact", hidden: true }), imgsBox = el("div", { class: "ah-imgs" }), vids = el("div", { class: "rowbtns ah-vids" }), preview = el("div", { class: "ah-preview" });
+  const attach = async (it, btn) => {
+    const list = state.replyPages;
+    if (list.length >= MAX_PAGES) { status.textContent = "You can attach up to " + MAX_PAGES + " pictures. Remove one first."; return; }
+    btn.disabled = true; btn.textContent = "Adding...";
+    try {
+      const r = await fetch(it.thumb, { referrerPolicy: "no-referrer", credentials: "omit" }); if (!r.ok) throw new Error("bad");
+      const url = URL.createObjectURL(await r.blob());
+      try { list.push(await shrinkJpeg(url)); } finally { URL.revokeObjectURL(url); }
+      const credit = "\n\u{1F5BC} Picture: " + it.title + " (Wikimedia Commons) " + it.page;
+      if (!ta.value.includes(it.page)) ta.value = (ta.value + credit).slice(0, 5000);
+      const at = box.closest("form") && box.closest("form").querySelector(".attach"); if (at && at._draw) at._draw();
+      btn.textContent = "✓ Added";
+    } catch (_) { btn.disabled = false; btn.textContent = "Add to answer"; status.textContent = "Could not add that picture. Try another."; }
+  };
+  const drawImgs = (imgs) => imgsBox.replaceChildren(...imgs.map(it => el("div", { class: "ah-img" },
+    el("img", { src: it.thumb, alt: it.title, loading: "lazy", referrerpolicy: "no-referrer" }),
+    el("small", {}, it.title),
+    el("div", { class: "rowbtns" }, el("button", { type: "button", class: "btn sm primary", onclick: (e) => attach(it, e.currentTarget) }, "Add to answer"), outLink(it.page, "Open", "btn sm")))));
+  const drawVids = (q) => vids.replaceChildren(
+    outLink(yt(q + " explained"), "▶ Videos: " + q, "btn sm"),
+    outLink(lectureUrl(d.subject, q), "\u{1F393} NPTEL / IIT lecture", "btn sm"),
+    outLink(yt("Neso Academy " + q), "Neso Academy", "btn sm"),
+    outLink(yt("Khan Academy " + q), "Khan Academy", "btn sm"));
+  const drawPreview = () => { const c = renderYtCards(ta.value); preview.replaceChildren(...(c ? [el("small", { class: "hint" }, "Your answer will show this video:"), c] : [])); };
+  const run = async () => {
+    const q = ahQuery(d.title + " " + (d.body || ""), ta.value);
+    if (!q) { status.textContent = "Type a few words of your answer to get pictures and videos."; return; }
+    if (q === last) return; last = q; const me = ++seq;
+    status.textContent = "Looking for pictures and videos for: " + q + " ...";
+    drawVids(q);
+    try {
+      const r = await ahLookup(q); if (me !== seq) return;
+      drawImgs(r.imgs);
+      fact.hidden = !(r.wiki && r.wiki.text);
+      fact.replaceChildren(...(r.wiki && r.wiki.text ? [el("small", {}, "QUICK FACT (Wikipedia): " + r.wiki.title), el("p", {}, r.wiki.text), r.wiki.page ? outLink(r.wiki.page, "Read more", "btn sm") : null].filter(Boolean) : []));
+      status.textContent = r.imgs.length ? "Pictures for: " + q + ". Check each one is right before you add it." : "No picture found for: " + q + ". Try typing more of the topic words, or use the notebook.";
+    } catch (_) { if (me === seq) status.textContent = "Could not load pictures now. The video links still work."; }
+  };
+  const onType = () => { drawPreview(); if (!open) return; clearTimeout(timer); timer = setTimeout(run, 900); };
+  ta.addEventListener("input", onType);
+  const toggle = el("button", { type: "button", class: "btn sm ah-toggle", "aria-expanded": "false", onclick: () => {
+    open = !open; body.hidden = !open; toggle.setAttribute("aria-expanded", String(open));
+    toggle.textContent = open ? "\u{1F4A1} Hide answer helper" : "\u{1F4A1} Answer helper: pictures, diagrams and videos";
+    if (open) { last = ""; run(); }
+  } }, "\u{1F4A1} Answer helper: pictures, diagrams and videos");
+  body.append(status, fact, imgsBox, vids, el("p", { class: "hint" }, "Only topic words are searched. Your name is never sent. Pictures come from Wikimedia and are free to use with credit, which is added to your answer. Paste a YouTube link in your answer to show it as a video card."), preview);
+  box.append(toggle, body); return box;
+}
 async function toggleLike(d) {
   if (!store) return;
   const id = d.id + "_" + store.uid;
