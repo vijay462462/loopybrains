@@ -725,6 +725,11 @@ function scroll() { const m=document.getElementById('sb-msgs'); if(m) setTimeout
 //  CSS
 // ════════════════════════════════════════════════════════════
 window.sparkBotToggle = () => toggle();
+window.sparkBotAsk = (q) => {
+  if (!document.getElementById('sb-win')) build();
+  if (!isOpen) toggle();
+  if (q) { let n = 0; const go = () => { const i = document.getElementById('sb-in'); if (!i) return; if (busy && n++ < 40) return setTimeout(go, 250); i.value = q; send(); }; setTimeout(go, 380); }
+};
 function init() { build(); }
 if (document.readyState==='loading') document.addEventListener('DOMContentLoaded',init);
 else init();

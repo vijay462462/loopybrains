@@ -1385,10 +1385,33 @@ function bestStreakEver() {
 }
 const costumeUnlocked = (id) => { const c = COSTUMES.find(x => x[0] === id); return !!c && bestStreakEver() >= c[2]; };
 const equippedCostume = () => { const id = readJSON("dd-costume", "none"); return costumeUnlocked(id) ? id : "none"; };
+// Loopy comes alive: eyes follow your finger, a night mood, and a tap that opens the Loop Bot with a smart question.
+function loopyPrompt() {
+  const h = new Date().getHours(), plan = readJSON("dd-exam-plan", null), left = plan && plan.date ? Math.ceil((new Date(plan.date + "T00:00:00").getTime() - new Date().setHours(0, 0, 0, 0)) / 864e5) : null;
+  const pool = h >= 22 || h < 5 ? [["Too late to study? Ask me for a 10 minute revision plan", "Make me a 10 minute revision plan"]]
+    : [["Stuck on a topic? I can explain it simply", "Explain a tough topic to me simply"],
+       ["Want a quick quiz on your subject?", "Quiz me with 3 questions"],
+       ["Ask me for a study plan for this week", "Make me a study plan for this week"],
+       ["Need career or placement help? Ask me", "Guide me on career and placements"]];
+  if (left != null && left >= 0 && left <= 30) pool.unshift([left + " days to your exam. Want a plan?", "I have " + left + " days left for my exam. Make me a plan"]);
+  const pick = pool[dayNum() % pool.length]; return { label: pick[0], q: pick[1] };
+}
+function loopyTap(e) {
+  const b = e && e.currentTarget, svg = b && b.querySelector ? b.querySelector(".loopy-mini") : null;
+  if (svg) { svg.classList.remove("lp-hop"); void svg.getBoundingClientRect(); svg.classList.add("lp-hop"); }
+  try { confetti && confetti(); } catch (_) {}
+  if (window.sparkBotAsk) window.sparkBotAsk(loopyPrompt().q);;
+}
+document.addEventListener("pointermove", (e) => {
+  document.querySelectorAll(".hero-loopy .loopy-mini").forEach((s) => {
+    const r = s.getBoundingClientRect(), dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2), d = Math.hypot(dx, dy) || 1;
+    s.style.setProperty("--ex", (dx / d * 1.6).toFixed(2) + "px"); s.style.setProperty("--ey", (dy / d * 1.2).toFixed(2) + "px");
+  });
+}, { passive: true });
 function loopyMini(costume) {
   const NS = "http://www.w3.org/2000/svg", mk = (t, at) => { const n = document.createElementNS(NS, t); for (const k in at) n.setAttribute(k, at[k]); return n; };
   const id = costume || equippedCostume();
-  const svg = mk("svg", { viewBox: "0 0 60 60", width: "46", height: "46", class: "loopy-mini", "aria-hidden": "true" });
+  const svg = mk("svg", { viewBox: "0 0 60 60", width: "46", height: "46", class: "loopy-mini" + ((new Date().getHours() >= 23 || new Date().getHours() < 5) ? " lp-sleepy" : ""), "aria-hidden": "true" });
   svg.append(mk("line", { x1: 30, y1: 6, x2: 30, y2: 12, stroke: "#c4b5fd", "stroke-width": 3, "stroke-linecap": "round" }), mk("circle", { cx: 30, cy: 5, r: 3.5, fill: "#fde047" }),
     mk("rect", { x: 8, y: 12, width: 44, height: 38, rx: 15, fill: "#fff", stroke: "#a78bfa", "stroke-width": 2.5 }), mk("rect", { x: 13, y: 18, width: 34, height: 25, rx: 11, fill: "#1e1757" }),
     mk("ellipse", { cx: 23, cy: 28, rx: 3.4, ry: 4.6, fill: "#67e8f9", class: "lp-eyes" }), mk("ellipse", { cx: 37, cy: 28, rx: 3.4, ry: 4.6, fill: "#67e8f9", class: "lp-eyes" }), mk("path", { d: "M25 36q5 4.5 10 0", fill: "none", stroke: "#fde68a", "stroke-width": 2.4, "stroke-linecap": "round" }));
@@ -1573,8 +1596,9 @@ function renderToday() {
   const stat = (num, label, cls, fn) => el("button", { class: "today-stat " + (cls || ""), type: "button", onclick: fn }, el("b", {}, String(num)), el("span", {}, label));
   const pts = typeof weekPoints === "function" ? weekPoints() : 0;
   const lb = launchBanner(name);
-  bar.replaceChildren(lb, lb ? null : el("div", { class: "today-hero" }, NO_COLLEGE ? null : el("div", { class: "hero-crest" }, crestEl(54)), el("div", { class: "hero-loopy" }, loopyMini()),
+  bar.replaceChildren(lb, lb ? null : el("div", { class: "today-hero" }, NO_COLLEGE ? null : el("div", { class: "hero-crest" }, crestEl(54)), el("button", { class: "hero-loopy", type: "button", "aria-label": "Chat with Loopy", onclick: loopyTap }, loopyMini()),
     el("div", { class: "hero-text" }, el("small", { class: "hero-kicker" }, "✨ " + COLLEGE), el("strong", { class: "today-hello" }, hello + (name ? ", " + name : "") + " 👋"), el("small", { class: "today-words" }, WORDS[dayNum() % WORDS.length])),
+    el("button", { class: "hero-say", type: "button", onclick: loopyTap }, el("span", { class: "hero-say-dot" }), el("span", {}, loopyPrompt().label), el("b", {}, "Ask Loopy \u203A")),
     el("button", { class: "hero-ask", type: "button", onclick: () => { const b = $("askBtn"); if (b) b.click(); } }, "❓ Ask a doubt")),
     (() => { if (newbie) return null; const t = loopyTip(), st = readJSON("dd-tip", {}); if (st.gone && st.day === dayStr()) return null;
       return el("div", { class: "today-tip" }, el("small", {}, "💡 Loopy\u2019s tip for today"), el("p", {}, t.text), el("div", { class: "rowbtns" }, t.cta ? el("button", { class: "btn sm primary", type: "button", onclick: t.cta[1] }, t.cta[0]) : null, el("button", { class: "btn sm", type: "button", onclick: () => { writeJSON("dd-tip", { ...readJSON("dd-tip", {}), day: dayStr(), gone: true }); todayKey = ""; renderToday(); } }, "Got it"))); })(),
