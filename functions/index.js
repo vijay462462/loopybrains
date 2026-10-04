@@ -146,6 +146,13 @@ const AI_SYSTEM = "You are The Campus Loop's study helper for Indian college stu
   "exam and placement preparation, coding doubts, study plans, and interview practice. If asked about anything else, politely say you can only help with studies. " +
   "Be accurate and concise (under 250 words unless a derivation needs more). Show steps for calculations. If you are not sure, say so instead of guessing. " +
   "Never help with cheating on an exam in progress, and never write abusive or adult content. Use plain text, no markdown tables.";
+// Search mode: the app sends a topic and gets back a structured study card (summary, key points, search phrases for the best videos, diagrams and PDFs).
+const AI_SEARCH_SYSTEM = "You are Loopy AI, the study search engine of The Campus Loop for Indian college students. Given a topic, reply with ONLY a JSON object, no other text, with these keys: " +
+  "\"summary\" (plain text, 60 to 110 words, accurate and simple), \"keyPoints\" (3 to 6 short strings), \"example\" (one short worked example or analogy), " +
+  "\"videoQueries\" (3 to 5 short YouTube search phrases for the best lectures, prefer NPTEL, IIT, MIT OCW and well known teachers), " +
+  "\"diagramQueries\" (2 or 3 short image search phrases), \"pdfQueries\" (2 or 3 short phrases for lecture notes or previous papers), \"related\" (3 to 5 related topic names). " +
+  "Only academic topics. If the topic is not academic, return {\"summary\":\"Loopy AI only searches study topics.\",\"keyPoints\":[],\"example\":\"\",\"videoQueries\":[],\"diagramQueries\":[],\"pdfQueries\":[],\"related\":[]}. If unsure, say so in the summary instead of guessing.";
+const strList = (a, n, len) => (Array.isArray(a) ? a : []).filter(x => typeof x === "string" && x.trim()).slice(0, n).map(x => x.replace(/[\u0000-\u001F<>]/g, " ").trim().slice(0, len));
 exports.askAI = onRequest({ secrets: [ANTHROPIC_KEY], cors: ALLOWED_ORIGINS, region: "asia-south1", timeoutSeconds: 60, memory: "256MiB", maxInstances: 5 }, async (req, res) => {
   try {
     if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
@@ -163,7 +170,11 @@ exports.askAI = onRequest({ secrets: [ANTHROPIC_KEY], cors: ALLOWED_ORIGINS, reg
       }
     }
     if (!paid && !(adm.exists && user.email_verified === true)) return res.status(403).json({ error: "The AI helper is part of The Campus Loop Plus." });
-    const raw = Array.isArray((req.body || {}).messages) ? req.body.messages.slice(-8) : [];
+    const searchMode = (req.body || {}).mode === "search";
+    const topic = searchMode ? String((req.body || {}).query || "").replace(/[\u0000-\u001F<>]/g, " ").replace(/\s+/g, " ").trim().slice(0, 80) : "";
+    if (searchMode && topic.length < 2) return res.status(400).json({ error: "Type a topic first." });
+    const level = ["quick", "deep", "exam"].includes((req.body || {}).level) ? req.body.level : "quick";
+    const raw = searchMode ? [{ role: "user", content: "Topic: " + topic + "\nLevel: " + level }] : (Array.isArray((req.body || {}).messages) ? req.body.messages.slice(-8) : []);
     const messages = raw.filter(x => x && (x.role === "user" || x.role === "assistant") && typeof x.content === "string" && x.content.trim())
       .map(x => ({ role: x.role, content: x.content.trim().slice(0, 1500) }));
     while (messages.length && messages[0].role !== "user") messages.shift();
@@ -179,11 +190,18 @@ exports.askAI = onRequest({ secrets: [ANTHROPIC_KEY], cors: ALLOWED_ORIGINS, reg
     const r = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "content-type": "application/json", "x-api-key": ANTHROPIC_KEY.value(), "anthropic-version": "2023-06-01" },
-      body: JSON.stringify({ model: AI_MODEL, max_tokens: 700, system: AI_SYSTEM, messages }),
+      body: JSON.stringify({ model: AI_MODEL, max_tokens: searchMode ? 1000 : 700, system: searchMode ? AI_SEARCH_SYSTEM : AI_SYSTEM, messages }),
     });
     if (!r.ok) { console.error("askAI upstream", r.status, (await r.text()).slice(0, 300)); return res.status(502).json({ error: "The AI helper is busy. Please try again in a minute." }); }
     const data = await r.json();
     const reply = ((data.content || []).filter(b => b.type === "text").map(b => b.text).join("\n") || "").trim().slice(0, 4000);
+    if (searchMode) {
+      let o = {}; try { const j = reply.slice(reply.indexOf("{"), reply.lastIndexOf("}") + 1); o = JSON.parse(j); } catch (_) {}
+      const card = { summary: String(o.summary || "").replace(/[\u0000-\u001F<>]/g, " ").trim().slice(0, 900), keyPoints: strList(o.keyPoints, 6, 160), example: String(o.example || "").replace(/[\u0000-\u001F<>]/g, " ").trim().slice(0, 400),
+        videoQueries: strList(o.videoQueries, 5, 80), diagramQueries: strList(o.diagramQueries, 3, 80), pdfQueries: strList(o.pdfQueries, 3, 80), related: strList(o.related, 5, 60) };
+      if (!card.summary) return res.status(502).json({ error: "Loopy AI could not answer that. Try rephrasing." });
+      return res.json({ search: card, left: AI_DAILY_LIMIT - used });
+    }
     return res.json({ reply: reply || "Sorry, I could not answer that. Try rephrasing.", left: AI_DAILY_LIMIT - used });
   } catch (e) {
     console.error("askAI", e);

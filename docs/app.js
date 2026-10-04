@@ -3736,7 +3736,17 @@ const lsFetch = async (url) => {
   try { const r = await fetch(url, { signal: ctl.signal, referrerPolicy: "no-referrer", credentials: "omit" }); if (!r.ok) throw new Error("bad"); return await r.json(); } finally { clearTimeout(t); }
 };
 async function lsRun(q) {
-  const ls = state.ls; ls.q = q; ls.err = ""; ls.res = null; ls.busy = true; render();
+  const ls = state.ls; ls.q = q; ls.err = ""; ls.res = null; ls.ai = null; ls.aiNote = ""; ls.busy = true; render();
+  const aiOn = !!PLUS.functionsUrl && !!store && !!store.idToken && !plusLocked();
+  const aiTask = aiOn ? (async () => {
+    try {
+      const tok = await store.idToken(); if (!tok) throw new Error("Sign in to use Loopy AI answers.");
+      const r = await fetch(PLUS.functionsUrl.replace(/\/$/, "") + "/askAI", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + tok }, body: JSON.stringify({ mode: "search", query: q, level: ls.level }) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok || !d.search) throw new Error(d.error || "Loopy AI is busy. Try again.");
+      ls.ai = d.search; ls.aiLeft = typeof d.left === "number" ? d.left : null;
+    } catch (e) { ls.aiNote = (e && e.message) || "Loopy AI could not answer."; }
+  })() : Promise.resolve();
   try {
     const found = await lsFetch("https://en.wikipedia.org/w/api.php?action=query&list=search&srlimit=1&format=json&origin=*&srsearch=" + encodeURIComponent(q));
     const hit = found && found.query && found.query.search && found.query.search[0];
@@ -3747,12 +3757,25 @@ async function lsRun(q) {
       ls.res = { title: String(sm.title || hit.title).slice(0, 120), text: String(sm.extract || "").slice(0, 900), img, page };
     } else ls.res = { title: q, text: "", img: "", page: "" };
   } catch (_) { ls.res = { title: q, text: "", img: "", page: "" }; ls.err = "The quick answer could not load. The links below still work."; }
+  await aiTask;
   ls.busy = false; render();
-  try { bump && bump("search", 1); } catch (_) {}
+  try { bump("search", 1); } catch (_) {}
 }
 function openLoopySearch(q, back) {
   state.ls = Object.assign(state.ls || { level: "quick", q: "", res: null, busy: false, err: "" }, { q: lsClean(q), back: back || "plus" });
   showPanel("loopysearch"); if (state.ls.q) lsRun(state.ls.q);
+}
+function lsAiCard(ls) {
+  const a = ls.ai, yt = (t) => "https://www.youtube.com/results?search_query=" + encodeURIComponent(t), gg = (t, img) => "https://www.google.com/search?" + (img ? "tbm=isch&" : "") + "q=" + encodeURIComponent(t);
+  return el("div", { class: "learn-card ls-card ls-ai" },
+    el("small", { class: "tag" }, "\u2728 Loopy AI"),
+    el("p", {}, a.summary),
+    a.keyPoints.length ? el("ul", { class: "ls-points" }, ...a.keyPoints.map(k => el("li", {}, k))) : null,
+    a.example ? el("p", { class: "hint" }, el("b", {}, "Example: "), a.example) : null,
+    a.videoQueries.length ? el("div", { class: "rowbtns" }, ...a.videoQueries.map(t => outLink(yt(t), "\u25B6 " + t, "btn sm"))) : null,
+    a.diagramQueries.length || a.pdfQueries.length ? el("div", { class: "rowbtns" }, ...a.diagramQueries.map(t => outLink(gg(t, true), "\u{1F5BC} " + t, "btn sm")), ...a.pdfQueries.map(t => outLink(gg(t + " filetype:pdf"), "\u{1F4C4} " + t, "btn sm"))) : null,
+    a.related.length ? el("div", { class: "rowbtns" }, el("small", { class: "hint" }, "Related:"), ...a.related.map(t => el("button", { class: "linkbtn", type: "button", onclick: () => lsRun(lsClean(t)) }, t))) : null,
+    el("p", { class: "hint" }, "AI answers can contain mistakes. Check important facts with your book or teacher." + (ls.aiLeft != null ? " " + ls.aiLeft + " AI questions left today." : "")));
 }
 function renderLoopySearch() {
   const ls = state.ls || (state.ls = { level: "quick", q: "", res: null, busy: false, err: "" });
@@ -3769,6 +3792,9 @@ function renderLoopySearch() {
     el("div", { class: "ls-bar" }, input, el("button", { class: "btn primary", type: "button", disabled: ls.busy ? "" : null, onclick: go }, ls.busy ? "Searching…" : "Search")),
     el("div", { class: "rowbtns", role: "group", "aria-label": "How deep" }, ...Object.entries(LS_LEVELS).map(([k, v]) => el("button", { class: "btn sm" + (ls.level === k ? " primary" : ""), type: "button", "aria-pressed": String(ls.level === k), onclick: () => { ls.level = k; render(); } }, v[0]))),
     !q ? el("p", { class: "hint" }, "Tip: search a unit topic from your syllabus, for example Moment generating function.") : null,
+    q && ls.ai ? lsAiCard(ls) : null,
+    q && !ls.ai && PLUS.functionsUrl ? el("p", { class: "hint", role: "status" }, ls.aiNote || "Loopy AI answers appear here for Plus members.") : null,
+    q && !PLUS.functionsUrl ? el("p", { class: "hint" }, "Loopy AI answers switch on soon. The quick answer and links below work now.") : null,
     q && r ? el("div", { class: "learn-card ls-card" },
       r.img ? el("img", { class: "ls-img", src: r.img, alt: r.title, loading: "lazy", referrerpolicy: "no-referrer" }) : null,
       el("strong", {}, r.title),
