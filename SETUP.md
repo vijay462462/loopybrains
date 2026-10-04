@@ -93,7 +93,7 @@ Students can tap **Profile > Verify your college email**. A sign-in link is emai
 
 One-time setup in the Firebase console:
 1. Authentication > Sign-in method > **Email/Password** > switch on, then also switch on **Email link (passwordless sign-in)** and Save.
-2. Authentication > Settings > **Authorized domains** > add your website domain (for example `vijay462462.github.io`, or your own domain later).
+2. Authentication > Settings > **Authorized domains** > add your website domain (`vijay462462.github.io`, `thecampusloop.co.in` and `www.thecampusloop.co.in`).
 3. Publish the updated `firestore.rules`.
 
 Per-college fields in `colleges/<slug>` (all optional):

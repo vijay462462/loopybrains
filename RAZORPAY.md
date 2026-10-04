@@ -16,7 +16,7 @@ The payment code is already written (`functions/index.js`: `createPaymentLink`, 
 2. On a computer with Node 20: `npm i -g firebase-tools`, `firebase login`, `git clone https://github.com/vijay462462/rgukt-spark`, `cd rgukt-spark`, `firebase use doubt-desk-e6f39`.
 3. `cd functions && npm install && cd ..`
 4. Secrets (paste when asked): `firebase functions:secrets:set RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET` (make up a long random text), and for the AI helper `ANTHROPIC_API_KEY`, for e-mail `SMTP_USER`, `SMTP_PASS`.
-5. `firebase deploy --only functions` (enter `SITE_URL` = `https://vijay462462.github.io/rgukt-spark/`). It prints the function URLs; they look like `https://asia-south1-doubt-desk-e6f39.cloudfunctions.net/...`.
+5. `firebase deploy --only functions` (enter `SITE_URL` = `https://thecampusloop.co.in/`). It prints the function URLs; they look like `https://asia-south1-doubt-desk-e6f39.cloudfunctions.net/...`.
 6. Publish `firestore.rules` (Firestore › Rules).
 
 ## 4. Webhook
