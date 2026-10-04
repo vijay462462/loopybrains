@@ -6980,9 +6980,8 @@ function renderView() {
     if (hasBadWords(body)) { showNotice(LANGUAGE_MSG); return; }
     if (isAcademicTab(state.tab)) { const prob = academicProblem("answer", body, pages.length > 0 || replyFiles.some(f => f.url)); if (prob) { const m = $("f-reply-msg"); if (m) { m.textContent = prob; m.hidden = false; } else showNotice(prob); return; } }
     if (replyFiles.some(f => f.pct !== undefined)) { showNotice("Please wait for uploads to finish."); return; }
-    const wait = spamCheck();
+    const wait = postingBlocked();   // answers have no daily or hourly limit; only blocked or paused students are stopped
     if (wait) { showNotice(wait); return; }
-    notePosted();
     const id = store.newId("replies");
     const pageIds = pages.map(u => { const pid = store.newId("pages"); pageCache.set(pid, u); return pid; });
     const anonymous = state.replyAnon;
