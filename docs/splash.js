@@ -21,7 +21,7 @@
   var i = 0, typer = setInterval(function () { if (!bubble) { clearInterval(typer); return; } i += 2; bubble.textContent = say.slice(0, i); if (i >= say.length) clearInterval(typer); }, 28);
   el.setAttribute("data-live", "1");                    // JS is running: switch off the CSS safety timer
   var done = false;
-  function close() { if (done) return; done = true; clearInterval(typer); el.classList.add("splash-out"); setTimeout(function () { if (el.parentNode) el.remove(); }, 450); }
+  function close() { if (done) return; done = true; clearInterval(typer); try { document.dispatchEvent(new Event("splash-closed")); } catch (e) {} el.classList.add("splash-out"); setTimeout(function () { if (el.parentNode) el.remove(); }, 450); }
   var go = document.getElementById("splashGo"); if (go) go.addEventListener("click", close);
   if (!first) el.addEventListener("click", close);      // returning students: tap anywhere
   document.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === "Escape") close(); });

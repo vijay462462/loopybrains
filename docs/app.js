@@ -1284,12 +1284,21 @@ function showWelcome(force) {
   document.addEventListener("keydown", onKey); paint(); document.body.append(box);
 }
 function maybeWelcome() {
+  if (NO_COLLEGE) return;
+  // welcomeEveryVisit (config.js): show the About + welcome steps after the opening screen on every visit (handy for testing). Set it to false before launch.
+  const every = !!(window.DOUBT_DESK_CONFIG && window.DOUBT_DESK_CONFIG.welcomeEveryVisit);
+  if (every) {
+    const go = () => { try { if (sessionStorage.getItem("dd-ob-shown")) return; sessionStorage.setItem("dd-ob-shown", "1"); } catch (_) {} setTimeout(showWelcome, 250); };
+    if (document.getElementById("splash")) document.addEventListener("splash-closed", go, { once: true }); else go();
+    return;
+  }
   try {
-    if (localStorage.getItem("dd-welcome-done") || NO_COLLEGE) return;
+    if (localStorage.getItem("dd-welcome-done")) return;
     // people who already used the app before this welcome existed do not need it
     if (["dd-name", "dd-avatar", "dd-post-times", "dd-seen"].some(k => localStorage.getItem(k) !== null)) { localStorage.setItem("dd-welcome-done", "1"); return; }
   } catch (_) { return; }
-  setTimeout(showWelcome, 700);
+  const go2 = () => setTimeout(showWelcome, 250);
+  if (document.getElementById("splash")) document.addEventListener("splash-closed", go2, { once: true }); else go2();
 }
 // Doubts nobody has answered yet (not mine, last 14 days): the Today card nudges helpers to answer them, which keeps the board alive.
 const unansweredDoubts = () => { const mine = store ? allMyIds() : new Set(), since = Date.now() - 14 * 864e5; return state.doubts.filter(d => !d.deleted && !isHidden(d) && (d.createdAt || 0) > since && !mine.has(d.authorId) && !d.resolvedReplyId && !repliesFor(d.id).length); };

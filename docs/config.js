@@ -10,6 +10,9 @@ window.DOUBT_DESK_CONFIG = {
     offer: { label: "Founding student offer", yearly: 299, until: "2026-12-31" },
     trialDays: 7 },
 
+  // true = show the About and welcome steps after the opening screen on EVERY visit (good for testing). Set to false before launch.
+  welcomeEveryVisit: true,
+
   // Shown on the About screen when someone joins. Fill these in: they build trust. Leave a value empty to hide it.
   about: { founder: "", college: "", email: "" },
 
