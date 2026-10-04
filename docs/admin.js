@@ -1,4 +1,4 @@
-// CampusLoop admin dashboard. Opens only for signed-in users whose auth id has a document in the `admins` collection;
+// The Campus Loop admin dashboard. Opens only for signed-in users whose auth id has a document in the `admins` collection;
 // the Firestore security rules decide what an admin may do, this page only shows the buttons.
 const CFG = window.DOUBT_DESK_CONFIG || {};
 const FB_VERSION = "10.12.2";
@@ -59,7 +59,7 @@ async function finishLink() {
 }
 function loginView(note) {
   const email = h("input", { type: "email", placeholder: "your email", autocomplete: "email", "aria-label": "Email" }), msg = h("p", { class: "msg" }, note || "");
-  return h("div", { class: "card" }, h("h2", {}, "CampusLoop admin"), h("p", { class: "adm-hint" }, "Sign in with your email. We send you a link; open it on this device."), email,
+  return h("div", { class: "card" }, h("h2", {}, "The Campus Loop admin"), h("p", { class: "adm-hint" }, "Sign in with your email. We send you a link; open it on this device."), email,
     h("div", { class: "row" }, h("button", { class: "b pri", onclick: async (e) => {
       const v = email.value.trim().toLowerCase(); if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) { msg.textContent = "Type a valid email."; return; }
       e.currentTarget.disabled = true; msg.textContent = "Sending…";
@@ -254,7 +254,7 @@ function collegesView() {
     const d = c.doc || {}, isDir = DIR.some(x => x.slug === c.slug), msg = h("p", { class: "msg" });
     const f = {
       slug: h("input", { value: c.slug || "", disabled: !!c.slug && c.slug !== "(new)" ? true : false, placeholder: "link-name (lowercase, digits, dashes)" }),
-      name: h("input", { value: d.name || c.name || "" }), title: h("input", { value: d.title || "", placeholder: "Header title (default: CampusLoop)" }), tagline: h("input", { value: d.tagline || "" }),
+      name: h("input", { value: d.name || c.name || "" }), title: h("input", { value: d.title || "", placeholder: "Header title (default: The Campus Loop)" }), tagline: h("input", { value: d.tagline || "" }),
       state: h("input", { value: d.state || c.state || "" }), city: h("input", { value: d.city || c.city || "" }),
       campuses: h("textarea", { value: (d.campuses || []).join(", ") }), subjects: h("textarea", { value: (d.subjects || []).join(", ") }), clubs: h("textarea", { value: (d.clubs || []).join(", ") }),
       ideaCategories: h("textarea", { value: (d.ideaCategories || []).join(", ") }), domains: h("input", { value: (d.domains || []).join(", "), placeholder: "college.edu.in" }),
@@ -475,7 +475,7 @@ function reportView() {
     const totalPosts = POSTS.reduce((n, [c]) => n + rows[c][0], 0), prevPosts = POSTS.reduce((n, [c]) => n + rows[c][1], 0);
     const tile = (label, v, d) => h("div", { class: "stat" }, h("b", {}, String(v)), h("span", {}, label + (d == null ? "" : " · " + arrow(d))));
     const name = S.room ? S.room.name : "College", from = new Date(t0).toLocaleDateString(), to = new Date(now).toLocaleDateString();
-    const summary = name + " on CampusLoop, " + from + " to " + to + ":\n- " + active.size + " active students (of " + profiles + " with a profile)\n- " + totalPosts + " new posts (" + arrow(delta(totalPosts, prevPosts)) + " vs last week) and " + rows.replies[0] + " replies\n- " + doubts.length + " doubts asked, " + doubtsAnswered + " answered" + (doubts.length ? " (" + Math.round(doubtsAnswered * 100 / doubts.length) + "%)" : "") + "\n- " + rows.stories[0] + " stories shared\n- Top subjects: " + (top.map(t => t[0] + " (" + t[1] + ")").join(", ") || "none yet") + "\n- " + flagged + " items reported or hidden by moderators" + (all.length >= 1000 ? "\n(Large board: counts of students are from the latest 1000 posts per section.)" : "");
+    const summary = name + " on The Campus Loop, " + from + " to " + to + ":\n- " + active.size + " active students (of " + profiles + " with a profile)\n- " + totalPosts + " new posts (" + arrow(delta(totalPosts, prevPosts)) + " vs last week) and " + rows.replies[0] + " replies\n- " + doubts.length + " doubts asked, " + doubtsAnswered + " answered" + (doubts.length ? " (" + Math.round(doubtsAnswered * 100 / doubts.length) + "%)" : "") + "\n- " + rows.stories[0] + " stories shared\n- Top subjects: " + (top.map(t => t[0] + " (" + t[1] + ")").join(", ") || "none yet") + "\n- " + flagged + " items reported or hidden by moderators" + (all.length >= 1000 ? "\n(Large board: counts of students are from the latest 1000 posts per section.)" : "");
     const max = Math.max(1, ...top.map(t => t[1]));
     out.replaceChildren(
       h("div", { class: "card report" }, h("h3", {}, name + " · weekly report"), h("p", { class: "adm-hint" }, from + " to " + to + ", compared with the 7 days before."),
@@ -702,7 +702,7 @@ function draw() {
   const pickerBox = needs ? roomPicker(() => draw()) : null;
   const body = h("div", {});
   root.replaceChildren(
-    h("div", { class: "adm-head" }, h("h1", {}, S.staffOnly ? "Welcome, respected staff" : "CampusLoop admin"), h("small", {}, (S.staffOnly ? "Thank you for serving your college. " : "") + (u.email || "")), h("button", { class: "b sm", onclick: async () => { await au.signOut(auth); location.reload(); } }, "Sign out")),
+    h("div", { class: "adm-head" }, h("h1", {}, S.staffOnly ? "Welcome, respected staff" : "The Campus Loop admin"), h("small", {}, (S.staffOnly ? "Thank you for serving your college. " : "") + (u.email || "")), h("button", { class: "b sm", onclick: async () => { await au.signOut(auth); location.reload(); } }, "Sign out")),
     tabs, pickerBox, body);
   if (needs) { if (S.room) body.append(VIEWS[S.tab]()); else body.append(h("p", { class: "adm-hint" }, "Choose a college above first.")); }
   else body.append(VIEWS[S.tab]());

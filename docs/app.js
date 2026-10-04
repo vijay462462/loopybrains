@@ -39,8 +39,8 @@ function pickCollege() {
 try { const r = new URLSearchParams(location.search).get("ref"); if (r && /^[A-Za-z0-9_-]{10}$/.test(r) && !localStorage.getItem("dd-ref")) localStorage.setItem("dd-ref", r); } catch (_) {}
 try { const g = new URLSearchParams(location.search).get("gift"); if (g && /^[A-HJ-NP-Z2-9]{12}$/i.test(g)) localStorage.setItem("dd-gift", g.toUpperCase()); } catch (_) {}
 const SEL = pickCollege(), NO_COLLEGE = SEL === "", IS_RGUKT = SEL === "rgukt";
-const BRAND = BASE_CFG.brand || "CampusLoop";
-// CampusLoop Plus (optional paid plan). enabled:false = free early access and a waitlist; see PREMIUM.md to go live.
+const BRAND = BASE_CFG.brand || "The Campus Loop";
+// The Campus Loop Plus (optional paid plan). enabled:false = free early access and a waitlist; see PREMIUM.md to go live.
 const PLUS = { enabled: false, monthly: 49, yearly: 399, functionsUrl: "", ...(BASE_CFG.plus || {}) };
 function cleanTenant(raw, slug) {
   if (!raw || typeof raw !== "object" || raw.enabled === false) return null;
@@ -1339,7 +1339,7 @@ function showWelcome(force, startId) {
       const inp = el("input", { type: "text", maxlength: "30", placeholder: "Your first name", "aria-label": "Your name", autocomplete: "given-name", value: nameVal });
       inp.addEventListener("input", () => { nameVal = inp.value; });
       inp.addEventListener("keydown", (e) => { if (e.key === "Enter") go(1); });
-      body = [el("div", { class: "ob-loopy" }, loopyMini()), el("h2", {}, "Welcome to the " + BRAND + " family"), el("p", { class: "ob-say" }, "Hi, I\u2019m Loopy \u{1F916}. Ask boldly, answer together, and grow with your whole campus. What should I call you?"), inp];
+      body = [el("div", { class: "ob-loopy" }, loopyMini()), el("h2", {}, "Welcome to " + BRAND + " family"), el("p", { class: "ob-say" }, "Hi, I\u2019m Loopy \u{1F916}. Ask boldly, answer together, and grow with your whole campus. What should I call you?"), inp];
     } else if (sid === "interests") {
       body = [el("div", { class: "ob-loopy" }, loopyMini()), el("h2", {}, (who ? "Nice to meet you, " + who : "Nice to meet you") + "! \u{1F44B}"), el("p", { class: "ob-say" }, "What brings you here? Pick any. I will tailor your home screen."),
         el("div", { class: "ob-chips" }, ...INTERESTS.map(([ic, t, k]) => el("button", { class: "ob-chip" + (picked.has(k) ? " on" : ""), type: "button", "aria-pressed": String(picked.has(k)), onclick: (e) => { if (picked.has(k)) picked.delete(k); else picked.add(k); e.currentTarget.classList.toggle("on", picked.has(k)); e.currentTarget.setAttribute("aria-pressed", String(picked.has(k))); } }, ic + " " + t)))];
@@ -1613,7 +1613,7 @@ function renderToday() {
   const note = state.welcomeNote && readJSON("dd-note-gone", 0) !== state.welcomeNote.updatedAt ? state.welcomeNote : null;
   const key = [hello, name, streak, quizDone, left, equippedCostume(), storyGroups().length, readJSON("dd-launch", false) ? 1 : 0, readJSON("dd-launch-gone", false) ? 1 : 0, state.dataReady ? 1 : 0, boxToday() ? 1 : 0, questSteps().filter(s => s[2]).length, state.replies.length, state.doubts.length, readJSON("dd-tip", {}).gone ? 1 : 0, mistakeList().length, state.weekly.length, dayNum(), (typeof weekPoints === "function" ? weekPoints() : 0), note ? note.updatedAt : 0, openDrives().length, upcomingEvents().length, unansweredDoubts().length].join("|"); if (key === todayKey && !bar.hidden) return; todayKey = key;
   const chip = (txt, cls, fn) => el("button", { class: "today-chip " + (cls || ""), type: "button", onclick: fn }, txt);
-  const WORDS = ["Welcome to the " + BRAND + " family 💙", "Respect your teachers, help your juniors. 🙏", "Every question is welcome here.", "Kind words build a strong campus. 🌱", "Thank you for being part of our family.", "Learn together, grow together. 🚀", "Our teachers and staff work hard for you. Say thank you today. 🙏"];
+  const WORDS = ["Welcome to " + BRAND + " family 💙", "Respect your teachers, help your juniors. 🙏", "Every question is welcome here.", "Kind words build a strong campus. 🌱", "Thank you for being part of our family.", "Learn together, grow together. 🚀", "Our teachers and staff work hard for you. Say thank you today. 🙏"];
   const newbie = !readJSON("dd-quest-done", false) && (readJSON("dd-visits", { n: 1 }).n || 1) <= 21 && questSteps().filter(s => s[2]).length < 3;
   const stat = (num, label, cls, fn) => el("button", { class: "today-stat " + (cls || ""), type: "button", onclick: fn }, el("b", {}, String(num)), el("span", {}, label));
   const pts = typeof weekPoints === "function" ? weekPoints() : 0;
@@ -1701,7 +1701,7 @@ const EXPLORE = [
   ["Study", [["quizBtn", "🧠", "Daily Quiz"], ["labBtn", "🧪", "Study Lab"], ["studyBtn", "📖", "Study Tools"], ["learnBtn", "📚", "Learn from IIT"], ["focusBtn", "🎯", "Focus mode"]]],
   ["Campus", [["__story", "📸", "Add a story"], ["eventsBtn", "🎉", "Events"], ["drivesBtn", "🏢", "Campus Drives"], ["leadersBtn", "🏆", "Top Helpers"], ["alumniBtn", "🎓", "Alumni", "alumni"]]],
   ["Career", [["careerBtn", "🚀", "Career Guide"], ["__resume", "📄", "Resume builder"]]],
-  ["More", [["__stickers", "🎴", "Sticker book"], ["__wardrobe", "👗", "Loopy\u2019s wardrobe"], ["__install", "📲", "Install app"], ["__plus", "⭐", "CampusLoop Plus"], ["botBtn", "🤖", "Loop Bot", "bot"], ["funBtn", "🎉", "Entertainment", "fun"], ["aboutBtn", "ℹ️", "About Us"]]],
+  ["More", [["__stickers", "🎴", "Sticker book"], ["__wardrobe", "👗", "Loopy\u2019s wardrobe"], ["__install", "📲", "Install app"], ["__plus", "⭐", "The Campus Loop Plus"], ["botBtn", "🤖", "Loop Bot", "bot"], ["funBtn", "🎉", "Entertainment", "fun"], ["aboutBtn", "ℹ️", "About Us"]]],
 ];
 function renderExplore() {
   const back = el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back");
@@ -1734,10 +1734,10 @@ function showMilestone(n, tries) {
   if (bonus) { const until = Math.max(Number(readJSON("dd-bonus-until", 0)) || 0, Date.now()) + bonus * 864e5; writeJSON("dd-bonus-until", until); }
   writeJSON("dd-milestones", [...(readJSON("dd-milestones", [])), n]);
   box.append(el("div", { class: "welcome-card" },
-    el("div", { class: "welcome-icon", "aria-hidden": "true" }, icon), el("h2", {}, "Day " + n + " with the " + BRAND + " family 🎉"), el("h3", {}, title), el("p", {}, text),
+    el("div", { class: "welcome-icon", "aria-hidden": "true" }, icon), el("h2", {}, "Day " + n + " with " + BRAND + " family 🎉"), el("h3", {}, title), el("p", {}, text),
     bonus ? el("p", { class: "plan-deal" }, "🎁 Our gift: " + bonus + " free day" + (bonus === 1 ? "" : "s") + " of Plus studio") : null,
     el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", onclick: close }, "Thank you!"),
-      el("button", { class: "btn", type: "button", onclick: () => { shareResult({ kicker: "Member of the " + BRAND + " family", emoji: icon, big: "Day " + n, line: title }); } }, "📤 Share"))));
+      el("button", { class: "btn", type: "button", onclick: () => { shareResult({ kicker: "Member of " + BRAND + " family", emoji: icon, big: "Day " + n, line: title }); } }, "📤 Share"))));
   document.body.append(box); confetti(120);
 }
 function maybeMilestone() {
@@ -3106,9 +3106,9 @@ function inviteCard() {
       try { await navigator.clipboard.writeText(text + " " + url); note.textContent = "Link copied. Paste it in your class group."; } catch (_) { note.textContent = url; }
     } }, "Share invite link")), note);
 }
-// ---------- CampusLoop Plus ----------
+// ---------- The Campus Loop Plus ----------
 function plusCard() {
-  return el("div", { class: "learn-card" }, el("strong", {}, "⭐ CampusLoop Plus" + (state.plan.plus ? " (active)" : "")),
+  return el("div", { class: "learn-card" }, el("strong", {}, "⭐ The Campus Loop Plus" + (state.plan.plus ? " (active)" : "")),
     el("p", { class: "hint" }, PLUS.enabled ? "Cloud backup of your study tools, a ⭐ badge and more." : "Early access is free while we build it. Tell us what you would like."),
     el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => { loadPlan().then(() => { if (state.mode === "plus") render(); }); showPanel("plus"); } }, "See Plus")));
 }
@@ -3224,7 +3224,7 @@ function renderPlus() {
       PLUS.enabled ? el("p", { class: "hint" }, "Pay safely by UPI, card or net banking (Razorpay). Your plan switches on within a minute of paying." + (verified ? "" : " Verify your email first (Profile › Verify your college email) so we can attach the plan to you.")) : el("div", {}, el("p", { class: "hint" }, "Payments open soon. Everything below is free while we build Plus. Tap Notify me and we will tell you the day it opens" + (offerOn() ? ", and you get the " + offerOn().label.toLowerCase() + " price of ₹" + offerOn().yearly + " for the first year." : ".")), wemail));
   };
   return [
-    el("h2", {}, "⭐ CampusLoop Plus" + (has ? " (active)" : "")),
+    el("h2", {}, "⭐ The Campus Loop Plus" + (has ? " (active)" : "")),
     has ? el("div", { class: "plus-hero" }, "✨ Welcome, Plus member. Your studio is ready.") : null,
     el("p", { class: "hint" }, has && state.plan.college ? "🎓 " + COLLEGE + " provides Plus for every student until " + new Date(state.plan.until).toLocaleDateString() + ". Enjoy, and thank your college!" : has ? "Thank you for supporting CampusLoop. Your plan is active until " + new Date(state.plan.until).toLocaleDateString() + "." : PLUS.enabled ? "Extras for students who want more. Everything free today stays free." : "Early access: everything below that already works is free while we build Plus. Everything free today stays free."),
     (!plusLocked() ? coachCard() : null),
@@ -3260,7 +3260,7 @@ function renderPlus() {
     el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")),
   ].filter(Boolean);
 }
-// CampusLoop Plus studio: timed mock tests (subjects or placement), progress chart, mistake notebook and exam planner. Data stays on this phone.
+// The Campus Loop Plus studio: timed mock tests (subjects or placement), progress chart, mistake notebook and exam planner. Data stays on this phone.
 const MOCK_N = 15, MOCK_SECS = 20 * 60;
 const trialLeft = () => { const t = Number(readJSON("dd-trial-start", 0)) || 0, d = Number(PLUS.trialDays) || 0; return t && d ? Math.max(0, Math.ceil((t + d * 864e5 - Date.now()) / 864e5)) : 0; };
 const bonusLeft = () => Math.max(0, Math.ceil(((Number(readJSON("dd-bonus-until", 0)) || 0) - Date.now()) / 864e5));
@@ -3322,7 +3322,7 @@ function scoreBars(bySub) {
 }
 function renderMock() {
   const m = state.mock, back = el("button", { class: "btn", type: "button", onclick: () => { if (state.mock) clearInterval(state.mock.tick); state.mock = null; showPanel("plus"); } }, "Back");
-  if (plusLocked()) return [el("h2", {}, "📝 Mock tests"), el("p", { class: "hint" }, "Mock tests are part of CampusLoop Plus."), el("div", { class: "rowbtns" }, back)];
+  if (plusLocked()) return [el("h2", {}, "📝 Mock tests"), el("p", { class: "hint" }, "Mock tests are part of The Campus Loop Plus."), el("div", { class: "rowbtns" }, back)];
   if (!m) {
     const hist = mockHistory();
     return [el("h2", {}, "📝 Mock tests"), el("p", { class: "hint" }, MOCK_N + " questions, " + (MOCK_SECS / 60) + " minutes, then a subject-wise report. Questions you miss go to your Mistake notebook."),
@@ -3379,7 +3379,7 @@ function coachCard() {
 // Previous-year paper vault (Plus): papers are added by the admin as links; students filter, open and tick off what they have practised.
 function renderPapers() {
   const back = el("button", { class: "btn", type: "button", onclick: () => showPanel("plus") }, "Back");
-  if (plusLocked()) return [el("h2", {}, "📚 Paper vault"), el("p", { class: "hint" }, "The previous-year paper vault is part of CampusLoop Plus."), el("div", { class: "rowbtns" }, back)];
+  if (plusLocked()) return [el("h2", {}, "📚 Paper vault"), el("p", { class: "hint" }, "The previous-year paper vault is part of The Campus Loop Plus."), el("div", { class: "rowbtns" }, back)];
   const all = state.papers.slice().sort((a, b) => (b.year - a.year) || String(a.subject).localeCompare(b.subject)), done = new Set(readJSON("dd-papers-done", []));
   if (!all.length) return [el("h2", {}, "📚 Paper vault"), el("p", { class: "hint" }, "No papers have been added for " + COLLEGE + " yet. Your admin adds them from the admin dashboard."), el("div", { class: "rowbtns" }, back)];
   const f = state.paperFilter || (state.paperFilter = { subject: "", year: "", q: "" });
@@ -3400,7 +3400,7 @@ function renderPapers() {
 // AI study helper (Plus): chat with Claude through our own server function; the secret key never reaches the phone.
 function renderAI() {
   const back = el("button", { class: "btn", type: "button", onclick: () => showPanel("plus") }, "Back");
-  if (plusLocked()) return [el("h2", {}, "🤖 AI study helper"), el("p", { class: "hint" }, "The AI study helper is part of CampusLoop Plus."), el("div", { class: "rowbtns" }, back)];
+  if (plusLocked()) return [el("h2", {}, "🤖 AI study helper"), el("p", { class: "hint" }, "The AI study helper is part of The Campus Loop Plus."), el("div", { class: "rowbtns" }, back)];
   if (!PLUS.functionsUrl) return [el("h2", {}, "🤖 AI study helper"), el("p", { class: "hint" }, "The AI helper is being set up and will switch on soon."), el("div", { class: "rowbtns" }, back)];
   const chat = state.ai || (state.ai = { msgs: [], busy: false, note: "" });
   const box = el("textarea", { maxlength: "1000", rows: "3", placeholder: "Ask a study doubt, e.g. Explain Dijkstra with an example", "aria-label": "Your question" });
@@ -3462,7 +3462,7 @@ function ftFinish() {
 }
 function renderFocusPlus() {
   const back = el("button", { class: "btn", type: "button", onclick: () => { if (state.ft && state.ft.tick) clearInterval(state.ft.tick); state.ft = null; showPanel("plus"); } }, "Back");
-  if (plusLocked()) return [el("h2", {}, "⏱️ Focus timer"), el("p", { class: "hint" }, "The focus timer is part of CampusLoop Plus."), el("div", { class: "rowbtns" }, back)];
+  if (plusLocked()) return [el("h2", {}, "⏱️ Focus timer"), el("p", { class: "hint" }, "The focus timer is part of The Campus Loop Plus."), el("div", { class: "rowbtns" }, back)];
   const f = state.ft || (state.ft = { idle: true, msg: "" }), log = studyLog(), days = Array.from({ length: 7 }, (_, i) => { const d = new Date(Date.now() - (6 - i) * 864e5); return [d.toLocaleDateString(undefined, { weekday: "short" }), log[dayStr(d)] || 0]; });
   const max = Math.max(60, ...days.map(x => x[1])), total = days.reduce((a, x) => a + x[1], 0), mm = (ms) => Math.floor(ms / 6e4) + ":" + String(Math.floor(ms % 6e4 / 1e3)).padStart(2, "0");
   const start = (kind) => { const mins = kind === "focus" ? FOCUS_MIN : BREAK_MIN; const n = { kind, end: Date.now() + mins * 6e4, done: false }; n.tick = setInterval(() => { const l = n.end - Date.now(); if (state.mode !== "focusplus" || state.ft !== n) { clearInterval(n.tick); return; } if (l <= 0) { ftFinish(); return; } const t = document.querySelector("[data-ft]"); if (t) t.textContent = mm(l); }, 1000); state.ft = n; render(); };
@@ -3503,7 +3503,7 @@ async function redeemPendingGift() {
 function giftCard() {
   const has = state.plan.plus, say = el("p", { class: "hint", role: "status" }, "");
   const link = (c) => location.origin + location.pathname + "?c=" + encodeURIComponent(SEL) + "&gift=" + c;
-  const share = async (c) => { const text = "I gifted you CampusLoop Plus! Open this link to claim it: " + link(c); try { if (navigator.share) { await navigator.share({ title: BRAND, text, url: link(c) }); return; } } catch (_) { return; } try { await navigator.clipboard.writeText(text); say.textContent = "✅ Gift link copied. Paste it in WhatsApp."; } catch (_) { say.textContent = link(c); } };
+  const share = async (c) => { const text = "I gifted you The Campus Loop Plus! Open this link to claim it: " + link(c); try { if (navigator.share) { await navigator.share({ title: BRAND, text, url: link(c) }); return; } } catch (_) { return; } try { await navigator.clipboard.writeText(text); say.textContent = "✅ Gift link copied. Paste it in WhatsApp."; } catch (_) { say.textContent = link(c); } };
   if (!PLUS.enabled) return el("div", { class: "learn-card plus-list" }, el("strong", {}, "🎁 Gift Plus to a friend"), el("p", { class: "hint" }, "Gifts open when payments open. You will pay once, get a link, and your friend gets the days."));
   if (giftsState.list === null) loadGifts();
   const buyGift = (key, label) => el("button", { class: "btn sm", type: "button", onclick: async (e) => { e.currentTarget.disabled = true; try { await startCheckout(key, true); say.textContent = "The payment page opened. After you pay, come back here (tap Refresh) to get the gift link."; } catch (err) { say.textContent = err.message || "Could not start the payment."; } e.currentTarget.disabled = false; } }, label);
@@ -3531,7 +3531,7 @@ function resumeDoc(d) {
 }
 function renderResume() {
   const back = el("button", { class: "btn", type: "button", onclick: () => showPanel("plus") }, "Back");
-  if (plusLocked()) return [el("h2", {}, "📄 Resume builder"), el("p", { class: "hint" }, "The resume builder is part of CampusLoop Plus."), el("div", { class: "rowbtns" }, back)];
+  if (plusLocked()) return [el("h2", {}, "📄 Resume builder"), el("p", { class: "hint" }, "The resume builder is part of The Campus Loop Plus."), el("div", { class: "rowbtns" }, back)];
   const d = resumeData(), prev = el("div", { class: "resume-wrap" }), save = () => { writeJSON("dd-resume", d); prev.replaceChildren(resumeDoc(d)); };
   const inp = (label, get, set, max, ph, area) => { const f = el(area ? "textarea" : "input", { maxlength: String(max), placeholder: ph || label, "aria-label": label }); f.value = get(); f.addEventListener("input", () => { set(f.value.slice(0, max)); save(); }); return f; };
   const row = (...kids) => el("div", { class: "two" }, ...kids);
@@ -3560,7 +3560,7 @@ function renderResume() {
 // Weekly Plus leaderboard: points from focus minutes, mock tests, mistakes cleared and papers practised. Resets every Monday.
 function renderWeeklyBoard() {
   const back = el("button", { class: "btn", type: "button", onclick: () => showPanel("plus") }, "Back");
-  if (plusLocked()) return [el("h2", {}, "🏅 Weekly leaderboard"), el("p", { class: "hint" }, "The weekly leaderboard is for CampusLoop Plus members."), el("div", { class: "rowbtns" }, back)];
+  if (plusLocked()) return [el("h2", {}, "🏅 Weekly leaderboard"), el("p", { class: "hint" }, "The weekly leaderboard is for The Campus Loop Plus members."), el("div", { class: "rowbtns" }, back)];
   syncWeekly();
   const uid = store && store.authUid ? store.authUid() : "", rows = state.weekly.slice().sort((a, b) => b.points - a.points || a.updatedAt - b.updatedAt), mine = rows.findIndex(r => r.uid === uid), medal = ["🥇", "🥈", "🥉"];
   const left = (() => { const ms = weekStartMs() + 7 * 864e5 - Date.now(), d = Math.floor(ms / 864e5), h = Math.floor(ms % 864e5 / 36e5); return d + "d " + h + "h"; })();
@@ -3576,7 +3576,7 @@ const GOAL_DEFS = [["tests", "📝 Take 3 mock tests", 3], ["cleared", "📓 Cle
 const PLUS_BADGES = [["🥉", "First mock", l => l.tests >= 1], ["🥈", "5 mocks done", l => l.tests >= 5], ["🏆", "Ace: 90%+ in a test", l => l.best >= 90], ["🧹", "Mistake slayer (20)", l => l.cleared >= 20], ["📚", "Paper warrior (10)", l => l.papers >= 10], ["🗓️", "Planner set", () => !!readJSON("dd-exam-plan", null)], ["⏱️", "Focused: 10 hours", l => (l.mins || 0) >= 600], ["🌳", "Family: 7 days", () => (readJSON("dd-visits", { n: 0 }).n || 0) >= 7], ["🏆", "Family: 30 days", () => (readJSON("dd-visits", { n: 0 }).n || 0) >= 30]];
 function renderGoals() {
   const back = el("button", { class: "btn", type: "button", onclick: () => showPanel("plus") }, "Back");
-  if (plusLocked()) return [el("h2", {}, "🎯 Goals and badges"), el("p", { class: "hint" }, "Goals and badges are part of CampusLoop Plus."), el("div", { class: "rowbtns" }, back)];
+  if (plusLocked()) return [el("h2", {}, "🎯 Goals and badges"), el("p", { class: "hint" }, "Goals and badges are part of The Campus Loop Plus."), el("div", { class: "rowbtns" }, back)];
   const g = goalStats(), l = lifeStats(), allDone = GOAL_DEFS.every(([k, , n]) => (g[k] || 0) >= n), got = PLUS_BADGES.filter(b => b[2](l)).length;
   return [el("h2", {}, "🎯 Goals and badges"), allDone ? el("div", { class: "wow", role: "status" }, el("span", { class: "wow-conf", "aria-hidden": "true" }, "🎉 ✨ 🎊"), el("strong", {}, "Wow, all weekly goals done!")) : el("p", { class: "hint" }, "Weekly goals reset every Monday."),
     el("div", { class: "learn-card plus-list" }, el("strong", {}, "This week"), ...GOAL_DEFS.map(([k, label, n]) => { const v = Math.min(n, g[k] || 0), bar = el("div", { class: "mock-bar" }, el("span", {})); bar.firstChild.style.setProperty("width", Math.round(v * 100 / n) + "%"); return el("div", {}, el("div", { class: "rowbtns" }, el("span", {}, label), el("b", {}, v + "/" + n)), bar); })),
@@ -3588,7 +3588,7 @@ function renderGoals() {
 // Mistake notebook: questions you missed come back until you answer them right.
 function renderMistakes() {
   const back = el("button", { class: "btn", type: "button", onclick: () => { state.mist = null; showPanel("plus"); } }, "Back"), list = mistakeList();
-  if (plusLocked()) return [el("h2", {}, "📓 Mistake notebook"), el("p", { class: "hint" }, "The mistake notebook is part of CampusLoop Plus."), el("div", { class: "rowbtns" }, back)];
+  if (plusLocked()) return [el("h2", {}, "📓 Mistake notebook"), el("p", { class: "hint" }, "The mistake notebook is part of The Campus Loop Plus."), el("div", { class: "rowbtns" }, back)];
   if (!list.length) return [el("h2", {}, "📓 Mistake notebook"), el("p", { class: "hint" }, "Nothing here yet. Questions you get wrong in a mock test are saved here so you can practise them again."), el("div", { class: "rowbtns" }, back)];
   const st = state.mist || (state.mist = { i: Math.floor(Math.random() * list.length), pick: -1 });
   const q = list[st.i % list.length], answered = st.pick >= 0;
@@ -3615,7 +3615,7 @@ function buildPlan(subjects, examDate) {
 }
 function renderPlanner() {
   const back = el("button", { class: "btn", type: "button", onclick: () => showPanel("plus") }, "Back");
-  if (plusLocked()) return [el("h2", {}, "🗓️ Exam planner"), el("p", { class: "hint" }, "The exam planner is part of CampusLoop Plus."), el("div", { class: "rowbtns" }, back)];
+  if (plusLocked()) return [el("h2", {}, "🗓️ Exam planner"), el("p", { class: "hint" }, "The exam planner is part of The Campus Loop Plus."), el("div", { class: "rowbtns" }, back)];
   const saved = readJSON("dd-exam-plan", null) || {}, name = el("input", { maxlength: "40", placeholder: "Exam name, e.g. Semester 3", value: saved.name || "", "aria-label": "Exam name" }),
     date = el("input", { type: "date", value: saved.date || "", "aria-label": "Exam date" }), subs = el("textarea", { maxlength: "300", placeholder: "Subjects, separated by commas", "aria-label": "Subjects" }, saved.subjects || ""),
     msg = el("p", { class: "hint", role: "status" }, "");
@@ -4086,7 +4086,7 @@ const funShuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--
 const funBest = (k, v) => { try { const o = JSON.parse(localStorage.getItem("dd-fun-best") || "{}"); if (v === undefined) return o[k]; o[k] = v; localStorage.setItem("dd-fun-best", JSON.stringify(o)); } catch (_) {} return undefined; };
 
 const yt = (q) => "https://www.youtube.com/results?search_query=" + encodeURIComponent(q);
-// Official YouTube jukeboxes. These are copyrighted songs streamed by the rights holders on YouTube; CampusLoop only links out.
+// Official YouTube jukeboxes. These are copyrighted songs streamed by the rights holders on YouTube; The Campus Loop only links out.
 const FUN_JUKE = [
   ["🎤 Telugu directors",[["M. M. Keeravani","M M Keeravani hits jukebox"], ["Devi Sri Prasad","Devi Sri Prasad hits jukebox"], ["S. Thaman","S Thaman hits jukebox"], ["Mani Sharma","Mani Sharma hits jukebox"], ["Ilaiyaraaja (Telugu)","Ilaiyaraaja (Telugu) hits jukebox"], ["A. R. Rahman (Telugu)","A R Rahman (Telugu) hits jukebox"], ["Koti","Koti hits jukebox"], ["Raj-Koti","Raj Koti hits jukebox"], ["Chakri","Chakri hits jukebox"], ["Anup Rubens","Anup Rubens hits jukebox"], ["Mickey J Meyer","Mickey J Meyer hits jukebox"], ["Kalyani Malik","Kalyani Malik hits jukebox"], ["R. P. Patnaik","R P Patnaik hits jukebox"], ["Gopi Sundar","Gopi Sundar hits jukebox"], ["Ghibran","Ghibran hits jukebox"], ["Bheems Ceciroleo","Bheems Ceciroleo hits jukebox"], ["Radhan","Radhan hits jukebox"], ["Vishal Chandrashekhar","Vishal Chandrashekhar hits jukebox"], ["Sai Kartheek","Sai Kartheek hits jukebox"], ["Harris Jayaraj (Telugu)","Harris Jayaraj (Telugu) hits jukebox"], ["Vidyasagar (Telugu)","Vidyasagar (Telugu) hits jukebox"], ["Ramesh Naidu","Ramesh Naidu hits jukebox"], ["K. Chakravarthy","K Chakravarthy hits jukebox"], ["Satyam","Satyam hits jukebox"], ["K. V. Mahadevan","K V Mahadevan hits jukebox"], ["Ghantasala","Ghantasala hits jukebox"], ["Ramana Gogula","Ramana Gogula hits jukebox"], ["M. M. Srilekha","M M Srilekha hits jukebox"], ["Vandemataram Srinivas","Vandemataram Srinivas hits jukebox"], ["Sri Kommineni","Sri Kommineni hits jukebox"], ["S. V. Krishna Reddy","S V Krishna Reddy hits jukebox"], ["Joshua Sridhar","Joshua Sridhar hits jukebox"], ["Shravan Bharadwaj","Shravan Bharadwaj hits jukebox"], ["Prashanth R Vihari","Prashanth R Vihari hits jukebox"], ["Sekhar Chandra","Sekhar Chandra hits jukebox"], ["Leon James (Telugu)","Leon James (Telugu) hits jukebox"], ["Sunil Kashyap","Sunil Kashyap hits jukebox"], ["Phani Kalyan","Phani Kalyan hits jukebox"], ["Mahati Swara Sagar","Mahati Swara Sagar hits jukebox"], ["Praveen Lakkaraju","Praveen Lakkaraju hits jukebox"], ["Gowra Hari","Gowra Hari hits jukebox"], ["Sricharan Pakala","Sricharan Pakala hits jukebox"], ["Achu Rajamani","Achu Rajamani hits jukebox"], ["Jakes Bejoy (Telugu)","Jakes Bejoy (Telugu) hits jukebox"], ["Hesham Abdul Wahab","Hesham Abdul Wahab hits jukebox"], ["Justin Prabhakaran (Telugu)","Justin Prabhakaran (Telugu) hits jukebox"], ["Anirudh (Telugu)","Anirudh (Telugu) hits jukebox"], ["Vijaya Bhaskar","Vijaya Bhaskar hits jukebox"], ["Pendyala Nageswara Rao","Pendyala Nageswara Rao hits jukebox"], ["Saluri Rajeswara Rao","Saluri Rajeswara Rao hits jukebox"], ["T. V. Raju","T V Raju hits jukebox"], ["Adi Narayana Rao","Adi Narayana Rao hits jukebox"], ["J. V. Raghavulu","J V Raghavulu hits jukebox"], ["S. Rajeswara Rao","S Rajeswara Rao hits jukebox"], ["Harshavardhan Rameshwar","Harshavardhan Rameshwar hits jukebox"], ["Ajay Arasada","Ajay Arasada hits jukebox"], ["Vijay Bulganin","Vijay Bulganin hits jukebox"], ["Chaitan Bharadwaj","Chaitan Bharadwaj hits jukebox"], ["Sagar Mahati","Sagar Mahati hits jukebox"], ["Shakthikanth Karthick","Shakthikanth Karthick hits jukebox"], ["Karthik Rodriguez","Karthik Rodriguez hits jukebox"], ["Raghu Kunche","Raghu Kunche hits jukebox"], ["Madhavapeddi Suresh","Madhavapeddi Suresh hits jukebox"], ["Chellapilla Satyam","Chellapilla Satyam hits jukebox"], ["Ram Miriyala","Ram Miriyala hits jukebox"], ["Kaala Bhairava","Kaala Bhairava hits jukebox"], ["S. A. Rajkumar (Telugu)","S A Rajkumar (Telugu) hits jukebox"], ["Deva (Telugu)","Deva (Telugu) hits jukebox"], ["Rajan-Nagendra (Telugu)","Rajan Nagendra (Telugu) hits jukebox"], ["Vijay Antony (Telugu)","Vijay Antony (Telugu) hits jukebox"], ["Santhosh Narayanan (Telugu)","Santhosh Narayanan (Telugu) hits jukebox"], ["Yuvan Shankar Raja (Telugu)","Yuvan Shankar Raja (Telugu) hits jukebox"], ["Rajesh Murugesan (Telugu)","Rajesh Murugesan (Telugu) hits jukebox"], ["Gopi Sundar (Telugu)","Gopi Sundar (Telugu) hits jukebox"]]],
   ["🎙️ Telugu playlists",[["Telugu melodies","Telugu melody songs video jukebox"], ["Telugu love songs","Telugu love songs jukebox"], ["Telugu mass beats","Telugu mass songs jukebox"], ["Telugu 90s hits","90s Telugu hit songs jukebox"], ["Telugu 2000s hits","2000s Telugu hit songs jukebox"], ["Telugu folk (Janapada)","Telugu folk songs jukebox"], ["Telugu devotional","Telugu devotional songs jukebox"], ["Telugu friendship songs","Telugu friendship songs jukebox"], ["Telugu old golden hits","Telugu old golden hits jukebox"], ["Telugu duets","Telugu duet songs jukebox"], ["Telugu sad songs","Telugu emotional sad songs jukebox"], ["Telugu college songs","Telugu college life songs jukebox"]]],
@@ -4266,7 +4266,7 @@ function moviesView() {
       outLink("https://www.google.com/search?q=" + encodeURIComponent("new " + label + " movies releasing this week OTT and theatres"), "🗓️ This week", "linkbtn"),
       outLink("https://www.google.com/search?q=" + encodeURIComponent(label + " movie reviews and ratings " + yr), "⭐ Reviews", "linkbtn")))),
     watch,
-    el("p", { class: "hint" }, "Watch movies only in theatres or on official OTT apps. Piracy sites are illegal and often carry viruses and scams. CampusLoop does not host any movie."));
+    el("p", { class: "hint" }, "Watch movies only in theatres or on official OTT apps. Piracy sites are illegal and often carry viruses and scams. The Campus Loop does not host any movie."));
 }
 
 function memoryGame() {
@@ -4339,7 +4339,7 @@ function renderFun() {
       body.replaceChildren(
         chillPlayer(),
         el("div", { class: "label" }, "🎬 Music director and singer jukeboxes"),
-        el("p", { class: "hint" }, "Tap a name to open official jukeboxes on YouTube. These are copyrighted songs streamed by the rights holders, so CampusLoop only links to them. Listen on YouTube with low volume and earphones."),
+        el("p", { class: "hint" }, "Tap a name to open official jukeboxes on YouTube. These are copyrighted songs streamed by the rights holders, so The Campus Loop only links to them. Listen on YouTube with low volume and earphones."),
         el("details", { class: "fun-det", open: true },
           el("summary", {}, "🆕 Latest released songs (" + FUN_NEW.length + ")"),
           el("p", { class: "hint" }, "Newest uploads first, from official channels. Pick this week or this month."),
@@ -4491,7 +4491,7 @@ function renderAbout() {
       el("p", {}, "Built by students, for students."),
       el("p", {}, "💙 Dedicated to our students: advanced, disciplined and obedient learners who work hard, respect their teachers and lift each other up. You are the reason Spark exists.")),
     el("div", { class: "label" }, "🎯 Our mission"),
-    el("p", {}, "Every student should have a senior to ask, a clear path after graduation, and quality study material, without paying for any of it. CampusLoop brings these together so no doubt stays unanswered and no student feels lost after E4."),
+    el("p", {}, "Every student should have a senior to ask, a clear path after graduation, and quality study material, without paying for any of it. The Campus Loop brings these together so no doubt stays unanswered and no student feels lost after E4."),
     el("div", { class: "label" }, "✨ What you get"),
     feature("❓", "Doubts", "Ask by subject, year (E1-E4) and campus. Peers answer, you mark the best answer, and helpers earn points."),
     feature("💡", "Ideas, Clubs and Challenges", "Share project ideas, join clubs and take part in challenges and hackathons."),
@@ -4504,9 +4504,9 @@ function renderAbout() {
     el("div", { class: "label" }, "🔒 Privacy and safety"),
     el("p", {}, "No login and no password. Your device gets a random ID so your posts stay yours. You can post anonymously, report anything inappropriate and edit your own posts. We do not sell or share your data."),
     el("div", { class: "label" }, "💚 Free to use"),
-    el("p", {}, "The board, quizzes, study tools and every resource we link to are free, with no ads. An optional paid plan, CampusLoop Plus, is being prepared for extras. Nothing that is free today will be taken away."),
+    el("p", {}, "The board, quizzes, study tools and every resource we link to are free, with no ads. An optional paid plan, The Campus Loop Plus, is being prepared for extras. Nothing that is free today will be taken away."),
     el("div", { class: "label" }, "⚠️ Please note"),
-    el("p", { class: "hint" }, "CampusLoop is a student community platform. Always confirm official dates, fees, results and rules on your college's official websites before acting on them. Career and scholarship details can change, so check the official links."),
+    el("p", { class: "hint" }, "The Campus Loop is a student community platform. Always confirm official dates, fees, results and rules on your college's official websites before acting on them. Career and scholarship details can change, so check the official links."),
     IS_RGUKT && el("div", { class: "label" }, "🔗 Official RGUKT campuses"),
     IS_RGUKT && el("div", { class: "rowbtns" },
       outLink("https://www.rguktn.ac.in", "Nuzvid", "linkbtn"),

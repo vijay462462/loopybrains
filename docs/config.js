@@ -1,9 +1,9 @@
 // Doubt Desk settings. Edit this file to change subjects or connect the database.
 window.DOUBT_DESK_CONFIG = {
   // Product name shown across the app. Change it here to rename everything.
-  brand: "CampusLoop",
+  brand: "The Campus Loop",
 
-  // CampusLoop Plus (optional paid plan). Keep enabled:false until payments are set up (see PREMIUM.md).
+  // The Campus Loop Plus (optional paid plan). Keep enabled:false until payments are set up (see PREMIUM.md).
   // monthly / yearly are prices in rupees; functionsUrl is the address of the deployed payment functions.
   plus: { enabled: false, weekly: 19, semester: 149, monthly: 49, yearly: 399, functionsUrl: "",
     // Launch offer on the yearly plan until the date below (also set OFFER in functions/index.js). Set offer: null to remove it.
@@ -17,7 +17,7 @@ window.DOUBT_DESK_CONFIG = {
   about: { founder: "Vijay M", college: "", email: "v.bhaskar462@gmail.com" },
 
   // Site title shown in the header
-  title: "CampusLoop",
+  title: "The Campus Loop",
 
   // Paste your Firebase web app config here (Firebase console > Project settings > Your apps).
   firebase: {

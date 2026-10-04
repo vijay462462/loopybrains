@@ -1,4 +1,4 @@
-// CampusLoop Plus: server side of the payments. NOT DEPLOYED and NOT TESTED against real Razorpay yet:
+// The Campus Loop Plus: server side of the payments. NOT DEPLOYED and NOT TESTED against real Razorpay yet:
 // read PREMIUM.md ("Going live") and test with Razorpay TEST keys before using real money.
 //
 //  createPaymentLink  - the signed-in, email-verified student asks for a payment link; we create it on Razorpay
@@ -23,10 +23,10 @@ const SITE_URL = defineString("SITE_URL");            // e.g. https://campusloop
 
 // Prices in paise (1 rupee = 100 paise). Keep in step with `plus` in docs/config.js.
 const PLANS = {
-  weekly: { amount: 1900, days: 7, label: "CampusLoop Plus - 1 week (exam pass)" },
-  semester: { amount: 14900, days: 130, label: "CampusLoop Plus - semester (about 4 months)" },
-  monthly: { amount: 4900, days: 31, label: "CampusLoop Plus - 1 month" },
-  yearly: { amount: 39900, days: 366, label: "CampusLoop Plus - 1 year" },
+  weekly: { amount: 1900, days: 7, label: "The Campus Loop Plus - 1 week (exam pass)" },
+  semester: { amount: 14900, days: 130, label: "The Campus Loop Plus - semester (about 4 months)" },
+  monthly: { amount: 4900, days: 31, label: "The Campus Loop Plus - 1 month" },
+  yearly: { amount: 39900, days: 366, label: "The Campus Loop Plus - 1 year" },
 };
 const DAY = 86400000;
 // ---------- Security helpers ----------
@@ -142,7 +142,7 @@ exports.razorpayWebhook = onRequest({ secrets: [WEBHOOK_SECRET], region: "asia-s
 // Limits: 40 questions per student per day, short messages, short answers. NOT DEPLOYED and NOT TESTED yet.
 const AI_MODEL = "claude-haiku-4-5-20251001";
 const AI_DAILY_LIMIT = 40;
-const AI_SYSTEM = "You are CampusLoop's study helper for Indian college students. Only help with academics: explaining concepts, solving problems step by step, " +
+const AI_SYSTEM = "You are The Campus Loop's study helper for Indian college students. Only help with academics: explaining concepts, solving problems step by step, " +
   "exam and placement preparation, coding doubts, study plans, and interview practice. If asked about anything else, politely say you can only help with studies. " +
   "Be accurate and concise (under 250 words unless a derivation needs more). Show steps for calculations. If you are not sure, say so instead of guessing. " +
   "Never help with cheating on an exam in progress, and never write abusive or adult content. Use plain text, no markdown tables.";
@@ -162,7 +162,7 @@ exports.askAI = onRequest({ secrets: [ANTHROPIC_KEY], cors: ALLOWED_ORIGINS, reg
         paid = user.email_verified === true && cp.exists && Number(cp.data().until) > Date.now() && domains.length > 0 && domains.some(d => host === d || host.endsWith("." + d));
       }
     }
-    if (!paid && !(adm.exists && user.email_verified === true)) return res.status(403).json({ error: "The AI helper is part of CampusLoop Plus." });
+    if (!paid && !(adm.exists && user.email_verified === true)) return res.status(403).json({ error: "The AI helper is part of The Campus Loop Plus." });
     const raw = Array.isArray((req.body || {}).messages) ? req.body.messages.slice(-8) : [];
     const messages = raw.filter(x => x && (x.role === "user" || x.role === "assistant") && typeof x.content === "string" && x.content.trim())
       .map(x => ({ role: x.role, content: x.content.trim().slice(0, 1500) }));
@@ -292,20 +292,20 @@ async function buildReport(room, name) {
   const total = POST_COLLS.reduce((n, x) => n + counts[x[0]][0], 0), prev = POST_COLLS.reduce((n, x) => n + counts[x[0]][1], 0);
   const range = new Date(t0).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }) + " to " + new Date(now).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" });
   const lines = [
-    name + " on CampusLoop: weekly engagement report (" + range + ")", "",
+    name + " on The Campus Loop: weekly engagement report (" + range + ")", "",
     "Active students this week: " + active.size + " (of " + profiles + " with a profile)",
     "New posts: " + total + " (" + pct(total, prev) + " vs last week)", "Replies: " + counts.replies[0] + " (" + pct(counts.replies[0], counts.replies[1]) + ")",
     "Doubts asked: " + doubts.length + ", answered: " + nAnswered + (doubts.length ? " (" + Math.round(nAnswered * 100 / doubts.length) + "%)" : ""),
     "Stories shared: " + counts.stories[0], "Most asked subjects: " + (top.map(t => t[0] + " (" + t[1] + ")").join(", ") || "none this week"),
     "Items reported or hidden by moderators: " + flagged, "",
-    "This report contains only counts and subjects, never student names or post text.", "Thank you for supporting your students. - CampusLoop",
+    "This report contains only counts and subjects, never student names or post text.", "Thank you for supporting your students. - The Campus Loop",
   ];
-  return { subject: "CampusLoop weekly report: " + name, text: lines.join("\n"), html: "<div style=\"font-family:Arial,sans-serif;line-height:1.5\"><h2>" + name.replace(/[<>&]/g, "") + " - weekly report</h2><p>" + range + "</p><ul>" + lines.slice(2, 9).map(l => "<li>" + l.replace(/[<>&]/g, "") + "</li>").join("") + "</ul><p style=\"color:#666\">" + lines.slice(10).join("<br>") + "</p></div>" };
+  return { subject: "The Campus Loop weekly report: " + name, text: lines.join("\n"), html: "<div style=\"font-family:Arial,sans-serif;line-height:1.5\"><h2>" + name.replace(/[<>&]/g, "") + " - weekly report</h2><p>" + range + "</p><ul>" + lines.slice(2, 9).map(l => "<li>" + l.replace(/[<>&]/g, "") + "</li>").join("") + "</ul><p style=\"color:#666\">" + lines.slice(10).join("<br>") + "</p></div>" };
 }
 const mailer = () => nodemailer.createTransport({ service: "gmail", auth: { user: SMTP_USER.value(), pass: SMTP_PASS.value() } });
 async function sendReportFor(slug, d, tx) {
   const rep = await buildReport(d.room, d.name || slug);
-  await tx.sendMail({ from: '"CampusLoop" <' + SMTP_USER.value() + ">", to: (d.emails || []).join(","), subject: rep.subject, text: rep.text, html: rep.html });
+  await tx.sendMail({ from: '"The Campus Loop" <' + SMTP_USER.value() + ">", to: (d.emails || []).join(","), subject: rep.subject, text: rep.text, html: rep.html });
   await db.collection("reportEmails").doc(slug).set({ lastSent: Date.now() }, { merge: true });
 }
 exports.weeklyReport = onSchedule({ schedule: "every monday 08:00", timeZone: "Asia/Kolkata", region: "asia-south1", secrets: [SMTP_USER, SMTP_PASS], timeoutSeconds: 540, memory: "512MiB" }, async () => {

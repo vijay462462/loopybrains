@@ -1,6 +1,6 @@
 {
-  "name": "CampusLoop",
-  "short_name": "CampusLoop",
+  "name": "The Campus Loop",
+  "short_name": "The Campus Loop",
   "description": "Ask doubts, share ideas and run clubs with students of your college.",
   "start_url": "./",
   "scope": "./",
