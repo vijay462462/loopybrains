@@ -2425,3 +2425,9 @@ html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 .welcome.kb .welcome-skip { display: block; margin-bottom: -6px; }
 .welcome.kb .ob-card > .ob-step.ob-s-college { gap: 6px; }
 .welcome.kb .ob-s-college > .state-btn, .welcome.kb .ob-s-college > input[type="search"] { min-height: 40px; font-size: 15px; }
+
+/* ---- A to Z jump strip: pick a college without opening the keyboard ---- */
+.ob-letters { display: flex; gap: 5px; overflow-x: auto; width: 100%; padding: 2px 0 4px; scrollbar-width: none; } .ob-letters::-webkit-scrollbar { display: none; } .ob-letters[hidden] { display: none; }
+.ob-let { flex: none; min-width: 34px; height: 34px; padding: 0 8px; border-radius: 10px; border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line)); background: color-mix(in srgb, var(--accent) 8%, var(--sheet)); color: var(--ink); font: inherit; font-weight: 800; font-size: 14px; transition: transform .1s, background .15s; }
+.ob-let.on { background: var(--grad); color: #fff; border-color: transparent; box-shadow: 0 8px 16px -10px var(--accent); transform: translateY(-1px); } .ob-let:active { transform: scale(.92); }
+@media (max-height: 640px) { .ob-s-college .ob-letters { display: flex; } }

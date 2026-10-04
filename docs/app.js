@@ -1401,12 +1401,14 @@ function showWelcome(force, startId) {
         return ["\u{1F4DA} " + (cd.subjects || pr.subjects || []).filter(s => s !== "Other").length + " subjects", "\u{1F3DB} " + (cd.clubs || pr.clubs || []).filter(s => s !== "Other").length + " clubs", "\u{1F3AF} " + (cd.exam || pr.exam || "Exams")];
       };
       const list = el("div", { class: "ob-colist", role: "listbox", "aria-label": "Colleges" }), chosen = el("p", { class: "ob-chosen", role: "status" }, ""), count = el("p", { class: "ob-count", "aria-live": "polite" }, ""), types = el("div", { class: "ob-types", role: "tablist", "aria-label": "College type" });
-      const stSel = stateSheet(() => cst, (v) => { cst = v; browsing = true; fill(); });
+      const letters = el("div", { class: "ob-letters", role: "group", "aria-label": "Jump to a letter" }); let cl = "";
+      const stSel = stateSheet(() => cst, (v) => { cst = v; cl = ""; browsing = true; fill(); });
+      list.addEventListener("touchstart", () => { try { if (document.activeElement === q) q.blur(); } catch (_) {} }, { passive: true });
       let browsing = !pickSlug;   // false once a college is chosen: the list folds away and a preview card shows instead
       const pickBox = el("div", { class: "ob-pick", "aria-live": "polite" });
       const drawPick = () => {
         const c = pickSlug ? (all.find(x => x.slug === pickSlug) || { slug: pickSlug, name: pickName, state: "", sub: "", grp: "general" }) : null, show = !!c && !browsing;
-        pickBox.hidden = !show; [stSel, q, types, count, list].forEach(n => { if (n) n.hidden = show; }); chosen.hidden = show || !pickSlug;
+        pickBox.hidden = !show; [stSel, q, types, letters, count, list].forEach(n => { if (n) n.hidden = show; }); chosen.hidden = show || !pickSlug;
         if (!show) return;
         const [c1, c2] = c.slug === "rgukt" ? STATE_COLORS["Andhra Pradesh"] : collegeColors(c.slug, c.state || "");
         pickBox.style.setProperty("--c1", c1); pickBox.style.setProperty("--c2", c2);
@@ -1418,7 +1420,7 @@ function showWelcome(force, startId) {
       const mark = () => { chosen.textContent = pickSlug ? "\u2705 " + pickName : ""; chosen.hidden = !pickSlug; };
       const pick = (c) => {
         pickSlug = c.slug; pickName = c.name; browsing = false;
-        try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); if (navigator.vibrate) navigator.vibrate(12); } catch (_) {}
+        try { q.blur(); if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); if (navigator.vibrate) navigator.vibrate(12); } catch (_) {}
         mark(); fill(); const nb = box.querySelector(".rowbtns .btn.primary"); if (nb) nb.textContent = pickSlug !== curSlug ? "Continue with " + (pickName.length > 16 ? pickName.slice(0, 15) + "\u2026" : pickName) : "Continue";
         setTimeout(() => { const on = list.querySelector(".ob-col.on"); if (on) on.scrollIntoView({ block: "nearest", behavior: "smooth" }); }, 40);
       };
@@ -1432,7 +1434,12 @@ function showWelcome(force, startId) {
         if (cst === "All India" && !needle) { types.replaceChildren(); count.textContent = ""; list.replaceChildren(el("p", { class: "hint" }, "Type your college or city to search all of India, or pick a state above.")); return; }
         if (ctype !== "all" && !inState.some(c => c.grp === ctype)) ctype = "all";
         drawTypes(inState);
-        const rows = inState.filter(c => ctype === "all" || c.grp === ctype);
+        const pool = inState.filter(c => ctype === "all" || c.grp === ctype), initial = (c) => (c.name.replace(/^the\s+/i, "")[0] || "").toUpperCase();
+        const have = new Set(pool.map(initial)); if (cl && !have.has(cl)) cl = "";
+        letters.replaceChildren(...[...have].sort().map(L => el("button", { type: "button", class: "ob-let" + (cl === L ? " on" : ""), "aria-pressed": String(cl === L), onclick: () => { cl = cl === L ? "" : L; try { if (navigator.vibrate) navigator.vibrate(6); } catch (_) {} fill(); } }, L)));
+        letters.hidden = have.size < 4;
+        { const on = letters.querySelector(".ob-let.on"); if (on) letters.scrollLeft = Math.max(0, on.offsetLeft - letters.clientWidth / 2 + on.offsetWidth / 2); }
+        const rows = cl ? pool.filter(c => initial(c) === cl) : pool;
         count.textContent = rows.length + " college" + (rows.length === 1 ? "" : "s") + (cst === "All India" ? "" : " in " + cst);
         list.replaceChildren(...(rows.length ? rows.slice(0, 60).map(c => { const on = pickSlug === c.slug;
           return el("button", { class: "ob-col" + (on ? " on" : ""), type: "button", role: "option", "aria-selected": String(on), onclick: () => pick(c),
@@ -1441,10 +1448,10 @@ function showWelcome(force, startId) {
       };
       const q = el("input", { type: "search", enterkeyhint: "done", placeholder: "Search your college or city\u2026", "aria-label": "Search colleges", autocomplete: "off", value: cq });
       q.addEventListener("keydown", (ev) => { if (ev.key === "Enter") { ev.preventDefault(); const first = list.querySelector(".ob-col"); if (first && cq.trim()) { first.click(); } else q.blur(); } else if (ev.key === "ArrowDown") { ev.preventDefault(); const f = list.querySelector(".ob-col"); if (f) f.focus(); } });
-      q.addEventListener("input", () => { cq = q.value; browsing = true; fill(); });
+      q.addEventListener("input", () => { cq = q.value; cl = ""; browsing = true; fill(); });
       let last = ""; try { last = localStorage.getItem("dd-college-name") || ""; } catch (_) {}
       const lastSlug = curSlug, lastBtn = last && lastSlug && !pickSlug ? el("button", { type: "button", class: "ob-last", onclick: () => { const c = all.find(x => x.slug === lastSlug); if (c) { cst = c.state || cst; pick(c); } } }, "\u21A9 Continue with " + last) : null;
-      body = [el("h2", {}, "Choose your college \u{1F3EB}"), el("p", { class: "ob-say" }, "Each college has its own private board, subjects and clubs. Pick yours and I will set everything up."), lastBtn, pickBox, stSel, q, types, count, list, chosen];
+      body = [el("h2", {}, "Choose your college \u{1F3EB}"), el("p", { class: "ob-say" }, "Each college has its own private board, subjects and clubs. Pick yours and I will set everything up."), lastBtn, pickBox, stSel, q, types, letters, count, list, chosen];
       mark(); fill();
     } else if (sid === "name") {
       const inp = el("input", { type: "text", maxlength: "30", placeholder: "Your first name", "aria-label": "Your name", autocomplete: "given-name", value: nameVal });
