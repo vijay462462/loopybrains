@@ -780,8 +780,8 @@ function myHiddenCount() {
   return n;
 }
 function postingBlocked() {
-  if (state.verifiedPosting && !myAccount().verified) return "\u{1F512} Posting needs a verified email, to keep students safe. Open Profile and tap \u201CVerify your college email\u201D. Reading is always open.";
-  if (TENANT && TENANT.requireVerified && !myVerified()) return "🔒 This college board needs a verified college email to post. Open Profile and tap “Verify your college email”.";
+  if (state.verifiedPosting && !myAccount().verified) return "\u{1F512} Posting needs a verified email, to keep students safe. Open Profile and tap \u201CVerify your email\u201D. Reading is always open.";
+  if (TENANT && TENANT.requireVerified && !myVerified()) return "🔒 This college board needs a verified college email to post. Open Profile and tap “Verify your email” and use your college email.";
   if (isBlockedDevice()) return "🚫 This device has been blocked from posting for breaking the class rules. Contact the admin to appeal.";
   let st = {}; try { st = JSON.parse(localStorage.getItem("dd-restrict") || "{}"); } catch (_) {}
   const n = myHiddenCount();
@@ -3915,7 +3915,7 @@ function renderPlus() {
       el("div", { class: "plan-grid" }, ...cards),
       (PLUS.enabled && !has) ? el("div", { class: "promo-row" }, code, el("button", { class: "btn sm", type: "button", onclick: apply }, "Apply")) : null, (PLUS.enabled && !has) ? codeMsg : null,
       (PLUS.enabled && !has && PLUS.trialDays) ? (trialLeft() ? el("p", { class: "plan-deal" }, "🎁 Free trial active: " + trialLeft() + " day" + (trialLeft() === 1 ? "" : "s") + " left (AI helper needs a paid plan).") : (readJSON("dd-trial-start", 0) ? null : el("button", { class: "btn", type: "button", onclick: () => { writeJSON("dd-trial-start", Date.now()); render(); } }, "🎁 Start " + PLUS.trialDays + "-day free trial"))) : null,
-      PLUS.enabled ? el("p", { class: "hint" }, "Pay safely by UPI, card or net banking (Razorpay). Your plan switches on within a minute of paying." + (verified ? "" : " Verify your email first (Profile › Verify your college email) so we can attach the plan to you.")) : el("div", {}, el("p", { class: "hint" }, "Payments open soon. Everything below is free while we build Plus. Tap Notify me and we will tell you the day it opens" + (offerOn() ? ", and you get the " + offerOn().label.toLowerCase() + " price of ₹" + offerOn().yearly + " for the first year." : ".")), wemail));
+      PLUS.enabled ? el("p", { class: "hint" }, "Pay safely by UPI, card or net banking (Razorpay). Your plan switches on within a minute of paying." + (verified ? "" : " Verify your email first (Profile › Verify your email) so we can attach the plan to you.")) : el("div", {}, el("p", { class: "hint" }, "Payments open soon. Everything below is free while we build Plus. Tap Notify me and we will tell you the day it opens" + (offerOn() ? ", and you get the " + offerOn().label.toLowerCase() + " price of ₹" + offerOn().yearly + " for the first year." : ".")), wemail));
   };
   return [
     el("h2", {}, "⭐ The Campus Loop Plus" + (has ? " (active)" : "")),
@@ -3947,7 +3947,7 @@ function renderPlus() {
     el("div", { class: "label" }, "🎨 Theme"),
     (PLUS.enabled && !has) ? el("p", { class: "hint" }, "Themes are part of the paid plan.") : el("div", { class: "rowbtns" }, ...THEMES.map(([n, c]) => el("button", { class: "btn sm", type: "button", onclick: () => { try { if (c) localStorage.setItem("dd-theme", c); else localStorage.removeItem("dd-theme"); } catch (_) {} if (!c) { const b = BRAND_COLORS || ["#4f46e5", "#7c3aed"]; document.documentElement.style.setProperty("--accent", b[0]); document.documentElement.style.setProperty("--brand-a", b[0]); document.documentElement.style.setProperty("--brand-b", b[1]); } else applyTheme(); } }, n))),
     el("div", { class: "label" }, "☁️ Backup"),
-    !verified ? el("p", { class: "hint" }, "Backup needs a verified email so you can sign in on a new phone. Open Profile and tap “Verify your college email”.") : (PLUS.enabled && !has ? el("p", { class: "hint" }, "Backup is part of the paid plan.") : null),
+    !verified ? el("p", { class: "hint" }, "Backup needs a verified email so you can sign in on a new phone. Open Profile and tap “Verify your email”.") : (PLUS.enabled && !has ? el("p", { class: "hint" }, "Backup is part of the paid plan.") : null),
     el("div", { class: "rowbtns" }, backup, restore),
     el("div", { class: "label" }, "🗳️ Help us decide"),
     survey,
@@ -4267,7 +4267,7 @@ function refInviteCard() {
   const link = refLink(), say = el("p", { class: "hint", role: "status" }, "");
   if (!link) return el("div", { class: "learn-card plus-list" }, el("strong", {}, "🎁 Invite friends, earn free Plus"), el("p", { class: "hint" }, "Connect to the internet to get your invite link."));
   return el("div", { class: "learn-card plus-list" }, el("strong", {}, "🎁 Invite friends, earn free Plus"),
-    el("p", { class: "hint" }, "When a friend joins with your link and verifies their college email, you get 7 free days of Plus (up to 8 friends) and they get 3 days."),
+    el("p", { class: "hint" }, "When a friend joins with your link and verifies their email, you get 7 free days of Plus (up to 8 friends) and they get 3 days."),
     el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", onclick: async () => {
       const text = "Join me on " + BRAND + ", the free study community for our college: " + link;
       try { if (navigator.share) { await navigator.share({ title: BRAND, text, url: link }); return; } } catch (_) { return; }
@@ -4332,7 +4332,7 @@ function giftCard() {
   if (giftsState.list === null) loadGifts();
   const buyGift = (key, label) => el("button", { class: "btn sm", type: "button", onclick: async (e) => { e.currentTarget.disabled = true; try { await startCheckout(key, true); say.textContent = "The payment page opened. After you pay, come back here (tap Refresh) to get the gift link."; } catch (err) { say.textContent = err.message || "Could not start the payment."; } e.currentTarget.disabled = false; } }, label);
   return el("div", { class: "learn-card plus-list" }, el("strong", {}, "🎁 Gift Plus to a friend"),
-    el("p", { class: "hint" }, "Pay once and send a link. Your friend gets the days after verifying their college email. You can gift a week, a month or a semester."),
+    el("p", { class: "hint" }, "Pay once and send a link. Your friend gets the days after verifying their email. You can gift a week, a month or a semester."),
     el("div", { class: "rowbtns" }, buyGift("weekly", "Gift 1 week · ₹" + (PLUS.weekly || 19)), buyGift("monthly", "Gift 1 month · ₹" + PLUS.monthly), buyGift("semester", "Gift a semester · ₹" + (PLUS.semester || 149))),
     ...((giftsState.list || []).map(g => el("div", { class: "rowbtns" }, el("span", { class: "hint" }, "🎁 " + g.days + " days · " + (g.redeemed ? "claimed ✔" : "not claimed yet")), g.redeemed ? null : el("button", { class: "btn sm primary", type: "button", onclick: () => share(g.code) }, "Share link")))),
     el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: () => { giftsState.list = null; giftsState.loading = false; loadGifts(); } }, "↻ Refresh my gifts")), say);
@@ -4462,24 +4462,24 @@ function renderPlanner() {
       writeJSON("dd-exam-plan", { name: name.value.trim().slice(0, 40), date: date.value, subjects: subs.value.trim().slice(0, 300) }); msg.textContent = "✅ Plan saved on this phone."; draw();
     } }, "Make my plan"), back), msg, out].filter(Boolean);
 }
-// "Verify your college email": a sign-in link is sent to the email; tapping it proves the student owns that address.
+// "Verify your email" (any email works, such as Gmail or a college address): a sign-in link is sent to the email; tapping it proves the student owns that address.
 function verifyBlock() {
   const acct = myAccount(), ok = myVerified(), doms = COLLEGE_DOMAINS;
   if (ok) return el("div", { class: "learn-card" }, el("strong", {}, "✅ Verified student"), el("p", { class: "hint" }, acct.email.replace(/^(.).*(@.*)$/, "$1•••$2") + " · other students see a ✔ next to your name."));
-  const email = el("input", { type: "email", name: "vemail", maxlength: "100", placeholder: doms.length ? "you@" + doms[0] : "your college email", "aria-label": "College email", autocomplete: "email" });
-  const msg = el("p", { class: "hint", role: "status" }, state.mailMsg || (acct.verified && !ok ? "That email is not from " + COLLEGE + ". Use your college email." : ""));
+  const email = el("input", { type: "email", name: "vemail", maxlength: "100", placeholder: (TENANT && TENANT.requireVerified && doms.length) ? "you@" + doms[0] : "your email, for example you@gmail.com", "aria-label": "Your email", autocomplete: "email" });
+  const msg = el("p", { class: "hint", role: "status" }, state.mailMsg || (acct.verified && !ok ? "This board needs an email from " + COLLEGE + ". Use your college email." : ""));
   const send = el("button", { type: "button", class: "btn sm primary", onclick: async () => {
     const e = email.value.trim().toLowerCase();
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) { msg.textContent = "Type a valid email address."; return; }
-    if (!emailDomainOk(e)) { msg.textContent = "Please use your " + COLLEGE + " email (ending " + doms.map(d => "@" + d).join(", ") + ")."; return; }
+    if (!emailDomainOk(e)) { msg.textContent = "This board needs your " + COLLEGE + " email (ending " + doms.map(d => "@" + d).join(", ") + ")."; return; }
     if (!store || !store.sendEmailLink) { msg.textContent = "Email verification needs the live board. Connect to the internet and try again."; return; }
     send.disabled = true; msg.textContent = "Sending…";
     try { await store.sendEmailLink(e); state.mailMsg = "📧 Link sent to " + e + ". Open it on this phone to finish. Check spam too."; msg.textContent = state.mailMsg; }
     catch (err) { msg.textContent = err && err.code === "auth/operation-not-allowed" ? "Email sign-in is not switched on yet for this app. Please tell the admin." : err && err.code === "auth/unauthorized-continue-uri" ? "This website address is not allowed for email links yet. Please tell the admin." : "Could not send the email. Check your internet and try again."; }
     send.disabled = false;
   } }, "Send verification link");
-  return el("div", { class: "learn-card" }, el("strong", {}, "✔ Verify your college email"),
-    el("p", { class: "hint" }, "Optional. Verified students get a ✔ and can post on boards that need it." + (doms.length ? " Use an email ending " + doms.map(d => "@" + d).join(" or ") + "." : "")),
+  return el("div", { class: "learn-card" }, el("strong", {}, "✔ Verify your email"),
+    el("p", { class: "hint" }, "Optional. Any email works: Gmail, Yahoo, a college address or another one. Verified students get a ✔, can use cloud backup and can post on boards that need it." + ((TENANT && TENANT.requireVerified && doms.length) ? " This board needs an email ending " + doms.map(d => "@" + d).join(" or ") + "." : "")),
     email, el("div", { class: "rowbtns" }, send), msg);
 }
 function renderMe() {
@@ -4567,7 +4567,7 @@ function logoutBlock() {
       el("div", { class: "rowbtns" }, el("button", { class: "btn danger", type: "button", onclick: go }, "Yes, log out"), el("button", { class: "btn primary", type: "button", onclick: close }, "Stay signed in"))));
     document.body.append(ov);
   };
-  return el("div", { class: "logout-block" }, el("div", { class: "acct-head" }, el("span", { class: "acct-ic", "aria-hidden": "true" }, "\u{1F464}"), el("div", {}, el("strong", { class: "acct-title" }, "Account"), el("small", { class: "acct-sub" }, acc.verified ? "Signed in as " + acc.email + " \u2714 verified" : "This device only. Verify your college email to keep your points safe."))),
+  return el("div", { class: "logout-block" }, el("div", { class: "acct-head" }, el("span", { class: "acct-ic", "aria-hidden": "true" }, "\u{1F464}"), el("div", {}, el("strong", { class: "acct-title" }, "Account"), el("small", { class: "acct-sub" }, acc.verified ? "Signed in as " + acc.email + " \u2714 verified" : "This device only. Verify your email to keep your points safe."))),
     el("button", { class: "btn logout-btn", type: "button", onclick: ask }, "\u{1F6AA} Log out"), msg);
 }
 
@@ -8078,7 +8078,7 @@ async function imgToJpeg(file, max, q, square) {
   if (bmp.close) bmp.close();
   return c.toDataURL("image/jpeg", q);
 }
-const emailDomainOk = (e) => !COLLEGE_DOMAINS.length || COLLEGE_DOMAINS.includes(String(e || "").split("@")[1] ? String(e).split("@")[1].toLowerCase() : "");
+const emailDomainOk = (e) => !(TENANT && TENANT.requireVerified) || !COLLEGE_DOMAINS.length || COLLEGE_DOMAINS.includes(String(e || "").split("@")[1] ? String(e).split("@")[1].toLowerCase() : "");
 const myAccount = () => (store && store.account ? store.account() : { email: "", verified: false });
 const myVerified = () => { const a = myAccount(); return a.verified && emailDomainOk(a.email); };
 async function loadPlan() {
