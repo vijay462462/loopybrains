@@ -2514,3 +2514,11 @@ body.simple .tabs button[aria-selected="true"] { display: inline-flex; }
 .rg-opt.ok small { color: #16a34a; opacity: 1; }
 .rg-opt:active { transform: scale(.98); }
 .rg-opt:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent, #7c3aed) 60%, transparent); outline-offset: 2px; }
+/* Board rows have four parts: rank, picture, name and points. */
+.board li { grid-template-columns: 36px auto minmax(0, 1fr) auto; }
+.board li img.av, .board li .av { flex: none; }
+.board .who small { display: block; line-height: 1.35; overflow-wrap: anywhere; }
+.board .pts { align-self: center; }
+@media (max-width: 700px) {
+  header.top #notifBtn { position: absolute; top: 8px; right: 58px; padding: 4px 9px; font-size: 16px; border-radius: 999px; background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 25%, var(--line)); backdrop-filter: none; }
+}
