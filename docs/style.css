@@ -2486,3 +2486,5 @@ body.simple .tabs button[aria-selected="true"] { display: inline-flex; }
 
 .unit-topics { display: grid; gap: 4px; margin: 0 0 8px; font-size: 13.5px; line-height: 1.45; }
 .unit-topics span { color: color-mix(in srgb, currentColor 78%, transparent); }
+
+.dod-card { border-color: color-mix(in srgb, #f59e0b 55%, var(--line)); background: linear-gradient(150deg, color-mix(in srgb, #f59e0b 14%, var(--sheet)), var(--sheet)); display: grid; gap: 6px; }

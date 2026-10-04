@@ -188,6 +188,24 @@ function moderationView() {
   return h("div", {}, h("div", { class: "card" }, h("h3", {}, "Reported and hidden items"), h("p", { class: "adm-hint" }, "Latest 300 of each kind. Serious reports (abuse, unsafe, personal info) come first. Hide removes it for students; Restore brings it back. Nothing is ever deleted for good."), h("div", { class: "row" }, refresh), chips), msg, out);
 }
 
+function feedbackView() {
+  const out = h("div", {}), msg = h("p", { class: "msg" });
+  const load = async () => {
+    out.replaceChildren(h("p", { class: "hint" }, "Loading…"));
+    try {
+      const snap = await fs.getDocs(fs.query(fs.collection(db, "pilotFeedback"), fs.orderBy("createdAt", "desc"), fs.limit(200)));
+      const rows = snap.docs.map(d => d.data()), n = rows.length;
+      if (!n) { out.replaceChildren(h("p", { class: "hint" }, "No feedback yet.")); return; }
+      const avg = rows.reduce((a, r) => a + (r.rating || 0), 0) / n, pay = {};
+      rows.forEach(r => { pay[r.pay] = (pay[r.pay] || 0) + 1; });
+      out.replaceChildren(
+        h("div", { class: "card" }, h("b", {}, n + " responses, average " + avg.toFixed(1) + " out of 5"), h("p", { class: "mono" }, "Would pay: " + ["no", "29", "49", "99", "later"].map(k => (k === "no" || k === "later" ? k : "₹" + k) + " " + (pay[k] || 0)).join(" · "))),
+        ...rows.filter(r => r.liked || r.improve).slice(0, 40).map(r => h("div", { class: "card" }, h("div", { class: "row" }, h("b", {}, "★ " + r.rating), h("span", { class: "tag" }, r.slug || "college"), h("span", { class: "mono" }, new Date(r.createdAt).toLocaleDateString())), r.liked ? h("p", {}, "Likes: " + r.liked) : null, r.improve ? h("p", {}, "Improve: " + r.improve) : null)));
+    } catch (e) { msg.className = "msg err"; msg.textContent = "Could not load (" + (e.code || "error") + "). Publish the latest rules."; out.replaceChildren(); }
+  };
+  load();
+  return h("div", {}, h("h2", {}, "Pilot feedback"), h("p", { class: "hint" }, "One form per student per week. Only admins can read this."), msg, out);
+}
 function profileReportsView() {
   const p = roomPath(), out = h("div", {}), msg = h("p", { class: "msg" });
   const WHY = { a: "abuse", b: "bullying or unsafe", p: "personal info", s: "spam" };
@@ -691,8 +709,8 @@ function papersView() {
 }
 
 // ---------- shell ----------
-const TABS = [["overview", "Overview", true], ["report", "Weekly report", true], ["mail", "Report emails", true], ["moderation", "Moderation", true], ["profreports", "Profile reports", true], ["stories", "Recent stories", true], ["blocked", "Blocked devices", true], ["licences", "College licences", false], ["staff", "College staff", false], ["sale", "Flash sale", false], ["promos", "Promo codes", false], ["events", "Events", true], ["drives", "Placement drives", true], ["welcome", "Welcome note", true], ["notices", "Notices", true], ["papers", "Papers", true], ["colleges", "Colleges", false], ["requests", "Requests and survey", false], ["log", "Log", false]];
-const VIEWS = { stories: storiesView, welcome: welcomeView, events: eventsView, drives: drivesView, mail: mailView, report: reportView, staff: staffView, sale: saleView, promos: promosView, notices: noticesView, papers: papersView, overview: overviewView, moderation: moderationView, profreports: profileReportsView, blocked: blockedView, colleges: collegesView, requests: requestsView, log: logView };
+const TABS = [["overview", "Overview", true], ["report", "Weekly report", true], ["mail", "Report emails", true], ["moderation", "Moderation", true], ["profreports", "Profile reports", true], ["feedback", "Pilot feedback", false], ["stories", "Recent stories", true], ["blocked", "Blocked devices", true], ["licences", "College licences", false], ["staff", "College staff", false], ["sale", "Flash sale", false], ["promos", "Promo codes", false], ["events", "Events", true], ["drives", "Placement drives", true], ["welcome", "Welcome note", true], ["notices", "Notices", true], ["papers", "Papers", true], ["colleges", "Colleges", false], ["requests", "Requests and survey", false], ["log", "Log", false]];
+const VIEWS = { stories: storiesView, welcome: welcomeView, events: eventsView, drives: drivesView, mail: mailView, report: reportView, staff: staffView, sale: saleView, promos: promosView, notices: noticesView, papers: papersView, overview: overviewView, moderation: moderationView, profreports: profileReportsView, feedback: feedbackView, blocked: blockedView, colleges: collegesView, requests: requestsView, log: logView };
 function draw() {
   const u = auth.currentUser;
   const STAFF_TABS = ["stories", "welcome", "events", "drives", "report", "notices", "moderation", "profreports", "blocked", "papers"], shownTabs = S.staffOnly ? TABS.filter(t => STAFF_TABS.includes(t[0])) : TABS;

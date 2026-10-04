@@ -1837,7 +1837,7 @@ function renderToday() {
     streak = state.myStreak || 0, quizDone = QUIZ.length ? !!myQuizAnswer(dayNum()) : true, plan = readJSON("dd-exam-plan", null),
     left = plan && plan.date ? Math.ceil((new Date(plan.date + "T00:00:00").getTime() - new Date().setHours(0, 0, 0, 0)) / 864e5) : null;
   const note = state.welcomeNote && readJSON("dd-note-gone", 0) !== state.welcomeNote.updatedAt ? state.welcomeNote : null;
-  const key = [hello, name, streak, quizDone, left, equippedCostume(), storyGroups().length, readJSON("dd-launch", false) ? 1 : 0, readJSON("dd-launch-gone", false) ? 1 : 0, state.dataReady ? 1 : 0, boxToday() ? 1 : 0, questSteps().filter(s => s[2]).length, state.replies.length, state.doubts.length, readJSON("dd-tip", {}).gone ? 1 : 0, mistakeList().length, state.weekly.length, dayNum(), (typeof weekPoints === "function" ? weekPoints() : 0), note ? note.updatedAt : 0, openDrives().length, upcomingEvents().length, unansweredDoubts().length, readJSON("dd-today-closed", "") === dayStr() ? 1 : 0].join("|"); if (key === todayKey && !bar.hidden) return; todayKey = key;
+  const key = [hello, name, streak, quizDone, left, equippedCostume(), storyGroups().length, readJSON("dd-launch", false) ? 1 : 0, readJSON("dd-launch-gone", false) ? 1 : 0, state.dataReady ? 1 : 0, boxToday() ? 1 : 0, questSteps().filter(s => s[2]).length, state.replies.length, state.doubts.length, readJSON("dd-tip", {}).gone ? 1 : 0, mistakeList().length, state.weekly.length, dayNum(), (typeof weekPoints === "function" ? weekPoints() : 0), note ? note.updatedAt : 0, openDrives().length, upcomingEvents().length, unansweredDoubts().length, readJSON("dd-today-closed", "") === dayStr() ? 1 : 0, (doubtOfDay() || {}).id || "", fbDone() ? 1 : 0].join("|"); if (key === todayKey && !bar.hidden) return; todayKey = key;
   if (readJSON("dd-today-closed", "") === dayStr()) { bar.hidden = false; bar.replaceChildren(el("button", { class: "today-reopen", type: "button", onclick: () => { writeJSON("dd-today-closed", ""); todayKey = ""; renderToday(); } }, "Show today\u2019s card")); return; }
   const chip = (txt, cls, fn) => el("button", { class: "today-chip " + (cls || ""), type: "button", onclick: fn }, txt);
   const WORDS = ["Welcome to " + BRAND + " family", "Respect your teachers, help your juniors. 🙏", "Every question is welcome here.", "Kind words build a strong campus. 🌱", "Thank you for being part of our family.", "Learn together, grow together.", "Our teachers and staff work hard for you. Say thank you today. 🙏"];
@@ -1852,18 +1852,20 @@ function renderToday() {
     (() => { if (newbie) return null; const t = loopyTip(), st = readJSON("dd-tip", {}); if (st.gone && st.day === dayStr()) return null;
       return el("div", { class: "today-tip" }, el("small", {}, "💡 Loopy\u2019s tip for today"), el("p", {}, t.text), el("div", { class: "rowbtns" }, t.cta ? el("button", { class: "btn sm primary", type: "button", onclick: t.cta[1] }, t.cta[0]) : null, el("button", { class: "btn sm", type: "button", onclick: () => { writeJSON("dd-tip", { ...readJSON("dd-tip", {}), day: dayStr(), gone: true }); todayKey = ""; renderToday(); } }, "Got it"))); })(),
     note ? el("div", { class: "today-note" }, el("strong", {}, "💬 " + (note.from ? "A note from " + note.from : "A note from your college")), el("p", {}, note.text), el("button", { class: "of-x", type: "button", "aria-label": "Dismiss note", onclick: () => { writeJSON("dd-note-gone", note.updatedAt); todayKey = ""; renderToday(); } }, "✕")) : null, null, 
-    questCard(), boxButton(), quizTeaser(), latestHelp(),
+    questCard(), boxButton(), quizTeaser(), dodCard(), latestHelp(),
     newbie ? null : el("div", { class: "today-stats" },
       stat(streak, streak === 1 ? "day streak 🔥" : "day streak 🔥", streak && !(state.myDays && state.myDays.has(dayNum())) ? "warn" : "", () => showPanel("me")),
       stat(pts, "points this week ⚡", "", () => showPanel("wboard")),
       QUIZ.length ? stat(quizDone ? "✓" : "Go", quizDone ? "quiz done 🧠" : "today's quiz 🧠", quizDone ? "" : "pulse", () => showPanel("quiz")) : null),
     el("div", { class: "today-chips" },
       IS_RGUKT ? chip("\u{1F4D8} Semester subjects", "", () => { state.mode = "curriculum"; render(); try { $("sheet").scrollIntoView({ behavior: "smooth" }); } catch (_) {} }) : null,
-      left != null && left >= 0 && left <= 60 ? chip("⏳ " + (left === 0 ? "Exam today" : left + " days to exam"), left <= 7 ? "warn" : "", () => showPanel("planner")) : null,
+      left != null && left >= 0 && left <= 120 ? chip("⏳ " + (left === 0 ? "Exam today" : left + " days to exam"), left <= 7 ? "warn" : "", () => showPanel("planner")) : null,
       upcomingEvents().filter(e => e.startAt < Date.now() + 7 * 864e5).length ? chip("🎉 " + upcomingEvents().filter(e => e.startAt < Date.now() + 7 * 864e5).length + " event" + (upcomingEvents().filter(e => e.startAt < Date.now() + 7 * 864e5).length === 1 ? "" : "s") + " this week", "", () => showPanel("events")) : null,
       unansweredDoubts().length ? chip("🙋 " + unansweredDoubts().length + " doubt" + (unansweredDoubts().length === 1 ? "" : "s") + " need an answer", "pulse", showUnanswered) : null,
       openDrives().length ? chip("🏢 " + openDrives().length + " campus drive" + (openDrives().length === 1 ? "" : "s"), "", () => showPanel("drives")) : null,
       storyGroups().length < STORY_ROW_MIN ? chip("📸 Add a story", "", () => openStoryAdd()) : null,
+      (readJSON("dd-visits", { n: 1 }).n || 1) >= 3 && !fbDone() ? chip("\u{1F4AC} Give feedback", "", () => showPanel("feedback")) : null,
+      left == null && (readJSON("dd-visits", { n: 1 }).n || 1) >= 2 ? chip("\u23F3 Set your exam date", "", () => showPanel("planner")) : null,
       chip("🧰 Explore", "", () => showPanel("explore")))); 
   bar.hidden = false;
 }
@@ -2120,6 +2122,50 @@ function showHowTo() {
     el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", onclick: close }, "Got it"))));
   document.body.append(ov);
 }
+// ---------- Pilot feedback, doubt of the day ----------
+const FB_PAY = [["no", "No"], ["29", "₹29"], ["49", "₹49"], ["99", "₹99"], ["later", "Ask me later"]];
+const fbDone = () => readJSON("dd-fb-" + weekKey(), false);
+function renderFeedback() {
+  const f = { rating: 0, pay: "later" }, say = el("p", { class: "hint", role: "status" }, "");
+  const liked = el("textarea", { maxlength: "300", rows: "2", placeholder: "What do you like?", "aria-label": "What do you like" }), improve = el("textarea", { maxlength: "300", rows: "3", placeholder: "What should we fix or add?", "aria-label": "What should we improve" });
+  const stars = el("div", { class: "rowbtns", role: "radiogroup", "aria-label": "Rating" }), pays = el("div", { class: "rowbtns", role: "radiogroup", "aria-label": "Would you pay" });
+  const draw = () => {
+    stars.replaceChildren(...[1, 2, 3, 4, 5].map(n => el("button", { class: "btn" + (f.rating === n ? " primary" : ""), type: "button", role: "radio", "aria-checked": String(f.rating === n), "aria-label": n + " out of 5", onclick: () => { f.rating = n; draw(); } }, n <= f.rating ? "★ " + n : "☆ " + n)));
+    pays.replaceChildren(...FB_PAY.map(([v, t]) => el("button", { class: "btn sm" + (f.pay === v ? " primary" : ""), type: "button", role: "radio", "aria-checked": String(f.pay === v), onclick: () => { f.pay = v; draw(); } }, t)));
+  };
+  draw();
+  if (fbDone()) return [el("h2", {}, "\u{1F4AC} Thank you!"), el("p", { class: "hint" }, "We have your feedback for this week. You can send another one next week."), el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back"))];
+  return [
+    el("h2", {}, "\u{1F4AC} Help us improve"),
+    el("p", { class: "hint" }, "This takes 30 seconds. Your answers are private, are not shown with your name, and are read only by the team."),
+    el("div", { class: "label" }, "How useful is " + BRAND + " for you?"), stars,
+    el("div", { class: "label" }, "Would you pay each month for extra features?"), pays,
+    el("div", { class: "label" }, "What do you like?"), liked,
+    el("div", { class: "label" }, "What should we improve?"), improve,
+    el("p", { class: "guide-safe" }, el("b", {}, "Stay safe: "), "Do not write phone numbers, passwords or other people's names here."),
+    el("div", { class: "rowbtns" },
+      el("button", { class: "btn primary", type: "button", onclick: async (e) => {
+        if (!f.rating) { say.textContent = "Please pick a rating from 1 to 5."; return; }
+        if (!store || !store.setTop || !store.authUid()) { say.textContent = "Connect to the internet and try again."; return; }
+        e.currentTarget.disabled = true;
+        try { await store.setTop("pilotFeedback", store.authUid() + "_" + weekKey(), { week: weekKey(), uid: store.authUid(), slug: battleSlug(), rating: f.rating, pay: f.pay, liked: liked.value.trim().slice(0, 300), improve: improve.value.trim().slice(0, 300), createdAt: Date.now() }); writeJSON("dd-fb-" + weekKey(), true); render(); }
+        catch (_) { say.textContent = "Could not send. Check your connection and try again."; e.currentTarget.disabled = false; }
+      } }, "Send feedback"),
+      el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")), say,
+  ];
+}
+// One unanswered doubt is featured each day. The pick is the same for everyone on a college board, so classmates gather on it.
+function doubtOfDay() {
+  if (!store) return null;
+  const mine = allMyIds(), cutoff = Date.now() - 4 * 86400000;
+  const pool = state.doubts.filter(d => !d.deleted && !mine.has(d.authorId) && (d.createdAt || 0) > cutoff && !d.resolvedReplyId && repliesFor(d.id).length === 0).sort((a, b) => (a.createdAt - b.createdAt) || (a.id < b.id ? -1 : 1));
+  return pool.length ? pool[dayNum() % pool.length] : null;
+}
+function dodCard() {
+  const d = doubtOfDay(); if (!d) return null;
+  return el("div", { class: "learn-card dod-card" }, el("small", { class: "tag" }, "\u{1F31F} DOUBT OF THE DAY"), el("strong", {}, String(d.title || "").slice(0, 110)), el("small", { class: "hint" }, d.subject + " · waiting " + ago(d.createdAt) + ". Be the first to answer."),
+    el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => { state.tab = "doubts"; openItem(d.id); } }, "\u{1F64B} Answer it")));
+}
 // ---------- Notification centre, doubts waiting for you, reminders and Simple view ----------
 const isSimple = () => readJSON("dd-simple", true) !== false;
 const setSimple = (on) => { writeJSON("dd-simple", !!on); document.body.classList.toggle("simple", !!on); render(); };
@@ -2144,6 +2190,7 @@ function notifItems() {
   const me = allStats().get(store.uid);
   if (me && me.streak > 0 && me.days && !me.days.has(dayNum()) && new Date().getHours() >= 17) items.push({ id: "streak" + dayNum(), at: Date.now(), icon: "\u{1F525}", text: "Your " + me.streak + "-day streak ends tonight. Answer one doubt or take the quiz to keep it.", go: () => showUnanswered(), fresh: true, todo: true });
   if (QUIZ.length && !myQuizAnswer(dayNum())) items.push({ id: "quiz" + dayNum(), at: Date.now() - 1, icon: "\u{1F9E0}", text: "Today's quiz is waiting. It takes one minute.", go: () => showPanel("quiz"), fresh: true, todo: true });
+  if ((readJSON("dd-visits", { n: 1 }).n || 1) >= 3 && !fbDone()) items.push({ id: "fb" + weekKey(), at: Date.now() - 2, icon: "\u{1F4AC}", text: "Tell us how to improve " + BRAND + ". It takes 30 seconds.", go: () => showPanel("feedback"), fresh: true, todo: true });
   return items.sort((a, b) => b.at - a.at).slice(0, 25);
 }
 function renderBell() {
@@ -2200,6 +2247,7 @@ const MODE_GUIDE = {
   explore: { icon: "\u{1F9ED}", purpose: "Discover what is happening across the app.", steps: ["Browse the cards.", "Open one that interests you.", "Come back for new things daily."], safe: SAFE_COMMON, next: ["❓ Ask a doubt", "ask"] },
   drives: { icon: "\u{1F3E2}", purpose: "Campus drives and company visits with dates and links.", steps: ["Check the date and eligibility.", "Open the official link to register.", "Prepare using the resume tool."], safe: "A real drive never asks you to pay. Report any post that does.", next: ["\u{1F4C4} Build my resume", "resume"] },
   events: { icon: "\u{1F4C5}", purpose: "Events, fests and workshops on your campus.", steps: ["Pick an event.", "Check the date and place.", "Invite a friend."], safe: "Meet in public places on campus.", next: ["\u{1F4E2} Notices", "notices"] },
+  feedback: { icon: "\u{1F4AC}", purpose: "Tell the team what works and what to fix. It shapes the next version.", steps: ["Give a rating from 1 to 5.", "Say whether you would pay and how much.", "Write one thing you like and one thing to improve."], safe: "Do not write phone numbers or passwords. Feedback is private and not shown with your name.", next: null },
   notifs: { icon: "\u{1F514}", purpose: "Everything that needs you: answers to your doubts, doubts waiting for a first answer, and streak reminders.", steps: ["Tap a line to open it.", "Answer a waiting doubt to be the first helper.", "Turn on phone alerts if you want a ping while the app is in the background."], safe: "Alerts show only the title of a post. Nothing private is sent anywhere.", next: ["\u{1F64B} See open doubts", "intro"] },
   loopysearch: { icon: "\u{1F50E}", purpose: "Search any topic and see it: a quick answer, a picture, then videos, diagrams and PDFs.", steps: ["Type a topic or a unit name.", "Pick Quick idea, Deep lecture or Exam prep.", "Open a video, diagram or PDF, or ask Loopy to explain."], safe: "Results open other websites. Download only from trusted sites.", next: ["\u2753 Ask classmates", "ask"] },
   ai: { icon: "\u{1F916}", purpose: "Ask Loopy for study help.", steps: ["Type a clear question.", "Read the answer.", "Check important facts in your textbook."], safe: "Loopy can make mistakes. Do not type personal details into it.", next: ["❓ Ask classmates", "ask"] },
@@ -8187,6 +8235,7 @@ function render() {
       state.mode === "wardrobe" ? renderWardrobe() :
       state.mode === "drives" ? renderDrives() :
       state.mode === "events" ? renderEvents() :
+      state.mode === "feedback" ? renderFeedback() :
       state.mode === "notifs" ? renderNotifs() :
       state.mode === "loopysearch" ? renderLoopySearch() :
       state.mode === "ai" ? renderAI() :

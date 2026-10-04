@@ -56,6 +56,14 @@ await t("push: cannot store a token under another user's id", () => assertFails(
 await t("push: tokens cannot be read back from the app", () => assertFails(getDoc(doc(alice, "pushTokens", "alice"))));
 await t("push: too many or oversized tokens refused", async () => { await assertFails(setDoc(doc(alice, "pushTokens", "alice"), { tokens: [tok, tok, tok, tok, tok, tok], updatedAt: Date.now() })); await assertFails(setDoc(doc(alice, "pushTokens", "alice"), { tokens: ["y".repeat(500)], updatedAt: Date.now() })); });
 await t("push: extra fields refused, signed out refused", async () => { await assertFails(setDoc(doc(alice, "pushTokens", "alice"), { tokens: [tok], updatedAt: Date.now(), admin: true })); await assertFails(setDoc(doc(anon, "pushTokens", "alice"), { tokens: [tok], updatedAt: Date.now() })); });
+// ---- pilot feedback ----
+const fb = (db, uid, extra = {}, id) => setDoc(doc(db, "pilotFeedback", id || uid + "_w5"), { week: "w5", uid, slug: "rgukt", rating: 4, pay: "49", liked: "Quick answers", improve: "More subjects", createdAt: Date.now(), ...extra });
+await t("feedback: own weekly form accepted", () => assertSucceeds(fb(alice, "alice")));
+await t("feedback: a second form the same week is refused (create only)", () => assertFails(fb(alice, "alice", { rating: 1 })));
+await t("feedback: cannot write for another user", () => assertFails(fb(alice, "bob", {}, "bob_w5")));
+await t("feedback: bad rating / bad price / long text refused", async () => { await assertFails(fb(alice, "alice", { rating: 9 }, "alice_w6")); await assertFails(fb(alice, "alice", { pay: "5" }, "alice_w6")); await assertFails(fb(alice, "alice", { liked: "x".repeat(400) }, "alice_w6")); });
+await t("feedback: students cannot read feedback", () => assertFails(getDoc(doc(alice, "pilotFeedback", "alice_w5"))));
+await t("feedback: signed out refused", () => assertFails(fb(anon, "ghost")));
 // profile streak
 const prof = (db, uid, extra) => setDoc(doc(db, "rooms/r00m-Abc123xy/profiles", uid + "12345678"), { name: "A", dp: "", updatedAt: Date.now(), ownerUid: uid, ...extra });
 await t("profile with streak 5 is accepted", () => assertSucceeds(prof(alice, "alice", { streak: 5 })));

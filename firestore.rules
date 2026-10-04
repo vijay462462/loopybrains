@@ -330,6 +330,19 @@ service cloud.firestore {
         && request.resource.data.updatedAt is int;
       allow delete: if request.auth != null && request.auth.uid == uid;
     }
+    // Pilot feedback: one short form per student per week (document id = <uid>_<week>). Students can only add their own; only admins read it.
+    match /pilotFeedback/{id} {
+      allow read: if isAdmin();
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['week', 'uid', 'slug', 'rating', 'pay', 'liked', 'improve', 'createdAt'])
+        && request.resource.data.uid == request.auth.uid && str(request.resource.data.week, 2, 12) && str(request.resource.data.slug, 0, 40)
+        && id == request.auth.uid + '_' + request.resource.data.week
+        && request.resource.data.rating is int && request.resource.data.rating >= 1 && request.resource.data.rating <= 5
+        && request.resource.data.pay in ['no', '29', '49', '99', 'later']
+        && str(request.resource.data.liked, 0, 300) && str(request.resource.data.improve, 0, 300)
+        && recent(request.resource.data.createdAt);
+      allow update, delete: if false;
+    }
     // Weekly Showdown (ideas and answers). Same idea as the quiz battle, with two extra locks: only a verified e-mail can score, and one student
     // is capped per week (5 ideas, 20 answers). A student's counter and their college's counter must move together by exactly 1.
     function showOk(after, before) {
