@@ -390,6 +390,30 @@ async function sendReportFor(slug, d, tx) {
   await tx.sendMail({ from: '"The Campus Loop" <' + SMTP_USER.value() + ">", to: (d.emails || []).join(","), subject: rep.subject, text: rep.text, html: rep.html });
   await db.collection("reportEmails").doc(slug).set({ lastSent: Date.now() }, { merge: true });
 }
+
+// emailMyIds: sends the signed-in student's nickname, @Loop ID and number ID to THEIR OWN verified email address (never to any other address).
+// The number ID and the @name are checked against the database, so the email cannot be used to send someone else's details or free text.
+exports.emailMyIds = onRequest({ secrets: [SMTP_USER, SMTP_PASS], cors: ALLOWED_ORIGINS, region: "asia-south1", timeoutSeconds: 60, maxInstances: 3 }, async (req, res) => {
+  try {
+    if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
+    const m = /^Bearer (.+)$/.exec(req.get("Authorization") || "");
+    if (!m) return res.status(401).json({ error: "Please sign in first." });
+    const user = await admin.auth().verifyIdToken(m[1]);
+    if (!user.email || user.email_verified !== true) return res.status(403).json({ error: "Verify your email first." });
+    if (!(await allow(user.uid, "emailIds", 3, 86400000))) return res.status(429).json({ error: "You can email your IDs 3 times a day." });
+    const clean = (v, n) => String(v || "").replace(/[\u0000-\u001F<>&"']/g, " ").replace(/\s+/g, " ").trim().slice(0, n);
+    const nick = clean((req.body || {}).nickname, 40) || "Student", handleIn = String((req.body || {}).handle || "").toLowerCase();
+    let handle = ""; if (/^[a-z0-9_]{3,15}$/.test(handleIn)) { const h = await db.collection("handles").doc(handleIn).get(); if (h.exists && h.data().uid === user.uid) handle = handleIn; }
+    const sid = await db.collection("studentIds").doc(user.uid).get(), num = sid.exists ? String(sid.data().id || "") : "";
+    const site = SITE_URL.value() || "";
+    const lines = ["Nickname: " + nick, handle ? "Loop ID: @" + handle : "", num ? "Number ID: " + num : ""].filter(Boolean);
+    const text = "Your The Campus Loop details\n\n" + lines.join("\n") + "\n\nKeep this email. If you forget your Loop ID, open the app and use \"Forgot my Loop ID\"" + (site ? " at " + site : "") + ". These details are not a password. Never share your email password with anyone.";
+    const html = "<div style=\"font-family:system-ui,Arial,sans-serif;max-width:480px\"><h2>Your The Campus Loop details</h2>" + lines.map(l => "<p style=\"font-size:16px;margin:6px 0\"><b>" + l.replace(":", ":</b>") + "</p>").join("") + "<p style=\"color:#555\">Keep this email. If you forget your Loop ID, open the app and tap <b>Forgot my Loop ID</b>. These details are not a password.</p></div>";
+    await mailer().sendMail({ from: '"The Campus Loop" <' + SMTP_USER.value() + ">", to: user.email, subject: "Your The Campus Loop ID", text, html });
+    return res.json({ ok: true });
+  } catch (e) { console.error("emailMyIds", e); return res.status(500).json({ error: "Could not send the email. Please try again." }); }
+});
+
 exports.weeklyReport = onSchedule({ schedule: "every monday 08:00", timeZone: "Asia/Kolkata", region: "asia-south1", secrets: [SMTP_USER, SMTP_PASS], timeoutSeconds: 540, memory: "512MiB" }, async () => {
   const snap = await db.collection("reportEmails").where("active", "==", true).limit(200).get(), tx = mailer();
   for (const doc of snap.docs) { try { const d = doc.data(); if ((d.emails || []).length) await sendReportFor(doc.id, d, tx); } catch (e) { console.error("weeklyReport", doc.id, e); } }

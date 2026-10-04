@@ -2473,8 +2473,29 @@ function saveIdsCard() {
 function renderLoopIdStep() {
   const go = () => { state.mode = state.afterLoop || (state.selected ? "view" : "intro"); state.afterLoop = null; render(); };
   return [el("h2", {}, "Create your Loop ID"), el("p", { class: "ob-say" }, "Hi " + (getName() || "there") + "! A Loop ID is a short name friends can use to find you, like @" + ((getName() || "student").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 8) || "student") + "."),
-    handleCard(), saveIdsCard(), verifyBlock(),
+    handleCard(), (myAccount().verified && PLUS.functionsUrl) ? mailIdsCard() : saveIdsCard(), myAccount().verified ? null : el("p", { class: "hint" }, "Verify your email below and we will send your nickname and Loop ID to it automatically."), verifyBlock(),
     el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", onclick: go }, myHandle() ? "Continue" : "Continue without a Loop ID"), el("button", { class: "linkbtn", type: "button", onclick: () => { writeJSON("dd-loopid-skip", true); go(); } }, "Do not ask me again"))];
+}
+// Sends the nickname, Loop ID and number ID to the student's own verified email (the server checks everything and only mails that address).
+async function mailMyIds() {
+  if (!PLUS.functionsUrl || !store || !store.idToken) throw new Error("Email sending is not switched on yet.");
+  const tok = await store.idToken(); if (!tok) throw new Error("Connect to the internet and try again.");
+  const r = await fetch(PLUS.functionsUrl.replace(/\/$/, "") + "/emailMyIds", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + tok }, body: JSON.stringify({ nickname: getName() || "", handle: myHandle() }) });
+  const d = await r.json().catch(() => ({})); if (!r.ok) throw new Error(d.error || "Could not send the email.");
+  writeJSON("dd-ids-mailed", (getName() || "") + "|" + myHandle() + "|" + (readJSON("dd-clid", "") || ""));
+  return true;
+}
+// Once the email is verified and a nickname or Loop ID exists, mail the details once (and again if they change).
+let _autoMail = false;
+async function autoMailIds() {
+  if (_autoMail || !store || !state.loaded || !PLUS.functionsUrl || !myAccount().verified || !getName()) return;
+  const key = (getName() || "") + "|" + myHandle() + "|" + (readJSON("dd-clid", "") || ""); if (readJSON("dd-ids-mailed", "") === key) return;
+  _autoMail = true; try { await mailMyIds(); showNotice("We emailed your nickname and Loop ID to " + myAccount().email.replace(/^(.).*(@.*)$/, "$1•••$2") + "."); } catch (_) {} finally { _autoMail = false; }
+}
+function mailIdsCard() {
+  const acc = myAccount(), say = el("p", { class: "hint", role: "status" }, ""), masked = acc.email.replace(/^(.).*(@.*)$/, "$1•••$2");
+  return el("div", { class: "learn-card" }, el("strong", {}, "\u{1F4E7} Your IDs go to your email"), el("p", { class: "hint" }, "Your nickname and Loop ID are sent to " + masked + ", so you can find them if you forget."),
+    el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: async (e) => { const b = e.currentTarget; b.disabled = true; say.textContent = "Sending…"; try { await mailMyIds(); say.textContent = "✅ Sent. Check your inbox and spam folder."; } catch (er) { say.textContent = (er && er.message) || "Could not send."; } b.disabled = false; } }, "✉️ Email my IDs now")), say);
 }
 // ---------- Helper of the week and push opt-in ----------
 function helperOfWeek() {
@@ -8619,7 +8640,7 @@ function toggleFocus() {
 function render() {
   try {
     document.body.dataset.tab = state.tab; applyFocus();
-    renderHeader(); renderTrendBar(); renderStoryBar(); renderRail(); try { renderGuide(); } catch (_) {} renderList(); renderBottomNav(); try { if (IS_RGUKT && !readJSON("dd-rgukt-year", null) && !document.querySelector(".welcome")) showEligibility(); } catch (_) {} try { document.body.classList.toggle("simple", isSimple()); renderBell(); notifPing(); claimStudentIdOnce(); } catch (_) {}
+    renderHeader(); renderTrendBar(); renderStoryBar(); renderRail(); try { renderGuide(); } catch (_) {} renderList(); renderBottomNav(); try { if (IS_RGUKT && !readJSON("dd-rgukt-year", null) && !document.querySelector(".welcome")) showEligibility(); } catch (_) {} try { document.body.classList.toggle("simple", isSimple()); renderBell(); notifPing(); claimStudentIdOnce(); autoMailIds(); } catch (_) {}
     // Forms keep what the student is typing while live updates arrive.
     const key = ["ask", "edit", "name", "alumniJoin", "alumniJob", "fun", "lab", "college", "plus"].includes(state.mode) ? state.mode + state.tab : "";
     if (key && key === sheetKey) return;
