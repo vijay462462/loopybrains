@@ -1319,13 +1319,58 @@ async function loadWelcomeNote() {
 // "Today" card under the header: a personal greeting with the things that bring students back (streak, daily quiz, exam countdown).
 let todayKey = "";
 // Small Loopy face for the Today card (same robot as the welcome screen).
-function loopyMini() {
+// Loopy's costumes: unlocked by your best streak. Drawn on top of the robot face (same 60x60 picture).
+const COSTUMES = [
+  ["none", "Classic Loopy", 0, "The original, always cool."],
+  ["cap", "Scholar cap", 3, "Reach a 3-day streak"],
+  ["phones", "Focus headphones", 7, "Reach a 7-day streak"],
+  ["shades", "Cool shades", 14, "Reach a 14-day streak"],
+  ["mask", "Hero mask", 30, "Reach a 30-day streak"],
+  ["crown", "Golden crown", 60, "Reach a 60-day streak"],
+  ["legend", "Legend halo", 100, "Reach a 100-day streak"],
+];
+function bestStreakEver() {
+  const v = Math.max(state.myBest || 0, state.myStreak || 0, Number(readJSON("dd-best", 0)) || 0);
+  if (v > (Number(readJSON("dd-best", 0)) || 0)) writeJSON("dd-best", v);
+  return v;
+}
+const costumeUnlocked = (id) => { const c = COSTUMES.find(x => x[0] === id); return !!c && bestStreakEver() >= c[2]; };
+const equippedCostume = () => { const id = readJSON("dd-costume", "none"); return costumeUnlocked(id) ? id : "none"; };
+function loopyMini(costume) {
   const NS = "http://www.w3.org/2000/svg", mk = (t, at) => { const n = document.createElementNS(NS, t); for (const k in at) n.setAttribute(k, at[k]); return n; };
+  const id = costume || equippedCostume();
   const svg = mk("svg", { viewBox: "0 0 60 60", width: "46", height: "46", class: "loopy-mini", "aria-hidden": "true" });
   svg.append(mk("line", { x1: 30, y1: 6, x2: 30, y2: 12, stroke: "#c4b5fd", "stroke-width": 3, "stroke-linecap": "round" }), mk("circle", { cx: 30, cy: 5, r: 3.5, fill: "#fde047" }),
     mk("rect", { x: 8, y: 12, width: 44, height: 38, rx: 15, fill: "#fff", stroke: "#a78bfa", "stroke-width": 2.5 }), mk("rect", { x: 13, y: 18, width: 34, height: 25, rx: 11, fill: "#1e1757" }),
     mk("ellipse", { cx: 23, cy: 28, rx: 3.4, ry: 4.6, fill: "#67e8f9", class: "lp-eyes" }), mk("ellipse", { cx: 37, cy: 28, rx: 3.4, ry: 4.6, fill: "#67e8f9", class: "lp-eyes" }), mk("path", { d: "M25 36q5 4.5 10 0", fill: "none", stroke: "#fde68a", "stroke-width": 2.4, "stroke-linecap": "round" }));
+  if (id === "cap") svg.append(mk("path", { d: "M11 13 L30 3 L49 13 L30 21 Z", fill: "#1e1757", stroke: "#fde047", "stroke-width": 1 }), mk("rect", { x: 22, y: 14, width: 16, height: 5, rx: 2, fill: "#312e81" }), mk("path", { d: "M49 13 L49 22", stroke: "#fde047", "stroke-width": 1.6, "stroke-linecap": "round" }), mk("circle", { cx: 49, cy: 23, r: 2, fill: "#fde047" }));
+  if (id === "phones") svg.append(mk("path", { d: "M9 32 A21 21 0 0 1 51 32", fill: "none", stroke: "#f472b6", "stroke-width": 3.6, "stroke-linecap": "round" }), mk("rect", { x: 3, y: 27, width: 8, height: 14, rx: 4, fill: "#f472b6" }), mk("rect", { x: 49, y: 27, width: 8, height: 14, rx: 4, fill: "#f472b6" }));
+  if (id === "shades") svg.append(mk("rect", { x: 14, y: 22.5, width: 14, height: 10, rx: 4.5, fill: "#0b0b1c" }), mk("rect", { x: 32, y: 22.5, width: 14, height: 10, rx: 4.5, fill: "#0b0b1c" }), mk("path", { d: "M28 26 h4", stroke: "#0b0b1c", "stroke-width": 2 }), mk("path", { d: "M16.5 25 l5 0", stroke: "#fff", "stroke-width": 1.2, opacity: ".6", "stroke-linecap": "round" }));
+  if (id === "mask") svg.append(mk("path", { d: "M10 24 h40 v9 q-20 6 -40 0 z", fill: "#ef4444" }), mk("ellipse", { cx: 23, cy: 28.5, rx: 4.6, ry: 4.4, fill: "#fff" }), mk("ellipse", { cx: 37, cy: 28.5, rx: 4.6, ry: 4.4, fill: "#fff" }), mk("ellipse", { cx: 23, cy: 28.5, rx: 2.6, ry: 3.4, fill: "#67e8f9", class: "lp-eyes" }), mk("ellipse", { cx: 37, cy: 28.5, rx: 2.6, ry: 3.4, fill: "#67e8f9", class: "lp-eyes" }));
+  if (id === "crown") svg.append(mk("path", { d: "M14 14 L17 3 L24 9 L30 1.5 L36 9 L43 3 L46 14 Z", fill: "#fbbf24", stroke: "#b45309", "stroke-width": 1 }), mk("circle", { cx: 17, cy: 3.5, r: 1.8, fill: "#f43f5e" }), mk("circle", { cx: 30, cy: 2, r: 1.8, fill: "#38bdf8" }), mk("circle", { cx: 43, cy: 3.5, r: 1.8, fill: "#f43f5e" }));
+  if (id === "legend") svg.append(mk("ellipse", { cx: 30, cy: 4, rx: 15, ry: 3.6, fill: "none", stroke: "#fde047", "stroke-width": 2.4 }), mk("path", { d: "M5 20 l1.6 3.4 3.6 .5 -2.6 2.5 .6 3.6 -3.2 -1.8 -3.2 1.8 .6 -3.6 -2.6 -2.5 3.6 -.5z", fill: "#fde047", transform: "scale(.7) translate(-2 4)" }), mk("path", { d: "M48 30 l1.6 3.4 3.6 .5 -2.6 2.5 .6 3.6 -3.2 -1.8 -3.2 1.8 .6 -3.6 -2.6 -2.5 3.6 -.5z", fill: "#fde047", transform: "scale(.7) translate(20 14)" }));
   return svg;
+}
+// Wardrobe screen and unlock celebration.
+function renderWardrobe() {
+  const best = bestStreakEver(), eq = equippedCostume(), back = el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back");
+  return [el("h2", {}, "👗 Loopy\u2019s wardrobe"), el("p", { class: "hint" }, "Your best streak is " + best + " day" + (best === 1 ? "" : "s") + ". Keep your streak going to unlock new costumes for Loopy."),
+    el("div", { class: "plus-tiles" }, ...COSTUMES.map(([id, name, need, how]) => { const ok = best >= need, on = eq === id;
+      const tile = el("button", { class: "plus-tile costume" + (on ? " on" : "") + (ok ? "" : " locked"), type: "button", "aria-label": name + (ok ? (on ? ", worn" : ", unlocked") : ", locked: " + how), onclick: () => { if (!ok) return; writeJSON("dd-costume", id); todayKey = ""; try { renderHeader(); } catch (_) {} render(); } },
+        el("span", { class: "cos-prev" }, loopyMini(id)), el("strong", {}, name), el("small", {}, ok ? (on ? "✔ Wearing" : "Tap to wear") : "🔒 " + how));
+      const sv = tile.querySelector("svg"); if (sv) { sv.setAttribute("width", "64"); sv.setAttribute("height", "64"); } return tile; })),
+    el("div", { class: "rowbtns" }, back)];
+}
+let costumeChecked = false;
+function checkNewCostume() {
+  if (costumeChecked || !state.dataReady) return; costumeChecked = true;
+  const best = bestStreakEver(), seen = readJSON("dd-costumes-seen", ["none"]), fresh = COSTUMES.filter(c => best >= c[2] && !seen.includes(c[0]));
+  if (!fresh.length) return; writeJSON("dd-costumes-seen", [...seen, ...fresh.map(c => c[0])]);
+  const c = fresh[fresh.length - 1]; writeJSON("dd-costume", c[0]);
+  const box = el("div", { id: "costumeModal", class: "welcome", role: "dialog", "aria-modal": "true" }, el("div", { class: "welcome-card" }, el("div", { class: "ob-loopy" }, (() => { const s = loopyMini(c[0]); s.setAttribute("width", "110"); s.setAttribute("height", "110"); return s; })()),
+    el("h2", {}, "Loopy unlocked the " + c[1] + "! 🎉"), el("p", {}, "Your " + c[2] + "-day streak earned a new look. Loopy is wearing it now."),
+    el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", onclick: () => { box.remove(); todayKey = ""; try { renderHeader(); } catch (_) {} } }, "Love it!"), el("button", { class: "btn", type: "button", onclick: () => { box.remove(); showPanel("wardrobe"); } }, "👗 Wardrobe"))));
+  setTimeout(() => { if (!document.getElementById("welcome") && !document.getElementById("milestone")) { document.body.append(box); confetti(110); } }, 1500);
 }
 // Loopy's daily tip: one helpful, personal suggestion a day (chosen from your streak, quiz, exam date, mistakes, weak topic, rank or the board), else a study tip.
 const STUDY_TIPS = [
@@ -1465,13 +1510,14 @@ function launchBanner(name) {
     el("button", { class: "launch-x", type: "button", "aria-label": "Close banner", onclick: () => { writeJSON("dd-launch-gone", true); todayKey = ""; renderToday(); } }, "✕")));
 }
 function renderToday() {
+  try { checkNewCostume(); } catch (_) {}
   const bar = $("todayBar"); if (!bar) return;
   if (NO_COLLEGE || !store) { bar.hidden = true; return; }
   const hr = new Date().getHours(), hello = hr < 12 ? "Good morning" : hr < 17 ? "Good afternoon" : "Good evening", name = (getName() || "").trim().split(/\s+/)[0] || "",
     streak = state.myStreak || 0, quizDone = QUIZ.length ? !!myQuizAnswer(dayNum()) : true, plan = readJSON("dd-exam-plan", null),
     left = plan && plan.date ? Math.ceil((new Date(plan.date + "T00:00:00").getTime() - new Date().setHours(0, 0, 0, 0)) / 864e5) : null;
   const note = state.welcomeNote && readJSON("dd-note-gone", 0) !== state.welcomeNote.updatedAt ? state.welcomeNote : null;
-  const key = [hello, name, streak, quizDone, left, storyGroups().length, readJSON("dd-launch", false) ? 1 : 0, readJSON("dd-launch-gone", false) ? 1 : 0, state.dataReady ? 1 : 0, boxToday() ? 1 : 0, questSteps().filter(s => s[2]).length, state.replies.length, state.doubts.length, readJSON("dd-tip", {}).gone ? 1 : 0, mistakeList().length, state.weekly.length, dayNum(), (typeof weekPoints === "function" ? weekPoints() : 0), note ? note.updatedAt : 0, openDrives().length, upcomingEvents().length, unansweredDoubts().length].join("|"); if (key === todayKey && !bar.hidden) return; todayKey = key;
+  const key = [hello, name, streak, quizDone, left, equippedCostume(), storyGroups().length, readJSON("dd-launch", false) ? 1 : 0, readJSON("dd-launch-gone", false) ? 1 : 0, state.dataReady ? 1 : 0, boxToday() ? 1 : 0, questSteps().filter(s => s[2]).length, state.replies.length, state.doubts.length, readJSON("dd-tip", {}).gone ? 1 : 0, mistakeList().length, state.weekly.length, dayNum(), (typeof weekPoints === "function" ? weekPoints() : 0), note ? note.updatedAt : 0, openDrives().length, upcomingEvents().length, unansweredDoubts().length].join("|"); if (key === todayKey && !bar.hidden) return; todayKey = key;
   const chip = (txt, cls, fn) => el("button", { class: "today-chip " + (cls || ""), type: "button", onclick: fn }, txt);
   const WORDS = ["Welcome to the " + BRAND + " family 💙", "Respect your teachers, help your juniors. 🙏", "Every question is welcome here.", "Kind words build a strong campus. 🌱", "Thank you for being part of our family.", "Learn together, grow together. 🚀", "Our teachers and staff work hard for you. Say thank you today. 🙏"];
   const newbie = !readJSON("dd-quest-done", false) && (readJSON("dd-visits", { n: 1 }).n || 1) <= 21 && questSteps().filter(s => s[2]).length < 3;
@@ -1559,11 +1605,11 @@ const EXPLORE = [
   ["Study", [["quizBtn", "🧠", "Daily Quiz"], ["labBtn", "🧪", "Study Lab"], ["studyBtn", "📖", "Study Tools"], ["learnBtn", "📚", "Learn from IIT"], ["focusBtn", "🎯", "Focus mode"]]],
   ["Campus", [["__story", "📸", "Add a story"], ["eventsBtn", "🎉", "Events"], ["drivesBtn", "🏢", "Campus Drives"], ["leadersBtn", "🏆", "Top Helpers"], ["alumniBtn", "🎓", "Alumni", "alumni"]]],
   ["Career", [["careerBtn", "🚀", "Career Guide"], ["__resume", "📄", "Resume builder"]]],
-  ["More", [["__stickers", "🎴", "Sticker book"], ["__install", "📲", "Install app"], ["__plus", "⭐", "CampusLoop Plus"], ["botBtn", "🤖", "Loop Bot", "bot"], ["funBtn", "🎉", "Entertainment", "fun"], ["aboutBtn", "ℹ️", "About Us"]]],
+  ["More", [["__stickers", "🎴", "Sticker book"], ["__wardrobe", "👗", "Loopy\u2019s wardrobe"], ["__install", "📲", "Install app"], ["__plus", "⭐", "CampusLoop Plus"], ["botBtn", "🤖", "Loop Bot", "bot"], ["funBtn", "🎉", "Entertainment", "fun"], ["aboutBtn", "ℹ️", "About Us"]]],
 ];
 function renderExplore() {
   const back = el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back");
-  const go = (id) => { if (id === "__plus") { showPanel("plus"); return; } if (id === "__resume") { showPanel("resume"); return; } if (id === "__story") { openStoryAdd(); return; } if (id === "__stickers") { showPanel("stickers"); return; } if (id === "__install") { const ib = $("installBtn"); if (_pwaPrompt && ib) ib.click(); else showNotice("To install: open your browser menu and tap Add to Home screen.", ""); return; } const b = $(id); if (b) b.click(); };
+  const go = (id) => { if (id === "__plus") { showPanel("plus"); return; } if (id === "__resume") { showPanel("resume"); return; } if (id === "__story") { openStoryAdd(); return; } if (id === "__stickers") { showPanel("stickers"); return; } if (id === "__wardrobe") { showPanel("wardrobe"); return; } if (id === "__install") { const ib = $("installBtn"); if (_pwaPrompt && ib) ib.click(); else showNotice("To install: open your browser menu and tap Add to Home screen.", ""); return; } const b = $(id); if (b) b.click(); };
   return [el("h2", {}, "🧰 Explore"), el("p", { class: "hint" }, "Everything in " + BRAND + ", in one place."),
     ...EXPLORE.flatMap(([title, items]) => [el("div", { class: "label" }, title), el("div", { class: "plus-tiles" }, ...items.filter(it => !it[3] || !document.body.classList.contains("no-" + it[3])).map(([id, icon, label]) => el("button", { class: "plus-tile", type: "button", onclick: () => go(id) }, el("span", { class: "pt-i", "aria-hidden": "true" }, icon), el("strong", {}, label))))]),
     el("div", { class: "rowbtns" }, back)];
@@ -7205,6 +7251,7 @@ function render() {
       state.mode === "notices" ? renderNotices() :
       state.mode === "explore" ? renderExplore() :
       state.mode === "stickers" ? renderStickers() :
+      state.mode === "wardrobe" ? renderWardrobe() :
       state.mode === "drives" ? renderDrives() :
       state.mode === "events" ? renderEvents() :
       state.mode === "ai" ? renderAI() :
