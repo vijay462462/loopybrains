@@ -1903,6 +1903,49 @@ function renderHeader() {
   }
 }
 
+// Every tab says what it is for, how to use it in three steps, and the next step to take. Students can close it; a small link brings it back.
+const TAB_GUIDE = {
+  doubts: { icon: "\u2753", purpose: "Stuck on a problem? Ask it here and classmates and seniors will answer.", steps: ["Pick your branch and subject on the left (or leave it on All).", "Tap Ask a doubt, write your question and add a photo if it helps.", "Open your doubt later to read answers. Thank the helpful ones with a reaction."], next: () => { const mine = store ? allMyIds() : new Set(); const asked = state.doubts.some(d => mine.has(d.authorId)); return asked ? ["\u{1F64B} Answer a classmate\u2019s doubt", () => showUnanswered()] : ["\u2753 Ask your first doubt", () => openAsk()]; } },
+  ideas: { icon: "\u{1F4A1}", purpose: "Share project, startup and campus ideas. Find people to build them with.", steps: ["Choose a category, such as Project or Startup.", "Tap Share an idea and say what you want to build and who you need.", "Read the comments, then team up with the people who reply."], next: () => ["\u{1F4A1} Share an idea", () => openAsk()] },
+  clubs: { icon: "\u{1F3DB}", purpose: "Find your club, see what it is doing and post updates for its members.", steps: ["Pick a club on the left.", "Read its latest posts and events.", "Post a meeting, a result or a call for new members."], next: () => ["\u{1F4E3} Post in a club", () => openAsk()] },
+  challenges: { icon: "\u{1F3AE}", purpose: "Quizzes, puzzles and contests. Win points for yourself and your college.", steps: ["Take the daily quiz. It takes one minute.", "Try a puzzle or an innovation challenge.", "Check the Board to see how your college is doing this week."], next: () => ["\u{1F9E0} Take today\u2019s quiz", () => showPanel("quiz")] },
+  jobs: { icon: "\u{1F4BC}", purpose: "Internships, jobs, off-campus drives and interview experiences in one place.", steps: ["Pick a type, such as Internship or Interview experience.", "Open a post for the details and the official link.", "Never pay for a job. Report anything that asks for money."], next: () => ["\u{1F3E2} See campus drives", () => showPanel("drives")] },
+  market: { icon: "\u{1F6D2}", purpose: "Buy and sell books, notes, electronics and hostel items with your college mates.", steps: ["Pick a category, or search for what you need.", "Message the seller and meet in a public place on campus.", "Selling? Tap Post an item with a clear photo and price."], next: () => ["\u{1F3F7}\uFE0F Sell something", () => openAsk()] },
+  gate: { icon: "\u{1F3AF}", purpose: "Exam preparation: previous papers, tips and discussions for your exam.", steps: ["Pick your branch and subject.", "Open the previous papers and try them with a timer.", "Stuck on a question? Post it in the discussion."], next: () => ["\u{1F4DD} Open previous papers", () => { const b = document.querySelector(".pyq-panel, .subj-chip"); if (b) b.scrollIntoView({ behavior: "smooth" }); }] },
+};
+function renderGuide() {
+  const box = $("guideBar"); if (!box) return;
+  const g = TAB_GUIDE[state.tab]; if (!g || NO_COLLEGE || state.query.trim()) { box.hidden = true; return; }
+  const key = "dd-guide-" + state.tab, closed = readJSON(key, false);
+  box.hidden = false;
+  if (closed) { box.className = "guide-card mini"; box.replaceChildren(el("button", { class: "guide-reopen", type: "button", onclick: () => { writeJSON(key, false); renderGuide(); } }, "\u2139\uFE0F How this works")); return; }
+  box.className = "guide-card";
+  const nx = g.next();
+  box.replaceChildren(
+    el("button", { class: "guide-x", type: "button", "aria-label": "Close this guide", onclick: () => { writeJSON(key, true); renderGuide(); } }, "\u2715"),
+    el("div", { class: "guide-head" }, el("span", { class: "guide-ic", "aria-hidden": "true" }, g.icon), el("div", {}, el("small", {}, "WHAT THIS IS FOR"), el("strong", {}, g.purpose))),
+    el("ol", { class: "guide-steps" }, ...g.steps.map(s => el("li", {}, s))),
+    el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", onclick: nx[1] }, nx[0]), el("button", { class: "btn sm", type: "button", onclick: () => showHowTo() }, "\u{1F4D6} Full guide")));
+}
+// The full guide: the path from joining to getting the most out of the app, with ticks for the steps you have already done.
+function showHowTo() {
+  const mine = store ? allMyIds() : new Set(), name = !!(getName() || "").trim();
+  const asked = state.doubts.some(d => mine.has(d.authorId)), answered = state.replies.some(r => mine.has(r.authorId)), quiz = (QUIZ.length ? !!myQuizAnswer(dayNum()) : true) || readJSON("dd-quest-quiz", false), campusPicked = CAMPUSES.length ? !!getCampus() : true;
+  const close = () => ov.remove();
+  const row = (done, icon, title, text, label, fn) => el("li", { class: done ? "done" : "" }, el("span", { class: "hw-tick", "aria-hidden": "true" }, done ? "\u2713" : icon), el("div", {}, el("strong", {}, title), el("small", {}, text), done || !fn ? null : el("button", { class: "btn sm primary", type: "button", onclick: () => { close(); fn(); } }, label)));
+  const steps = [
+    row(name, "1", "Tell us your name", "A first name is enough. It is shown with your posts.", "Set my name", () => { state.afterName = null; showPanel("name"); }),
+    CAMPUSES.length ? row(campusPicked, "2", "Pick your campus", "So classmates on your campus can find you.", "Choose campus", () => { state.mode = "campus"; render(); }) : null,
+    row(asked, "3", "Ask your first doubt", "Open Doubts, tap Ask a doubt and write your question.", "Ask a doubt", () => openAsk()),
+    row(answered, "4", "Answer someone", "Helping others earns points and builds your streak.", "See open doubts", () => showUnanswered()),
+    row(quiz, "5", "Take today\u2019s quiz", "One question a day. It counts for your college.", "Take the quiz", () => showPanel("quiz")),
+    row(false, "6", "Come back tomorrow", "Visit every day to grow your streak and unlock Loopy\u2019s costumes.", "", null),
+  ].filter(Boolean);
+  const ov = el("div", { class: "welcome", role: "dialog", "aria-modal": "true", "aria-label": "How to use " + BRAND }, el("div", { class: "welcome-card hw" },
+    el("h2", {}, "\u{1F4D6} How to use " + BRAND), el("p", { class: "ob-say" }, "Follow these steps. Tick marks show what you have already done."), el("ol", { class: "hw-list" }, ...steps),
+    el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", onclick: close }, "Got it"))));
+  document.body.append(ov);
+}
 function renderRail() {
   const t = TABS[state.tab], rows = state[t.coll];
   const counts = {};
@@ -3772,6 +3815,7 @@ function renderMe() {
     el("div", { class: "badges" }, BADGES.map(([icon, name, how, test]) => el("div", { class: "badge" + (test(p) ? " got" : "") }, el("span", { class: "bicon" }, icon), el("b", {}, name), el("small", {}, how)))),
     el("div", { class: "rowbtns" },
       el("button", { class: "btn primary", type: "button", onclick: () => { state.mode = "quiz"; render(); } }, "🧠 Today's quiz"),
+      el("button", { class: "btn", type: "button", onclick: () => showHowTo() }, "\u{1F4D6} How to use the app"),
       el("button", { class: "btn", type: "button", onclick: () => { state.mode = "learn"; render(); } }, "📚 Learn from IIT"),
       el("button", { class: "btn", type: "button", onclick: () => { state.afterName = "me"; state.mode = "name"; render(); } }, "Change name"),
       PRIVATE && el("button", { class: "btn", type: "button", onclick: () => { setCode(""); location.reload(); } }, "Change class code"),
@@ -7466,7 +7510,7 @@ function toggleFocus() {
 function render() {
   try {
     document.body.dataset.tab = state.tab; applyFocus();
-    renderHeader(); renderTrendBar(); renderStoryBar(); renderRail(); renderList(); renderBottomNav();
+    renderHeader(); renderTrendBar(); renderStoryBar(); renderRail(); try { renderGuide(); } catch (_) {} renderList(); renderBottomNav();
     // Forms keep what the student is typing while live updates arrive.
     const key = ["ask", "edit", "name", "alumniJoin", "alumniJob", "fun", "lab", "college", "plus"].includes(state.mode) ? state.mode + state.tab : "";
     if (key && key === sheetKey) return;
