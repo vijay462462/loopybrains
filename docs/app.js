@@ -3756,10 +3756,15 @@ function logoutBlock() {
     try { if (window.indexedDB && indexedDB.databases) (await indexedDB.databases()).forEach(d => d.name && /firebase/i.test(d.name) && indexedDB.deleteDatabase(d.name)); } catch (_) {}
     location.replace(location.origin + location.pathname);
   };
-  const confirm = el("div", { class: "logout-confirm", hidden: "" }, el("p", {}, acc.verified ? "You will be signed out of " + acc.email + " and this device will be cleared. Sign in again with the same email to get your points back." : "This clears your name, college and progress from this device. Without a verified email your points cannot be restored."),
-    el("div", { class: "rowbtns" }, el("button", { class: "btn danger", type: "button", onclick: go }, "Yes, log out"), el("button", { class: "btn", type: "button", onclick: () => { confirm.hidden = true; } }, "Stay signed in")));
+  const ask = () => {
+    const close = () => ov.remove(), text = acc.verified ? "You will be signed out of " + acc.email + " and this device will be cleared. Sign in again with the same email to get your points back." : "This clears your name, college and progress from this device. Without a verified email your points cannot be restored.";
+    const ov = el("div", { class: "welcome", role: "dialog", "aria-modal": "true", "aria-label": "Log out" }, el("div", { class: "welcome-card" },
+      el("div", { class: "welcome-icon", "aria-hidden": "true" }, "\u{1F6AA}"), el("h2", {}, "Log out?"), el("p", { class: "ob-say" }, text),
+      el("div", { class: "rowbtns" }, el("button", { class: "btn danger", type: "button", onclick: go }, "Yes, log out"), el("button", { class: "btn primary", type: "button", onclick: close }, "Stay signed in"))));
+    document.body.append(ov);
+  };
   return el("div", { class: "logout-block" }, el("div", { class: "label" }, "Account"),
-    el("button", { class: "btn logout-btn", type: "button", onclick: () => { confirm.hidden = !confirm.hidden; } }, "\u{1F6AA} Log out"), confirm, msg);
+    el("button", { class: "btn logout-btn", type: "button", onclick: ask }, "\u{1F6AA} Log out"), msg);
 }
 
 // ---------- confetti ----------
