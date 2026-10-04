@@ -1371,7 +1371,14 @@ function showWelcome(force, startId) {
       const inp = el("input", { type: "text", maxlength: "30", placeholder: "Your first name", "aria-label": "Your name", autocomplete: "given-name", value: nameVal });
       inp.addEventListener("input", () => { nameVal = inp.value; });
       inp.addEventListener("keydown", (e) => { if (e.key === "Enter") go(1); });
-      body = [el("div", { class: "ob-loopy" }, loopyMini()), el("h2", {}, "Welcome to " + BRAND + " family"), el("p", { class: "ob-say" }, "Hi, I\u2019m Loopy \u{1F916}. Ask boldly, answer together, and grow with your whole campus. What should I call you?"), inp];
+      body = [el("div", { class: "ob-loopy" }, loopyMini()), el("h2", {}, "Welcome to " + BRAND + " family"),
+        el("div", { class: "ob-heart", "aria-label": "A message for you" },
+          el("p", { class: "hl lead" }, "Behind every question is a student brave enough to ask. \u{1F499}"),
+          el("p", { class: "hl" }, "Maybe you are far from home. Maybe exam week feels heavy. Maybe it seems everyone else already knows the answer."),
+          el("p", { class: "hl" }, "They don\u2019t. We didn\u2019t either."),
+          el("p", { class: "hl" }, "Here no question is small and nobody studies alone. Seniors who once sat where you sit are ready to help, and one day you will help someone too."),
+          el("p", { class: "hl sign" }, "We are really glad you are here. \u2014 Loopy and the team")),
+        el("p", { class: "ob-say" }, "So, what should I call you?"), inp];
     } else if (sid === "interests") {
       body = [el("div", { class: "ob-loopy" }, loopyMini()), el("h2", {}, (who ? "Nice to meet you, " + who : "Nice to meet you") + "! \u{1F44B}"), el("p", { class: "ob-say" }, "What brings you here? Pick any. I will tailor your home screen."),
         el("div", { class: "ob-chips" }, ...INTERESTS.map(([ic, t, k]) => el("button", { class: "ob-chip" + (picked.has(k) ? " on" : ""), "data-k": k, type: "button", "aria-pressed": String(picked.has(k)), onclick: (e) => { if (picked.has(k)) picked.delete(k); else picked.add(k); e.currentTarget.classList.toggle("on", picked.has(k)); e.currentTarget.setAttribute("aria-pressed", String(picked.has(k))); } }, ic + " " + t)))];
