@@ -1892,7 +1892,7 @@ function renderHeader() {
             class: "campus-chip" + (state.campusFilter === c ? " active" : ""),
             style: c !== "all" ? "--cc:" + campusColor(c) : "",
             onclick: () => { state.campusFilter = c; render(); if (c !== "all" && innerWidth <= 1000) setTimeout(() => { const l = $("list"); if (l) l.scrollIntoView({ behavior: "smooth", block: "start" }); }, 80); }
-          }, c === "all" ? "🌐 All" : c + " · " + campusPostCount(c))
+          }, c === "all" ? "🌐 All" : c + " · " + campusSeenCount(c))
         ),
         myC ? el("button", { type: "button", class: "campus-chip my",
           onclick: () => { state.mode = "campus"; render(); }
@@ -2027,7 +2027,7 @@ function visible() {
   let rows = state[t.coll].filter(d => !isHidden(d) &&
     (state.group === "All" || d[t.field] === state.group) &&
     (!q || ((d.title || "") + " " + (d.body || "")).toLowerCase().includes(q)));
-  if (state.campusFilter !== "all") rows = rows.filter(d => d.campus === state.campusFilter || (d.aud === "all" && state.tab === "doubts"));
+  if (state.campusFilter !== "all") rows = rows.filter(d => addressedTo(d, state.campusFilter));
   if (state.yearFilter !== "All" && (state.tab === "doubts" || state.tab === "gate")) rows = rows.filter(d => d.year === state.yearFilter);
   if (state.tab === "doubts" && (state.filter === "open" || state.filter === "done")) rows = rows.filter(d => (state.filter === "done") === !!d.resolvedReplyId);
   if (state.tab === "doubts" && state.filter === "mentor") rows = rows.filter(needsMentor);
@@ -2666,6 +2666,9 @@ function yearHub() {
 }
 
 const CAMPUS_COLLS = ["doubts", "ideas", "clubs", "gate", "challenges", "jobs", "market"];
+// A post is shown under a campus filter when it is from that campus, sent to all campuses, or sent to that campus.
+const addressedTo = (d, c) => d.campus === c || d.aud === "all" || (Array.isArray(d.to) && d.to.includes(c));
+const campusSeenCount = (c) => CAMPUS_COLLS.reduce((n, k) => n + state[k].filter(x => !x.deleted && addressedTo(x, c)).length, 0);
 const campusPostCount = (c) => CAMPUS_COLLS.reduce((n, k) => n + state[k].filter(x => x.campus === c && !x.deleted).length, 0);
 function campusHub() {
   const c = state.campusFilter;
@@ -2763,7 +2766,8 @@ function renderList() {
     if (d.year) meta.push(el("span", { class: "pill year-pill" }, d.year));
     if (d.campus && CAMPUSES.length > 0) meta.push(el("span", { class: "campus-badge", style: "--cc:" + campusColor(d.campus) }, d.campus));
     if (d.via) meta.push(el("span", { class: "pill via-pill", title: "Asked by a student of " + d.via }, "\u{1F30D} From " + d.via));
-    else if (d.aud === "all" && state.tab === "doubts" && CAMPUSES.length > 0) meta.push(el("span", { class: "pill open", title: "Visible to every campus" }, "\u{1F310} All campuses"));
+    else if (d.aud === "all" && CAMPUSES.length > 0) meta.push(el("span", { class: "pill open", title: "Visible to every campus" }, "\u{1F310} All campuses"));
+    else if (d.aud === "pick" && Array.isArray(d.to) && d.to.length) meta.push(el("span", { class: "pill via-pill", title: "Sent to " + d.to.join(", ") }, "\u{1F3AF} To " + d.to.map(campusLabel).join(", ")));
     if (d.pages && d.pages.length) meta.push(el("span", {}, "📎 " + d.pages.length + (d.pages.length === 1 ? " page" : " pages")));
     if (d.fileAttachments && d.fileAttachments.length) meta.push(el("span", {}, "📁 " + d.fileAttachments.length + (d.fileAttachments.length === 1 ? " file" : " files")));
     const av = d.anonymous ? avatarEl("👤") : avatarEl(mine(d) ? getAvatar() : avatarFor(d.authorName || ""));
@@ -6715,10 +6719,21 @@ const roomOfCollege = async (slug) => {
   try { const d = store.getTop ? await store.getTop("colleges", slug) : null; if (d && typeof d.room === "string" && /^[A-Za-z0-9_-]{3,60}$/.test(d.room)) return d.room; } catch (_) {}
   return "college-" + slug;
 };
-function audienceBlock() {
-  const myC = getCampus(), hasCampuses = CAMPUSES.length > 0, canNet = !!(store && store.setIn);
-  const box = el("div", { class: "aud-box" });
-  const opt = (value, icon, title, text, on) => el("label", { class: "aud-opt" }, el("input", { type: "radio", name: "aud", value, checked: on ? "" : null }), el("span", { class: "aud-txt" }, el("b", {}, icon + " " + title), el("small", {}, text)));
+const campusLabel = (c) => ({ RKVALLEY: "RK Valley" })[c] || String(c).charAt(0) + String(c).slice(1).toLowerCase();
+const AUD_TABS = ["doubts", "ideas", "clubs", "gate", "jobs"];
+let askTo = [];   // campuses chosen with "Choose campuses"
+function audienceBlock(withNet) {
+  const myC = getCampus(), hasCampuses = CAMPUSES.length > 0, canNet = !!(store && store.setIn && withNet);
+  const box = el("div", { class: "aud-box" }), summary = el("p", { class: "aud-sum", role: "status" });
+  const picker = el("div", { class: "aud-camps", hidden: "" });
+  const mode = () => { const r = box.querySelector("input[name=aud]:checked"); return r ? r.value : "all"; };
+  const sum = () => {
+    const m = mode();
+    summary.textContent = m === "all" ? "\u{1F4E2} Visible to all " + CAMPUSES.length + " campuses of " + COLLEGE + "." : m === "my" ? "\u{1F3EB} " + (myC ? myC + " students see it first" : "Pick your campus first to use this") + ". Everyone can still find it." : askTo.length ? "\u{1F3AF} Sent to " + askTo.map(campusLabel).join(", ") + ". Everyone can still find it." : "\u{1F3AF} Tap the campuses you want to reach.";
+    picker.hidden = m !== "pick";
+  };
+  const seg = (value, icon, title, on) => el("label", { class: "aud-seg" }, el("input", { type: "radio", name: "aud", value, checked: on ? "" : null, onchange: sum }), el("span", {}, el("b", {}, icon), el("i", {}, title)));
+  CAMPUSES.forEach(c => picker.append(el("button", { type: "button", class: "aud-camp" + (askTo.includes(c) ? " on" : ""), style: "--cc:" + campusColor(c), "aria-pressed": String(askTo.includes(c)), onclick: (e) => { askTo = askTo.includes(c) ? askTo.filter(x => x !== c) : [...askTo, c]; e.currentTarget.classList.toggle("on", askTo.includes(c)); e.currentTarget.setAttribute("aria-pressed", String(askTo.includes(c))); try { if (navigator.vibrate) navigator.vibrate(8); } catch (_) {} sum(); } }, el("span", { class: "ac-ic" }, CAMPUS_ICON[c] || "\u{1F3EB}"), el("span", { class: "ac-nm" }, campusLabel(c)), el("span", { class: "ac-ck", "aria-hidden": "true" }, "\u2713"))));
   const chips = el("div", { class: "aud-chips" }), results = el("div", { class: "aud-results" }), note = el("p", { class: "hint" });
   const drawChips = () => { chips.replaceChildren(...askNet.map(c => el("span", { class: "aud-chip" }, c.name, el("button", { type: "button", "aria-label": "Remove " + c.name, onclick: () => { askNet = askNet.filter(x => x.slug !== c.slug); drawChips(); drawResults(); } }, "\u2715")))); note.textContent = askNet.length ? "Your doubt will also be sent to " + askNet.length + " college" + (askNet.length === 1 ? "" : "s") + ". Answers come back to you here." : ""; };
   const all = [...(SEL !== "rgukt" ? [{ slug: "rgukt", name: "RGUKT AP", state: "Andhra Pradesh" }] : []), ...DIRECTORY.filter(c => c.slug !== SEL && c.slug !== "rgukt").map(c => ({ slug: c.slug, name: c.name, state: c.state || "" }))];
@@ -6730,18 +6745,18 @@ function audienceBlock() {
     results.replaceChildren(...(rows.length ? rows.map(c => el("button", { type: "button", class: "aud-res", onclick: () => { if (askNet.length >= NET_MAX) { note.textContent = "You can pick up to " + NET_MAX + " colleges."; return; } askNet.push(c); q.value = ""; drawChips(); drawResults(); } }, el("b", {}, c.name), el("small", {}, c.state))) : [el("p", { class: "hint" }, "No college found.")]));
   };
   q.addEventListener("input", drawResults);
-  box.append(el("div", { class: "label" }, "Who should see your doubt?"),
-    hasCampuses ? el("div", { class: "aud-opts" },
-      opt("all", "\u{1F310}", "All " + COLLEGE + " campuses", "Fastest answers. Students of every campus can see it.", true),
-      opt("campus", "\u{1F3EB}", myC ? "My campus first (" + myC + ")" : "My campus first", myC ? "Your campus mates see it first. Everyone can still find it." : "Pick your campus first to use this option.", false)) : null,
+  box.append(el("div", { class: "label" }, "Send your post to"),
+    hasCampuses ? el("div", { class: "aud-segs", role: "radiogroup" }, seg("all", "\u{1F310}", "All campuses", true), seg("my", "\u{1F3EB}", "My campus", false), seg("pick", "\u{1F3AF}", "Choose", false)) : null,
+    hasCampuses ? picker : null, hasCampuses ? summary : null,
     canNet ? el("details", { class: "aud-net" }, el("summary", {}, "\u{1F30D} Also ask students of other colleges (optional)"),
       el("p", { class: "hint" }, "Pick up to " + NET_MAX + " colleges. Their students will see your doubt with your first name and your college name. Do not share private details."),
       q, results, chips, note) : null);
-  drawChips();
+  drawChips(); sum();
   return box;
 }
+
 function renderAsk(existing) {
-  if (!existing) askNet = [];
+  if (!existing) { askNet = []; askTo = []; } askTo = [];
   if (state.tab === "market") return renderMarketAsk(existing);
   const t = TABS[state.tab];
   const err = el("p", { class: "err", hidden: true });
@@ -6802,8 +6817,14 @@ function renderAsk(existing) {
       }
       const myC = getCampus(); if (myC) doc.campus = myC;
       let netTargets = [];
+      if (AUD_TABS.includes(state.tab) && CAMPUSES.length) {
+        const audEl = form.querySelector("input[name=aud]:checked"), av = audEl ? audEl.value : "all";
+        if (av === "pick") {
+          if (!askTo.length) { err.textContent = "Tap at least one campus to send your post to, or choose All campuses."; err.hidden = false; btn.disabled = false; btn.textContent = label; return; }
+          doc.aud = "pick"; doc.to = askTo.slice(0, 4);
+        } else doc.aud = av === "my" && myC ? "my" : "all";
+      }
       if (state.tab === "doubts") {
-        const audEl = form.querySelector("input[name=aud]:checked"); if (CAMPUSES.length) doc.aud = audEl && audEl.value === "campus" && myC ? "campus" : "all";
         if (askNet.length && store.setIn) {
           if (netToday() >= NET_DAILY) { err.textContent = "You can ask other colleges " + NET_DAILY + " times a day. Remove the other colleges, or try again tomorrow."; err.hidden = false; btn.disabled = false; btn.textContent = label; return; }
           for (const c of askNet.slice(0, NET_MAX)) { try { netTargets.push({ slug: c.slug, name: c.name, room: await roomOfCollege(c.slug), id: store.newId("doubts") }); } catch (_) {} }
@@ -6848,7 +6869,7 @@ function renderAsk(existing) {
         )
       ),
       el("label", {}, "Tags (optional)", el("input", { id: "f-tags", name: "tags", maxlength: "100", placeholder: "e.g. mid-1, unit-2, tricky" }))),
-    state.tab === "doubts" && !existing && audienceBlock(),
+    AUD_TABS.includes(state.tab) && !existing && audienceBlock(state.tab === "doubts"),
     state.tab === "gate" && el("div", { class: "gate-fields" },
       el("label", {}, "PYQ Year",
         el("select", { name: "pyqYear" },

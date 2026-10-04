@@ -220,5 +220,8 @@ await t("the verified badge needs a verified email", async () => { await assertF
 await env.withSecurityRulesDisabled(async (c) => { await setDoc(doc(c.firestore(), R + "/profiles/dev-legacy-1234"), { name: "Old", dp: "", status: "", updatedAt: now() }); });
 await t("an older profile without an owner can be claimed by its next saver", () => assertSucceeds(setDoc(doc(student, R + "/profiles/dev-legacy-1234"), prof({ name: "Old" }))));
 await t("...and then nobody else can take it", () => assertFails(setDoc(doc(other, R + "/profiles/dev-legacy-1234"), prof({ ownerUid: "other" }))));
+console.log("send a post to chosen campuses");
+await t("a post can be addressed to chosen campuses", () => assertSucceeds(setDoc(doc(anon, R + "/ideas/to1"), { title: "An idea", body: "x", category: "Project", authorId: "dev-to-12345678", authorName: "S", createdAt: now(), aud: "pick", to: ["ONGOLE", "SRIKAKULAM"], campus: "NUZVID" })));
+await t("more than four target campuses is refused", () => assertFails(setDoc(doc(anon, R + "/ideas/to2"), { title: "An idea", body: "x", category: "Project", authorId: "dev-to-12345678", authorName: "S", createdAt: now(), to: ["A", "B", "C", "D", "E"] })));
 console.log(`\n${pass} passed, ${fail} failed`);
 await env.cleanup(); process.exit(fail ? 1 : 0);

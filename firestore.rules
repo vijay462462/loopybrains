@@ -70,7 +70,7 @@ service cloud.firestore {
                                'pages', 'fileAttachments', 'year', 'tags', 'pyqYear', 'marks', 'difficulty',
                                'resolvedReplyId', 'bounty', 'campus', 'chalType', 'timeLimit', 'questions', 'status',
                                'winner', 'winnerName', 'runnerUp', 'runnerUpName', 'deleted', 'reports', 'editedAt',
-                               'company', 'applyUrl', 'deadline', 'pay', 'ownerUid', 'aud', 'via', 'viaSlug', 'viaOf', 'sentTo'])
+                               'company', 'applyUrl', 'deadline', 'pay', 'ownerUid', 'aud', 'to', 'via', 'viaSlug', 'viaOf', 'sentTo'])
         && optStr(d, 'ownerUid', 60) && str(d.title, 3, 200) && str(d.body, 0, 5000) && str(d[g], 1, 60)
         && str(d.authorName, 1, 40) && str(d.authorId, 8, 80) && d.createdAt is int
         && optBool(d, 'anonymous') && optBool(d, 'urgent') && optBool(d, 'bounty') && optBool(d, 'deleted')
@@ -78,7 +78,7 @@ service cloud.firestore {
         && optList(d, 'questions', 10)
         && optStr(d, 'year', 12) && optStr(d, 'tags', 100) && optStr(d, 'pyqYear', 20) && optStr(d, 'marks', 4)
         && optStr(d, 'difficulty', 10) && optStr(d, 'campus', 30) && optStr(d, 'chalType', 20)
-        && optStr(d, 'aud', 8) && optStr(d, 'via', 80) && optStr(d, 'viaSlug', 40) && optStr(d, 'viaOf', 100) && optList(d, 'sentTo', 3)
+        && optStr(d, 'aud', 8) && optStr(d, 'via', 80) && optStr(d, 'viaSlug', 40) && optStr(d, 'viaOf', 100) && optList(d, 'sentTo', 3) && optList(d, 'to', 4)
         && optStr(d, 'company', 60) && optStr(d, 'applyUrl', 300) && optStr(d, 'deadline', 10) && optStr(d, 'pay', 40)
         && optStr(d, 'winner', 100) && optStr(d, 'winnerName', 40) && optStr(d, 'runnerUp', 100) && optStr(d, 'runnerUpName', 40)
         && (!('timeLimit' in d) || (d.timeLimit is number && d.timeLimit >= 0 && d.timeLimit <= 180))

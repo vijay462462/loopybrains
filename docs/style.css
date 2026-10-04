@@ -2326,3 +2326,16 @@ html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 .ob-step > input[type="text"] { width: 100%; box-sizing: border-box; min-height: 52px; padding: 0 16px; border: 1.5px solid transparent; border-radius: 16px; font: inherit; font-weight: 700; font-size: 17px; color: #fff; text-align: center; outline: none; -webkit-appearance: none; appearance: none;
   background: linear-gradient(#171347, #171347) padding-box, linear-gradient(120deg, #f472b6, #a855f7 50%, #22d3ee) border-box; box-shadow: 0 10px 26px -14px rgb(168 85 247 / .8); transition: box-shadow .2s ease; }
 .ob-step > input[type="text"]::placeholder { color: #a5b4fc; font-weight: 600; } .ob-step > input[type="text"]:focus { box-shadow: 0 0 0 4px rgb(168 85 247 / .3), 0 14px 30px -12px rgb(168 85 247 / .9); }
+
+/* ---- Send to: segmented control and campus chips ---- */
+.aud-segs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 4px; border-radius: 16px; background: color-mix(in srgb, var(--accent) 8%, var(--line)); }
+.aud-seg { position: relative; display: block; cursor: pointer; } .aud-seg input { position: absolute; opacity: 0; pointer-events: none; }
+.aud-seg span { display: grid; justify-items: center; gap: 2px; padding: 9px 4px; border-radius: 12px; font-weight: 800; font-size: 12.5px; text-align: center; transition: background .18s, color .18s, transform .12s, box-shadow .18s; }
+.aud-seg b { font-size: 18px; line-height: 1; } .aud-seg i { font-style: normal; }
+.aud-seg input:checked + span { background: var(--grad); color: #fff; box-shadow: 0 10px 20px -10px var(--accent); transform: translateY(-1px); }
+.aud-seg input:focus-visible + span { outline: 3px solid color-mix(in srgb, var(--accent) 70%, #fff); outline-offset: 2px; }
+.aud-camps { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; animation: obIn .25s ease both; } .aud-camps[hidden] { display: none; }
+.aud-camp { position: relative; display: flex; align-items: center; gap: 8px; padding: 11px 12px; border-radius: 14px; border: 1.5px solid color-mix(in srgb, var(--cc) 45%, var(--line)); background: color-mix(in srgb, var(--cc) 8%, var(--sheet)); color: var(--ink); font: inherit; font-weight: 800; font-size: 14px; text-align: left; transition: transform .1s, box-shadow .2s, background .2s; }
+.aud-camp .ac-ic { font-size: 18px; } .aud-camp .ac-nm { flex: 1; } .aud-camp .ac-ck { width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; background: var(--cc); color: #fff; font-size: 12px; font-weight: 900; transform: scale(0); transition: transform .2s cubic-bezier(.2, 1.5, .4, 1); }
+.aud-camp.on { background: linear-gradient(135deg, color-mix(in srgb, var(--cc) 24%, var(--sheet)), color-mix(in srgb, var(--cc) 10%, var(--sheet))); border-color: var(--cc); box-shadow: 0 12px 22px -14px var(--cc); } .aud-camp.on .ac-ck { transform: scale(1); }
+.aud-sum { margin: 0; padding: 8px 12px; border-radius: 12px; background: color-mix(in srgb, var(--accent) 9%, transparent); font-weight: 700; font-size: 13px; line-height: 1.35; }
