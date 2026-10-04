@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>The Campus Loop</title>
-<meta name="description" content="The Campus Loop — ask doubts, share ideas and run clubs together with students of your college. Every question brings you closer to the answer.">
+<meta name="description" content="The Campus Loop, ask doubts, share ideas and run clubs together with students of your college. Every question brings you closer to the answer.">
 <meta name="theme-color" content="#7c3aed">
 <meta http-equiv="Cache-Control" content="no-cache">
 <meta name="referrer" content="no-referrer">
@@ -12,7 +12,7 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://api.dicebear.com https://img.youtube.com data: blob:; media-src 'self' blob: https:; connect-src 'self' https://asia-south1-doubt-desk-e6f39.cloudfunctions.net https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com wss://*.firebaseio.com https://*.supabase.co wss://*.supabase.co; frame-src https://www.youtube.com; object-src 'none'; base-uri 'none'; form-action 'self'; worker-src 'self'; manifest-src 'self'; upgrade-insecure-requests;">
 
 <!-- PWA -->
-<link rel="manifest" href="manifest.json?v=307">
+<link rel="manifest" href="manifest.json?v=309">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -27,16 +27,16 @@
 <!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@500&display=swap">
-<link rel="stylesheet" href="style.css?v=307">
-<link rel="stylesheet" href="sparkbot.css?v=307">
-<link rel="stylesheet" href="player.css?v=307">
-<link rel="stylesheet" href="lab.css?v=307">
+<link rel="stylesheet" href="style.css?v=309">
+<link rel="stylesheet" href="sparkbot.css?v=309">
+<link rel="stylesheet" href="player.css?v=309">
+<link rel="stylesheet" href="lab.css?v=309">
 </head>
 <body>
 <div id="splash" class="splash sp2" role="status" aria-live="polite">
   <div class="sp2-bg" aria-hidden="true"><i class="b1"></i><i class="b2"></i><i class="b3"></i></div>
   <div class="sp2-main">
-    <small class="sp2-kicker">✨ THE CAMPUS LOOP</small>
+    <small class="sp2-kicker">THE CAMPUS LOOP</small>
     <h1 class="splash-title sp2-h" id="splashTitle">Stuck? <span>Someone on your campus has the answer.</span></h1>
     <p class="splash-sub sp2-sub" id="splashSub">Ask boldly. Answer together. Innovate endlessly.</p>
     <div class="sp2-crest-slot" id="splashCrestSlot"></div>
@@ -78,10 +78,10 @@
   </div>
   <button type="button" class="btn primary splash-go sp2-go" id="splashGo">Join my campus →</button>
 </div>
-<script src="splash.js?v=307"></script>
+<script src="splash.js?v=309"></script>
 
 <!-- offline indicator -->
-<div id="offlineBar" class="offline-bar" hidden>📵 You're offline — showing cached posts</div>
+<div id="offlineBar" class="offline-bar" hidden>📵 You're offline, showing cached posts</div>
 
 <!-- PWA install prompt -->
 <div id="installBanner" class="install-banner" hidden>
@@ -91,7 +91,7 @@
 </div>
 
 <!-- new posts toast -->
-<div id="newToast" class="new-toast" hidden role="status" aria-live="polite"><span>New posts arrived — tap to see ↑</span></div>
+<div id="newToast" class="new-toast" hidden role="status" aria-live="polite"><span>New posts available. Tap to view</span></div>
 
 <div class="wrap">
   <canvas id="particles" aria-hidden="true"></canvas>
@@ -119,7 +119,7 @@
       <button class="chip tool" id="quizBtn" type="button"><span class="ci">🧠</span> <span class="cl">Daily Quiz</span></button>
       <button class="chip tool" id="learnBtn" type="button"><span class="ci">📚</span> <span class="cl">Learn from IIT</span></button>
       <button class="chip tool" id="studyBtn" type="button"><span class="ci">📖</span> <span class="cl">Study Tools</span></button>
-      <button class="chip tool" id="careerBtn" type="button"><span class="ci">🚀</span> <span class="cl">Career Guide</span></button>
+      <button class="chip tool" id="careerBtn" type="button"><span class="ci"></span> <span class="cl">Career Guide</span></button>
       <button class="chip tool" id="aboutBtn" type="button"><span class="ci">ℹ️</span> <span class="cl">About Us</span></button>
       <button class="chip tool" id="leadersBtn" type="button"><span class="ci">🏆</span> <span class="cl">Top Helpers</span></button>
       <button class="chip tool" id="labBtn" type="button"><span class="ci">🧪</span> <span class="cl">Study Lab · Focus · Cards · CGPA</span></button>
@@ -130,7 +130,7 @@
       <button class="chip tool" id="eventsBtn" type="button"><span class="ci">🎉</span> <span class="cl">Events</span></button>
       <button class="chip tool" id="drivesBtn" type="button"><span class="ci">🏢</span> <span class="cl">Campus Drives</span></button>
       <button class="chip tool" id="alumniBtn" type="button"><span class="ci">🎓</span> <span class="cl">Alumni</span></button>
-      <button class="chip tool" id="botBtn" type="button"><span class="ci">🤖</span> <span class="cl">Loop Bot</span></button>
+      <button class="chip tool" id="botBtn" type="button"><span class="ci"></span> <span class="cl">Loop Bot</span></button>
       <button class="chip tool" id="funBtn" type="button"><span class="ci">🎉</span> <span class="cl">Entertainment</span></button>
     </div>
     <div id="campusBar" class="campus-bar" hidden></div>
@@ -167,16 +167,16 @@
 <!-- bottom navigation (mobile only) -->
 <nav class="bottom-nav" id="bottomNav" aria-label="Main navigation"></nav>
 
-<script src="config.js?v=307"></script>
-<script src="quiz.js?v=307"></script>
-<script src="plus-data.js?v=307"></script>
-<script src="colleges-ap.js?v=307"></script>
-<script src="colleges-ap2.js?v=307"></script>
-<script src="colleges-ap3.js?v=307"></script>
-<script src="college-data.js?v=307"></script>
-<script src="rgukt-curriculum.js?v=307"></script>
-<script src="colleges-india.js?v=307"></script>
-<script type="module" src="app.js?v=307"></script>
-<script src="lazy.js?v=307"></script>
+<script src="config.js?v=309"></script>
+<script src="quiz.js?v=309"></script>
+<script src="plus-data.js?v=309"></script>
+<script src="colleges-ap.js?v=309"></script>
+<script src="colleges-ap2.js?v=309"></script>
+<script src="colleges-ap3.js?v=309"></script>
+<script src="college-data.js?v=309"></script>
+<script src="rgukt-curriculum.js?v=309"></script>
+<script src="colleges-india.js?v=309"></script>
+<script type="module" src="app.js?v=309"></script>
+<script src="lazy.js?v=309"></script>
 </body>
 </html>

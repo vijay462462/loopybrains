@@ -32,7 +32,7 @@ const fsDoc = (d) => Object.fromEntries(Object.entries((d && d.fields) || {}).ma
       const m = (await r.text()).match(/app\.js\?v=(\d+)/); if (!m || Number(m[1]) <= mine) return;
       shown = true;
       const bar = document.createElement("div"); bar.className = "update-bar"; bar.setAttribute("role", "status");
-      const t = document.createElement("span"); t.textContent = "\u2728 A new version is ready.";
+      const t = document.createElement("span"); t.textContent = "A new version is ready.";
       const b = document.createElement("button"); b.type = "button"; b.textContent = "Refresh now";
       b.onclick = async () => { try { if (navigator.serviceWorker) { const rs = await navigator.serviceWorker.getRegistrations(); await Promise.all(rs.map(x => x.update().catch(() => {}))); } if (window.caches) { const ks = await caches.keys(); await Promise.all(ks.map(k => caches.delete(k))); } } catch (_) {} location.replace(location.pathname + location.search.replace(/[?&]r=\d+/, "") + (location.search ? "&" : "?") + "r=" + m[1]); };
       const x = document.createElement("button"); x.type = "button"; x.className = "x"; x.setAttribute("aria-label", "Later"); x.textContent = "\u2715"; x.onclick = () => bar.remove();
@@ -251,7 +251,7 @@ const CAPTIONS = (CFG.captions && CFG.captions.length) ? CFG.captions : [
   "Your question might be the one the whole class is stuck on.",
   "Teach one, learn twice. Answer a doubt today.",
   "Great engineers ask the questions others skip.",
-  "Signals, circuits, systems — decode them together.",
+  "Signals, circuits, systems, decode them together.",
   "Small doubts, big breakthroughs.",
   "Share an idea today. Build it with your class tomorrow.",
 ];
@@ -281,9 +281,9 @@ const TABS = {
   },
   gate: {
     coll: "gate", field: "subject", groups: SUBJECTS, groupLabel: "Subjects", noun: "discussion",
-    ask: "Post GATE discussion", tagline: "GATE PYQs, shortcuts, concepts and exam alerts — shared across all campuses.",
+    ask: "Post GATE discussion", tagline: "GATE PYQs, shortcuts, concepts and exam alerts, shared across all campuses.",
     replyNoun: "reply", replyLabel: "Your reply", replyBtn: "Post reply",
-    placeholder: "e.g. GATE EC 2023 — Z-transform question (Session 1, Q14)",
+    placeholder: "e.g. GATE EC 2023, Z-transform question (Session 1, Q14)",
     bodyHint: "Full question, approach, shortcut trick, or exam alert.",
   },
   challenges: {
@@ -302,9 +302,9 @@ const TABS = {
   },
   market: {
     coll: "market", field: "category", groups: ["Books", "Notes", "Electronics", "Hostel", "Clothing", "Cycles & Bikes", "Sports", "Lab & Stationery", "Furniture", "Services", "Lost & Found", "Other"], groupLabel: "Category", noun: "listing",
-    ask: "Sell an item", tagline: "Buy and sell textbooks, electronics, hostel items and more — with fellow " + COLLEGE + " students.",
+    ask: "Sell an item", tagline: "Buy and sell textbooks, electronics, hostel items and more, with fellow " + COLLEGE + " students.",
     replyNoun: "inquiry", replyLabel: "Your message", replyBtn: "Send",
-    placeholder: "e.g. Data Structures book by Cormen — 2nd year, good condition",
+    placeholder: "e.g. Data Structures book by Cormen, 2nd year, good condition",
     bodyHint: "Describe the item, its condition, why you're selling, and any extra details.",
     market: true,
   },
@@ -364,7 +364,7 @@ const DEPT_VISUAL = {
   Civil: { bg: "linear-gradient(135deg,#f59e0b 0%,#10b981 100%)", art: "🏗️🏛️📐🔩🌉", label: "Civil Engineering", sub: "Structures · Fluid · Geo · Transport · Env" },
   Mech:  { bg: "linear-gradient(135deg,#ef4444 0%,#f97316 100%)", art: "⚙️🔩🔧🛠️💨", label: "Mechanical Engineering", sub: "Thermo · Fluid · Design · Manufacturing · HT" },
   EEE:   { bg: "linear-gradient(135deg,#f59e0b 0%,#ef4444 100%)", art: "⚡💡🔋🔌🌡️", label: "Electrical & Electronics", sub: "Machines · Power Systems · Control · Electronics" },
-  "AI & ML": { bg: "linear-gradient(135deg,#6366f1 0%,#ec4899 100%)", art: "🤖🧠📊🔮💡", label: "Artificial Intelligence & Machine Learning", sub: "Algorithms · Statistics · Databases · Compilers" },
+  "AI & ML": { bg: "linear-gradient(135deg,#6366f1 0%,#ec4899 100%)", art: "🧠📊🔮💡", label: "Artificial Intelligence & Machine Learning", sub: "Algorithms · Statistics · Databases · Compilers" },
   Chemical:  { bg: "linear-gradient(135deg,#10b981 0%,#0ea5e9 100%)", art: "🧪⚗️🏭🔥💧", label: "Chemical Engineering", sub: "Process · Heat & Mass Transfer · Reactions" },
   MME:       { bg: "linear-gradient(135deg,#64748b 0%,#f59e0b 100%)", art: "🔩🧲🔬⛏️🪙", label: "Metallurgical & Materials", sub: "Extraction · Materials · Testing · Casting" },
 };
@@ -397,8 +397,8 @@ const state = {
   dept: "All",         // "All" | "ECE" | "CSE" | "Civil" | "Mech" | "EEE"
   yearFilter: "All",   // "All" | "E1" | "E2" | "E3" | "E4"
   gateYearPick: null,  // null | "2024" | "2023" …
-  gateResView: null,   // null | resource obj — content browser
-  gatePYQBranch: null, // null | "ECE" | "CSE" | "Civil" | "Mech" | "EEE" — PYQ paper panel
+  gateResView: null,   // null | resource obj, content browser
+  gatePYQBranch: null, // null | "ECE" | "CSE" | "Civil" | "Mech" | "EEE", PYQ paper panel
   aiPanel: null,       // post id that has AI panel open
 };
 const ANON = "Anonymous";
@@ -443,18 +443,18 @@ function setName(v) { try { localStorage.setItem("dd-name", v); } catch (_) {} }
 // Avatar icons for profile display
 const AVATARS = [
   // Characters & students
-  "🧑‍💻","👨‍🎓","👩‍🎓","🧑‍🔬","👩‍🔬","🧑‍🚀","🦸","🧙","🥷","🧑‍🎨",
+  "🧑‍💻","👨‍🎓","👩‍🎓","🧑‍🔬","👩‍🔬","🧑‍","🦸","🧙","🥷","🧑‍🎨",
   // Animals
   "🦊","🐯","🦁","🐼","🦅","🐬","🦋","🐺","🦉","🐉",
   // Icons
-  "⚡","🎯","🔥","🌙","🚀","💫","💎","🏆","🌊","❄️"
+  "⚡","🎯","🔥","🌙","","💫","💎","🏆","🌊","❄️"
 ];
 // DiceBear 3D portrait seeds shown in the avatar picker
 const DB_SEEDS = ["apex","cipher","echo","flash","ghost","hawk","jade","luna","nova","orbit","pixel","vega","storm","blaze","frost","zion"];
 const dbUrl = (seed) => "https://api.dicebear.com/9.x/notionists/svg?seed=" + encodeURIComponent(seed) + "&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf&backgroundType=gradientLinear";
 function getAvatar() { try { return getDp() || localStorage.getItem("dd-avatar") || AVATARS[0]; } catch (_) { return AVATARS[0]; } }
 function setAvatar(v) { try { localStorage.setItem("dd-avatar", v); localStorage.removeItem("dd-dp"); } catch (_) {} if (store) syncProfile().catch(() => {}); }
-// Avatar for any user by name — returns DiceBear URL for a consistent illustrated portrait
+// Avatar for any user by name, returns DiceBear URL for a consistent illustrated portrait
 function avatarFor(name) {
   if (!name || name === ANON) return "👤";
   return dpByName(name) || dbUrl(name);
@@ -532,7 +532,7 @@ function deviceId() {
   writeCookie(id);
   return id;
 }
-// All device IDs this browser has ever used — lets mine() recognise old posts after a localStorage reset.
+// All device IDs this browser has ever used, lets mine() recognise old posts after a localStorage reset.
 function allMyIds() {
   const KEY = "dd-device-id", HIST = "dd-old-ids";
   const cur = deviceId();
@@ -820,7 +820,7 @@ function reportButton(coll, x) {
 // Delete only hides a post (deleted: true); nothing is erased, so the teacher can restore it in Firebase.
 const softDelete = (coll, id) => store.update(coll, id, { deleted: true });
 
-// GATE PYQ papers data — official GATE archive + GeeksForGeeks solutions (all free, no login)
+// GATE PYQ papers data, official GATE archive + GeeksForGeeks solutions (all free, no login)
 const GATE_PYQ = {
   ECE: [
     { year: "2025", pdf: "https://gate2025.iitr.ac.in/", sol: "https://www.geeksforgeeks.org/gate-2025-ec-question-paper/", label: "EC 2025" },
@@ -889,7 +889,7 @@ function renderGatePYQPanel(branch) {
   const icons = { ECE: "📡", CSE: "💻", EEE: "⚡", Civil: "🏗️", Mech: "⚙️" };
   return el("div", { class: "pyq-panel" },
     el("div", { class: "pyq-panel-hdr" },
-      el("span", { class: "pyq-panel-title" }, icons[branch] || "📄", " ", branch, " — Previous Year Papers"),
+      el("span", { class: "pyq-panel-title" }, icons[branch] || "📄", " ", branch, ", Previous Year Papers"),
       el("span", { class: "pyq-panel-sub" }, "2016–2025 · Free PDFs & solved solutions"),
     ),
     el("div", { class: "pyq-paper-grid" },
@@ -1276,7 +1276,7 @@ function trackNew(coll, rows) {
   if (added > 0) {
     _newCount += added;
     const t = $('newToast');
-    if (t) { const s = t.querySelector('span'); if (s) s.textContent = _newCount + ' new post' + (_newCount > 1 ? 's' : '') + ' arrived — tap to see ↑'; t.hidden = false; }
+    if (t) { const s = t.querySelector('span'); if (s) s.textContent = _newCount + ' new post' + (_newCount > 1 ? 's' : '') + '. Tap to view'; t.hidden = false; }
   }
 }
 
@@ -1365,7 +1365,7 @@ const WELCOME = [
   ["🛡️", "Ask without fear", "Sign in is anonymous, you choose your name, and admins and students moderate every post. Bad posts are hidden fast and abusive devices are blocked."],
   ["🏆", "Answer together, earn rewards", "Help a classmate to earn points, build a daily streak, win badges and show up on the Top Helpers board. Stories and quizzes keep it fun."],
   ["🙏", "Respect for everyone", "We honour our students, teachers and staff. Speak kindly, help your juniors, thank those who help you, and treat every person here the way you want your own family to be treated. Together we grow."],
-  ["🚀", "Study smarter", "Daily quiz, Study Lab, flashcards, CGPA tools, jobs and papers, all in one place. Everything on the board is free. Plus adds extras like mock tests and an AI helper."],
+  ["", "Study smarter", "Daily quiz, Study Lab, flashcards, CGPA tools, jobs and papers, all in one place. Everything on the board is free. Plus adds extras like mock tests and an AI helper."],
 ];
 function showWelcome(force, startId) {
   if (document.getElementById("welcome")) return;
@@ -1412,7 +1412,7 @@ function showWelcome(force, startId) {
         if (!show) return;
         const [c1, c2] = c.slug === "rgukt" ? STATE_COLORS["Andhra Pradesh"] : collegeColors(c.slug, c.state || "");
         pickBox.style.setProperty("--c1", c1); pickBox.style.setProperty("--c2", c2);
-        pickBox.replaceChildren(el("div", { class: "pk-top" }, badge(c.slug, c.name, c.state), el("div", { class: "pk-name" }, el("small", {}, "\u2728 Your college"), el("strong", {}, c.name), c.sub ? el("span", {}, c.sub) : null)),
+        pickBox.replaceChildren(el("div", { class: "pk-top" }, badge(c.slug, c.name, c.state), el("div", { class: "pk-name" }, el("small", {}, "Your college"), el("strong", {}, c.name), c.sub ? el("span", {}, c.sub) : null)),
           el("div", { class: "pk-chips" }, ...peek(c).map(t => el("i", {}, t))),
           el("p", { class: "pk-line" }, "I will set up your private board, subjects and clubs for " + c.name + "."),
           el("button", { type: "button", class: "pk-change", onclick: () => { browsing = true; fill(); try { q.focus(); } catch (_) {} } }, "\u21BA Change college"));
@@ -1459,11 +1459,11 @@ function showWelcome(force, startId) {
       inp.addEventListener("keydown", (e) => { if (e.key === "Enter") go(1); });
       body = [el("div", { class: "ob-loopy" }, loopyMini()), el("h2", {}, "Welcome to " + BRAND + " family"),
         el("div", { class: "ob-heart", "aria-label": "A message for you" },
-          el("p", { class: "hl lead" }, "Behind every question is a student brave enough to ask. \u{1F499}"),
+          el("p", { class: "hl lead" }, "Behind every question is a student brave enough to ask."),
           el("p", { class: "hl" }, "Maybe you are far from home. Maybe exam week feels heavy. Maybe it seems everyone else already knows the answer."),
           el("p", { class: "hl" }, "They don\u2019t. We didn\u2019t either."),
           el("p", { class: "hl" }, "Here no question is small and nobody studies alone. Seniors who once sat where you sit are ready to help, and one day you will help someone too."),
-          el("p", { class: "hl sign" }, "We are really glad you are here. \u2014 Loopy and the team")),
+          el("p", { class: "hl sign" }, "We are glad you are here. The Campus Loop team")),
         el("p", { class: "ob-say" }, "So, what should I call you?"), inp];
     } else if (sid === "interests") {
       body = [el("div", { class: "ob-loopy" }, loopyMini()), el("h2", {}, (who ? "Nice to meet you, " + who : "Nice to meet you") + "! \u{1F44B}"), el("p", { class: "ob-say" }, "What brings you here? Pick any. I will tailor your home screen."),
@@ -1521,7 +1521,7 @@ function showCollegeReveal() {
   const ov = el("div", { class: "cr", role: "dialog", "aria-modal": "true", "aria-label": "Welcome to " + COLLEGE },
     el("div", { class: "cr-card" },
       el("div", { class: "cr-art" }, el("i", { class: "cr-orb a" }), el("i", { class: "cr-orb b" }), el("i", { class: "cr-orb c" }), sky,
-        el("div", { class: "cr-ring" }, el("div", { class: "cr-crest" }, (TENANT && TENANT.crest) ? crestEl(92) : /^[A-Z0-9]{2,6}( [A-Z0-9]{2,6})?$/.test(String(COLLEGE).trim()) ? el("span", { class: "cr-mono cr-acr" }, ...String(COLLEGE).trim().split(" ").map((w, i) => el("b", { class: i ? "sub" : "" }, w))) : el("span", { class: "cr-mono" }, (() => { const w = String(COLLEGE).replace(/\(.*?\)/g, " ").split(/[^A-Za-z0-9]+/).filter(x => x && !/^(of|and|the|for|in)$/i.test(x)); return (w.length === 1 ? w[0].slice(0, 5) : w.slice(0, 3).map(x => x[0]).join("")).toUpperCase(); })()))), el("span", { class: "cr-chip" }, "\u2728 Welcome to")),
+        el("div", { class: "cr-ring" }, el("div", { class: "cr-crest" }, (TENANT && TENANT.crest) ? crestEl(92) : /^[A-Z0-9]{2,6}( [A-Z0-9]{2,6})?$/.test(String(COLLEGE).trim()) ? el("span", { class: "cr-mono cr-acr" }, ...String(COLLEGE).trim().split(" ").map((w, i) => el("b", { class: i ? "sub" : "" }, w))) : el("span", { class: "cr-mono" }, (() => { const w = String(COLLEGE).replace(/\(.*?\)/g, " ").split(/[^A-Za-z0-9]+/).filter(x => x && !/^(of|and|the|for|in)$/i.test(x)); return (w.length === 1 ? w[0].slice(0, 5) : w.slice(0, 3).map(x => x[0]).join("")).toUpperCase(); })()))), el("span", { class: "cr-chip" }, "Welcome to")),
       el("div", { class: "cr-body" },
         el("h2", {}, COLLEGE), el("p", { class: "cr-full" }, full), place ? el("p", { class: "cr-place" }, "\u{1F4CD} " + place) : null,
         el("div", { class: "cr-stats" }, el("span", {}, "\u{1F4DA} " + nSub), el("span", {}, "\u{1F3DB} " + CLUBS.filter(s => s !== "Other").length + " clubs"), el("span", {}, "\u{1F91D} Your own private board")),
@@ -1700,8 +1700,8 @@ function questCard() {
   const steps = questSteps(), n = steps.filter(s => s[2]).length;
   if (n === 3) { if (state.dataReady) { writeJSON("dd-quest-done", true); const until = Math.max(Number(readJSON("dd-bonus-until", 0)) || 0, Date.now()) + 864e5; writeJSON("dd-bonus-until", until); }
     if (!readJSON("dd-quest-cele", false)) { writeJSON("dd-quest-cele", true); setTimeout(() => confetti(140), 200); }
-    return el("div", { class: "wow", role: "status" }, el("span", { class: "wow-conf", "aria-hidden": "true" }, "🎉 ✨ 🎊"), el("strong", {}, "Wow, you finished your first steps!"), el("span", {}, "Welcome to the family. 🎁 1 free day of Plus studio is yours.")); }
-  return el("div", { class: "quest" }, el("div", { class: "quest-head" }, el("strong", {}, "🚀 Your first 3 steps"), el("small", {}, n + "/3")),
+    return el("div", { class: "wow", role: "status" }, el("span", { class: "wow-conf", "aria-hidden": "true" }, "🎉 🎊"), el("strong", {}, "Wow, you finished your first steps!"), el("span", {}, "Welcome to the family. 🎁 1 free day of Plus studio is yours.")); }
+  return el("div", { class: "quest" }, el("div", { class: "quest-head" }, el("strong", {}, "Your first 3 steps"), el("small", {}, n + "/3")),
     el("div", { class: "mock-bar" }, (() => { const s = el("span", {}); s.style.setProperty("width", Math.round(n * 100 / 3) + "%"); return s; })()),
     ...steps.map(([ic, t, ok, fn]) => el("button", { class: "quest-step" + (ok ? " done" : ""), type: "button", disabled: ok ? "" : null, onclick: fn }, el("span", {}, ok ? "✔" : ic), el("b", {}, t), ok ? null : el("i", {}, "Start →"))),
     el("small", { class: "hint" }, "Finish all three for a free day of Plus studio. 🎁"));
@@ -1731,7 +1731,7 @@ function confetti(n) {
   } catch (_) {}
 }
 // Mystery daily box: open it once a day for a fun fact, a collectible Loopy sticker, or (rarely) a bonus day of Plus studio.
-const STICKERS = [["🚀", "Rocket Loopy"], ["📚", "Bookworm Loopy"], ["🧠", "Genius Loopy"], ["🎧", "Focus Loopy"], ["🏆", "Champion Loopy"], ["🌟", "Star Loopy"], ["☕", "Chai Loopy"], ["🎓", "Graduate Loopy"], ["👑", "Golden Loopy"]];
+const STICKERS = [["", "Rocket Loopy"], ["📚", "Bookworm Loopy"], ["🧠", "Genius Loopy"], ["🎧", "Focus Loopy"], ["🏆", "Champion Loopy"], ["🌟", "Star Loopy"], ["☕", "Chai Loopy"], ["🎓", "Graduate Loopy"], ["👑", "Golden Loopy"]];
 const BOX_FACTS = [
   "The first computer bug was a real moth found stuck in a computer in 1947.", "Honey never spoils. Jars found in old Egyptian tombs were still good to eat.", "Your brain uses about 20% of your body's energy, though it is only 2% of your weight.",
   "Binary has only 0 and 1, yet every video, song and photo on your phone is made from it.", "Zero was invented in India. Aryabhata and Brahmagupta helped the world use it.", "A day on Venus is longer than a year on Venus.",
@@ -1757,7 +1757,7 @@ function showBox() {
   if (document.getElementById("boxModal")) return;
   const fresh = !boxToday(), rec = openBox(), box = el("div", { id: "boxModal", class: "welcome", role: "dialog", "aria-modal": "true", "aria-label": "Mystery box" });
   const close = () => { box.remove(); todayKey = ""; renderToday(); };
-  const body = rec.kind === "sticker" ? [el("div", { class: "welcome-icon", "aria-hidden": "true" }, STICKERS[rec.id][0]), el("h2", {}, "New sticker: " + STICKERS[rec.id][1] + "!"), el("p", {}, rec.id === 8 ? "A rare golden sticker! Very few students find this one. ✨" : "You now have " + readJSON("dd-stickers", []).length + " of " + STICKERS.length + " stickers. Come back tomorrow for more.")]
+  const body = rec.kind === "sticker" ? [el("div", { class: "welcome-icon", "aria-hidden": "true" }, STICKERS[rec.id][0]), el("h2", {}, "New sticker: " + STICKERS[rec.id][1] + "!"), el("p", {}, rec.id === 8 ? "A rare golden sticker! Very few students find this one." : "You now have " + readJSON("dd-stickers", []).length + " of " + STICKERS.length + " stickers. Come back tomorrow for more.")]
     : rec.kind === "bonus" ? [el("div", { class: "welcome-icon", "aria-hidden": "true" }, "🎁"), el("h2", {}, "Lucky day! A bonus gift"), el("p", {}, "You won 1 free day of Plus studio. Use the mock tests, planner and more today.")]
     : [el("div", { class: "welcome-icon", "aria-hidden": "true" }, "💡"), el("h2", {}, "Did you know?"), el("p", {}, BOX_FACTS[rec.id])];
   box.append(el("div", { class: "welcome-card" }, ...body, el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", onclick: close }, fresh ? "Wow, nice!" : "Close"), el("button", { class: "btn", type: "button", onclick: () => { close(); showPanel("stickers"); } }, "🎴 Sticker book"))));
@@ -1781,7 +1781,7 @@ function launchBanner(name) {
   const who = (name || "").trim();
   return el("div", { class: "launch" }, el("div", { class: "launch-in" },
     el("div", { class: "launch-loopy" }, loopyMini()),
-    el("div", { class: "launch-text" }, el("small", {}, "✨ NEW MEMBER · " + COLLEGE), el("strong", {}, "Welcome aboard" + (who ? ", " + who : "") + "! 🎉"), el("span", {}, "You are now part of the " + BRAND + " family. Finish your first 3 steps and unlock a free gift 🎁")),
+    el("div", { class: "launch-text" }, el("small", {}, "NEW MEMBER · " + COLLEGE), el("strong", {}, "Welcome aboard" + (who ? ", " + who : "") + "! 🎉"), el("span", {}, "You are now part of the " + BRAND + " family. Finish your first 3 steps and unlock a free gift 🎁")),
     el("div", { class: "launch-go" }, el("b", {}, n + "/3"), el("button", { class: "launch-btn", type: "button", onclick: () => { const q = document.querySelector(".quest"); if (q) q.scrollIntoView({ behavior: "smooth", block: "center" }); } }, "Start →")),
     el("button", { class: "launch-x", type: "button", "aria-label": "Close banner", onclick: () => { writeJSON("dd-launch-gone", true); todayKey = ""; renderToday(); } }, "✕")));
 }
@@ -1794,15 +1794,15 @@ function renderToday() {
     left = plan && plan.date ? Math.ceil((new Date(plan.date + "T00:00:00").getTime() - new Date().setHours(0, 0, 0, 0)) / 864e5) : null;
   const note = state.welcomeNote && readJSON("dd-note-gone", 0) !== state.welcomeNote.updatedAt ? state.welcomeNote : null;
   const key = [hello, name, streak, quizDone, left, equippedCostume(), storyGroups().length, readJSON("dd-launch", false) ? 1 : 0, readJSON("dd-launch-gone", false) ? 1 : 0, state.dataReady ? 1 : 0, boxToday() ? 1 : 0, questSteps().filter(s => s[2]).length, state.replies.length, state.doubts.length, readJSON("dd-tip", {}).gone ? 1 : 0, mistakeList().length, state.weekly.length, dayNum(), (typeof weekPoints === "function" ? weekPoints() : 0), note ? note.updatedAt : 0, openDrives().length, upcomingEvents().length, unansweredDoubts().length, readJSON("dd-today-closed", "") === dayStr() ? 1 : 0].join("|"); if (key === todayKey && !bar.hidden) return; todayKey = key;
-  if (readJSON("dd-today-closed", "") === dayStr()) { bar.hidden = false; bar.replaceChildren(el("button", { class: "today-reopen", type: "button", onclick: () => { writeJSON("dd-today-closed", ""); todayKey = ""; renderToday(); } }, "\u2728 Show today\u2019s card")); return; }
+  if (readJSON("dd-today-closed", "") === dayStr()) { bar.hidden = false; bar.replaceChildren(el("button", { class: "today-reopen", type: "button", onclick: () => { writeJSON("dd-today-closed", ""); todayKey = ""; renderToday(); } }, "Show today\u2019s card")); return; }
   const chip = (txt, cls, fn) => el("button", { class: "today-chip " + (cls || ""), type: "button", onclick: fn }, txt);
-  const WORDS = ["Welcome to " + BRAND + " family 💙", "Respect your teachers, help your juniors. 🙏", "Every question is welcome here.", "Kind words build a strong campus. 🌱", "Thank you for being part of our family.", "Learn together, grow together. 🚀", "Our teachers and staff work hard for you. Say thank you today. 🙏"];
+  const WORDS = ["Welcome to " + BRAND + " family", "Respect your teachers, help your juniors. 🙏", "Every question is welcome here.", "Kind words build a strong campus. 🌱", "Thank you for being part of our family.", "Learn together, grow together.", "Our teachers and staff work hard for you. Say thank you today. 🙏"];
   const newbie = !readJSON("dd-quest-done", false) && (readJSON("dd-visits", { n: 1 }).n || 1) <= 21 && questSteps().filter(s => s[2]).length < 3;
   const stat = (num, label, cls, fn) => el("button", { class: "today-stat " + (cls || ""), type: "button", onclick: fn }, el("b", {}, String(num)), el("span", {}, label));
   const pts = typeof weekPoints === "function" ? weekPoints() : 0;
   const lb = launchBanner(name);
   bar.replaceChildren(lb, lb ? null : el("div", { class: "today-hero" }, el("button", { class: "today-close", type: "button", "aria-label": "Close this card", title: "Close for today", onclick: () => { writeJSON("dd-today-closed", dayStr()); todayKey = ""; renderToday(); } }, "\u2715"), NO_COLLEGE ? null : el("div", { class: "hero-crest" }, crestEl(54)), el("button", { class: "hero-loopy", type: "button", "aria-label": "Chat with Loopy", onclick: loopyTap }, loopyMini()),
-    el("div", { class: "hero-text" }, el("small", { class: "hero-kicker" }, "✨ " + COLLEGE), el("strong", { class: "today-hello" }, hello + (name ? ", " + name : "") + " 👋"), el("small", { class: "today-words" }, WORDS[dayNum() % WORDS.length])),
+    el("div", { class: "hero-text" }, el("small", { class: "hero-kicker" }, " " + COLLEGE), el("strong", { class: "today-hello" }, hello + (name ? ", " + name : "") + " 👋"), el("small", { class: "today-words" }, WORDS[dayNum() % WORDS.length])),
     el("button", { class: "hero-say", type: "button", onclick: loopyTap }, el("span", { class: "hero-say-dot" }), el("span", {}, loopyPrompt().label), el("b", {}, "Ask Loopy \u203A")),
     el("button", { class: "hero-ask", type: "button", onclick: () => { const b = $("askBtn"); if (b) b.click(); } }, "❓ Ask a doubt")),
     (() => { if (newbie) return null; const t = loopyTip(), st = readJSON("dd-tip", {}); if (st.gone && st.day === dayStr()) return null;
@@ -1884,8 +1884,8 @@ function renderEvents() {
 const EXPLORE = [
   ["Study", [["quizBtn", "🧠", "Daily Quiz"], ["labBtn", "🧪", "Study Lab"], ["studyBtn", "📖", "Study Tools"], ["learnBtn", "📚", "Learn from IIT"], ["focusBtn", "🎯", "Focus mode"]]],
   ["Campus", [["__story", "📸", "Add a story"], ["eventsBtn", "🎉", "Events"], ["drivesBtn", "🏢", "Campus Drives"], ["leadersBtn", "🏆", "Top Helpers"], ["alumniBtn", "🎓", "Alumni", "alumni"]]],
-  ["Career", [["careerBtn", "🚀", "Career Guide"], ["__resume", "📄", "Resume builder"]]],
-  ["More", [["__stickers", "🎴", "Sticker book"], ["__wardrobe", "👗", "Loopy\u2019s wardrobe"], ["__install", "📲", "Install app"], ["__plus", "⭐", "The Campus Loop Plus"], ["botBtn", "🤖", "Loop Bot", "bot"], ["funBtn", "🎉", "Entertainment", "fun"], ["aboutBtn", "ℹ️", "About Us"]]],
+  ["Career", [["careerBtn", "", "Career Guide"], ["__resume", "📄", "Resume builder"]]],
+  ["More", [["__stickers", "🎴", "Sticker book"], ["__wardrobe", "👗", "Loopy\u2019s wardrobe"], ["__install", "📲", "Install app"], ["__plus", "⭐", "The Campus Loop Plus"], ["botBtn", "", "Loop Bot", "bot"], ["funBtn", "🎉", "Entertainment", "fun"], ["aboutBtn", "ℹ️", "About Us"]]],
 ];
 function renderExplore() {
   const back = el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back");
@@ -2505,7 +2505,7 @@ function renderMarketView() {
     own && el("button", { class: "btn danger", type: "button", onclick: (e) => confirmDelete(e.currentTarget, async () => { await softDelete("market", d.id); state.selected = null; state.mode = "intro"; render(); })}, "🗑 Delete"),
     el("button", { class: "btn", type: "button", onclick: () => {
       const url = location.origin + location.pathname + "#market/" + d.id;
-      if (navigator.share) navigator.share({ title: d.title, text: "Check this listing on " + BRAND + ": " + d.title + (d.price ? " — ₹" + d.price : ""), url });
+      if (navigator.share) navigator.share({ title: d.title, text: "Check this listing on " + BRAND + ": " + d.title + (d.price ? ", ₹" + d.price : ""), url });
       else { navigator.clipboard && navigator.clipboard.writeText(url); showNotice("Link copied!", "ok"); }
     }}, "🔗 Share"),
     el("button", { class: "btn", type: "button", onclick: () => { state.selected = null; state.mode = "intro"; render(); }}, "← Back")
@@ -2560,7 +2560,7 @@ function renderMarketAsk(existing) {
     if (hasBadWords(title + " " + body)) { err.textContent = LANGUAGE_MSG; err.hidden = false; return; }
     if (whatsapp && whatsapp.length < 10) { err.textContent = "Enter a valid 10-digit WhatsApp number."; err.hidden = false; return; }
     if (!existing && store && sellerFlagged(store.uid)) { err.textContent = "Your account has been restricted from posting due to multiple reports. Contact an admin to appeal."; err.hidden = false; return; }
-    // College-issued laptops cannot be sold — college policy
+    // College-issued laptops cannot be sold, college policy
     if (category === "Electronics" && /\blaptop\b|\bhp\s*laptop\b|\bdell\s*laptop\b|\bcollege\s*laptop\b/i.test(title + " " + body)) { err.textContent = "College-issued laptops cannot be sold on this platform (RGUKT policy). Remove this item."; err.hidden = false; return; }
     const wait = existing ? "" : spamCheck();
     if (wait) { err.textContent = wait; err.hidden = false; return; }
@@ -2599,11 +2599,11 @@ function renderMarketAsk(existing) {
       el("label", { class: "check" }, el("input", { type: "checkbox", name: "giveaway", checked: !!(existing && existing.price === 0) }), "🆓 I'm giving this away for free"),
       el("label", { class: "check" }, el("input", { type: "checkbox", name: "wanted", checked: !!(existing && isWantedAd(existing)) }), "🔎 I want to BUY this (wanted ad). The price above is my budget")),
     el("label", {}, "Description", el("textarea", { name: "body", maxlength: "2000", placeholder: t.bodyHint, value: existing ? existing.body : "" })),
-    el("label", {}, "Your WhatsApp number (optional — buyers will contact you)",
-      el("input", { name: "whatsapp", type: "tel", maxlength: "15", placeholder: "e.g. 9876543210 — not shown publicly except to buyers" })
+    el("label", {}, "Your WhatsApp number (optional, buyers will contact you)",
+      el("input", { name: "whatsapp", type: "tel", maxlength: "15", placeholder: "e.g. 9876543210, not shown publicly except to buyers" })
     ),
     el("p", { class: "hint" }, "⚠️ Your WhatsApp number is only shared with students who open this listing."),
-    el("p", { class: "hint" }, "🚫 College-issued laptops cannot be sold — college policy. Books & Notes are visible to all campuses; other items are campus-local."),
+    el("p", { class: "hint" }, "🚫 College-issued laptops cannot be sold, college policy. Books & Notes are visible to all campuses; other items are campus-local."),
     mktSafetyTips(),
     err,
     el("div", { class: "rowbtns" },
@@ -2650,7 +2650,7 @@ function otherHub(count) {
       ? count + " " + (count === 1 ? noun.replace(/s$/, "") : noun) + " here. Tap one to read it and reply, or add your own."
       : "No " + noun + " in " + g + " yet. Be the first! Tap the button below to post, or get inspired with the free links."),
     el("div", { class: "rowbtns" }, acts),
-    el("p", { class: "hint" }, "What next? ① Share yours  ② Like and reply to others  ③ Team up and build it together 🚀"));
+    el("p", { class: "hint" }, "What next? ① Share yours  ② Like and reply to others  ③ Team up and build it together"));
 }
 function subjectHub(count) {
   if (["ideas", "clubs", "challenges"].includes(state.tab) && state.group !== "All") return otherHub(count);
@@ -2672,7 +2672,7 @@ function subjectHub(count) {
       ? count + (count === 1 ? " post" : " posts") + " here. Tap one to read or answer it, or use the buttons below."
       : "No " + g + " posts yet. Be the first! Ask your question, or study the topic using the buttons below."),
     el("div", { class: "rowbtns" }, acts),
-    el("p", { class: "hint" }, "What next? ① Ask your doubt  ② Study the topic  ③ Come back and help others — answering earns you points 🏆"));
+    el("p", { class: "hint" }, "What next? ① Ask your doubt  ② Study the topic  ③ Come back and help others, answering earns you points 🏆"));
 }
 
 // ---------- campus hub: info, live activity, ranking and actions for the selected campus ----------
@@ -2722,11 +2722,11 @@ const YEAR_GUIDE = {
   E3: { name: "Skills and internships", tag: "Turn knowledge into skills, projects and experience.",
     goals: ["Apply for a summer internship (NCS and AICTE portals are free)", "Build a mini project and write a strong one-page resume", "Start GATE basics and solve previous-year papers", "Earn one NPTEL, Kaggle or Google certificate", "Find a mentor among seniors and alumni", "Practise aptitude and communication for placements"],
     dates: ["Internship applications: begin early in the year", "GATE preparation: aim to start by the second semester"],
-    actions: [["🚀 Career Guide", () => { careerBranch = null; showPanel("career"); }], ["🎯 GATE tab", () => goTab("gate")], ["🎓 Alumni", () => { alumniView = "dir"; showPanel("alumni"); }], ["🧪 Study Lab", () => showPanel("lab")]] },
+    actions: [["Career Guide", () => { careerBranch = null; showPanel("career"); }], ["🎯 GATE tab", () => goTab("gate")], ["🎓 Alumni", () => { alumniView = "dir"; showPanel("alumni"); }], ["🧪 Study Lab", () => showPanel("lab")]] },
   E4: { name: "Launch year", tag: "Finish strong and choose your next step.",
     goals: ["Finish your major project and write a clear report", "Placement prep: DSA, aptitude and mock interviews", "GATE: revise and take full mock tests (exam is usually in February)", "Study abroad: shortlist universities and apply (usually October to January)", "Update your resume, LinkedIn and GitHub", "Plan your next step with the Career Guide"],
     dates: ["Campus placements: usually in the final year", "GATE exam: usually in February", "Abroad applications: usually October to January"],
-    actions: [["🚀 Career Guide", () => { careerBranch = null; showPanel("career"); }], ["🌍 Abroad Explorer", () => { careerBranch = "ABROAD"; showPanel("career"); }], ["🎯 GATE tab", () => goTab("gate")], ["🎓 Alumni", () => { alumniView = "dir"; showPanel("alumni"); }]] },
+    actions: [["Career Guide", () => { careerBranch = null; showPanel("career"); }], ["🌍 Abroad Explorer", () => { careerBranch = "ABROAD"; showPanel("career"); }], ["🎯 GATE tab", () => goTab("gate")], ["🎓 Alumni", () => { alumniView = "dir"; showPanel("alumni"); }]] },
 };
 const yearPosts = (y) => [...state.doubts, ...state.gate].filter(x => x.year === y && !x.deleted);
 const yearPostCount = (y) => yearPosts(y).length;
@@ -2988,7 +2988,7 @@ function renderQuiz() {
       b.disabled = false; b.textContent = ok ? "✅ Shared to your story" : "📣 Share this quiz to my story";
     } }, "📣 Share this quiz to my story")));
     out.push(el("p", { class: "hint" }, total + (total === 1 ? " classmate has" : " classmates have") + " answered today. " + (total ? Math.round(correctCount * 100 / total) + "% got it right." : "")));
-  } else out.push(el("p", { class: "hint" }, "Pick one answer — one try only. Each student gets a different question today. Correct answer earns +3 points."));
+  } else out.push(el("p", { class: "hint" }, "Pick one answer, one try only. Each student gets a different question today. Correct answer earns +3 points."));
   const y = quizFor(day - 1), ya = myQuizAnswer(day - 1);
   if (y) out.push(el("details", { class: "quiz-y" }, el("summary", {}, "Yesterday's question"),
     el("p", { class: "body" }, y.q + "\nAnswer: " + "ABCD"[y.a] + ". " + y.o[y.a] + (ya ? (ya.opt === y.a ? "  ✅ you got it" : "  ❌ you picked " + "ABCD"[ya.opt]) : "") + "\n💡 " + y.e)));
@@ -3215,10 +3215,10 @@ function renderLeaders() {
     list,
     el("p", { class: "hint" }, "Answer a classmate's doubt +2 · answer marked helpful +5 more · each 👍💡🔥 on your answer +1 · daily quiz right +3 · share an idea +2 · each like on your idea +1 · ask a doubt +1. Anonymous posts don't count."),
     el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => showPanel("battle") }, "⚔️ College vs College scoreboard")),
-    rivalBoard && el("div", { class: "label" }, "🏫 Campus Rivalry — all " + CAMPUSES.length + " campuses"),
+    rivalBoard && el("div", { class: "label" }, "🏫 Campus Rivalry, all " + CAMPUSES.length + " campuses"),
     rivalBoard,
     ...weeklyQuizBlock(),
-    rivalBoard && el("p", { class: "hint" }, "Campus points — ask a doubt +1 · share an idea +2 · helpful answer +5 · post in clubs +1. Compete with other campuses."),
+    rivalBoard && el("p", { class: "hint" }, "Campus points, ask a doubt +1 · share an idea +2 · helpful answer +5 · post in clubs +1. Compete with other campuses."),
     el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")),
   ].filter(Boolean);
 }
@@ -3392,7 +3392,7 @@ async function startCheckout(planKey, gift) {
 }
 const PLUS_FEATURES = ["Plus gift link for a friend", "Group study rooms with a shared timer", "Scan handwritten notes into flashcards", "Live doubt sessions with seniors", "Placement preparation kit", "Offline downloads of papers", "Weekly leaderboard for Plus members", "More resume templates", "No ads, ever"];
 const PLUS_TILES = [
-  ["🤖", "AI study helper", "Ask doubts and get step-by-step answers from Claude. 40 a day.", "ai"],
+  ["", "AI study helper", "Ask doubts and get step-by-step answers from Claude. 40 a day.", "ai"],
   ["📝", "Mock tests", "Timed subject and placement tests with a topic-wise report.", "mock"],
   ["📓", "Mistake notebook", "Questions you missed come back until you get them right.", "mistakes"],
   ["🗓️", "Exam planner", "A daily plan with spaced revision before your exam.", "planner"],
@@ -3488,7 +3488,7 @@ function renderPlus() {
   };
   return [
     el("h2", {}, "⭐ The Campus Loop Plus" + (has ? " (active)" : "")),
-    has ? el("div", { class: "plus-hero" }, "✨ Welcome, Plus member. Your studio is ready.") : null,
+    has ? el("div", { class: "plus-hero" }, "Welcome, Plus member. Your studio is ready.") : null,
     el("p", { class: "hint" }, has && state.plan.college ? "🎓 " + COLLEGE + " provides Plus for every student until " + new Date(state.plan.until).toLocaleDateString() + ". Enjoy, and thank your college!" : has ? "Thank you for supporting CampusLoop. Your plan is active until " + new Date(state.plan.until).toLocaleDateString() + "." : PLUS.enabled ? "Extras for students who want more. Everything free today stays free." : "Early access: everything below that already works is free while we build Plus. Everything free today stays free."),
     (!plusLocked() ? coachCard() : null),
     plansBlock(),
@@ -3501,10 +3501,10 @@ function renderPlus() {
     el("div", { class: "plus-tiles" }, ...PLUS_TILES.map(([icon, title, text, mode]) => el("button", { class: "plus-tile", type: "button", onclick: () => { if (mode) { state.mock = null; state.mist = null; showPanel(mode); } } }, el("span", { class: "pt-i", "aria-hidden": "true" }, icon), el("strong", {}, title), el("span", {}, text)))),
     el("div", { class: "label" }, "Free vs Plus"),
     el("div", { class: "plus-cmp", role: "table" }, ...PLUS_COMPARE.map(([f, free, plus], i) => el("div", { class: "pc-row" + (i === 0 ? " head" : ""), role: "row" }, el("span", { role: "cell" }, f), el("span", { role: "cell" }, free), el("span", { role: "cell" }, plus)))),
-    el("div", { class: "label" }, "🚀 Plus studio"),
+    el("div", { class: "label" }, "Plus studio"),
     (PLUS.enabled && !has) ? el("p", { class: "hint" }, "The studio is part of the paid plan.") : null,
     el("div", { class: "rowbtns" },
-      el("button", { class: "btn primary", type: "button", onclick: () => showPanel("ai") }, "🤖 AI helper"),
+      el("button", { class: "btn primary", type: "button", onclick: () => showPanel("ai") }, "AI helper"),
       el("button", { class: "btn", type: "button", onclick: () => { state.mock = null; showPanel("mock"); } }, "📝 Mock tests"),
       el("button", { class: "btn", type: "button", onclick: () => { state.mist = null; showPanel("mistakes"); } }, "📓 Mistakes (" + mistakeList().length + ")"),
       el("button", { class: "btn", type: "button", onclick: () => showPanel("planner") }, "🗓️ Exam planner"),
@@ -3598,7 +3598,7 @@ function renderMock() {
     const r = m.result, pct = Math.round(r.right * 100 / r.n), same = mockHistory().filter(x => x.b === m.bank), prev = same.length > 1 ? same[same.length - 2] : null, pp = prev ? Math.round(prev.right * 100 / prev.n) : null;
     const weak = Object.entries(r.bySub).sort((a, b) => (a[1].r / a[1].n) - (b[1].r / b[1].n))[0];
     if (pct >= 80 && !m.cele) { m.cele = true; setTimeout(() => confetti(110), 150); }
-    return [pct >= 70 ? el("div", { class: "wow", role: "status" }, el("span", { class: "wow-conf", "aria-hidden": "true" }, "🎉 ✨ 🎊 ⭐ 🎉"), el("strong", {}, pct >= 90 ? "Wow, outstanding!" : pct >= 80 ? "Wow, amazing!" : "Great job!"), el("span", {}, r.right + " out of " + r.n + " correct")) : null,
+    return [pct >= 70 ? el("div", { class: "wow", role: "status" }, el("span", { class: "wow-conf", "aria-hidden": "true" }, "🎉 🎊 ⭐ 🎉"), el("strong", {}, pct >= 90 ? "Wow, outstanding!" : pct >= 80 ? "Wow, amazing!" : "Great job!"), el("span", {}, r.right + " out of " + r.n + " correct")) : null,
       el("h2", {}, "📝 Result: " + r.right + " / " + r.n + " (" + pct + "%)"),
       prev ? el("p", { class: "hint" }, "Last time: " + pp + "%. " + (pct > pp ? "Better! 📈" : pct === pp ? "Same." : "Keep practising.")) : null,
       el("div", { class: "learn-card plus-list" }, el("strong", {}, "By topic (weakest first)"), ...scoreBars(r.bySub)),
@@ -3663,8 +3663,8 @@ function renderPapers() {
 // AI study helper (Plus): chat with Claude through our own server function; the secret key never reaches the phone.
 function renderAI() {
   const back = el("button", { class: "btn", type: "button", onclick: () => showPanel("plus") }, "Back");
-  if (plusLocked()) return [el("h2", {}, "🤖 AI study helper"), el("p", { class: "hint" }, "The AI study helper is part of The Campus Loop Plus."), el("div", { class: "rowbtns" }, back)];
-  if (!PLUS.functionsUrl) return [el("h2", {}, "🤖 AI study helper"), el("p", { class: "hint" }, "The AI helper is being set up and will switch on soon."), el("div", { class: "rowbtns" }, back)];
+  if (plusLocked()) return [el("h2", {}, "AI study helper"), el("p", { class: "hint" }, "The AI study helper is part of The Campus Loop Plus."), el("div", { class: "rowbtns" }, back)];
+  if (!PLUS.functionsUrl) return [el("h2", {}, "AI study helper"), el("p", { class: "hint" }, "The AI helper is being set up and will switch on soon."), el("div", { class: "rowbtns" }, back)];
   const chat = state.ai || (state.ai = { msgs: [], busy: false, note: "" });
   const box = el("textarea", { maxlength: "1000", rows: "3", placeholder: "Ask a study doubt, e.g. Explain Dijkstra with an example", "aria-label": "Your question" });
   const send = async () => {
@@ -3679,7 +3679,7 @@ function renderAI() {
     } catch (e) { chat.msgs.pop(); chat.note = (e && e.message) || "Could not reach the AI helper."; box.value = text; }
     chat.busy = false; render();
   };
-  return [el("h2", {}, "🤖 AI study helper"), el("p", { class: "hint" }, "Ask academic doubts only. Answers can contain mistakes, so check important facts with your book or teacher."),
+  return [el("h2", {}, "AI study helper"), el("p", { class: "hint" }, "Ask academic doubts only. Answers can contain mistakes, so check important facts with your book or teacher."),
     ...chat.msgs.map(m => el("div", { class: "ai-msg " + (m.role === "user" ? "me" : "bot") }, m.content)),
     chat.busy ? el("p", { class: "hint", role: "status" }, "Thinking…") : null,
     box, chat.note ? el("p", { class: "hint", role: "status" }, chat.note) : null,
@@ -3841,7 +3841,7 @@ function renderGoals() {
   const back = el("button", { class: "btn", type: "button", onclick: () => showPanel("plus") }, "Back");
   if (plusLocked()) return [el("h2", {}, "🎯 Goals and badges"), el("p", { class: "hint" }, "Goals and badges are part of The Campus Loop Plus."), el("div", { class: "rowbtns" }, back)];
   const g = goalStats(), l = lifeStats(), allDone = GOAL_DEFS.every(([k, , n]) => (g[k] || 0) >= n), got = PLUS_BADGES.filter(b => b[2](l)).length;
-  return [el("h2", {}, "🎯 Goals and badges"), allDone ? el("div", { class: "wow", role: "status" }, el("span", { class: "wow-conf", "aria-hidden": "true" }, "🎉 ✨ 🎊"), el("strong", {}, "Wow, all weekly goals done!")) : el("p", { class: "hint" }, "Weekly goals reset every Monday."),
+  return [el("h2", {}, "🎯 Goals and badges"), allDone ? el("div", { class: "wow", role: "status" }, el("span", { class: "wow-conf", "aria-hidden": "true" }, "🎉 🎊"), el("strong", {}, "Wow, all weekly goals done!")) : el("p", { class: "hint" }, "Weekly goals reset every Monday."),
     el("div", { class: "learn-card plus-list" }, el("strong", {}, "This week"), ...GOAL_DEFS.map(([k, label, n]) => { const v = Math.min(n, g[k] || 0), bar = el("div", { class: "mock-bar" }, el("span", {})); bar.firstChild.style.setProperty("width", Math.round(v * 100 / n) + "%"); return el("div", {}, el("div", { class: "rowbtns" }, el("span", {}, label), el("b", {}, v + "/" + n)), bar); })),
     el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", onclick: () => shareResult({ kicker: "My week on " + BRAND, emoji: "🔥", big: weekPoints() + " points", line: (g.mins || 0) + " focus minutes · " + (g.tests || 0) + " tests · " + (g.cleared || 0) + " mistakes fixed" }) }, "📤 Share my week")),
     el("div", { class: "label" }, "Badges (" + got + "/" + PLUS_BADGES.length + ")"),
@@ -3924,7 +3924,7 @@ function verifyBlock() {
 function renderMe() {
   const p = (store && allStats().get(store.uid)) || { name: getName(), points: 0, answers: 0, helpful: 0, ideas: 0, quizRight: 0, streak: 0, reacts: 0, likes: 0, asked: 0, quizDone: 0, level: levelOf(0) };
   const lv = p.level, pct = Math.round((p.points - lv.from) * 100 / (lv.to - lv.from));
-  // Avatar picker — 3D portraits + emoji
+  // Avatar picker, 3D portraits + emoji
   const cur = getAvatar();
   const dbPicker = el("div", { class: "avatar-picker" },
     DB_SEEDS.map(seed => {
@@ -3972,9 +3972,9 @@ function renderMe() {
       [["🔥", p.streak + "-day", "streak"], ["🤝", p.answers, "answers"], ["✅", p.helpful, "helpful"], ["🧠", p.quizRight, "quiz right"], ["💡", p.ideas, "ideas"], ["❤️", p.reacts + p.likes, "reactions"]]
         .map(([i, v, l]) => el("div", { class: "stat" }, el("b", {}, i + " " + v), el("small", {}, l)))),
     store && el("details", { class: "quiz-y" }, el("summary", {}, MENTORS.has(store.uid) ? "🎓 You are a verified mentor" : "🎓 Are you an IIT mentor?"),
-      el("p", { class: "hint" }, "Mentors — send this ID to the board's teacher so your answers show the mentor badge. It identifies this phone or computer."),
+      el("p", { class: "hint" }, "Mentors, send this ID to the board's teacher so your answers show the mentor badge. It identifies this phone or computer."),
       el("div", { class: "rowbtns" }, el("code", { class: "devid" }, store.uid), el("button", { class: "btn sm", type: "button", onclick: (e) => copyLink(e.currentTarget, store.uid) }, "Copy ID"))),
-    el("div", { class: "label" }, "📅 Activity — last 30 days"),
+    el("div", { class: "label" }, "📅 Activity, last 30 days"),
     renderHeatmap(p),
     el("div", { class: "label" }, "Badges"),
     el("div", { class: "badges" }, BADGES.map(([icon, name, how, test]) => el("div", { class: "badge" + (test(p) ? " got" : "") }, el("span", { class: "bicon" }, icon), el("b", {}, name), el("small", {}, how)))),
@@ -4045,7 +4045,7 @@ function expertHelp(d) {
   const g = d.subject;
   const text = d.title + (d.body ? "\n\n" + d.body : "");
   return el("div", { class: "expert" },
-    el("div", { class: "label" }, needsMentor(d) ? "⏳ Waiting 2+ days — get expert help" : "Get help from IIT experts"),
+    el("div", { class: "label" }, needsMentor(d) ? "⏳ Waiting 2+ days, get expert help" : "Get help from IIT experts"),
     el("div", { class: "rowbtns" },
       el("a", { class: "btn sm", href: nptelUrl(g), target: "_blank", rel: "noopener noreferrer", onclick: () => { try { navigator.clipboard.writeText(text); } catch (_) {} } }, "🎓 Ask on IIT NPTEL forum"),
       outLink(lectureUrl(g, d.title), "▶ Watch IIT lecture")),
@@ -4171,7 +4171,7 @@ function alumniGo(mode) { state.mode = mode; render(); if (innerWidth <= 1000) $
 
 function alumniProfileCard(d) {
   const kv = alumniKV(d.body);
-  const name = d.title.replace(/^🎓\s*/, "").split(" — ")[0];
+  const name = d.title.replace(/^🎓\s*/, "").split(", ")[0];
   const pills = [kv.branch, kv.batch && "Batch " + kv.batch].filter(Boolean);
   return el("div", { class: "learn-card" },
     el("strong", {}, "🎓 " + name),
@@ -4265,7 +4265,7 @@ function alumniForm(kind) {
       const role = val("role"), company = val("company"), apply = val("apply");
       if (role.length < 3 || company.length < 2) return bad("Add the role and company name.");
       if (apply && !SAFE_URL_RE.test(apply)) return bad("The apply link must start with https://");
-      title = ("💼 " + role + " — " + company).slice(0, 200);
+      title = ("💼 " + role + ", " + company).slice(0, 200);
       lines = ["Company: " + company, val("location") && "Location: " + val("location"), val("experience") && "Experience: " + val("experience"), apply && "Apply: " + apply, val("details") && "Details: " + val("details").replace(/\n+/g, " ")].filter(Boolean);
     } else {
       const name = val("name"), working = val("working"), linkedin = val("linkedin");
@@ -4274,7 +4274,7 @@ function alumniForm(kind) {
       if (linkedin && !LINKEDIN_RE.test(linkedin)) return bad("LinkedIn link must look like https://www.linkedin.com/in/your-name");
       if (!f.consent.checked) return bad("Please tick the box to confirm you agree to show these details.");
       const help = ALUMNI_HELP.filter((h, i) => f["help" + i] && f["help" + i].checked).join(", ");
-      title = ("🎓 " + name + " — " + val("branch") + " · Batch " + val("batch")).slice(0, 200);
+      title = ("🎓 " + name + ", " + val("branch") + " · Batch " + val("batch")).slice(0, 200);
       lines = ["Branch: " + val("branch"), "Batch: " + val("batch"), "Working: " + working, val("location") && "Location: " + val("location"), linkedin && "LinkedIn: " + linkedin, help && "Help: " + help, val("about") && "About: " + val("about").replace(/\n+/g, " ")].filter(Boolean);
     }
     const body = lines.join("\n").slice(0, 4800);
@@ -4570,7 +4570,7 @@ function moviesView() {
 }
 
 function memoryGame() {
-  const EMOJI = ["🚀", "🧠", "💡", "🎯", "📚", "⚡", "🔬", "🎓"];
+  const EMOJI = ["", "🧠", "💡", "🎯", "📚", "⚡", "🔬", "🎓"];
   let cards = [], open = [], matched = 0, moves = 0, lock = false;
   const grid = el("div", { class: "fun-mem" });
   const info = el("p", { class: "hint" });
@@ -4789,17 +4789,17 @@ function renderAbout() {
     el("div", { class: "learn-card" },
       el("strong", {}, "🔥 Built by students"),
       el("p", {}, "Built by students, for students."),
-      el("p", {}, "💙 Dedicated to our students: advanced, disciplined and obedient learners who work hard, respect their teachers and lift each other up. You are the reason Spark exists.")),
+      el("p", {}, "Dedicated to our students: advanced, disciplined and obedient learners who work hard, respect their teachers and lift each other up. You are the reason Spark exists.")),
     el("div", { class: "label" }, "🎯 Our mission"),
     el("p", {}, "Every student should have a senior to ask, a clear path after graduation, and quality study material, without paying for any of it. The Campus Loop brings these together so no doubt stays unanswered and no student feels lost after E4."),
-    el("div", { class: "label" }, "✨ What you get"),
+    el("div", { class: "label" }, "What you get"),
     feature("❓", "Doubts", "Ask by subject, year (E1-E4) and campus. Peers answer, you mark the best answer, and helpers earn points."),
     feature("💡", "Ideas, Clubs and Challenges", "Share project ideas, join clubs and take part in challenges and hackathons."),
     feature("🎯", "GATE", "Previous-year papers with solutions, MCQs, formulas and a year-wise preparation plan."),
     feature("🧠", "Daily Quiz and Top Helpers", "A new question every day, a leaderboard and recognition for the students who help most."),
     feature("📖", "Study Tools and Learn from IIT", "Unit-wise syllabus, formula cards, study plans and free IIT course links."),
-    feature("🚀", "Career Guide", "Branch-wise options after graduation: jobs, M.Tech, PSU, study abroad and premium paths, all with free links."),
-    feature("🤖", "Loop Bot", "Ask anything about academics, GATE, placements, campus life or the app and get instant answers with clickable resources."),
+    feature("", "Career Guide", "Branch-wise options after graduation: jobs, M.Tech, PSU, study abroad and premium paths, all with free links."),
+    feature("", "Loop Bot", "Ask anything about academics, GATE, placements, campus life or the app and get instant answers with clickable resources."),
     feature("🛒", "Market", "Buy and sell textbooks, notes and equipment inside the " + COLLEGE + " community."),
     el("div", { class: "label" }, "🔒 Privacy and safety"),
     el("p", {}, "No login and no password. Your device gets a random ID so your posts stay yours. You can post anonymously, report anything inappropriate and edit your own posts. We do not sell or share your data."),
@@ -4851,7 +4851,7 @@ const CAREER = {
       links: [["roadmap.sh", "https://roadmap.sh"], ["CSES Problem Set", "https://cses.fi/problemset/"], ["freeCodeCamp", "https://www.freecodecamp.org"], ["CS50", "https://cs50.harvard.edu/x/"], ["Kaggle Learn", "https://www.kaggle.com/learn"], ["AWS Skill Builder", "https://skillbuilder.aws"]] },
   ]},
   "AI & ML": { tag: "Artificial Intelligence & Machine Learning", sections: [
-    { icon: "🤖", title: "Private sector jobs", note: "Machine Learning Engineer, Data Scientist, Data Analyst, Generative AI / LLM Engineer, MLOps Engineer, Computer Vision Engineer, NLP Engineer, Data Engineer, AI Product Manager and AI consultant. Startups and global companies hire for these roles in every sector.",
+    { icon: "", title: "Private sector jobs", note: "Machine Learning Engineer, Data Scientist, Data Analyst, Generative AI / LLM Engineer, MLOps Engineer, Computer Vision Engineer, NLP Engineer, Data Engineer, AI Product Manager and AI consultant. Startups and global companies hire for these roles in every sector.",
       links: [["Google Careers", "https://www.google.com/about/careers/applications/"], ["Microsoft", "https://careers.microsoft.com"], ["Amazon", "https://www.amazon.jobs"], ["TCS NextStep", "https://nextstep.tcs.com"], ["Infosys", "https://www.infosys.com/careers/"], ["Zoho", "https://www.zoho.com/careers/"], ["National Career Service", "https://www.ncs.gov.in"]] },
     CAREER_COMMON.higher("DA paper (Data Science & AI) or CS paper", [["IISc Bangalore", "https://iisc.ac.in"], ["IIIT Hyderabad", "https://www.iiit.ac.in"]]),
     { icon: "🔬", title: "AI research and national AI missions", note: "Research roles in India's AI ecosystem: research assistant, PhD, or scientist positions. A strong GitHub, a paper or a thesis project helps a lot.",
@@ -4902,7 +4902,7 @@ const CAREER = {
     CAREER_COMMON.higher("ME paper"),
     { icon: "🏛️", title: "Government and PSU", note: "BHEL, NTPC, HAL, ONGC, IOCL, HPCL, BPCL, GAIL, SAIL, ISRO, DRDO, Railways (RRB JE, workshops), SSC JE, and ESE (UPSC Engineering Services). Most PSUs recruit through GATE ME.",
       links: [["BHEL", "https://www.bhel.com/careers"], ["HAL", "https://hal-india.co.in"], ["IOCL", "https://iocl.com/people-career"], ["ONGC", "https://ongcindia.com/web/eng/careers"], ["ISRO", "https://www.isro.gov.in/Careers.html"], ["UPSC ESE", "https://upsc.gov.in"]] },
-    { icon: "🤖", title: "Robotics, EV and advanced manufacturing", note: "Mechatronics, 3D printing, drones and EV design are growing quickly. Build projects and enter student design competitions.",
+    { icon: "", title: "Robotics, EV and advanced manufacturing", note: "Mechatronics, 3D printing, drones and EV design are growing quickly. Build projects and enter student design competitions.",
       links: [["FreeCAD (free CAD)", "https://www.freecad.org"], ["NPTEL Mechanical", "https://nptel.ac.in"], ["SAE India", "https://www.saeindia.org"]] },
     CAREER_COMMON.abroad(), CAREER_COMMON.mba(), CAREER_COMMON.startup(),
     { icon: "🛠️", title: "Skills to build now (all free)", note: "SolidWorks / CATIA / FreeCAD, ANSYS basics, manufacturing processes, thermodynamics for GATE, Python for automation, one end-to-end project.",
@@ -4917,7 +4917,7 @@ const CAREER_EXTRA = {
       links: [["IISc Bangalore", "https://iisc.ac.in"], ["IIIT Hyderabad Research", "https://www.iiit.ac.in/research/"], ["Microsoft Research India", "https://www.microsoft.com/en-us/research/lab/microsoft-research-india/"], ["arXiv", "https://arxiv.org"]] },
   ],
   "AI & ML": [
-    { icon: "✨", title: "Generative AI and LLM careers", note: "Prompt engineering, fine-tuning, retrieval-augmented generation (RAG) and AI agents are among the fastest-growing skills. Build and publish a small LLM app to stand out.",
+    { icon: "", title: "Generative AI and LLM careers", note: "Prompt engineering, fine-tuning, retrieval-augmented generation (RAG) and AI agents are among the fastest-growing skills. Build and publish a small LLM app to stand out.",
       links: [["Hugging Face Learn", "https://huggingface.co/learn"], ["Google AI for Developers", "https://ai.google.dev"], ["Anthropic Docs", "https://docs.anthropic.com"], ["LangChain Docs", "https://python.langchain.com"]] },
     { icon: "🏥", title: "AI for good: health, agriculture and governance", note: "India needs AI in healthcare, farming, education and public services. Join national hackathons and AI4Bharat-style open projects for impact and visibility.",
       links: [["IndiaAI", "https://indiaai.gov.in"], ["AI4Bharat", "https://ai4bharat.iitm.ac.in"], ["Smart India Hackathon", "https://www.sih.gov.in"], ["Startup India", "https://www.startupindia.gov.in"]] },
@@ -4993,7 +4993,7 @@ const PREMIUM = {
       links: [["UPSC", "https://upsc.gov.in"], ["UPSC ESE", "https://upsc.gov.in"], ["IBPS (bank SO / IT officer)", "https://www.ibps.in"]] },
     { icon: "🏫", title: "Become a professor or researcher", note: "UGC-NET and CSIR-NET qualify you for lectureship and JRF. Combine with M.Tech and PhD to teach at universities and run your own lab.",
       links: [["UGC NET", "https://ugcnet.nta.ac.in"], ["CSIR NET", "https://csirnet.nta.ac.in"], ["NPTEL (teach and learn)", "https://nptel.ac.in"]] },
-    { icon: "🚀", title: "Build a startup with government backing", note: "Startup India registration, Atal Innovation Mission and incubators at IITs help with funding, mentors and legal support. Patents protect your idea.",
+    { icon: "", title: "Build a startup with government backing", note: "Startup India registration, Atal Innovation Mission and incubators at IITs help with funding, mentors and legal support. Patents protect your idea.",
       links: [["Startup India", "https://www.startupindia.gov.in"], ["Atal Innovation Mission", "https://aim.gov.in"], ["Indian Patent Office", "https://ipindia.gov.in"], ["Smart India Hackathon", "https://www.sih.gov.in"]] },
     { icon: "🧑‍🏭", title: "Free graduate apprenticeship with stipend", note: "NATS gives fresh graduate engineers paid on-the-job training in real companies, which is a strong stepping stone to a permanent job.",
       links: [["NATS Portal", "https://nats.education.gov.in"], ["Apprenticeship India", "https://apprenticeshipindia.gov.in"]] },
@@ -5013,7 +5013,7 @@ function renderCareer() {
   const back = el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: leave }, "Back"));
   if (!careerBranch) {
     return [
-      el("h2", {}, "🚀 Career Guide"),
+      el("h2", {}, "Career Guide"),
       el("p", { class: "hint" }, "Finished (or about to finish) your degree and unsure what next? Pick your branch to see every career path with free links."),
       el("div", { class: "label" }, "Select your branch"),
       el("div", { class: "rowbtns" }, Object.keys(CAREER).map(b => el("button", { class: "btn primary", type: "button", onclick: go(b) }, b))),
@@ -5041,7 +5041,7 @@ function renderCareer() {
   }
   const c = CAREER[careerBranch];
   return [
-    el("h2", {}, "🚀 " + careerBranch + " — after graduation"),
+    el("h2", {}, " " + careerBranch + ", after graduation"),
     el("p", { class: "hint" }, c.tag + ". Options you can choose after B.Tech. Tap any link; all are free to use."),
     el("div", { class: "rowbtns" }, Object.keys(CAREER).map(b =>
       el("button", { class: "btn sm" + (b === careerBranch ? " primary" : ""), type: "button", onclick: go(b) }, b))),
@@ -5188,14 +5188,14 @@ let mcqRevealed = {};
 let syllabusSubj = null;
 let syllabusUnit = null; // "subject-unitIdx"
 
-// RGUKT AP syllabus — unit-wise topics for every subject
+// RGUKT AP syllabus, unit-wise topics for every subject
 const SYLLABUS = {
-  // ——— ECE ———
+  // ---- ECE ----
   "DLD": {
     branch: "ECE",
     code: "23EC2102", credits: "4 Credits  |  3L: 1T: 0P  |  PCC",
     units: [
-      { title: "Unit I — Number Systems & Boolean Algebra", hours: "6 hrs", topics: [
+      { title: "Unit I, Number Systems & Boolean Algebra", hours: "6 hrs", topics: [
         "Number systems: Representations and Conversions (Binary, Octal, Decimal, Hexadecimal)",
         "Boolean constants and variables",
         "Basic gates: operation and truth tables",
@@ -5219,7 +5219,7 @@ const SYLLABUS = {
           { label: "📄 NPTEL Lecture Notes – Digital Circuits & Systems", url: "https://nptel.ac.in/courses/117106114/" },
         ],
       }},
-      { title: "Unit II — Combinational Circuit Design", hours: "12 hrs", topics: [
+      { title: "Unit II, Combinational Circuit Design", hours: "12 hrs", topics: [
         "Combinational circuit minimization using Boolean laws and Karnaugh maps",
         "Multi-level synthesis, timing hazards, logic levels and noise margins; Fan-out, Fan-in",
         "Single-bit adders and subtractors; multi-bit adders; BCD adder",
@@ -5243,7 +5243,7 @@ const SYLLABUS = {
           { label: "📄 GFG – Magnitude Comparator", url: "https://www.geeksforgeeks.org/magnitude-comparator-in-digital-logic/" },
         ],
       }},
-      { title: "Unit III — Latches & Flip-Flops", hours: "10 hrs", topics: [
+      { title: "Unit III, Latches & Flip-Flops", hours: "10 hrs", topics: [
         "Bistable elements; S-R latch, S'-R' latch, S̄ latch with enable, D latch",
         "Race-around condition and elimination methods",
         "Edge-triggered D flip-flop; edge-triggered D flip-flop with asynchronous inputs",
@@ -5266,7 +5266,7 @@ const SYLLABUS = {
           { label: "📄 GFG – Master-Slave JK Flip-Flop", url: "https://www.geeksforgeeks.org/master-slave-jk-flip-flop/" },
         ],
       }},
-      { title: "Unit IV — Counters & Registers", hours: "14 hrs", topics: [
+      { title: "Unit IV, Counters & Registers", hours: "14 hrs", topics: [
         "Frequency division and counting",
         "Design and analysis of asynchronous counters; delay and maximum clock frequency",
         "Design and analysis of synchronous counters",
@@ -5289,7 +5289,7 @@ const SYLLABUS = {
           { label: "📄 GFG – Ring Counter and Johnson Counter", url: "https://www.geeksforgeeks.org/ring-counter-in-digital-logic/" },
         ],
       }},
-      { title: "Unit V — Decoders, Multiplexers & PLDs", hours: "10 hrs", topics: [
+      { title: "Unit V, Decoders, Multiplexers & PLDs", hours: "10 hrs", topics: [
         "Decoders: Binary decoder; synthesis of logic functions using decoders; cascading binary decoders; seven-segment decoders and applications",
         "Multiplexers: synthesis of logic functions using multiplexers",
         "Demultiplexers: Realization; 1-4 and 1-8 line demultiplexers; demultiplexer tree",
@@ -5311,7 +5311,7 @@ const SYLLABUS = {
           { label: "📄 GFG – Programmable Logic Devices (PAL, PLA)", url: "https://www.geeksforgeeks.org/programmable-logic-devices/" },
         ],
       }},
-      { title: "Unit VI — Memory & Digital System Design", hours: "8 hrs", topics: [
+      { title: "Unit VI, Memory & Digital System Design", hours: "8 hrs", topics: [
         "Memory Structure and Timing: Static RAM (SRAM), Dynamic RAM (DRAM)",
         "Architecture: CPLD, FPGA",
         "Design and analysis of Digital circuits: Digital Clock",
@@ -5335,11 +5335,11 @@ const SYLLABUS = {
       }},
     ],
     textbooks: [
-      "Ronald J. Tocci, Neal S. Widmer, Gregory L. Moss — 'Digital Systems', Pearson, 10th edition",
-      "John F. Wakerly — 'Digital Design', Pearson, 4th edition",
+      "Ronald J. Tocci, Neal S. Widmer, Gregory L. Moss, 'Digital Systems', Pearson, 10th edition",
+      "John F. Wakerly, 'Digital Design', Pearson, 4th edition",
     ],
     refbooks: [
-      "Stephen Brown, Zvonko Vranesic — 'Fundamentals of Digital Logic with Verilog Design', TMH, 2nd edition",
+      "Stephen Brown, Zvonko Vranesic, 'Fundamentals of Digital Logic with Verilog Design', TMH, 2nd edition",
     ],
     webres: [
       { label: "NPTEL – Digital Circuits & Systems (Prof. Shankar Balachandran, IIT Madras)", url: "https://nptel.ac.in/courses/117106114/" },
@@ -5349,292 +5349,292 @@ const SYLLABUS = {
   "DSP": {
     branch: "ECE",
     units: [
-      { title: "Unit 1 — Discrete-Time Signals & Z-transform", topics: ["Classification of DT signals and systems", "LTI systems: convolution, properties", "Z-transform definition, properties, ROC", "Inverse Z-transform (partial fractions, power series)", "System function H(z), stability using poles"] },
-      { title: "Unit 2 — Frequency Analysis & DFT", topics: ["DTFT and its properties", "DFT: definition and properties", "Circular convolution", "Overlap-add and overlap-save methods", "Relationship between DTFT, DFT, and Z-transform"] },
-      { title: "Unit 3 — Fast Fourier Transform (FFT)", topics: ["Divide-and-conquer approach", "DIT-FFT algorithm (Cooley-Tukey)", "DIF-FFT algorithm", "Computational complexity: O(N log N)", "IFFT computation"] },
-      { title: "Unit 4 — IIR Filter Design", topics: ["Analog filter prototypes: Butterworth, Chebyshev", "Bilinear transformation", "Impulse invariant method", "Digital IIR filter design procedure", "Frequency transformations"] },
-      { title: "Unit 5 — FIR Filter Design", topics: ["Linear phase FIR filters", "Window functions: Rectangular, Hamming, Hanning, Kaiser", "Frequency sampling method", "FIR vs IIR comparison", "Introduction to multirate signal processing"] },
+      { title: "Unit 1, Discrete-Time Signals & Z-transform", topics: ["Classification of DT signals and systems", "LTI systems: convolution, properties", "Z-transform definition, properties, ROC", "Inverse Z-transform (partial fractions, power series)", "System function H(z), stability using poles"] },
+      { title: "Unit 2, Frequency Analysis & DFT", topics: ["DTFT and its properties", "DFT: definition and properties", "Circular convolution", "Overlap-add and overlap-save methods", "Relationship between DTFT, DFT, and Z-transform"] },
+      { title: "Unit 3, Fast Fourier Transform (FFT)", topics: ["Divide-and-conquer approach", "DIT-FFT algorithm (Cooley-Tukey)", "DIF-FFT algorithm", "Computational complexity: O(N log N)", "IFFT computation"] },
+      { title: "Unit 4, IIR Filter Design", topics: ["Analog filter prototypes: Butterworth, Chebyshev", "Bilinear transformation", "Impulse invariant method", "Digital IIR filter design procedure", "Frequency transformations"] },
+      { title: "Unit 5, FIR Filter Design", topics: ["Linear phase FIR filters", "Window functions: Rectangular, Hamming, Hanning, Kaiser", "Frequency sampling method", "FIR vs IIR comparison", "Introduction to multirate signal processing"] },
     ],
   },
   "AEC": {
     branch: "ECE",
     units: [
-      { title: "Unit 1 — BJT Biasing & Small-Signal Amplifiers", topics: ["BJT operating regions", "DC bias circuits (fixed, self-bias, voltage divider)", "h-parameter model", "CE, CB, CC amplifier analysis", "Gain, input/output impedance"] },
-      { title: "Unit 2 — Multi-Stage & Feedback Amplifiers", topics: ["RC-coupled, transformer-coupled, direct-coupled amplifiers", "Cascade amplifier analysis", "Feedback types (voltage/current series/shunt)", "Effect of feedback on gain, bandwidth, distortion", "Barkhausen criterion for oscillation"] },
-      { title: "Unit 3 — Oscillators", topics: ["RC phase shift oscillator", "Wien bridge oscillator", "Hartley and Colpitts oscillators", "Crystal oscillators", "Frequency stability"] },
-      { title: "Unit 4 — Power Amplifiers", topics: ["Class A, B, AB, C amplifiers", "Push-pull amplifier", "Efficiency and power dissipation", "Thermal runaway", "Distortion in power amplifiers"] },
-      { title: "Unit 5 — Op-Amp Applications", topics: ["Ideal op-amp characteristics", "Inverting and non-inverting amplifiers", "Summing, Difference, Integrator, Differentiator", "Comparators and Schmitt trigger", "Active filters (LPF, HPF, BPF)", "Precision rectifiers"] },
+      { title: "Unit 1, BJT Biasing & Small-Signal Amplifiers", topics: ["BJT operating regions", "DC bias circuits (fixed, self-bias, voltage divider)", "h-parameter model", "CE, CB, CC amplifier analysis", "Gain, input/output impedance"] },
+      { title: "Unit 2, Multi-Stage & Feedback Amplifiers", topics: ["RC-coupled, transformer-coupled, direct-coupled amplifiers", "Cascade amplifier analysis", "Feedback types (voltage/current series/shunt)", "Effect of feedback on gain, bandwidth, distortion", "Barkhausen criterion for oscillation"] },
+      { title: "Unit 3, Oscillators", topics: ["RC phase shift oscillator", "Wien bridge oscillator", "Hartley and Colpitts oscillators", "Crystal oscillators", "Frequency stability"] },
+      { title: "Unit 4, Power Amplifiers", topics: ["Class A, B, AB, C amplifiers", "Push-pull amplifier", "Efficiency and power dissipation", "Thermal runaway", "Distortion in power amplifiers"] },
+      { title: "Unit 5, Op-Amp Applications", topics: ["Ideal op-amp characteristics", "Inverting and non-inverting amplifiers", "Summing, Difference, Integrator, Differentiator", "Comparators and Schmitt trigger", "Active filters (LPF, HPF, BPF)", "Precision rectifiers"] },
     ],
   },
   "CS": {
     branch: "ECE",
     units: [
-      { title: "Unit 1 — Introduction & Modeling", topics: ["Open-loop vs closed-loop systems", "Transfer function, Block diagram algebra", "Signal flow graphs, Mason's gain formula", "Modeling of electrical, mechanical systems"] },
-      { title: "Unit 2 — Time Domain Analysis", topics: ["Test signals: step, ramp, impulse", "Transient response of 1st and 2nd order systems", "Rise time, peak time, settling time, overshoot", "Steady-state error and error constants (Kp, Kv, Ka)", "System type and error"] },
-      { title: "Unit 3 — Stability Analysis", topics: ["Routh-Hurwitz stability criterion", "Root locus construction rules", "Effect of poles and zeros on root locus", "Gain and phase margin from root locus"] },
-      { title: "Unit 4 — Frequency Domain Analysis", topics: ["Frequency response, polar plots", "Bode magnitude and phase plots", "Gain margin and phase margin", "Nyquist stability criterion", "Closed-loop frequency response"] },
-      { title: "Unit 5 — Compensators & State Space", topics: ["Lead, lag, lead-lag compensators", "PID controller design", "State space representation", "State transition matrix", "Controllability and observability"] },
+      { title: "Unit 1, Introduction & Modeling", topics: ["Open-loop vs closed-loop systems", "Transfer function, Block diagram algebra", "Signal flow graphs, Mason's gain formula", "Modeling of electrical, mechanical systems"] },
+      { title: "Unit 2, Time Domain Analysis", topics: ["Test signals: step, ramp, impulse", "Transient response of 1st and 2nd order systems", "Rise time, peak time, settling time, overshoot", "Steady-state error and error constants (Kp, Kv, Ka)", "System type and error"] },
+      { title: "Unit 3, Stability Analysis", topics: ["Routh-Hurwitz stability criterion", "Root locus construction rules", "Effect of poles and zeros on root locus", "Gain and phase margin from root locus"] },
+      { title: "Unit 4, Frequency Domain Analysis", topics: ["Frequency response, polar plots", "Bode magnitude and phase plots", "Gain margin and phase margin", "Nyquist stability criterion", "Closed-loop frequency response"] },
+      { title: "Unit 5, Compensators & State Space", topics: ["Lead, lag, lead-lag compensators", "PID controller design", "State space representation", "State transition matrix", "Controllability and observability"] },
     ],
   },
   "CN": {
     branch: "ECE",
     units: [
-      { title: "Unit 1 — Introduction & Physical Layer", topics: ["Network types: LAN, WAN, MAN", "OSI model (7 layers) and TCP/IP model", "Data transmission: bandwidth, throughput, latency", "Transmission media (guided and unguided)", "Encoding and modulation techniques"] },
-      { title: "Unit 2 — Data Link Layer", topics: ["Framing, error detection (CRC, checksum)", "Error correction (Hamming code)", "Flow control: stop-and-wait, sliding window", "MAC protocols: ALOHA, CSMA/CD, CSMA/CA", "IEEE 802.3 Ethernet, IEEE 802.11 Wi-Fi"] },
-      { title: "Unit 3 — Network Layer", topics: ["IPv4 addressing, subnetting, CIDR", "IPv6 overview", "Routing algorithms: Dijkstra (OSPF), Bellman-Ford (RIP)", "IP fragmentation, ICMP", "ARP, DHCP"] },
-      { title: "Unit 4 — Transport Layer", topics: ["Services: connection-oriented vs connectionless", "UDP: features and applications", "TCP: segments, three-way handshake", "TCP congestion control (slow start, AIMD)", "TCP flow control (sliding window)"] },
-      { title: "Unit 5 — Application Layer", topics: ["DNS: domain name resolution", "HTTP/HTTPS: request-response", "FTP, SMTP, POP3, IMAP", "Socket programming basics", "Introduction to network security (SSL/TLS)"] },
+      { title: "Unit 1, Introduction & Physical Layer", topics: ["Network types: LAN, WAN, MAN", "OSI model (7 layers) and TCP/IP model", "Data transmission: bandwidth, throughput, latency", "Transmission media (guided and unguided)", "Encoding and modulation techniques"] },
+      { title: "Unit 2, Data Link Layer", topics: ["Framing, error detection (CRC, checksum)", "Error correction (Hamming code)", "Flow control: stop-and-wait, sliding window", "MAC protocols: ALOHA, CSMA/CD, CSMA/CA", "IEEE 802.3 Ethernet, IEEE 802.11 Wi-Fi"] },
+      { title: "Unit 3, Network Layer", topics: ["IPv4 addressing, subnetting, CIDR", "IPv6 overview", "Routing algorithms: Dijkstra (OSPF), Bellman-Ford (RIP)", "IP fragmentation, ICMP", "ARP, DHCP"] },
+      { title: "Unit 4, Transport Layer", topics: ["Services: connection-oriented vs connectionless", "UDP: features and applications", "TCP: segments, three-way handshake", "TCP congestion control (slow start, AIMD)", "TCP flow control (sliding window)"] },
+      { title: "Unit 5, Application Layer", topics: ["DNS: domain name resolution", "HTTP/HTTPS: request-response", "FTP, SMTP, POP3, IMAP", "Socket programming basics", "Introduction to network security (SSL/TLS)"] },
     ],
   },
   "CO & D": {
     branch: "ECE",
     units: [
-      { title: "Unit 1 — Basic Computer Organization", topics: ["Register transfer language (RTL)", "Buses and memory transfers", "Arithmetic logic unit (ALU) design", "Instruction cycle: fetch-decode-execute", "Addressing modes"] },
-      { title: "Unit 2 — Instruction Set Architecture", topics: ["Instruction formats and types", "RISC vs CISC", "Assembly language overview", "Stacks, subroutine calls", "Interrupt handling"] },
-      { title: "Unit 3 — CPU Design & Control Unit", topics: ["Hardwired control", "Microprogrammed control", "Micro-operations", "Pipeline hazards: structural, data, control", "Hazard mitigation techniques"] },
-      { title: "Unit 4 — Memory Organization", topics: ["Cache memory: mapping (direct, associative, set-associative)", "Cache replacement policies (LRU, FIFO)", "Virtual memory, paging, TLB", "Memory hierarchy and performance", "DRAM, SRAM comparison"] },
-      { title: "Unit 5 — I/O & Advanced Topics", topics: ["I/O interfaces: programmed, interrupt-driven, DMA", "I/O buses (PCI, USB)", "Multiprocessors introduction", "Shared memory and message passing", "GPU architecture overview"] },
+      { title: "Unit 1, Basic Computer Organization", topics: ["Register transfer language (RTL)", "Buses and memory transfers", "Arithmetic logic unit (ALU) design", "Instruction cycle: fetch-decode-execute", "Addressing modes"] },
+      { title: "Unit 2, Instruction Set Architecture", topics: ["Instruction formats and types", "RISC vs CISC", "Assembly language overview", "Stacks, subroutine calls", "Interrupt handling"] },
+      { title: "Unit 3, CPU Design & Control Unit", topics: ["Hardwired control", "Microprogrammed control", "Micro-operations", "Pipeline hazards: structural, data, control", "Hazard mitigation techniques"] },
+      { title: "Unit 4, Memory Organization", topics: ["Cache memory: mapping (direct, associative, set-associative)", "Cache replacement policies (LRU, FIFO)", "Virtual memory, paging, TLB", "Memory hierarchy and performance", "DRAM, SRAM comparison"] },
+      { title: "Unit 5, I/O & Advanced Topics", topics: ["I/O interfaces: programmed, interrupt-driven, DMA", "I/O buses (PCI, USB)", "Multiprocessors introduction", "Shared memory and message passing", "GPU architecture overview"] },
     ],
   },
   "PRV": {
     branch: "ECE",
     units: [
-      { title: "Unit 1 — Probability Fundamentals", topics: ["Sample space, events", "Axioms of probability", "Conditional probability, Bayes' theorem", "Independence of events", "Combinatorial problems"] },
-      { title: "Unit 2 — Random Variables", topics: ["Discrete RV: PMF, CDF", "Continuous RV: PDF, CDF", "Common distributions: Bernoulli, Binomial, Poisson, Uniform, Gaussian, Exponential", "Functions of a random variable"] },
-      { title: "Unit 3 — Statistical Averages", topics: ["Mean, variance, standard deviation", "Moments and moment generating function", "Chebyshev's inequality", "Characteristic function", "Central limit theorem"] },
-      { title: "Unit 4 — Multiple Random Variables", topics: ["Joint PDF/PMF", "Marginal and conditional distributions", "Correlation and covariance", "Linear transformation of RVs", "Jointly Gaussian RVs"] },
-      { title: "Unit 5 — Random Processes", topics: ["Classification of random processes", "Stationary processes (SSS and WSS)", "Autocorrelation and power spectral density", "Wiener-Khinchin theorem", "Response of LTI systems to random inputs"] },
+      { title: "Unit 1, Probability Fundamentals", topics: ["Sample space, events", "Axioms of probability", "Conditional probability, Bayes' theorem", "Independence of events", "Combinatorial problems"] },
+      { title: "Unit 2, Random Variables", topics: ["Discrete RV: PMF, CDF", "Continuous RV: PDF, CDF", "Common distributions: Bernoulli, Binomial, Poisson, Uniform, Gaussian, Exponential", "Functions of a random variable"] },
+      { title: "Unit 3, Statistical Averages", topics: ["Mean, variance, standard deviation", "Moments and moment generating function", "Chebyshev's inequality", "Characteristic function", "Central limit theorem"] },
+      { title: "Unit 4, Multiple Random Variables", topics: ["Joint PDF/PMF", "Marginal and conditional distributions", "Correlation and covariance", "Linear transformation of RVs", "Jointly Gaussian RVs"] },
+      { title: "Unit 5, Random Processes", topics: ["Classification of random processes", "Stationary processes (SSS and WSS)", "Autocorrelation and power spectral density", "Wiener-Khinchin theorem", "Response of LTI systems to random inputs"] },
     ],
   },
   "CS-2": {
     branch: "ECE",
     units: [
-      { title: "Unit 1 — Amplitude Modulation", topics: ["AM: generation, spectrum, power", "DSB-SC, SSB-SC, VSB", "AM demodulation (envelope detector)", "Superheterodyne receiver", "Figure of merit for AM"] },
-      { title: "Unit 2 — Angle Modulation", topics: ["FM and PM: instantaneous frequency", "WBFM and NBFM", "FM spectrum (Bessel functions)", "FM demodulation (limiter-discriminator, PLL)", "Comparison of AM vs FM"] },
-      { title: "Unit 3 — Pulse Modulation", topics: ["Sampling theorem", "PAM: natural and flat-top", "PWM and PPM", "PCM: quantization, encoding, companding (μ-law, A-law)", "Delta modulation and ADM"] },
-      { title: "Unit 4 — Digital Modulation", topics: ["ASK, FSK, PSK, BPSK, QPSK", "Differential PSK (DPSK)", "QAM", "Coherent vs non-coherent detection", "BER comparison of digital schemes"] },
-      { title: "Unit 5 — Information Theory & Noise", topics: ["Entropy, mutual information", "Channel capacity (Shannon)", "Source coding (Huffman, LZW)", "Noise in AM and FM receivers", "Threshold effect in FM"] },
+      { title: "Unit 1, Amplitude Modulation", topics: ["AM: generation, spectrum, power", "DSB-SC, SSB-SC, VSB", "AM demodulation (envelope detector)", "Superheterodyne receiver", "Figure of merit for AM"] },
+      { title: "Unit 2, Angle Modulation", topics: ["FM and PM: instantaneous frequency", "WBFM and NBFM", "FM spectrum (Bessel functions)", "FM demodulation (limiter-discriminator, PLL)", "Comparison of AM vs FM"] },
+      { title: "Unit 3, Pulse Modulation", topics: ["Sampling theorem", "PAM: natural and flat-top", "PWM and PPM", "PCM: quantization, encoding, companding (μ-law, A-law)", "Delta modulation and ADM"] },
+      { title: "Unit 4, Digital Modulation", topics: ["ASK, FSK, PSK, BPSK, QPSK", "Differential PSK (DPSK)", "QAM", "Coherent vs non-coherent detection", "BER comparison of digital schemes"] },
+      { title: "Unit 5, Information Theory & Noise", topics: ["Entropy, mutual information", "Channel capacity (Shannon)", "Source coding (Huffman, LZW)", "Noise in AM and FM receivers", "Threshold effect in FM"] },
     ],
   },
   "RFME": {
     branch: "ECE",
     units: [
-      { title: "Unit 1 — Transmission Line Theory", topics: ["Distributed parameters: L, C, R, G", "Characteristic impedance Z₀", "Reflection coefficient, VSWR", "Smith chart applications", "Quarter-wave and half-wave transformers"] },
-      { title: "Unit 2 — Microwave Components", topics: ["Rectangular and circular waveguides", "TE and TM modes, cutoff frequency", "Microwave resonators", "Directional couplers, circulators, isolators", "Microwave filters"] },
-      { title: "Unit 3 — Microwave Tubes", topics: ["Limitations of conventional tubes at microwave frequencies", "Klystron (two-cavity, reflex)", "Magnetron", "Travelling wave tube (TWT)", "Backward wave oscillator (BWO)"] },
-      { title: "Unit 4 — Microwave Semiconductor Devices", topics: ["Gunn diode and transferred electron devices", "IMPATT and TRAPATT diodes", "PIN diodes and Schottky diodes", "MESFETs, HEMTs", "Microwave integrated circuits (MICs)"] },
-      { title: "Unit 5 — Antennas & Measurements", topics: ["Antenna parameters: gain, directivity, efficiency", "Dipole, monopole, loop antennas", "Antenna arrays and beam steering", "Microwave power, frequency, and VSWR measurement", "Noise figure measurement"] },
+      { title: "Unit 1, Transmission Line Theory", topics: ["Distributed parameters: L, C, R, G", "Characteristic impedance Z₀", "Reflection coefficient, VSWR", "Smith chart applications", "Quarter-wave and half-wave transformers"] },
+      { title: "Unit 2, Microwave Components", topics: ["Rectangular and circular waveguides", "TE and TM modes, cutoff frequency", "Microwave resonators", "Directional couplers, circulators, isolators", "Microwave filters"] },
+      { title: "Unit 3, Microwave Tubes", topics: ["Limitations of conventional tubes at microwave frequencies", "Klystron (two-cavity, reflex)", "Magnetron", "Travelling wave tube (TWT)", "Backward wave oscillator (BWO)"] },
+      { title: "Unit 4, Microwave Semiconductor Devices", topics: ["Gunn diode and transferred electron devices", "IMPATT and TRAPATT diodes", "PIN diodes and Schottky diodes", "MESFETs, HEMTs", "Microwave integrated circuits (MICs)"] },
+      { title: "Unit 5, Antennas & Measurements", topics: ["Antenna parameters: gain, directivity, efficiency", "Dipole, monopole, loop antennas", "Antenna arrays and beam steering", "Microwave power, frequency, and VSWR measurement", "Noise figure measurement"] },
     ],
   },
-  // ——— CSE ———
+  // ---- CSE ----
   "DS & A": {
     branch: "CSE",
     units: [
-      { title: "Unit 1 — Linear Data Structures", topics: ["Arrays: operations, 2D arrays", "Linked lists: singly, doubly, circular", "Stacks: operations, applications (expression evaluation, parenthesis matching)", "Queues: simple, circular, priority, deque"] },
-      { title: "Unit 2 — Trees", topics: ["Binary trees: traversals (inorder, preorder, postorder)", "Binary search trees: search, insert, delete", "AVL trees: rotations (LL, RR, LR, RL)", "Heaps (min-heap, max-heap), heapify", "B-trees overview"] },
-      { title: "Unit 3 — Graphs", topics: ["Representation: adjacency matrix, list", "BFS and DFS traversals", "Shortest paths: Dijkstra, Bellman-Ford", "Minimum spanning tree: Prim, Kruskal", "Topological sort"] },
-      { title: "Unit 4 — Sorting & Searching", topics: ["Bubble, Selection, Insertion sort: O(n²)", "Merge sort and Quick sort: O(n log n)", "Heap sort", "Binary search: O(log n)", "Hashing: hash functions, collision (chaining, open addressing)"] },
-      { title: "Unit 5 — Algorithm Design Techniques", topics: ["Greedy: activity selection, Huffman coding, fractional knapsack", "Dynamic programming: 0/1 knapsack, LCS, matrix chain", "Backtracking: N-queens, graph coloring", "Branch and bound", "Complexity: P, NP, NP-complete"] },
+      { title: "Unit 1, Linear Data Structures", topics: ["Arrays: operations, 2D arrays", "Linked lists: singly, doubly, circular", "Stacks: operations, applications (expression evaluation, parenthesis matching)", "Queues: simple, circular, priority, deque"] },
+      { title: "Unit 2, Trees", topics: ["Binary trees: traversals (inorder, preorder, postorder)", "Binary search trees: search, insert, delete", "AVL trees: rotations (LL, RR, LR, RL)", "Heaps (min-heap, max-heap), heapify", "B-trees overview"] },
+      { title: "Unit 3, Graphs", topics: ["Representation: adjacency matrix, list", "BFS and DFS traversals", "Shortest paths: Dijkstra, Bellman-Ford", "Minimum spanning tree: Prim, Kruskal", "Topological sort"] },
+      { title: "Unit 4, Sorting & Searching", topics: ["Bubble, Selection, Insertion sort: O(n²)", "Merge sort and Quick sort: O(n log n)", "Heap sort", "Binary search: O(log n)", "Hashing: hash functions, collision (chaining, open addressing)"] },
+      { title: "Unit 5, Algorithm Design Techniques", topics: ["Greedy: activity selection, Huffman coding, fractional knapsack", "Dynamic programming: 0/1 knapsack, LCS, matrix chain", "Backtracking: N-queens, graph coloring", "Branch and bound", "Complexity: P, NP, NP-complete"] },
     ],
   },
   "OS": {
     branch: "CSE",
     units: [
-      { title: "Unit 1 — Process Management", topics: ["Process states and PCB", "Process creation/termination (fork, exec)", "Threads: user-level vs kernel-level", "CPU scheduling: FCFS, SJF, Priority, Round Robin", "Multi-level queue scheduling"] },
-      { title: "Unit 2 — Process Synchronization", topics: ["Race condition, critical section problem", "Peterson's solution", "Semaphores (binary, counting)", "Monitors", "Classic problems: Producer-Consumer, Readers-Writers, Dining Philosophers"] },
-      { title: "Unit 3 — Deadlock", topics: ["Deadlock conditions (Coffman's 4 conditions)", "Resource allocation graph", "Deadlock prevention and avoidance (Banker's algorithm)", "Deadlock detection and recovery"] },
-      { title: "Unit 4 — Memory Management", topics: ["Contiguous allocation (fixed, variable partitions)", "Fragmentation, compaction", "Paging: page table, TLB", "Segmentation", "Virtual memory: demand paging, page fault handling"] },
-      { title: "Unit 5 — File Systems & I/O", topics: ["File attributes, operations, types", "Directory structure", "File allocation: contiguous, linked, indexed (inode)", "Disk scheduling: FCFS, SSTF, SCAN, C-SCAN", "I/O hardware and software layers"] },
+      { title: "Unit 1, Process Management", topics: ["Process states and PCB", "Process creation/termination (fork, exec)", "Threads: user-level vs kernel-level", "CPU scheduling: FCFS, SJF, Priority, Round Robin", "Multi-level queue scheduling"] },
+      { title: "Unit 2, Process Synchronization", topics: ["Race condition, critical section problem", "Peterson's solution", "Semaphores (binary, counting)", "Monitors", "Classic problems: Producer-Consumer, Readers-Writers, Dining Philosophers"] },
+      { title: "Unit 3, Deadlock", topics: ["Deadlock conditions (Coffman's 4 conditions)", "Resource allocation graph", "Deadlock prevention and avoidance (Banker's algorithm)", "Deadlock detection and recovery"] },
+      { title: "Unit 4, Memory Management", topics: ["Contiguous allocation (fixed, variable partitions)", "Fragmentation, compaction", "Paging: page table, TLB", "Segmentation", "Virtual memory: demand paging, page fault handling"] },
+      { title: "Unit 5, File Systems & I/O", topics: ["File attributes, operations, types", "Directory structure", "File allocation: contiguous, linked, indexed (inode)", "Disk scheduling: FCFS, SSTF, SCAN, C-SCAN", "I/O hardware and software layers"] },
     ],
   },
   "DBMS": {
     branch: "CSE",
     units: [
-      { title: "Unit 1 — Database Concepts & ER Model", topics: ["Database vs file system", "Database architecture (3-tier)", "ER model: entities, attributes, relationships", "Weak entities and participation constraints", "ER-to-relational mapping"] },
-      { title: "Unit 2 — Relational Model & SQL", topics: ["Relational algebra: σ, π, ⋈, ∪, −", "Relational calculus", "SQL: DDL (CREATE, ALTER, DROP)", "SQL: DML (INSERT, UPDATE, DELETE, SELECT)", "Joins, subqueries, aggregate functions, GROUP BY, HAVING"] },
-      { title: "Unit 3 — Normalization", topics: ["Functional dependencies", "1NF, 2NF, 3NF, BCNF", "Multi-valued dependencies and 4NF", "Lossless decomposition and dependency preservation", "Denormalization"] },
-      { title: "Unit 4 — Transaction Management", topics: ["ACID properties", "Transaction states and schedules", "Serializability (conflict, view)", "Concurrency control: locking (2PL), timestamps", "Deadlock detection in databases"] },
-      { title: "Unit 5 — Storage & Query Optimization", topics: ["Storage hierarchy, buffer management", "File organization: heap, sorted, hashed", "Indexing: primary, secondary, B+ tree index", "Query processing steps", "Query optimization: cost estimation, join ordering"] },
+      { title: "Unit 1, Database Concepts & ER Model", topics: ["Database vs file system", "Database architecture (3-tier)", "ER model: entities, attributes, relationships", "Weak entities and participation constraints", "ER-to-relational mapping"] },
+      { title: "Unit 2, Relational Model & SQL", topics: ["Relational algebra: σ, π, ⋈, ∪, −", "Relational calculus", "SQL: DDL (CREATE, ALTER, DROP)", "SQL: DML (INSERT, UPDATE, DELETE, SELECT)", "Joins, subqueries, aggregate functions, GROUP BY, HAVING"] },
+      { title: "Unit 3, Normalization", topics: ["Functional dependencies", "1NF, 2NF, 3NF, BCNF", "Multi-valued dependencies and 4NF", "Lossless decomposition and dependency preservation", "Denormalization"] },
+      { title: "Unit 4, Transaction Management", topics: ["ACID properties", "Transaction states and schedules", "Serializability (conflict, view)", "Concurrency control: locking (2PL), timestamps", "Deadlock detection in databases"] },
+      { title: "Unit 5, Storage & Query Optimization", topics: ["Storage hierarchy, buffer management", "File organization: heap, sorted, hashed", "Indexing: primary, secondary, B+ tree index", "Query processing steps", "Query optimization: cost estimation, join ordering"] },
     ],
   },
   "OOP": {
     branch: "CSE",
     units: [
-      { title: "Unit 1 — OOP Fundamentals & Java Basics", topics: ["OOP concepts: encapsulation, abstraction, inheritance, polymorphism", "Java program structure, JVM, JDK", "Data types, operators, control statements", "Arrays, strings, StringBuffer", "Methods, constructors, 'this' keyword"] },
-      { title: "Unit 2 — Inheritance & Polymorphism", topics: ["Single, multilevel, hierarchical inheritance", "Method overriding and dynamic dispatch", "Abstract classes and methods", "Interfaces and multiple inheritance", "final keyword"] },
-      { title: "Unit 3 — Packages & Exception Handling", topics: ["Creating and using packages", "Access modifiers: public, private, protected", "try-catch-finally blocks", "Checked and unchecked exceptions", "User-defined exceptions, throw and throws"] },
-      { title: "Unit 4 — Multithreading & Generics", topics: ["Thread creation: Thread class and Runnable", "Thread lifecycle and scheduling", "Synchronization: synchronized methods and blocks", "Inter-thread communication (wait, notify)", "Generics: generic classes and methods, bounded types"] },
-      { title: "Unit 5 — Collections & I/O", topics: ["Collection framework: List, Set, Map, Queue", "ArrayList, LinkedList, HashSet, TreeSet, HashMap", "Iterators and for-each loop", "File I/O: FileInputStream, FileOutputStream, BufferedReader", "Serialization and deserialization"] },
+      { title: "Unit 1, OOP Fundamentals & Java Basics", topics: ["OOP concepts: encapsulation, abstraction, inheritance, polymorphism", "Java program structure, JVM, JDK", "Data types, operators, control statements", "Arrays, strings, StringBuffer", "Methods, constructors, 'this' keyword"] },
+      { title: "Unit 2, Inheritance & Polymorphism", topics: ["Single, multilevel, hierarchical inheritance", "Method overriding and dynamic dispatch", "Abstract classes and methods", "Interfaces and multiple inheritance", "final keyword"] },
+      { title: "Unit 3, Packages & Exception Handling", topics: ["Creating and using packages", "Access modifiers: public, private, protected", "try-catch-finally blocks", "Checked and unchecked exceptions", "User-defined exceptions, throw and throws"] },
+      { title: "Unit 4, Multithreading & Generics", topics: ["Thread creation: Thread class and Runnable", "Thread lifecycle and scheduling", "Synchronization: synchronized methods and blocks", "Inter-thread communication (wait, notify)", "Generics: generic classes and methods, bounded types"] },
+      { title: "Unit 5, Collections & I/O", topics: ["Collection framework: List, Set, Map, Queue", "ArrayList, LinkedList, HashSet, TreeSet, HashMap", "Iterators and for-each loop", "File I/O: FileInputStream, FileOutputStream, BufferedReader", "Serialization and deserialization"] },
     ],
   },
   "TOC": {
     branch: "CSE",
     units: [
-      { title: "Unit 1 — Regular Languages & FA", topics: ["Alphabet, strings, languages", "Deterministic finite automaton (DFA)", "NFA and NFA-to-DFA conversion (subset construction)", "Regular expressions", "Regular expression to NFA (Thompson's construction)"] },
-      { title: "Unit 2 — Regular Language Properties", topics: ["Closure properties of regular languages", "Pumping lemma for regular languages", "Myhill-Nerode theorem", "Minimization of DFA", "Decision problems for regular languages"] },
-      { title: "Unit 3 — Context-Free Languages", topics: ["Context-free grammar (CFG)", "Derivations, parse trees, ambiguity", "Chomsky Normal Form (CNF) and Greibach Normal Form", "Pushdown automata (PDA)", "Pumping lemma for CFLs"] },
-      { title: "Unit 4 — Turing Machines", topics: ["Turing machine model and transitions", "Variants: multi-tape TM, non-deterministic TM", "Church-Turing thesis", "Recursive and recursively enumerable languages", "Universal Turing machine"] },
-      { title: "Unit 5 — Decidability & Complexity", topics: ["Decidable and undecidable problems", "Halting problem (undecidable, proof by diagonalization)", "Rice's theorem", "Complexity classes: P, NP", "NP-completeness: SAT, 3-SAT, Clique, Vertex Cover"] },
+      { title: "Unit 1, Regular Languages & FA", topics: ["Alphabet, strings, languages", "Deterministic finite automaton (DFA)", "NFA and NFA-to-DFA conversion (subset construction)", "Regular expressions", "Regular expression to NFA (Thompson's construction)"] },
+      { title: "Unit 2, Regular Language Properties", topics: ["Closure properties of regular languages", "Pumping lemma for regular languages", "Myhill-Nerode theorem", "Minimization of DFA", "Decision problems for regular languages"] },
+      { title: "Unit 3, Context-Free Languages", topics: ["Context-free grammar (CFG)", "Derivations, parse trees, ambiguity", "Chomsky Normal Form (CNF) and Greibach Normal Form", "Pushdown automata (PDA)", "Pumping lemma for CFLs"] },
+      { title: "Unit 4, Turing Machines", topics: ["Turing machine model and transitions", "Variants: multi-tape TM, non-deterministic TM", "Church-Turing thesis", "Recursive and recursively enumerable languages", "Universal Turing machine"] },
+      { title: "Unit 5, Decidability & Complexity", topics: ["Decidable and undecidable problems", "Halting problem (undecidable, proof by diagonalization)", "Rice's theorem", "Complexity classes: P, NP", "NP-completeness: SAT, 3-SAT, Clique, Vertex Cover"] },
     ],
   },
   "CD": {
     branch: "CSE",
     units: [
-      { title: "Unit 1 — Lexical Analysis", topics: ["Phases of compiler", "Role of lexical analyzer", "Tokens, patterns, lexemes", "Regular expressions for tokens", "LEX/FLEX tool overview"] },
-      { title: "Unit 2 — Syntax Analysis (Parsing)", topics: ["Context-free grammars for programming languages", "Top-down parsing: recursive descent, predictive LL(1)", "First and Follow sets, parsing table", "Bottom-up parsing: LR(0), SLR(1), LALR(1)", "YACC/Bison tool overview"] },
-      { title: "Unit 3 — Semantic Analysis", topics: ["Syntax-directed definitions (SDD)", "Synthesized and inherited attributes", "L-attributed and S-attributed grammars", "Type checking and type systems", "Symbol table structure and operations"] },
-      { title: "Unit 4 — Intermediate Code Generation", topics: ["Three-address code", "Quadruples, triples, indirect triples", "Syntax-directed translation for expressions", "Control flow statements (if, while)", "Backpatching"] },
-      { title: "Unit 5 — Code Optimization & Generation", topics: ["Basic blocks and flow graphs", "Local optimizations: constant folding, dead code elimination", "Global optimizations: loop invariant code motion, induction variable elimination", "Register allocation and assignment", "Code generation algorithms"] },
+      { title: "Unit 1, Lexical Analysis", topics: ["Phases of compiler", "Role of lexical analyzer", "Tokens, patterns, lexemes", "Regular expressions for tokens", "LEX/FLEX tool overview"] },
+      { title: "Unit 2, Syntax Analysis (Parsing)", topics: ["Context-free grammars for programming languages", "Top-down parsing: recursive descent, predictive LL(1)", "First and Follow sets, parsing table", "Bottom-up parsing: LR(0), SLR(1), LALR(1)", "YACC/Bison tool overview"] },
+      { title: "Unit 3, Semantic Analysis", topics: ["Syntax-directed definitions (SDD)", "Synthesized and inherited attributes", "L-attributed and S-attributed grammars", "Type checking and type systems", "Symbol table structure and operations"] },
+      { title: "Unit 4, Intermediate Code Generation", topics: ["Three-address code", "Quadruples, triples, indirect triples", "Syntax-directed translation for expressions", "Control flow statements (if, while)", "Backpatching"] },
+      { title: "Unit 5, Code Optimization & Generation", topics: ["Basic blocks and flow graphs", "Local optimizations: constant folding, dead code elimination", "Global optimizations: loop invariant code motion, induction variable elimination", "Register allocation and assignment", "Code generation algorithms"] },
     ],
   },
   "SE": {
     branch: "CSE",
     units: [
-      { title: "Unit 1 — Software Process Models", topics: ["Software development life cycle (SDLC)", "Waterfall model", "Prototyping, Spiral model", "Agile: Scrum, XP", "DevOps overview"] },
-      { title: "Unit 2 — Requirements Engineering", topics: ["Functional and non-functional requirements", "Requirements elicitation techniques", "Use case diagrams (UML)", "Software Requirements Specification (SRS)", "Requirements validation and traceability"] },
-      { title: "Unit 3 — Software Design", topics: ["Architectural design patterns (MVC, layered, microservices)", "UML diagrams: class, sequence, state, activity", "Design principles: SOLID", "Object-oriented design", "Modular design metrics: cohesion, coupling"] },
-      { title: "Unit 4 — Software Testing", topics: ["Testing levels: unit, integration, system, acceptance", "Black-box testing: equivalence partitioning, boundary value analysis", "White-box testing: statement, branch, path coverage", "Test-driven development (TDD)", "Regression testing, performance testing"] },
-      { title: "Unit 5 — Project Management & Quality", topics: ["Project planning: WBS, Gantt charts, PERT/CPM", "Effort estimation: COCOMO model, function points", "Risk management", "Software quality: ISO 9001, CMMI", "Configuration management and version control (Git)"] },
+      { title: "Unit 1, Software Process Models", topics: ["Software development life cycle (SDLC)", "Waterfall model", "Prototyping, Spiral model", "Agile: Scrum, XP", "DevOps overview"] },
+      { title: "Unit 2, Requirements Engineering", topics: ["Functional and non-functional requirements", "Requirements elicitation techniques", "Use case diagrams (UML)", "Software Requirements Specification (SRS)", "Requirements validation and traceability"] },
+      { title: "Unit 3, Software Design", topics: ["Architectural design patterns (MVC, layered, microservices)", "UML diagrams: class, sequence, state, activity", "Design principles: SOLID", "Object-oriented design", "Modular design metrics: cohesion, coupling"] },
+      { title: "Unit 4, Software Testing", topics: ["Testing levels: unit, integration, system, acceptance", "Black-box testing: equivalence partitioning, boundary value analysis", "White-box testing: statement, branch, path coverage", "Test-driven development (TDD)", "Regression testing, performance testing"] },
+      { title: "Unit 5, Project Management & Quality", topics: ["Project planning: WBS, Gantt charts, PERT/CPM", "Effort estimation: COCOMO model, function points", "Risk management", "Software quality: ISO 9001, CMMI", "Configuration management and version control (Git)"] },
     ],
   },
   "Python": {
     branch: "CSE",
     units: [
-      { title: "Unit 1 — Python Basics", topics: ["Variables, data types, operators", "Control flow: if/elif/else, for, while", "Functions: def, arguments, return, lambda", "Strings and string methods", "Lists, tuples, sets, dictionaries"] },
-      { title: "Unit 2 — OOP in Python", topics: ["Classes and objects", "Constructors (__init__), self", "Inheritance and method overriding", "Dunder methods (__str__, __len__, __add__)", "Decorators and properties"] },
-      { title: "Unit 3 — File Handling & Exceptions", topics: ["File open, read, write, close", "with statement and context managers", "try-except-finally, raise", "Custom exceptions", "JSON and CSV file handling"] },
-      { title: "Unit 4 — NumPy & Pandas", topics: ["NumPy arrays: creation, indexing, slicing", "Array operations and broadcasting", "Pandas Series and DataFrame", "Data loading (CSV, Excel)", "Data cleaning, filtering, groupby, merge"] },
-      { title: "Unit 5 — Data Visualization & Introduction to ML", topics: ["Matplotlib: line, bar, scatter, histogram plots", "Seaborn for statistical plots", "Scikit-learn: train-test split", "Linear regression, logistic regression", "Evaluation metrics: accuracy, confusion matrix"] },
+      { title: "Unit 1, Python Basics", topics: ["Variables, data types, operators", "Control flow: if/elif/else, for, while", "Functions: def, arguments, return, lambda", "Strings and string methods", "Lists, tuples, sets, dictionaries"] },
+      { title: "Unit 2, OOP in Python", topics: ["Classes and objects", "Constructors (__init__), self", "Inheritance and method overriding", "Dunder methods (__str__, __len__, __add__)", "Decorators and properties"] },
+      { title: "Unit 3, File Handling & Exceptions", topics: ["File open, read, write, close", "with statement and context managers", "try-except-finally, raise", "Custom exceptions", "JSON and CSV file handling"] },
+      { title: "Unit 4, NumPy & Pandas", topics: ["NumPy arrays: creation, indexing, slicing", "Array operations and broadcasting", "Pandas Series and DataFrame", "Data loading (CSV, Excel)", "Data cleaning, filtering, groupby, merge"] },
+      { title: "Unit 5, Data Visualization & Introduction to ML", topics: ["Matplotlib: line, bar, scatter, histogram plots", "Seaborn for statistical plots", "Scikit-learn: train-test split", "Linear regression, logistic regression", "Evaluation metrics: accuracy, confusion matrix"] },
     ],
   },
   "Maths": {
     branch: "CSE",
     units: [
-      { title: "Unit 1 — Logic & Sets", topics: ["Propositional logic, truth tables", "Predicate logic, quantifiers", "Set theory: operations, power set, Cartesian product", "Functions: injective, surjective, bijective", "Relations: equivalence, partial order, Hasse diagram"] },
-      { title: "Unit 2 — Graph Theory", topics: ["Graph types: simple, directed, weighted", "Euler and Hamiltonian paths/circuits", "Trees and spanning trees", "Planar graphs, graph coloring", "Chromatic number"] },
-      { title: "Unit 3 — Combinatorics", topics: ["Counting: permutations, combinations", "Pigeonhole principle", "Inclusion-exclusion principle", "Recurrence relations", "Generating functions"] },
-      { title: "Unit 4 — Linear Algebra", topics: ["Matrices: operations, rank, determinant", "Systems of linear equations (Gaussian elimination)", "Eigenvalues and eigenvectors", "Cayley-Hamilton theorem", "Linear transformations"] },
-      { title: "Unit 5 — Probability & Statistics", topics: ["Probability: axioms, conditional, Bayes", "Discrete distributions: Binomial, Poisson", "Continuous distributions: Normal, Exponential", "Mean, variance, standard deviation", "Hypothesis testing overview"] },
+      { title: "Unit 1, Logic & Sets", topics: ["Propositional logic, truth tables", "Predicate logic, quantifiers", "Set theory: operations, power set, Cartesian product", "Functions: injective, surjective, bijective", "Relations: equivalence, partial order, Hasse diagram"] },
+      { title: "Unit 2, Graph Theory", topics: ["Graph types: simple, directed, weighted", "Euler and Hamiltonian paths/circuits", "Trees and spanning trees", "Planar graphs, graph coloring", "Chromatic number"] },
+      { title: "Unit 3, Combinatorics", topics: ["Counting: permutations, combinations", "Pigeonhole principle", "Inclusion-exclusion principle", "Recurrence relations", "Generating functions"] },
+      { title: "Unit 4, Linear Algebra", topics: ["Matrices: operations, rank, determinant", "Systems of linear equations (Gaussian elimination)", "Eigenvalues and eigenvectors", "Cayley-Hamilton theorem", "Linear transformations"] },
+      { title: "Unit 5, Probability & Statistics", topics: ["Probability: axioms, conditional, Bayes", "Discrete distributions: Binomial, Poisson", "Continuous distributions: Normal, Exponential", "Mean, variance, standard deviation", "Hypothesis testing overview"] },
     ],
   },
-  // ——— Civil ———
+  // ---- Civil ----
   "SOM": {
     branch: "Civil",
     units: [
-      { title: "Unit 1 — Stress & Strain", topics: ["Normal and shear stress", "Hooke's law, elastic constants (E, G, ν, K)", "Relationship between elastic constants", "Thermal stresses", "Composite bars and tapering bars"] },
-      { title: "Unit 2 — Shear Force & Bending Moment", topics: ["Types of beams and loads", "SFD and BMD for cantilever, simply supported, overhanging beams", "Relation between load, SF, and BM", "Point of contraflexure"] },
-      { title: "Unit 3 — Bending & Shear Stresses", topics: ["Theory of simple bending", "Bending stress: σ = My/I", "Section modulus, moment of inertia of standard sections", "Shear stress distribution in beams", "Composite beams (flitched beams)"] },
-      { title: "Unit 4 — Deflection of Beams & Columns", topics: ["Differential equation of elastic curve", "Macaulay's method", "Moment-area method", "Columns: short vs long", "Euler's buckling load, effective length, slenderness ratio"] },
-      { title: "Unit 5 — Torsion & Pressure Vessels", topics: ["Torsion of circular shafts: τ = Tr/J", "Power transmitted by shaft", "Thin cylinders: hoop and longitudinal stress", "Thick cylinders (Lamé's equations)", "Principal stresses and Mohr's circle"] },
+      { title: "Unit 1, Stress & Strain", topics: ["Normal and shear stress", "Hooke's law, elastic constants (E, G, ν, K)", "Relationship between elastic constants", "Thermal stresses", "Composite bars and tapering bars"] },
+      { title: "Unit 2, Shear Force & Bending Moment", topics: ["Types of beams and loads", "SFD and BMD for cantilever, simply supported, overhanging beams", "Relation between load, SF, and BM", "Point of contraflexure"] },
+      { title: "Unit 3, Bending & Shear Stresses", topics: ["Theory of simple bending", "Bending stress: σ = My/I", "Section modulus, moment of inertia of standard sections", "Shear stress distribution in beams", "Composite beams (flitched beams)"] },
+      { title: "Unit 4, Deflection of Beams & Columns", topics: ["Differential equation of elastic curve", "Macaulay's method", "Moment-area method", "Columns: short vs long", "Euler's buckling load, effective length, slenderness ratio"] },
+      { title: "Unit 5, Torsion & Pressure Vessels", topics: ["Torsion of circular shafts: τ = Tr/J", "Power transmitted by shaft", "Thin cylinders: hoop and longitudinal stress", "Thick cylinders (Lamé's equations)", "Principal stresses and Mohr's circle"] },
     ],
   },
   "FM": {
     branch: "Civil",
     units: [
-      { title: "Unit 1 — Fluid Properties & Statics", topics: ["Density, viscosity, surface tension, capillarity", "Hydrostatic law", "Pressure measurement: manometers, gauges", "Force on submerged plane surfaces", "Buoyancy and metacentric height"] },
-      { title: "Unit 2 — Fluid Kinematics", topics: ["Types of flow: steady/unsteady, laminar/turbulent", "Streamlines, pathlines, streaklines", "Continuity equation (1D, 3D)", "Velocity potential and stream function", "Rotational vs irrotational flow"] },
-      { title: "Unit 3 — Fluid Dynamics", topics: ["Bernoulli's equation and applications", "Venturimeter, orifice, pitot tube", "Momentum equation", "Flow through pipes: Darcy-Weisbach equation", "Losses: major (friction) and minor (bends, valves)"] },
-      { title: "Unit 4 — Boundary Layer & Turbulence", topics: ["Boundary layer concept, displacement thickness", "Laminar and turbulent boundary layers", "Drag and lift on bodies", "Reynolds number, turbulence", "Flow separation"] },
-      { title: "Unit 5 — Open Channel & Hydraulic Machines", topics: ["Open channel flow: Manning's equation", "Specific energy, critical flow, Froude number", "Hydraulic jump", "Centrifugal pumps: characteristics, cavitation", "Francis and Kaplan turbines"] },
+      { title: "Unit 1, Fluid Properties & Statics", topics: ["Density, viscosity, surface tension, capillarity", "Hydrostatic law", "Pressure measurement: manometers, gauges", "Force on submerged plane surfaces", "Buoyancy and metacentric height"] },
+      { title: "Unit 2, Fluid Kinematics", topics: ["Types of flow: steady/unsteady, laminar/turbulent", "Streamlines, pathlines, streaklines", "Continuity equation (1D, 3D)", "Velocity potential and stream function", "Rotational vs irrotational flow"] },
+      { title: "Unit 3, Fluid Dynamics", topics: ["Bernoulli's equation and applications", "Venturimeter, orifice, pitot tube", "Momentum equation", "Flow through pipes: Darcy-Weisbach equation", "Losses: major (friction) and minor (bends, valves)"] },
+      { title: "Unit 4, Boundary Layer & Turbulence", topics: ["Boundary layer concept, displacement thickness", "Laminar and turbulent boundary layers", "Drag and lift on bodies", "Reynolds number, turbulence", "Flow separation"] },
+      { title: "Unit 5, Open Channel & Hydraulic Machines", topics: ["Open channel flow: Manning's equation", "Specific energy, critical flow, Froude number", "Hydraulic jump", "Centrifugal pumps: characteristics, cavitation", "Francis and Kaplan turbines"] },
     ],
   },
   "Struct": {
     branch: "Civil",
     units: [
-      { title: "Unit 1 — Statically Determinate Structures", topics: ["Beams: SFD, BMD", "Plane trusses: method of joints, sections", "Influence lines for beams", "Arches: three-hinged arch", "Cable structures"] },
-      { title: "Unit 2 — Energy Methods", topics: ["Castigliano's theorems", "Unit load method (virtual work)", "Deflection of trusses and beams", "Maxwell-Betti reciprocal theorem"] },
-      { title: "Unit 3 — Force and Displacement Methods", topics: ["Degree of indeterminacy", "Compatibility method (three-moment equation)", "Slope deflection method", "Moment distribution method (Hardy Cross)"] },
-      { title: "Unit 4 — Stiffness Matrix Method", topics: ["Stiffness matrix formulation", "Global vs local coordinates", "Member stiffness matrix", "Assembly and solution for beams and frames", "Introduction to finite element method"] },
-      { title: "Unit 5 — Dynamic Analysis & Plastic Analysis", topics: ["Free vibration of structures", "Natural frequency, mode shapes", "Plastic hinges, plastic moment", "Collapse mechanisms for beams and frames", "Load factor and shape factor"] },
+      { title: "Unit 1, Statically Determinate Structures", topics: ["Beams: SFD, BMD", "Plane trusses: method of joints, sections", "Influence lines for beams", "Arches: three-hinged arch", "Cable structures"] },
+      { title: "Unit 2, Energy Methods", topics: ["Castigliano's theorems", "Unit load method (virtual work)", "Deflection of trusses and beams", "Maxwell-Betti reciprocal theorem"] },
+      { title: "Unit 3, Force and Displacement Methods", topics: ["Degree of indeterminacy", "Compatibility method (three-moment equation)", "Slope deflection method", "Moment distribution method (Hardy Cross)"] },
+      { title: "Unit 4, Stiffness Matrix Method", topics: ["Stiffness matrix formulation", "Global vs local coordinates", "Member stiffness matrix", "Assembly and solution for beams and frames", "Introduction to finite element method"] },
+      { title: "Unit 5, Dynamic Analysis & Plastic Analysis", topics: ["Free vibration of structures", "Natural frequency, mode shapes", "Plastic hinges, plastic moment", "Collapse mechanisms for beams and frames", "Load factor and shape factor"] },
     ],
   },
-  // ——— Mech ———
+  // ---- Mech ----
   "Thermo": {
     branch: "Mech",
     units: [
-      { title: "Unit 1 — Basic Concepts", topics: ["Thermodynamic system, boundary, surroundings", "Properties: intensive vs extensive", "State, process, cycle", "Zeroth law and temperature", "Pure substance and phase diagrams (P-v-T surface)"] },
-      { title: "Unit 2 — First Law of Thermodynamics", topics: ["Heat and work (sign conventions)", "First law for closed and open systems", "Enthalpy, specific heats Cp and Cv", "Steady-flow energy equation (SFEE)", "Throttling and nozzle flow"] },
-      { title: "Unit 3 — Second Law & Entropy", topics: ["Kelvin-Planck and Clausius statements", "Carnot cycle and efficiency", "Clausius inequality", "Entropy: definition, T-s diagram", "Entropy generation and irreversibility"] },
-      { title: "Unit 4 — Gas Power Cycles", topics: ["Air standard analysis", "Otto cycle (petrol engine)", "Diesel cycle", "Brayton cycle (gas turbine)", "Comparison of cycles, compressor work"] },
-      { title: "Unit 5 — Vapour Cycles & Refrigeration", topics: ["Rankine cycle (steam power plant)", "Reheat and regenerative Rankine cycle", "Vapour compression refrigeration", "COP, refrigerants", "Psychrometrics: DBT, WBT, humidity, AHU"] },
+      { title: "Unit 1, Basic Concepts", topics: ["Thermodynamic system, boundary, surroundings", "Properties: intensive vs extensive", "State, process, cycle", "Zeroth law and temperature", "Pure substance and phase diagrams (P-v-T surface)"] },
+      { title: "Unit 2, First Law of Thermodynamics", topics: ["Heat and work (sign conventions)", "First law for closed and open systems", "Enthalpy, specific heats Cp and Cv", "Steady-flow energy equation (SFEE)", "Throttling and nozzle flow"] },
+      { title: "Unit 3, Second Law & Entropy", topics: ["Kelvin-Planck and Clausius statements", "Carnot cycle and efficiency", "Clausius inequality", "Entropy: definition, T-s diagram", "Entropy generation and irreversibility"] },
+      { title: "Unit 4, Gas Power Cycles", topics: ["Air standard analysis", "Otto cycle (petrol engine)", "Diesel cycle", "Brayton cycle (gas turbine)", "Comparison of cycles, compressor work"] },
+      { title: "Unit 5, Vapour Cycles & Refrigeration", topics: ["Rankine cycle (steam power plant)", "Reheat and regenerative Rankine cycle", "Vapour compression refrigeration", "COP, refrigerants", "Psychrometrics: DBT, WBT, humidity, AHU"] },
     ],
   },
   "FM-M": {
     branch: "Mech",
     units: [
-      { title: "Unit 1 — Fluid Properties & Statics", topics: ["Viscosity, surface tension, capillarity", "Hydrostatic forces on surfaces", "Buoyancy, metacentric height", "Pressure measurement"] },
-      { title: "Unit 2 — Fluid Kinematics & Dynamics", topics: ["Continuity equation", "Bernoulli's equation", "Flow measurement: venturimeter, orifice", "Momentum equation applications"] },
-      { title: "Unit 3 — Viscous Flow & Boundary Layer", topics: ["Laminar flow in pipes (Hagen-Poiseuille)", "Turbulent flow, friction factor (Moody chart)", "Boundary layer development", "Drag and lift"] },
-      { title: "Unit 4 — Turbomachinery — Pumps", topics: ["Centrifugal pump: components, velocity triangles", "Head, efficiency, power", "Cavitation and NPSH", "Pump characteristics and selection", "Reciprocating pumps"] },
-      { title: "Unit 5 — Turbomachinery — Turbines", topics: ["Impulse vs reaction turbines", "Pelton wheel", "Francis turbine", "Kaplan turbine", "Performance characteristics and specific speed"] },
+      { title: "Unit 1, Fluid Properties & Statics", topics: ["Viscosity, surface tension, capillarity", "Hydrostatic forces on surfaces", "Buoyancy, metacentric height", "Pressure measurement"] },
+      { title: "Unit 2, Fluid Kinematics & Dynamics", topics: ["Continuity equation", "Bernoulli's equation", "Flow measurement: venturimeter, orifice", "Momentum equation applications"] },
+      { title: "Unit 3, Viscous Flow & Boundary Layer", topics: ["Laminar flow in pipes (Hagen-Poiseuille)", "Turbulent flow, friction factor (Moody chart)", "Boundary layer development", "Drag and lift"] },
+      { title: "Unit 4, Turbomachinery, Pumps", topics: ["Centrifugal pump: components, velocity triangles", "Head, efficiency, power", "Cavitation and NPSH", "Pump characteristics and selection", "Reciprocating pumps"] },
+      { title: "Unit 5, Turbomachinery, Turbines", topics: ["Impulse vs reaction turbines", "Pelton wheel", "Francis turbine", "Kaplan turbine", "Performance characteristics and specific speed"] },
     ],
   },
   "MD": {
     branch: "Mech",
     units: [
-      { title: "Unit 1 — Design Philosophy & Stresses", topics: ["Factor of safety, design for static loads", "Principal stresses, Mohr's circle", "Theories of failure (Von Mises, Tresca, Rankine)", "Stress concentration factors"] },
-      { title: "Unit 2 — Fatigue & Impact", topics: ["S-N curve, endurance limit (Goodman, Soderberg)", "Stress concentration under fatigue", "Impact loading, Charpy and Izod tests", "Cumulative fatigue damage"] },
-      { title: "Unit 3 — Shafts, Keys & Couplings", topics: ["Shaft design for torsion and bending", "ASME code for shafts", "Keys: parallel, Woodruff", "Couplings: rigid, flexible, universal joints"] },
-      { title: "Unit 4 — Bearings & Lubrication", topics: ["Sliding contact (journal) bearings", "Hydrodynamic lubrication theory", "Rolling contact bearings: designation, load capacity, life (L10)", "Bearing selection from catalogue"] },
-      { title: "Unit 5 — Gears & Springs", topics: ["Spur gear design: Lewis equation, surface fatigue", "Helical, bevel, worm gear overview", "Spring types: helical, leaf, torsion", "Close-coiled helical spring design", "Spring combinations: series and parallel"] },
+      { title: "Unit 1, Design Philosophy & Stresses", topics: ["Factor of safety, design for static loads", "Principal stresses, Mohr's circle", "Theories of failure (Von Mises, Tresca, Rankine)", "Stress concentration factors"] },
+      { title: "Unit 2, Fatigue & Impact", topics: ["S-N curve, endurance limit (Goodman, Soderberg)", "Stress concentration under fatigue", "Impact loading, Charpy and Izod tests", "Cumulative fatigue damage"] },
+      { title: "Unit 3, Shafts, Keys & Couplings", topics: ["Shaft design for torsion and bending", "ASME code for shafts", "Keys: parallel, Woodruff", "Couplings: rigid, flexible, universal joints"] },
+      { title: "Unit 4, Bearings & Lubrication", topics: ["Sliding contact (journal) bearings", "Hydrodynamic lubrication theory", "Rolling contact bearings: designation, load capacity, life (L10)", "Bearing selection from catalogue"] },
+      { title: "Unit 5, Gears & Springs", topics: ["Spur gear design: Lewis equation, surface fatigue", "Helical, bevel, worm gear overview", "Spring types: helical, leaf, torsion", "Close-coiled helical spring design", "Spring combinations: series and parallel"] },
     ],
   },
-  // ——— EEE ———
+  // ---- EEE ----
   "Circuits": {
     branch: "EEE",
     units: [
-      { title: "Unit 1 — Circuit Analysis Techniques", topics: ["KVL, KCL for DC circuits", "Nodal analysis (Node voltage method)", "Mesh analysis (Loop current method)", "Source transformation", "Star-Delta (Y-Δ) transformation"] },
-      { title: "Unit 2 — Network Theorems", topics: ["Superposition theorem", "Thevenin's theorem", "Norton's theorem", "Maximum power transfer theorem", "Millman's theorem, Reciprocity theorem"] },
-      { title: "Unit 3 — AC Analysis & Phasors", topics: ["Sinusoidal steady state", "Phasors and impedance (R, L, C)", "Series and parallel AC circuits", "Power: real (W), reactive (VAR), apparent (VA)", "Power factor and correction"] },
-      { title: "Unit 4 — Resonance & Coupled Circuits", topics: ["Series RLC resonance: f₀, Q, bandwidth", "Parallel resonance", "Magnetically coupled circuits, mutual inductance", "Dot convention", "Ideal transformer equivalent circuit"] },
-      { title: "Unit 5 — Laplace & Network Functions", topics: ["Laplace transform for circuit analysis", "Initial and final value theorems", "Network functions: driving-point, transfer", "Poles, zeros, frequency response from network function", "Two-port network parameters (Z, Y, ABCD, h)"] },
+      { title: "Unit 1, Circuit Analysis Techniques", topics: ["KVL, KCL for DC circuits", "Nodal analysis (Node voltage method)", "Mesh analysis (Loop current method)", "Source transformation", "Star-Delta (Y-Δ) transformation"] },
+      { title: "Unit 2, Network Theorems", topics: ["Superposition theorem", "Thevenin's theorem", "Norton's theorem", "Maximum power transfer theorem", "Millman's theorem, Reciprocity theorem"] },
+      { title: "Unit 3, AC Analysis & Phasors", topics: ["Sinusoidal steady state", "Phasors and impedance (R, L, C)", "Series and parallel AC circuits", "Power: real (W), reactive (VAR), apparent (VA)", "Power factor and correction"] },
+      { title: "Unit 4, Resonance & Coupled Circuits", topics: ["Series RLC resonance: f₀, Q, bandwidth", "Parallel resonance", "Magnetically coupled circuits, mutual inductance", "Dot convention", "Ideal transformer equivalent circuit"] },
+      { title: "Unit 5, Laplace & Network Functions", topics: ["Laplace transform for circuit analysis", "Initial and final value theorems", "Network functions: driving-point, transfer", "Poles, zeros, frequency response from network function", "Two-port network parameters (Z, Y, ABCD, h)"] },
     ],
   },
   "EM": {
     branch: "EEE",
     units: [
-      { title: "Unit 1 — DC Generators", topics: ["Construction: armature, field, commutator, brushes", "EMF equation", "Types of DC generators (series, shunt, compound)", "Characteristics: OCC, external, internal", "Voltage build-up and critical resistance"] },
-      { title: "Unit 2 — DC Motors", topics: ["Back EMF, torque equation", "Types: series, shunt, compound motors", "Speed-torque characteristics", "Speed control methods: armature, field control", "Starting: 3-point and 4-point starters, losses, efficiency"] },
-      { title: "Unit 3 — Transformers", topics: ["Construction and working principle", "EMF equation: E = 4.44fNΦm", "Equivalent circuit, phasor diagram", "OC and SC tests, efficiency, voltage regulation", "Auto-transformer, 3-phase transformer connections"] },
-      { title: "Unit 4 — Induction Motors", topics: ["Construction: squirrel cage vs slip ring", "Rotating magnetic field, synchronous speed", "Slip, equivalent circuit", "Torque-slip characteristics", "Starting methods (DOL, star-delta, auto-transformer), speed control"] },
-      { title: "Unit 5 — Synchronous Machines", topics: ["Construction and working of alternator", "EMF equation, winding factors", "Armature reaction, voltage regulation (EMF, MMF, ZPF methods)", "Synchronous motor: V-curves, hunting", "Parallel operation of alternators"] },
+      { title: "Unit 1, DC Generators", topics: ["Construction: armature, field, commutator, brushes", "EMF equation", "Types of DC generators (series, shunt, compound)", "Characteristics: OCC, external, internal", "Voltage build-up and critical resistance"] },
+      { title: "Unit 2, DC Motors", topics: ["Back EMF, torque equation", "Types: series, shunt, compound motors", "Speed-torque characteristics", "Speed control methods: armature, field control", "Starting: 3-point and 4-point starters, losses, efficiency"] },
+      { title: "Unit 3, Transformers", topics: ["Construction and working principle", "EMF equation: E = 4.44fNΦm", "Equivalent circuit, phasor diagram", "OC and SC tests, efficiency, voltage regulation", "Auto-transformer, 3-phase transformer connections"] },
+      { title: "Unit 4, Induction Motors", topics: ["Construction: squirrel cage vs slip ring", "Rotating magnetic field, synchronous speed", "Slip, equivalent circuit", "Torque-slip characteristics", "Starting methods (DOL, star-delta, auto-transformer), speed control"] },
+      { title: "Unit 5, Synchronous Machines", topics: ["Construction and working of alternator", "EMF equation, winding factors", "Armature reaction, voltage regulation (EMF, MMF, ZPF methods)", "Synchronous motor: V-curves, hunting", "Parallel operation of alternators"] },
     ],
   },
   "PS": {
     branch: "EEE",
     units: [
-      { title: "Unit 1 — Power System Structure", topics: ["Generation: thermal, hydro, nuclear, renewable", "Transmission system: EHV lines", "Distribution system", "Per-unit system", "Power system components modelling"] },
-      { title: "Unit 2 — Transmission Line Parameters", topics: ["Resistance, inductance (GMD, GMR)", "Capacitance of lines", "Short, medium, long line models", "ABCD parameters", "Ferranti effect"] },
-      { title: "Unit 3 — Load Flow Analysis", topics: ["Bus classification (slack, PV, PQ)", "Gauss-Seidel load flow", "Newton-Raphson load flow", "Fast decoupled load flow", "Power flow equations"] },
-      { title: "Unit 4 — Fault Analysis", topics: ["Symmetrical (3-phase) fault analysis", "Symmetrical components (positive, negative, zero sequence)", "Unsymmetrical faults: SLG, LL, DLG", "Sequence networks", "Fault current calculations"] },
-      { title: "Unit 5 — Power System Stability", topics: ["Steady-state and transient stability", "Swing equation", "Equal area criterion", "Methods to improve stability", "Power system protection: relays, circuit breakers, fuses"] },
+      { title: "Unit 1, Power System Structure", topics: ["Generation: thermal, hydro, nuclear, renewable", "Transmission system: EHV lines", "Distribution system", "Per-unit system", "Power system components modelling"] },
+      { title: "Unit 2, Transmission Line Parameters", topics: ["Resistance, inductance (GMD, GMR)", "Capacitance of lines", "Short, medium, long line models", "ABCD parameters", "Ferranti effect"] },
+      { title: "Unit 3, Load Flow Analysis", topics: ["Bus classification (slack, PV, PQ)", "Gauss-Seidel load flow", "Newton-Raphson load flow", "Fast decoupled load flow", "Power flow equations"] },
+      { title: "Unit 4, Fault Analysis", topics: ["Symmetrical (3-phase) fault analysis", "Symmetrical components (positive, negative, zero sequence)", "Unsymmetrical faults: SLG, LL, DLG", "Sequence networks", "Fault current calculations"] },
+      { title: "Unit 5, Power System Stability", topics: ["Steady-state and transient stability", "Swing equation", "Equal area criterion", "Methods to improve stability", "Power system protection: relays, circuit breakers, fuses"] },
     ],
   },
   "PE": {
     branch: "EEE",
     units: [
-      { title: "Unit 1 — Power Semiconductor Devices", topics: ["Diode, SCR (thyristor) characteristics", "MOSFET and IGBT as switches", "Triggering and commutation of SCR", "Protection: snubber circuits, heat sinks"] },
-      { title: "Unit 2 — Rectifiers", topics: ["Half-wave and full-wave rectifiers", "Single-phase and 3-phase controlled rectifiers (R, RL, RLE loads)", "Dual converters", "Power factor and THD", "Freewheeling diode"] },
-      { title: "Unit 3 — DC-DC Converters (Choppers)", topics: ["Step-down (Buck) converter", "Step-up (Boost) converter", "Buck-Boost converter", "CCM and DCM operation", "Duty cycle control"] },
-      { title: "Unit 4 — Inverters", topics: ["Single-phase half-bridge and full-bridge inverters", "3-phase inverters (180° and 120° conduction)", "PWM techniques: sinusoidal PWM, SPWM", "Harmonic reduction", "Voltage source vs current source inverters"] },
-      { title: "Unit 5 — AC Voltage Controllers & Applications", topics: ["Single-phase and 3-phase AC controllers", "Cycloconverters", "Variable speed drives (VSD)", "UPS systems", "FACTS devices overview (SVC, STATCOM)"] },
+      { title: "Unit 1, Power Semiconductor Devices", topics: ["Diode, SCR (thyristor) characteristics", "MOSFET and IGBT as switches", "Triggering and commutation of SCR", "Protection: snubber circuits, heat sinks"] },
+      { title: "Unit 2, Rectifiers", topics: ["Half-wave and full-wave rectifiers", "Single-phase and 3-phase controlled rectifiers (R, RL, RLE loads)", "Dual converters", "Power factor and THD", "Freewheeling diode"] },
+      { title: "Unit 3, DC-DC Converters (Choppers)", topics: ["Step-down (Buck) converter", "Step-up (Boost) converter", "Buck-Boost converter", "CCM and DCM operation", "Duty cycle control"] },
+      { title: "Unit 4, Inverters", topics: ["Single-phase half-bridge and full-bridge inverters", "3-phase inverters (180° and 120° conduction)", "PWM techniques: sinusoidal PWM, SPWM", "Harmonic reduction", "Voltage source vs current source inverters"] },
+      { title: "Unit 5, AC Voltage Controllers & Applications", topics: ["Single-phase and 3-phase AC controllers", "Cycloconverters", "Variable speed drives (VSD)", "UPS systems", "FACTS devices overview (SVC, STATCOM)"] },
     ],
   },
   "Control": {
     branch: "EEE",
     units: [
-      { title: "Unit 1 — Mathematical Modelling", topics: ["Transfer function of electrical and mechanical systems", "Block diagram reduction", "Signal flow graphs, Mason's gain formula", "Analogies between electrical and mechanical systems"] },
-      { title: "Unit 2 — Time Response Analysis", topics: ["Standard test inputs", "First and second order system responses", "Time domain specifications: tr, tp, Mp, ts", "Steady-state error and error constants", "Effect of adding poles and zeros"] },
-      { title: "Unit 3 — Stability Analysis", topics: ["Characteristic equation, roots", "Routh-Hurwitz criterion and special cases", "Root locus: construction rules", "Root locus for gain and phase variations"] },
-      { title: "Unit 4 — Frequency Response", topics: ["Bode plots: magnitude and phase", "Gain margin, phase margin", "Polar plots, Nyquist criterion", "Closed-loop frequency response", "M and N circles, Nichols chart"] },
-      { title: "Unit 5 — Control System Design", topics: ["Lead, lag, lead-lag compensator design", "PID controller: tuning (Ziegler-Nichols)", "State variable analysis", "Controllability and observability (Kalman's tests)", "State feedback and pole placement"] },
+      { title: "Unit 1, Mathematical Modelling", topics: ["Transfer function of electrical and mechanical systems", "Block diagram reduction", "Signal flow graphs, Mason's gain formula", "Analogies between electrical and mechanical systems"] },
+      { title: "Unit 2, Time Response Analysis", topics: ["Standard test inputs", "First and second order system responses", "Time domain specifications: tr, tp, Mp, ts", "Steady-state error and error constants", "Effect of adding poles and zeros"] },
+      { title: "Unit 3, Stability Analysis", topics: ["Characteristic equation, roots", "Routh-Hurwitz criterion and special cases", "Root locus: construction rules", "Root locus for gain and phase variations"] },
+      { title: "Unit 4, Frequency Response", topics: ["Bode plots: magnitude and phase", "Gain margin, phase margin", "Polar plots, Nyquist criterion", "Closed-loop frequency response", "M and N circles, Nichols chart"] },
+      { title: "Unit 5, Control System Design", topics: ["Lead, lag, lead-lag compensator design", "PID controller: tuning (Ziegler-Nichols)", "State variable analysis", "Controllability and observability (Kalman's tests)", "State feedback and pole placement"] },
     ],
   },
 };
 
 // Generate auto resources for units without hardcoded res data
 function genUnitRes(subj, unit) {
-  const topicHint = unit.title.replace(/^Unit [IVX\d]+ — /, "");
+  const topicHint = unit.title.replace(/^Unit [IVX\d]+, /, "");
   const q = encodeURIComponent(subj + " " + topicHint);
   const nptelTerm = encodeURIComponent((window.DOUBT_DESK_CONFIG?.learn?.[subj] || subj) + " lecture");
   return {
@@ -5691,7 +5691,7 @@ const GATE_MCQ = {
       trick: "gm = IC/VT = 2.6 mA / 26 mV = 100 mA/V = 0.1 A/V. Shortcut: gm(mA/V) = IC(mA)/26." },
     { q: "In an ideal op-amp inverting amplifier, the voltage at the inverting input (V⁻) is?",
       opts: ["Vin","Vout","0 V (virtual ground)","Vcc/2"], ans: 2,
-      trick: "Virtual ground: V⁻ = V⁺ = 0 V (non-inverting input grounded). 'Virtual' because no physical connection to ground — just forced by negative feedback." },
+      trick: "Virtual ground: V⁻ = V⁺ = 0 V (non-inverting input grounded). 'Virtual' because no physical connection to ground, just forced by negative feedback." },
     { q: "MOSFET enters saturation region when?",
       opts: ["VGS > Vth only","VDS ≥ VGS − Vth","VDS < VGS − Vth","VGS = 0"], ans: 1,
       trick: "Three regions: Cut-off (VGS<Vth), Triode (VDS < VGS−Vth), Saturation (VDS ≥ VGS−Vth). Saturation → ID = (k/2)(VGS−Vth)² independent of VDS." },
@@ -5713,7 +5713,7 @@ const GATE_MCQ = {
   "CN": [
     { q: "Shannon's channel capacity theorem: C = ?",
       opts: ["B·log₂(SNR)","B·log₂(1+SNR)","B·SNR","log₂(1+SNR)"], ans: 1,
-      trick: "1+SNR not SNR alone — the '+1' accounts for the noise power itself. Units: C in bps, B in Hz. Double SNR → add B·1 bps (diminishing returns)." },
+      trick: "1+SNR not SNR alone, the '+1' accounts for the noise power itself. Units: C in bps, B in Hz. Double SNR → add B·1 bps (diminishing returns)." },
     { q: "To detect AND correct 1-bit error, minimum Hamming distance required is?",
       opts: ["1","2","3","4"], ans: 2,
       trick: "To detect d errors: dmin ≥ d+1. To correct d errors: dmin ≥ 2d+1. For 1-bit correction: dmin ≥ 3." },
@@ -5755,13 +5755,13 @@ const GATE_MCQ = {
   "OS": [
     { q: "Which of the following is NOT one of the 4 necessary conditions for deadlock?",
       opts: ["Mutual exclusion","Hold and wait","Preemption allowed","Circular wait"], ans: 2,
-      trick: "4 conditions: (1) Mutual exclusion (2) Hold & Wait (3) No preemption (4) Circular wait. 'Preemption allowed' actually PREVENTS deadlock — it's the opposite!" },
+      trick: "4 conditions: (1) Mutual exclusion (2) Hold & Wait (3) No preemption (4) Circular wait. 'Preemption allowed' actually PREVENTS deadlock, it's the opposite!" },
     { q: "CPU utilisation formula for n identical processes each spending fraction p in I/O?",
       opts: ["1−p","1−pⁿ","n(1−p)","1−n·p"], ans: 1,
       trick: "All n processes block simultaneously with probability pⁿ. So CPU utilisation = 1−pⁿ. More processes or less I/O wait → CPU stays busier." },
     { q: "Which page replacement algorithm has the lowest page fault rate but is unimplementable?",
       opts: ["FIFO","LRU","Optimal (OPT)","Clock"], ans: 2,
-      trick: "OPT replaces the page not used for the longest time in future — requires future knowledge. Used only as a benchmark. LRU ≈ OPT in practice." },
+      trick: "OPT replaces the page not used for the longest time in future, requires future knowledge. Used only as a benchmark. LRU ≈ OPT in practice." },
     { q: "In semaphore operations wait(S) and signal(S), what does wait(S) do?",
       opts: ["S++","S−−; block if S<0","S=0","Check if S>0 only"], ans: 1,
       trick: "wait(S): S−−; if S<0 → block. signal(S): S++; if S≤0 → wake one blocked process. Binary semaphore (0/1) = mutex lock." },
@@ -5778,7 +5778,7 @@ const GATE_MCQ = {
       trick: "INNER = only matching rows. LEFT = all left + matching right. RIGHT = all right + matching left. FULL OUTER = all rows from both, NULLs for missing matches." },
     { q: "In E-R model, a 'weak entity' is one that?",
       opts: ["Has no attributes","Cannot exist without a related strong entity","Has only one attribute","Is not connected to any other entity"], ans: 1,
-      trick: "Weak entity has no key of its own — identified by partial key + owner entity. Example: 'Order-item' depends on 'Order'. Shown with double rectangle in ER diagram." },
+      trick: "Weak entity has no key of its own, identified by partial key + owner entity. Example: 'Order-item' depends on 'Order'. Shown with double rectangle in ER diagram." },
   ],
   "Circuits": [
     { q: "Maximum power transfer to load RL occurs when RL equals?",
@@ -5811,7 +5811,7 @@ const GATE_MCQ = {
   "Thermo": [
     { q: "Carnot efficiency of an engine operating between 600K (hot) and 300K (cold)?",
       opts: ["25%","33%","50%","75%"], ans: 2,
-      trick: "η = 1 − TL/TH = 1 − 300/600 = 0.5 = 50%. Always use absolute Kelvin! η represents the theoretical maximum — no real engine can exceed this." },
+      trick: "η = 1 − TL/TH = 1 − 300/600 = 0.5 = 50%. Always use absolute Kelvin! η represents the theoretical maximum, no real engine can exceed this." },
     { q: "Which process occurs at constant temperature?",
       opts: ["Adiabatic","Isobaric","Isochoric","Isothermal"], ans: 3,
       trick: "Iso = same/constant. Thermal = temperature → Isothermal (T constant). Isobaric = pressure constant. Isochoric = volume constant. Adiabatic = no heat transfer (Q=0)." },
@@ -5888,7 +5888,7 @@ function renderResources() {
                         onclick: () => { syllabusUnit = uOpen ? null : ukey; render(); }
                       },
                         el("span", { class: "syl-unit-num" }, "U" + (ui + 1)),
-                        el("span", { class: "syl-unit-name" }, u.title.replace(/^Unit [IVX\d]+ — /, "")),
+                        el("span", { class: "syl-unit-name" }, u.title.replace(/^Unit [IVX\d]+, /, "")),
                         u.hours && el("span", { class: "syl-hours" }, u.hours),
                         el("span", { class: "syl-unit-arr" }, uOpen ? "▲" : "▼")
                       ),
@@ -5900,7 +5900,7 @@ function renderResources() {
                             el("div", { class: "unit-res-items" }, ...res.chapters.map(c =>
                               el("div", { class: "unit-res-item" },
                                 el("strong", { class: "unit-res-book" }, c.book),
-                                el("span", {}, " — " + c.ref)
+                                el("span", {}, ", " + c.ref)
                               )
                             ))
                           ),
@@ -6005,7 +6005,7 @@ function renderResources() {
     ];
   } else if (resourceTab === "pyq") {
     content = [
-      el("p", { class: "hint" }, "Find previous year questions for GATE and university exams — subject by subject."),
+      el("p", { class: "hint" }, "Find previous year questions for GATE and university exams, subject by subject."),
       el("div", { class: "learn" }, ...SUBJECTS.map(s => el("div", { class: "learn-card", ...colorAttrs(s, "doubts") },
         el("span", { class: "tag", ...colorAttrs(s, "doubts") }, s),
         el("strong", {}, learnTerm(s)),
@@ -6016,7 +6016,7 @@ function renderResources() {
     ];
   } else if (resourceTab === "placement") {
     content = [
-      el("p", { class: "hint" }, "Curated resources for campus placements — coding practice, core subjects and aptitude."),
+      el("p", { class: "hint" }, "Curated resources for campus placements, coding practice, core subjects and aptitude."),
       el("div", { class: "placement-grid" },
         ...PLACEMENT_RES.map(p => el("a", { class: "placement-card", href: p.url, target: "_blank", rel: "noopener noreferrer" },
           el("span", { class: "placement-icon" }, p.icon),
@@ -6042,7 +6042,7 @@ function renderResources() {
           ? "Cover ~" + perDay + " subject" + (perDay > 1 ? "s" : "") + " per day to finish in time"
           : "Focus on revision + solve PYQs today")
       );
-    }) : [el("p", { class: "hint" }, "No exam dates configured yet. Ask your teacher to add them in config.js — your personalised countdown and daily plan will appear here.")];
+    }) : [el("p", { class: "hint" }, "No exam dates configured yet. Ask your teacher to add them in config.js, your personalised countdown and daily plan will appear here.")];
 
     const tips = [
       ["🍅","Pomodoro","25 min study + 5 min break. After 4 rounds take 20 min. Keeps focus sharp."],
@@ -6100,7 +6100,7 @@ function renderExams() {
 }
 
 function renderGateResourceDetail(res) {
-  // 100% FREE course catalog — no subscription, no payment
+  // 100% FREE course catalog, no subscription, no payment
   const C = {
     "IIT Bombay": [
       { name:"Engineering Mathematics",   branch:"All",       icon:"📐", yt:"https://www.youtube.com/results?search_query=IIT+Bombay+Engineering+Mathematics+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=engineering+mathematics" },
@@ -6115,7 +6115,7 @@ function renderGateResourceDetail(res) {
     "IIT Delhi": [
       { name:"Engineering Mathematics",   branch:"All",       icon:"📐", yt:"https://www.youtube.com/results?search_query=IIT+Delhi+Engineering+Mathematics+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=engineering+mathematics" },
       { name:"Algorithms",                branch:"CSE",       icon:"🧮", yt:"https://www.youtube.com/results?search_query=IIT+Delhi+Algorithms+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=algorithms" },
-      { name:"Theory of Computation",     branch:"CSE",       icon:"🤖", yt:"https://www.youtube.com/results?search_query=IIT+Delhi+Theory+Computation+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=theory+of+computation" },
+      { name:"Theory of Computation",     branch:"CSE",       icon:"", yt:"https://www.youtube.com/results?search_query=IIT+Delhi+Theory+Computation+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=theory+of+computation" },
       { name:"Digital Electronics",       branch:"ECE",       icon:"⚡", yt:"https://www.youtube.com/results?search_query=IIT+Delhi+Digital+Electronics+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=digital+electronics" },
       { name:"Power Systems",             branch:"EEE",       icon:"🔌", yt:"https://www.youtube.com/results?search_query=IIT+Delhi+Power+Systems+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=power+systems" },
       { name:"Structural Analysis",       branch:"Civil",     icon:"🏗️", yt:"https://www.youtube.com/results?search_query=IIT+Delhi+Structural+Analysis+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=structural+analysis" },
@@ -6154,7 +6154,7 @@ function renderGateResourceDetail(res) {
       { name:"Fluid Mechanics",           branch:"Civil/Mech",icon:"🌊", yt:"https://www.youtube.com/results?search_query=IIT+Roorkee+Fluid+Mechanics+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=fluid+mechanics" },
     ],
     "IIT Hyderabad": [
-      { name:"Machine Learning",          branch:"CSE",       icon:"🤖", yt:"https://www.youtube.com/results?search_query=IIT+Hyderabad+Machine+Learning+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=machine+learning" },
+      { name:"Machine Learning",          branch:"CSE",       icon:"", yt:"https://www.youtube.com/results?search_query=IIT+Hyderabad+Machine+Learning+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=machine+learning" },
       { name:"Operating Systems",         branch:"CSE",       icon:"💻", yt:"https://www.youtube.com/results?search_query=IIT+Hyderabad+Operating+Systems+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=operating+systems" },
       { name:"Digital Communications",    branch:"ECE",       icon:"📡", yt:"https://www.youtube.com/results?search_query=IIT+Hyderabad+Digital+Communications+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=digital+communications" },
       { name:"VLSI Design",               branch:"ECE",       icon:"🔬", yt:"https://www.youtube.com/results?search_query=IIT+Hyderabad+VLSI+NPTEL", pdf:"https://nptel.ac.in/courses?search=VLSI+design" },
@@ -6182,12 +6182,12 @@ function renderGateResourceDetail(res) {
       { name:"Probability & Statistics",  branch:"All",       icon:"📊", yt:"https://www.youtube.com/results?search_query=IISc+Probability+Statistics+NPTEL", pdf:"https://nptel.ac.in/courses?searchQuery=probability+statistics" },
     ],
     "MIT OpenCourseWare": [
-      { name:"6.006 — Algorithms",        branch:"CSE",       icon:"🧮", yt:"https://www.youtube.com/results?search_query=MIT+6.006+Introduction+to+Algorithms", pdf:"https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-fall-2011/" },
-      { name:"6.002 — Circuits",          branch:"ECE/EEE",   icon:"🔌", yt:"https://www.youtube.com/results?search_query=MIT+6.002+Circuits+Electronics", pdf:"https://ocw.mit.edu/courses/6-002-circuits-and-electronics-spring-2007/" },
-      { name:"6.003 — Signals & Systems", branch:"ECE",       icon:"📡", yt:"https://www.youtube.com/results?search_query=MIT+6.003+Signals+Systems", pdf:"https://ocw.mit.edu/courses/6-003-signals-and-systems-fall-2011/" },
-      { name:"18.06 — Linear Algebra",    branch:"All",       icon:"📐", yt:"https://www.youtube.com/results?search_query=MIT+18.06+Linear+Algebra+Gilbert+Strang", pdf:"https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/" },
-      { name:"1.050 — Solid Mechanics",   branch:"Civil/Mech",icon:"🔩", yt:"https://www.youtube.com/results?search_query=MIT+Solid+Mechanics+1.050", pdf:"https://ocw.mit.edu/courses/1-050-solid-mechanics-fall-2004/" },
-      { name:"2.005 — Thermodynamics",    branch:"Mech",      icon:"🌡️", yt:"https://www.youtube.com/results?search_query=MIT+Thermodynamics+2.005", pdf:"https://ocw.mit.edu/courses/2-005-thermal-fluids-engineering-i-fall-2003/" },
+      { name:"6.006, Algorithms",        branch:"CSE",       icon:"🧮", yt:"https://www.youtube.com/results?search_query=MIT+6.006+Introduction+to+Algorithms", pdf:"https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-fall-2011/" },
+      { name:"6.002, Circuits",          branch:"ECE/EEE",   icon:"🔌", yt:"https://www.youtube.com/results?search_query=MIT+6.002+Circuits+Electronics", pdf:"https://ocw.mit.edu/courses/6-002-circuits-and-electronics-spring-2007/" },
+      { name:"6.003, Signals & Systems", branch:"ECE",       icon:"📡", yt:"https://www.youtube.com/results?search_query=MIT+6.003+Signals+Systems", pdf:"https://ocw.mit.edu/courses/6-003-signals-and-systems-fall-2011/" },
+      { name:"18.06, Linear Algebra",    branch:"All",       icon:"📐", yt:"https://www.youtube.com/results?search_query=MIT+18.06+Linear+Algebra+Gilbert+Strang", pdf:"https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/" },
+      { name:"1.050, Solid Mechanics",   branch:"Civil/Mech",icon:"🔩", yt:"https://www.youtube.com/results?search_query=MIT+Solid+Mechanics+1.050", pdf:"https://ocw.mit.edu/courses/1-050-solid-mechanics-fall-2004/" },
+      { name:"2.005, Thermodynamics",    branch:"Mech",      icon:"🌡️", yt:"https://www.youtube.com/results?search_query=MIT+Thermodynamics+2.005", pdf:"https://ocw.mit.edu/courses/2-005-thermal-fluids-engineering-i-fall-2003/" },
     ],
     "MIT YouTube": [
       { name:"Linear Algebra (Gilbert Strang)",branch:"All",  icon:"📐", yt:"https://www.youtube.com/playlist?list=PLE7DDD91010BC51F8", pdf:"https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/" },
@@ -6198,35 +6198,35 @@ function renderGateResourceDetail(res) {
     ],
     "Stanford Online": [
       { name:"Algorithms (Roughgarden)",   branch:"CSE",      icon:"🧮", yt:"https://www.youtube.com/results?search_query=Stanford+Tim+Roughgarden+Algorithms", pdf:"https://online.stanford.edu/courses/soe-ycsalgorithms1-algorithms-design-and-analysis-part-1" },
-      { name:"Machine Learning (Ng)",      branch:"CSE",      icon:"🤖", yt:"https://www.youtube.com/results?search_query=Andrew+Ng+Machine+Learning+Stanford+CS229", pdf:"https://cs229.stanford.edu/materials.html" },
-      { name:"CS101 — Intro to CS",        branch:"CSE",      icon:"💻", yt:"https://www.youtube.com/results?search_query=Stanford+CS101+Introduction+Computer+Science", pdf:"https://online.stanford.edu/free-courses" },
+      { name:"Machine Learning (Ng)",      branch:"CSE",      icon:"", yt:"https://www.youtube.com/results?search_query=Andrew+Ng+Machine+Learning+Stanford+CS229", pdf:"https://cs229.stanford.edu/materials.html" },
+      { name:"CS101, Intro to CS",        branch:"CSE",      icon:"💻", yt:"https://www.youtube.com/results?search_query=Stanford+CS101+Introduction+Computer+Science", pdf:"https://online.stanford.edu/free-courses" },
       { name:"Compilers (Aiken)",          branch:"CSE",      icon:"⚙️", yt:"https://www.youtube.com/results?search_query=Stanford+CS143+Compilers+Alex+Aiken", pdf:"https://web.stanford.edu/class/cs143/" },
     ],
     "Coursera (Audit)": [
-      { name:"Algorithms (Stanford) — FREE",branch:"CSE",     icon:"🧮", yt:"https://www.youtube.com/results?search_query=Stanford+Algorithms+Specialization+Tim+Roughgarden", pdf:"https://www.coursera.org/specializations/algorithms" },
-      { name:"Data Structures (UCSD) — FREE",branch:"CSE",    icon:"🌳", yt:"https://www.youtube.com/results?search_query=UCSD+Data+Structures+Coursera", pdf:"https://www.coursera.org/specializations/data-structures-algorithms" },
-      { name:"Digital Systems (UCSD) — FREE",branch:"ECE",    icon:"⚡", yt:"https://www.youtube.com/results?search_query=UCSD+digital+systems+Coursera", pdf:"https://www.coursera.org/learn/digital-systems" },
-      { name:"Linear Algebra (Imperial) — FREE",branch:"All", icon:"📐", yt:"https://www.youtube.com/results?search_query=Imperial+College+Linear+Algebra+Coursera", pdf:"https://www.coursera.org/specializations/mathematics-machine-learning" },
+      { name:"Algorithms (Stanford), FREE",branch:"CSE",     icon:"🧮", yt:"https://www.youtube.com/results?search_query=Stanford+Algorithms+Specialization+Tim+Roughgarden", pdf:"https://www.coursera.org/specializations/algorithms" },
+      { name:"Data Structures (UCSD), FREE",branch:"CSE",    icon:"🌳", yt:"https://www.youtube.com/results?search_query=UCSD+Data+Structures+Coursera", pdf:"https://www.coursera.org/specializations/data-structures-algorithms" },
+      { name:"Digital Systems (UCSD), FREE",branch:"ECE",    icon:"⚡", yt:"https://www.youtube.com/results?search_query=UCSD+digital+systems+Coursera", pdf:"https://www.coursera.org/learn/digital-systems" },
+      { name:"Linear Algebra (Imperial), FREE",branch:"All", icon:"📐", yt:"https://www.youtube.com/results?search_query=Imperial+College+Linear+Algebra+Coursera", pdf:"https://www.coursera.org/specializations/mathematics-machine-learning" },
     ],
     "edX Free Courses": [
-      { name:"CS50 — Harvard Intro CS (FREE)",branch:"CSE",   icon:"💻", yt:"https://www.youtube.com/results?search_query=CS50+Harvard+Introduction+Computer+Science+2023", pdf:"https://cs50.harvard.edu/x/" },
-      { name:"Circuits & Electronics (MIT) — FREE",branch:"ECE",icon:"🔌",yt:"https://www.youtube.com/results?search_query=MIT+6.002+circuits+electronics+edX", pdf:"https://www.edx.org/course/circuits-and-electronics-1-basic-circuit-analysis" },
-      { name:"Engineering Maths (IITR) — FREE",branch:"All", icon:"📐", yt:"https://www.youtube.com/results?search_query=IIT+Roorkee+Engineering+Mathematics+SWAYAM", pdf:"https://www.edx.org/search?q=engineering+mathematics" },
-      { name:"Thermodynamics (UT Austin) — FREE",branch:"Mech",icon:"🌡️",yt:"https://www.youtube.com/results?search_query=UT+Austin+Thermodynamics+edX", pdf:"https://www.edx.org/search?q=thermodynamics" },
+      { name:"CS50, Harvard Intro CS (FREE)",branch:"CSE",   icon:"💻", yt:"https://www.youtube.com/results?search_query=CS50+Harvard+Introduction+Computer+Science+2023", pdf:"https://cs50.harvard.edu/x/" },
+      { name:"Circuits & Electronics (MIT), FREE",branch:"ECE",icon:"🔌",yt:"https://www.youtube.com/results?search_query=MIT+6.002+circuits+electronics+edX", pdf:"https://www.edx.org/course/circuits-and-electronics-1-basic-circuit-analysis" },
+      { name:"Engineering Maths (IITR), FREE",branch:"All", icon:"📐", yt:"https://www.youtube.com/results?search_query=IIT+Roorkee+Engineering+Mathematics+SWAYAM", pdf:"https://www.edx.org/search?q=engineering+mathematics" },
+      { name:"Thermodynamics (UT Austin), FREE",branch:"Mech",icon:"🌡️",yt:"https://www.youtube.com/results?search_query=UT+Austin+Thermodynamics+edX", pdf:"https://www.edx.org/search?q=thermodynamics" },
     ],
     "Khan Academy": [
       { name:"Linear Algebra",             branch:"All",      icon:"📐", yt:"https://www.youtube.com/@khanacademy/search?query=linear+algebra", pdf:"https://www.khanacademy.org/math/linear-algebra" },
       { name:"Calculus 1, 2 & 3",          branch:"All",      icon:"∫",  yt:"https://www.youtube.com/@khanacademy/search?query=calculus", pdf:"https://www.khanacademy.org/math/calculus-1" },
       { name:"Differential Equations",     branch:"All",      icon:"📊", yt:"https://www.youtube.com/@khanacademy/search?query=differential+equations", pdf:"https://www.khanacademy.org/math/differential-equations" },
       { name:"Electric Circuits",          branch:"ECE/EEE",  icon:"🔌", yt:"https://www.youtube.com/@khanacademy/search?query=electrical+engineering+circuits", pdf:"https://www.khanacademy.org/science/electrical-engineering" },
-      { name:"Physics — Mechanics",        branch:"All",      icon:"⚙️", yt:"https://www.youtube.com/@khanacademy/search?query=mechanics+physics", pdf:"https://www.khanacademy.org/science/physics" },
+      { name:"Physics, Mechanics",        branch:"All",      icon:"⚙️", yt:"https://www.youtube.com/@khanacademy/search?query=mechanics+physics", pdf:"https://www.khanacademy.org/science/physics" },
       { name:"Statistics & Probability",   branch:"All",      icon:"📊", yt:"https://www.youtube.com/@khanacademy/search?query=probability+statistics", pdf:"https://www.khanacademy.org/math/statistics-probability" },
     ],
     "Gate Smashers": [
       { name:"Operating Systems (Full)",   branch:"CSE",      icon:"💻", yt:"https://www.youtube.com/@GateSmashersFull/search?query=operating+systems", pdf:"https://nptel.ac.in/courses?searchQuery=operating+systems" },
       { name:"DBMS (Full)",                branch:"CSE",      icon:"🗄️", yt:"https://www.youtube.com/@GateSmashersFull/search?query=DBMS", pdf:"https://nptel.ac.in/courses?searchQuery=database+management" },
       { name:"Computer Networks (Full)",   branch:"CSE",      icon:"🌐", yt:"https://www.youtube.com/@GateSmashersFull/search?query=computer+networks", pdf:"https://nptel.ac.in/courses?searchQuery=computer+networks" },
-      { name:"Theory of Computation",      branch:"CSE",      icon:"🤖", yt:"https://www.youtube.com/@GateSmashersFull/search?query=theory+of+computation", pdf:"https://nptel.ac.in/courses?searchQuery=theory+of+computation" },
+      { name:"Theory of Computation",      branch:"CSE",      icon:"", yt:"https://www.youtube.com/@GateSmashersFull/search?query=theory+of+computation", pdf:"https://nptel.ac.in/courses?searchQuery=theory+of+computation" },
       { name:"Algorithms & Data Structures",branch:"CSE",     icon:"🌳", yt:"https://www.youtube.com/@GateSmashersFull/search?query=data+structures+algorithms", pdf:"https://nptel.ac.in/courses?searchQuery=data+structures+algorithms" },
       { name:"Computer Organisation (CO)", branch:"CSE",      icon:"🏛", yt:"https://www.youtube.com/@GateSmashersFull/search?query=computer+organisation", pdf:"https://nptel.ac.in/courses?searchQuery=computer+organisation" },
       { name:"Discrete Mathematics",       branch:"CSE",      icon:"🔢", yt:"https://www.youtube.com/@GateSmashersFull/search?query=discrete+mathematics", pdf:"https://nptel.ac.in/courses?searchQuery=discrete+mathematics" },
@@ -6249,10 +6249,10 @@ function renderGateResourceDetail(res) {
       { name:"Engineering Mathematics",    branch:"All",      icon:"📐", yt:"https://www.youtube.com/@nptel/search?query=engineering+mathematics", pdf:"https://nptel.ac.in/courses?searchQuery=engineering+mathematics" },
     ],
     "Knowledge Gate": [
-      { name:"DBMS — Full Course",          branch:"CSE",     icon:"🗄️", yt:"https://www.youtube.com/@KnowledgeGate9/search?query=DBMS", pdf:"https://nptel.ac.in/courses?searchQuery=database+management" },
-      { name:"Operating Systems — Full",    branch:"CSE",     icon:"💻", yt:"https://www.youtube.com/@KnowledgeGate9/search?query=operating+systems", pdf:"https://nptel.ac.in/courses?searchQuery=operating+systems" },
-      { name:"Computer Networks — Full",    branch:"CSE",     icon:"🌐", yt:"https://www.youtube.com/@KnowledgeGate9/search?query=computer+networks", pdf:"https://nptel.ac.in/courses?searchQuery=computer+networks" },
-      { name:"Theory of Computation",       branch:"CSE",     icon:"🤖", yt:"https://www.youtube.com/@KnowledgeGate9/search?query=theory+of+computation", pdf:"https://nptel.ac.in/courses?searchQuery=theory+of+computation" },
+      { name:"DBMS, Full Course",          branch:"CSE",     icon:"🗄️", yt:"https://www.youtube.com/@KnowledgeGate9/search?query=DBMS", pdf:"https://nptel.ac.in/courses?searchQuery=database+management" },
+      { name:"Operating Systems, Full",    branch:"CSE",     icon:"💻", yt:"https://www.youtube.com/@KnowledgeGate9/search?query=operating+systems", pdf:"https://nptel.ac.in/courses?searchQuery=operating+systems" },
+      { name:"Computer Networks, Full",    branch:"CSE",     icon:"🌐", yt:"https://www.youtube.com/@KnowledgeGate9/search?query=computer+networks", pdf:"https://nptel.ac.in/courses?searchQuery=computer+networks" },
+      { name:"Theory of Computation",       branch:"CSE",     icon:"", yt:"https://www.youtube.com/@KnowledgeGate9/search?query=theory+of+computation", pdf:"https://nptel.ac.in/courses?searchQuery=theory+of+computation" },
       { name:"Algorithms",                  branch:"CSE",     icon:"🧮", yt:"https://www.youtube.com/@KnowledgeGate9/search?query=algorithms", pdf:"https://nptel.ac.in/courses?searchQuery=algorithms" },
       { name:"Digital Electronics",         branch:"ECE/CSE", icon:"⚡", yt:"https://www.youtube.com/@KnowledgeGate9/search?query=digital+electronics", pdf:"https://nptel.ac.in/courses?searchQuery=digital+electronics" },
     ],
@@ -6280,16 +6280,16 @@ function renderGateResourceDetail(res) {
     ],
     "IIT Delhi Official": [
       { name:"Algorithms",                 branch:"CSE",      icon:"🧮", yt:"https://www.youtube.com/@IITDelhiOfficial/search?query=algorithms", pdf:"https://nptel.ac.in/courses?searchQuery=algorithms" },
-      { name:"Theory of Computation",      branch:"CSE",      icon:"🤖", yt:"https://www.youtube.com/@IITDelhiOfficial/search?query=theory+of+computation", pdf:"https://nptel.ac.in/courses?searchQuery=theory+of+computation" },
+      { name:"Theory of Computation",      branch:"CSE",      icon:"", yt:"https://www.youtube.com/@IITDelhiOfficial/search?query=theory+of+computation", pdf:"https://nptel.ac.in/courses?searchQuery=theory+of+computation" },
       { name:"Digital Systems",            branch:"ECE",      icon:"⚡", yt:"https://www.youtube.com/@IITDelhiOfficial/search?query=digital+systems", pdf:"https://nptel.ac.in/courses?searchQuery=digital+systems" },
       { name:"Mathematics",                branch:"All",      icon:"📐", yt:"https://www.youtube.com/@IITDelhiOfficial/search?query=mathematics", pdf:"https://nptel.ac.in/courses?searchQuery=engineering+mathematics" },
     ],
     "Unacademy GATE": [
-      { name:"GATE CSE — Free Lectures",   branch:"CSE",      icon:"💻", yt:"https://www.youtube.com/@UnacademyGATE/search?query=CSE", pdf:"https://nptel.ac.in/courses?disciplineId=106" },
-      { name:"GATE ECE — Free Lectures",   branch:"ECE",      icon:"📡", yt:"https://www.youtube.com/@UnacademyGATE/search?query=ECE", pdf:"https://nptel.ac.in/courses?disciplineId=117" },
-      { name:"GATE EEE — Free Lectures",   branch:"EEE",      icon:"⚡", yt:"https://www.youtube.com/@UnacademyGATE/search?query=EE", pdf:"https://nptel.ac.in/courses?disciplineId=108" },
-      { name:"GATE Civil — Free Lectures", branch:"Civil",    icon:"🏗️", yt:"https://www.youtube.com/@UnacademyGATE/search?query=civil", pdf:"https://nptel.ac.in/courses?disciplineId=105" },
-      { name:"GATE Mech — Free Lectures",  branch:"Mech",     icon:"⚙️", yt:"https://www.youtube.com/@UnacademyGATE/search?query=mechanical", pdf:"https://nptel.ac.in/courses?disciplineId=112" },
+      { name:"GATE CSE, Free Lectures",   branch:"CSE",      icon:"💻", yt:"https://www.youtube.com/@UnacademyGATE/search?query=CSE", pdf:"https://nptel.ac.in/courses?disciplineId=106" },
+      { name:"GATE ECE, Free Lectures",   branch:"ECE",      icon:"📡", yt:"https://www.youtube.com/@UnacademyGATE/search?query=ECE", pdf:"https://nptel.ac.in/courses?disciplineId=117" },
+      { name:"GATE EEE, Free Lectures",   branch:"EEE",      icon:"⚡", yt:"https://www.youtube.com/@UnacademyGATE/search?query=EE", pdf:"https://nptel.ac.in/courses?disciplineId=108" },
+      { name:"GATE Civil, Free Lectures", branch:"Civil",    icon:"🏗️", yt:"https://www.youtube.com/@UnacademyGATE/search?query=civil", pdf:"https://nptel.ac.in/courses?disciplineId=105" },
+      { name:"GATE Mech, Free Lectures",  branch:"Mech",     icon:"⚙️", yt:"https://www.youtube.com/@UnacademyGATE/search?query=mechanical", pdf:"https://nptel.ac.in/courses?disciplineId=112" },
     ],
     "MADE Easy": [
       { name:"GATE Topper Discussions",    branch:"All",      icon:"🏆", yt:"https://www.youtube.com/@madeeasygroupofficial/search?query=GATE+topper", pdf:"https://madeeasypublications.org" },
@@ -6297,17 +6297,17 @@ function renderGateResourceDetail(res) {
       { name:"Previous Year Solutions",    branch:"All",      icon:"📄", yt:"https://www.youtube.com/@madeeasygroupofficial/search?query=previous+year+questions", pdf:"https://madeeasypublications.org/gate-books.php" },
     ],
     "Ravindrababu Ravula": [
-      { name:"Theory of Computation",      branch:"CSE",      icon:"🤖", yt:"https://www.youtube.com/@ravindrababuravula/search?query=theory+of+computation", pdf:"https://nptel.ac.in/courses?searchQuery=theory+of+computation" },
+      { name:"Theory of Computation",      branch:"CSE",      icon:"", yt:"https://www.youtube.com/@ravindrababuravula/search?query=theory+of+computation", pdf:"https://nptel.ac.in/courses?searchQuery=theory+of+computation" },
       { name:"Operating Systems",          branch:"CSE",      icon:"💻", yt:"https://www.youtube.com/@ravindrababuravula/search?query=operating+systems", pdf:"https://nptel.ac.in/courses?searchQuery=operating+systems" },
       { name:"DBMS",                       branch:"CSE",      icon:"🗄️", yt:"https://www.youtube.com/@ravindrababuravula/search?query=DBMS", pdf:"https://nptel.ac.in/courses?searchQuery=database+management" },
       { name:"Computer Networks",          branch:"CSE",      icon:"🌐", yt:"https://www.youtube.com/@ravindrababuravula/search?query=computer+networks", pdf:"https://nptel.ac.in/courses?searchQuery=computer+networks" },
       { name:"Algorithms",                 branch:"CSE",      icon:"🧮", yt:"https://www.youtube.com/@ravindrababuravula/search?query=algorithms", pdf:"https://nptel.ac.in/courses?searchQuery=algorithms" },
     ],
     "5 Minutes Engineering": [
-      { name:"Quick Concepts — CSE",       branch:"CSE",      icon:"💻", yt:"https://www.youtube.com/@5MinutesEngineering/search?query=computer+science", pdf:"https://nptel.ac.in/courses?disciplineId=106" },
-      { name:"Quick Concepts — ECE",       branch:"ECE",      icon:"📡", yt:"https://www.youtube.com/@5MinutesEngineering/search?query=electronics", pdf:"https://nptel.ac.in/courses?disciplineId=117" },
-      { name:"Quick Concepts — Mech",      branch:"Mech",     icon:"⚙️", yt:"https://www.youtube.com/@5MinutesEngineering/search?query=mechanical", pdf:"https://nptel.ac.in/courses?disciplineId=112" },
-      { name:"Quick Concepts — Civil",     branch:"Civil",    icon:"🏗️", yt:"https://www.youtube.com/@5MinutesEngineering/search?query=civil", pdf:"https://nptel.ac.in/courses?disciplineId=105" },
+      { name:"Quick Concepts, CSE",       branch:"CSE",      icon:"💻", yt:"https://www.youtube.com/@5MinutesEngineering/search?query=computer+science", pdf:"https://nptel.ac.in/courses?disciplineId=106" },
+      { name:"Quick Concepts, ECE",       branch:"ECE",      icon:"📡", yt:"https://www.youtube.com/@5MinutesEngineering/search?query=electronics", pdf:"https://nptel.ac.in/courses?disciplineId=117" },
+      { name:"Quick Concepts, Mech",      branch:"Mech",     icon:"⚙️", yt:"https://www.youtube.com/@5MinutesEngineering/search?query=mechanical", pdf:"https://nptel.ac.in/courses?disciplineId=112" },
+      { name:"Quick Concepts, Civil",     branch:"Civil",    icon:"🏗️", yt:"https://www.youtube.com/@5MinutesEngineering/search?query=civil", pdf:"https://nptel.ac.in/courses?disciplineId=105" },
     ],
   };
 
@@ -6325,12 +6325,12 @@ function renderGateResourceDetail(res) {
           el("span", { class: "gate-res-det-emoji" }, res.emoji),
           el("div", {},
             el("div", { class: "gate-res-det-name" }, res.name),
-            el("div", { class: "gate-res-det-sub" }, res.sub || "Free content — no payment needed"),
+            el("div", { class: "gate-res-det-sub" }, res.sub || "Free content, no payment needed"),
           ),
         ),
         el("a", { class: "btn sm", href: res.url, target: "_blank", rel: "noopener noreferrer" }, btnLabel),
       ),
-      el("div", { class: "gate-free-badge" }, "✅ 100% FREE — No subscription, no payment, no login required"),
+      el("div", { class: "gate-free-badge" }, "✅ 100% FREE, No subscription, no payment, no login required"),
       courses.length > 0
         ? el("div", { class: "gate-course-list" },
             el("div", { class: "gate-course-hint" },
@@ -6366,43 +6366,43 @@ function renderGateResourceDetail(res) {
 function renderGateIntro() {
   const PYQ_YEARS = ["2025","2024","2023","2022","2021","2020","2019","2018","2017","2016"];
   const GATE_IITS = [
-    { name: "IIT Bombay", sub: "NPTEL courses — ECE, CS, Civil, Mech", emoji: "🏛", url: "https://nptel.ac.in/institutes/106101010" },
-    { name: "IIT Delhi", sub: "NPTEL courses — All engineering", emoji: "🏛", url: "https://nptel.ac.in/institutes/110101002" },
-    { name: "IIT Madras", sub: "NPTEL courses — ECE, CS, Mech", emoji: "🏛", url: "https://nptel.ac.in/institutes/106106047" },
+    { name: "IIT Bombay", sub: "NPTEL courses, ECE, CS, Civil, Mech", emoji: "🏛", url: "https://nptel.ac.in/institutes/106101010" },
+    { name: "IIT Delhi", sub: "NPTEL courses, All engineering", emoji: "🏛", url: "https://nptel.ac.in/institutes/110101002" },
+    { name: "IIT Madras", sub: "NPTEL courses, ECE, CS, Mech", emoji: "🏛", url: "https://nptel.ac.in/institutes/106106047" },
     { name: "IIT Kanpur", sub: "NPTEL + GATE papers archive", emoji: "🏛", url: "https://nptel.ac.in/institutes/101104025" },
-    { name: "IIT Kharagpur", sub: "NPTEL courses — Civil, EEE, ECE", emoji: "🏛", url: "https://nptel.ac.in/institutes/105105127" },
-    { name: "IIT Roorkee", sub: "NPTEL courses — Civil, ECE, CS", emoji: "🏛", url: "https://nptel.ac.in/institutes/107107145" },
-    { name: "IIT Hyderabad", sub: "NPTEL courses — CS, ECE, EEE", emoji: "🏛", url: "https://nptel.ac.in/institutes/102107086" },
-    { name: "NIT Warangal", sub: "NPTEL courses — All branches", emoji: "🏫", url: "https://nptel.ac.in/institutes/105109055" },
-    { name: "NIT Trichy", sub: "NPTEL courses — Civil, Mech, ECE", emoji: "🏫", url: "https://nptel.ac.in/institutes/106106085" },
-    { name: "IISc Bangalore", sub: "NPTEL — Advanced research courses", emoji: "🔬", url: "https://nptel.ac.in/institutes/106101003" },
+    { name: "IIT Kharagpur", sub: "NPTEL courses, Civil, EEE, ECE", emoji: "🏛", url: "https://nptel.ac.in/institutes/105105127" },
+    { name: "IIT Roorkee", sub: "NPTEL courses, Civil, ECE, CS", emoji: "🏛", url: "https://nptel.ac.in/institutes/107107145" },
+    { name: "IIT Hyderabad", sub: "NPTEL courses, CS, ECE, EEE", emoji: "🏛", url: "https://nptel.ac.in/institutes/102107086" },
+    { name: "NIT Warangal", sub: "NPTEL courses, All branches", emoji: "🏫", url: "https://nptel.ac.in/institutes/105109055" },
+    { name: "NIT Trichy", sub: "NPTEL courses, Civil, Mech, ECE", emoji: "🏫", url: "https://nptel.ac.in/institutes/106106085" },
+    { name: "IISc Bangalore", sub: "NPTEL, Advanced research courses", emoji: "🔬", url: "https://nptel.ac.in/institutes/106101003" },
   ];
   const GATE_WORLD = [
-    { name: "MIT OpenCourseWare", sub: "Free MIT courses — CS, EEE, Civil", emoji: "🇺🇸", url: "https://ocw.mit.edu" },
-    { name: "MIT YouTube", sub: "Full lecture videos — HD", emoji: "▶️", url: "https://www.youtube.com/@mitocw" },
-    { name: "Stanford Online", sub: "Free courses — CS, AI, Mech", emoji: "🏫", url: "https://online.stanford.edu/free-courses" },
-    { name: "Coursera (Audit)", sub: "Top university courses — free audit", emoji: "🌐", url: "https://www.coursera.org" },
-    { name: "edX Free Courses", sub: "MIT, Harvard, IIT — free audit", emoji: "📖", url: "https://www.edx.org/search?q=engineering" },
-    { name: "Khan Academy", sub: "Maths, Physics — concept building", emoji: "🧮", url: "https://www.khanacademy.org" },
+    { name: "MIT OpenCourseWare", sub: "Free MIT courses, CS, EEE, Civil", emoji: "🇺🇸", url: "https://ocw.mit.edu" },
+    { name: "MIT YouTube", sub: "Full lecture videos, HD", emoji: "▶️", url: "https://www.youtube.com/@mitocw" },
+    { name: "Stanford Online", sub: "Free courses, CS, AI, Mech", emoji: "🏫", url: "https://online.stanford.edu/free-courses" },
+    { name: "Coursera (Audit)", sub: "Top university courses, free audit", emoji: "🌐", url: "https://www.coursera.org" },
+    { name: "edX Free Courses", sub: "MIT, Harvard, IIT, free audit", emoji: "📖", url: "https://www.edx.org/search?q=engineering" },
+    { name: "Khan Academy", sub: "Maths, Physics, concept building", emoji: "🧮", url: "https://www.khanacademy.org" },
   ];
   const GATE_VIDEOS = [
-    { name: "Gate Smashers", sub: "CSE — Full GATE playlist HD", emoji: "💻", url: "https://www.youtube.com/@GateSmashersFull" },
-    { name: "Neso Academy", sub: "ECE & CSE — HD lectures", emoji: "📡", url: "https://www.youtube.com/@NesoAcademy" },
-    { name: "NPTEL Official", sub: "All branches — IIT faculty HD", emoji: "🎓", url: "https://www.youtube.com/@nptel" },
-    { name: "Knowledge Gate", sub: "CSE — Concepts + PYQs", emoji: "🧠", url: "https://www.youtube.com/@KnowledgeGate9" },
-    { name: "EE Academy", sub: "EEE / ECE — Circuit theory", emoji: "⚡", url: "https://www.youtube.com/@EEAcademy1" },
-    { name: "Civil Guruji", sub: "Civil — Full GATE HD", emoji: "🏗️", url: "https://www.youtube.com/@CivilGuruji" },
+    { name: "Gate Smashers", sub: "CSE, Full GATE playlist HD", emoji: "💻", url: "https://www.youtube.com/@GateSmashersFull" },
+    { name: "Neso Academy", sub: "ECE & CSE, HD lectures", emoji: "📡", url: "https://www.youtube.com/@NesoAcademy" },
+    { name: "NPTEL Official", sub: "All branches, IIT faculty HD", emoji: "🎓", url: "https://www.youtube.com/@nptel" },
+    { name: "Knowledge Gate", sub: "CSE, Concepts + PYQs", emoji: "🧠", url: "https://www.youtube.com/@KnowledgeGate9" },
+    { name: "EE Academy", sub: "EEE / ECE, Circuit theory", emoji: "⚡", url: "https://www.youtube.com/@EEAcademy1" },
+    { name: "Civil Guruji", sub: "Civil, Full GATE HD", emoji: "🏗️", url: "https://www.youtube.com/@CivilGuruji" },
     { name: "IIT Madras Online", sub: "IIT Madras official lectures", emoji: "🏛", url: "https://www.youtube.com/@iitmadrasonline" },
     { name: "IIT Delhi Official", sub: "IIT Delhi lecture series", emoji: "🏛", url: "https://www.youtube.com/@IITDelhiOfficial" },
     { name: "Unacademy GATE", sub: "Live + recorded free content", emoji: "🎯", url: "https://www.youtube.com/@UnacademyGATE" },
     { name: "MADE Easy", sub: "Toppers & expert discussions", emoji: "📘", url: "https://www.youtube.com/@madeeasygroupofficial" },
-    { name: "Ravindrababu Ravula", sub: "CSE — Theory of Computation, OS", emoji: "💡", url: "https://www.youtube.com/@ravindrababuravula" },
+    { name: "Ravindrababu Ravula", sub: "CSE, Theory of Computation, OS", emoji: "💡", url: "https://www.youtube.com/@ravindrababuravula" },
     { name: "5 Minutes Engineering", sub: "Quick concept videos all branches", emoji: "⏱", url: "https://www.youtube.com/@5MinutesEngineering" },
   ];
   const GATE_PAPERS = [
-    { name: "Official GATE Papers", sub: "All years — IIT Kanpur archive", emoji: "📄", url: "https://gate.iitk.ac.in/GATE_past_papers.html" },
+    { name: "Official GATE Papers", sub: "All years, IIT Kanpur archive", emoji: "📄", url: "https://gate.iitk.ac.in/GATE_past_papers.html" },
     { name: "NPTEL Notes (PDF)", sub: "Subject-wise free lecture notes", emoji: "📚", url: "https://nptel.ac.in/courses" },
-    { name: "SWAYAM Free Courses", sub: "Govt platform — IIT/NIT faculty", emoji: "🇮🇳", url: "https://swayam.gov.in" },
+    { name: "SWAYAM Free Courses", sub: "Govt platform, IIT/NIT faculty", emoji: "🇮🇳", url: "https://swayam.gov.in" },
     { name: "MADE Easy Books", sub: "Handbooks & workbooks", emoji: "📘", url: "https://madeeasypublications.org" },
     { name: "ACE Academy", sub: "Study material & test series", emoji: "📗", url: "https://aceenggacademy.com" },
     { name: "GATE Academy", sub: "Notes, books & video classes", emoji: "📙", url: "https://thegateacademy.com" },
@@ -6426,7 +6426,7 @@ function renderGateIntro() {
     state.group = "All";
     // also set dept-based subject filter if branch known
     if (y) {
-      // pre-filter by pyqYear via query trick — store in state
+      // pre-filter by pyqYear via query trick, store in state
       state.gateYearPick = y;
     } else {
       state.gateYearPick = null;
@@ -6487,8 +6487,8 @@ function renderGateIntro() {
 
       // Top IITs & NITs
       el("div", { class: "gate-section" },
-        el("div", { class: "gate-section-title" }, "🏛 Top IITs & NITs — Free Courses"),
-        el("div", { class: "gate-section-sub" }, "Tap any institute → see subjects → ▶ watch video in HD · 📄 download PDF — all 100% free"),
+        el("div", { class: "gate-section-title" }, "🏛 Top IITs & NITs, Free Courses"),
+        el("div", { class: "gate-section-sub" }, "Tap any institute → see subjects → ▶ watch video in HD · 📄 download PDF, all 100% free"),
         el("div", { class: "gate-res-grid gate-res-grid-2" },
           ...GATE_IITS.map(r =>
             el("button", { type: "button", class: "gate-res-chip", onclick: () => openRes(r) },
@@ -6506,7 +6506,7 @@ function renderGateIntro() {
       // World class universities
       el("div", { class: "gate-section" },
         el("div", { class: "gate-section-title" }, "🌍 World Class Universities"),
-        el("div", { class: "gate-section-sub" }, "MIT, Stanford, Khan Academy — tap to see free courses"),
+        el("div", { class: "gate-section-sub" }, "MIT, Stanford, Khan Academy, tap to see free courses"),
         el("div", { class: "gate-res-grid gate-res-grid-2" },
           ...GATE_WORLD.map(r =>
             el("button", { type: "button", class: "gate-res-chip", onclick: () => openRes(r) },
@@ -6524,7 +6524,7 @@ function renderGateIntro() {
       // Free video lectures
       el("div", { class: "gate-section" },
         el("div", { class: "gate-section-title" }, "🎥 Free YouTube Lectures (HD)"),
-        el("div", { class: "gate-section-sub" }, "Tap a channel → see subjects → ▶ opens YouTube — plays in HD immediately"),
+        el("div", { class: "gate-section-sub" }, "Tap a channel → see subjects → ▶ opens YouTube, plays in HD immediately"),
         el("div", { class: "gate-res-grid" },
           ...GATE_VIDEOS.map(r =>
             el("button", { type: "button", class: "gate-res-chip", onclick: () => openRes(r) },
@@ -6597,10 +6597,10 @@ function renderIntro() {
   ) : null;
 
   const steps = state.tab === "doubts"
-    ? "1. Ask — pick the subject and write the question. Add a photo of your notebook or write it on the notebook page.\n2. Answer — open any doubt and explain the steps. You can attach your handwritten working too.\n3. Resolve — the student who asked marks the answer that helped. Tap \u201cI have this doubt too\u201d on doubts you share."
+    ? "1. Ask, pick the subject and write the question. Add a photo of your notebook or write it on the notebook page.\n2. Answer, open any doubt and explain the steps. You can attach your handwritten working too.\n3. Resolve, the student who asked marks the answer that helped. Tap \u201cI have this doubt too\u201d on doubts you share."
     : state.tab === "market"
-    ? "1. List — post an item with price, condition and WhatsApp number.\n2. Browse — search by category or filter available items.\n3. Contact — buyer taps WhatsApp button to reach seller directly.\n4. Sold — mark your listing as Sold once done."
-    : "1. Share — post an idea for a project, startup or research. Sketch it on the notebook page if that helps.\n2. Like — tap ♥ on ideas you want to see happen.\n3. Build — reply with thoughts, improvements or an offer to join.";
+    ? "1. List, post an item with price, condition and WhatsApp number.\n2. Browse, search by category or filter available items.\n3. Contact, buyer taps WhatsApp button to reach seller directly.\n4. Sold, mark your listing as Sold once done."
+    : "1. Share, post an idea for a project, startup or research. Sketch it on the notebook page if that helps.\n2. Like, tap ♥ on ideas you want to see happen.\n3. Build, reply with thoughts, improvements or an offer to join.";
 
   // Keyboard shortcut hint (desktop)
   const kbHint = window.matchMedia("(pointer: fine)").matches
@@ -6762,7 +6762,7 @@ function renderChalQuiz(d) {
         }
         render();
       }
-    }, "🚀 Start Quiz")
+    }, "Start Quiz")
   );
 }
 
@@ -7121,6 +7121,12 @@ function renderView() {
     el("h2", {}, d.title),
     d.tags && el("div", { class: "post-tags" }, ...d.tags.split(",").map(tag => tag.trim()).filter(Boolean).map(tag => el("span", { class: "post-tag" }, "#" + tag))),
   ];
+  if (own && AUD_TABS.includes(state.tab)) {
+    const aud = d.aud === "pick" && Array.isArray(d.to) && d.to.length ? "Sent to " + d.to.map(campusLabel).join(", ") + " students. Everyone in " + COLLEGE + " can still find it."
+      : d.aud === "my" && d.campus ? "Shown first to " + campusLabel(d.campus) + " students. Everyone in " + COLLEGE + " can still find it."
+      : CAMPUSES.length ? "Visible to all campuses of " + COLLEGE + "." : "Visible to students of " + COLLEGE + ".";
+    out.push(el("p", { class: "aud-line" }, el("b", {}, "Who can see this: "), aud + (Array.isArray(d.sentTo) && d.sentTo.length ? " Also sent to " + d.sentTo.map(x => x.name).join(", ") + "." : "") + " Students of other colleges cannot see it unless you chose to send it to them."));
+  }
   if (state.tab === "jobs") {
     const dl = jobDaysLeft(d), link = safeHttp(d.applyUrl);
     out.push(el("div", { class: "learn-card" },
@@ -7137,9 +7143,9 @@ function renderView() {
     const q = encodeURIComponent((d.title || "") + (d.body ? "\n" + d.body : ""));
     const subj = encodeURIComponent(learnTerm(d.subject || d[t.field] || ""));
     const aiTools = [
-      { name: "Gemini AI", icon: "✦", desc: "Google AI — best for students", color: "#1a73e8",
+      { name: "Gemini AI", icon: "✦", desc: "Google AI, best for students", color: "#1a73e8",
         url: "https://gemini.google.com/app?q=" + q },
-      { name: "ChatGPT", icon: "🤖", desc: "Step-by-step answers", color: "#10a37f",
+      { name: "ChatGPT", icon: "", desc: "Step-by-step answers", color: "#10a37f",
         url: "https://chat.openai.com/?q=" + q },
       { name: "Perplexity AI", icon: "🔍", desc: "Cited explanations", color: "#20b2aa",
         url: "https://www.perplexity.ai/search?q=" + q },
@@ -7158,7 +7164,7 @@ function renderView() {
       el("div", { class: "ai-bar" },
         el("button", { type: "button", class: "ai-toggle" + (aiOpen ? " open" : ""),
           onclick: () => { state.aiPanel = aiOpen ? null : d.id; render(); }
-        }, "🤖 Ask AI", el("span", { class: "ai-arr" }, aiOpen ? "▲" : "▼")),
+        }, "Ask AI", el("span", { class: "ai-arr" }, aiOpen ? "▲" : "▼")),
         aiOpen && el("div", { class: "ai-panel" },
           el("p", { class: "ai-hint" }, "Your question is pre-loaded. Tap any tool to get an instant explanation."),
           el("div", { class: "ai-tools" },
@@ -7197,7 +7203,7 @@ function renderView() {
       const quizEl = renderChalQuiz(d);
       if (quizEl) out.push(quizEl);
     } else {
-      out.push(el("p", { class: "hint" }, "No MCQ questions — reply with your answer or idea below."));
+      out.push(el("p", { class: "hint" }, "No MCQ questions, reply with your answer or idea below."));
     }
     out.push(renderChalLeaderboard(d));
     if (own) {
@@ -7366,7 +7372,7 @@ function renderCampusPicker() {
           el("span", { class: "campus-pick-icon" }, CAMPUS_ICON[c] || "\u{1F3EB}"), el("span", { class: "campus-pick-name" }, c), el("span", { class: "campus-pick-sub" }, full),
           rich ? el("span", { class: "cp-meta" }, "\u{1F4CD} " + (CAMPUS_DISTRICT[c] || "")) : null,
           rich && brs.length ? el("span", { class: "cp-brs" }, ...brs.map(b => el("i", {}, b))) : null,
-          rich ? el("span", { class: "cp-live" }, n ? "\u{1F525} " + n + " post" + (n === 1 ? "" : "s") + " from this campus" : "\u2728 Be the first to post here") : null,
+          rich ? el("span", { class: "cp-live" }, n ? "\u{1F525} " + n + " post" + (n === 1 ? "" : "s") + " from this campus" : "Be the first to post here") : null,
           rich ? el("span", { class: "cp-go" }, "Choose " + (({ RKVALLEY: "RK Valley" })[c] || c.charAt(0) + c.slice(1).toLowerCase()) + " \u2192") : null);
       })
     ),
@@ -7573,7 +7579,7 @@ function renderStoryBar() {
   bar.hidden = false;
 }
 const STORY_CARDS = new Set(["idea", "innovation", "share"]);
-const STORY_TAG = { idea: "💡 BEST IDEA", innovation: "🚀 INNOVATION" };
+const STORY_TAG = { idea: "💡 BEST IDEA", innovation: "INNOVATION" };
 const REF_TAG = { doubts: "❓ DOUBT", ideas: "💡 IDEA", clubs: "🏛 CLUB", gate: "🎯 GATE", challenges: "🎮 CHALLENGE", jobs: "💼 OPENING" };
 // One-tap sharing of a post or today's quiz to your own story (study content only, same checks as the add screen).
 async function shareToStory(fields) {
@@ -7647,7 +7653,7 @@ function openStoryAdd() {
     txt.placeholder = ({ quiz: "Type your quiz question…", idea: "Your best idea in one line…", innovation: "Name your innovation or project…" })[kind] || "Type a study tip, a formula or a quick note…";
     det.placeholder = kind === "idea" ? "Why is it good? Who does it help? (optional)" : "What problem does it solve? How does it work? (optional)";
     if (kind !== "photo") { const g = STORY_BG[bg]; prev.firstChild.style.setProperty("background", "linear-gradient(135deg," + g[0] + "," + g[1] + ")"); }
-    tabs.replaceChildren(...[["text", "✍️ Tip / note"], ["quiz", "🧠 Quiz"], ["idea", "💡 Best idea"], ["innovation", "🚀 Innovation"], ["photo", "📄 Notes photo"]].map(([k, l]) => el("button", { type: "button", class: "btn sm" + (kind === k ? " primary" : ""), onclick: () => { kind = k; draw(); } }, l)));
+    tabs.replaceChildren(...[["text", "✍️ Tip / note"], ["quiz", "🧠 Quiz"], ["idea", "💡 Best idea"], ["innovation", "Innovation"], ["photo", "📄 Notes photo"]].map(([k, l]) => el("button", { type: "button", class: "btn sm" + (kind === k ? " primary" : ""), onclick: () => { kind = k; draw(); } }, l)));
     sw.hidden = kind === "photo"; file.hidden = kind !== "photo"; cap.hidden = kind !== "photo"; quizBox.hidden = kind !== "quiz"; det.hidden = !(kind === "idea" || kind === "innovation");
   };
   const tabs = el("div", { class: "rowbtns" });
@@ -7954,7 +7960,7 @@ renderExams();
 startCaptions();
 const deep = /^#(doubts|ideas|clubs|gate|challenges|jobs|market)(?:\/([\w-]+))?$/.exec(location.hash);
 if (deep) state.tab = deep[1];
-// Show board immediately — Firebase will fill it in once connected
+// Show board immediately, Firebase will fill it in once connected
 state.loaded = true;
 if (NO_COLLEGE) state.mode = "college";
 // First-time campus pick
@@ -7989,7 +7995,7 @@ render();
       ? (/configuration-not-found|operation-not-allowed|admin-restricted/.test(ae)
         ? "The class board's sign-in service is not switched on yet. Admin: open Firebase › Authentication, press Get started, and enable the Anonymous sign-in method (" + ae + "). Students: please try again later."
         : "Could not sign in to the class board (slow internet or a blocked browser setting). Check your connection and reload. If it keeps happening, tell the admin this code: " + (ae || "no-reply") + ".")
-      : "Database error: " + code + " — reload or check internet.");
+      : "Database error: " + code + ", reload or check internet.");
   };
   const update = () => {
     if (!opened && deep && deep[2] && state[TABS[state.tab].coll].some(x => x.id === deep[2])) { opened = true; openItem(deep[2]); return; }

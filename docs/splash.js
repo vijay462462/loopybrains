@@ -12,12 +12,12 @@
   else if (!first) { title.textContent = "Welcome back to The Campus Loop family"; }
   try {
     var note = JSON.parse(localStorage.getItem("dd-welcome-note") || "null");
-    if (note && note.text) { var p = document.createElement("p"); p.className = "splash-note"; p.textContent = "\u201C" + note.text + "\u201D"; if (note.from) { var s = document.createElement("small"); s.textContent = "\u2014 " + note.from; p.appendChild(s); } sub.parentNode.insertBefore(p, sub.nextSibling); }
+    if (note && note.text) { var p = document.createElement("p"); p.className = "splash-note"; p.textContent = "\u201C" + note.text + "\u201D"; if (note.from) { var s = document.createElement("small"); s.textContent = ",  " + note.from; p.appendChild(s); } sub.parentNode.insertBefore(p, sub.nextSibling); }
   } catch (e) {}
   var bubble = document.getElementById("splashBubble"), visits = 1;
   try { visits = (JSON.parse(localStorage.getItem("dd-visits") || "{}").n || 0) + 1; } catch (e) {}
-  var say = first ? "Hi! I\u2019m Loopy \u{1F916}, your Campus Loop buddy. Ask doubts without fear, learn something new every day, and grow with the whole family!"
-    : name ? "Hi " + name + "! Great to see you again \u{1F44B} Day " + visits + " with the family. Shall we ace today\u2019s quiz?" : "Welcome back! I\u2019m Loopy \u{1F916}. Ready to learn something new today?";
+  var say = first ? "Hello, I\u2019m Loopy, your guide on The Campus Loop. Ask your doubts without hesitation, learn something new every day, and grow together with your campus."
+    : name ? "Welcome back, " + name + ". This is day " + visits + " with The Campus Loop. Today\u2019s quiz is ready when you are." : "Welcome back. I\u2019m Loopy. Today\u2019s quiz and your campus feed are ready.";
   var i = 0, typer = setInterval(function () { if (!bubble) { clearInterval(typer); return; } i += 2; bubble.textContent = say.slice(0, i); if (i >= say.length) clearInterval(typer); }, 28);
   try {
     var crest = localStorage.getItem("dd-crest") || "", cname = localStorage.getItem("dd-college-name") || "";

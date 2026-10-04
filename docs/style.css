@@ -1,4 +1,4 @@
-/* Layout: exercise-book page — graph-paper ground, subject rail on the left, doubts list, and an answer sheet that opens beside it */
+/* Layout: exercise-book page, graph-paper ground, subject rail on the left, doubts list, and an answer sheet that opens beside it */
 :root {
   --paper: #f6f5fd;
   --sheet: #ffffff;
@@ -472,7 +472,7 @@ img.av-hero { width: 76px; height: 76px; border-radius: 50%; object-fit: cover; 
 .item:nth-child(n+6){ animation-delay: .18s; }
 
 /* ============================================================
-   3D tilt — smooth transition when not being dragged
+   3D tilt, smooth transition when not being dragged
    ============================================================ */
 .item, .spot, .learn-card, .badge.got {
   transition: transform .15s ease, box-shadow .15s ease;
@@ -620,7 +620,7 @@ h1 span {
 }
 
 /* ============================================================
-   Class-code gate — centred in the list column
+   Class-code gate, centred in the list column
    ============================================================ */
 .gate-card {
   max-width: 400px; margin: 48px auto; padding: 32px 28px;
@@ -1099,7 +1099,7 @@ h1 span {
 .syl-topics li { font-size: .8rem; line-height: 1.5; color: var(--text); }
 
 /* ============================================================
-   Syllabus — metadata, hours, resources (v41)
+   Syllabus, metadata, hours, resources (v41)
    ============================================================ */
 .syl-meta {
   display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
@@ -1294,7 +1294,7 @@ div.chal-opt.wrong b { background: #ef4444; color: #fff; }
 .mkt-price-big { font: 700 2rem var(--f-head); color: var(--accent); margin: 4px 0 10px; }
 .mkt-price-big.free { font-size: 1.2rem; color: var(--muted); }
 .mkt-sold-banner { background: color-mix(in oklab,#10b981 15%,var(--sheet)); color: #10b981; font: 700 .9rem var(--f-body); padding: 8px 14px; border-radius: 10px; margin-bottom: 10px; text-align: center; }
-/* sell button — green accent */
+/* sell button, green accent */
 .btn.sell { background: linear-gradient(135deg, #10b981, #059669); color: #fff; border-color: transparent; font-weight: 700; }
 .btn.sell:hover { background: linear-gradient(135deg, #059669, #047857); }
 
@@ -1429,7 +1429,7 @@ div.chal-opt.wrong b { background: #ef4444; color: #fff; }
 .gate-res-arrow { font-size: 18px; font-weight: 700; color: var(--muted); margin-left: auto; flex-shrink: 0; }
 
 /* ============================================================
-   GATE Resource Detail — course browser
+   GATE Resource Detail, course browser
    ============================================================ */
 .gate-res-detail { display: flex; flex-direction: column; gap: 14px; }
 .gate-res-detail-hdr {
@@ -1979,7 +1979,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 @keyframes lpBlink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.08); } }
 @keyframes lpGlow { 50% { transform: scale(1.35); filter: drop-shadow(0 0 8px #fde047); } }
 @media (prefers-reduced-motion: reduce) { .lp-float, .lp-shadow, .lp-wave, .lp-eyes, .lp-ant, .loopy, .splash-bubble { animation: none; } }
-.today-hello::before { content: "🤖 "; }
+.today-hello::before { content: " "; }
 
 /* ---- Today card v2: Loopy, three stat tiles, tidy chip grid ---- */
 .today-hello::before { content: none; }
@@ -2431,3 +2431,8 @@ html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 .ob-let { flex: none; min-width: 34px; height: 34px; padding: 0 8px; border-radius: 10px; border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line)); background: color-mix(in srgb, var(--accent) 8%, var(--sheet)); color: var(--ink); font: inherit; font-weight: 800; font-size: 14px; transition: transform .1s, background .15s; }
 .ob-let.on { background: var(--grad); color: #fff; border-color: transparent; box-shadow: 0 8px 16px -10px var(--accent); transform: translateY(-1px); } .ob-let:active { transform: scale(.92); }
 @media (max-height: 640px) { .ob-s-college .ob-letters { display: flex; } }
+
+/* New-posts notice: a calm pill instead of a loud banner */
+.new-toast:not([hidden]) { top: 12px; padding: 9px 16px 9px 14px; border-radius: 99px; background: rgb(24 20 66 / .94); color: #fff; font-weight: 700; font-size: 13px; border: 1px solid rgb(167 139 250 / .5); box-shadow: 0 14px 30px -12px rgb(0 0 0 / .7); backdrop-filter: blur(8px); display: flex; align-items: center; gap: 8px; }
+.new-toast:not([hidden])::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 0 0 rgb(74 222 128 / .7); animation: lpPing 2s infinite; }
+.aud-line { margin: 0; padding: 9px 12px; border-radius: 12px; background: color-mix(in srgb, var(--accent) 8%, transparent); border-left: 3px solid var(--accent); font-size: 13px; line-height: 1.45; } .aud-line b { font-weight: 800; }

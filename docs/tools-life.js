@@ -199,7 +199,7 @@
       return card(inp, row(h("button", { type: "button", class: "btn sm", onclick: () => go(2) }, "Format"), h("button", { type: "button", class: "btn sm", onclick: () => go(0) }, "Minify"), h("button", { type: "button", class: "btn sm", onclick: (e) => copy(out.textContent, e.currentTarget) }, "Copy")), msg, out);
     }
     function b64() {
-      const inp = ta("Text to convert", 4, "Hello Spark ✨"), out = h("pre", { class: "tl-pre" });
+      const inp = ta("Text to convert", 4, "Hello Spark"), out = h("pre", { class: "tl-pre" });
       const run = (k) => { try { const v = inp.value; out.textContent = k === "enc" ? btoa(String.fromCharCode(...new TextEncoder().encode(v))) : k === "dec" ? new TextDecoder().decode(Uint8Array.from(atob(v.trim()), (c) => c.charCodeAt(0))) : k === "uenc" ? encodeURIComponent(v) : decodeURIComponent(v); } catch (e) { out.textContent = "Could not convert: " + e.message; } };
       return card(inp, row(h("button", { type: "button", class: "btn sm", onclick: () => run("enc") }, "Base64 encode"), h("button", { type: "button", class: "btn sm", onclick: () => run("dec") }, "Base64 decode"), h("button", { type: "button", class: "btn sm", onclick: () => run("uenc") }, "URL encode"), h("button", { type: "button", class: "btn sm", onclick: () => run("udec") }, "URL decode")), out, h("button", { type: "button", class: "btn sm", onclick: (e) => copy(out.textContent, e.currentTarget) }, "Copy result"));
     }
