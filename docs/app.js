@@ -49,7 +49,7 @@ function cleanTenant(raw, slug) {
   const f = raw.features && typeof raw.features === "object" ? raw.features : {};
   const dep = {}; if (raw.departments && typeof raw.departments === "object") for (const [k, v] of Object.entries(raw.departments).slice(0, 12)) { const kk = t1(k, 20); if (kk) dep[kk] = tList(v, 30, 40); }
   return {
-    slug, room, name, crest: (typeof raw.crest === "string" && raw.crest.length <= 60000 && /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+\/=]+$/.test(raw.crest)) ? raw.crest : "", title: t1(raw.title, 40) || BRAND, tagline: t1(raw.tagline, 80), captions: tList(raw.captions, 90, 10),
+    slug, room, name, examLabel: t1(raw.examLabel, 24), crest: (typeof raw.crest === "string" && raw.crest.length <= 60000 && /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+\/=]+$/.test(raw.crest)) ? raw.crest : "", title: t1(raw.title, 40) || BRAND, tagline: t1(raw.tagline, 80), captions: tList(raw.captions, 90, 10),
     campuses: tList(raw.campuses, 24, 12), clubs: tList(raw.clubs, 30, 30), subjects: tList(raw.subjects, 30, 80), ideaCategories: tList(raw.ideaCategories, 30, 20),
     exams: (Array.isArray(raw.exams) ? raw.exams : []).map(e => ({ name: t1(e && e.name, 40), date: t1(e && e.date, 10) })).filter(e => e.name && /^\d{4}-\d{2}-\d{2}$/.test(e.date)).slice(0, 12),
     domains: tList(raw.domains, 60, 8).map(d => d.toLowerCase().replace(/^@/, '')).filter(d => /^[a-z0-9.-]+\.[a-z]{2,}$/.test(d)), requireVerified: raw.requireVerified === true, departments: dep, accent: /^#[0-9a-fA-F]{6}$/.test(raw.accent || "") ? raw.accent : "",
@@ -96,11 +96,43 @@ const GENERIC_CLUBS = ["Coding Club", "AI/ML", "Robotics", "Electronics", "Start
 const GENERIC_IDEAS = ["Project", "Startup", "Research", "Campus life", "Social impact", "Other"];
 const DIRECTORY = Array.isArray(window.COLLEGE_DIRECTORY) ? window.COLLEGE_DIRECTORY : [];
 const INDIA_STATES = ["Andaman and Nicobar Islands", "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chandigarh", "Chhattisgarh", "Dadra and Nagar Haveli and Daman and Diu", "Delhi", "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jammu and Kashmir", "Jharkhand", "Karnataka", "Kerala", "Ladakh", "Lakshadweep", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Puducherry", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal"];
+// Subjects, clubs, idea categories and the exam tab are tuned to the TYPE of college, so a medical college, a law university and an engineering college each feel like their own.
+const KIND_PRESETS = {
+  engineering: { exam: "GATE", bot: true,
+    subjects: ["Maths", "Physics", "Chemistry", "English", "Programming", "Data Structures", "DBMS", "Operating Systems", "Networks", "Electronics", "Circuits", "Signals", "Mechanics", "Thermodynamics", "Machines", "Structures", "Other"],
+    clubs: ["Coding Club", "AI/ML", "Robotics", "Electronics", "Startup Cell", "Research Society", "Cultural", "Sports", "NSS / NCC", "Other"], ideas: ["Project", "Startup", "Research", "Campus life", "Social impact", "Other"] },
+  medical: { exam: "NEET PG", bot: false,
+    subjects: ["Anatomy", "Physiology", "Biochemistry", "Pathology", "Pharmacology", "Microbiology", "Forensic Medicine", "Community Medicine", "Medicine", "Surgery", "OBG", "Pediatrics", "Other"],
+    clubs: ["Medical Quiz", "Research Society", "Blood Donation", "Health Awareness", "Cultural", "Sports", "NSS / NCC", "Other"], ideas: ["Case discussion", "Research", "Health awareness", "Campus life", "Social impact", "Other"] },
+  agri: { exam: "ICAR / JRF", bot: false,
+    subjects: ["Agronomy", "Soil Science", "Horticulture", "Plant Pathology", "Entomology", "Genetics and Breeding", "Agri Economics", "Agri Engineering", "Animal Husbandry", "Extension", "Other"],
+    clubs: ["Farm Club", "Research Society", "Entrepreneurship", "Cultural", "Sports", "NSS / NCC", "Other"], ideas: ["Farm innovation", "Research", "Startup", "Campus life", "Social impact", "Other"] },
+  law: { exam: "CLAT / Judiciary", bot: false,
+    subjects: ["Constitutional Law", "Contract Law", "Criminal Law", "Torts", "Jurisprudence", "Property Law", "Family Law", "Company Law", "Legal English", "IPR", "Other"],
+    clubs: ["Moot Court", "Debate", "Legal Aid Cell", "Cultural", "Sports", "NSS / NCC", "Other"], ideas: ["Moot ideas", "Policy", "Research", "Campus life", "Social impact", "Other"] },
+  degree: { exam: "Competitive exams", bot: false,
+    subjects: ["Maths", "Physics", "Chemistry", "Botany", "Zoology", "Computer Science", "Commerce", "Accounting", "Economics", "English", "Telugu / Hindi", "History", "Political Science", "Other"],
+    clubs: ["Computer Club", "Commerce Club", "Science Club", "Literary", "Cultural", "Sports", "NSS / NCC", "Other"], ideas: ["Project", "Startup", "Research", "Campus life", "Social impact", "Other"] },
+  design: { exam: "Design entrance", bot: false,
+    subjects: ["Design", "Architecture", "Drawing", "Art History", "Materials", "Urban Planning", "Other"],
+    clubs: ["Design Club", "Photography", "Cultural", "Sports", "NSS / NCC", "Other"], ideas: ["Design project", "Startup", "Research", "Campus life", "Social impact", "Other"] },
+  general: { exam: "Competitive exams", bot: false, subjects: GENERIC_SUBJECTS, clubs: GENERIC_CLUBS, ideas: GENERIC_IDEAS },
+};
+function kindGroup(kind) {
+  const k = String(kind || "").toLowerCase();
+  if (/engineering|technical|technolog|national institute/.test(k)) return "engineering";
+  if (/medical|health sciences/.test(k)) return "medical";
+  if (/agricultur|horticultur|veterinar/.test(k)) return "agri";
+  if (/law/.test(k)) return "law";
+  if (/degree/.test(k)) return "degree";
+  if (/architecture|arts/.test(k)) return "design";
+  return "general";
+}
 async function loadTenant() {
   const slug = SEL; if (!slug || slug === "rgukt") return null;
   const dir = DIRECTORY.find(c => c.slug === slug);
-  const withDir = (t) => dir ? { ...t, room: "college-" + slug } : t;   // directory colleges always share one room
-  const fromDir = () => cleanTenant({ name: dir.name, room: "college-" + slug, clubs: GENERIC_CLUBS, subjects: GENERIC_SUBJECTS, ideaCategories: GENERIC_IDEAS }, slug);
+  const withDir = (t) => dir ? { ...t, room: "college-" + slug, examLabel: t.examLabel || ((window.COLLEGE_DATA || {})[slug] || {}).exam || KIND_PRESETS[kindGroup(dir.kind)].exam } : t;   // directory colleges always share one room
+  const fromDir = () => { const pr = KIND_PRESETS[kindGroup(dir.kind)], cd = (window.COLLEGE_DATA || {})[slug] || {}; return cleanTenant({ name: dir.name, room: "college-" + slug, clubs: cd.clubs || pr.clubs, subjects: cd.subjects || pr.subjects, ideaCategories: cd.ideas || pr.ideas, examLabel: cd.exam || pr.exam, features: { bot: cd.bot != null ? cd.bot === true : pr.bot } }, slug); };
   const key = "dd-tenant-" + slug; let cached = null;
   try { cached = JSON.parse(localStorage.getItem(key) || "null"); } catch (_) {}
   const fb = BASE_CFG.firebase || {};
@@ -131,6 +163,7 @@ async function loadTenant() {
   }
 }
 const TENANT = await loadTenant();
+const EXAM_LABEL = (TENANT && TENANT.examLabel) || "GATE";   // the exam tab: GATE for engineering, NEET PG for medical, CLAT for law, and so on
 const ROOM_PATH = TENANT ? "rooms/" + TENANT.room + "/" : IS_RGUKT ? DEFAULT_ROOM_PATH : "lobby/";
 const COLLEGE = TENANT ? TENANT.name : IS_RGUKT ? "RGUKT" : "your college";
 // Email domains a student of this college signs up with. Used to check the verified email; empty = any email is accepted.
@@ -234,6 +267,7 @@ const TABS = {
     market: true,
   },
 };
+if (EXAM_LABEL !== "GATE") { TABS.gate.ask = "Post " + EXAM_LABEL + " discussion"; TABS.gate.tagline = EXAM_LABEL + " previous papers, tips, concepts and exam alerts, shared across all campuses."; TABS.gate.placeholder = "e.g. a " + EXAM_LABEL + " question you want help with"; TABS.gate.bodyHint = "Full question, your approach, a tip, or an exam alert."; }
 
 // ---------- campus ----------
 const CAMPUSES = (CFG.campuses && CFG.campuses.length) ? CFG.campuses : [];
@@ -1180,7 +1214,7 @@ function trackNew(coll, rows) {
 function renderBottomNav() {
   const nav = $('bottomNav'); if (!nav) return;
   const icons = { doubts: '❓', ideas: '💡', clubs: '🏛', gate: '🎯', challenges: '🎮', market: '🛒' };
-  const labels = { doubts: 'Doubts', ideas: 'Ideas', clubs: 'Clubs', gate: 'GATE', challenges: 'Challenges', market: 'Market' };
+  const labels = { doubts: 'Doubts', ideas: 'Ideas', clubs: 'Clubs', gate: EXAM_LABEL.length > 8 ? EXAM_LABEL.split(/[ /]/)[0] : EXAM_LABEL, challenges: 'Challenges', market: 'Market' };
   nav.replaceChildren(
     ...['doubts', 'ideas', 'clubs', 'market', 'gate'].filter(tab => (!focusOn() || isAcademicTab(tab)) && featureOn(tab === 'market' ? 'market' : 'doubts')).map(tab => {
       const cnt = state[TABS[tab].coll].length;
@@ -1750,7 +1784,7 @@ function renderHeader() {
     ft.setAttribute("aria-expanded", String(open));
   }
   $("quizBtn").classList.toggle("dot", !!(store && state.loaded && QUIZ.length && !myQuizAnswer(dayNum())));
-  $("search").placeholder = state.tab === "doubts" ? "Search doubts" : state.tab === "gate" ? "Search GATE discussions" : state.tab === "market" ? "Search listings" : state.tab === "clubs" ? "Search club posts" : state.tab === "challenges" ? "Search challenges" : state.tab === "jobs" ? "Search openings" : "Search ideas";
+  $("search").placeholder = state.tab === "doubts" ? "Search doubts" : state.tab === "gate" ? "Search " + EXAM_LABEL + " discussions" : state.tab === "market" ? "Search listings" : state.tab === "clubs" ? "Search club posts" : state.tab === "challenges" ? "Search challenges" : state.tab === "jobs" ? "Search openings" : "Search ideas";
   $("rail").setAttribute("aria-label", t.groupLabel);
   const opts = state.tab === "doubts"
     ? [["all","Newest"],["asked","Most asked"],["open","Unanswered"],["mine","My posts"],["mentor","Needs mentor"],["done","Resolved"],["bounty","🎁 Bounty"]]
@@ -7360,6 +7394,7 @@ document.addEventListener("click", (e) => { const b = e.target.closest && e.targ
   addEventListener("touchmove", (e) => { if (!on) return; dy = e.touches[0].clientY - y0; const dx = Math.abs(e.touches[0].clientX - Number(ind.dataset.x || 0)); if (dy < 8 || dx > dy) { if (dy < 0) on = false; return; } show(dy > 70 ? "Release to refresh" : "Pull to refresh", dy > 70 ? "↑" : "↓", dy * 0.6); }, { passive: true });
   addEventListener("touchend", () => { if (!on) return; on = false; if (dy > 70) refresh(); else hide(); }, { passive: true });
 })();
+try { const gt = document.querySelector('.tabs [data-tab="gate"]'); if (gt) gt.textContent = "🎯 " + EXAM_LABEL; } catch (_) {}
 maybeWelcome();
 maybeMilestone();
 $("filterToggle").addEventListener("click", () => { document.querySelector("header.top").classList.toggle("filters-open"); renderHeader(); });
