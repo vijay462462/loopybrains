@@ -1401,7 +1401,9 @@ function showWelcome(force, startId) {
       body = [el("div", { class: "ob-loopy" }, loopyMini()), el("h2", {}, "About " + BRAND), el("p", { class: "ob-say" }, "We are a team of students and teachers who wanted one safe, friendly place for every campus to ask, answer and grow together. " + BRAND + " is built by students, for students, and we promise to earn your trust every day."),
         el("div", { class: "ab-list" }, line("🛡️", "Safe and moderated", "Anonymous sign-in, reported posts hidden fast, abusive devices blocked."), line("🔒", "Private by design", "No ads. We never sell your data. Only your chosen name is shown."), line("🙏", "Respect for everyone", "Students, teachers and staff are honoured here."), line("🆓", "Free to learn", "The board, quizzes and Study Lab are free forever. Plus is optional.")),
         el("p", { class: "ab-meta" }, [ab.founder ? "Founded by " + ab.founder : "", ab.college ? ab.college : "", "Made with ❤️ in India"].filter(Boolean).join(" · ")),
-        el("p", { class: "ab-meta" }, ab.email ? el("a", { href: "mailto:" + ab.email }, "Write to us: " + ab.email) : null, ab.email ? " · " : "", el("a", { href: "about.html", target: "_blank", rel: "noopener" }, "Our full story"), " · ", el("a", { href: "privacy.html", target: "_blank", rel: "noopener" }, "Privacy"), " · ", el("a", { href: "terms.html", target: "_blank", rel: "noopener" }, "Terms"))];
+        el("p", { class: "ab-meta" }, ab.email ? el("a", { href: "mailto:" + ab.email }, "Write to us: " + ab.email) : null, ab.email ? " · " : "", el("a", { href: "about.html", target: "_blank", rel: "noopener" }, "Our full story"), " · ", el("a", { href: "privacy.html", target: "_blank", rel: "noopener" }, "Privacy"), " · ", el("a", { href: "terms.html", target: "_blank", rel: "noopener" }, "Terms")),
+        el("div", { class: "ab-terms" }, el("b", {}, "Terms in short"), el("ul", {}, el("li", {}, "Be kind. No abuse, cheating, fake posts or spam."), el("li", {}, "Never share anyone's private details, passwords or OTPs."), el("li", {}, "Posts that break the rules are hidden and devices can be blocked."), el("li", {}, BRAND + " is a student community app. It is not run by, or affiliated with, any college.")),
+          el("label", { class: "ab-agree" }, el("input", { type: "checkbox", id: "ob-terms", checked: readJSON("dd-terms", null) ? "" : null }), el("span", {}, "I have read and agree to the ", el("a", { href: "terms.html", target: "_blank", rel: "noopener" }, "Terms of Use"), " and the ", el("a", { href: "privacy.html", target: "_blank", rel: "noopener" }, "Privacy Policy"), ". I am at least 13 years old, or I have a parent's permission.")))];
     } else if (sid === "college") {
       const badge = (slug, name, st) => { const [ca, cb] = slug === "rgukt" ? STATE_COLORS["Andhra Pradesh"] : collegeColors(slug, st || ""); const ini = name.replace(/\(.*?\)/g, "").split(/[\s-]+/).filter(w => /^[A-Za-z]/.test(w) && !/^(of|and|the|for|in)$/i.test(w)).slice(0, 2).map(w => w[0].toUpperCase()).join("") || "C"; const b = el("span", { class: "col-badge", "aria-hidden": "true" }, ini); b.style.setProperty("background", "linear-gradient(135deg," + ca + "," + cb + ")"); return b; };
       const GRP = { all: "All", engineering: "Engineering", medical: "Medical", agri: "Agriculture", law: "Law", degree: "Degree", design: "Design", general: "Other" };
@@ -1485,15 +1487,23 @@ function showWelcome(force, startId) {
     box.replaceChildren(el("div", { class: "welcome-card ob-card" }, el("button", { class: "welcome-skip", type: "button", onclick: finish }, "Skip"), bar, el("div", { class: "ob-step ob-s-" + sid }, ...body),
       el("div", { class: "rowbtns" }, step > 0 ? el("button", { class: "btn", type: "button", onclick: () => go(-1) }, "Back") : null, last ? el("button", { class: "btn", type: "button", onclick: finish }, "Close") : el("button", { class: "btn primary", type: "button", onclick: () => go(1) }, sid === "about" ? "Continue" : sid === "college" ? (pickSlug && pickSlug !== curSlug ? "Continue with " + (pickName.length > 16 ? pickName.slice(0, 15) + "\u2026" : pickName) : "Continue") : "Next"))));
     const f = box.querySelector("input") || box.querySelector(".btn.primary"); if (f && sid !== "about") f.focus();
-    // The About step asks the student to read it all: Continue switches on once the whole text has been scrolled through.
+    // The About step: Continue switches on once the whole text has been scrolled through AND the terms box is ticked.
     if (sid === "about") {
-      const stepEl = box.querySelector(".ob-step"), nextBtn = box.querySelector(".ob-card > .rowbtns .btn.primary");
-      if (stepEl && nextBtn) {
-        const hint = el("p", { class: "ob-scrollhint", role: "status" }, "\u2193 Scroll to read everything");
+      const stepEl = box.querySelector(".ob-step"), nextBtn = box.querySelector(".ob-card > .rowbtns .btn.primary"), skipBtn = box.querySelector(".welcome-skip"), agree = box.querySelector("#ob-terms");
+      if (stepEl && nextBtn && agree) {
+        const hint = el("p", { class: "ob-scrollhint", role: "status" }, "");
         const atEnd = () => stepEl.scrollTop + stepEl.clientHeight >= stepEl.scrollHeight - 12;
-        const lock = () => { nextBtn.disabled = true; nextBtn.classList.add("locked"); nextBtn.setAttribute("aria-disabled", "true"); stepEl.parentNode.insertBefore(hint, stepEl.nextSibling); };
-        const unlock = () => { nextBtn.disabled = false; nextBtn.classList.remove("locked"); nextBtn.removeAttribute("aria-disabled"); hint.remove(); stepEl.style.maskImage = stepEl.style.webkitMaskImage = "none"; };
-        requestAnimationFrame(() => { if (atEnd()) return; lock(); const chk = () => { if (atEnd()) { unlock(); stepEl.removeEventListener("scroll", chk); } }; stepEl.addEventListener("scroll", chk, { passive: true }); setTimeout(chk, 600); });
+        const update = () => {
+          const end = atEnd(), ok = end && agree.checked;
+          nextBtn.disabled = !ok; nextBtn.classList.toggle("locked", !ok); if (ok) nextBtn.removeAttribute("aria-disabled"); else nextBtn.setAttribute("aria-disabled", "true");
+          if (skipBtn) skipBtn.hidden = !agree.checked;
+          hint.textContent = !end ? "\u2193 Scroll to read everything" : !agree.checked ? "Tick the box to agree to the terms" : "";
+          if (!hint.textContent) hint.remove(); else if (!hint.isConnected) stepEl.parentNode.insertBefore(hint, stepEl.nextSibling);
+          if (end) stepEl.style.maskImage = stepEl.style.webkitMaskImage = "none";
+        };
+        agree.addEventListener("change", () => { if (agree.checked) writeJSON("dd-terms", { v: 1, at: Date.now() }); else { try { localStorage.removeItem("dd-terms"); } catch (_) {} } try { if (navigator.vibrate) navigator.vibrate(8); } catch (_) {} update(); });
+        stepEl.addEventListener("scroll", update, { passive: true });
+        requestAnimationFrame(() => { update(); setTimeout(update, 600); });
       }
     }
   }

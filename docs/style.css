@@ -2466,3 +2466,10 @@ html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 .ls-people { display: grid; gap: 8px; margin: 8px 0; }
 .ls-bar input[type=search] { font-size: 16px; }
 @media (prefers-reduced-motion: reduce) { .ls-seg button { transition: none; } }
+
+.ab-terms { display: grid; gap: 10px; margin: 12px 0 4px; padding: 14px; border-radius: 18px; text-align: left; border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line)); background: color-mix(in srgb, var(--accent) 8%, var(--sheet)); }
+.ab-terms ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 13.5px; line-height: 1.4; }
+.ab-agree { display: flex; gap: 10px; align-items: flex-start; font-size: 13.5px; line-height: 1.45; cursor: pointer; }
+.ab-agree input { flex: none; width: 22px; height: 22px; margin-top: 1px; accent-color: var(--accent); }
+.ab-agree a { text-decoration: underline; font-weight: 700; }
+.welcome-skip[hidden] { display: none !important; }
