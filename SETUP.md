@@ -148,3 +148,7 @@ Platform admins and college staff (see "College staff accounts") open `/admin.ht
 ## Club and campus events
 
 Admins and staff (a club coordinator can be added as a staff member with their club as the role label) open `/admin.html` › **Events**: title, club, venue, start/end time, optional capacity and link. Students see **🎉 Events** (and a Today-card chip for events within 7 days), tap **I am going**, and can **Add to calendar** (.ics file). The organiser sees the names of those going. A full event shows "Full". Publish the latest `firestore.rules` first.
+
+## College crest (logo)
+
+In `/admin.html` › **Colleges** › Edit › **College crest**: choose the college's logo (PNG, JPG or WebP; square works best). The dashboard shrinks it to a small image and saves it with the college. Students then see it in the college button, on the home hero and on the opening screen. Without an upload, students see a clean monogram of the college's initials in its own colours. Publish the latest `firestore.rules` first.

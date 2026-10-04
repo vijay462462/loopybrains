@@ -19,6 +19,10 @@
   var say = first ? "Hi! I\u2019m Loopy \u{1F916}, your CampusLoop buddy. Ask doubts without fear, learn something new every day, and grow with the whole family!"
     : name ? "Hi " + name + "! Great to see you again \u{1F44B} Day " + visits + " with the family. Shall we ace today\u2019s quiz?" : "Welcome back! I\u2019m Loopy \u{1F916}. Ready to learn something new today?";
   var i = 0, typer = setInterval(function () { if (!bubble) { clearInterval(typer); return; } i += 2; bubble.textContent = say.slice(0, i); if (i >= say.length) clearInterval(typer); }, 28);
+  try {
+    var crest = localStorage.getItem("dd-crest") || "", cname = localStorage.getItem("dd-college-name") || "";
+    if (cname) { var box = document.createElement("div"); box.className = "splash-crest"; if (/^data:image\/(png|jpeg|webp);base64,/.test(crest)) { var im = document.createElement("img"); im.src = crest; im.alt = ""; box.appendChild(im); } var nm = document.createElement("span"); nm.textContent = cname; box.appendChild(nm); title.parentNode.insertBefore(box, title.nextSibling); }
+  } catch (e) {}
   el.setAttribute("data-live", "1");                    // JS is running: switch off the CSS safety timer
   var done = false;
   function close() { if (done) return; done = true; clearInterval(typer); try { document.dispatchEvent(new Event("splash-closed")); } catch (e) {} el.classList.add("splash-out"); setTimeout(function () { if (el.parentNode) el.remove(); }, 450); }

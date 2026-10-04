@@ -49,7 +49,7 @@ function cleanTenant(raw, slug) {
   const f = raw.features && typeof raw.features === "object" ? raw.features : {};
   const dep = {}; if (raw.departments && typeof raw.departments === "object") for (const [k, v] of Object.entries(raw.departments).slice(0, 12)) { const kk = t1(k, 20); if (kk) dep[kk] = tList(v, 30, 40); }
   return {
-    slug, room, name, title: t1(raw.title, 40) || BRAND, tagline: t1(raw.tagline, 80), captions: tList(raw.captions, 90, 10),
+    slug, room, name, crest: (typeof raw.crest === "string" && raw.crest.length <= 60000 && /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+\/=]+$/.test(raw.crest)) ? raw.crest : "", title: t1(raw.title, 40) || BRAND, tagline: t1(raw.tagline, 80), captions: tList(raw.captions, 90, 10),
     campuses: tList(raw.campuses, 24, 12), clubs: tList(raw.clubs, 30, 30), subjects: tList(raw.subjects, 30, 80), ideaCategories: tList(raw.ideaCategories, 30, 20),
     exams: (Array.isArray(raw.exams) ? raw.exams : []).map(e => ({ name: t1(e && e.name, 40), date: t1(e && e.date, 10) })).filter(e => e.name && /^\d{4}-\d{2}-\d{2}$/.test(e.date)).slice(0, 12),
     domains: tList(raw.domains, 60, 8).map(d => d.toLowerCase().replace(/^@/, '')).filter(d => /^[a-z0-9.-]+\.[a-z]{2,}$/.test(d)), requireVerified: raw.requireVerified === true, departments: dep, accent: /^#[0-9a-fA-F]{6}$/.test(raw.accent || "") ? raw.accent : "",
@@ -1477,7 +1477,7 @@ function renderToday() {
   const newbie = !readJSON("dd-quest-done", false) && (readJSON("dd-visits", { n: 1 }).n || 1) <= 21 && questSteps().filter(s => s[2]).length < 3;
   const stat = (num, label, cls, fn) => el("button", { class: "today-stat " + (cls || ""), type: "button", onclick: fn }, el("b", {}, String(num)), el("span", {}, label));
   const pts = typeof weekPoints === "function" ? weekPoints() : 0;
-  bar.replaceChildren(launchBanner(name), el("div", { class: "today-hero" }, el("div", { class: "hero-loopy" }, loopyMini()),
+  bar.replaceChildren(launchBanner(name), el("div", { class: "today-hero" }, NO_COLLEGE ? null : el("div", { class: "hero-crest" }, crestEl(54)), el("div", { class: "hero-loopy" }, loopyMini()),
     el("div", { class: "hero-text" }, el("small", { class: "hero-kicker" }, "✨ " + COLLEGE), el("strong", { class: "today-hello" }, hello + (name ? ", " + name : "") + " 👋"), el("small", { class: "today-words" }, WORDS[dayNum() % WORDS.length])),
     el("button", { class: "hero-ask", type: "button", onclick: () => { const b = $("askBtn"); if (b) b.click(); } }, "❓ Ask a doubt")),
     (() => { if (newbie) return null; const t = loopyTip(), st = readJSON("dd-tip", {}); if (st.gone && st.day === dayStr()) return null;
@@ -1601,6 +1601,19 @@ function showMilestone(n, tries) {
 function maybeMilestone() {
   const n = recordVisit(), done = readJSON("dd-milestones", []);
   if (MILESTONES.some(m => m[0] === n) && !done.includes(n) && !NO_COLLEGE) setTimeout(() => showMilestone(n, 0), 1800);
+}
+// College crest: the college's own logo when the admin uploaded one, otherwise a clean monogram badge in the college colours.
+function collegeInitials() {
+  const words = String(COLLEGE || BRAND).replace(/\(.*?\)/g, " ").split(/[^A-Za-z0-9]+/).filter(w => w && !/^(of|and|the|for|in|college|university|institute)$/i.test(w));
+  if (words.length === 1) return words[0].slice(0, 5).toUpperCase();
+  return words.slice(0, 3).map(w => w[0]).join("").toUpperCase();
+}
+function crestEl(size) {
+  const px = (size || 28) + "px";
+  if (TENANT && TENANT.crest) { const im = el("img", { class: "crest crest-img", src: TENANT.crest, alt: COLLEGE + " crest", width: String(size || 28), height: String(size || 28) }); return im; }
+  const w = el("span", { class: "crest crest-mono", role: "img", "aria-label": COLLEGE + " crest" }, collegeInitials());
+  w.style.setProperty("width", px); w.style.setProperty("height", px); w.style.setProperty("font-size", Math.max(9, Math.round((size || 28) * (collegeInitials().length > 4 ? 0.27 : collegeInitials().length > 3 ? 0.3 : collegeInitials().length > 2 ? 0.34 : 0.4))) + "px");
+  return w;
 }
 // Trust strip under the tagline: honest promises plus real numbers from this college (shown only once they are big enough to mean something).
 let trustKey = "";
@@ -7330,7 +7343,8 @@ if (CFG.title) { document.title = CFG.title; }
   const h1 = $("siteTitle");
   if (h1) { const m = /^(.*?[a-z])([A-Z][a-z]*)$/.exec(CFG.title.trim()); const w = CFG.title.trim().split(/\s+/); if (w.length > 1) { const last = w.pop(); h1.replaceChildren(w.join(" ") + " ", el("span", {}, last)); } else if (m) h1.replaceChildren(m[1], el("span", {}, m[2])); else h1.textContent = CFG.title; }
   const sc = $("streakChip"); if (sc) sc.addEventListener("click", () => showPanel("me"));
-  const cb = $("collegeBtn"); if (cb) { cb.textContent = "🏫 " + (TENANT ? TENANT.name : IS_RGUKT ? "RGUKT" : "Choose your college") + " ▾"; cb.addEventListener("click", () => showPanel("college")); }
+  const cb = $("collegeBtn"); if (cb) { cb.replaceChildren(...(TENANT && TENANT.crest ? [crestEl(22), " "] : ["🏫 "]), (TENANT ? TENANT.name : IS_RGUKT ? "RGUKT" : "Choose your college") + " ▾");
+  try { if (TENANT && TENANT.crest) localStorage.setItem("dd-crest", TENANT.crest); else localStorage.removeItem("dd-crest"); localStorage.setItem("dd-college-name", COLLEGE || ""); } catch (_) {} cb.addEventListener("click", () => showPanel("college")); }
 }
 
 // ---------- start ----------

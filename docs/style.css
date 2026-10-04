@@ -2085,3 +2085,12 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 .launch .loopy-mini { width: 62px; height: 62px; }
 @keyframes borderFlow { to { background-position: 300% 0; } } @keyframes twinkle { 50% { transform: scale(1.5) rotate(20deg); opacity: .3; } }
 @media (prefers-reduced-motion: reduce) { .launch, .launch-in::before, .launch-in::after { animation: none; } }
+/* ---- College crest ---- */
+.crest { display: inline-grid; place-items: center; vertical-align: middle; border-radius: 28%; flex: none; }
+.crest-mono { color: #fff; font-weight: 800; letter-spacing: -.02em; background: linear-gradient(145deg, var(--brand-a, #6d28d9), var(--brand-b, #db2777)); box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / .55), 0 2px 8px rgb(0 0 0 / .25); text-shadow: 0 1px 2px rgb(0 0 0 / .3); }
+.crest-img { object-fit: contain; background: #fff; padding: 2px; box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / .6), 0 2px 8px rgb(0 0 0 / .25); }
+.college-btn { display: inline-flex; align-items: center; gap: 6px; }
+.hero-crest { position: absolute; top: 14px; right: 14px; } .hero-crest .crest { border-radius: 18px; box-shadow: 0 10px 24px -8px rgb(0 0 0 / .6), inset 0 0 0 2px rgb(255 255 255 / .6); }
+.today-hero { padding-right: 78px; }
+.today-hero .hero-ask { margin-right: -62px; }
+.splash-crest { display: grid; place-items: center; gap: 4px; margin-top: 8px; font-weight: 700; opacity: .95; } .splash-crest img { width: 54px; height: 54px; border-radius: 16px; background: #fff; padding: 3px; object-fit: contain; box-shadow: 0 10px 24px -8px rgb(0 0 0 / .6); }

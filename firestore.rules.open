@@ -158,7 +158,8 @@ service cloud.firestore {
     function validCollege() {
       let d = request.resource.data;
       return d.keys().hasOnly(['name', 'title', 'tagline', 'room', 'city', 'state', 'captions', 'campuses', 'subjects', 'departments',
-                               'clubs', 'ideaCategories', 'exams', 'accent', 'features', 'domains', 'requireVerified', 'listed', 'enabled', 'updatedAt'])
+                               'clubs', 'ideaCategories', 'exams', 'accent', 'crest', 'features', 'domains', 'requireVerified', 'listed', 'enabled', 'updatedAt'])
+        && optStr(d, 'crest', 60000) && (!('crest' in d) || d.crest == '' || d.crest.matches('data:image/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+'))
         && str(d.name, 3, 60) && d.room is string && d.room.matches('[A-Za-z0-9_-]{6,40}')
         && optStr(d, 'title', 40) && optStr(d, 'tagline', 80) && optStr(d, 'city', 40) && optStr(d, 'state', 50) && optStr(d, 'accent', 7)
         && optList(d, 'captions', 10) && optList(d, 'campuses', 12) && optList(d, 'subjects', 80) && optList(d, 'clubs', 30)

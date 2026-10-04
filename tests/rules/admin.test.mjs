@@ -169,6 +169,10 @@ await t("staff posts the welcome note", () => assertSucceeds(setDoc(doc(sctx, R 
 await t("admin updates it and students read it", async () => { await assertSucceeds(setDoc(doc(admin, R + "/welcomeMsg/current"), wn({ text: "Best wishes for the exams!" }))); await assertSucceeds(getDoc(doc(student, R + "/welcomeMsg/current"))); });
 await t("student cannot write it; other ids and long text are refused", async () => { await assertFails(setDoc(doc(student, R + "/welcomeMsg/current"), wn())); await assertFails(setDoc(doc(admin, R + "/welcomeMsg/other"), wn())); await assertFails(setDoc(doc(admin, R + "/welcomeMsg/current"), wn({ text: "x".repeat(300) }))); });
 await t("staff cannot write another college's note", () => assertFails(setDoc(doc(sctx, R2 + "/welcomeMsg/current"), wn())));
+console.log("college crest");
+await t("admin saves a college crest image", () => assertSucceeds(setDoc(doc(admin, "colleges/crest-college"), college({ crest: "data:image/png;base64,iVBORw0KGgo=" }))));
+await t("a crest that is not an image data URL is refused", async () => { await assertFails(setDoc(doc(admin, "colleges/crest-bad1"), college({ crest: "https://evil.example/x.png" }))); await assertFails(setDoc(doc(admin, "colleges/crest-bad2"), college({ crest: "data:text/html;base64,PHNjcmlwdD4=" }))); await assertFails(setDoc(doc(admin, "colleges/crest-bad3"), college({ crest: "data:image/png;base64," + "A".repeat(70000) }))); });
+await t("a student cannot set a crest", () => assertFails(setDoc(doc(student, "colleges/crest-evil"), college({ crest: "data:image/png;base64,iVBORw0KGgo=" }))));
 console.log("server-only collections");
 await t("gifts, referrals, entitlements and payments cannot be read or written from the app", async () => { for (const p of ["gifts/ABCDEFGHJKLM", "referrals/x", "refStats/x", "payments/p1", "aiUsage/u_1"]) { await assertFails(getDoc(doc(student, p))); await assertFails(setDoc(doc(student, p), { x: 1 })); } await assertFails(setDoc(doc(student, "entitlements/stud"), { plan: "plus", until: now() + 1e10 })); });
 console.log(`\n${pass} passed, ${fail} failed`);

@@ -208,13 +208,28 @@ function collegesView() {
       campuses: h("textarea", { value: (d.campuses || []).join(", ") }), subjects: h("textarea", { value: (d.subjects || []).join(", ") }), clubs: h("textarea", { value: (d.clubs || []).join(", ") }),
       ideaCategories: h("textarea", { value: (d.ideaCategories || []).join(", ") }), domains: h("input", { value: (d.domains || []).join(", "), placeholder: "college.edu.in" }),
       accent: h("input", { value: d.accent || "", placeholder: "#e11d48" }), room: h("input", { value: isDir ? "college-" + c.slug : (d.room || ""), disabled: isDir }),
+      crestFile: h("input", { type: "file", accept: "image/png,image/jpeg,image/webp", "aria-label": "College crest image" }),
       requireVerified: h("input", { type: "checkbox", checked: d.requireVerified === true }), listed: h("input", { type: "checkbox", checked: d.listed !== false }), enabled: h("input", { type: "checkbox", checked: d.enabled !== false }),
     };
+    let crestData = typeof d.crest === "string" ? d.crest : "";
+    const prev = h("div", { class: "row" }), paintCrest = () => prev.replaceChildren(crestData ? h("img", { class: "st-thumb crest-prev", alt: "Crest preview", src: crestData }) : h("span", { class: "adm-hint" }, "No crest yet: students see a clean monogram of the initials."), crestData ? h("button", { class: "b sm bad", type: "button", onclick: () => { crestData = ""; paintCrest(); } }, "Remove crest") : null);
+    paintCrest();
+    f.crestFile.addEventListener("change", () => {
+      const file = f.crestFile.files && f.crestFile.files[0]; if (!file) return;
+      if (!/^image\/(png|jpeg|webp)$/.test(file.type) || file.size > 4e6) { msg.className = "msg err"; msg.textContent = "Choose a PNG, JPG or WebP image under 4 MB."; return; }
+      const url = URL.createObjectURL(file), img = new Image();
+      img.onload = () => { URL.revokeObjectURL(url);
+        for (const [px, q] of [[192, 0.88], [160, 0.8], [128, 0.7], [96, 0.6]]) { const cv = document.createElement("canvas"); cv.width = px; cv.height = px; const g = cv.getContext("2d"); g.clearRect(0, 0, px, px); const r = Math.min(px / img.width, px / img.height); g.drawImage(img, (px - img.width * r) / 2, (px - img.height * r) / 2, img.width * r, img.height * r);
+          let out = cv.toDataURL("image/webp", q); if (!/^data:image\/webp/.test(out)) out = cv.toDataURL("image/png"); if (out.length <= 55000) { crestData = out; msg.className = "msg ok"; msg.textContent = "Crest ready. Press Save college."; paintCrest(); return; } }
+        msg.className = "msg err"; msg.textContent = "That image is too detailed. Use a simpler logo."; };
+      img.onerror = () => { URL.revokeObjectURL(url); msg.className = "msg err"; msg.textContent = "Could not read that image."; };
+      img.src = url; });
     const feat = FEATURES.map(([k, label, def]) => ({ k, label, box: h("input", { type: "checkbox", checked: d.features && typeof d.features[k] === "boolean" ? d.features[k] : def }) }));
     const L = (t, el) => h("label", {}, t, el), C = (t, el) => h("label", { class: "check" }, el, t);
     form.replaceChildren(h("div", { class: "card" }, h("h3", {}, c.slug && c.slug !== "(new)" ? "Edit " + c.name : "New college"),
       isDir ? h("p", { class: "adm-hint" }, "This college is in the built-in directory. Saving customises it; its room stays college-" + c.slug + ".") : null,
       h("div", { class: "cols" }, L("Link name", f.slug), L("Name", f.name), L("Header title", f.title), L("Tagline", f.tagline), L("State", f.state), L("City", f.city)),
+      L("College crest (logo, square works best)", f.crestFile), prev,
       L("Room id (private, 6-40 letters, digits, - _)", f.room), isDir ? null : h("div", { class: "row" }, h("button", { class: "b sm", onclick: () => { f.room.value = "k" + Array.from(crypto.getRandomValues(new Uint8Array(11)), x => "abcdefghijkmnpqrstuvwxyz23456789"[x % 32]).join(""); } }, "Generate room id")),
       L("Campuses (comma separated)", f.campuses), L("Subjects", f.subjects), L("Clubs", f.clubs), L("Idea categories", f.ideaCategories),
       h("div", { class: "cols" }, L("Email domains (verification)", f.domains), L("Accent colour", f.accent)),
@@ -229,7 +244,7 @@ function collegesView() {
         const accent = clean(f.accent.value, 7), data = {
           name: clean(f.name.value, 60), room, title: clean(f.title.value, 40), tagline: clean(f.tagline.value, 80), state: clean(f.state.value, 50), city: clean(f.city.value, 40),
           campuses: list(f.campuses.value, 24, 12), subjects: list(f.subjects.value, 30, 80), clubs: list(f.clubs.value, 30, 30), ideaCategories: list(f.ideaCategories.value, 30, 20),
-          domains: list(f.domains.value.toLowerCase(), 60, 8), accent: /^#[0-9a-fA-F]{6}$/.test(accent) ? accent : "",
+          domains: list(f.domains.value.toLowerCase(), 60, 8), accent: /^#[0-9a-fA-F]{6}$/.test(accent) ? accent : "", crest: crestData,
           features: Object.fromEntries(feat.map(x => [x.k, x.box.checked])), requireVerified: f.requireVerified.checked, listed: f.listed.checked, enabled: f.enabled.checked, updatedAt: Date.now(),
         };
         e.currentTarget.disabled = true;
