@@ -386,6 +386,7 @@ function cleanDoc(v, key) {
 const UPLOAD_EXT = new Set(["pdf", "png", "jpg", "jpeg", "gif", "webp", "doc", "docx", "ppt", "pptx", "xls", "xlsx", "txt", "csv"]);
 const fileExt = (name) => (String(name || "").split(".").pop() || "").toLowerCase();
 
+const yl = (k) => ({ E1: "B.Tech 1st year", E2: "B.Tech 2nd year", E3: "B.Tech 3rd year", E4: "B.Tech 4th year" })[k] || String(k || "");
 const state = {
   tab: "doubts", group: "All", query: "", filter: "all",
   doubts: [], ideas: [], clubs: [], gate: [], jobs: [], challenges: [], chalScores: [], market: [], marketReports: [], marketRatings: [], marketInterests: [], replies: [], likes: [], plan: { plus: false, until: 0 }, papers: [], notices: [], drives: [], weekly: [], events: [], rsvps: [], blocked: [], profiles: [], stories: [], storyViews: [], storyAnswers: [], loaded: false,
@@ -2042,7 +2043,7 @@ function renderHeader() {
         ...["All", "E1", "E2", "E3", "E4"].map(y =>
           el("button", { type: "button", class: "campus-chip" + (state.yearFilter === y ? " active" : ""),
             onclick: () => { state.yearFilter = y; render(); if (y !== "All" && innerWidth <= 1000) setTimeout(() => { const l = $("list"); if (l) l.scrollIntoView({ behavior: "smooth", block: "start" }); }, 80); }
-          }, y === "All" ? "All Years" : y + " · " + yearPostCount(y))
+          }, y === "All" ? "All Years" : yl(y) + " · " + yearPostCount(y))
         )
       );
     }
@@ -2252,19 +2253,19 @@ function renderCurious() {
   ].filter(Boolean);
 }
 // RGUKT is open from B.Tech 2nd year (E2) onwards (the six-year integrated course starts with P1, P2 and E1). This is a self-declaration shown once on RGUKT.
-const RG_YEARS = [["P1", "Pre-University 1", false], ["P2", "Pre-University 2", false], ["E1", "B.Tech 1st year (E1)", false], ["E2", "B.Tech 2nd year (E2)", true], ["E3", "B.Tech 3rd year (E3)", true], ["E4", "B.Tech 4th year (E4)", true]];
+const RG_YEARS = [["P1", "Pre-University 1", false], ["P2", "Pre-University 2", false], ["E1", "B.Tech 1st year", false], ["E2", "B.Tech 2nd year", true], ["E3", "B.Tech 3rd year", true], ["E4", "B.Tech 4th year", true]];
 function showEligibility() {
   if (document.getElementById("rgElig")) return;
   const msg = el("p", { class: "ob-say", role: "status" }, "");
   const ov = el("div", { class: "welcome", id: "rgElig", role: "dialog", "aria-modal": "true", "aria-label": "Which year are you in?" });
   const choose = (k, ok) => {
-    if (!ok) { msg.textContent = "Thank you. " + BRAND + " is open to RGUKT B.Tech 2nd year (E2) students and above for now, because of the age policy. Please come back when you reach E2. Meanwhile you can read the About page."; return; }
+    if (!ok) { msg.textContent = "Thank you. " + BRAND + " is open to RGUKT B.Tech 2nd year students and above for now, because of the age policy. Please come back when you reach B.Tech 2nd year. Meanwhile you can read the About page."; return; }
     writeJSON("dd-rgukt-year", { year: k, at: Date.now() });
     try { curState.year = k; const o = readJSON("dd-curio-prof", {}) || {}; o.year = Number(k[1]) || o.year; writeJSON("dd-curio-prof", o); } catch (_) {}
     ov.remove(); render();
   };
   ov.append(el("div", { class: "welcome-card ob-card" }, el("div", { class: "ob-loopy" }, loopyMini()), el("h2", {}, "Which year are you in?"),
-    el("p", { class: "ob-say" }, "RGUKT is a six-year integrated course. " + BRAND + " is for B.Tech 2nd year (E2) students and above."),
+    el("p", { class: "ob-say" }, "RGUKT is a six-year integrated course. " + BRAND + " is for B.Tech 2nd year students and above."),
     el("div", { class: "rowbtns", role: "group", "aria-label": "Your year" }, ...RG_YEARS.map(([k, t, ok]) => el("button", { class: "btn" + (ok ? "" : " sm"), type: "button", onclick: () => choose(k, ok) }, t))), msg,
     el("p", { class: "hint" }, "This is your own declaration. Please answer honestly. Details are in the ", el("a", { href: "terms.html", target: "_blank", rel: "noopener" }, "Terms"), ".")));
   document.body.append(ov);
@@ -3110,20 +3111,20 @@ function yearHub() {
   const tile = (n, label) => el("div", { class: "intro-stat" }, el("span", { class: "intro-stat-n" }, n), el("span", { class: "intro-stat-l" }, label));
   const pillEl = el("span", { class: "pill open" }, pct + "% of goals done"), fillEl = el("span", { class: "lab-fill goal", style: "width:" + pct + "%" });
   return el("div", { class: "learn-card year-hub" },
-    el("div", { class: "campus-hub-head" }, el("strong", {}, "🎓 " + y + " · " + g.name), pillEl),
+    el("div", { class: "campus-hub-head" }, el("strong", {}, "🎓 " + yl(y) + " · " + g.name), pillEl),
     el("p", { class: "hint" }, g.tag),
-    el("p", { class: fresh ? "campus-live" : "hint" }, fresh ? "🟢 " + fresh + " new " + y + " post" + (fresh > 1 ? "s" : "") + " in the last 24 hours" : "⚪ No new " + y + " posts today. Ask one!"),
+    el("p", { class: fresh ? "campus-live" : "hint" }, fresh ? "🟢 " + fresh + " new " + yl(y) + " post" + (fresh > 1 ? "s" : "") + " in the last 24 hours" : "⚪ No new " + yl(y) + " posts today. Ask one!"),
     el("div", { class: "intro-stats" }, tile(posts.length, "posts"), tile(students, "students"), tile(solved + "/" + doubts.length, "doubts solved")),
     el("div", { class: "lab-track small" }, fillEl),
-    el("small", { class: "hint" }, "✅ Your " + y + " goals (tap to tick)"),
+    el("small", { class: "hint" }, "✅ Your " + yl(y) + " goals (tap to tick)"),
     ...g.goals.map((t, i) => el("label", { class: "check yr-goal" }, el("input", { type: "checkbox", checked: done.includes(i), onchange: (e) => { done = e.target.checked ? [...new Set([...done, i])] : done.filter(x => x !== i); saveDone(); const p = Math.round((done.length / g.goals.length) * 100); pillEl.textContent = p + "% of goals done"; fillEl.style.setProperty("width", p + "%"); } }), t)),
     el("small", { class: "hint" }, "📅 Key dates"),
     el("ul", { class: "yr-dates" }, ...g.dates.map(d => el("li", {}, d))),
-    seniors.length ? el("div", {}, el("small", { class: "hint" }, "🧑‍🏫 Seniors helping " + y), ...seniors.map(t => el("div", { class: "tl-trow" }, el("span", {}, t.name + " (" + t.year + ")"), el("strong", {}, t.n + (t.n === 1 ? " reply" : " replies"))))) : null,
+    seniors.length ? el("div", {}, el("small", { class: "hint" }, "🧑‍🏫 Seniors helping " + yl(y)), ...seniors.map(t => el("div", { class: "tl-trow" }, el("span", {}, t.name + " (" + yl(t.year) + ")"), el("strong", {}, t.n + (t.n === 1 ? " reply" : " replies"))))) : null,
     el("small", { class: "hint" }, "Batch activity"),
-    ...["E1", "E2", "E3", "E4"].map(b => el("div", { class: "rival-row" }, el("span", { class: "rival-rank" }, b), el("div", { class: "rival-bar-wrap" }, el("div", { class: "rival-bar", style: "width:" + Math.round(yearPostCount(b) * 100 / maxN) + "%;background:" + (b === y ? "var(--ta)" : "var(--line)") })), el("span", { class: "rival-score" }, yearPostCount(b) + " posts"))),
+    ...["E1", "E2", "E3", "E4"].map(b => el("div", { class: "rival-row" }, el("span", { class: "rival-rank" }, yl(b).replace("B.Tech ", "")), el("div", { class: "rival-bar-wrap" }, el("div", { class: "rival-bar", style: "width:" + Math.round(yearPostCount(b) * 100 / maxN) + "%;background:" + (b === y ? "var(--ta)" : "var(--line)") })), el("span", { class: "rival-score" }, yearPostCount(b) + " posts"))),
     el("div", { class: "rowbtns" }, g.actions.map(([label, fn]) => el("button", { class: "btn sm", type: "button", onclick: fn }, label)),
-      el("button", { class: "btn sm primary", type: "button", onclick: openAsk }, "➕ Ask as " + y),
+      el("button", { class: "btn sm primary", type: "button", onclick: openAsk }, "➕ Ask as " + yl(y)),
       el("button", { class: "btn sm", type: "button", onclick: () => { state.yearFilter = "All"; render(); } }, "✕ All years")));
 }
 
@@ -3230,7 +3231,7 @@ function renderList() {
       if (d.pay) meta.push(el("span", { class: "pill" }, "💰 " + d.pay));
       if (votes) meta.push(el("span", { class: "likes" }, "♥ " + votes));
     } else meta.push(el("span", { class: "likes" }, "♥ " + votes));
-    if (d.year) meta.push(el("span", { class: "pill year-pill" }, d.year));
+    if (d.year) meta.push(el("span", { class: "pill year-pill" }, yl(d.year)));
     if (d.campus && CAMPUSES.length > 0) meta.push(el("span", { class: "campus-badge", style: "--cc:" + campusColor(d.campus) }, d.campus));
     if (d.via) meta.push(el("span", { class: "pill via-pill", title: "Asked by a student of " + d.via }, "\u{1F30D} From " + d.via));
     else if (d.aud === "all" && CAMPUSES.length > 0) meta.push(el("span", { class: "pill open", title: "Visible to every campus" }, "\u{1F310} All campuses"));
@@ -4602,7 +4603,7 @@ function renderSubject(C, r) {
   const mids = [["Mid 1", [1, 2]], ["Mid 2", [3, 4]], ["Mid 3", [5, 6]]];
   return [
     el("h2", {}, "\u{1F4D8} " + name),
-    el("p", { class: "hint" }, code + " · " + credits + " credit" + (credits === 1 ? "" : "s") + " · " + curState.year + " · " + (C.branches[curState.branch] || curState.branch)),
+    el("p", { class: "hint" }, code + " · " + credits + " credit" + (credits === 1 ? "" : "s") + " · " + yl(curState.year) + " · " + (C.branches[curState.branch] || curState.branch)),
     el("div", { class: "guide-card" },
       el("div", { class: "guide-head" }, el("span", { class: "guide-ic", "aria-hidden": "true" }, "\u{1F4C4}"), el("div", {}, el("small", {}, "OFFICIAL SYLLABUS"), el("strong", {}, "Unit-wise topics are in the RGUKT document"))),
       el("p", { class: "hint" }, found ? "Unit topics below come from the official RGUKT syllabus. The PDF has the full detail. Look for " : "Open the syllabus PDF from the RGUKT website and look for " + code.split(" / ")[0] + ". It lists the topics of every unit."),
@@ -4637,12 +4638,12 @@ function renderCurriculum() {
     el("h2", {}, "\u{1F4D8} RGUKT subjects"),
     el("p", { class: "hint" }, "Subjects and subject codes by year, branch and campus, taken from the RGUKT timetable. Use it as a reference. Check the official RGUKT notices for the final list."),
     el("div", { class: "label" }, "Year"),
-    el("div", { class: "rowbtns" }, ...yrs.map(y => chip(y + " \u00B7 " + C.years[y], curState.year === y, () => { curState.year = y; curState.open = null; render(); }))),
+    el("div", { class: "rowbtns" }, ...yrs.map(y => chip(yl(y) + " \u00B7 " + C.years[y], curState.year === y, () => { curState.year = y; curState.open = null; render(); }))),
     el("div", { class: "label" }, "Branch"),
     el("div", { class: "rowbtns" }, ...brs.map(b => chip(b, curState.branch === b, () => { curState.branch = b; curState.open = null; render(); }))),
     curState.year === "E3" || curState.year === "E4" ? el("div", { class: "label" }, "Campus") : null,
-    curState.year === "E3" || curState.year === "E4" ? el("div", { class: "rowbtns" }, chip("All", curState.campus === "ALL", () => { curState.campus = "ALL"; curState.open = null; render(); }), ...camps.map(([k, v]) => chip(v, curState.campus === k, () => { curState.campus = k; curState.open = null; render(); }))) : el("p", { class: "hint" }, "Years E1 and E2 are the same on every campus."),
-    el("p", { class: "hint" }, rows.length + " subject" + (rows.length === 1 ? "" : "s") + " \u00B7 " + (C.branches[curState.branch] || curState.branch) + " \u00B7 " + curState.year),
+    curState.year === "E3" || curState.year === "E4" ? el("div", { class: "rowbtns" }, chip("All", curState.campus === "ALL", () => { curState.campus = "ALL"; curState.open = null; render(); }), ...camps.map(([k, v]) => chip(v, curState.campus === k, () => { curState.campus = k; curState.open = null; render(); }))) : el("p", { class: "hint" }, "Years B.Tech 1st and 2nd year are the same on every campus."),
+    el("p", { class: "hint" }, rows.length + " subject" + (rows.length === 1 ? "" : "s") + " \u00B7 " + (C.branches[curState.branch] || curState.branch) + " \u00B7 " + yl(curState.year)),
     el("div", { class: "learn" }, rows.length ? rows.map((r, ri) => el("div", { class: "learn-card" },
       el("span", { class: "tag" }, r[1]),
       el("strong", {}, r[0]),
@@ -5361,9 +5362,9 @@ function renderAbout() {
       el("p", {}, "Built by students, for students."),
       el("p", {}, "Dedicated to our students: advanced, disciplined and obedient learners who work hard, respect their teachers and lift each other up. You are the reason Spark exists.")),
     el("div", { class: "label" }, "🎯 Our mission"),
-    el("p", {}, "Every student should have a senior to ask, a clear path after graduation, and quality study material, without paying for any of it. The Campus Loop brings these together so no doubt stays unanswered and no student feels lost after E4."),
+    el("p", {}, "Every student should have a senior to ask, a clear path after graduation, and quality study material, without paying for any of it. The Campus Loop brings these together so no doubt stays unanswered and no student feels lost after B.Tech 4th year."),
     el("div", { class: "label" }, "What you get"),
-    feature("❓", "Doubts", "Ask by subject, year (E1-E4) and campus. Peers answer, you mark the best answer, and helpers earn points."),
+    feature("❓", "Doubts", "Ask by subject, year (B.Tech 1st to 4th year) and campus. Peers answer, you mark the best answer, and helpers earn points."),
     feature("💡", "Ideas, Clubs and Challenges", "Share project ideas, join clubs and take part in challenges and hackathons."),
     feature("🎯", "GATE", "Previous-year papers with solutions, MCQs, formulas and a year-wise preparation plan."),
     feature("🧠", "Daily Quiz and Top Helpers", "A new question every day, a leaderboard and recognition for the students who help most."),
@@ -5400,7 +5401,7 @@ const CAREER_COMMON = {
     note: "M.Tech / MS by research via GATE (" + gatePaper + "). IITs, NITs, IIITs and IISc admit through GATE scores. A GATE scholarship pays a monthly stipend.",
     links: [["GATE official", GATE_URL], ["COAP (IIT M.Tech)", "https://coap.iitb.ac.in"], ["CCMT (NIT/IIIT M.Tech)", "https://ccmt.admissions.nic.in"], ["GATE Overflow", "https://gateoverflow.in/"], ...extra] }),
   abroad: () => ({ icon: "🌍", title: "Study abroad (MS / PhD)",
-    note: "Start in E3. Needs a strong CGPA, 2-3 projects or a research paper, recommendation letters and GRE/IELTS where required. Germany has no tuition at public universities.",
+    note: "Start in B.Tech 3rd year. Needs a strong CGPA, 2-3 projects or a research paper, recommendation letters and GRE/IELTS where required. Germany has no tuition at public universities.",
     links: [["EducationUSA (free advising)", "https://www.educationusa.in"], ["DAAD Germany", "https://www.daad.in"], ["Chevening UK scholarship", "https://www.chevening.org"], ["Study in Australia", "https://www.studyaustralia.gov.au"]] }),
   mba: () => ({ icon: "📈", title: "MBA / Management",
     note: "Good after 1-2 years of work experience. Entrance exams: CAT (IIMs), XAT, GMAT.",
@@ -5521,7 +5522,7 @@ const ABROAD = {
   tag: "Study and work abroad",
   intro: "A step-by-step view of MS, PhD and work options abroad. Fees, exams and rules change every year, so always confirm on the official websites linked below.",
   sections: [
-    { icon: "🗓️", title: "Timeline (start in E2, apply in E4)", note: "E2: keep CGPA high, learn one skill deeply. E3 sem 1: pick 2-3 countries, prepare GRE / IELTS / TOEFL where needed, do 2-3 projects. E3 summer: research internship (Mitacs, DAAD WISE, IAS). E4 sem 1: SOP, 3 recommendation letters, apply (many deadlines fall between October and January). E4 sem 2: offers, scholarship, visa, education loan.",
+    { icon: "🗓️", title: "Timeline (start in B.Tech 2nd year, apply in B.Tech 4th year)", note: "B.Tech 2nd year: keep CGPA high, learn one skill deeply. B.Tech 3rd year sem 1: pick 2-3 countries, prepare GRE / IELTS / TOEFL where needed, do 2-3 projects. B.Tech 3rd year summer: research internship (Mitacs, DAAD WISE, IAS). B.Tech 4th year sem 1: SOP, 3 recommendation letters, apply (many deadlines fall between October and January). B.Tech 4th year sem 2: offers, scholarship, visa, education loan.",
       links: [["Vidya Lakshmi (govt education loan portal)", "https://www.vidyalakshmi.co.in"], ["EducationUSA", "https://www.educationusa.in"]] },
     { icon: "🇺🇸", title: "USA", note: "Largest choice of MS and PhD programmes. PhD and many research-based MS offers come with funding (RA / TA). Typical needs: strong CGPA, projects or research, SOP, recommendation letters, TOEFL / IELTS, and GRE for some universities.",
       links: [["EducationUSA", "https://www.educationusa.in"], ["Fulbright-Nehru (USIEF)", "https://www.usief.org.in"], ["MIT OpenCourseWare", "https://ocw.mit.edu"]] },
@@ -5553,7 +5554,7 @@ const PREMIUM = {
   sections: [
     { icon: "🥇", title: "Prime Minister's Research Fellowship (PMRF)", note: "Direct PhD admission at IITs, IISc and IISERs with one of the highest research fellowships in India. For top students with strong CGPA or GATE scores.",
       links: [["PMRF official", "https://www.pmrf.in"], ["INSPIRE Fellowship", "https://online-inspire.gov.in"]] },
-    { icon: "🔬", title: "Summer research fellowships", note: "Work with leading scientists for 2 months in E2 or E3. The best way to get strong recommendation letters for MS and PhD.",
+    { icon: "🔬", title: "Summer research fellowships", note: "Work with leading scientists for 2 months in B.Tech 2nd or 3rd year. The best way to get strong recommendation letters for MS and PhD.",
       links: [["Indian Academies Summer Research Fellowship", "https://www.ias.ac.in"], ["DAAD WISE (Germany)", "https://www.daad.in"], ["Mitacs Globalink (Canada)", "https://www.mitacs.ca/en/programs/globalink"], ["CERN Summer Student Programme", "https://home.cern/summer-student-programme"]] },
     { icon: "🛰️", title: "ISRO, DRDO and national labs", note: "Scientist and engineer roles with ISRO, DRDO, BARC and CSIR labs. Recruitment is through GATE or the labs' own exams. Think long term.",
       links: [["ISRO Careers", "https://www.isro.gov.in/Careers.html"], ["DRDO RAC", "https://rac.gov.in"], ["BARC", "https://barc.gov.in"], ["CSIR", "https://www.csir.res.in"]] },
@@ -7553,7 +7554,7 @@ function renderAsk(existing) {
     (state.tab === "doubts" || state.tab === "gate") && el("div", { class: "two" },
       el("label", {}, "Your Batch Year",
         el("select", { id: "f-year", name: "year" },
-          ["(Select year)", "E1", "E2", "E3", "E4"].map(y => el("option", { value: y === "(Select year)" ? "" : y, selected: existing ? existing.year === y : (state.yearFilter !== "All" && state.yearFilter === y) }, y))
+          ["(Select year)", "E1", "E2", "E3", "E4"].map(y => el("option", { value: y === "(Select year)" ? "" : y, label: y === "(Select year)" ? "(Select year)" : yl(y), selected: existing ? existing.year === y : (state.yearFilter !== "All" && state.yearFilter === y) }, y))
         )
       ),
       el("label", {}, "Tags (optional)", el("input", { id: "f-tags", name: "tags", maxlength: "100", placeholder: "e.g. mid-1, unit-2, tricky" }))),
@@ -7683,7 +7684,7 @@ function renderView() {
   const out = [
     el("div", { class: "meta" },
       el("span", { class: "tag", ...colorAttrs(g) }, g),
-      d.year && el("span", { class: "pill year-pill" }, d.year),
+      d.year && el("span", { class: "pill year-pill" }, yl(d.year)),
       state.tab === "doubts" && isUrgent(d) && el("span", { class: "pill urgent" }, "🔥 Urgent"),
       state.tab === "doubts" && el("span", { class: "pill " + (d.resolvedReplyId ? "done" : "open") }, d.resolvedReplyId ? "Resolved" : "Open"),
       state.tab === "doubts" && d.bounty && !d.resolvedReplyId && el("span", { class: "pill bounty" }, "🎁 Bounty"),
