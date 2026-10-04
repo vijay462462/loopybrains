@@ -6840,6 +6840,7 @@ const AUD_TABS = ["doubts", "ideas", "clubs", "gate", "jobs"];
 let askTo = [];   // campuses chosen with "Choose campuses"
 function audienceBlock(withNet) {
   const myC = getCampus(), hasCampuses = CAMPUSES.length > 0, canNet = !!(store && store.setIn && withNet);
+  if (!hasCampuses && !canNet) return null;   // a one-campus college has nothing to choose here
   const box = el("div", { class: "aud-box" }), summary = el("p", { class: "aud-sum", role: "status" });
   const picker = el("div", { class: "aud-camps", hidden: "" });
   const mode = () => { const r = box.querySelector("input[name=aud]:checked"); return r ? r.value : "all"; };
@@ -7006,7 +7007,7 @@ function renderAsk(existing) {
         )
       ),
     ),
-    el("label", {}, "Details", el("textarea", { id: "f-body", name: "body", maxlength: "5000", placeholder: t.bodyHint })),
+    el("label", {}, "Details", el("textarea", { id: "f-body", name: "body", rows: "6", maxlength: "5000", placeholder: t.bodyHint })),
     existing && existing.pages && existing.pages.length ? el("p", { class: "hint" }, "This post already has " + existing.pages.length + " page(s). You can add up to " + Math.max(0, MAX_PAGES - existing.pages.length) + " more.") : null,
     attachPicker(newPages, existing ? MAX_PAGES - ((existing.pages || []).length) : MAX_PAGES),
     store.uploadFile ? filePicker(newFileLinks) : null,

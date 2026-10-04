@@ -2436,3 +2436,7 @@ html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 .new-toast:not([hidden]) { top: 12px; padding: 9px 16px 9px 14px; border-radius: 99px; background: rgb(24 20 66 / .94); color: #fff; font-weight: 700; font-size: 13px; border: 1px solid rgb(167 139 250 / .5); box-shadow: 0 14px 30px -12px rgb(0 0 0 / .7); backdrop-filter: blur(8px); display: flex; align-items: center; gap: 8px; }
 .new-toast:not([hidden])::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 0 0 rgb(74 222 128 / .7); animation: lpPing 2s infinite; }
 .aud-line { margin: 0; padding: 9px 12px; border-radius: 12px; background: color-mix(in srgb, var(--accent) 8%, transparent); border-left: 3px solid var(--accent); font-size: 13px; line-height: 1.45; } .aud-line b { font-weight: 800; }
+
+/* Post form: a sensible text box, not a screen-high one */
+.form textarea#f-body { min-height: 150px; max-height: 42vh; height: auto; field-sizing: content; align-self: start; resize: vertical; }
+.form > label { align-self: start; }
