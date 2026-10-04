@@ -2285,12 +2285,12 @@ function showEligibility() {
     el("p", { class: "hint" }, "This is your own declaration. Please answer honestly. Details are in the ", el("a", { href: "terms.html", target: "_blank", rel: "noopener" }, "Terms"), ".")));
   document.body.append(ov);
 }
-// ---------- Short Campus Loop ID: STATE-COLLEGE-CODE, for example AP-RGUK-7K3F9 ----------
+// ---------- Short Campus Loop ID: STATE-COLLEGE-4 digits, for example AP-RGU-4821 ----------
 // Made from the sign-in id with a fixed mix, so it is the same on every visit and needs no server. It is for sharing and support, never for signing in.
 const STATE_CODES = { "Andhra Pradesh": "AP", "Telangana": "TS", "Tamil Nadu": "TN", "Karnataka": "KA", "Kerala": "KL", "Maharashtra": "MH", "Delhi": "DL", "Uttar Pradesh": "UP", "West Bengal": "WB", "Gujarat": "GJ", "Rajasthan": "RJ", "Madhya Pradesh": "MP", "Punjab": "PB", "Odisha": "OD", "Bihar": "BR", "Assam": "AS", "Haryana": "HR", "Jammu and Kashmir": "JK", "Uttarakhand": "UK", "Jharkhand": "JH", "Chhattisgarh": "CG", "Himachal Pradesh": "HP", "Puducherry": "PY", "Goa": "GA", "Meghalaya": "ML", "Manipur": "MN", "Chandigarh": "CH", "Tripura": "TR", "Nagaland": "NL", "Arunachal Pradesh": "AR", "Mizoram": "MZ", "Sikkim": "SK", "Ladakh": "LA", "Andaman and Nicobar Islands": "AN", "Lakshadweep": "LD", "Dadra and Nagar Haveli and Daman and Diu": "DD" };
 function clCodes() {
   const slug = NO_COLLEGE ? "" : (TENANT ? TENANT.slug : "rgukt"), d = DIRECTORY.find(x => x.slug === slug), st = IS_RGUKT ? "Andhra Pradesh" : (d && d.state) || (TENANT && TENANT.state) || "";
-  const parts = slug.split("-").filter(w => w && !/^(of|and|the|for|in)$/.test(w)), col = (parts.length > 1 ? parts.map(w => w[0]).join("") : slug).replace(/[^a-z0-9]/g, "").toUpperCase().slice(0, 4) || "CL";
+  const parts = slug.split("-").filter(w => w && !/^(of|and|the|for|in)$/.test(w)), col = (parts.length > 1 ? parts.map(w => w[0]).join("") : slug).replace(/[^a-z0-9]/g, "").toUpperCase().slice(0, 3) || "CL";
   return [STATE_CODES[st] || "IN", col];
 }
 function clHash(str) {   // cyrb53, a small fast 53-bit mixing function
@@ -2299,16 +2299,14 @@ function clHash(str) {   // cyrb53, a small fast 53-bit mixing function
   h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909); h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
   return 4294967296 * (2097151 & h2) + (h1 >>> 0);
 }
-const CL_ALPHA = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";   // no I, L, O, U: easy to read and type
 function campusId(uid) {
   if (!uid) return "";
-  let n = clHash("campusloop|" + uid), code = ""; for (let i = 0; i < 5; i++) { code += CL_ALPHA[n % 32]; n = Math.floor(n / 32); }
-  return clCodes().join("-") + "-" + code;
+  return clCodes().join("-") + "-" + String(clHash("campusloop|" + uid) % 10000).padStart(4, "0");
 }
 function idCard() {
   const uid = store && store.uid; if (!uid) return null; const id = campusId(uid), say = el("small", { class: "hint", role: "status" }, "");
   return el("div", { class: "learn-card id-card" }, el("small", { class: "tag" }, "\u{1F194} YOUR CAMPUS LOOP ID"), el("strong", { class: "id-code" }, id),
-    el("small", { class: "hint" }, "Share it with friends or quote it when you write to support. It is not a password."),
+    el("small", { class: "hint" }, "Share it with friends or quote it when you write to support. It is not a password. If two students ever share a number, the nickname tells them apart."),
     el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: async () => { try { await navigator.clipboard.writeText(id); say.textContent = "Copied."; } catch (_) { say.textContent = id; } } }, "\u{1F4CB} Copy")), say);
 }
 // ---------- Helper of the week and push opt-in ----------
