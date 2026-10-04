@@ -5,6 +5,9 @@ window.DOUBT_DESK_CONFIG = {
 
   // The Campus Loop Plus (optional paid plan). Keep enabled:false until payments are set up (see PREMIUM.md).
   // monthly / yearly are prices in rupees; functionsUrl is the address of the deployed payment functions.
+  // Photos. To stop misuse the app is camera-only for photos in doubts, answers and stories, and profile photos are off (avatars are used).
+  // Set gallery: true to allow choosing existing pictures, and profilePhoto: true to allow profile photos again.
+  media: { gallery: false, profilePhoto: false },
   // Background push alerts (needs the push function deployed). Paste the Web Push certificate key from Firebase console > Project settings > Cloud Messaging. It is a public key, safe to publish.
   push: { vapidKey: "" },
   plus: { enabled: false, weekly: 19, semester: 149, monthly: 49, yearly: 399, functionsUrl: "",

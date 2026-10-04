@@ -74,6 +74,7 @@ try { const g = new URLSearchParams(location.search).get("gift"); if (g && /^[A-
 const SEL = pickCollege(), NO_COLLEGE = SEL === "", IS_RGUKT = SEL === "rgukt";
 const BRAND = BASE_CFG.brand || "The Campus Loop";
 // The Campus Loop Plus (optional paid plan). enabled:false = free early access and a waitlist; see PREMIUM.md to go live.
+const MEDIA = { gallery: false, profilePhoto: false, ...(BASE_CFG.media || {}) };   // photos: camera only and no profile photos, to stop misuse (see config.js)
 const PUSH = { vapidKey: "", ...(BASE_CFG.push || {}) };
 const PLUS = { enabled: false, monthly: 49, yearly: 399, functionsUrl: "", ...(BASE_CFG.plus || {}) };
 function cleanTenant(raw, slug) {
@@ -1081,7 +1082,7 @@ function attachPicker(list, max) {
   return el("div", { class: "attach" },
     el("div", { class: "rowbtns" },
       el("button", { type: "button", class: "btn sm", onclick: () => pick(true) }, "📷 Take photo"),
-      el("button", { type: "button", class: "btn sm", onclick: () => pick(false) }, "🖼 Upload image"),
+      MEDIA.gallery ? el("button", { type: "button", class: "btn sm", onclick: () => pick(false) }, "🖼 Upload image") : null,
       el("button", { type: "button", class: "btn sm", onclick: () => {
         if (list.length >= max) { say("You can attach up to " + max + " pages."); return; }
         openNotebook((u) => { list.push(u); draw(); });
@@ -4734,8 +4735,8 @@ function renderMe() {
       el("div", {},
         el("h2", {}, (getName() || "You") + " · Level " + lv.n),
         el("p", { class: "hint" }, titleOf(p.points) + " · " + plural(p.points, "point")))),
-    el("p", { class: "hint" }, "📷 Your profile photo (everyone can see it next to your posts)"),
-    el("div", { class: "rowbtns" }, el("button", { type: "button", class: "btn sm primary", onclick: pickDp }, getDp() ? "Change photo" : "Upload photo"), getDp() && el("button", { type: "button", class: "btn sm", onclick: removeDp }, "Remove photo")),
+    MEDIA.profilePhoto ? el("p", { class: "hint" }, "📷 Your profile photo (everyone can see it next to your posts)") : el("p", { class: "hint" }, "🛡️ Profile photos are switched off to keep everyone safe. Pick an avatar below."),
+    MEDIA.profilePhoto ? el("div", { class: "rowbtns" }, el("button", { type: "button", class: "btn sm primary", onclick: pickDp }, getDp() ? "Change photo" : "Upload photo"), getDp() && el("button", { type: "button", class: "btn sm", onclick: removeDp }, "Remove photo")) : null,
     state.dpMsg && el("p", { class: "hint", role: "status" }, state.dpMsg),
     streakCard(),
     battleCard(),
@@ -8241,7 +8242,7 @@ const STORY_ROW_MIN = 3, STORY_MS = 86400000, STORY_SHOW = 5500, STORY_DAILY_MAX
 const STORY_BG = [["#7c3aed", "#2563eb"], ["#db2777", "#f97316"], ["#059669", "#0ea5e9"], ["#f59e0b", "#ef4444"], ["#1e293b", "#6366f1"], ["#0d9488", "#84cc16"], ["#9333ea", "#ec4899"], ["#0f172a", "#334155"]];
 const DP_OK = /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]{20,40000}$/;
 const IMG_OK = /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]{20,700000}$/;
-const getDp = () => { try { const v = localStorage.getItem("dd-dp"); return DP_OK.test(v || "") ? v : ""; } catch (_) { return ""; } };
+const getDp = () => { if (!MEDIA.profilePhoto) return ""; try { const v = localStorage.getItem("dd-dp"); return DP_OK.test(v || "") ? v : ""; } catch (_) { return ""; } };
 // Report a person's profile photo or status line. Sends a private report to the admin queue and hides that item for you at once.
 function openProfileReport(id, name) {
   if (!store || !id || allMyIds().has(id)) return;
@@ -8469,7 +8470,7 @@ function openStoryAdd() {
   const det = el("textarea", { maxlength: "300", rows: "3", "aria-label": "Details" });
   const qexpl = el("input", { type: "text", maxlength: "200", placeholder: "Why is it correct? (optional, shown after answering)", "aria-label": "Explanation" });
   const quizBox = el("div", { class: "st-quiz-form" }, ...qopts.map((inp, i) => el("label", { class: "st-optrow o" + i }, el("b", {}, "ABCD"[i]), inp)), el("label", { class: "st-ansrow" }, el("span", {}, "✅"), qans), qexpl);
-  const file = el("input", { type: "file", accept: "image/*", "aria-label": "Choose a photo" });
+  const file = el("input", { type: "file", accept: "image/*", capture: MEDIA.gallery ? null : "environment", "aria-label": MEDIA.gallery ? "Choose a photo" : "Take a photo" });
   file.addEventListener("change", async () => {
     err.textContent = ""; img = "";
     try {
@@ -8878,7 +8879,7 @@ render();
   if (store.subscribeWhere && store.uid) { const keep = { to: [], from: [] }, merge = () => { state.privAns = [...keep.to, ...keep.from.filter(x => !keep.to.some(y => y.id === x.id))]; try { render(); } catch (_) {} }; store.subscribeWhere("privateAnswers", "toUid", store.uid, rows => { keep.to = rows; merge(); }, () => {}); store.subscribeWhere("privateAnswers", "ownerUid", store.uid, rows => { keep.from = rows; merge(); }, () => {}); }
   let dpChecked = false;
   store.subscribe("profiles", rows => {
-    state.profiles = rows.filter(p => typeof p.name === "string" && (!p.dp || DP_OK.test(p.dp))).map(p => ({ ...p, status: String(p.status || "").slice(0, 60), verified: p.verified === true, plus: p.plus === true, curio: Number.isInteger(p.curio) && p.curio > 0 ? Math.min(p.curio, 100000) : 0, cid: typeof p.cid === "string" && CLID_OK.test(p.cid) ? p.cid : "", handle: typeof p.handle === "string" && /^[a-z0-9_]{3,15}$/.test(p.handle) ? p.handle : "", streak: Number.isInteger(p.streak) && p.streak > 0 ? p.streak : 0 })); update();
+    state.profiles = rows.filter(p => typeof p.name === "string" && (!p.dp || DP_OK.test(p.dp))).map(p => ({ ...p, dp: MEDIA.profilePhoto ? p.dp : "", status: String(p.status || "").slice(0, 60), verified: p.verified === true, plus: p.plus === true, curio: Number.isInteger(p.curio) && p.curio > 0 ? Math.min(p.curio, 100000) : 0, cid: typeof p.cid === "string" && CLID_OK.test(p.cid) ? p.cid : "", handle: typeof p.handle === "string" && /^[a-z0-9_]{3,15}$/.test(p.handle) ? p.handle : "", streak: Number.isInteger(p.streak) && p.streak > 0 ? p.streak : 0 })); update();
     if (!dpChecked && (getDp() || getStatus() || myVerified() || state.plan.plus)) { dpChecked = true; const me = rows.find(p => p.id === store.uid); if (!me || (me.dp || "") !== getDp() || me.name !== getName() || (me.status || "") !== getStatus() || (me.verified === true) !== myVerified() || (me.plus === true) !== !!state.plan.plus) syncProfile().catch(() => {}); }
   }, e => {});
   const since = Date.now() - STORY_MS;
