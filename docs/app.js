@@ -1396,6 +1396,7 @@ function showCollegeReveal() {
       el("div", { class: "cr-body" },
         el("h2", {}, COLLEGE), el("p", { class: "cr-full" }, full), place ? el("p", { class: "cr-place" }, "\u{1F4CD} " + place) : null,
         el("div", { class: "cr-stats" }, el("span", {}, "\u{1F4DA} " + nSub), el("span", {}, "\u{1F3DB} " + CLUBS.filter(s => s !== "Other").length + " clubs"), el("span", {}, "\u{1F91D} Your own private board")),
+        el("p", { class: "cr-disc" }, "Independent student community. Not run or endorsed by the college."),
         el("button", { class: "btn primary cr-go", type: "button", onclick: close }, "Enter " + (COLLEGE.length > 22 ? "my college" : COLLEGE) + " \u2192"))));
   ov.style.setProperty("--c1", c1); ov.style.setProperty("--c2", c2);
   const open = () => document.body.append(ov);
