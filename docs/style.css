@@ -2119,3 +2119,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 .ob-chosen { margin: 0; font-weight: 800; color: var(--accent); min-height: 1.4em; }
 .ob-step select { width: 100%; padding: 11px 14px; border-radius: 14px; }
 .ob-chosen.shake { animation: obShake .4s ease; } @keyframes obShake { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+/* College button on phones: neutral pill, one line, never wider than the bar (long names such as "A.C. College (Andhra Christian College)" get an ellipsis). */
+@media (max-width: 700px) {
+  body header.top .college-btn, body.tenant header.top .college-btn { display: inline-block; max-width: calc(100% - 64px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; background: var(--accent-soft); color: var(--ink); border: 1px solid color-mix(in srgb, var(--accent) 25%, var(--line)); }
+}
