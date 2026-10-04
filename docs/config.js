@@ -5,6 +5,8 @@ window.DOUBT_DESK_CONFIG = {
 
   // The Campus Loop Plus (optional paid plan). Keep enabled:false until payments are set up (see PREMIUM.md).
   // monthly / yearly are prices in rupees; functionsUrl is the address of the deployed payment functions.
+  // Background push alerts (needs the push function deployed). Paste the Web Push certificate key from Firebase console > Project settings > Cloud Messaging. It is a public key, safe to publish.
+  push: { vapidKey: "" },
   plus: { enabled: false, weekly: 19, semester: 149, monthly: 49, yearly: 399, functionsUrl: "",
     // Launch offer on the yearly plan until the date below (also set OFFER in functions/index.js). Set offer: null to remove it.
     offer: { label: "Founding student offer", yearly: 299, until: "2026-12-31" },

@@ -74,6 +74,7 @@ try { const g = new URLSearchParams(location.search).get("gift"); if (g && /^[A-
 const SEL = pickCollege(), NO_COLLEGE = SEL === "", IS_RGUKT = SEL === "rgukt";
 const BRAND = BASE_CFG.brand || "The Campus Loop";
 // The Campus Loop Plus (optional paid plan). enabled:false = free early access and a waitlist; see PREMIUM.md to go live.
+const PUSH = { vapidKey: "", ...(BASE_CFG.push || {}) };
 const PLUS = { enabled: false, monthly: 49, yearly: 399, functionsUrl: "", ...(BASE_CFG.plus || {}) };
 function cleanTenant(raw, slug) {
   if (!raw || typeof raw !== "object" || raw.enabled === false) return null;
@@ -625,6 +626,17 @@ async function firebaseStore(conf, prefix = "") {
       await b.commit(); return true;
     },
     showdownBoard: async (week, kind) => (await fs.getDocs(fs.query(fs.collection(db, "showdownColleges"), fs.where("week", "==", week), fs.where("kind", "==", kind), fs.limit(400)))).docs.map(d => d.data()),
+    // Background push alerts: get this browser's token (needs the project's web-push key) and store it under the student's own id.
+    enablePush: async (vapidKey) => {
+      if (!auth || !auth.currentUser || !/^[A-Za-z0-9_-]{60,200}$/.test(vapidKey || "")) throw new Error("Push is not set up yet.");
+      if (!("serviceWorker" in navigator) || !("Notification" in window)) throw new Error("This browser does not support push alerts.");
+      if ((await Notification.requestPermission()) !== "granted") throw new Error("Alerts were not allowed.");
+      const msg = await import(base + "firebase-messaging.js"), reg = await navigator.serviceWorker.ready;
+      const token = await msg.getToken(msg.getMessaging(app), { vapidKey, serviceWorkerRegistration: reg });
+      if (!token) throw new Error("Could not get an alert token.");
+      await fs.setDoc(fs.doc(db, "pushTokens", auth.currentUser.uid), { tokens: [token], updatedAt: Date.now() });
+      return true;
+    },
     getTop: async (coll, id) => { const snap = await fs.getDoc(fs.doc(db, coll, id)); return snap.exists() ? snap.data() : null; },
     authUid: () => (auth && auth.currentUser ? auth.currentUser.uid : ""),
     idToken: async () => (auth && auth.currentUser ? auth.currentUser.getIdToken() : ""),
@@ -1298,7 +1310,7 @@ function renderBottomNav() {
   const icons = { doubts: '❓', ideas: '💡', clubs: '🏛', gate: '🎯', challenges: '🎮', market: '🛒' };
   const labels = { doubts: 'Doubts', ideas: 'Ideas', clubs: 'Clubs', gate: EXAM_LABEL.length > 8 ? EXAM_LABEL.split(/[ /]/)[0] : EXAM_LABEL, challenges: 'Challenges', market: 'Market' };
   nav.replaceChildren(
-    ...['doubts', 'ideas', 'clubs', 'market', 'gate'].filter(tab => (!focusOn() || isAcademicTab(tab)) && featureOn(tab === 'market' ? 'market' : 'doubts')).map(tab => {
+    ...['doubts', 'ideas', 'clubs', 'market', 'gate'].filter(tab => (!isSimple() || tab === 'doubts' || tab === 'ideas' || state.tab === tab) && (!focusOn() || isAcademicTab(tab)) && featureOn(tab === 'market' ? 'market' : 'doubts')).map(tab => {
       const cnt = state[TABS[tab].coll].length;
       return el('button', { type: 'button', class: 'bnav-btn' + (state.tab === tab ? ' active' : ''), onclick: () => {
         if (state.tab === tab) { openAsk(); return; }
@@ -1313,6 +1325,7 @@ function renderBottomNav() {
     }),
     el('button', { type: 'button', class: 'bnav-btn', onclick: () => showPanel('leaders') },
       el('span', { class: 'bnav-icon' }, '🏆'), el('span', { class: 'bnav-label' }, 'Board')),
+    isSimple() ? el('button', { type: 'button', class: 'bnav-btn', onclick: () => setSimple(false) }, el('span', { class: 'bnav-icon' }, '⋯'), el('span', { class: 'bnav-label' }, 'More')) : null,
     el('button', { type: 'button', class: 'bnav-btn' + (!getName() ? ' bnav-pulse' : ''), onclick: () => { state.afterName = null; showPanel(getName() ? 'me' : 'name'); } },
       avatarEl(getName() ? getAvatar() : '👤', 'av bnav-av'), el('span', { class: 'bnav-label' }, getName() ? 'Me' : 'Profile'))
   );
@@ -2107,6 +2120,65 @@ function showHowTo() {
     el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", onclick: close }, "Got it"))));
   document.body.append(ov);
 }
+// ---------- Notification centre, doubts waiting for you, reminders and Simple view ----------
+const isSimple = () => readJSON("dd-simple", true) !== false;
+const setSimple = (on) => { writeJSON("dd-simple", !!on); document.body.classList.toggle("simple", !!on); render(); };
+// Doubts nobody has answered yet, in subjects this student has answered before (the quickest way to get a first answer).
+function waitingDoubts() {
+  if (!store) return [];
+  const mine = allMyIds(), byId = new Map(state.doubts.map(d => [d.id, d])), subj = new Set();
+  for (const r of state.replies) if (r.parentColl === "doubts" && mine.has(r.authorId)) { const d = byId.get(r.parentId); if (d && d.subject) subj.add(d.subject); }
+  if (!subj.size) return [];
+  const cutoff = Date.now() - 3 * 86400000;
+  return state.doubts.filter(d => !d.deleted && !mine.has(d.authorId) && subj.has(d.subject) && (d.createdAt || 0) > cutoff && !d.resolvedReplyId && repliesFor(d.id).length === 0).sort((a, b) => b.createdAt - a.createdAt).slice(0, 5);
+}
+function notifItems() {
+  const items = []; if (!store || !state.loaded) return items;
+  const mine = allMyIds(), seen = Number(readJSON("dd-notif-seen", 0)) || 0, week = Date.now() - 7 * 86400000;
+  const myD = new Map(state.doubts.filter(d => mine.has(d.authorId) && !d.deleted).map(d => [d.id, d]));
+  for (const r of state.replies) {
+    const d = myD.get(r.parentId); if (!d || r.parentColl !== "doubts" || mine.has(r.authorId) || (r.createdAt || 0) < week) continue;
+    items.push({ id: "a" + r.id, at: r.createdAt || 0, icon: "\u{1F4AC}", text: (r.anonymous ? "Someone" : r.authorName || "A classmate") + " answered your doubt: " + String(d.title || "").slice(0, 70), go: () => { state.tab = "doubts"; openItem(d.id); }, fresh: (r.createdAt || 0) > seen });
+  }
+  for (const d of waitingDoubts()) items.push({ id: "w" + d.id, at: d.createdAt || 0, icon: "\u{1F64B}", text: "Waiting for a first answer in " + d.subject + ": " + String(d.title || "").slice(0, 60), go: () => { state.tab = "doubts"; openItem(d.id); }, fresh: true, todo: true });
+  const me = allStats().get(store.uid);
+  if (me && me.streak > 0 && me.days && !me.days.has(dayNum()) && new Date().getHours() >= 17) items.push({ id: "streak" + dayNum(), at: Date.now(), icon: "\u{1F525}", text: "Your " + me.streak + "-day streak ends tonight. Answer one doubt or take the quiz to keep it.", go: () => showUnanswered(), fresh: true, todo: true });
+  if (QUIZ.length && !myQuizAnswer(dayNum())) items.push({ id: "quiz" + dayNum(), at: Date.now() - 1, icon: "\u{1F9E0}", text: "Today's quiz is waiting. It takes one minute.", go: () => showPanel("quiz"), fresh: true, todo: true });
+  return items.sort((a, b) => b.at - a.at).slice(0, 25);
+}
+function renderBell() {
+  let b = $("notifBtn");
+  if (!b) { const host = $("themeBtn"); if (!host || !host.parentNode) return; b = el("button", { class: "chip", id: "notifBtn", type: "button", "aria-label": "Notifications", title: "Notifications", onclick: () => showPanel("notifs") }); host.parentNode.insertBefore(b, host); }
+  const n = notifItems().filter(i => i.fresh).length;
+  b.replaceChildren(el("span", { "aria-hidden": "true" }, "\u{1F514}"), n ? el("i", { class: "bell-n" }, n > 9 ? "9+" : String(n)) : null);
+  b.setAttribute("aria-label", n ? n + " new notifications" : "Notifications");
+}
+// While the app is open in the background, new answers can also appear as a phone notification (only after the student allows it).
+const notified = new Set(); let notifPrimed = false;
+function notifPing() {
+  if (!store || !state.loaded) return;
+  const items = notifItems().filter(i => i.id[0] === "a" && i.fresh);
+  if (!notifPrimed) { items.forEach(i => notified.add(i.id)); notifPrimed = true; return; }
+  for (const i of items) {
+    if (notified.has(i.id)) continue; notified.add(i.id);
+    try { if (document.hidden && "Notification" in window && Notification.permission === "granted") navigator.serviceWorker.getRegistration().then(reg => reg && reg.showNotification(BRAND, { body: i.text.slice(0, 120), icon: "icon-192.png", tag: i.id })); } catch (_) {}
+  }
+}
+function renderNotifs() {
+  const items = notifItems(), perm = "Notification" in window ? Notification.permission : "unsupported", say = el("p", { class: "hint", role: "status" }, "");
+  return [
+    el("h2", {}, "\u{1F514} Notifications"),
+    el("p", { class: "hint" }, "Answers to your doubts, doubts waiting for you, and reminders to keep your streak."),
+    items.length ? el("div", { class: "learn" }, ...items.map(i => el("button", { class: "learn-card notif-row" + (i.fresh ? " fresh" : ""), type: "button", onclick: () => { writeJSON("dd-notif-seen", Date.now()); i.go(); } }, el("span", { class: "notif-ic", "aria-hidden": "true" }, i.icon), el("span", {}, i.text, el("small", { class: "hint" }, i.todo ? "To do" : ago(i.at)))))) : el("p", { class: "hint" }, "You are all caught up. Ask a doubt or answer one to see updates here."),
+    el("div", { class: "rowbtns" },
+      items.length ? el("button", { class: "btn sm", type: "button", onclick: () => { writeJSON("dd-notif-seen", Date.now()); render(); } }, "Mark all as read") : null,
+      PUSH.vapidKey && store && store.enablePush && perm !== "denied" ? el("button", { class: "btn sm primary", type: "button", onclick: async (e) => { e.currentTarget.disabled = true; try { await store.enablePush(PUSH.vapidKey); writeJSON("dd-push-on", true); say.textContent = "Push alerts are on, even when the app is closed."; } catch (er) { say.textContent = (er && er.message) || "Could not turn on alerts."; } } }, readJSON("dd-push-on", false) ? "\u{1F514} Push alerts on" : "\u{1F514} Turn on push alerts") : null,
+      !PUSH.vapidKey && perm === "default" ? el("button", { class: "btn sm primary", type: "button", onclick: async () => { try { const r = await Notification.requestPermission(); say.textContent = r === "granted" ? "Phone alerts are on while the app is open in the background." : "Alerts stay off. You can change this in your browser settings."; } catch (_) { say.textContent = "Your browser does not support alerts."; } } }, "\u{1F4F2} Turn on phone alerts") : null),
+    perm === "denied" ? el("p", { class: "hint" }, "Alerts are blocked in your browser settings.") : null, say,
+    el("p", { class: "hint" }, PUSH.vapidKey ? "Push alerts reach you even when the app is closed. They show only a short title." : "Phone alerts only work while the app is open in the background. Alerts when the app is fully closed need the push server to be switched on."),
+    el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")),
+  ];
+}
 // Every screen opened from a tab or a button explains itself: what it is for, how to use it, how to stay safe and the next step. It can be closed (and brought back) without redrawing, so a half-written form is never lost.
 const SAFE_COMMON = "Never share your password, OTP or bank details with anyone here. Staff will never ask for them.";
 const MODE_GUIDE = {
@@ -2128,6 +2200,7 @@ const MODE_GUIDE = {
   explore: { icon: "\u{1F9ED}", purpose: "Discover what is happening across the app.", steps: ["Browse the cards.", "Open one that interests you.", "Come back for new things daily."], safe: SAFE_COMMON, next: ["❓ Ask a doubt", "ask"] },
   drives: { icon: "\u{1F3E2}", purpose: "Campus drives and company visits with dates and links.", steps: ["Check the date and eligibility.", "Open the official link to register.", "Prepare using the resume tool."], safe: "A real drive never asks you to pay. Report any post that does.", next: ["\u{1F4C4} Build my resume", "resume"] },
   events: { icon: "\u{1F4C5}", purpose: "Events, fests and workshops on your campus.", steps: ["Pick an event.", "Check the date and place.", "Invite a friend."], safe: "Meet in public places on campus.", next: ["\u{1F4E2} Notices", "notices"] },
+  notifs: { icon: "\u{1F514}", purpose: "Everything that needs you: answers to your doubts, doubts waiting for a first answer, and streak reminders.", steps: ["Tap a line to open it.", "Answer a waiting doubt to be the first helper.", "Turn on phone alerts if you want a ping while the app is in the background."], safe: "Alerts show only the title of a post. Nothing private is sent anywhere.", next: ["\u{1F64B} See open doubts", "intro"] },
   loopysearch: { icon: "\u{1F50E}", purpose: "Search any topic and see it: a quick answer, a picture, then videos, diagrams and PDFs.", steps: ["Type a topic or a unit name.", "Pick Quick idea, Deep lecture or Exam prep.", "Open a video, diagram or PDF, or ask Loopy to explain."], safe: "Results open other websites. Download only from trusted sites.", next: ["\u2753 Ask classmates", "ask"] },
   ai: { icon: "\u{1F916}", purpose: "Ask Loopy for study help.", steps: ["Type a clear question.", "Read the answer.", "Check important facts in your textbook."], safe: "Loopy can make mistakes. Do not type personal details into it.", next: ["❓ Ask classmates", "ask"] },
   resume: { icon: "\u{1F4C4}", purpose: "Build a one-page resume from what you have done.", steps: ["Fill in your details.", "Review the preview.", "Save or print it."], safe: "Your resume stays on your device. Share it only with companies you have verified.", next: ["\u{1F3E2} See drives", "drives"] },
@@ -4316,8 +4389,15 @@ const RGUKT_SYLLABUS = {
 const RGUKT_SYLLABUS_PAGES = [["https://rguktsklm.ac.in/academics/cirriculums", "Srikakulam: all curriculums"], ["https://www.rguktrkv.ac.in/Academics.php?view=Curriculum", "RK Valley: curriculum"], ["https://rguktn.ac.in/academics/programmes/", "Nuzvid: programmes"]];
 const unitKey = (code) => "dd-units-" + String(code).replace(/[^A-Za-z0-9]/g, "").slice(0, 24);
 // One subject: its official syllabus, then six units (two per mid exam) with a tick list and study links for each unit.
+let _unitsLoading = false;
+function loadUnits() {
+  if (window.RGUKT_UNITS || _unitsLoading) return; _unitsLoading = true;
+  const sc = document.createElement("script"); sc.src = "rgukt-units.js?v=" + ((document.querySelector('script[src^="app.js"]') || {}).src || "").split("v=")[1];
+  sc.onload = () => { if (state.mode === "curriculum") render(); }; sc.onerror = () => { window.RGUKT_UNITS = {}; }; document.head.append(sc);
+}
 function renderSubject(C, r) {
-  const [name, code, credits, cat] = r, key = unitKey(code), done = readJSON(key, []).filter(n => Number.isInteger(n) && n >= 1 && n <= 6);
+  loadUnits();
+  const [name, code, credits, cat] = r, key = unitKey(code), U = window.RGUKT_UNITS || {}, found = code.split("/").map(x => x.trim().toUpperCase()).map(c => U[c]).find(Boolean), unitInfo = (n) => found && Array.isArray(found.n) ? found.n.find(u => u && u.u === n) : null, done = readJSON(key, []).filter(n => Number.isInteger(n) && n >= 1 && n <= 6);
   const pdf = RGUKT_SYLLABUS[curState.branch];
   const unitUrl = (n, kind) => kind === "v" ? lectureUrl(name, "unit " + n) : "https://www.google.com/search?q=" + encodeURIComponent(name + " unit " + n + " notes filetype:pdf");
   const toggle = (n) => { const cur = new Set(readJSON(key, [])); cur.has(n) ? cur.delete(n) : cur.add(n); writeJSON(key, [...cur]); render(); };
@@ -4327,13 +4407,14 @@ function renderSubject(C, r) {
     el("p", { class: "hint" }, code + " · " + credits + " credit" + (credits === 1 ? "" : "s") + " · " + curState.year + " · " + (C.branches[curState.branch] || curState.branch)),
     el("div", { class: "guide-card" },
       el("div", { class: "guide-head" }, el("span", { class: "guide-ic", "aria-hidden": "true" }, "\u{1F4C4}"), el("div", {}, el("small", {}, "OFFICIAL SYLLABUS"), el("strong", {}, "Unit-wise topics are in the RGUKT document"))),
-      el("p", { class: "hint" }, "Open the syllabus PDF from the RGUKT website and look for " + code.split(" / ")[0] + ". It lists the topics of every unit."),
+      el("p", { class: "hint" }, found ? "Unit topics below come from the official RGUKT syllabus. The PDF has the full detail. Look for " : "Open the syllabus PDF from the RGUKT website and look for " + code.split(" / ")[0] + ". It lists the topics of every unit."),
       el("div", { class: "rowbtns" }, pdf ? outLink(pdf[0], "\u{1F4C4} " + pdf[1], "btn sm primary") : null, ...(pdf ? [] : RGUKT_SYLLABUS_PAGES.map(([u, t]) => outLink(u, "\u{1F517} " + t, "btn sm primary")))),
       pdf ? null : el("p", { class: "hint" }, "The syllabus file for this branch is not published as one PDF. Use these official curriculum pages."),
       el("p", { class: "guide-safe" }, el("b", {}, "Stay safe: "), "Download syllabus files only from the official RGUKT links above. Links open in a new tab.")),
     el("div", { class: "label" }, "Your unit tracker (" + done.length + " of 6 done)"),
     el("div", { class: "pq-bar", role: "progressbar", "aria-valuemin": "0", "aria-valuemax": "6", "aria-valuenow": String(done.length) }, el("i", { style: "width:" + Math.round(done.length / 6 * 100) + "%" })),
     ...mids.map(([label, units]) => el("div", { class: "learn" }, el("small", { class: "hint" }, label + " covers units " + units.join(" and ")), ...units.map(n => el("div", { class: "learn-card" },
+      unitInfo(n) ? el("p", { class: "unit-topics" }, el("b", {}, "Unit " + n + (unitInfo(n).t ? ": " + String(unitInfo(n).t) : "")), el("span", {}, String(unitInfo(n).x || ""))) : null,
       el("div", { class: "rowbtns" }, el("button", { class: "btn sm" + (done.includes(n) ? " primary" : ""), type: "button", "aria-pressed": String(done.includes(n)), onclick: () => toggle(n) }, (done.includes(n) ? "✓ " : "") + "Unit " + n), outLink(unitUrl(n, "v"), "▶ Videos", "linkbtn"), outLink(unitUrl(n, "p"), "\u{1F4C4} Notes PDF", "linkbtn")))))),
     el("div", { class: "rowbtns" },
       el("button", { class: "btn sm primary", type: "button", onclick: () => { openLoopySearch(name, "curriculum"); } }, "\u{1F50E} Loopy AI Search"),
@@ -8074,7 +8155,7 @@ function toggleFocus() {
 function render() {
   try {
     document.body.dataset.tab = state.tab; applyFocus();
-    renderHeader(); renderTrendBar(); renderStoryBar(); renderRail(); try { renderGuide(); } catch (_) {} renderList(); renderBottomNav();
+    renderHeader(); renderTrendBar(); renderStoryBar(); renderRail(); try { renderGuide(); } catch (_) {} renderList(); renderBottomNav(); try { document.body.classList.toggle("simple", isSimple()); renderBell(); notifPing(); } catch (_) {}
     // Forms keep what the student is typing while live updates arrive.
     const key = ["ask", "edit", "name", "alumniJoin", "alumniJob", "fun", "lab", "college", "plus"].includes(state.mode) ? state.mode + state.tab : "";
     if (key && key === sheetKey) return;
@@ -8106,6 +8187,7 @@ function render() {
       state.mode === "wardrobe" ? renderWardrobe() :
       state.mode === "drives" ? renderDrives() :
       state.mode === "events" ? renderEvents() :
+      state.mode === "notifs" ? renderNotifs() :
       state.mode === "loopysearch" ? renderLoopySearch() :
       state.mode === "ai" ? renderAI() :
       state.mode === "goals" ? renderGoals() :

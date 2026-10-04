@@ -49,6 +49,13 @@ await t("showdown cheat: jump a player to n=5 is refused", () => assertFails(set
 await t("showdown cap: idea 6 in a week is refused", async () => { for (let i = 0; i < 3; i++) await sd(va, "s1", "anu", "vera", "idea"); await assertFails(sd(va, "s1", "anu", "vera", "idea")); });
 await t("showdown: unknown kind is refused", () => assertFails(sd(va, "s1", "anu", "vera", "hack", { players: 1 })));
 await t("showdown: board is public, player docs are not listable", async () => { await assertSucceeds(getDocs(query(collection(anon, "showdownColleges"), where("week", "==", "s1")))); await assertFails(getDocs(collection(va, "showdownPlayers"))); });
+// ---- push tokens ----
+const tok = "x".repeat(40);
+await t("push: a user stores their own token", () => assertSucceeds(setDoc(doc(alice, "pushTokens", "alice"), { tokens: [tok], updatedAt: Date.now() })));
+await t("push: cannot store a token under another user's id", () => assertFails(setDoc(doc(alice, "pushTokens", "bob"), { tokens: [tok], updatedAt: Date.now() })));
+await t("push: tokens cannot be read back from the app", () => assertFails(getDoc(doc(alice, "pushTokens", "alice"))));
+await t("push: too many or oversized tokens refused", async () => { await assertFails(setDoc(doc(alice, "pushTokens", "alice"), { tokens: [tok, tok, tok, tok, tok, tok], updatedAt: Date.now() })); await assertFails(setDoc(doc(alice, "pushTokens", "alice"), { tokens: ["y".repeat(500)], updatedAt: Date.now() })); });
+await t("push: extra fields refused, signed out refused", async () => { await assertFails(setDoc(doc(alice, "pushTokens", "alice"), { tokens: [tok], updatedAt: Date.now(), admin: true })); await assertFails(setDoc(doc(anon, "pushTokens", "alice"), { tokens: [tok], updatedAt: Date.now() })); });
 // profile streak
 const prof = (db, uid, extra) => setDoc(doc(db, "rooms/r00m-Abc123xy/profiles", uid + "12345678"), { name: "A", dp: "", updatedAt: Date.now(), ownerUid: uid, ...extra });
 await t("profile with streak 5 is accepted", () => assertSucceeds(prof(alice, "alice", { streak: 5 })));

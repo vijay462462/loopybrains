@@ -319,6 +319,17 @@ service cloud.firestore {
         && battleOk(request.resource.data, resource == null ? {'correct': 0, 'total': 0, 'players': 0} : resource.data);
       allow delete: if false;
     }
+    // Web-push tokens: a signed-in user stores only their OWN token document (id = their uid). Nobody can read tokens from the app;
+    // only the server function that sends notifications can (it ignores these rules).
+    match /pushTokens/{uid} {
+      allow get, list: if false;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['tokens', 'updatedAt'])
+        && request.resource.data.tokens is list && request.resource.data.tokens.size() >= 1 && request.resource.data.tokens.size() <= 5
+        && request.resource.data.tokens[0] is string && request.resource.data.tokens[0].size() >= 20 && request.resource.data.tokens[0].size() <= 400
+        && request.resource.data.updatedAt is int;
+      allow delete: if request.auth != null && request.auth.uid == uid;
+    }
     // Weekly Showdown (ideas and answers). Same idea as the quiz battle, with two extra locks: only a verified e-mail can score, and one student
     // is capped per week (5 ideas, 20 answers). A student's counter and their college's counter must move together by exactly 1.
     function showOk(after, before) {

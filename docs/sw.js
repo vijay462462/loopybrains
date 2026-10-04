@@ -1,30 +1,30 @@
 // RGUKT Spark service worker, v36
 // Cache versioned assets only. Never cache index.html so updates deploy instantly.
-const CACHE = 'spark-v320';
+const CACHE = 'spark-v321';
 const SHELL = [
-  './style.css?v=320',
-  './sparkbot.css?v=320',
-  './config.js?v=320',
-  './quiz.js?v=320',
-  './splash.js?v=320',
-  './plus-data.js?v=320',
-  './colleges-ap.js?v=320',
-  './colleges-ap2.js?v=320',
-  './colleges-ap3.js?v=320',
-  './college-data.js?v=320',
-  './rgukt-curriculum.js?v=320',
-  './lazy.js?v=320',
-  './colleges-india.js?v=320',
-  './app.js?v=320',
-  './sparkbot.js?v=320',
-  './player.js?v=320',
-  './player.css?v=320',
-  './tools-core.js?v=320',
-  './tools-math.js?v=320',
-  './tools-eng.js?v=320',
-  './tools-life.js?v=320',
-  './lab.js?v=320',
-  './lab.css?v=320',
+  './style.css?v=321',
+  './sparkbot.css?v=321',
+  './config.js?v=321',
+  './quiz.js?v=321',
+  './splash.js?v=321',
+  './plus-data.js?v=321',
+  './colleges-ap.js?v=321',
+  './colleges-ap2.js?v=321',
+  './colleges-ap3.js?v=321',
+  './college-data.js?v=321',
+  './rgukt-curriculum.js?v=321',
+  './lazy.js?v=321',
+  './colleges-india.js?v=321',
+  './app.js?v=321',
+  './sparkbot.js?v=321',
+  './player.js?v=321',
+  './player.css?v=321',
+  './tools-core.js?v=321',
+  './tools-math.js?v=321',
+  './tools-eng.js?v=321',
+  './tools-life.js?v=321',
+  './lab.js?v=321',
+  './lab.css?v=321',
   './manifest.json',
   './icon.svg',
   './icon-192.png',
@@ -65,4 +65,16 @@ self.addEventListener('fetch', e => {
       })
       .catch(() => caches.match(e.request))
   );
+});
+
+// Web push (needs the push server to be switched on). Data-only messages: we build the notification here so nothing private is shown on a locked screen.
+self.addEventListener('push', e => {
+  let d = {}; try { d = e.data ? e.data.json() : {}; } catch (_) {}
+  const data = d.data || d, title = String(data.title || 'The Campus Loop').slice(0, 60), body = String(data.body || 'You have a new update.').slice(0, 120);
+  e.waitUntil(self.registration.showNotification(title, { body, icon: './icon-192.png', badge: './favicon-32.png', tag: String(data.tag || 'campusloop').slice(0, 60), data: { url: './' + (/^#[a-z]{3,12}(\/[A-Za-z0-9_-]{1,60})?$/.test(String(data.hash || '')) ? data.hash : '') } }));
+});
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  const url = new URL((e.notification.data && e.notification.data.url) || './', self.registration.scope).href;
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => { for (const c of list) { if (c.url.startsWith(self.registration.scope) && 'focus' in c) { c.navigate && c.navigate(url); return c.focus(); } } return self.clients.openWindow(url); }));
 });

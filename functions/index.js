@@ -7,6 +7,7 @@
 //                       on the student's Plus plan by writing entitlements/<uid> (only this server can write it).
 const { onRequest } = require("firebase-functions/v2/https");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
+const { onDocumentCreated } = require("firebase-functions/v2/firestore");
 const { defineSecret, defineString } = require("firebase-functions/params");
 const admin = require("firebase-admin");
 const crypto = require("crypto");
@@ -207,6 +208,26 @@ exports.askAI = onRequest({ secrets: [ANTHROPIC_KEY], cors: ALLOWED_ORIGINS, reg
     console.error("askAI", e);
     return res.status(500).json({ error: "Something went wrong. Please try again." });
   }
+});
+
+
+// ---------- Push: tell a student when their doubt gets an answer ----------
+// Runs when a reply is created. Only the doubt's owner (ownerUid) is told, never the answerer, and at most 3 pushes per student per hour.
+// Messages are data-only and carry just a short title, so nothing private is shown on a locked screen. Tokens live in pushTokens/<uid> (written by the student's own app, readable only here).
+exports.notifyOnReply = onDocumentCreated({ document: "rooms/{room}/replies/{id}", region: "asia-south1", maxInstances: 5 }, async (event) => {
+  try {
+    const r = event.data && event.data.data(); if (!r || r.parentColl !== "doubts" || typeof r.parentId !== "string" || r.deleted === true) return;
+    const dSnap = await db.doc("rooms/" + event.params.room + "/doubts/" + r.parentId).get(); if (!dSnap.exists) return;
+    const d = dSnap.data(), owner = typeof d.ownerUid === "string" ? d.ownerUid : "";
+    if (!owner || owner === r.ownerUid || d.deleted === true) return;
+    if (!(await allow(owner, "push", 3, 3600000))) return;
+    const tSnap = await db.collection("pushTokens").doc(owner).get(); if (!tSnap.exists) return;
+    const tokens = (tSnap.data().tokens || []).filter(t => typeof t === "string").slice(0, 5); if (!tokens.length) return;
+    const title = String(d.title || "your doubt").replace(/[\u0000-\u001F<>]/g, " ").slice(0, 60);
+    const res = await admin.messaging().sendEachForMulticast({ tokens, data: { title: "New answer", body: "Someone answered your doubt: " + title, tag: "a" + event.params.id, hash: "#doubts/" + r.parentId.replace(/[^A-Za-z0-9_-]/g, "").slice(0, 60) }, webpush: { headers: { Urgency: "normal", TTL: "86400" } } });
+    const dead = tokens.filter((_, i) => !res.responses[i].success && /registration-token-not-registered|invalid-registration-token|invalid-argument/.test((res.responses[i].error && res.responses[i].error.code) || ""));
+    if (dead.length) await db.collection("pushTokens").doc(owner).set({ tokens: tokens.filter(t => !dead.includes(t)).length ? tokens.filter(t => !dead.includes(t)) : admin.firestore.FieldValue.delete(), updatedAt: Date.now() }, { merge: true }).catch(() => {});
+  } catch (e) { console.error("notifyOnReply", e); }
 });
 
 // ---------- Referral rewards ----------

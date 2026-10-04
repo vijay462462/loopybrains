@@ -2473,3 +2473,16 @@ html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 .ab-agree input { flex: none; width: 22px; height: 22px; margin-top: 1px; accent-color: var(--accent); }
 .ab-agree a { text-decoration: underline; font-weight: 700; }
 .welcome-skip[hidden] { display: none !important; }
+
+#notifBtn { position: relative; }
+.bell-n { position: absolute; top: -4px; right: -4px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 99px; background: #ef4444; color: #fff; font: 800 10px/17px system-ui, sans-serif; text-align: center; font-style: normal; }
+.notif-row { display: flex; gap: 12px; align-items: flex-start; text-align: left; width: 100%; cursor: pointer; font: inherit; color: inherit; }
+.notif-row.fresh { border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); background: color-mix(in srgb, var(--accent) 9%, var(--sheet)); }
+.notif-row span:last-child { display: grid; gap: 2px; }
+.notif-ic { font-size: 22px; flex: none; }
+body.simple .hdr-actions .chip.tool:not(#quizBtn):not(#aboutBtn):not(#leadersBtn) { display: none; }
+body.simple .tabs button[data-tab="clubs"], body.simple .tabs button[data-tab="jobs"], body.simple .tabs button[data-tab="market"], body.simple .tabs button[data-tab="gate"] { display: none; }
+body.simple .tabs button[aria-selected="true"] { display: inline-flex; }
+
+.unit-topics { display: grid; gap: 4px; margin: 0 0 8px; font-size: 13.5px; line-height: 1.45; }
+.unit-topics span { color: color-mix(in srgb, currentColor 78%, transparent); }
