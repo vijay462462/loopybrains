@@ -1636,6 +1636,7 @@ function renderToday() {
       stat(pts, "points this week ⚡", "", () => showPanel("wboard")),
       QUIZ.length ? stat(quizDone ? "✓" : "Go", quizDone ? "quiz done 🧠" : "today's quiz 🧠", quizDone ? "" : "pulse", () => showPanel("quiz")) : null),
     el("div", { class: "today-chips" },
+      IS_RGUKT ? chip("\u{1F4D8} Semester subjects", "", () => { state.mode = "curriculum"; render(); try { $("sheet").scrollIntoView({ behavior: "smooth" }); } catch (_) {} }) : null,
       left != null && left >= 0 && left <= 60 ? chip("⏳ " + (left === 0 ? "Exam today" : left + " days to exam"), left <= 7 ? "warn" : "", () => showPanel("planner")) : null,
       upcomingEvents().filter(e => e.startAt < Date.now() + 7 * 864e5).length ? chip("🎉 " + upcomingEvents().filter(e => e.startAt < Date.now() + 7 * 864e5).length + " event" + (upcomingEvents().filter(e => e.startAt < Date.now() + 7 * 864e5).length === 1 ? "" : "s") + " this week", "", () => showPanel("events")) : null,
       unansweredDoubts().length ? chip("🙋 " + unansweredDoubts().length + " doubt" + (unansweredDoubts().length === 1 ? "" : "s") + " need an answer", "pulse", showUnanswered) : null,
@@ -3787,10 +3788,40 @@ function expertHelp(d) {
     el("p", { class: "hint" }, "\u201cAsk on IIT NPTEL forum\u201d copies this doubt and opens the IIT course for " + g + ". Enrol free, open the course forum, and paste it there."));
 }
 
+// RGUKT subjects by year, branch and campus (from the RGUKT draft timetable: subject names and codes only, no exam dates).
+const curState = { year: "E1", branch: "", campus: "ALL" };
+function renderCurriculum() {
+  const C = window.RGUKT_CURRICULUM;
+  if (!C) return [el("h2", {}, "RGUKT subjects"), el("p", { class: "hint" }, "Not available right now."), el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")];
+  const yrs = Object.keys(C.years), brs = Object.keys(C.data[curState.year] || {});
+  if (!brs.includes(curState.branch)) curState.branch = brs[0] || "";
+  const rows = ((C.data[curState.year] || {})[curState.branch] || []).filter(r => curState.campus === "ALL" || r[4] === "ALL" || String(r[4]).split(",").includes(curState.campus));
+  const chip = (label, on, fn) => el("button", { type: "button", class: "btn sm" + (on ? " primary" : ""), onclick: fn }, label);
+  const camps = Object.entries(C.campuses);
+  const catName = { BSC: "Basic Science", ESC: "Engineering Science", PCC: "Core", PEC: "Professional Elective", OEC: "Open Elective", MC: "Mandatory", HSC: "Humanities", HSMC: "Humanities" };
+  return [
+    el("h2", {}, "\u{1F4D8} RGUKT subjects"),
+    el("p", { class: "hint" }, "Subjects and subject codes by year, branch and campus, taken from the RGUKT timetable. Use it as a reference. Check the official RGUKT notices for the final list."),
+    el("div", { class: "label" }, "Year"),
+    el("div", { class: "rowbtns" }, ...yrs.map(y => chip(y + " \u00B7 " + C.years[y], curState.year === y, () => { curState.year = y; render(); }))),
+    el("div", { class: "label" }, "Branch"),
+    el("div", { class: "rowbtns" }, ...brs.map(b => chip(b, curState.branch === b, () => { curState.branch = b; render(); }))),
+    curState.year === "E3" || curState.year === "E4" ? el("div", { class: "label" }, "Campus") : null,
+    curState.year === "E3" || curState.year === "E4" ? el("div", { class: "rowbtns" }, chip("All", curState.campus === "ALL", () => { curState.campus = "ALL"; render(); }), ...camps.map(([k, v]) => chip(v, curState.campus === k, () => { curState.campus = k; render(); }))) : el("p", { class: "hint" }, "Years E1 and E2 are the same on every campus."),
+    el("p", { class: "hint" }, rows.length + " subject" + (rows.length === 1 ? "" : "s") + " \u00B7 " + (C.branches[curState.branch] || curState.branch) + " \u00B7 " + curState.year),
+    el("div", { class: "learn" }, rows.length ? rows.map(r => el("div", { class: "learn-card" },
+      el("span", { class: "tag" }, r[1]),
+      el("strong", {}, r[0]),
+      el("small", { class: "hint" }, [r[2] + " credit" + (r[2] === 1 ? "" : "s"), catName[r[3]] || r[3], r[4] === "ALL" ? "All campuses" : String(r[4]).split(",").map(c => C.campuses[c] || c).join(", ")].join(" \u00B7 ")),
+      el("div", { class: "rowbtns" }, el("button", { class: "linkbtn", type: "button", onclick: () => { state.tab = "doubts"; state.group = "All"; state.filter = "all"; state.query = r[0]; state.selected = null; state.mode = "intro"; render(); } }, "\u{1F50E} Doubts on this"), outLink(lectureUrl(r[0]), "\u25B6 Lectures", "linkbtn"), outLink(nptelUrl(r[0]), "\u{1F393} IIT course", "linkbtn")))) : [el("p", { class: "hint" }, "No subjects listed here for this campus.")]),
+    el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")),
+  ];
+}
 function renderLearn() {
   const pending = state.doubts.filter(needsMentor).sort((a, b) => a.createdAt - b.createdAt);
   const msg = "Hi! Students of G Block Mind Hub need help with these doubts:\n" + pending.slice(0, 10).map((d, i) => (i + 1) + ". [" + d.subject + "] " + d.title + " " + location.origin + location.pathname + "#doubts/" + d.id).join("\n") + "\nThe class code is needed to open them. Thank you!";
   return [
+    IS_RGUKT ? el("button", { class: "btn primary", type: "button", onclick: () => { state.mode = "curriculum"; render(); } }, "\u{1F4D8} RGUKT subjects by year, branch and campus") : null,
     el("h2", {}, "📚 Learn from IIT"),
     el("p", { class: "hint" }, "Free courses and lectures by IIT professors. NPTEL course forums are answered by IIT teaching assistants."),
     el("div", { class: "rowbtns" },
@@ -7379,6 +7410,7 @@ function render() {
       state.mode === "leaders" ? renderLeaders() :
       state.mode === "quiz" ? renderQuiz() :
       state.mode === "me" ? renderMe() :
+      state.mode === "curriculum" ? renderCurriculum() :
       state.mode === "learn" ? renderLearn() :
       state.mode === "resources" ? renderResources() :
       state.mode === "career" ? renderCareer() :
