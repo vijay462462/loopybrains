@@ -165,7 +165,7 @@ async function loadTenant() {
 const TENANT = await loadTenant();
 const EXAM_LABEL = (TENANT && TENANT.examLabel) || "GATE";   // the exam tab: GATE for engineering, NEET PG for medical, CLAT for law, and so on
 const ROOM_PATH = TENANT ? "rooms/" + TENANT.room + "/" : IS_RGUKT ? DEFAULT_ROOM_PATH : "lobby/";
-const COLLEGE = TENANT ? TENANT.name : IS_RGUKT ? "RGUKT" : "your college";
+const COLLEGE = TENANT ? TENANT.name : IS_RGUKT ? "RGUKT AP" : "your college";
 // Email domains a student of this college signs up with. Used to check the verified email; empty = any email is accepted.
 const COLLEGE_DOMAINS = TENANT ? TENANT.domains : IS_RGUKT ? ["rguktn.ac.in", "rguktong.ac.in", "rguktrkv.ac.in", "rguktsklm.ac.in"] : [];
 const featureOn = (k) => !TENANT || TENANT.features[k] !== false;
@@ -1340,7 +1340,7 @@ function showWelcome(force, startId) {
         el("p", { class: "ab-meta" }, ab.email ? el("a", { href: "mailto:" + ab.email }, "Write to us: " + ab.email) : null, ab.email ? " · " : "", el("a", { href: "about.html", target: "_blank", rel: "noopener" }, "Our full story"), " · ", el("a", { href: "privacy.html", target: "_blank", rel: "noopener" }, "Privacy"), " · ", el("a", { href: "terms.html", target: "_blank", rel: "noopener" }, "Terms"))];
     } else if (sid === "college") {
       const badge = (slug, name, st) => { const [ca, cb] = slug === "rgukt" ? STATE_COLORS["Andhra Pradesh"] : collegeColors(slug, st || ""); const ini = name.replace(/\(.*?\)/g, "").split(/[\s-]+/).filter(w => /^[A-Za-z]/.test(w) && !/^(of|and|the|for|in)$/i.test(w)).slice(0, 2).map(w => w[0].toUpperCase()).join("") || "C"; const b = el("span", { class: "col-badge", "aria-hidden": "true" }, ini); b.style.setProperty("background", "linear-gradient(135deg," + ca + "," + cb + ")"); return b; };
-      const all = [{ slug: "rgukt", name: "RGUKT", state: "Andhra Pradesh", sub: "Rajiv Gandhi University of Knowledge Technologies" }, ...DIRECTORY.filter(d => d.slug !== "rgukt").map(d => ({ slug: d.slug, name: d.name, state: d.state || "Andhra Pradesh", sub: [d.city, d.kind].filter(Boolean).join(" \u00B7 ") }))];
+      const all = [{ slug: "rgukt", name: "RGUKT AP", state: "Andhra Pradesh", sub: "Rajiv Gandhi University of Knowledge Technologies, Andhra Pradesh" }, ...DIRECTORY.filter(d => d.slug !== "rgukt").map(d => ({ slug: d.slug, name: d.name, state: d.state || "Andhra Pradesh", sub: [d.city, d.kind].filter(Boolean).join(" \u00B7 ") }))];
       const list = el("div", { class: "ob-colist", role: "listbox", "aria-label": "Colleges" }), chosen = el("p", { class: "ob-chosen", role: "status" }, ""), stSel = stateSheet(() => cst, (v) => { cst = v; fill(); });
       const mark = () => { chosen.textContent = pickSlug ? "\u2705 " + pickName : "Pick your college to continue"; };
       const fill = () => {
@@ -1378,7 +1378,7 @@ function showCollegeReveal() {
   const dir = DIRECTORY.find(c => c.slug === SEL) || {};
   const st = IS_RGUKT ? "Andhra Pradesh" : (dir.state || (TENANT && TENANT.state) || "");
   const [c1, c2] = IS_RGUKT ? STATE_COLORS["Andhra Pradesh"] : collegeColors(SEL, st);
-  const full = IS_RGUKT ? "Rajiv Gandhi University of Knowledge Technologies" : (TENANT && TENANT.name) || dir.name || COLLEGE;
+  const full = IS_RGUKT ? "Rajiv Gandhi University of Knowledge Technologies, Andhra Pradesh" : SEL === "rgukt-basara" ? "Rajiv Gandhi University of Knowledge Technologies, Basara, Telangana" : (TENANT && TENANT.name) || dir.name || COLLEGE;
   const place = IS_RGUKT ? "Nuzvid \u00B7 RK Valley \u00B7 Ongole \u00B7 Srikakulam" : [dir.city, dir.kind, st].filter(Boolean).join(" \u00B7 ");
   const nSub = RGUKT_DEPTS ? Object.keys(RGUKT_DEPTS).length + " branches" : SUBJECTS.filter(s => s !== "Other").length + " subjects";
   const NS = "http://www.w3.org/2000/svg", mk = (t, at) => { const n = document.createElementNS(NS, t); for (const k in at) n.setAttribute(k, at[k]); return n; };
@@ -3101,7 +3101,7 @@ async function battleRecord(ok) {
   try { if (await store.battleHit(weekKey(), slug, !!ok) && ok) { rec.n++; localStorage.setItem("dd-battle-day", JSON.stringify(rec)); } } catch (_) {}
 }
 function collegeInfo(slug) {
-  if (slug === "rgukt") return { name: "RGUKT", state: "Andhra Pradesh" };
+  if (slug === "rgukt") return { name: "RGUKT AP", state: "Andhra Pradesh" };
   const d = DIRECTORY.find(c => c.slug === slug); if (d) return { name: d.name, state: d.state || "Andhra Pradesh" };
   return { name: slug.replace(/-/g, " ").replace(/\b\w/g, m => m.toUpperCase()), state: "" };
 }
@@ -4522,7 +4522,7 @@ function renderCollege() {
     m.delete("rgukt");
     return [...m.values()].sort((a, b) => a.name.localeCompare(b.name));
   };
-  const rgukt = { slug: "rgukt", name: "RGUKT", state: "Andhra Pradesh", sub: "Rajiv Gandhi University of Knowledge Technologies" };
+  const rgukt = { slug: "rgukt", name: "RGUKT AP", state: "Andhra Pradesh", sub: "Rajiv Gandhi University of Knowledge Technologies, Andhra Pradesh" };
   const stCounts = () => { const c = {}; for (const x of [rgukt, ...entries()]) c[x.state] = (c[x.state] || 0) + 1; return c; };
   const stateSelect = stateSheet(() => stateSel, (v) => { stateSel = v; try { localStorage.setItem("dd-state", stateSel); } catch (_) {} fill(); }, (s) => stCounts()[s] || 0);
   const drawStates = () => { stateSelect.sync(); };
@@ -7618,7 +7618,7 @@ if (CFG.title) { document.title = CFG.title; }
   const h1 = $("siteTitle");
   if (h1) { const m = /^(.*?[a-z])([A-Z][a-z]*)$/.exec(CFG.title.trim()); const w = CFG.title.trim().split(/\s+/); if (w.length > 1) { const last = w.pop(); h1.replaceChildren(w.join(" ") + " ", el("span", {}, last)); } else if (m) h1.replaceChildren(m[1], el("span", {}, m[2])); else h1.textContent = CFG.title; }
   const sc = $("streakChip"); if (sc) sc.addEventListener("click", () => showPanel("me"));
-  const cb = $("collegeBtn"); if (cb) { cb.replaceChildren(...(TENANT && TENANT.crest ? [crestEl(22), " "] : ["🏫 "]), (TENANT ? TENANT.name : IS_RGUKT ? "RGUKT" : "Choose your college") + " ▾");
+  const cb = $("collegeBtn"); if (cb) { cb.replaceChildren(...(TENANT && TENANT.crest ? [crestEl(22), " "] : ["🏫 "]), (TENANT ? TENANT.name : IS_RGUKT ? "RGUKT AP" : "Choose your college") + " ▾");
   try { if (TENANT && TENANT.crest) localStorage.setItem("dd-crest", TENANT.crest); else localStorage.removeItem("dd-crest"); localStorage.setItem("dd-college-name", COLLEGE || ""); } catch (_) {} cb.addEventListener("click", () => showPanel("college")); }
 }
 

@@ -514,6 +514,7 @@
   { slug: "loyola-college", name: "Loyola College", city: "Chennai", state: "Tamil Nadu", kind: "Degree college" },
   { slug: "madras-christian-college", name: "Madras Christian College", city: "Chennai", state: "Tamil Nadu", kind: "Degree college" },
   { slug: "presidency-college-chennai", name: "Presidency College Chennai", city: "Chennai", state: "Tamil Nadu", kind: "Degree college" },
+  { slug: "rgukt-basara", name: "RGUKT Basara", city: "Basara, Nirmal", state: "Telangana", kind: "Engineering university" },
   { slug: "iit-hyderabad", name: "IIT Hyderabad", city: "Hyderabad", state: "Telangana", kind: "National institute" },
   { slug: "nit-warangal", name: "NIT Warangal", city: "Warangal", state: "Telangana", kind: "National institute" },
   { slug: "iiit-hyderabad", name: "IIIT Hyderabad", city: "Hyderabad", state: "Telangana", kind: "National institute" },

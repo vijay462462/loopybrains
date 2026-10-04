@@ -66,5 +66,12 @@ window.COLLEGE_DATA = {
     source: "https://www.aknu.edu.in/UCST/ucst-courses.php",
     subjects: ["Computer Science", "Electronics and Communication", "Civil", "Mechanical", "Information Technology", "Mathematics", "Physics", "Chemistry", "Botany", "Zoology", "Biochemistry", "Biotechnology", "Geology", "Aquaculture", "MBA", "MCA", "BCA", "Law", "Education", "Other"],
     exam: "Competitive exams", bot: false
+  },
+  // RGUKT Basara (Telangana): the Telangana campus of the Rajiv Gandhi University of Knowledge Technologies (separate from RGUKT AP).
+  // Branches below are the usual engineering branches of the RGUKT system; confirm against the official Basara site before launch.
+  "rgukt-basara": {
+    source: "https://www.rgukt.ac.in/",
+    subjects: ["Computer Science", "Electronics and Communication", "Electrical and Electronics", "Mechanical", "Civil", "Chemical Engineering", "Metallurgical and Materials", "Maths", "Physics", "Chemistry", "English", "Other"],
+    clubs: ["Coding Club", "Robotics", "Cultural", "Sports", "NSS", "Literary", "Other"], exam: "GATE", bot: false
   }
 };
