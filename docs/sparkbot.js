@@ -451,6 +451,9 @@ function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>
 // ════════════════════════════════════════════════════════════
 //  ORB SVG
 // ════════════════════════════════════════════════════════════
+function loopy(size=30) {
+  return `<svg class="sb-loopy" width="${size}" height="${size}" viewBox="0 0 60 60" aria-hidden="true"><line x1="30" y1="6" x2="30" y2="12" stroke="#c4b5fd" stroke-width="3" stroke-linecap="round"/><circle cx="30" cy="5" r="3.5" fill="#fde047"/><rect x="8" y="12" width="44" height="38" rx="15" fill="#fff" stroke="#a78bfa" stroke-width="2.5"/><rect x="13" y="18" width="34" height="25" rx="11" fill="#1e1757"/><ellipse class="sb-eye" cx="23" cy="28" rx="3.4" ry="4.6" fill="#67e8f9"/><ellipse class="sb-eye" cx="37" cy="28" rx="3.4" ry="4.6" fill="#67e8f9"/><path d="M25 36q5 4.5 10 0" fill="none" stroke="#fde68a" stroke-width="2.4" stroke-linecap="round"/></svg>`;
+}
 function orb(size=40) {
   const c = size/2, r1=c*.82, r2=c*.62, r3=c*.44;
   return `<svg class="sb-orb" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
@@ -490,16 +493,14 @@ function build() {
     <button id="sb-btn" type="button" aria-label="Open Loop Bot">
       ${orb(38)}<span class="sb-btn-ring"></span><span class="sb-btn-badge">✦</span>
     </button>
-    <div id="sb-win" role="dialog" aria-label="Loop Bot" aria-hidden="true">
+    <div id="sb-win" role="dialog" aria-label="Loopy, your study buddy" aria-hidden="true">
       <div class="sb-frame">
         <div class="sb-top">
-          <div class="sb-pts">${particles(22)}</div>
-          <div class="sb-scan"></div>
           <div class="sb-top-row">
-            <div class="sb-top-av">${orb(44)}</div>
+            <div class="sb-top-av">${loopy(46)}</div>
             <div class="sb-top-info">
-              <div class="sb-top-name">Loop Bot</div>
-              <div class="sb-top-stat"><span class="sb-live-dot"></span>Premium AI · Online · v5</div>
+              <div class="sb-top-name">Loopy</div>
+              <div class="sb-top-stat"><span class="sb-live-dot"></span>Your study buddy · Online</div>
             </div>
             <select class="sb-lang" id="sb-lang" aria-label="Voice language" title="Voice language">
               <option value="en-IN">EN</option><option value="te-IN">తెలుగు</option><option value="hi-IN">हिन्दी</option>
@@ -534,52 +535,11 @@ function build() {
   document.getElementById('sb-clr').onclick  = clearChat;
   initVoice();
 
-  // ── Inline styles ─────────────────────────────────────
   const inp = document.getElementById('sb-in');
-  Object.assign(inp.style,{
-    flex:'1',background:'rgba(10,8,30,.72)',
-    border:'1.5px solid rgba(139,92,246,.4)',borderRadius:'28px',
-    padding:'11px 20px',fontSize:'14px',fontWeight:'600',
-    fontFamily:"'Bricolage Grotesque','Atkinson Hyperlegible',system-ui,sans-serif",
-    letterSpacing:'.01em',
-    color:'#f0ebff',outline:'none',boxSizing:'border-box',
-    boxShadow:'inset 0 1px 0 rgba(196,181,253,.08),0 2px 16px rgba(109,40,217,.18)',
-    backdropFilter:'blur(12px)',
-    transition:'border-color .2s,box-shadow .25s,background .2s',
-  });
-  inp.addEventListener('focus',()=>{
-    inp.style.background='rgba(20,12,48,.82)';
-    inp.style.borderColor='rgba(167,139,250,.85)';
-    inp.style.boxShadow='0 0 0 3px rgba(109,40,217,.2),0 0 28px rgba(139,92,246,.18),inset 0 1px 0 rgba(196,181,253,.15)';
-  });
-  inp.addEventListener('blur',()=>{
-    inp.style.background='rgba(10,8,30,.72)';
-    inp.style.borderColor='rgba(139,92,246,.4)';
-    inp.style.boxShadow='inset 0 1px 0 rgba(196,181,253,.08),0 2px 16px rgba(109,40,217,.18)';
-  });
   inp.addEventListener('keydown', e => { if (e.key==='Enter') send(); });
 
-  const go = document.getElementById('sb-go');
-  Object.assign(go.style,{
-    width:'42px',height:'42px',minWidth:'42px',borderRadius:'50%',border:'none',cursor:'pointer',flexShrink:'0',
-    background:'linear-gradient(135deg,#9333ea,#ec4899,#06b6d4)',
-    color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',
-    boxShadow:'0 4px 18px rgba(147,51,234,.55),0 0 14px rgba(236,72,153,.3)',
-    transition:'transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .2s',
-  });
-  go.onmouseenter=()=>{ go.style.transform='scale(1.14) translateY(-2px)';go.style.filter='brightness(1.18)'; };
-  go.onmouseleave=()=>{ go.style.transform='';go.style.filter=''; };
-
-  const bar = document.querySelector('.sb-bar');
-  if (bar) Object.assign(bar.style,{
-    background:'linear-gradient(180deg,rgba(15,10,40,.85) 0%,rgba(8,6,28,.92) 100%)',
-    borderTop:'1px solid rgba(139,92,246,.2)',
-    display:'flex',alignItems:'center',gap:'10px',padding:'10px 14px',flexShrink:'0',
-    backdropFilter:'blur(16px)',
-  });
-
   setChips(QUICK_DEFAULT);
-  addMsg('bot',"🌟 **Hey! I'm Loop Bot v5** — your premium AI companion for The Campus Loop!\n\nI can answer questions about:\n📚 Academics · 🎯 GATE prep · 🏫 Campus life · 💼 Career\n💻 Programming · 🧠 Engineering subjects · ✨ App features\n\n*Ask me anything in your own words!* 🚀", true);
+  addMsg('bot',"🌟 **Hi, I'm Loopy** — your study buddy on The Campus Loop!\n\nI can answer questions about:\n📚 Academics · 🎯 GATE prep · 🏫 Campus life · 💼 Career\n💻 Programming · 🧠 Engineering subjects · ✨ App features\n\n*Ask me anything in your own words!* 🚀", true);
 }
 
 function toggle() {
@@ -603,7 +563,7 @@ function addMsg(role, text, instant=false) {
   d.className=`sb-msg sb-${role}`; d.style.setProperty('--n',msgCount++);
   if (role==='bot') {
     const cid=`sbc-${Date.now()}-${msgCount}`;
-    d.innerHTML=`<div class="sb-av">${orb(26)}</div>
+    d.innerHTML=`<div class="sb-av">${loopy(30)}</div>
       <div class="sb-bub sb-bub-bot">
         <span class="sb-bub-shine"></span>
         <div class="sb-bub-txt" id="${cid}">${md(text)}</div>
@@ -622,7 +582,7 @@ function showDots() {
   const msgs=document.getElementById('sb-msgs'); if (!msgs) return;
   const phrase=THINKING[Math.floor(Math.random()*THINKING.length)];
   const d=document.createElement('div'); d.id='sb-dots'; d.className='sb-msg sb-bot';
-  d.innerHTML=`<div class="sb-av">${orb(26)}</div><div class="sb-bub sb-bub-bot"><div class="sb-think-row"><div class="sb-dots"><i></i><i></i><i></i></div><span class="sb-think-txt">${phrase}</span></div></div>`;
+  d.innerHTML=`<div class="sb-av">${loopy(30)}</div><div class="sb-bub sb-bub-bot"><div class="sb-think-row"><div class="sb-dots"><i></i><i></i><i></i></div><span class="sb-think-txt">${phrase}</span></div></div>`;
   msgs.appendChild(d);
   requestAnimationFrame(()=>requestAnimationFrame(()=>d.classList.add('sb-vis')));
   scroll();
@@ -700,22 +660,9 @@ function setChips(list) {
   const bar=document.getElementById('sb-chips'); if (!bar) return;
   bar.innerHTML='';
   list.forEach((q,i)=>{
-    const th=CHIP_THEMES[i%CHIP_THEMES.length];
-    const b=document.createElement('button'); b.type='button'; b.textContent=q;
-    Object.assign(b.style,{
-      padding:'6px 14px',borderRadius:'22px',cursor:'pointer',whiteSpace:'nowrap',
-      fontSize:'12px',fontWeight:'700',letterSpacing:'.2px',
-      background:th.bg,border:'1.5px solid '+th.border,color:th.color,
-      boxShadow:'0 3px 14px '+th.glow+',inset 0 1px 0 rgba(255,255,255,.15)',
-      backdropFilter:'blur(8px)',
-      transition:'transform .18s cubic-bezier(.34,1.56,.64,1),box-shadow .18s',
-      opacity:'0',transform:'translateY(8px) scale(.88)',
-    });
-    b.onmouseenter=()=>{ b.style.transform='translateY(-3px) scale(1.07)';b.style.filter='brightness(1.2)'; };
-    b.onmouseleave=()=>{ b.style.transform='translateY(0) scale(1)';b.style.filter=''; };
+    const b=document.createElement('button'); b.type='button'; b.className='sb-chip'; b.textContent=q; b.style.setProperty('--d',(i*60)+'ms');
     b.onclick=()=>{ document.getElementById('sb-in').value=q.replace(/\s[^\s]+$/,'');send(); };
     bar.appendChild(b);
-    setTimeout(()=>{ b.style.opacity='1';b.style.transform='translateY(0) scale(1)'; },i*70+20);
   });
 }
 
