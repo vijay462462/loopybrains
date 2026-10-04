@@ -8272,7 +8272,7 @@ function renderView() {
     list.append(el("div", { class: "ans" + (best ? " best" : "") + (isMentor(r) ? " mentor" : "") },
       el("div", { class: "who" }, r.anonymous ? avatarEl("👤") : avatarEl(mine(r) ? getAvatar() : avatarFor(r.authorName || "")), el("strong", {}, who(r)), isMentor(r) && el("span", { class: "pill mentor" }, "🎓 " + MENTORS.get(r.authorId)), el("span", {}, ago(r.createdAt)), best && el("span", { class: "pill done" }, "Helped"), ...tools, reportButton("replies", r)),
       state.tab === "doubts" ? el("div", { class: "rowbtns q-row" }, qualityPill(answerQuality(r, "r" + r.id, best ? "best" : "")), state.verified[r.id] ? el("span", { class: "pill open" }, "\u2714 Verified by " + state.verified[r.id].byName) : null) : null,
-      r.body && r.body !== PAGE_ONLY && el("p", { class: "body" }, r.body),
+      r.body && r.body !== PAGE_ONLY && (isAcademicTab(state.tab) ? richAnswer(r.body, d.title + " " + (d.subject || "")) : el("p", { class: "body" }, r.body)),
       r.body && r.body !== PAGE_ONLY && renderYtCards(r.body),
       own && best && state.tab === "doubts" && r.body && !r.body.startsWith("\u{1F4DD} Study note") ? studyNoteBox(d, r.body) : null,
       r.pages && r.pages.length ? pagesView(r.pages) : null,
@@ -8322,6 +8322,7 @@ function renderView() {
     el("label", { for: "f-reply", class: "label" }, t.replyLabel),
     replyTa,
     el("p", { class: "hint st-err", id: "f-reply-msg", role: "alert", hidden: true }),
+    isAcademicTab(state.tab) ? answerStudio(d, replyTa) : null,
     isAcademicTab(state.tab) ? answerHelper(d, replyTa) : null,
     attachPicker(state.replyPages, MAX_PAGES),
     store.uploadFile ? filePicker(replyFiles) : null,
@@ -8332,6 +8333,82 @@ function renderView() {
   return out;
 }
 
+// Rich answers: the answer text is stored as plain text; this draws it with colours, spacing and structure (text only, never HTML).
+const RT_KEYS = new Set("voltage current resistance capacitance inductance impedance gate source drain channel substrate transistor diode junction semiconductor depletion enhancement threshold bias amplifier gain signal frequency circuit capacitor resistor inductor power energy force mass velocity acceleration momentum torque pressure temperature entropy enthalpy algorithm array stack queue pointer recursion complexity function variable matrix vector derivative integral equation probability theorem proof logic memory register processor latency throughput protocol packet".split(" "));
+const RT_CONN = new Set("because therefore hence thus so since if then however but while whereas when unless otherwise finally first second next also".split(" "));
+const RT_WARN = new Set("not never cannot can't don't doesn't without except only avoid wrong".split(" "));
+const RT_RE = /(https?:\/\/\S+)|([A-Za-z0-9_()\[\]\.\^\/]+(?:\s*(?:=|≈|≠|≤|≥|→|\+|×|÷|\^)\s*[A-Za-z0-9_()\[\]\.\^\/-]+)+)|(\d+(?:\.\d+)?\s?(?:mV|kV|V|mA|µA|uA|A|kΩ|MΩ|Ω|kHz|MHz|GHz|Hz|mW|kW|W|pF|nF|µF|uF|F|mH|H|cm|mm|km|kg|ms|µs|ns|N|J|K|°C|dB)(?![A-Za-z])|\d+(?:\.\d+)?%)|(\b[A-Z][A-Z0-9]{1,}\b)|([A-Za-z][A-Za-z'’-]*)/g;
+const RT_LABELS = { idea: ["idea", "\u{1F4A1} Idea"], definition: ["idea", "\u{1F4D8} Definition"], summary: ["idea", "\u{1F4CC} Summary"], answer: ["idea", "✅ Answer"], "how it works": ["how", "⚙️ How it works"], why: ["how", "\u{1F9E0} Why"], example: ["ex", "\u{1F4DD} Example"], "real life": ["ex", "\u{1F30D} Real life"], "common mistake": ["warn", "⚠️ Common mistake"], mistake: ["warn", "⚠️ Mistake"], "try this": ["try", "❓ Try this"], note: ["tip", "\u{1F4CE} Note"], tip: ["tip", "✨ Tip"], formula: ["formula", "\u{1D453}ₓ Formula"] };
+function rtRole(t) {
+  if (/\b(for example|for instance|e\.g\.|such as)/i.test(t)) return "ex";
+  if (/\b(because|therefore|hence|thus|since|as a result)\b/i.test(t)) return "why";
+  if (/\b(never|cannot|avoid|mistake|wrong|careful|don't)\b/i.test(t)) return "warn";
+  if (/\b(is a|is an|is called|is defined|refers to|means|stands for)\b/i.test(t)) return "def";
+  return "";
+}
+function rtInline(text, topic) {
+  const out = []; let last = 0, m; RT_RE.lastIndex = 0;
+  const put = (cls, t) => out.push(cls ? el("span", { class: cls }, t) : document.createTextNode(t));
+  while ((m = RT_RE.exec(text)) !== null) {
+    if (m.index > last) put("", text.slice(last, m.index));
+    last = m.index + m[0].length;
+    if (m[1]) put("", m[0]);
+    else if (m[2]) put("rt-eq", m[0]);
+    else if (m[3]) put("rt-num", m[0]);
+    else if (m[4]) put("rt-term", m[0]);
+    else { const w = m[5].toLowerCase(); put(topic.has(w) ? "rt-topic" : RT_KEYS.has(w) ? "rt-key" : RT_CONN.has(w) ? "rt-conn" : RT_WARN.has(w) ? "rt-warn" : "", m[0]); }
+  }
+  if (last < text.length) put("", text.slice(last));
+  return out;
+}
+function rtSentences(text, topic) {
+  const bits = String(text).split(/([.!?]+)\s+/), sents = [];   // split after . ! ? followed by a space (decimals like 3.5 stay whole)
+  for (let k = 0; k < bits.length; k += 2) { const sn = (bits[k] || "") + (bits[k + 1] || ""); if (sn.trim()) sents.push(sn); }
+  return sents.flatMap((sn, i, all) => { const role = rtRole(sn); const node = el("span", { class: "rs" + (role ? " rs-" + role : "") }, ...rtInline(sn, topic)); return i < all.length - 1 ? [node, document.createTextNode(" ")] : [node]; });
+}
+function richAnswer(text, topicText) {
+  const topic = new Set(ahWords(topicText)), root = el("div", { class: "rt" });
+  let ol = null, ul = null;
+  for (const raw of String(text || "").slice(0, 5000).split(/\r?\n/).map(l => l.trim()).filter(Boolean)) {
+    const lab = /^(?:[\p{Extended_Pictographic}️\s]*)(idea|definition|summary|answer|how it works|why|example|real[- ]?life|common mistake|mistake|try this|note|tip|formula|step\s*\d+)\s*[:：–-]\s*(.*)$/iu.exec(raw);
+    const num = /^(\d{1,2})[.)]\s+(.*)$/.exec(raw), bul = /^[-*•]\s+(.*)$/.exec(raw);
+    if (lab) {
+      ol = ul = null; const key = lab[1].toLowerCase().replace(/-/g, " ").replace(/\s+/g, " "), kind = /^step/.test(key) ? ["how", "\u{1F522} " + lab[1].replace(/^./, c => c.toUpperCase())] : RT_LABELS[key] || ["tip", lab[1]];
+      root.append(el("div", { class: "rt-card rt-k-" + kind[0] }, el("b", { class: "rt-lab" }, kind[1]), el("div", { class: "rt-txt" }, ...rtSentences(lab[2], topic))));
+    } else if (num) {
+      ul = null; if (!ol) { ol = el("ol", { class: "rt-ol" }); root.append(ol); }
+      ol.append(el("li", { value: num[1] }, ...rtSentences(num[2], topic)));
+    } else if (bul) {
+      ol = null; if (!ul) { ul = el("ul", { class: "rt-ul" }); root.append(ul); }
+      ul.append(el("li", {}, ...rtSentences(bul[1], topic)));
+    } else { ol = ul = null; root.append(el("p", { class: "rt-p" }, ...rtSentences(raw, topic))); }
+  }
+  return root;
+}
+// Auto-format: clean spacing, spaces after punctuation, capital letters, full stops and arrows. It never changes the meaning.
+function ahTidy(text) {
+  return String(text || "").replace(/\r/g, "").split("\n").map(line => {
+    let l = line.replace(/[ \t]+/g, " ").trim(); if (!l) return "";
+    if (/https?:\/\//.test(l)) return l;
+    l = l.replace(/\s+([,.;:!?)])/g, "$1").replace(/([,;!?])(?=[A-Za-z])/g, "$1 ").replace(/\.(?=[A-Z][a-z])/g, ". ").replace(/\(\s+/g, "(").replace(/\s*->\s*/g, " → ").replace(/\bi'm\b/g, "I'm").replace(/\bi\b(?=\s+(?:am|was|think|know|have|will|can|would|had|do|did|use|see|need|want|got|get)\b)/g, "I");
+    l = l.replace(/(^|[.!?]\s+|^[-*•\d.)\s]+)([a-z])/g, (m, a, b) => a + b.toUpperCase());
+    if (l.split(" ").length >= 4 && /[A-Za-z0-9]$/.test(l)) l += ".";
+    return l;
+  }).join("\n").replace(/\n{3,}/g, "\n\n").trim();
+}
+const AS_STARTERS = [["\u{1F4A1} Idea", "Idea: "], ["⚙️ How it works", "How it works: "], ["\u{1F30D} Real life", "Real life: "], ["⚠️ Common mistake", "Common mistake: "], ["❓ Try this", "Try this: "]];
+function answerStudio(d, ta) {
+  const prev = el("div", { class: "as-prev", hidden: true }), topic = d.title + " " + (d.subject || ""); let t = 0;
+  const upd = () => { const v = ta.value.trim(); prev.hidden = !v; prev.replaceChildren(...(v ? [el("small", { class: "hint" }, "✨ Preview: this is how your answer will look to others"), richAnswer(v, topic)] : [])); };
+  ta.addEventListener("input", () => { clearTimeout(t); t = setTimeout(upd, 250); });
+  const add = (txt) => { const pre = ta.value && !ta.value.endsWith("\n") ? "\n" : ""; ta.value = (ta.value + pre + txt).slice(0, 5000); ta.focus(); try { ta.setSelectionRange(ta.value.length, ta.value.length); } catch (_) {} upd(); };
+  return el("div", { class: "astudio" },
+    el("div", { class: "label" }, "Make your answer clear and interesting"),
+    el("div", { class: "rowbtns" }, ...AS_STARTERS.map(([lab, txt]) => el("button", { type: "button", class: "btn sm", onclick: () => add(txt) }, lab)),
+      el("button", { type: "button", class: "btn sm primary", onclick: () => { ta.value = ahTidy(ta.value); upd(); } }, "✨ Auto-format")),
+    el("p", { class: "hint" }, "Tip: start with an Idea, show How it works, add a Real life example, warn about a Common mistake, and end with a Try this question. It keeps readers curious."),
+    prev);
+}
 // Answer helper: while a student writes an answer, suggest pictures and diagrams (Wikimedia Commons), a quick fact (Wikipedia) and video searches for the same topic.
 // It starts only when the student taps the button, sends only topic words (never the name or account), reads public pages, and shows text with textContent only.
 const AH_STOP = new Set("the a an and or of to in on for with is are was were be been being how what why when where which who whom this that these those it its as at by from into than then so such can could should would will may might do does did done not no yes you your we our they their them me my he she his her use used using also very more most some any all each other one two get got make made like just about over under between because therefore thus hence explain clearly please tell sir".split(" "));
@@ -8342,27 +8419,45 @@ function ahQuery(title, typed) {
   return [...new Set([...ahWords(title).slice(0, 3), ...top])].slice(0, 5).join(" ");
 }
 const ahCache = new Map();
-async function ahLookup(q) {
-  if (ahCache.has(q)) return ahCache.get(q);
-  const [com, wik] = await Promise.all([
-    lsFetch("https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&gsrlimit=8&prop=imageinfo&iiprop=url|mime&iiurlwidth=360&format=json&origin=*&gsrsearch=" + encodeURIComponent(q + " diagram")).catch(() => null),
-    lsFetch("https://en.wikipedia.org/w/api.php?action=query&list=search&srlimit=1&format=json&origin=*&srsearch=" + encodeURIComponent(q)).then(async f => {
-      const hit = f && f.query && f.query.search && f.query.search[0]; if (!hit || typeof hit.title !== "string") return null;
-      const sm = await lsFetch("https://en.wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(hit.title.replace(/ /g, "_")));
-      const page = sm.content_urls && sm.content_urls.desktop && String(sm.content_urls.desktop.page || "").startsWith("https://en.wikipedia.org/") ? sm.content_urls.desktop.page : "";
-      return { title: String(sm.title || hit.title).slice(0, 120), text: String(sm.extract || "").slice(0, 420), page };
-    }).catch(() => null),
-  ]);
-  const imgs = [];
-  const pages = com && com.query && com.query.pages ? Object.values(com.query.pages).sort((a, b) => (a.index || 0) - (b.index || 0)) : [];
+const AH_SKIP = /icon|logo|symbol|flag|commons-|wikidata|wikipedia|edit-|ambox|question|padlock|stub|disambig|portal|button|arrow|ooui/i;
+async function ahCommons(q) {
+  const com = await lsFetch("https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&gsrlimit=8&prop=imageinfo&iiprop=url|mime&iiurlwidth=360&format=json&origin=*&gsrsearch=" + encodeURIComponent(q)).catch(() => null);
+  const imgs = [], pages = com && com.query && com.query.pages ? Object.values(com.query.pages).sort((a, b) => (a.index || 0) - (b.index || 0)) : [];
   for (const pg of pages) {
     const ii = pg.imageinfo && pg.imageinfo[0]; if (!ii || !/^image\/(png|jpeg|svg\+xml)$/.test(ii.mime || "")) continue;
     const thumb = String(ii.thumburl || ""), page = String(ii.descriptionurl || "");
     if (!thumb.startsWith("https://upload.wikimedia.org/") || !page.startsWith("https://commons.wikimedia.org/")) continue;
     imgs.push({ title: String(pg.title || "File").replace(/^File:/, "").replace(/\.[A-Za-z0-9]{2,4}$/, "").replace(/[_<>]/g, " ").slice(0, 80), thumb, page });
-    if (imgs.length >= 4) break;
   }
-  const out = { imgs, wiki: wik }; ahCache.set(q, out); return out;
+  return imgs;
+}
+async function ahArticleImages(title) {   // the diagrams already used inside the Wikipedia article
+  const m = await lsFetch("https://en.wikipedia.org/api/rest_v1/page/media-list/" + encodeURIComponent(title.replace(/ /g, "_"))).catch(() => null);
+  const out = [];
+  for (const it of (m && Array.isArray(m.items) ? m.items : [])) {
+    if (it.type !== "image" || it.showInGallery === false || AH_SKIP.test(String(it.title || ""))) continue;
+    const sr = Array.isArray(it.srcset) && it.srcset[0] && String(it.srcset[0].src || ""), thumb = sr ? (sr.startsWith("//") ? "https:" + sr : sr) : "";
+    if (!thumb.startsWith("https://upload.wikimedia.org/") || !/^File:/.test(it.title || "")) continue;
+    out.push({ title: String(it.title).replace(/^File:/, "").replace(/\.[A-Za-z0-9]{2,4}$/, "").replace(/[_<>]/g, " ").slice(0, 80), thumb, page: "https://commons.wikimedia.org/wiki/" + encodeURIComponent(String(it.title).replace(/ /g, "_")) });
+  }
+  return out;
+}
+async function ahLookup(q, topic) {
+  const key = q + "|" + topic; if (ahCache.has(key)) return ahCache.get(key);
+  const wikiQ = topic || q;
+  const wik = await lsFetch("https://en.wikipedia.org/w/api.php?action=query&list=search&srlimit=1&format=json&origin=*&srsearch=" + encodeURIComponent(wikiQ)).then(async f => {
+    const hit = f && f.query && f.query.search && f.query.search[0]; if (!hit || typeof hit.title !== "string") return null;
+    const sm = await lsFetch("https://en.wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(hit.title.replace(/ /g, "_")));
+    const page = sm.content_urls && sm.content_urls.desktop && String(sm.content_urls.desktop.page || "").startsWith("https://en.wikipedia.org/") ? sm.content_urls.desktop.page : "";
+    return { title: String(sm.title || hit.title).slice(0, 120), text: String(sm.extract || "").slice(0, 420), page, raw: hit.title };
+  }).catch(() => null);
+  const short = q.split(" ").slice(0, 2).join(" ");
+  let imgs = await ahCommons(q + " diagram");
+  if (imgs.length < 3 && short !== q) imgs = imgs.concat(await ahCommons(short + " diagram"));
+  if (imgs.length < 3 && wik) imgs = imgs.concat(await ahArticleImages(wik.raw));
+  if (imgs.length < 1) imgs = await ahCommons(short || q);
+  const seen = new Set(), uniq = imgs.filter(x => !seen.has(x.thumb) && seen.add(x.thumb)).slice(0, 6);
+  const out = { imgs: uniq, wiki: wik }; ahCache.set(key, out); return out;
 }
 function answerHelper(d, ta) {
   const box = el("div", { class: "ahelp" }), body = el("div", { class: "ah-body", hidden: true });
@@ -8392,7 +8487,11 @@ function answerHelper(d, ta) {
     outLink(yt(q + " explained"), "▶ Videos: " + q, "btn sm"),
     outLink(lectureUrl(d.subject, q), "\u{1F393} NPTEL / IIT lecture", "btn sm"),
     outLink(yt("Neso Academy " + q), "Neso Academy", "btn sm"),
-    outLink(yt("Khan Academy " + q), "Khan Academy", "btn sm"));
+    outLink(yt("Khan Academy " + q), "Khan Academy", "btn sm"),
+    outLink(yt(q + " animation"), "\u{1F39E}\uFE0F Animation", "btn sm"),
+    outLink("https://sketchfab.com/search?type=models&q=" + encodeURIComponent(q), "\u{1F9CA} 3D models", "btn sm"),
+    outLink("https://www.google.com/search?tbm=isch&q=" + encodeURIComponent(q + " colour diagram"), "\u{1F3A8} Colour diagrams", "btn sm"),
+    outLink("https://phet.colorado.edu/en/search?q=" + encodeURIComponent(q), "\u{1F9EA} Simulator", "btn sm"));
   const drawPreview = () => { const c = renderYtCards(ta.value); preview.replaceChildren(...(c ? [el("small", { class: "hint" }, "Your answer will show this video:"), c] : [])); };
   const run = async () => {
     const q = ahQuery(d.title + " " + (d.body || ""), ta.value);
@@ -8401,7 +8500,7 @@ function answerHelper(d, ta) {
     status.textContent = "Looking for pictures and videos for: " + q + " ...";
     drawVids(q);
     try {
-      const r = await ahLookup(q); if (me !== seq) return;
+      const r = await ahLookup(q, ahWords(d.title).slice(0, 3).join(" ")); if (me !== seq) return;
       drawImgs(r.imgs);
       fact.hidden = !(r.wiki && r.wiki.text);
       fact.replaceChildren(...(r.wiki && r.wiki.text ? [el("small", {}, "QUICK FACT (Wikipedia): " + r.wiki.title), el("p", {}, r.wiki.text), r.wiki.page ? outLink(r.wiki.page, "Read more", "btn sm") : null].filter(Boolean) : []));
