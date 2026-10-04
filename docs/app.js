@@ -2106,6 +2106,7 @@ const MODE_GUIDE = {
   explore: { icon: "\u{1F9ED}", purpose: "Discover what is happening across the app.", steps: ["Browse the cards.", "Open one that interests you.", "Come back for new things daily."], safe: SAFE_COMMON, next: ["❓ Ask a doubt", "ask"] },
   drives: { icon: "\u{1F3E2}", purpose: "Campus drives and company visits with dates and links.", steps: ["Check the date and eligibility.", "Open the official link to register.", "Prepare using the resume tool."], safe: "A real drive never asks you to pay. Report any post that does.", next: ["\u{1F4C4} Build my resume", "resume"] },
   events: { icon: "\u{1F4C5}", purpose: "Events, fests and workshops on your campus.", steps: ["Pick an event.", "Check the date and place.", "Invite a friend."], safe: "Meet in public places on campus.", next: ["\u{1F4E2} Notices", "notices"] },
+  loopysearch: { icon: "\u{1F50E}", purpose: "Search any topic and see it: a quick answer, a picture, then videos, diagrams and PDFs.", steps: ["Type a topic or a unit name.", "Pick Quick idea, Deep lecture or Exam prep.", "Open a video, diagram or PDF, or ask Loopy to explain."], safe: "Results open other websites. Download only from trusted sites.", next: ["\u2753 Ask classmates", "ask"] },
   ai: { icon: "\u{1F916}", purpose: "Ask Loopy for study help.", steps: ["Type a clear question.", "Read the answer.", "Check important facts in your textbook."], safe: "Loopy can make mistakes. Do not type personal details into it.", next: ["❓ Ask classmates", "ask"] },
   resume: { icon: "\u{1F4C4}", purpose: "Build a one-page resume from what you have done.", steps: ["Fill in your details.", "Review the preview.", "Save or print it."], safe: "Your resume stays on your device. Share it only with companies you have verified.", next: ["\u{1F3E2} See drives", "drives"] },
   wboard: { icon: "\u{1F4CA}", purpose: "This week’s progress for you and your college.", steps: ["See your points.", "Compare with last week.", "Pick one thing to improve."], safe: "Only nicknames are shown.", next: ["\u{1F3AF} Set a goal", "goals"] },
@@ -3456,6 +3457,7 @@ async function startCheckout(planKey, gift) {
 }
 const PLUS_FEATURES = ["Plus gift link for a friend", "Group study rooms with a shared timer", "Scan handwritten notes into flashcards", "Live doubt sessions with seniors", "Placement preparation kit", "Offline downloads of papers", "Weekly leaderboard for Plus members", "More resume templates", "No ads, ever"];
 const PLUS_TILES = [
+  ["\u{1F50E}", "Loopy AI Search", "Search any topic for a quick answer, pictures, videos and PDFs.", "loopysearch"],
   ["", "AI study helper", "Ask doubts and get step-by-step answers from Claude. 40 a day.", "ai"],
   ["📝", "Mock tests", "Timed subject and placement tests with a topic-wise report.", "mock"],
   ["📓", "Mistake notebook", "Questions you missed come back until you get them right.", "mistakes"],
@@ -3725,12 +3727,77 @@ function renderPapers() {
     el("div", { class: "rowbtns" }, back)].filter(Boolean);
 }
 // AI study helper (Plus): chat with Claude through our own server function; the secret key never reaches the phone.
+// Loopy AI Search: type any topic and get a quick answer with a picture (from Wikipedia, read-only), then the best places to watch, read and practise it. Free, needs no sign-in, and only reads public pages.
+const LS_LEVELS = { quick: ["⚡ Quick idea", "explained simply"], deep: ["\u{1F52C} Deep lecture", "full lecture"], exam: ["\u{1F3AF} Exam prep", "important questions previous year"] };
+const LS_CHANNELS = [["NPTEL", "NPTEL (IITs)"], ["MIT OpenCourseWare", "MIT OpenCourseWare"], ["Khan Academy", "Khan Academy"], ["Neso Academy", "Neso Academy"], ["Gate Smashers", "Gate Smashers"], ["3Blue1Brown", "3Blue1Brown (visual maths)"]];
+const lsClean = (q) => String(q || "").replace(/[\u0000-\u001F\u007F<>]/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
+const lsFetch = async (url) => {
+  const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 8000);
+  try { const r = await fetch(url, { signal: ctl.signal, referrerPolicy: "no-referrer", credentials: "omit" }); if (!r.ok) throw new Error("bad"); return await r.json(); } finally { clearTimeout(t); }
+};
+async function lsRun(q) {
+  const ls = state.ls; ls.q = q; ls.err = ""; ls.res = null; ls.busy = true; render();
+  try {
+    const found = await lsFetch("https://en.wikipedia.org/w/api.php?action=query&list=search&srlimit=1&format=json&origin=*&srsearch=" + encodeURIComponent(q));
+    const hit = found && found.query && found.query.search && found.query.search[0];
+    if (hit && typeof hit.title === "string") {
+      const sm = await lsFetch("https://en.wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(hit.title.replace(/ /g, "_")));
+      const img = sm.thumbnail && typeof sm.thumbnail.source === "string" && sm.thumbnail.source.startsWith("https://upload.wikimedia.org/") ? sm.thumbnail.source : "";
+      const page = sm.content_urls && sm.content_urls.desktop && String(sm.content_urls.desktop.page || "").startsWith("https://en.wikipedia.org/") ? sm.content_urls.desktop.page : "";
+      ls.res = { title: String(sm.title || hit.title).slice(0, 120), text: String(sm.extract || "").slice(0, 900), img, page };
+    } else ls.res = { title: q, text: "", img: "", page: "" };
+  } catch (_) { ls.res = { title: q, text: "", img: "", page: "" }; ls.err = "The quick answer could not load. The links below still work."; }
+  ls.busy = false; render();
+  try { bump && bump("search", 1); } catch (_) {}
+}
+function openLoopySearch(q, back) {
+  state.ls = Object.assign(state.ls || { level: "quick", q: "", res: null, busy: false, err: "" }, { q: lsClean(q), back: back || "plus" });
+  showPanel("loopysearch"); if (state.ls.q) lsRun(state.ls.q);
+}
+function renderLoopySearch() {
+  const ls = state.ls || (state.ls = { level: "quick", q: "", res: null, busy: false, err: "" });
+  const input = el("input", { type: "search", maxlength: "80", placeholder: "Try: Bayes theorem, Dijkstra, transformer", "aria-label": "Topic to search", autocomplete: "off", value: ls.q });
+  const go = () => { const q = lsClean(input.value); if (q.length < 2) { input.focus(); return; } lsRun(q); };
+  input.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); go(); } });
+  const q = ls.q, suffix = LS_LEVELS[ls.level][1];
+  const yt = (extra) => "https://www.youtube.com/results?search_query=" + encodeURIComponent(q + " " + extra);
+  const gg = (extra, img) => "https://www.google.com/search?" + (img ? "tbm=isch&" : "") + "q=" + encodeURIComponent(q + " " + extra);
+  const r = ls.res;
+  return [
+    el("h2", {}, "\u{1F50E} Loopy AI Search"),
+    el("p", { class: "hint" }, "Type a topic. Loopy finds a quick answer with a picture, then the best videos, diagrams and PDFs for it."),
+    el("div", { class: "ls-bar" }, input, el("button", { class: "btn primary", type: "button", disabled: ls.busy ? "" : null, onclick: go }, ls.busy ? "Searching…" : "Search")),
+    el("div", { class: "rowbtns", role: "group", "aria-label": "How deep" }, ...Object.entries(LS_LEVELS).map(([k, v]) => el("button", { class: "btn sm" + (ls.level === k ? " primary" : ""), type: "button", "aria-pressed": String(ls.level === k), onclick: () => { ls.level = k; render(); } }, v[0]))),
+    !q ? el("p", { class: "hint" }, "Tip: search a unit topic from your syllabus, for example Moment generating function.") : null,
+    q && r ? el("div", { class: "learn-card ls-card" },
+      r.img ? el("img", { class: "ls-img", src: r.img, alt: r.title, loading: "lazy", referrerpolicy: "no-referrer" }) : null,
+      el("strong", {}, r.title),
+      r.text ? el("p", {}, r.text) : el("p", { class: "hint" }, "No short summary found. Use the lanes below."),
+      r.page ? outLink(r.page, "\u{1F4D6} Read more on Wikipedia", "linkbtn") : null,
+      ls.err ? el("p", { class: "hint", role: "status" }, ls.err) : null,
+      el("p", { class: "hint" }, "Summary text is from Wikipedia and can be incomplete. Check important facts in your textbook.")) : null,
+    q ? el("div", { class: "label" }, "▶ Watch") : null,
+    q ? el("div", { class: "rowbtns" }, ...LS_CHANNELS.map(([c, t]) => outLink(yt(c + " " + suffix), t, "btn sm"))) : null,
+    q ? el("div", { class: "label" }, "\u{1F5BC} See it") : null,
+    q ? el("div", { class: "rowbtns" }, outLink(gg("diagram explained", true), "Diagrams", "btn sm"), outLink("https://commons.wikimedia.org/w/index.php?search=" + encodeURIComponent(q) + "&ns6=1", "Free images (Wikimedia)", "btn sm"), outLink(yt("animation visualization"), "Animations", "btn sm")) : null,
+    q ? el("div", { class: "label" }, "\u{1F4C4} Read and practise") : null,
+    q ? el("div", { class: "rowbtns" }, outLink(gg("filetype:pdf lecture notes site:nptel.ac.in OR site:ocw.mit.edu OR site:ac.in"), "Official notes PDF", "btn sm"), outLink(gg("filetype:pdf previous year questions"), "Question papers", "btn sm"), outLink("https://www.geeksforgeeks.org/search/?q=" + encodeURIComponent(q), "GeeksforGeeks", "btn sm")) : null,
+    q ? el("div", { class: "label" }, "\u{1F4AC} Ask for help") : null,
+    q ? el("div", { class: "rowbtns" },
+      PLUS.functionsUrl ? el("button", { class: "btn sm primary", type: "button", onclick: () => { state.ai = state.ai || { msgs: [], busy: false, note: "" }; state.ai.prefill = "Explain " + q + " for a B.Tech student, with a simple example."; showPanel("ai"); } }, "✨ Explain with Loopy AI") : null,
+      el("button", { class: "btn sm", type: "button", onclick: () => { state.tab = "doubts"; state.group = "All"; state.filter = "all"; state.query = q; state.selected = null; state.mode = "intro"; render(); } }, "\u{1F50E} Doubts on this"),
+      el("button", { class: "btn sm", type: "button", onclick: () => { state.mode = "ask"; render(); } }, "❓ Ask classmates")) : null,
+    q ? el("p", { class: "guide-safe" }, el("b", {}, "Stay safe: "), "Video and PDF buttons open other websites in a new tab. Download only from sites you trust and never enter your password or OTP there.") : null,
+    el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => showPanel(state.ls && state.ls.back || "plus") }, "Back")),
+  ];
+}
 function renderAI() {
   const back = el("button", { class: "btn", type: "button", onclick: () => showPanel("plus") }, "Back");
   if (plusLocked()) return [el("h2", {}, "AI study helper"), el("p", { class: "hint" }, "The AI study helper is part of The Campus Loop Plus."), el("div", { class: "rowbtns" }, back)];
   if (!PLUS.functionsUrl) return [el("h2", {}, "AI study helper"), el("p", { class: "hint" }, "The AI helper is being set up and will switch on soon."), el("div", { class: "rowbtns" }, back)];
   const chat = state.ai || (state.ai = { msgs: [], busy: false, note: "" });
   const box = el("textarea", { maxlength: "1000", rows: "3", placeholder: "Ask a study doubt, e.g. Explain Dijkstra with an example", "aria-label": "Your question" });
+  if (chat.prefill) { box.value = String(chat.prefill).slice(0, 1000); chat.prefill = ""; }
   const send = async () => {
     const text = box.value.trim(); if (!text || chat.busy) return;
     chat.msgs.push({ role: "user", content: text }); chat.busy = true; chat.note = ""; render();
@@ -4148,6 +4215,7 @@ function renderSubject(C, r) {
     ...mids.map(([label, units]) => el("div", { class: "learn" }, el("small", { class: "hint" }, label + " covers units " + units.join(" and ")), ...units.map(n => el("div", { class: "learn-card" },
       el("div", { class: "rowbtns" }, el("button", { class: "btn sm" + (done.includes(n) ? " primary" : ""), type: "button", "aria-pressed": String(done.includes(n)), onclick: () => toggle(n) }, (done.includes(n) ? "✓ " : "") + "Unit " + n), outLink(unitUrl(n, "v"), "▶ Videos", "linkbtn"), outLink(unitUrl(n, "p"), "\u{1F4C4} Notes PDF", "linkbtn")))))),
     el("div", { class: "rowbtns" },
+      el("button", { class: "btn sm primary", type: "button", onclick: () => { openLoopySearch(name, "curriculum"); } }, "\u{1F50E} Loopy AI Search"),
       outLink(nptelUrl(name), "\u{1F393} Full IIT course", "btn sm"),
       el("button", { class: "btn sm", type: "button", onclick: () => { state.tab = "doubts"; state.group = "All"; state.filter = "all"; state.query = name; state.selected = null; state.mode = "intro"; render(); } }, "\u{1F50E} Doubts on this"),
       el("button", { class: "btn", type: "button", onclick: () => { curState.open = null; render(); } }, "Back to subjects")),
@@ -7915,6 +7983,7 @@ function render() {
       state.mode === "wardrobe" ? renderWardrobe() :
       state.mode === "drives" ? renderDrives() :
       state.mode === "events" ? renderEvents() :
+      state.mode === "loopysearch" ? renderLoopySearch() :
       state.mode === "ai" ? renderAI() :
       state.mode === "goals" ? renderGoals() :
       state.mode === "wboard" ? renderWeeklyBoard() :
