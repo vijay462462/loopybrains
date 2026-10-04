@@ -5,7 +5,7 @@
   function calc() {
     var n = Math.max(1, parseInt(seats.value, 10) || 0), rate = n >= 3000 ? 30 : n >= 1000 ? 45 : 60, total = Math.max(25000, n * rate);
     out.textContent = n + " students: Rs " + rate + " per student, about Rs " + total.toLocaleString("en-IN") + " per year (about Rs " + Math.round(total / n) + " per student).";
-    quote.href = "mailto:YOUR-EMAIL-HERE?subject=" + encodeURIComponent("CampusLoop quote for " + n + " students") + "&body=" + encodeURIComponent("College name:\nCity:\nNumber of students: " + n + "\nContact person and phone:\n");
+    quote.href = "mailto:v.bhaskar462@gmail.com?subject=" + encodeURIComponent("CampusLoop quote for " + n + " students") + "&body=" + encodeURIComponent("College name:\nCity:\nNumber of students: " + n + "\nContact person and phone:\n");
   }
   seats.addEventListener("input", calc); calc();
 })();
