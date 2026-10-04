@@ -1411,7 +1411,8 @@ function showWelcome(force, startId) {
   const picked = new Set(readJSON("dd-interests", []));
   let step = Math.max(0, STEPS.indexOf(startId || "about")), nameVal = (getName() || "").trim(), pickSlug = curSlug, pickName = curSlug ? COLLEGE : "", cq = "", ctype = "all", cst = (() => { try { return localStorage.getItem("dd-state") || ""; } catch (_) { return ""; } })() || (curSlug && curSlug !== "rgukt" ? ((DIRECTORY.find(c => c.slug === curSlug) || {}).state || "") : "") || "Andhra Pradesh";
   const TOTAL = STEPS.length, box = el("div", { id: "welcome", class: "welcome", role: "dialog", "aria-modal": "true", "aria-label": "Welcome to " + BRAND });
-  const finish = () => { try { localStorage.setItem("dd-welcome-done", "1"); if (!localStorage.getItem("dd-launch-gone")) { localStorage.setItem("dd-launch", "1"); } } catch (_) {} if (STEPS[step] === "ready") setTimeout(() => confetti(130), 250); document.removeEventListener("keydown", onKey); box.remove(); todayKey = ""; try { renderHeader(); } catch (_) {} };
+  const finish = () => { try { localStorage.setItem("dd-welcome-done", "1"); if (!localStorage.getItem("dd-launch-gone")) { localStorage.setItem("dd-launch", "1"); } } catch (_) {} if (STEPS[step] === "ready") setTimeout(() => confetti(130), 250); document.removeEventListener("keydown", onKey); box.remove(); todayKey = ""; try { renderHeader(); } catch (_) {}
+    try { if (getName() && store && store.handleClaim && !myHandle() && !readJSON("dd-loopid-skip", false) && !readJSON("dd-loopid-shown", false)) { writeJSON("dd-loopid-shown", true); setTimeout(() => showPanel("loopid"), 400); } } catch (_) {} };
   const onKey = (e) => { if (e.key === "Escape") finish(); };
   const saveStep = () => { if (STEPS[step] === "college" && pickSlug && pickSlug !== curSlug) { try { sessionStorage.setItem("dd-ob-resume", "name"); localStorage.setItem("dd-state", cst); } catch (_) {} document.removeEventListener("keydown", onKey); switchCollege(pickSlug); return; } if (STEPS[step] === "name") { const v = nameVal.trim().slice(0, 30); if (v) setName(v); } if (STEPS[step] === "interests") writeJSON("dd-interests", [...picked]); };
   const go = (d) => { if (d > 0 && STEPS[step] === "college" && !pickSlug) { const c = box.querySelector(".ob-chosen"); if (c) { c.classList.remove("shake"); void c.offsetWidth; c.classList.add("shake"); } return; } saveStep(); step = Math.max(0, Math.min(TOTAL - 1, step + d)); paint(); };
@@ -1490,7 +1491,7 @@ function showWelcome(force, startId) {
       body = [el("h2", {}, "Choose your college \u{1F3EB}"), el("p", { class: "ob-say" }, "Each college has its own private board, subjects and clubs. Pick yours and I will set everything up."), lastBtn, pickBox, stSel, q, types, letters, count, list, chosen];
       mark(); fill();
     } else if (sid === "name") {
-      const inp = el("input", { type: "text", maxlength: "30", placeholder: "Your first name", "aria-label": "Your name", autocomplete: "given-name", value: nameVal });
+      const inp = el("input", { type: "text", maxlength: "30", placeholder: "Your nickname", "aria-label": "Your nickname", autocomplete: "given-name", value: nameVal });
       inp.addEventListener("input", () => { nameVal = inp.value; });
       inp.addEventListener("keydown", (e) => { if (e.key === "Enter") go(1); });
       body = [el("div", { class: "ob-loopy" }, loopyMini()), el("h2", {}, "Welcome to " + BRAND + " family"),
@@ -1764,7 +1765,7 @@ function questSteps() {
   const posted = state.doubts.some(d => mine.has(d.authorId)) || state.replies.some(r => mine.has(r.authorId)) || readJSON("dd-quest-post", false);
   const quiz = (QUIZ.length ? !!myQuizAnswer(dayNum()) : true) || readJSON("dd-quest-quiz", false);
   if (posted) writeJSON("dd-quest-post", true); if (quiz) writeJSON("dd-quest-quiz", true);
-  return [["✏️", "Set your name", name, () => { const b = $("nameBtn"); if (b) b.click(); }], ["💬", "Ask or answer one doubt", posted, () => { const b = $("askBtn"); if (b) b.click(); }], ["🧠", "Take today's quiz", quiz, () => showPanel("quiz")]];
+  return [["✏️", "Set your nickname", name, () => { const b = $("nameBtn"); if (b) b.click(); }], ["💬", "Ask or answer one doubt", posted, () => { const b = $("askBtn"); if (b) b.click(); }], ["🧠", "Take today's quiz", quiz, () => showPanel("quiz")]];
 }
 function questCard() {
   if (readJSON("dd-quest-done", false) || (readJSON("dd-visits", { n: 1 }).n || 1) > 21) return null;
@@ -2038,7 +2039,7 @@ function renderHeader() {
   const nb = $("nameBtn");
   if (getName()) {
     nb.replaceChildren(avatarEl(getAvatar(), "av av-nb"), document.createTextNode(" " + getName() + (me ? " · Lv " + me.level.n + (me.streak ? " · 🔥" + me.streak : "") : "")));
-  } else { nb.textContent = "Set your name"; }
+  } else { nb.textContent = "Set your nickname"; }
 
   // Campus filter chips
   const campusBar = $("campusBar");
@@ -2138,7 +2139,7 @@ function showHowTo() {
   const close = () => ov.remove();
   const row = (done, icon, title, text, label, fn) => el("li", { class: done ? "done" : "" }, el("span", { class: "hw-tick", "aria-hidden": "true" }, done ? "\u2713" : icon), el("div", {}, el("strong", {}, title), el("small", {}, text), done || !fn ? null : el("button", { class: "btn sm primary", type: "button", onclick: () => { close(); fn(); } }, label)));
   const steps = [
-    row(name, "1", "Tell us your name", "A first name is enough. It is shown with your posts.", "Set my name", () => { state.afterName = null; showPanel("name"); }),
+    row(name, "1", "Choose your nickname", "A nickname is enough. It is shown with your posts.", "Set my nickname", () => { state.afterName = null; showPanel("name"); }),
     CAMPUSES.length ? row(campusPicked, "2", "Pick your campus", "So classmates on your campus can find you.", "Choose campus", () => { state.mode = "campus"; render(); }) : null,
     row(asked, "3", "Ask your first doubt", "Open Doubts, tap Ask a doubt and write your question.", "Ask a doubt", () => openAsk()),
     row(answered, "4", "Answer someone", "Helping others earns points and builds your streak.", "See open doubts", () => showUnanswered()),
@@ -2438,6 +2439,26 @@ function privateAnswersFor(d) {
         } catch (er) { showNotice(errText(er)); }
       } }, "\u{1F4E2} Share with everyone")))));
 }
+// ---------- After choosing a nickname: create the Loop ID and keep both safe ----------
+function saveIdsCard() {
+  const nick = getName() || "", handle = myHandle(), num = store && store.uid ? campusId(store.uid) : "";
+  const email = el("input", { type: "email", maxlength: "100", placeholder: "your email, for example you@gmail.com", "aria-label": "Your email", autocomplete: "email" }), say = el("p", { class: "hint", role: "status" }, "");
+  const link = el("a", { class: "btn sm primary", href: "#", role: "button" }, "✉️ Email my Loop ID to me");
+  link.addEventListener("click", (e) => {
+    const to = email.value.trim();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) { e.preventDefault(); say.textContent = "Type a valid email address first."; return; }
+    const h = myHandle(), body = "My " + BRAND + " details\n\nNickname: " + (getName() || "") + "\n" + (h ? "Loop ID: @" + h + "\n" : "") + (num ? "Number ID: " + campusId(store.uid) + "\n" : "") + "\nKeep this email. If you forget your Loop ID, open " + location.origin + location.pathname + " and use Forgot my Loop ID. These details are not a password.";
+    link.href = "mailto:" + encodeURIComponent(to).replace(/%40/g, "@") + "?subject=" + encodeURIComponent("My " + BRAND + " Loop ID") + "&body=" + encodeURIComponent(body);
+    say.textContent = "Your email app will open with your details. Press send to keep them.";
+  });
+  return el("div", { class: "learn-card" }, el("strong", {}, "\u{1F4E7} Keep your IDs safe"), el("p", { class: "hint" }, "Send your nickname and Loop ID to your own email, so you can find them if you forget. Any email works."), email, el("div", { class: "rowbtns" }, link), say);
+}
+function renderLoopIdStep() {
+  const go = () => { state.mode = state.afterLoop || (state.selected ? "view" : "intro"); state.afterLoop = null; render(); };
+  return [el("h2", {}, "Create your Loop ID"), el("p", { class: "ob-say" }, "Hi " + (getName() || "there") + "! A Loop ID is a short name friends can use to find you, like @" + ((getName() || "student").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 8) || "student") + "."),
+    handleCard(), saveIdsCard(), verifyBlock(),
+    el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", onclick: go }, myHandle() ? "Continue" : "Continue without a Loop ID"), el("button", { class: "linkbtn", type: "button", onclick: () => { writeJSON("dd-loopid-skip", true); go(); } }, "Do not ask me again"))];
+}
 // ---------- Helper of the week and push opt-in ----------
 function helperOfWeek() {
   if (!store || !state.loaded) return null;
@@ -2592,6 +2613,7 @@ const MODE_GUIDE = {
   explore: { icon: "\u{1F9ED}", purpose: "Discover what is happening across the app.", steps: ["Browse the cards.", "Open one that interests you.", "Come back for new things daily."], safe: SAFE_COMMON, next: ["❓ Ask a doubt", "ask"] },
   drives: { icon: "\u{1F3E2}", purpose: "Campus drives and company visits with dates and links.", steps: ["Check the date and eligibility.", "Open the official link to register.", "Prepare using the resume tool."], safe: "A real drive never asks you to pay. Report any post that does.", next: ["\u{1F4C4} Build my resume", "resume"] },
   events: { icon: "\u{1F4C5}", purpose: "Events, fests and workshops on your campus.", steps: ["Pick an event.", "Check the date and place.", "Invite a friend."], safe: "Meet in public places on campus.", next: ["\u{1F4E2} Notices", "notices"] },
+  loopid: { icon: "\u{1F3F7}\uFE0F", purpose: "Pick a short Loop ID and keep your IDs safe by email.", steps: ["Type a name or tap one of the ideas.", "Tap Claim it when it says free.", "Email your IDs to yourself, then continue."], safe: "Your Loop ID is not a password. Do not share your email password with anyone.", next: null },
   forgotid: { icon: "\u{1F511}", purpose: "Find your Loop ID again, or get it back on a new phone.", steps: ["Look on the Me page if you are on your own phone.", "Search your nickname if you only remember that.", "Verify your email so a new phone can bring your account back."], safe: "Your Loop ID is not a password. Nobody can sign in with it.", next: null },
   curious: { icon: "\u{1F50E}", purpose: "A few minutes of wonder every day: a fact, a Why guess, a mystery topic and the best question of the week.", steps: ["Read the fact and tap I learned this.", "Guess the Why before you see the answer.", "Unlock the mystery topic and search more on anything that excites you."], safe: SAFE_COMMON, next: ["\u2753 Ask a question", "ask"] },
   feedback: { icon: "\u{1F4AC}", purpose: "Tell the team what works and what to fix. It shapes the next version.", steps: ["Give a rating from 1 to 5.", "Say whether you would pay and how much.", "Write one thing you like and one thing to improve."], safe: "Do not write phone numbers or passwords. Feedback is private and not shown with your name.", next: null },
@@ -3994,7 +4016,7 @@ const PLUS_TILES = [
   ["📄", "Resume builder", "A one-page ATS-friendly resume you can print as a PDF.", "resume"],
   ["⏱️", "Focus timer", "Pomodoro rounds with a 7-day study chart.", "focusplus"],
   ["🎯", "Goals and badges", "Weekly targets and badges to keep you going.", "goals"],
-  ["⭐", "Plus star", "A star next to your name on every post.", ""],
+  ["⭐", "Plus star", "A star next to your nickname on every post.", ""],
 ];
 const PLUS_COMPARE = [["", "Free", "Plus"], ["Board, stories, quizzes, Study Lab", "✔", "✔"], ["Daily streaks and battles", "✔", "✔"], ["AI study helper", "–", "✔"], ["Mock tests and progress chart", "–", "✔"], ["Mistake notebook and exam planner", "–", "✔"], ["Paper vault", "–", "✔"], ["Weekly goals, badges, focus timer", "–", "✔"], ["Resume builder, weekly leaderboard", "–", "✔"], ["Cloud backup, themes, ⭐", "–", "✔"]];
 function renderPlus() {
@@ -4704,7 +4726,7 @@ function renderMe() {
       el("button", { class: "btn", type: "button", onclick: () => showHowTo() }, "\u{1F4D6} How to use the app"),
       el("button", { class: "btn", type: "button", onclick: reportProblem }, "\u{1F41E} Report a problem"),
       el("button", { class: "btn", type: "button", onclick: () => { state.mode = "learn"; render(); } }, "📚 Learn from IIT"),
-      el("button", { class: "btn", type: "button", onclick: () => { state.afterName = "me"; state.mode = "name"; render(); } }, "Change name"),
+      el("button", { class: "btn", type: "button", onclick: () => { state.afterName = "me"; state.mode = "name"; render(); } }, "Change nickname"),
       PRIVATE && el("button", { class: "btn", type: "button", onclick: () => { setCode(""); location.reload(); } }, "Change class code"),
       el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")),
     idCard(), handleCard(),
@@ -7393,17 +7415,19 @@ function renderName() {
     e.preventDefault();
     const v = form.elements.name.value.trim().slice(0, 40);
     if (v.length < 2) { err.textContent = "Enter at least 2 characters."; err.hidden = false; return; }
-    if (hasBadWords(v) || v.toLowerCase() === ANON.toLowerCase()) { err.textContent = "Please use your real name or nickname."; err.hidden = false; return; }
-    setName(v); state.mode = state.afterName || (state.selected ? "view" : "intro"); state.afterName = null; render();
+    if (hasBadWords(v) || v.toLowerCase() === ANON.toLowerCase()) { err.textContent = "Please use a nickname that is not offensive."; err.hidden = false; return; }
+    setName(v); state.afterLoop = state.afterName || null; state.afterName = null;
+    if (!myHandle() && store && store.handleClaim && !readJSON("dd-loopid-skip", false)) { state.mode = "loopid"; render(); return; }
+    state.mode = state.afterLoop || (state.selected ? "view" : "intro"); state.afterLoop = null; render();
   } },
-    el("label", {}, "Your name", el("input", { id: "f-name", name: "name", maxlength: "40", autocomplete: "name", placeholder: "e.g. Ravi K (CSE-B)", value: getName() })),
-    el("p", { class: "hint" }, "Classmates see this name on your doubts, ideas and replies. It is saved on this phone or computer."),
+    el("label", {}, "Your nickname", el("input", { id: "f-name", name: "name", maxlength: "40", autocomplete: "nickname", placeholder: "e.g. Ravi K (CSE-B)", value: getName() })),
+    el("p", { class: "hint" }, "Classmates see this nickname on your doubts, ideas and replies. Use a nickname, not your full real name."),
     err,
     el("div", { class: "rowbtns" },
-      el("button", { class: "btn primary", type: "submit" }, "Save name"),
+      el("button", { class: "btn primary", type: "submit" }, "Save nickname"),
       el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; state.afterName = null; render(); } }, "Cancel")));
   setTimeout(() => form.elements.name.focus(), 0);
-  return [el("h2", {}, "What should classmates call you?"), form];
+  return [el("h2", {}, "Choose your nickname"), form];
 }
 
 // ---------- challenge helpers ----------
@@ -7513,7 +7537,7 @@ function renderChalQuiz(d) {
   }
 
   // Start button
-  if (!getName()) return el("p", { class: "hint" }, "Set your name first to take this quiz.");
+  if (!getName()) return el("p", { class: "hint" }, "Set your nickname first to take this quiz.");
   return el("div", { class: "chal-start-wrap" },
     el("div", { class: "chal-start-info" },
       el("span", { class: "pill" }, questions.length + " questions"),
@@ -8376,7 +8400,7 @@ const REF_TAG = { doubts: "❓ DOUBT", ideas: "💡 IDEA", clubs: "🏛 CLUB", g
 async function shareToStory(fields) {
   if (!store) return false;
   const pb = postingBlocked(); if (pb) { alert(pb); return false; }
-  if (!getName()) { showPanel("name"); showNotice("Set your name first, then share to your story."); return false; }
+  if (!getName()) { showPanel("name"); showNotice("Set your nickname first, then share to your story."); return false; }
   if (state.stories.filter(x => allMyIds().has(x.authorId) && Date.now() - x.createdAt < STORY_MS).length >= STORY_DAILY_MAX) { alert("You can add up to " + STORY_DAILY_MAX + " stories a day."); return false; }
   if (hasBadWords([fields.text, fields.caption || "", fields.expl || "", ...(fields.opts || [])].join(" "))) { alert(LANGUAGE_MSG); return false; }
   const id = store.newId("stories"), doc = { authorId: store.uid, authorName: getName().slice(0, 40), bg: "4", ...fields, createdAt: Date.now() };
@@ -8388,7 +8412,7 @@ async function shareToStory(fields) {
 function openStoryAdd() {
   if (!store) return;
   { const pb = postingBlocked(); if (pb) { alert(pb); return; } }
-  if (!getName()) { showPanel("name"); showNotice("Set your name first, then add your story."); return; }
+  if (!getName()) { showPanel("name"); showNotice("Set your nickname first, then add your story."); return; }
   if (state.stories.filter(s => allMyIds().has(s.authorId) && Date.now() - s.createdAt < STORY_MS).length >= STORY_DAILY_MAX) { showNotice("You can add up to " + STORY_DAILY_MAX + " stories a day."); return; }
   let kind = "text", img = "", bg = 0;
   const ov = el("div", { class: "st-view st-add", role: "dialog", "aria-modal": "true", "aria-label": "Add to your story" });
@@ -8604,6 +8628,7 @@ function render() {
       state.mode === "wardrobe" ? renderWardrobe() :
       state.mode === "drives" ? renderDrives() :
       state.mode === "events" ? renderEvents() :
+      state.mode === "loopid" ? renderLoopIdStep() :
       state.mode === "forgotid" ? renderForgotId() :
       state.mode === "curious" ? renderCurious() :
       state.mode === "feedback" ? renderFeedback() :
