@@ -3028,3 +3028,45 @@ header.top #paletteBtn, #paletteBtn { border-radius: 999px; background: var(--ac
   .bname b { font-size: .82rem; letter-spacing: .08em; }
   .bname i { font-size: .56rem; letter-spacing: .5em; }
 }
+
+/* ===== Premium welcome page: calm brand ground, serif headline, one gold accent, tidy grid ===== */
+.splash.sp2 { background: radial-gradient(75% 42% at 50% 0%, color-mix(in srgb, var(--hdr-brand) 15%, transparent), transparent 72%), linear-gradient(180deg, var(--splash), color-mix(in srgb, var(--splash) 80%, #000)); color: #f4efe4; }
+.sp2-bg { display: none; }
+.sp2-brand { margin-bottom: 20px; }
+.sp2-bmark svg { filter: none; }
+.sp2-bname b { color: #f6f1e6; letter-spacing: .14em; }
+.sp2-bname i { background: none; color: var(--hdr-brand); -webkit-text-fill-color: var(--hdr-brand); }
+.sp2-h { font-family: 'Bitstream Charter', Georgia, 'Times New Roman', serif; font-weight: 700; letter-spacing: -.01em; line-height: 1.12; font-size: clamp(2rem, 8.4vw, 2.85rem); color: #f6f1e6; }
+.sp2-h span { background: none; -webkit-background-clip: border-box; background-clip: border-box; color: var(--hdr-brand); -webkit-text-fill-color: var(--hdr-brand); font-style: italic; font-weight: 600; }
+.sp2-sub { font-family: 'Bitstream Charter', Georgia, 'Times New Roman', serif; font-style: italic; font-size: 1.02rem; color: rgb(244 239 228 / .72); opacity: 1; min-height: 0; margin-top: 4px; }
+.sp2-sub::before { content: ""; display: block; width: 44px; height: 2px; background: var(--hdr-brand); margin: 0 0 14px; }
+.sp2-chips { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.sp2-chip { margin: 0 !important; transform: none !important; animation: none !important; display: flex; align-items: center; justify-content: flex-start; gap: 12px; min-height: 52px; padding: 12px 14px; border-radius: 12px; background: rgb(255 255 255 / .05); border: 1px solid rgb(255 255 255 / .12); color: #f4efe4; backdrop-filter: none; -webkit-backdrop-filter: none; box-shadow: none; font-size: 14.5px; font-weight: 600; text-align: left; }
+.sp2-chip b { width: 22px; text-align: center; font-size: 17px; filter: grayscale(1) sepia(1) saturate(2.4) hue-rotate(-8deg) brightness(1.1); }
+.sp2-chip:active, .sp2-chip.pop { background: rgb(255 255 255 / .1); border-color: var(--hdr-brand); }
+.sp2-guide .loopy { width: 64px; filter: saturate(.7); }
+.sp2-bubble { background: rgb(255 255 255 / .06); color: #f4efe4; border: 1px solid rgb(255 255 255 / .12); border-radius: 12px; box-shadow: none; font-weight: 500; }
+.sp2-bubble::before { display: none; }
+.sp2-go { background: var(--hdr-brand); color: var(--splash); border: 0; border-radius: 12px; font-weight: 700; letter-spacing: .02em; box-shadow: none; padding: 16px 22px; }
+.sp2-go:hover { filter: brightness(1.06); }
+.sp2-trust { margin: 10px auto 0; max-width: 30em; width: 100%; text-align: center; font-size: 12px; color: rgb(244 239 228 / .55); }
+.sp2-h, .sp2-h span, .sp2-sub, .sp2-bname b, .sp2-bname i { text-shadow: none !important; filter: none; }
+.splash.sp2 { justify-content: flex-start; gap: 18px; overflow-y: auto; }
+.sp2-guide { margin-top: auto; padding-top: 6px; }
+.sp2-go { margin-top: 6px; }
+@media (max-width: 380px) { .sp2-chip { padding: 10px 11px; gap: 9px; font-size: 13.5px; min-height: 48px; } .sp2-chip b { width: 20px; font-size: 16px; } }
+@media (max-height: 780px) {
+  .splash.sp2 { gap: 12px; padding-top: 16px; }
+  .sp2-bmark svg { width: 48px; height: 48px; }
+  .sp2-brand { margin-bottom: 8px; }
+  .sp2-h { font-size: clamp(1.7rem, 7.4vw, 2.35rem); }
+  .sp2-sub::before { margin-bottom: 10px; }
+  .sp2-chip { min-height: 44px; padding: 8px 11px; }
+  .sp2-guide .loopy { width: 52px; }
+  .sp2-bubble { font-size: 12px; padding: 8px 10px; }
+  .sp2-go { padding: 14px 18px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .sp2-brand, .sp2-h, .sp2-sub, .sp2-chips, .sp2-guide, .sp2-go, .sp2-trust { animation: riseIn .55s ease both; }
+  .sp2-h { animation-delay: .08s; } .sp2-sub { animation-delay: .16s; } .sp2-chips { animation-delay: .24s; } .sp2-guide { animation-delay: .32s; } .sp2-go { animation-delay: .4s; } .sp2-trust { animation-delay: .46s; }
+}
