@@ -4557,6 +4557,7 @@ async function lsRun(q) {
   try { bump("search", 1); } catch (_) {}
 }
 function openLoopySearch(q, back) {
+  if (lsClean(q).length >= 2) { openTopic(q, "", back || "plus"); return; }
   state.ls = Object.assign(state.ls || { level: "quick", mode: "topic", q: "", res: null, busy: false, err: "" }, { q: lsClean(q), back: back || "plus" });
   showPanel("loopysearch"); if (state.ls.q) lsRun(state.ls.q);
 }
@@ -4597,6 +4598,138 @@ function lsAiCard(ls) {
     a.followUp ? el("div", { class: "curio-ask" }, el("small", { class: "tag" }, "\u{1F914} LOOPY ASKS YOU"), el("p", {}, a.followUp), el("button", { class: "btn sm primary", type: "button", onclick: () => { state.ai = state.ai || { msgs: [], busy: false, note: "" }; state.ai.prefill = "You asked me: " + a.followUp + "\nMy answer is: "; showPanel("ai"); } }, "\u270D\uFE0F Answer and get feedback")) : null,
     a.related.length ? el("div", { class: "rowbtns" }, el("small", { class: "hint" }, "Related:"), ...a.related.map(t => el("button", { class: "linkbtn", type: "button", onclick: () => lsRun(lsClean(t)) }, t))) : null,
     el("p", { class: "hint" }, "AI answers can contain mistakes. Check important facts with your book or teacher." + (ls.aiLeft != null ? " " + ls.aiLeft + " AI questions left today." : "")));
+}
+// ---------- Loopy AI topic guide ----------
+// Tap any topic and Loopy builds a guide in a fixed order: summary, key ideas, diagrams, 3D models, videos, practice and references. No typing needed.
+// Text and pictures come from Wikipedia and Wikimedia (read-only), 3D models from Sketchfab, and the AI card appears when the AI helper is switched on.
+const TP_SKIP = /^(see also|references|external links|further reading|notes|bibliography|sources|footnotes|citations|gallery|etymology|in popular culture|in fiction|awards|history of)/i;
+const TP_CACHE = new Map();
+const tpState = () => state.tp || (state.tp = { q: "", subject: "", level: "quick", busy: false, data: null, ai: null, aiNote: "", back: "" });
+function tpSections(text) {
+  const lines = String(text || "").slice(0, 60000).split("\n"), out = []; let cur = { h: "", t: [] };
+  for (const ln of lines) { const m = /^=+\s*(.+?)\s*=+\s*$/.exec(ln); if (m) { out.push(cur); cur = { h: m[1].replace(/[<>]/g, ""), t: [] }; } else if (ln.trim()) cur.t.push(ln.trim()); }
+  out.push(cur);
+  const clean = (a) => a.join(" ").replace(/\s*\((?:listen|pronounced|\/[^)]*)\)/gi, "").replace(/\s{2,}/g, " ").trim();
+  return { intro: clean((out[0] || { t: [] }).t), sections: out.slice(1).filter(x => x.h && !TP_SKIP.test(x.h) && x.t.length).map(x => ({ h: x.h.slice(0, 60), t: clean(x.t).slice(0, 460) })).filter(x => x.t.length > 40) };
+}
+async function tpModels(q) {
+  try {
+    const j = await lsFetch("https://api.sketchfab.com/v3/search?type=models&count=8&embeddable=true&q=" + encodeURIComponent(q));
+    return (j.results || []).map(m => {
+      const imgs = (m.thumbnails && m.thumbnails.images) || [], th = imgs.filter(i => i && typeof i.url === "string" && i.url.startsWith("https://media.sketchfab.com/")).sort((a, b) => (a.width || 0) - (b.width || 0)).find(i => (i.width || 0) >= 200) || imgs[0];
+      return { uid: String(m.uid || ""), name: String(m.name || "3D model").replace(/[<>]/g, "").slice(0, 70), thumb: th ? String(th.url) : "", by: String((m.user && m.user.displayName) || "").slice(0, 40) };
+    }).filter(m => /^[a-f0-9]{32}$/.test(m.uid) && m.thumb.startsWith("https://media.sketchfab.com/")).slice(0, 6);
+  } catch (_) { return []; }
+}
+async function tpLoad(q, subject) {
+  const key = q.toLowerCase(), ts = tpState();
+  if (TP_CACHE.has(key)) { ts.data = TP_CACHE.get(key); ts.busy = false; return; }
+  ts.busy = true; ts.data = null; render();
+  const aiOn = !!PLUS.functionsUrl && !!store && !!store.idToken && !plusLocked();
+  const aiTask = aiOn ? (async () => { try { const tok = await store.idToken(); if (!tok) return; const r = await fetch(PLUS.functionsUrl.replace(/\/$/, "") + "/askAI", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + tok }, body: JSON.stringify({ mode: "search", query: q, level: ts.level === "exam" ? "exam" : ts.level === "deep" ? "deep" : "quick" }) }); const d = await r.json().catch(() => ({})); if (r.ok && d.search) { ts.ai = d.search; ts.aiLeft = typeof d.left === "number" ? d.left : null; } else ts.aiNote = d.error || ""; } catch (e) { ts.aiNote = (e && e.message) || ""; } })() : Promise.resolve();
+  const data = { title: q, intro: "", sections: [], img: "", page: "", imgs: [], models: [] };
+  try {
+    const found = await lsFetch("https://en.wikipedia.org/w/api.php?action=query&list=search&srlimit=1&format=json&origin=*&srsearch=" + encodeURIComponent(q));
+    const hit = found && found.query && found.query.search && found.query.search[0];
+    if (hit && typeof hit.title === "string") {
+      const j = await lsFetch("https://en.wikipedia.org/w/api.php?action=query&prop=extracts|pageimages|info&inprop=url&explaintext=1&exsectionformat=wiki&piprop=thumbnail&pithumbsize=640&redirects=1&format=json&origin=*&titles=" + encodeURIComponent(hit.title));
+      const pg = j && j.query && j.query.pages ? Object.values(j.query.pages)[0] : null;
+      if (pg) {
+        const p = tpSections(pg.extract); data.title = String(pg.title || hit.title).slice(0, 100); data.intro = p.intro.slice(0, 900); data.sections = p.sections.slice(0, 8);
+        const th = pg.thumbnail && pg.thumbnail.source; data.img = typeof th === "string" && th.startsWith("https://upload.wikimedia.org/") ? th : "";
+        data.page = typeof pg.fullurl === "string" && pg.fullurl.startsWith("https://en.wikipedia.org/") ? pg.fullurl : "";
+        data.raw = hit.title;
+      }
+    }
+  } catch (_) {}
+  const short = ahWords(q).slice(0, 3).join(" ") || q;
+  const [imgsA, models] = await Promise.all([
+    ahCommons(short + " diagram").catch(() => []), tpModels(short)]);
+  let imgs = imgsA;
+  if (imgs.length < 4 && data.raw) imgs = imgs.concat(await ahArticleImages(data.raw).catch(() => []));
+  const seen = new Set(); data.imgs = imgs.filter(x => !seen.has(x.thumb) && seen.add(x.thumb)).slice(0, 8); data.models = models;
+  await aiTask;
+  TP_CACHE.set(key, data); ts.data = data; ts.busy = false; render();
+}
+function openTopic(q, subject, back) {
+  q = lsClean(q); if (q.length < 2) return;
+  const ts = tpState(); ts.q = q; ts.subject = subject || ts.subject || ""; ts.back = back || (state.mode !== "topic" ? state.mode : ts.back) || "intro"; ts.ai = null; ts.aiNote = "";
+  state.mode = "topic"; render();
+  try { window.scrollTo({ top: 0 }); } catch (_) {}
+  tpLoad(q, subject);
+}
+function tpOverlay(title, kids, openUrl, openLabel) {
+  const close = () => { ov.remove(); document.removeEventListener("keydown", onKey); }, onKey = (e) => { if (e.key === "Escape") close(); };
+  const ov = el("div", { class: "overlay", role: "dialog", "aria-modal": "true", "aria-label": title },
+    el("div", { class: "ovbar" }, el("span", { class: "ovcap" }, title), openUrl ? outLink(openUrl, openLabel || "Open original", "btn sm") : null, el("button", { type: "button", class: "btn sm primary", onclick: close }, "Close")),
+    el("div", { class: "ovbody" }, ...kids));
+  document.addEventListener("keydown", onKey); document.body.append(ov);
+}
+const tpImageView = (it) => tpOverlay(it.title, [el("img", { src: it.thumb.replace(/\/\d+px-/, "/960px-"), alt: it.title, referrerpolicy: "no-referrer", onerror: (e) => { e.target.src = it.thumb; } })], it.page, "Open on Wikimedia");
+const tpModelView = (m) => tpOverlay(m.name, [el("iframe", { class: "tp-embed", src: "https://sketchfab.com/models/" + m.uid + "/embed?autospin=0.2&ui_infos=0&ui_watermark=0", title: m.name + " in 3D", allow: "autoplay; fullscreen; xr-spatial-tracking", allowfullscreen: "", referrerpolicy: "no-referrer", sandbox: "allow-scripts allow-same-origin allow-popups" })], "https://sketchfab.com/3d-models/" + m.uid, "Open on Sketchfab");
+function tpSec(n, id, title, kicker, ...kids) {
+  return el("section", { class: "tp-sec s" + n, id: "tp-" + id }, el("div", { class: "tp-sec-h" }, el("span", { class: "tp-num", "aria-hidden": "true" }, String(n)), el("div", {}, el("h3", {}, title), kicker ? el("small", {}, kicker) : null)), ...kids.filter(Boolean));
+}
+function renderTopic() {
+  const ts = tpState(), q = ts.q, d = ts.data, subj = ts.subject;
+  const back = el("button", { class: "btn", type: "button", onclick: () => { state.mode = ts.back && ts.back !== "topic" ? ts.back : "intro"; render(); } }, "Back");
+  if (!q) return [el("h2", {}, "Loopy AI topic guide"), el("p", { class: "hint" }, "Pick a topic and Loopy builds a guide for you."), el("div", { class: "rowbtns" }, back)];
+  const yt = (extra) => "https://www.youtube.com/results?search_query=" + encodeURIComponent(q + " " + extra);
+  const gg = (extra) => "https://www.google.com/search?q=" + encodeURIComponent(q + " " + extra);
+  const sfx = LS_LEVELS[ts.level][1], lv = ts.level;
+  const levelBtns = Object.entries(LS_LEVELS).map(([k, v]) => el("button", { type: "button", class: "tp-lv" + (lv === k ? " on" : ""), "aria-pressed": String(lv === k), onclick: () => { ts.level = k; render(); } }, v[0].replace(/^[^\w]+/u, "")));
+  const jump = (id, t) => el("button", { type: "button", class: "tp-jump", onclick: () => { const e = document.getElementById("tp-" + id); if (e) e.scrollIntoView({ behavior: "smooth", block: "start" }); } }, t);
+  const hero = el("div", { class: "tp-hero" },
+    el("small", { class: "tp-kick" }, "Loopy AI · Topic guide"),
+    el("div", { class: "tp-hero-row" }, el("div", { class: "tp-hero-txt" }, el("h2", {}, d ? d.title : q), subj ? el("span", { class: "tp-chip" }, subj) : null), d && d.img ? el("img", { class: "tp-hero-img", src: d.img, alt: d.title, loading: "lazy", referrerpolicy: "no-referrer" }) : null),
+    ts.busy ? el("p", { class: "tp-load", role: "status" }, "Loopy is preparing your guide...") : (d && d.intro ? el("p", { class: "tp-lead" }, (d.intro.split(/\.\s/)[0] || d.intro).slice(0, 220)) : null),
+    el("div", { class: "tp-lvs", role: "group", "aria-label": "How deep" }, ...levelBtns),
+    el("div", { class: "tp-jumps" }, jump("overview", "Summary"), jump("ideas", "Key ideas"), jump("visuals", "Diagrams"), jump("models", "3D"), jump("watch", "Watch"), jump("practice", "Practice")));
+  const out = [hero];
+  if (ts.busy) { out.push(el("div", { class: "tp-skel", "aria-hidden": "true" }, el("i", {}), el("i", {}), el("i", {}))); out.push(el("div", { class: "rowbtns" }, back)); return out; }
+  // 1 Summary (AI first when available)
+  const ai = ts.ai;
+  out.push(tpSec(1, "overview", "Summary", "What it is, in plain words",
+    ai ? el("div", { class: "tp-ai" }, el("small", { class: "tag" }, "Loopy AI"), el("p", {}, ai.summary), ai.example ? el("p", { class: "hint" }, el("b", {}, "Example: "), ai.example) : null) : null,
+    d && d.intro ? el("p", { class: "tp-text" }, lv === "quick" ? d.intro.slice(0, 520) : d.intro) : el("p", { class: "hint" }, "No short summary was found for this exact name. Try the videos and notes below, or ask classmates."),
+    d && d.page ? outLink(d.page, "Read the full article", "linkbtn") : null));
+  // 2 Key ideas
+  const ideas = (ai && ai.keyPoints && ai.keyPoints.length ? ai.keyPoints.map(k => ({ h: "", t: k })) : []).concat(d ? d.sections.slice(0, lv === "quick" ? 3 : lv === "exam" ? 4 : 6) : []);
+  if (ideas.length) out.push(tpSec(2, "ideas", "Key ideas", lv === "exam" ? "What examiners expect" : "Learn these in order",
+    el("ol", { class: "tp-ideas" }, ...ideas.map(x => el("li", {}, x.h ? el("b", {}, x.h) : null, el("span", {}, x.t))))));
+  // sub-topics: tap to go deeper
+  const subs = d ? d.sections.map(x => x.h).filter(h => h.length <= 40).slice(0, 8) : [];
+  if (subs.length) out.push(el("div", { class: "tp-subs" }, el("small", {}, "Go deeper:"), ...subs.map(h => el("button", { type: "button", class: "tp-sub", onclick: () => openTopic(h + " " + (d.title || q), subj, "topic") }, h))));
+  // 3 Diagrams
+  out.push(tpSec(3, "visuals", "Diagrams and pictures", "Tap a picture to enlarge it",
+    d && d.imgs.length ? el("div", { class: "tp-gal" }, ...d.imgs.map(it => el("button", { type: "button", class: "tp-fig", onclick: () => tpImageView(it), "aria-label": "Open " + it.title }, el("img", { src: it.thumb, alt: it.title, loading: "lazy", referrerpolicy: "no-referrer" }), el("small", {}, it.title)))) : el("p", { class: "hint" }, "No free diagram was found for this exact name."),
+    el("div", { class: "rowbtns" }, outLink("https://www.google.com/search?tbm=isch&q=" + encodeURIComponent(q + " diagram colour"), "More diagrams", "btn sm"), outLink("https://commons.wikimedia.org/w/index.php?search=" + encodeURIComponent(q) + "&ns6=1", "Free images (Wikimedia)", "btn sm"))));
+  // 4 3D
+  out.push(tpSec(4, "models", "3D models", "Rotate and zoom with your finger",
+    d && d.models.length ? el("div", { class: "tp-gal" }, ...d.models.map(m => el("button", { type: "button", class: "tp-fig m3", onclick: () => tpModelView(m), "aria-label": "View " + m.name + " in 3D" }, el("img", { src: m.thumb, alt: m.name, loading: "lazy", referrerpolicy: "no-referrer" }), el("span", { class: "tp-3dbadge" }, "3D"), el("small", {}, m.name)))) : el("p", { class: "hint" }, "No 3D model found here. Try the search."),
+    el("div", { class: "rowbtns" }, outLink("https://sketchfab.com/search?type=models&q=" + encodeURIComponent(q), "Search 3D models", "btn sm"), outLink("https://phet.colorado.edu/en/search?q=" + encodeURIComponent(q), "Simulations (PhET)", "btn sm"))));
+  // 5 Watch
+  out.push(tpSec(5, "watch", "Watch and learn", lv === "deep" ? "Full lectures" : lv === "exam" ? "Exam-focused videos" : "Short, clear explanations",
+    el("div", { class: "tp-chans" }, ...LS_CHANNELS.map(([c, t]) => outLink(yt(c + " " + sfx), t, "tp-chan"))),
+    el("div", { class: "rowbtns" }, outLink(yt("animation"), "Animations", "btn sm"), outLink(yt("explained with example"), "Worked examples", "btn sm"))));
+  // 6 Practice
+  const checklist = ["Write the definition in one or two lines.", "Draw a neat, labelled diagram.", "State the formula or principle, with units.", "Give one worked example.", "List two applications and one limitation."];
+  const board = state.doubts.filter(x => !x.deleted && !isHidden(x) && relHit(ahWords(q), ahWords((x.title || "") + " " + (x.body || ""))) >= 1).length;
+  out.push(tpSec(6, "practice", "Practice and exam", "Test what you learned",
+    lv === "exam" ? el("ul", { class: "tp-check" }, ...checklist.map(c => el("li", {}, c))) : null,
+    el("div", { class: "rowbtns" }, outLink(gg("previous year questions filetype:pdf"), "Previous questions", "btn sm"), outLink(gg("lecture notes filetype:pdf site:nptel.ac.in OR site:ocw.mit.edu OR site:ac.in"), "Official notes (PDF)", "btn sm"), outLink(gg("solved problems"), "Solved problems", "btn sm")),
+    el("div", { class: "rowbtns" },
+      el("button", { class: "btn sm primary", type: "button", onclick: () => { state.tab = "doubts"; state.group = "All"; state.filter = "all"; state.query = q; state.selected = null; state.mode = "intro"; render(); } }, board ? "See " + board + " doubt" + (board === 1 ? "" : "s") + " on the board" : "Search the board"),
+      el("button", { class: "btn sm", type: "button", onclick: () => { state.mode = "ask"; render(); } }, "Ask classmates"),
+      PLUS.functionsUrl ? el("button", { class: "btn sm", type: "button", onclick: () => { state.ai = state.ai || { msgs: [], busy: false, note: "" }; state.ai.prefill = "Quiz me on " + q + " with three questions and check my answers."; showPanel("ai"); } }, "Quiz me") : null)));
+  // 7 Read more
+  out.push(tpSec(7, "more", "Read more", "Trusted places to go deeper",
+    el("div", { class: "rowbtns" }, d && d.page ? outLink(d.page, "Wikipedia", "btn sm") : null, outLink(gg("site:geeksforgeeks.org OR site:tutorialspoint.com"), "Tutorials", "btn sm"), outLink(gg("site:khanacademy.org"), "Khan Academy", "btn sm")),
+    el("p", { class: "hint" }, "Text and pictures come from Wikipedia and Wikimedia, 3D models from Sketchfab. They can be incomplete, so check important facts in your textbook." + (ai && ts.aiLeft != null ? " " + ts.aiLeft + " AI questions left today." : "")),
+    ts.aiNote && !ai ? el("p", { class: "hint", role: "status" }, ts.aiNote) : null));
+  out.push(el("p", { class: "guide-safe" }, el("b", {}, "Stay safe: "), "Videos, notes and 3D pages open other websites. Never enter your password or OTP there."));
+  out.push(el("div", { class: "rowbtns" }, back));
+  return out;
 }
 function renderLoopySearch() {
   const ls = state.ls || (state.ls = { level: "quick", mode: "topic", q: "", res: null, busy: false, err: "" });
@@ -5083,9 +5216,10 @@ function renderSubject(C, r) {
     el("div", { class: "pq-bar", role: "progressbar", "aria-valuemin": "0", "aria-valuemax": "6", "aria-valuenow": String(done.length) }, el("i", { style: "width:" + Math.round(done.length / 6 * 100) + "%" })),
     ...mids.map(([label, units]) => el("div", { class: "learn" }, el("small", { class: "hint" }, label + " covers units " + units.join(" and ")), ...units.map(n => el("div", { class: "learn-card" },
       unitInfo(n) ? el("p", { class: "unit-topics" }, el("b", {}, "Unit " + n + (unitInfo(n).t ? ": " + String(unitInfo(n).t) : "")), el("span", {}, String(unitInfo(n).x || ""))) : null,
+      unitInfo(n) ? el("div", { class: "tp-subs" }, ...String(unitInfo(n).x || "").split(/[;,.]/).map(t => t.trim()).filter(t => t.length > 2 && t.length < 50).slice(0, 8).map(t => el("button", { type: "button", class: "tp-sub", onclick: () => openTopic(t + " " + name, name, "curriculum") }, t))) : null,
       el("div", { class: "rowbtns" }, el("button", { class: "btn sm" + (done.includes(n) ? " primary" : ""), type: "button", "aria-pressed": String(done.includes(n)), onclick: () => toggle(n) }, (done.includes(n) ? "✓ " : "") + "Unit " + n), outLink(unitUrl(n, "v"), "▶ Videos", "linkbtn"), outLink(unitUrl(n, "p"), "\u{1F4C4} Notes PDF", "linkbtn")))))),
     el("div", { class: "rowbtns" },
-      el("button", { class: "btn sm primary", type: "button", onclick: () => { openLoopySearch(name, "curriculum"); } }, "\u{1F50E} Loopy AI Search"),
+      el("button", { class: "btn sm primary", type: "button", onclick: () => openTopic(name, name, "curriculum") }, "\u2728 Explain with Loopy AI"),
       outLink(nptelUrl(name), "\u{1F393} Full IIT course", "btn sm"),
       el("button", { class: "btn sm", type: "button", onclick: () => { state.tab = "doubts"; state.group = "All"; state.filter = "all"; state.query = name; state.selected = null; state.mode = "intro"; render(); } }, "\u{1F50E} Doubts on this"),
       el("button", { class: "btn", type: "button", onclick: () => { curState.open = null; render(); } }, "Back to subjects")),
@@ -9200,6 +9334,7 @@ function renderCore() {
       state.mode === "focusplus" ? renderFocusPlus() :
       state.mode === "college" ? renderCollege() :
       state.mode === "appearance" ? renderAppearance() :
+      state.mode === "topic" ? renderTopic() :
       state.mode === "howto" ? renderHowTo() :
       state.mode === "about" ? renderAbout() :
       state.mode === "lab" ? renderLab() :
