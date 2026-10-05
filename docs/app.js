@@ -4254,7 +4254,7 @@ async function startCheckout(planKey, gift) {
 const PLUS_FEATURES = ["Plus gift link for a friend", "Group study rooms with a shared timer", "Scan handwritten notes into flashcards", "Live doubt sessions with seniors", "Placement preparation kit", "Offline downloads of papers", "Weekly leaderboard for Plus members", "More resume templates", "No ads, ever"];
 const PLUS_TILES = [
   ["\u{1F50E}", "Loopy AI Search", "Search any topic for a quick answer, pictures, videos and PDFs.", "loopysearch"],
-  ["", "AI study helper", "Ask doubts and get step-by-step answers from Claude. 40 a day.", "ai"],
+  ["", "Loopy Brain", "Ask any topic. Get a structured answer from your syllabus, classmates and trusted sources.", "ai"],
   ["📝", "Mock tests", "Timed subject and placement tests with a topic-wise report.", "mock"],
   ["📓", "Mistake notebook", "Questions you missed come back until you get them right.", "mistakes"],
   ["🗓️", "Exam planner", "A daily plan with spaced revision before your exam.", "planner"],
@@ -4522,7 +4522,7 @@ function renderPapers() {
         el("button", { class: "btn sm", type: "button", onclick: () => { if (done.has(p.id)) done.delete(p.id); else { done.add(p.id); bump("papers", 1); } writeJSON("dd-papers-done", [...done].slice(-500)); render(); } }, done.has(p.id) ? "✔ Practised" : "Mark practised")))) : [el("p", { class: "hint" }, "No papers match.")]),
     el("div", { class: "rowbtns" }, back)].filter(Boolean);
 }
-// AI study helper (Plus): chat with Claude through our own server function; the secret key never reaches the phone.
+// Loopy Brain chat: answers are built in the app from the syllabus, board answers and Wikipedia. No outside AI service is called.
 // Loopy AI Search: type any topic and get a quick answer with a picture (from Wikipedia, read-only), then the best places to watch, read and practise it. Free, needs no sign-in, and only reads public pages.
 const LS_LEVELS = { quick: ["⚡ Quick idea", "explained simply"], deep: ["\u{1F52C} Deep lecture", "full lecture"], exam: ["\u{1F3AF} Exam prep", "important questions previous year"] };
 const LS_CHANNELS = [["NPTEL", "NPTEL (IITs)"], ["MIT OpenCourseWare", "MIT OpenCourseWare"], ["Khan Academy", "Khan Academy"], ["Neso Academy", "Neso Academy"], ["Gate Smashers", "Gate Smashers"], ["3Blue1Brown", "3Blue1Brown (visual maths)"]];
@@ -4626,7 +4626,7 @@ async function tpLoad(q, subject) {
   const key = q.toLowerCase(), ts = tpState();
   if (TP_CACHE.has(key)) { ts.data = TP_CACHE.get(key); ts.busy = false; return; }
   ts.busy = true; ts.data = null; render();
-  const aiOn = !!PLUS.functionsUrl && !!store && !!store.idToken && !plusLocked();
+  const aiOn = false;
   const aiTask = aiOn ? (async () => { try { const tok = await store.idToken(); if (!tok) return; const r = await fetch(PLUS.functionsUrl.replace(/\/$/, "") + "/askAI", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + tok }, body: JSON.stringify({ mode: "search", query: q, level: ts.level === "exam" ? "exam" : ts.level === "deep" ? "deep" : "quick" }) }); const d = await r.json().catch(() => ({})); if (r.ok && d.search) { ts.ai = d.search; ts.aiLeft = typeof d.left === "number" ? d.left : null; } else ts.aiNote = d.error || ""; } catch (e) { ts.aiNote = (e && e.message) || ""; } })() : Promise.resolve();
   const data = { title: q, intro: "", sections: [], img: "", page: "", imgs: [], models: [] };
   try {
@@ -4722,7 +4722,7 @@ function renderTopic() {
     el("div", { class: "rowbtns" },
       el("button", { class: "btn sm primary", type: "button", onclick: () => { state.tab = "doubts"; state.group = "All"; state.filter = "all"; state.query = q; state.selected = null; state.mode = "intro"; render(); } }, board ? "See " + board + " doubt" + (board === 1 ? "" : "s") + " on the board" : "Search the board"),
       el("button", { class: "btn sm", type: "button", onclick: () => { state.mode = "ask"; render(); } }, "Ask classmates"),
-      PLUS.functionsUrl ? el("button", { class: "btn sm", type: "button", onclick: () => { state.ai = state.ai || { msgs: [], busy: false, note: "" }; state.ai.prefill = "Quiz me on " + q + " with three questions and check my answers."; showPanel("ai"); } }, "Quiz me") : null)));
+      el("button", { class: "btn sm", type: "button", onclick: () => { state.ai = state.ai || { msgs: [], busy: false, note: "" }; state.ai.prefill = "Quiz me on " + q; showPanel("ai"); } }, "Quiz me"))));
   // 7 Read more
   out.push(tpSec(7, "more", "Read more", "Trusted places to go deeper",
     el("div", { class: "rowbtns" }, d && d.page ? outLink(d.page, "Wikipedia", "btn sm") : null, outLink(gg("site:geeksforgeeks.org OR site:tutorialspoint.com"), "Tutorials", "btn sm"), outLink(gg("site:khanacademy.org"), "Khan Academy", "btn sm")),
@@ -4785,6 +4785,103 @@ function renderLoopySearch() {
     el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => showPanel(state.ls && state.ls.back || "plus") }, "Back")),
   ];
 }
+// ---------- Loopy Brain: Loopy's own answer engine ----------
+// No outside AI. It reads three sources: your college's syllabus, the best answers classmates already posted on the board, and Wikipedia text.
+// It then builds a structured answer. It grows smarter every time students answer doubts.
+const BRAIN_CACHE = new Map();
+const brainSentences = (t) => String(t || "").replace(/\s+/g, " ").replace(/([.!?])\s+(?=[A-Z0-9])/g, "$1\u0001").split("\u0001").map(x => x.trim()).filter(x => x.length > 25 && x.length < 320);
+function brainIntent(text, prev) {
+  const t = String(text || "").trim(), l = t.toLowerCase();
+  const strip = (re) => lsClean(t.replace(re, ""));
+  let kind = "explain", topic = t;
+  if (/^(quiz|test)\b/.test(l) || /\bquiz me\b/.test(l)) { kind = "quiz"; topic = strip(/^(quiz me|quiz|test me|test)( with \d+ questions?)?( on| about)?/i); }
+  else if (/^(give|show) (me )?(an )?example/.test(l) || /^example/.test(l)) { kind = "example"; topic = strip(/^(give|show)( me)?( an)? example( of| for)?|^example( of| for)?/i); }
+  else if (/^(explain )?(it )?simpler|^explain simply|simple words/.test(l)) { kind = "simple"; topic = strip(/^(explain )?(it )?simpler|^explain simply( about)?|in simple words/i); }
+  else if (/^solve\b|step by step/.test(l)) { kind = "solve"; topic = strip(/^solve( step by step)?:?|step by step:?/i); }
+  else if (/exam( answer| style| answer format)|exam-style/.test(l)) { kind = "exam"; topic = strip(/^(write )?(an )?(exam[- ]style answer|exam answer( format)?)( for| on)?:?/i); }
+  else topic = strip(/^(explain|what is|what are|define|tell me about|describe)\b( a| an| the)?/i);
+  if (topic.length < 2 && prev) topic = prev;
+  return { kind, topic: topic.replace(/[?.!]+$/, "").trim() };
+}
+async function brainWiki(q) {
+  const key = q.toLowerCase(); if (BRAIN_CACHE.has(key)) return BRAIN_CACHE.get(key);
+  let out = null;
+  try {
+    const found = await lsFetch("https://en.wikipedia.org/w/api.php?action=query&list=search&srlimit=1&format=json&origin=*&srsearch=" + encodeURIComponent(q));
+    const hit = found && found.query && found.query.search && found.query.search[0];
+    if (hit && typeof hit.title === "string") {
+      const j = await lsFetch("https://en.wikipedia.org/w/api.php?action=query&prop=extracts|info&inprop=url&explaintext=1&exsectionformat=wiki&redirects=1&format=json&origin=*&titles=" + encodeURIComponent(hit.title));
+      const pg = j && j.query && j.query.pages ? Object.values(j.query.pages)[0] : null;
+      if (pg && pg.extract) { const p = tpSections(pg.extract); out = { title: String(pg.title || hit.title).slice(0, 100), intro: p.intro, sections: p.sections, page: typeof pg.fullurl === "string" && pg.fullurl.startsWith("https://en.wikipedia.org/") ? pg.fullurl : "" }; }
+    }
+  } catch (_) {}
+  BRAIN_CACHE.set(key, out); return out;
+}
+function brainBoard(topic) {
+  const w = ahWords(topic); if (!w.length) return [];
+  const need = Math.max(1, Math.ceil(w.length * 0.6)), out = [];
+  for (const d of state.doubts) {
+    if (d.deleted || isHidden(d)) continue;
+    if (relHit(w, ahWords((d.title || "") + " " + (d.subject || "") + " " + (d.body || ""))) < need) continue;
+    const reps = repliesFor(d.id).filter(r => !r.deleted && String(r.body || "").trim().length > 30);
+    if (!reps.length) continue;
+    const best = reps.slice().sort((a, b) => ((b.id === d.resolvedReplyId) - (a.id === d.resolvedReplyId)) || (likesFor(b.id).length - likesFor(a.id).length))[0];
+    out.push({ d, r: best, score: (best.id === d.resolvedReplyId ? 5 : 0) + likesFor(best.id).length });
+  }
+  return out.sort((a, b) => b.score - a.score).slice(0, 2);
+}
+function brainSyllabus(topic) {
+  const C = window.RGUKT_CURRICULUM; if (!C) return [];
+  const w = ahWords(topic); if (!w.length) return []; const out = [], seen = new Set();
+  for (const y of Object.keys(C.data || {})) for (const br of Object.keys(C.data[y] || {})) for (const r of C.data[y][br]) {
+    const k = r[1]; if (seen.has(k)) continue;
+    if (relHit(w, ahWords(r[0])) >= Math.max(1, Math.ceil(w.length * 0.6))) { seen.add(k); out.push({ name: r[0], code: r[1], year: (C.years && C.years[y]) || y, branch: (C.branches && C.branches[br]) || br }); }
+  }
+  return out.slice(0, 3);
+}
+function brainQuiz(wiki, n) {
+  const sents = brainSentences((wiki.intro + " " + wiki.sections.map(x => x.t).join(" "))), qs = [];
+  for (const s of sents) {
+    const cands = (s.match(/\b[A-Za-z][A-Za-z-]{6,}\b/g) || []).filter(x => !AH_STOP.has(x.toLowerCase()) && x.toLowerCase() !== wiki.title.toLowerCase());
+    if (!cands.length) continue; const ans = cands.sort((a, b) => b.length - a.length)[0];
+    qs.push({ q: s.replace(new RegExp("\\b" + ans + "\\b"), "______"), a: ans }); if (qs.length >= n) break;
+  }
+  return qs;
+}
+async function brainReply(text, chat) {
+  const { kind, topic } = brainIntent(text, chat.topic || ""); chat.topic = topic;
+  if (topic.length < 2) return "Tell me the topic, for example **Dijkstra algorithm** or **Ohm's law**, and I will explain it.";
+  const [wiki] = await Promise.all([brainWiki(topic)]);
+  const board = brainBoard(topic), syl = brainSyllabus(topic), L = [];
+  const title = wiki ? wiki.title : topic, intro = wiki ? brainSentences(wiki.intro) : [];
+  if (kind === "quiz") {
+    const qs = wiki ? brainQuiz(wiki, 3) : [];
+    if (!qs.length) return "I need more material on **" + topic + "** to make a good quiz. Open the topic guide, or try a more common name for the topic.";
+    L.push("## Quick quiz: " + title, "Fill in the missing word in each line.", ...qs.map((x, i) => (i + 1) + ". " + x.q), "", "## Answers", ...qs.map((x, i) => (i + 1) + ". **" + x.a + "**"));
+  } else if (kind === "simple") {
+    if (!intro.length && !board.length) return notFoundMsg(topic);
+    L.push("## " + title + ", in simple words", intro[0] || brainSentences(board[0].r.body)[0] || "");
+    if (intro[1]) L.push("", "Think of it like this: " + intro[1]);
+  } else if (kind === "example") {
+    const ex = wiki ? brainSentences(wiki.intro + " " + wiki.sections.map(x => x.t).join(" ")).filter(x => /\b(for example|for instance|such as|e\.g\.|used (in|to|for)|application)/i.test(x)).slice(0, 3) : [];
+    if (!ex.length && !board.length) return "I could not find a clear example of **" + topic + "** yet. Open the topic guide for videos and worked examples.";
+    L.push("## Examples of " + title, ...ex.map(x => "- " + x));
+  } else if (kind === "exam") {
+    if (!intro.length) return notFoundMsg(topic);
+    L.push("## Exam answer: " + title, "**1. Definition**", intro[0], "", "**2. Explanation**", ...(wiki.sections.slice(0, 3).map(x => "- **" + x.h + ":** " + (brainSentences(x.t)[0] || x.t.slice(0, 160)))), "", "**3. Diagram**", "- Draw a neat labelled diagram of " + title + ". The topic guide has pictures to copy from.", "", "**4. Conclusion**", "- Finish with one use of " + title + " and one limitation.");
+  } else {
+    if (!intro.length && !board.length && !syl.length) return notFoundMsg(topic);
+    if (intro.length) L.push("## " + title, intro.slice(0, 2).join(" "));
+    const keys = wiki ? wiki.sections.slice(0, 4).map(x => "- **" + x.h + ":** " + (brainSentences(x.t)[0] || x.t.slice(0, 170))) : [];
+    if (keys.length) L.push("", "## Key points", ...keys);
+    if (kind === "solve") L.push("", "## How to solve it", "1. Write what is given and what is asked.", "2. Name the rule or formula that connects them.", "3. Substitute the values with units.", "4. Check the answer makes sense.");
+  }
+  if (syl.length && kind !== "quiz") L.push("", "## In your syllabus", ...syl.map(x => "- **" + x.name + "** (" + x.code + "), " + x.year + ", " + x.branch));
+  if (board.length && kind !== "quiz") { L.push("", "## Solved by your classmates"); for (const { d, r } of board) L.push("- **" + d.title.slice(0, 90) + "**: " + String(r.body).replace(/\s+/g, " ").slice(0, 260) + (r.ai ? " (AI-labelled answer)" : "")); }
+  if (wiki && wiki.page && kind !== "quiz") L.push("", "Source: Wikipedia. Check important facts in your textbook.");
+  return L.join("\n");
+}
+const notFoundMsg = (t) => "I do not have enough on **" + t + "** yet. Try the usual textbook name, or tap **Open topic guide** for videos, diagrams and notes. You can also post it as a doubt, and your classmates' answers will teach me for next time.";
 // Loopy AI chat: greeting, starter cards, formatted answers, quick follow-ups, sticky composer.
 function aiInline(t) {
   const out = [], re = /(\*\*[^*]+\*\*|`[^`]+`)/g; let last = 0, m;
@@ -4810,21 +4907,14 @@ function aiFormat(text) {
 const AI_STARTERS = [["\u{1F4A1}", "Explain a topic simply", "Explain "], ["\u{1F9EE}", "Solve step by step", "Solve step by step: "], ["\u{1F3AF}", "Quiz me", "Quiz me with 3 questions on "], ["\u{1F4DD}", "Exam answer format", "Write an exam-style answer for: "]];
 function renderAI() {
   const back = el("button", { class: "btn", type: "button", onclick: () => showPanel("plus") }, "Back");
-  if (plusLocked()) return [el("h2", {}, "Loopy AI"), el("p", { class: "hint" }, "Loopy AI chat is part of The Campus Loop Plus."), el("div", { class: "rowbtns" }, back)];
-  if (!PLUS.functionsUrl) return [el("h2", {}, "Loopy AI"), el("p", { class: "hint" }, "Loopy AI is being set up and will switch on soon. The topic guide already works: pick any subject topic."), el("div", { class: "rowbtns" }, back)];
   const chat = state.ai || (state.ai = { msgs: [], busy: false, note: "" });
   const box = el("textarea", { maxlength: "1000", rows: "1", class: "ai-in", placeholder: "Message Loopy AI", "aria-label": "Your question" });
   if (chat.prefill) { box.value = String(chat.prefill).slice(0, 1000); chat.prefill = ""; }
   const ask = async (text) => {
     text = String(text || "").trim(); if (!text || chat.busy) return;
     chat.msgs.push({ role: "user", content: text }); chat.busy = true; chat.note = ""; render();
-    try {
-      const tok = store && store.idToken ? await store.idToken() : ""; if (!tok) throw new Error("Please connect to the internet and sign in first.");
-      const r = await fetch(PLUS.functionsUrl.replace(/\/$/, "") + "/askAI", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + tok }, body: JSON.stringify({ messages: chat.msgs.slice(-8), college: SEL }) });
-      const d = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(d.error || "Loopy AI is busy. Try again.");
-      chat.msgs.push({ role: "assistant", content: String(d.reply || "") }); chat.note = typeof d.left === "number" ? d.left + " questions left today." : "";
-    } catch (e) { chat.msgs.pop(); chat.note = (e && e.message) || "Could not reach Loopy AI."; chat.prefill = text; }
+    try { chat.msgs.push({ role: "assistant", content: await brainReply(text, chat) }); }
+    catch (e) { chat.msgs.pop(); chat.note = "Could not answer. Check your internet and try again."; chat.prefill = text; }
     chat.busy = false; render();
   };
   const send = () => ask(box.value);
@@ -4835,21 +4925,21 @@ function renderAI() {
   const bot = (m, i) => {
     const isLast = i === chat.msgs.length - 1;
     return el("div", { class: "ai-row bot" }, el("span", { class: "ai-av", "aria-hidden": "true" }, "L"),
-      el("div", { class: "ai-bub" }, el("small", { class: "ai-who" }, "Loopy AI"), aiFormat(m.content),
+      el("div", { class: "ai-bub" }, el("small", { class: "ai-who" }, "Loopy Brain"), aiFormat(m.content),
         el("div", { class: "ai-acts" },
           el("button", { type: "button", class: "ai-act", onclick: async (e) => { try { await navigator.clipboard.writeText(m.content); e.target.textContent = "Copied"; } catch (_) { e.target.textContent = "Press and hold to copy"; } } }, "Copy"),
           lastUser && isLast ? el("button", { type: "button", class: "ai-act", onclick: () => openTopic(lastUser.content.slice(0, 80), "", "ai") }, "Open topic guide") : null,
           isLast && !chat.busy ? el("button", { type: "button", class: "ai-act", onclick: () => { chat.msgs.pop(); const u = chat.msgs.pop(); if (u) ask(u.content); } }, "Try again") : null),
         isLast && !chat.busy ? el("div", { class: "ai-chips" }, ...chips.map(c => el("button", { type: "button", class: "tp-sub", onclick: () => ask(c) }, c))) : null));
   };
-  const hello = el("div", { class: "ai-hello" }, el("span", { class: "ai-av big", "aria-hidden": "true" }, "L"), el("h2", {}, "Hi " + (getName() || "there") + ", what shall we learn?"), el("p", { class: "hint" }, "Ask a study doubt, or pick one below. Loopy answers in clear steps with examples."),
+  const hello = el("div", { class: "ai-hello" }, el("span", { class: "ai-av big", "aria-hidden": "true" }, "L"), el("h2", {}, "Hi " + (getName() || "there") + ", what shall we learn?"), el("p", { class: "hint" }, "Type a topic or a doubt, or pick one below. Loopy Brain answers from your syllabus, your classmates and trusted sources."),
     el("div", { class: "ai-starters" }, ...AI_STARTERS.map(([ic, t, pre], i) => el("button", { type: "button", class: "ai-start c" + i, onclick: () => { box.value = pre; box.focus(); } }, el("span", { "aria-hidden": "true" }, ic), el("b", {}, t)))));
   return [chat.msgs.length ? el("div", { class: "ai-top" }, el("strong", {}, "Loopy AI"), el("button", { class: "btn sm", type: "button", onclick: () => { state.ai = null; render(); } }, "New chat")) : null,
     chat.msgs.length ? el("div", { class: "ai-thread" }, ...chat.msgs.map((m, i) => m.role === "user" ? el("div", { class: "ai-row me" }, el("div", { class: "ai-bub me" }, m.content)) : bot(m, i)),
       chat.busy ? el("div", { class: "ai-row bot" }, el("span", { class: "ai-av", "aria-hidden": "true" }, "L"), el("div", { class: "ai-bub", role: "status" }, el("span", { class: "ai-dots" }, el("i", {}), el("i", {}), el("i", {})))) : null) : hello,
     chat.note ? el("p", { class: "hint", role: "status" }, chat.note) : null,
     el("div", { class: "ai-composer" }, box, el("button", { class: "ai-send", type: "button", "aria-label": "Send", disabled: chat.busy ? "" : null, onclick: send }, svgIcon ? svgIcon("send") : "↑")),
-    el("p", { class: "hint ai-fine" }, "Loopy AI can make mistakes. Check important facts with your book or teacher."),
+    el("p", { class: "hint ai-fine" }, "Loopy Brain answers from your syllabus, classmates' best answers and Wikipedia. Check important facts in your book."),
     el("div", { class: "rowbtns" }, back)].filter(Boolean);
 }
 // Invite friends: share your link; when a friend verifies their email you get +7 days of Plus and they get +3 (rewards are given by the server).
