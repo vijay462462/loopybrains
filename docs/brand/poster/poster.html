@@ -2,33 +2,34 @@
 <style>
 @page{size:A4;margin:0}*{box-sizing:border-box}
 body{margin:0;width:210mm;height:297mm;font-family:Georgia,"Times New Roman",serif;background:#f6f1e7;color:#0f2342;position:relative;overflow:hidden}
-.band{position:absolute;left:0;right:0;top:0;height:128mm;background:#0f2342}
+.band{position:absolute;left:0;right:0;top:0;height:146mm;background:linear-gradient(90deg,#150f52,#120c46,#0e093a,#2c1d2b,#3d2820)}
+.hdr{display:block;position:absolute;left:0;top:0;width:210mm;-webkit-mask-image:linear-gradient(#000 78%,transparent);mask-image:linear-gradient(#000 78%,transparent)}
 .band:after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:10mm;background:#f6f1e7;border-radius:50% 50% 0 0/100% 100% 0 0}
-.in{position:relative;padding:16mm 16mm 0}
+.in{position:relative;padding:0 16mm 0}
 .brand{display:flex;align-items:center;gap:6mm;color:#f6f1e7}
 .brand img{width:26mm;height:26mm;border-radius:6mm}
 .brand b{font-size:11mm;letter-spacing:.04em;line-height:1}.brand small{display:block;font:600 4mm Arial,sans-serif;letter-spacing:.35em;color:#f0a35a;margin-top:2mm}
-h1{margin:12mm 0 0;font-size:15mm;line-height:1.05;color:#f6f1e7;max-width:170mm}
+h1{margin:0;position:absolute;top:80mm;left:16mm;font-size:15mm;line-height:1.05;color:#f6f1e7;max-width:170mm}
 h1 em{color:#f0a35a;font-style:normal}
-.sub{margin-top:6mm;font:5mm/1.4 Arial,sans-serif;color:#dfe6f1;max-width:165mm}
-.main{display:flex;gap:10mm;margin-top:34mm;align-items:flex-start}
+.sub{position:absolute;top:114mm;left:16mm;margin-top:0;font:5mm/1.4 Arial,sans-serif;color:#dfe6f1;max-width:165mm}
+.main{position:absolute;top:158mm;left:16mm;right:16mm;display:flex;gap:9mm;margin-top:0;align-items:flex-start}
 .steps{flex:1;font-family:Arial,sans-serif}
-.steps h2{font:700 6mm Georgia,serif;margin:0 0 5mm}
-.s{display:flex;gap:4mm;align-items:flex-start;margin-bottom:5mm;font-size:4.6mm;line-height:1.35}
+.steps h2{font:700 5.6mm Georgia,serif;margin:0 0 4mm}
+.s{display:flex;gap:4mm;align-items:flex-start;margin-bottom:4mm;font-size:4.3mm;line-height:1.35}
 .s i{flex:none;width:9mm;height:9mm;border-radius:50%;background:#0f2342;color:#f6f1e7;display:grid;place-items:center;font:700 4.6mm Arial;font-style:normal}
 .s:nth-child(3) i{background:#c0662f}.s:nth-child(4) i{background:#3d6f86}.s:nth-child(5) i{background:#4c6a4b}
-.card{width:72mm;background:#fff;border-radius:7mm;padding:6mm;text-align:center;box-shadow:0 2mm 6mm rgb(15 35 66/.15);border:.6mm solid #e4dccb}
-.qr{width:60mm;height:60mm;display:block;margin:0 auto}
+.card{width:66mm;background:#fff;border-radius:7mm;padding:6mm;text-align:center;box-shadow:0 2mm 6mm rgb(15 35 66/.15);border:.6mm solid #e4dccb}
+.qr{width:54mm;height:54mm;display:block;margin:0 auto}
 .card b{display:block;font:700 5mm Arial;margin-top:4mm}.card span{font:3.8mm Arial;color:#4b5a73}
 .url{margin-top:3mm;font:700 4.4mm Arial;color:#c0662f}
-.chips{display:flex;flex-wrap:wrap;gap:3mm;margin-top:10mm;font-family:Arial,sans-serif}
-.chips span{padding:2.2mm 4.5mm;border-radius:99mm;font-size:4mm;font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:2mm;margin-top:6mm;font-family:Arial,sans-serif}
+.chips span{padding:1.8mm 3.4mm;border-radius:99mm;font-size:3.5mm;font-weight:700}
 .c1{background:#e3ead9}.c2{background:#f6dcc5}.c3{background:#d8e6ec}.c4{background:#ecdde4}
 .foot{position:absolute;left:16mm;right:16mm;bottom:12mm;font:3.2mm/1.45 Arial,sans-serif;color:#4b5a73;border-top:.4mm solid #d9d0bd;padding-top:4mm}
 </style></head><body>
 <div class="band"></div>
 <div class="in">
-<div class="brand"><img src="../the-campus-loop-icon-1024.png" alt=""><div><b>THE CAMPUS</b><b style="font-size:7mm">LOOP</b></div></div>
+<img class="hdr" src="banner-crop.png" alt="The Campus Loop">
 <h1>Every topic. Every doubt.<br><em>One loop.</em></h1>
 <div class="sub">Ask. Answer. Learn with diagrams, videos and 3D, together with your classmates.</div>
 <div class="main">
