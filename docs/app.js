@@ -4925,7 +4925,7 @@ function brainQuiz(wiki, n) {
   return qs;
 }
 let _solver = null;
-async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=428", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
+async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=429", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
 async function brainReply(text, chat) {
   const sv = await brainSolve(text); if (sv) return sv;
   const { kind, topic } = brainIntent(text, chat.topic || ""); chat.topic = topic;
@@ -5001,7 +5001,7 @@ async function safeSync() {
   } catch (_) { _safeLoaded = false; }
 }
 let _safeMod = null;
-const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=428", location.href).href); } catch (_) { return null; } };
+const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=429", location.href).href); } catch (_) { return null; } };
 function safeModal(title, lines, danger) {
   const prev = document.getElementById("safeModal"); if (prev) prev.remove();
   const ov = el("div", { class: "safe-ov", id: "safeModal", role: "alertdialog", "aria-modal": "true", "aria-label": title },
@@ -5039,7 +5039,7 @@ const bsFree = (lv) => lv <= 1 || (IS_RGUKT && lv === 2);
 const BS_MODES = [["atlas", "Atlas", "Search anything", "Topics, doubts, maths and research, explained in easy words.", "Ask anything: a topic, doubt, problem or research idea"], ["launchpad", "Launchpad", "Project guide", "Turn an idea into a plan: objectives, tools, week-by-week steps, report outline and viva questions.", "Describe your project idea, e.g. IoT weather station"], ["forge", "Forge", "Find code", "Working code for classic problems in many languages, with the idea explained.", "e.g. binary search in Python"], ["aegis", "Aegis", "Learn security", "Understand how attacks work and how to defend, legally and safely.", "e.g. SQL injection, phishing, password safety"]];
 const bsModeInfo = (id) => BS_MODES.find(m => m[0] === id) || BS_MODES[0];
 let _modes = null;
-const brainModesMod = async () => { try { return _modes = _modes || await import(new URL("brain-modes.js?v=428", location.href).href); } catch (_) { return null; } };
+const brainModesMod = async () => { try { return _modes = _modes || await import(new URL("brain-modes.js?v=429", location.href).href); } catch (_) { return null; } };
 const PREF_KEY = "dd-bs-prefs", SAVED_KEY = "dd-bs-saved";
 const bsPrefs = () => { const p = readJSON(PREF_KEY, {}); return p && typeof p === "object" ? p : {}; };
 const bsState = () => state.bs || (state.bs = (() => { const p = bsPrefs(), ok = p.remember !== false;
@@ -5105,7 +5105,7 @@ function bsPool() {
 }
 const bsSuggest = (text) => { const n = text.trim().toLowerCase(); if (n.length < 2) return []; return bsPool().filter(t => t.toLowerCase().includes(n)).sort((a, b) => a.length - b.length).slice(0, 6); };
 let _report = null;
-const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=428", location.href).href); } catch (_) { return null; } };
+const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=429", location.href).href); } catch (_) { return null; } };
 async function bsPapers(q) {
   try {
     const j = await lsFetch("https://api.openalex.org/works?per-page=5&select=title,publication_year,cited_by_count,doi,open_access,authorships,abstract_inverted_index&search=" + encodeURIComponent(q));
@@ -5230,11 +5230,25 @@ function bsPaint(top) {
   const items = [...sc.querySelectorAll(".bsr-reveal")];
   if (!("IntersectionObserver" in window)) items.forEach(n => n.classList.add("in")); else { const io = new IntersectionObserver((es) => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), { root: sc, threshold: .08 }); items.forEach(n => io.observe(n)); }
 }
+// Friendly small talk, so "hey hi" gets a real reply instead of a random article. Free: no credits and no network.
+function bsChat(q) {
+  const t = String(q || "").toLowerCase().replace(/[^a-z\s']/g, " ").replace(/\s+/g, " ").trim(); if (!t || t.split(" ").length > 8) return "";
+  const name = ((readJSON("dd-name", "") || "") + "").split(" ")[0], hi = name ? ", " + name : "", pick = (a) => a[dayNum() % a.length];
+  const ask = " What would you like to learn today? You can ask a doubt, a topic, a maths problem, or tap Forge for code.";
+  if (/^(thanks?|thank you|thx|ty|thanku|thank u)( so much| a lot| loopy)?$/.test(t)) return pick(["You are welcome" + hi + "! Happy to help. Ask me anything else anytime.", "Anytime" + hi + "! Keep learning, you are doing great."]);
+  if (/^(bye|goodbye|good night|gn|see you|see ya|tata|cya)( loopy)?$/.test(t)) return "Bye" + hi + "! Come back whenever you have a doubt. Good luck with your studies.";
+  if (/(how are you|how r u|how are u|hows it going|how is it going|whats up|what s up|wassup|sup)\b/.test(t) && !/\b(compare|difference|what is|define)\b/.test(t)) return "I am fine, thank you" + hi + "! How are you?" + ask;
+  if (/^(who are you|what are you|what is your name|your name|who is loopy|are you ai|are you a robot)$/.test(t)) return "I am Loopy, the study helper inside The Campus Loop. I find explanations, pictures, code, project plans and security guides for students. I make mistakes sometimes, so check important facts with your books and teachers.";
+  if (/^(what can you do|help|help me|how to use|what do you do|how do you work)$/.test(t)) return "I can explain topics in easy words, solve maths and conversions, find code in Forge, plan projects in Launchpad and teach security in Aegis. Type a topic and press Search." ;
+  if (/^((hey|hi|hii+|hello+|hlo|helo|hola|yo|namaste|hey there|hi there|hello there|good morning|good afternoon|good evening|gm)( |$))+(loopy|bro|there|buddy|friend|all)?$/.test(t) || /^(hey+|hi+|hello+|hlo|hola|yo|namaste)$/.test(t)) return pick(["Hi" + hi + "! I am Loopy.", "Hello" + hi + "! Nice to see you.", "Hey" + hi + "! Good to see you."]) + ask;
+  return "";
+}
 async function bsSubmit(q) {
   q = lsClean(q); if (q.length < 2) return; const bs = bsState();
   if (/[^\u0000-\u024F\u2000-\u206F\u00A0-\u00FF]/.test(q) && ahWords(q).length === 0) { showNotice("Loopy Search works with English words for now. Please type your topic in English.", "err"); return; }
   if (!(await safetyGate(q))) return;
   { const mm = await brainModesMod(); if (mm && mm.offensive(q)) { safeModal("I can\u2019t help with attacking people or systems", ["Loopy Brain teaches security so you can defend, not so you can break into accounts, devices or websites. That could hurt real people and is against the law.", "Try Aegis to learn how attacks work and how to stop them, or practise legally on free labs such as PortSwigger Academy, picoCTF or TryHackMe."], false); return; } }
+  { const talk = bsChat(q); if (talk) { bs.pending = ""; bsRun(q, talk); return; } }
   const solved = await brainSolve(q); if (solved) { bs.pending = ""; bsRun(q, solved); return; }
   { const mm = await brainModesMod(), sg = mm && mm.suggestMode ? mm.suggestMode(q) : ""; if (sg && sg !== (bs.mode || "atlas")) { const nm = (BS_MODES.find(x => x[0] === sg) || [])[1] || sg; bs.mode = sg; showNotice("This looks like a " + (sg === "forge" ? "code" : sg === "aegis" ? "security" : "project") + " question, so I switched to " + nm + " for a better answer.", "ok"); } }
   if (bs.mode && bs.mode !== "atlas") { bs.pending = ""; bsRun(q); return; }
