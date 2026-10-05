@@ -140,12 +140,14 @@ await t("search safety: a student can add strikes but never lower them or lift a
   await assertFails(getDoc(doc(env.authenticatedContext("hal").firestore(), "searchSafety", "gus")));
   await assertSucceeds(getDoc(ref));
 });
-await t("search credits: only today, only +1 to +3 per search, ceiling 300, own document only", async () => {
+await t("search credits: only today, rises by at most 30 per save, ceiling 600, own document only", async () => {
   const ivy = env.authenticatedContext("ivy").firestore(), day = Math.floor((Date.now() + 19800000) / 86400000), id = "ivy_" + day, ref = doc(ivy, "searchUsage", id);
   await assertSucceeds(setDoc(ref, { n: 2, d: day, at: Date.now() }));
   await assertSucceeds(setDoc(ref, { n: 5, d: day, at: Date.now() }));
   await assertFails(setDoc(ref, { n: 2, d: day, at: Date.now() }));
-  await assertFails(setDoc(ref, { n: 20, d: day, at: Date.now() }));
+  await assertSucceeds(setDoc(ref, { n: 35, d: day, at: Date.now() }));
+  await assertFails(setDoc(ref, { n: 70, d: day, at: Date.now() }));
+  await assertFails(setDoc(ref, { n: 601, d: day, at: Date.now() }));
   await assertFails(setDoc(doc(ivy, "searchUsage", "ivy_" + (day - 1)), { n: 1, d: day - 1, at: Date.now() }));
   await assertFails(setDoc(doc(ivy, "searchUsage", "joe_" + day), { n: 1, d: day, at: Date.now() }));
   await assertFails(setDoc(doc(ivy, "searchUsage", id + "x"), { n: 1, d: day, at: Date.now() }));
@@ -157,7 +159,8 @@ await t("search credits: weekly counter follows the same rules", async () => {
   await assertSucceeds(setDoc(ref, { n: 1, w: week, at: Date.now() }));
   await assertSucceeds(setDoc(ref, { n: 4, w: week, at: Date.now() }));
   await assertFails(setDoc(ref, { n: 3, w: week, at: Date.now() }));
-  await assertFails(setDoc(ref, { n: 40, w: week, at: Date.now() }));
+  await assertSucceeds(setDoc(ref, { n: 30, w: week, at: Date.now() }));
+  await assertFails(setDoc(ref, { n: 70, w: week, at: Date.now() }));
   await assertFails(setDoc(doc(kim, "searchWeek", "kim_w" + (week - 1)), { n: 1, w: week - 1, at: Date.now() }));
   await assertFails(setDoc(doc(kim, "searchWeek", "lee_w" + week), { n: 1, w: week, at: Date.now() }));
   await assertSucceeds(getDoc(ref));

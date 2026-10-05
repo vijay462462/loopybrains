@@ -2000,7 +2000,13 @@ function renderToday() {
 // Placement drives: posted by the placement cell (admin or staff). Students check eligibility and register interest; the cell sees the list.
 const openDrives = () => state.drives.filter(d => d.lastDate > Date.now()).sort((a, b) => a.lastDate - b.lastDate);
 const drivesMine = {};
+// While the database connection is still starting (or has failed), screens that need it show a short waiting message instead of crashing.
+function connectingGate() {
+  if (store) return null;
+  return [el("h2", {}, "Connecting\u2026"), el("p", { class: "hint", role: "status" }, "Your class board is still connecting. This takes a moment on a slow network. Please wait, then try again."), el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => { state.mode = "intro"; render(); } }, "Back"))];
+}
 function renderDrives() {
+  { const g = connectingGate(); if (g) return g; }
   const back = el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back"), list = openDrives(), uid = store && store.authUid ? store.authUid() : "";
   const note = el("p", { class: "hint", role: "status" }, "");
   const days = (t) => { const d = Math.ceil((t - Date.now()) / 864e5); return d <= 0 ? "closes today" : d + " day" + (d === 1 ? "" : "s") + " left"; };
@@ -2038,6 +2044,7 @@ function icsFor(e) {
   return ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//CampusLoop//EN", "BEGIN:VEVENT", "UID:" + e.id + "@campusloop", "DTSTAMP:" + f(Date.now()), "DTSTART:" + f(e.startAt), "DTEND:" + f(e.endAt || e.startAt + 2 * 36e5), "SUMMARY:" + esc(e.title), "LOCATION:" + esc(e.venue), "DESCRIPTION:" + esc((e.club ? e.club + ". " : "") + (e.details || "")), "END:VEVENT", "END:VCALENDAR"].join("\r\n");
 }
 function renderEvents() {
+  { const g = connectingGate(); if (g) return g; }
   const back = el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back"), uid = store && store.authUid ? store.authUid() : "", note = el("p", { class: "hint", role: "status" }, "");
   const going = (e) => state.rsvps.filter(r => r.eventId === e.id), card = (e) => {
     const list = going(e), mine = list.some(r => r.uid === uid), full = e.capacity && list.length >= e.capacity && !mine;
@@ -2743,6 +2750,7 @@ function pushAskCard(d) {
 const FB_PAY = [["no", "No"], ["29", "₹29"], ["49", "₹49"], ["99", "₹99"], ["later", "Ask me later"]];
 const fbDone = () => readJSON("dd-fb-" + weekKey(), false);
 function renderFeedback() {
+  { const g = connectingGate(); if (g) return g; }
   const f = { rating: 0, pay: "later" }, say = el("p", { class: "hint", role: "status" }, "");
   const liked = el("textarea", { maxlength: "300", rows: "2", placeholder: "What do you like?", "aria-label": "What do you like" }), improve = el("textarea", { maxlength: "300", rows: "3", placeholder: "What should we fix or add?", "aria-label": "What should we improve" });
   const stars = el("div", { class: "rowbtns", role: "radiogroup", "aria-label": "Rating" }), pays = el("div", { class: "rowbtns", role: "radiogroup", "aria-label": "Would you pay" });
@@ -3185,6 +3193,7 @@ function starsDisplay(avg) {
 }
 
 function renderReportPanel(d) {
+  { const g = connectingGate(); if (g) return g; }
   if (alreadyReported(d.id)) return el("p", { class: "hint mkt-reported" }, "✅ You've already reported this listing.");
   const REASONS = ["Wrong description", "Item already sold", "Fake / misleading price", "Spam or irrelevant"];
   let open = false;
@@ -3214,6 +3223,7 @@ function renderReportPanel(d) {
 }
 
 function renderRatingPanel(d) {
+  { const g = connectingGate(); if (g) return g; }
   const existing = myRating(d.id);
   const avg = avgRating(d.id);
   const ratingCount = state.marketRatings.filter(r => r.listingId === d.id).length;
@@ -3247,6 +3257,7 @@ function renderRatingPanel(d) {
 }
 
 function renderBuyPanel(d) {
+  { const g = connectingGate(); if (g) return g; }
   const already = myInterest(d.id);
   const count = interestCount(d.id);
   const waNum = (d.whatsapp || "").replace(/\D/g, "");
@@ -3313,6 +3324,7 @@ function renderInterestedBuyers(d) {
 }
 
 function renderMarketView() {
+  { const g = connectingGate(); if (g) return g; }
   const d = state.market.find(x => x.id === state.selected);
   if (!d) return [el("p", { class: "hint" }, "This listing was deleted or is still loading.")];
   const own = mine(d);
@@ -3375,6 +3387,7 @@ function renderMarketView() {
 }
 
 function renderMarketAsk(existing) {
+  { const g = connectingGate(); if (g) return g; }
   const t = TABS.market;
   const err = el("p", { class: "err", hidden: true });
   const current = existing ? existing.category : (state.group !== "All" ? state.group : t.groups[0]);
@@ -4909,7 +4922,7 @@ function brainQuiz(wiki, n) {
   return qs;
 }
 let _solver = null;
-async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=424", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
+async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=425", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
 async function brainReply(text, chat) {
   const sv = await brainSolve(text); if (sv) return sv;
   const { kind, topic } = brainIntent(text, chat.topic || ""); chat.topic = topic;
@@ -4985,7 +4998,7 @@ async function safeSync() {
   } catch (_) { _safeLoaded = false; }
 }
 let _safeMod = null;
-const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=424", location.href).href); } catch (_) { return null; } };
+const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=425", location.href).href); } catch (_) { return null; } };
 function safeModal(title, lines, danger) {
   const prev = document.getElementById("safeModal"); if (prev) prev.remove();
   const ov = el("div", { class: "safe-ov", id: "safeModal", role: "alertdialog", "aria-modal": "true", "aria-label": title },
@@ -5023,7 +5036,7 @@ const bsFree = (lv) => lv <= 1 || (IS_RGUKT && lv === 2);
 const BS_MODES = [["atlas", "Atlas", "Search anything", "Topics, doubts, maths and research, explained in easy words.", "Ask anything: a topic, doubt, problem or research idea"], ["launchpad", "Launchpad", "Project guide", "Turn an idea into a plan: objectives, tools, week-by-week steps, report outline and viva questions.", "Describe your project idea, e.g. IoT weather station"], ["forge", "Forge", "Find code", "Working code for classic problems in many languages, with the idea explained.", "e.g. binary search in Python"], ["aegis", "Aegis", "Learn security", "Understand how attacks work and how to defend, legally and safely.", "e.g. SQL injection, phishing, password safety"]];
 const bsModeInfo = (id) => BS_MODES.find(m => m[0] === id) || BS_MODES[0];
 let _modes = null;
-const brainModesMod = async () => { try { return _modes = _modes || await import(new URL("brain-modes.js?v=424", location.href).href); } catch (_) { return null; } };
+const brainModesMod = async () => { try { return _modes = _modes || await import(new URL("brain-modes.js?v=425", location.href).href); } catch (_) { return null; } };
 const PREF_KEY = "dd-bs-prefs", SAVED_KEY = "dd-bs-saved";
 const bsPrefs = () => { const p = readJSON(PREF_KEY, {}); return p && typeof p === "object" ? p : {}; };
 const bsState = () => state.bs || (state.bs = (() => { const p = bsPrefs(), ok = p.remember !== false;
@@ -5089,7 +5102,7 @@ function bsPool() {
 }
 const bsSuggest = (text) => { const n = text.trim().toLowerCase(); if (n.length < 2) return []; return bsPool().filter(t => t.toLowerCase().includes(n)).sort((a, b) => a.length - b.length).slice(0, 6); };
 let _report = null;
-const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=424", location.href).href); } catch (_) { return null; } };
+const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=425", location.href).href); } catch (_) { return null; } };
 async function bsPapers(q) {
   try {
     const j = await lsFetch("https://api.openalex.org/works?per-page=5&select=title,publication_year,cited_by_count,doi,open_access,authorships,abstract_inverted_index&search=" + encodeURIComponent(q));
@@ -5102,7 +5115,7 @@ async function bsPapers(q) {
 }
 // ---------- Loopy Brain credits: daily and weekly limits ----------
 // A search costs 1 credit (Low), 2 (Medium) or 3 (High). Maths, conversions and formulas are free. Usage is also saved in the student's own record so clearing the browser does not reset it.
-const BS_CAPS = { free: { day: 10, week: 40 }, rgukt: { day: 60, week: 300 }, plus: { day: 150, week: 700 } };
+const BS_CAPS = { free: { day: 10, week: 40 }, rgukt: { day: 400, week: 2500 }, plus: { day: 600, week: 3000 } };
 const bsBase = () => hasPlusNow() ? BS_CAPS.plus : IS_RGUKT ? BS_CAPS.rgukt : BS_CAPS.free;
 const bsCaps = () => { const b = bsBase(), x = bsBonus(); return { day: b.day + x.day, week: b.week + x.week }; };
 const bsDay = () => Math.floor((Date.now() + 19800000) / 864e5), bsWeek = () => Math.floor((bsDay() + 3) / 7);   // India time; the week runs Monday to Sunday
@@ -5164,18 +5177,22 @@ function bsSurpriseModal(rec) {
       el("button", { class: "btn primary", type: "button", onclick: claim }, "Claim my gift"), el("button", { class: "btn", type: "button", onclick: () => ov.remove() }, "Later")));
   document.body.append(ov);
 }
+let _flushT = 0;
+// Usage is saved to the server in small batches (not after every search) to keep database writes low.
+async function bsFlushUsage() {
+  clearTimeout(_flushT); const uid = store && store.authUid && store.authUid(); if (!uid || !store.setTop) return;
+  const u = bsUsed(), d = bsDay(), w = bsWeek(); let more = false;
+  const dd = u.day - _srv.day, ww = u.week - _srv.week;
+  if (dd > 0) { const n = _srv.day + Math.min(dd, 30); if (dd > 30) more = true; try { await store.setTop("searchUsage", uid + "_" + d, { n, d, at: Date.now() }); _srv.day = n; } catch (_) {} }
+  if (ww > 0) { const n = _srv.week + Math.min(ww, 30); if (ww > 30) more = true; try { await store.setTop("searchWeek", uid + "_w" + w, { n, w, at: Date.now() }); _srv.week = n; } catch (_) {} }
+  if (more) _flushT = setTimeout(bsFlushUsage, 1500);
+}
+document.addEventListener("visibilitychange", () => { if (document.hidden) bsFlushUsage(); });
 async function bsSpend(cost) {
   if (!cost) return true; await bsUseSync(); const L = bsLeft();
   if (L.day < cost || L.week < cost) { bsLimitModal(L.week < cost ? "week" : "day", L); return false; }
   const d = bsDay(), w = bsWeek(), n = L.used.day + cost, wn = L.used.week + cost; writeJSON(USE_KEY, { d, w, n, wn });
-  try {
-    const uid = store && store.authUid && store.authUid();
-    if (uid && store.setTop) {
-      const sd = _srv.day + cost, sw = _srv.week + cost;
-      store.setTop("searchUsage", uid + "_" + d, { n: sd, d, at: Date.now() }).then(() => { _srv.day = sd; }).catch(() => {});
-      store.setTop("searchWeek", uid + "_w" + w, { n: sw, w, at: Date.now() }).then(() => { _srv.week = sw; }).catch(() => {});
-    }
-  } catch (_) {}
+  clearTimeout(_flushT); _flushT = setTimeout(bsFlushUsage, 6000);
   return true;
 }
 // ----- the overlay: a big, calm workspace like a modern AI app -----
@@ -5197,6 +5214,7 @@ function bsMount() {
 }
 const bsEsc = (e) => { if (e.key === "Escape" && !document.querySelector(".overlay")) bsClose(); };
 function bsClose(keepMode) {
+  bsFlushUsage();
   const o = bsEl(); if (o) o.remove(); document.documentElement.classList.remove("bs-open"); document.removeEventListener("keydown", bsEsc);
   if (!keepMode && state.mode === "ai") { state.mode = "intro"; render(); }
 }
@@ -5749,6 +5767,7 @@ function verifyBlock() {
     email, el("div", { class: "rowbtns" }, send), msg);
 }
 function renderMe() {
+  { const g = connectingGate(); if (g) return g; }
   const p = (store && allStats().get(store.uid)) || { name: getName(), points: 0, answers: 0, helpful: 0, ideas: 0, quizRight: 0, streak: 0, reacts: 0, likes: 0, asked: 0, quizDone: 0, level: levelOf(0) };
   const lv = p.level, pct = Math.round((p.points - lv.from) * 100 / (lv.to - lv.from));
   // Avatar picker, 3D portraits + emoji
@@ -8541,6 +8560,7 @@ function myChalScore(challengeId) {
 }
 
 function renderChalQuiz(d) {
+  { const g = connectingGate(); if (g) return g; }
   const questions = d.questions || [];
   if (!questions.length) return null;
   const timeLimit = d.timeLimit || 0;
@@ -8753,6 +8773,7 @@ function audienceBlock(withNet) {
 }
 
 function renderAsk(existing) {
+  { const g = connectingGate(); if (g) return g; }
   if (!existing) { askNet = []; askTo = []; } askTo = [];
   if (state.tab === "market") return renderMarketAsk(existing);
   const t = TABS[state.tab];
@@ -8988,6 +9009,7 @@ function otherCollegeAnswers(d) {
   return box;
 }
 function renderView() {
+  { const g = connectingGate(); if (g) return g; }
   if (state.tab === "market") return renderMarketView();
   const t = TABS[state.tab];
   const d = state[t.coll].find(x => x.id === state.selected);

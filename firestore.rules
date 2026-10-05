@@ -321,7 +321,7 @@ service cloud.firestore {
     }
     // Web-push tokens: a signed-in user stores only their OWN token document (id = their uid). Nobody can read tokens from the app;
     // only the server function that sends notifications can (it ignores these rules).
-    // Loopy Brain daily credits. The document id is <uid>_<day number in India time>. Students can only raise the count by one search (1 to 3 credits) at a time, up to a hard ceiling, and only for today.
+    // Loopy Brain daily credits. The document id is <uid>_<day number in India time>. Usage is saved in small batches: the count can only rise by up to 30 at a time, up to a hard ceiling, and only for today.
     match /searchUsage/{id} {
       allow read: if request.auth != null && id.matches(request.auth.uid + '_[0-9]+');
       allow create: if request.auth != null
@@ -330,14 +330,14 @@ service cloud.firestore {
         && id == request.auth.uid + '_' + string(request.resource.data.d)
         && request.resource.data.d * 86400000 <= request.time.toMillis() + 19800000
         && request.time.toMillis() + 19800000 < (request.resource.data.d + 1) * 86400000
-        && request.resource.data.n >= 1 && request.resource.data.n <= 3;
+        && request.resource.data.n >= 1 && request.resource.data.n <= 30;
       allow update: if request.auth != null
         && request.resource.data.keys().hasOnly(['n', 'd', 'at'])
         && request.resource.data.d == resource.data.d && request.resource.data.n is int && request.resource.data.at is int
         && id == request.auth.uid + '_' + string(request.resource.data.d)
         && request.resource.data.d * 86400000 <= request.time.toMillis() + 19800000
         && request.time.toMillis() + 19800000 < (request.resource.data.d + 1) * 86400000
-        && request.resource.data.n > resource.data.n && request.resource.data.n <= resource.data.n + 3 && request.resource.data.n <= 300;
+        && request.resource.data.n > resource.data.n && request.resource.data.n <= resource.data.n + 30 && request.resource.data.n <= 600;
       allow delete: if isAdmin();
     }
 
@@ -350,14 +350,14 @@ service cloud.firestore {
         && id == request.auth.uid + '_w' + string(request.resource.data.w)
         && (request.resource.data.w * 7 - 3) * 86400000 <= request.time.toMillis() + 19800000
         && request.time.toMillis() + 19800000 < (request.resource.data.w * 7 + 4) * 86400000
-        && request.resource.data.n >= 1 && request.resource.data.n <= 3;
+        && request.resource.data.n >= 1 && request.resource.data.n <= 30;
       allow update: if request.auth != null
         && request.resource.data.keys().hasOnly(['n', 'w', 'at'])
         && request.resource.data.w == resource.data.w && request.resource.data.n is int && request.resource.data.at is int
         && id == request.auth.uid + '_w' + string(request.resource.data.w)
         && (request.resource.data.w * 7 - 3) * 86400000 <= request.time.toMillis() + 19800000
         && request.time.toMillis() + 19800000 < (request.resource.data.w * 7 + 4) * 86400000
-        && request.resource.data.n > resource.data.n && request.resource.data.n <= resource.data.n + 3 && request.resource.data.n <= 1000;
+        && request.resource.data.n > resource.data.n && request.resource.data.n <= resource.data.n + 30 && request.resource.data.n <= 3000;
       allow delete: if isAdmin();
     }
 
