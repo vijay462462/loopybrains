@@ -2630,3 +2630,8 @@ body.simple .tabs button[aria-selected="true"] { display: inline-flex; }
 .ai-badge.auto b { color: #b45309; }
 :root[data-theme="dark"] .ai-badge b { color: #d8b4fe; } :root[data-theme="dark"] .ai-badge.auto b { color: #fcd34d; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .ai-badge b { color: #d8b4fe; } :root:not([data-theme="light"]) .ai-badge.auto b { color: #fcd34d; } }
+
+/* After posting: confirmation card instead of the form */
+.posted-card { margin: 10px 0; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--ok); background: var(--ok-soft); }
+.posted-card b { color: var(--ok); }
+.posted-card p { margin: 4px 0 8px; }
