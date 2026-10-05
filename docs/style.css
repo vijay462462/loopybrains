@@ -3501,3 +3501,24 @@ html.bs-open, html.bs-open body { overflow: hidden; }
 .pk-more { margin: 18px 4px 4px; opacity: .8; }
 .pk-note { margin: 10px 4px 18px; }
 .pk-steps li b { flex: none; }
+
+/* ===== Colourful logic and circuit diagrams ===== */
+.dg-svg { width: 100%; height: auto; max-height: 340px; display: block; margin: 6px 0; color: var(--ink, #1f2433); }
+.dg-svg .dg-t { fill: currentColor; font: 700 13px/1 system-ui, sans-serif; }
+.dg-svg .dg-t.s { font-size: 11px; font-weight: 500; opacity: .85; } .dg-svg .dg-t.b { fill: #2563eb; } .dg-svg .dg-t.g { fill: #16a34a; } .dg-svg .dg-t.m { fill: #ea580c; }
+.dg-svg .dg-cap { fill: currentColor; font: 600 10px system-ui, sans-serif; }
+.dg-svg .dg-w { fill: none; stroke-width: 2.4; stroke-linejoin: round; stroke-linecap: round; }
+.dg-svg .dg-w.in { stroke: #2563eb; } .dg-svg .dg-w.out { stroke: #16a34a; } .dg-svg .dg-w.mid { stroke: #0ea5e9; } .dg-svg .dg-w.clk { stroke: #ea580c; } .dg-svg .dg-w.fb { stroke: #9333ea; stroke-dasharray: 5 3; }
+.dg-svg .dg-ar { stroke: none; } .dg-svg .dg-ar.in { fill: #2563eb; } .dg-svg .dg-ar.out { fill: #16a34a; } .dg-svg .dg-ar.mid { fill: #0ea5e9; } .dg-svg .dg-ar.clk { fill: #ea580c; } .dg-svg .dg-ar.fb { fill: #9333ea; }
+.dg-svg .dg-dot.in { fill: #2563eb; } .dg-svg .dg-dot.out { fill: #16a34a; } .dg-svg .dg-dot.mid { fill: #0ea5e9; } .dg-svg .dg-dot.clk { fill: #ea580c; } .dg-svg .dg-dot.fb { fill: #9333ea; }
+.dg-svg .dg-gate, .dg-svg .dg-bub { stroke-width: 2.4; } .dg-svg .dg-xo { fill: none; stroke-width: 2.4; }
+.dg-svg .g-and { fill: #dbeafe; stroke: #2563eb; } .dg-svg .g-or { fill: #dcfce7; stroke: #16a34a; } .dg-svg .g-not { fill: #ffedd5; stroke: #ea580c; } .dg-svg .g-xor { fill: #f3e8ff; stroke: #9333ea; }
+.dg-svg .g-nand { fill: #fee2e2; stroke: #dc2626; } .dg-svg .g-nor { fill: #fce7f3; stroke: #db2777; } .dg-svg .g-xnor { fill: #cffafe; stroke: #0891b2; }
+.dg-svg .dg-box { stroke-width: 2.4; } .dg-svg .dg-box.ff { fill: #ede9fe; stroke: #7c3aed; } .dg-svg .dg-box.on { fill: #dcfce7; stroke: #16a34a; } .dg-svg .dg-box.off { fill: #f1f5f9; stroke: #94a3b8; }
+.dg-svg .dg-bt { fill: #1e1b4b; font: 700 12px system-ui, sans-serif; } .dg-svg .dg-clk { fill: none; stroke: #ea580c; stroke-width: 2.4; }
+.dg-svg .dg-grid { stroke: currentColor; stroke-width: 1; stroke-dasharray: 3 4; opacity: .25; }
+.dg-svg .dg-cell { fill: #f8fafc; stroke: #94a3b8; stroke-width: 1.5; } .dg-svg .dg-t.one { fill: #16a34a; font-size: 18px; } .dg-svg .dg-t.zero { fill: #94a3b8; font-size: 16px; font-weight: 500; } .dg-svg .dg-t.mn { fill: #64748b; font-size: 9px; font-weight: 500; }
+.dg-svg .dg-grp { fill-opacity: .22; stroke-width: 3; } .dg-svg .dg-grp.g1 { fill: #2563eb; stroke: #2563eb; } .dg-svg .dg-grp.g2 { fill: #16a34a; stroke: #16a34a; }
+.dg-card .dg-key { display: flex; flex-wrap: wrap; gap: 8px; font-size: 11px; margin-top: 4px; } .dg-key i { display: inline-block; width: 14px; height: 4px; border-radius: 2px; margin-right: 4px; vertical-align: middle; }
+.dg-key i.k-in { background: #2563eb; } .dg-key i.k-mid { background: #0ea5e9; } .dg-key i.k-out { background: #16a34a; } .dg-key i.k-clk { background: #ea580c; } .dg-key i.k-fb { background: #9333ea; }
+.dg-card .dg-svg { background: #fff; border-radius: 12px; padding: 6px; color: #1f2433; }
