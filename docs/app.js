@@ -4859,11 +4859,46 @@ async function brainWikiByTitle(title, lang) {
   } catch (_) {}
   BRAIN_CACHE.set(key, out); return out;
 }
+// Own topic guide for core engineering subjects: common student phrases -> the exact article that explains them.
+const BRAIN_ALIAS = [
+  [/\bsequential (logic )?(circuit|circuits|design)\b/, "Sequential logic"], [/\bcombinational (logic )?(circuit|circuits|design)\b/, "Combinational logic"], [/\b(flip ?flops?|latch(es)?)\b/, "Flip-flop (electronics)"],
+  [/\bfinite state machines?\b|\bfsm\b/, "Finite-state machine"], [/\bk[- ]?map\b|\bkarnaugh\b/, "Karnaugh map"], [/\bboolean algebra\b/, "Boolean algebra"], [/\blogic gates?\b/, "Logic gate"],
+  [/\b(adder|half adder|full adder)\b/, "Adder (electronics)"], [/\b(multiplexer|mux)\b/, "Multiplexer"], [/\bdecoder\b.*\b(logic|circuit|digital)\b|\bdigital decoder\b/, "Binary decoder"],
+  [/\bshift registers?\b/, "Shift register"], [/\b(counter|counters)\b.*\b(digital|logic|circuit|binary|ripple|synchronous)\b/, "Counter (digital)"], [/\boperational amplifier\b|\bop[- ]?amp\b/, "Operational amplifier"],
+  [/\bbjt\b|\bbipolar junction transistor\b/, "Bipolar junction transistor"], [/\bmosfet\b/, "MOSFET"], [/\bpn junction\b|\bp-n junction\b/, "P–n junction"], [/\brectifier\b/, "Rectifier"],
+  [/\bdata structures?\b/, "Data structure"], [/\boperating systems?\b/, "Operating system"], [/\bcomputer networks?\b/, "Computer network"], [/\bdbms\b|\bdatabase management system\b/, "Database"], [/\bnormali[sz]ation\b.*\b(database|dbms|sql)\b|\bdatabase normali[sz]ation\b/, "Database normalization"],
+  [/\bosi model\b/, "OSI model"], [/\btcp\b.*\bip\b|\btcp ip\b/, "Internet protocol suite"], [/\bdeadlocks?\b/, "Deadlock (computer science)"], [/\bpaging\b/, "Memory paging"], [/\bbinary search tree\b|\bbst\b/, "Binary search tree"],
+];
+// Looks for real article titles hidden inside the question (longest phrase wins), so "sequential logic circuits with flip flops" finds an exact article instead of a lucky word match.
+async function brainProbe(words, lang) {
+  const host = "https://" + (lang === "simple" ? "simple" : "en") + ".wikipedia.org", w = words.slice(0, 8), cands = new Map();
+  const sing = (x) => x.length > 3 && x.endsWith("s") && !x.endsWith("ss") ? x.slice(0, -1) : x;
+  for (let len = Math.min(w.length, 4); len >= 2; len--) for (let i = 0; i + len <= w.length; i++) {
+    const ph = w.slice(i, i + len), a = ph.join(" "), b = ph.slice(0, -1).concat(sing(ph[ph.length - 1])).join(" ");
+    cands.set(a, len); cands.set(b, len);
+  }
+  const list = [...cands.keys()].slice(0, 40); if (!list.length) return null;
+  try {
+    const j = await lsFetch(host + "/w/api.php?action=query&redirects=1&prop=pageprops&ppprop=disambiguation&format=json&origin=*&titles=" + encodeURIComponent(list.join("|")));
+    const q = j && j.query; if (!q || !q.pages) return null;
+    const via = new Map(); (q.redirects || []).forEach(r => { if (r && r.from && r.to) via.set(String(r.to), String(r.from)); }); const norm = new Map(); (q.normalized || []).forEach(n => norm.set(String(n.to), String(n.from)));
+    let best = null;
+    for (const p of Object.values(q.pages)) {
+      if (!p || typeof p.title !== "string" || "missing" in p || (p.pageprops && "disambiguation" in p.pageprops)) continue;
+      const from = (via.get(p.title) || p.title), len = cands.get(from.toLowerCase()) || cands.get((norm.get(from) || "").toLowerCase()) || cands.get(from.toLowerCase().replace(/\s*\(.*\)$/, "")) || 0;
+      if (len >= 2 && (!best || len > best.len)) best = { title: p.title, len };
+    }
+    return best;
+  } catch (_) { return null; }
+}
 // Picks the article that best fits the question. If nothing fits well, it says so instead of showing a wrong article.
 async function brainWiki(q, lang) {
   lang = lang === "simple" ? "simple" : "en"; const key = lang + ":" + q.toLowerCase(); if (BRAIN_CACHE.has(key)) return BRAIN_CACHE.get(key);
   const words = ahWords(q).filter(w => !BRAIN_NOISE.has(w)), core = words.join(" "), longest = [...words].sort((a, b) => b.length - a.length)[0] || "";
-  const lists = await Promise.all([brainSearch(q, lang, 6), core && core !== q.toLowerCase() ? brainSearch(core, lang, 6) : [], longest.length >= 5 ? brainPrefix(longest, lang) : []]), seen = new Set(), hits = lists.flat().filter(r => r.title && !seen.has(r.title) && seen.add(r.title)); let out = null;
+  const lower = q.toLowerCase(), alias = BRAIN_ALIAS.find(a => a[0].test(lower));
+  const [lists, pr] = await Promise.all([Promise.all([brainSearch(q, lang, 6), core && core !== q.toLowerCase() ? brainSearch(core, lang, 6) : [], longest.length >= 5 ? brainPrefix(longest, lang) : []]), alias ? null : (words.length >= 2 ? brainProbe(words, lang) : null)]), seen = new Set(), hits = lists.flat().filter(r => r.title && !seen.has(r.title) && seen.add(r.title)); let out = null;
+  const forced = alias ? alias[1] : pr && pr.len >= 2 && (pr.len >= 3 || words.length <= 4) ? pr.title : "";
+  if (forced) { const art = await brainWikiByTitle(forced, lang); if (art) { out = Object.assign({}, art, { conf: "ok", options: hits.map(r => r.title).filter(t => t !== art.title).slice(0, 5) }); BRAIN_CACHE.set(key, out); return out; } }
   if (hits.length) {
     const ranked = hits.map((r, i) => Object.assign({ i }, r, brainScore(words.length ? words : ahWords(q), r))).sort((a, b) => b.sc - a.sc || a.i - b.i), best = ranked[0];
     const cover = best.sc / Math.max(1, (words.length || 1) * 3), ok = best.titleHits >= 1 || (words.length >= 3 && cover >= 0.4);
@@ -4925,7 +4960,7 @@ function brainQuiz(wiki, n) {
   return qs;
 }
 let _solver = null;
-async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=431", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
+async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=432", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
 async function brainReply(text, chat) {
   const sv = await brainSolve(text); if (sv) return sv;
   const { kind, topic } = brainIntent(text, chat.topic || ""); chat.topic = topic;
@@ -5001,7 +5036,7 @@ async function safeSync() {
   } catch (_) { _safeLoaded = false; }
 }
 let _safeMod = null;
-const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=431", location.href).href); } catch (_) { return null; } };
+const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=432", location.href).href); } catch (_) { return null; } };
 function safeModal(title, lines, danger) {
   const prev = document.getElementById("safeModal"); if (prev) prev.remove();
   const ov = el("div", { class: "safe-ov", id: "safeModal", role: "alertdialog", "aria-modal": "true", "aria-label": title },
@@ -5039,7 +5074,7 @@ const bsFree = (lv) => lv <= 1 || IS_RGUKT;
 const BS_MODES = [["atlas", "Atlas", "Search anything", "Topics, doubts, maths and research, explained in easy words.", "Ask anything: a topic, doubt, problem or research idea"], ["launchpad", "Launchpad", "Project guide", "Turn an idea into a plan: objectives, tools, week-by-week steps, report outline and viva questions.", "Describe your project idea, e.g. IoT weather station"], ["forge", "Forge", "Find code", "Working code for classic problems in many languages, with the idea explained.", "e.g. binary search in Python"], ["aegis", "Aegis", "Learn security", "Understand how attacks work and how to defend, legally and safely.", "e.g. SQL injection, phishing, password safety"]];
 const bsModeInfo = (id) => BS_MODES.find(m => m[0] === id) || BS_MODES[0];
 let _modes = null;
-const brainModesMod = async () => { try { return _modes = _modes || await import(new URL("brain-modes.js?v=431", location.href).href); } catch (_) { return null; } };
+const brainModesMod = async () => { try { return _modes = _modes || await import(new URL("brain-modes.js?v=432", location.href).href); } catch (_) { return null; } };
 const PREF_KEY = "dd-bs-prefs", SAVED_KEY = "dd-bs-saved";
 const bsPrefs = () => { const p = readJSON(PREF_KEY, {}); return p && typeof p === "object" ? p : {}; };
 const bsState = () => state.bs || (state.bs = (() => { const p = bsPrefs(), ok = p.remember !== false;
@@ -5105,7 +5140,7 @@ function bsPool() {
 }
 const bsSuggest = (text) => { const n = text.trim().toLowerCase(); if (n.length < 2) return []; return bsPool().filter(t => t.toLowerCase().includes(n)).sort((a, b) => a.length - b.length).slice(0, 6); };
 let _report = null;
-const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=431", location.href).href); } catch (_) { return null; } };
+const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=432", location.href).href); } catch (_) { return null; } };
 async function bsPapers(q) {
   try {
     const j = await lsFetch("https://api.openalex.org/works?per-page=5&select=title,publication_year,cited_by_count,doi,open_access,authorships,abstract_inverted_index&search=" + encodeURIComponent(q));
