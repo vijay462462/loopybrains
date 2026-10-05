@@ -841,6 +841,7 @@ function academicProblem(kind, text, hasAttachment) {
   const t = String(text || "").trim();
   if (CHATTER.test(t)) return "This space is for academic questions and answers. Please write a real " + kind + ", or use Ideas or Clubs for casual chat.";
   if (kind === "answer" && t.length < 10 && !hasAttachment) return "Please write a helpful answer of at least 10 characters, or attach a page or file.";
+  if (symbolSpam(t)) return "Too many emoji, symbols or repeated characters. Use only symbols that help explain the " + kind + ".";
   return "";
 }
 async function reportPost(coll, x, reason) {
@@ -8343,6 +8344,15 @@ function renderView() {
     if (!getName()) { state.afterName = "view"; state.mode = "name"; render(); return; }
     if (hasBadWords(body)) { fail(LANGUAGE_MSG); return; }
     if (isAcademicTab(state.tab)) { const prob = academicProblem("answer", body, pages.length > 0 || replyFiles.some(f => f.url)); if (prob) { const m = $("f-reply-msg"); if (m) { m.textContent = prob; m.hidden = false; } fail(prob); return; } }
+    if (isAcademicTab(state.tab)) {
+      const links = urlsIn(body);
+      if (links.length > 3) { fail("Please add at most 3 links to one answer."); return; }
+      for (const u of links) { const r = await checkSourceLink(u, d); if (!r.ok) { fail(r.reason); return; } }
+      if (!links.length && body.length >= 80 && !pages.length && relHit(ahWords(body), relWords(d)) === 0) {
+        const tag = d.id + ":" + body.length;
+        if (state.relWarned !== tag) { state.relWarned = tag; fail("This answer does not seem to be about the question (" + (ahWords(d.title || "").slice(0, 4).join(", ") || d.subject) + "). Only related answers are accepted. If it is related, tap Post answer again."); return; }
+      }
+    }
     if (replyFiles.some(f => f.pct !== undefined)) { fail("Please wait for uploads to finish."); return; }
     const wait = postingBlocked();   // answers have no daily or hourly limit; only blocked or paused students are stopped
     if (wait) { fail(wait); return; }
@@ -8412,7 +8422,7 @@ function rtInline(text, topic) {
   while ((m = RT_RE.exec(text)) !== null) {
     if (m.index > last) put("", text.slice(last, m.index));
     last = m.index + m[0].length;
-    if (m[1]) put("", m[0]);
+    if (m[1]) { const raw = m[0].replace(/[.,;:!?)]+$/, ""), h = srcHost(raw); if (srcTrusted(h)) { out.push(el("a", { class: "rt-link", href: raw, target: "_blank", rel: "noopener noreferrer" }, "\u{1F517} " + h)); if (m[0].length > raw.length) put("", m[0].slice(raw.length)); } else put("", m[0]); }
     else if (m[2]) put("rt-eq", m[0]);
     else if (m[3]) put("rt-num", m[0]);
     else if (m[4]) put("rt-term", m[0]);
@@ -8463,16 +8473,52 @@ function answerStudio(d, ta) {
   const upd = () => { const v = ta.value.trim(); prev.hidden = !v; prev.replaceChildren(...(v ? [el("small", { class: "hint" }, "✨ Preview: this is how your answer will look to others"), richAnswer(v, topic)] : [])); };
   ta.addEventListener("input", () => { clearTimeout(t); t = setTimeout(upd, 250); });
   const add = (txt) => { const pre = ta.value && !ta.value.endsWith("\n") ? "\n" : ""; ta.value = (ta.value + pre + txt).slice(0, 5000); ta.focus(); try { ta.setSelectionRange(ta.value.length, ta.value.length); } catch (_) {} upd(); };
+  const linkIn = el("input", { type: "url", class: "as-link-in", placeholder: "https://youtube.com/... or a trusted website", maxlength: "300", "aria-label": "Link to add", autocomplete: "off" }), linkMsg = el("p", { class: "hint", role: "status" }, "");
   const ins = (sy) => { const a = ta.selectionStart == null ? ta.value.length : ta.selectionStart, e = ta.selectionEnd == null ? a : ta.selectionEnd; ta.value = (ta.value.slice(0, a) + sy + ta.value.slice(e)).slice(0, 5000); ta.focus(); try { ta.setSelectionRange(a + sy.length, a + sy.length); } catch (_) {} upd(); };
   return el("div", { class: "astudio" },
     el("div", { class: "label" }, "Make your answer clear and interesting"),
     el("div", { class: "rowbtns" }, ...AS_STARTERS.map(([lab, txt]) => el("button", { type: "button", class: "btn sm", onclick: () => add(txt) }, lab)),
       el("button", { type: "button", class: "btn sm primary", onclick: () => { ta.value = ahTidy(ta.value); upd(); } }, "✨ Auto-format")),
+    el("div", { class: "label" }, "Add a helpful link (must be about this question)"),
+    el("div", { class: "as-link" }, linkIn, el("button", { type: "button", class: "btn sm primary", onclick: async (e) => {
+      const b = e.currentTarget, u = linkIn.value.trim(); if (!u) return; b.disabled = true; linkMsg.textContent = "Checking the link...";
+      try { const r = await checkSourceLink(u, d); if (r.ok) { add("\u{1F517} Source: " + u); linkIn.value = ""; linkMsg.textContent = "\u2705 " + (r.unchecked ? "Added. It could not be checked automatically, so make sure it is about this question." : "Related. Added to your answer."); } else linkMsg.textContent = "\u274C " + r.reason; }
+      finally { b.disabled = false; }
+    } }, "Check and add")),
+    linkMsg,
     el("div", { class: "label" }, "Colour symbols (tap to add)"),
     el("div", { class: "as-sym", role: "group", "aria-label": "Symbols" }, ...AS_SYMBOLS.map(sy => el("button", { type: "button", class: "as-sy", "aria-label": "Insert " + sy, onclick: () => ins(sy) }, sy))),
     el("p", { class: "hint" }, "Tip: start with an Idea, show How it works, add a Real life example, warn about a Common mistake, and end with a Try this question. It keeps readers curious."),
     prev);
 }
+// Links and content in answers: only trusted sources, and only about the question.
+const SRC_OK = ["youtube.com", "youtu.be", "wikipedia.org", "wikimedia.org", "nptel.ac.in", "nptel.iitm.ac.in", "swayam.gov.in", "khanacademy.org", "geeksforgeeks.org", "tutorialspoint.com", "w3schools.com", "javatpoint.com", "programiz.com", "mathworld.wolfram.com", "wolframalpha.com", "desmos.com", "geogebra.org", "phet.colorado.edu", "ocw.mit.edu", "britannica.com", "ncert.nic.in", "allaboutcircuits.com", "electronics-tutorials.ws", "electrical4u.com", "circuitdigest.com", "3blue1brown.com", "docs.python.org", "developer.mozilla.org", "arxiv.org", "ieee.org", "rgukt.in"];
+const SRC_BAD = /^(bit\.ly|tinyurl\.com|t\.co|goo\.gl|is\.gd|cutt\.ly|rb\.gy|ow\.ly|shorturl\.at)$/;
+function srcHost(u) { try { const x = new URL(u); return x.protocol === "https:" ? x.hostname.replace(/^www\./, "").toLowerCase() : null; } catch (_) { return null; } }
+const srcTrusted = (h) => !!h && !SRC_BAD.test(h) && (SRC_OK.some(d => h === d || h.endsWith("." + d)) || /\.(ac\.in|edu|edu\.in|gov\.in|ac\.uk)$/.test(h));
+const urlsIn = (t) => [...new Set((String(t || "").match(/https?:\/\/[^\s<>"')]+/g) || []).map(u => u.replace(/[.,;:!?]+$/, "")))];
+const relWords = (d) => ahWords((d.title || "") + " " + (d.body || "") + " " + (d.subject || "") + " " + learnTerm(d.subject || ""));
+const relHit = (words, K) => words.filter(w => K.some(k => k === w || (w.length >= 5 && k.length >= 5 && k.slice(0, 5) === w.slice(0, 5)))).length;
+const SRC_GENERIC = new Set("courses course watch wiki html htm php aspx index page pages video videos article articles tutorial tutorials learn topic topics view lecture lectures notes content content_id module modules unit units chapter chapters search results list playlist embed shorts live www http https".split(" "));
+const srcCache = new Map();
+async function checkSourceLink(url, d) {
+  const key = d.id + "|" + url; if (srcCache.has(key)) return srcCache.get(key);
+  const done = (r) => { srcCache.set(key, r); return r; };
+  const h = srcHost(url);
+  if (!h) return { ok: false, reason: "Use a full link that starts with https://." };
+  if (SRC_BAD.test(h)) return { ok: false, reason: "Short links are not accepted. Paste the full link." };
+  if (!srcTrusted(h)) return { ok: false, reason: "That website is not on the trusted list (YouTube, Wikipedia, NPTEL, Khan Academy, GeeksforGeeks, university sites and similar). Ask the admin to add it if it is a good source." };
+  const K = relWords(d), ids = extractYtIds(url), topic = ahWords(d.title || "").slice(0, 4).join(", ") || (d.subject || "this question");
+  let words = [], title = "";
+  if (ids.length) {
+    try { const o = await lsFetch("https://www.youtube.com/oembed?format=json&url=" + encodeURIComponent("https://www.youtube.com/watch?v=" + ids[0])); title = String(o.title || "").slice(0, 120); words = ahWords(title + " " + (o.author_name || "")); }
+    catch (_) { return { ok: true, unchecked: true, label: "YouTube video" }; }   // could not read the video title: accepted, but not auto-checked
+  } else { try { const u = new URL(url); words = ahWords(decodeURIComponent(u.pathname + " " + u.search).replace(/[\/_\-+.=&?]/g, " ")).filter(w => !SRC_GENERIC.has(w) && !/^\d+$/.test(w)); } catch (_) {} }
+  if (!words.length) return done({ ok: true, unchecked: true, label: h });
+  if (relHit(words, K) < 1) return done({ ok: false, reason: (title ? "The video \"" + title + "\"" : "This link") + " does not look related to this question. Only links about " + topic + " are accepted.", title });
+  return done({ ok: true, title, label: title || h });
+}
+const symbolSpam = (text) => { const t = String(text || ""), n = (t.match(/\p{Extended_Pictographic}/gu) || []).length; return n > Math.max(6, Math.floor(t.length / 25)) || /(.)\1{7,}/u.test(t); };
 // Answer helper: while a student writes an answer, suggest pictures and diagrams (Wikimedia Commons), a quick fact (Wikipedia) and video searches for the same topic.
 // It starts only when the student taps the button, sends only topic words (never the name or account), reads public pages, and shows text with textContent only.
 const AH_STOP = new Set("the a an and or of to in on for with is are was were be been being how what why when where which who whom this that these those it its as at by from into than then so such can could should would will may might do does did done not no yes you your we our they their them me my he she his her use used using also very more most some any all each other one two get got make made like just about over under between because therefore thus hence explain clearly please tell sir".split(" "));

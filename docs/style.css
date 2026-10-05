@@ -2639,3 +2639,39 @@ body.simple .tabs button[aria-selected="true"] { display: inline-flex; }
 .ans.flash { animation: ansflash 2.2s ease-out; }
 @keyframes ansflash { 0%, 60% { box-shadow: 0 0 0 3px var(--accent), 0 0 24px var(--accent); } 100% { box-shadow: none; } }
 @media (prefers-reduced-motion: reduce) { .ans.flash { animation: none; outline: 3px solid var(--accent); } }
+
+.as-link { display: flex; gap: 6px; margin: 4px 0; }
+.as-link-in { flex: 1; min-width: 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--sheet); color: var(--ink); font: inherit; }
+.rt-link { color: var(--rt-key); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; word-break: break-all; }
+
+/* ===== Calm, professional look: soft tinted chips and cards instead of bright gradients ===== */
+.pill {
+  --pc: var(--muted);
+  font: 600 10.5px var(--f-mono); letter-spacing: .06em; text-transform: uppercase;
+  padding: 3px 8px; border-radius: 6px;
+  background: color-mix(in oklab, var(--pc) 11%, transparent);
+  color: color-mix(in oklab, var(--pc) 78%, var(--ink));
+  border: 1px solid color-mix(in oklab, var(--pc) 30%, transparent);
+}
+.pill.open { --pc: #6366f1; background: color-mix(in oklab, var(--pc) 11%, transparent); color: color-mix(in oklab, var(--pc) 78%, var(--ink)); }
+.pill.done { --pc: #10b981; background: color-mix(in oklab, var(--pc) 11%, transparent); color: color-mix(in oklab, var(--pc) 70%, var(--ink)); }
+.pill.urgent { --pc: #ef4444; background: color-mix(in oklab, var(--pc) 11%, transparent); color: color-mix(in oklab, var(--pc) 78%, var(--ink)); }
+.pill.bounty { --pc: #f59e0b; background: color-mix(in oklab, var(--pc) 11%, transparent); color: color-mix(in oklab, var(--pc) 70%, var(--ink)); }
+.pill.mentor, .pill.via-pill { --pc: #0ea5e9; background: color-mix(in oklab, var(--pc) 11%, transparent); color: color-mix(in oklab, var(--pc) 75%, var(--ink)); font-weight: 600; }
+.pill.year-pill { --pc: #94a3b8; font-weight: 600; background: color-mix(in oklab, var(--pc) 10%, transparent); color: color-mix(in oklab, var(--pc) 70%, var(--ink)); border: 1px solid color-mix(in oklab, var(--pc) 30%, transparent); }
+.pill.chal-winner-pill { --pc: #f59e0b; background: color-mix(in oklab, var(--pc) 11%, transparent) !important; color: color-mix(in oklab, var(--pc) 70%, var(--ink)) !important; }
+.tag { font-weight: 600; border-radius: 6px; background: color-mix(in oklab, var(--c) 9%, transparent); color: color-mix(in oklab, var(--c) 72%, var(--ink)); border: 1px solid color-mix(in oklab, var(--c) 26%, transparent); }
+.item {
+  background: linear-gradient(180deg, color-mix(in oklab, var(--c) 5%, var(--sheet)), var(--sheet));
+  border-left: 3px solid color-mix(in oklab, var(--c) 75%, var(--line));
+  box-shadow: 0 1px 2px rgb(0 0 0 / .10), 0 8px 20px -16px rgb(0 0 0 / .5);
+}
+.item:hover, .spot:hover { box-shadow: 0 8px 24px -14px color-mix(in oklab, var(--accent) 30%, transparent); }
+.spot {
+  color: var(--ink);
+  background: linear-gradient(135deg, color-mix(in oklab, var(--g1) 18%, var(--sheet)), color-mix(in oklab, var(--g2) 9%, var(--sheet)));
+  border: 1px solid color-mix(in oklab, var(--g1) 28%, var(--line));
+  box-shadow: 0 8px 22px -16px var(--g1);
+}
+.spot-k { color: color-mix(in oklab, var(--g1) 70%, var(--ink)); opacity: 1; }
+.spot-why { opacity: .85; color: var(--muted); }
