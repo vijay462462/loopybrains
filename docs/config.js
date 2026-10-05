@@ -10,6 +10,9 @@ window.DOUBT_DESK_CONFIG = {
   media: { gallery: false, profilePhoto: false },
   // App Check: paste the reCAPTCHA v3 SITE key (public) from Firebase console > App Check. Leave empty until you have registered the app (steps in APPCHECK.md).
   appCheck: { siteKey: "" },
+  // Surprise offers for Loopy Brain credits. Add one line per offer. from and to are dates (India time). The offer adds extra credits to every student while it runs.
+  // Example: { id: "festival", title: "Festival offer", text: "Extra credits all weekend", bonusDay: 10, bonusWeek: 20, from: "2026-10-20", to: "2026-10-25" }
+  brainOffers: [],
   // Background push alerts (needs the push function deployed). Paste the Web Push certificate key from Firebase console > Project settings > Cloud Messaging. It is a public key, safe to publish.
   push: { vapidKey: "" },
   plus: { enabled: false, weekly: 19, semester: 149, monthly: 49, yearly: 399, functionsUrl: "",

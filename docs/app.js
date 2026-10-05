@@ -4658,7 +4658,7 @@ async function tpLoad(q, subject) {
 }
 function openTopic(q, subject, back) {
   q = lsClean(q); if (q.length < 2) return;
-  safetyGate(q).then(ok => { if (ok) openTopicGo(q, subject, back); });
+  safetyGate(q).then(async (ok) => { if (ok && await bsSpend(1)) openTopicGo(q, subject, back); });
 }
 function openTopicGo(q, subject, back) {
   const ts = tpState(); ts.q = q; ts.subject = subject || ts.subject || ""; ts.back = back || (state.mode !== "topic" ? state.mode : ts.back) || "intro"; ts.ai = null; ts.aiNote = "";
@@ -4863,7 +4863,7 @@ function brainQuiz(wiki, n) {
   return qs;
 }
 let _solver = null;
-async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=420", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
+async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=421", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
 async function brainReply(text, chat) {
   const sv = await brainSolve(text); if (sv) return sv;
   const { kind, topic } = brainIntent(text, chat.topic || ""); chat.topic = topic;
@@ -4938,7 +4938,7 @@ async function safeSync() {
   } catch (_) { _safeLoaded = false; }
 }
 let _safeMod = null;
-const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=420", location.href).href); } catch (_) { return null; } };
+const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=421", location.href).href); } catch (_) { return null; } };
 function safeModal(title, lines, danger) {
   const prev = document.getElementById("safeModal"); if (prev) prev.remove();
   const ov = el("div", { class: "safe-ov", id: "safeModal", role: "alertdialog", "aria-modal": "true", "aria-label": title },
@@ -4988,7 +4988,7 @@ function bsPool() {
 }
 const bsSuggest = (text) => { const n = text.trim().toLowerCase(); if (n.length < 2) return []; return bsPool().filter(t => t.toLowerCase().includes(n)).sort((a, b) => a.length - b.length).slice(0, 6); };
 let _report = null;
-const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=420", location.href).href); } catch (_) { return null; } };
+const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=421", location.href).href); } catch (_) { return null; } };
 async function bsPapers(q) {
   try {
     const j = await lsFetch("https://api.openalex.org/works?per-page=5&select=title,publication_year,cited_by_count,doi,open_access,authorships,abstract_inverted_index&search=" + encodeURIComponent(q));
@@ -4998,6 +4998,84 @@ async function bsPapers(q) {
       return { title: String(w.title || "").replace(/<[^>]*>/g, "").slice(0, 200), year: w.publication_year || "", cites: w.cited_by_count || 0, authors: (w.authorships || []).slice(0, 3).map(x => String((x.author && x.author.display_name) || "")).filter(Boolean).join(", "), abs, url: oa || doi, oa: !!oa };
     }).filter(p => p.title);
   } catch (_) { return []; }
+}
+// ---------- Loopy Brain credits: daily and weekly limits ----------
+// A search costs 1 credit (Low), 2 (Medium) or 3 (High). Maths, conversions and formulas are free. Usage is also saved in the student's own record so clearing the browser does not reset it.
+const BS_CAPS = { free: { day: 10, week: 40 }, rgukt: { day: 30, week: 120 }, plus: { day: 150, week: 700 } };
+const bsBase = () => hasPlusNow() ? BS_CAPS.plus : IS_RGUKT ? BS_CAPS.rgukt : BS_CAPS.free;
+const bsCaps = () => { const b = bsBase(), x = bsBonus(); return { day: b.day + x.day, week: b.week + x.week }; };
+const bsDay = () => Math.floor((Date.now() + 19800000) / 864e5), bsWeek = () => Math.floor((bsDay() + 3) / 7);   // India time; the week runs Monday to Sunday
+const USE_KEY = "dd-bs-use", _srv = { day: 0, week: 0 };
+const bsUsed = () => { const r = readJSON(USE_KEY, {}) || {}; return { day: r.d === bsDay() ? Number(r.n) || 0 : 0, week: r.w === bsWeek() ? Number(r.wn) || 0 : 0 }; };
+let _useSyncDay = -1;
+async function bsUseSync() {
+  const d = bsDay(), w = bsWeek(); if (_useSyncDay === d) return; const uid = store && store.authUid && store.authUid(); if (!uid || !store.getTop) return; _useSyncDay = d;
+  try {
+    const [a, b] = await Promise.all([store.getTop("searchUsage", uid + "_" + d), store.getTop("searchWeek", uid + "_w" + w)]), u = bsUsed();
+    _srv.day = a ? Number(a.n) || 0 : 0; _srv.week = b ? Number(b.n) || 0 : 0;
+    writeJSON(USE_KEY, { d, w, n: Math.max(u.day, _srv.day), wn: Math.max(u.week, _srv.week) });
+  } catch (_) { _useSyncDay = -1; }
+}
+function bsLeft() { const caps = bsCaps(), used = bsUsed(); return { caps, used, day: Math.max(0, caps.day - used.day), week: Math.max(0, caps.week - used.week) }; }
+function bsLimitModal(kind, L) {
+  const prev = document.getElementById("safeModal"); if (prev) prev.remove();
+  const day = kind === "day", close = () => ov.remove();
+  const ov = el("div", { class: "safe-ov", id: "safeModal", role: "alertdialog", "aria-modal": "true", "aria-label": "Loopy credits used up" },
+    el("div", { class: "safe-card" }, el("div", { class: "safe-ic", "aria-hidden": "true" }, "⏳"), el("h3", {}, day ? "Today’s Loopy credits are used up" : "This week’s Loopy credits are used up"),
+      el("p", {}, day ? "You have used all " + L.caps.day + " credits for today. They come back at midnight, India time." : "You have used all " + L.caps.week + " credits for this week. They come back on Monday."),
+      el("p", {}, "Maths, conversions and formulas are still free, and Low effort costs the least."),
+      !hasPlusNow() ? el("button", { class: "btn primary", type: "button", onclick: () => { close(); if (bsEl()) bsClose(true); showPanel("plus"); } }, "See Campus Loop Plus") : null,
+      el("button", { class: "btn", type: "button", onclick: close }, "OK")));
+  document.body.append(ov);
+}
+// ----- surprises and offers -----
+const GIFT_KEY = "dd-bs-gift", WB_KEY = "dd-bs-wbonus";
+const fnv = (str) => { let h = 2166136261; for (const ch of String(str)) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
+const bsGid = () => { let g = readJSON("dd-bs-gid", ""); if (!g) { g = Math.random().toString(36).slice(2) + Date.now().toString(36); writeJSON("dd-bs-gid", g); } return g; };
+const bsGift = () => { const r = readJSON(GIFT_KEY, null); return r && r.d === bsDay() ? r : null; };
+const bsOffer = () => { const list = ((window.DOUBT_DESK_CONFIG || {}).brainOffers || []), t = new Date(Date.now() + 19800000).toISOString().slice(0, 10); return list.find(o => o && o.title && /^\d{4}-\d{2}-\d{2}$/.test(o.from || "") && /^\d{4}-\d{2}-\d{2}$/.test(o.to || "") && o.from <= t && t <= o.to) || null; };
+function bsBonus() {
+  const g = bsGift(), o = bsOffer(), w = readJSON(WB_KEY, {}), gd = g && g.claimed && g.credits ? g.credits : 0;
+  return { day: gd + (o ? Number(o.bonusDay) || 0 : 0), week: (w && w.w === bsWeek() ? Number(w.n) || 0 : 0) + (o ? Number(o.bonusWeek) || 0 : 0) };
+}
+// Each day a student has a small chance of a surprise. The roll is fixed for the day, so reopening the app does not reroll it.
+function bsRollSurprise() {
+  let g = bsGift(); if (g) return g.credits && !g.claimed ? g : null;
+  const h = fnv(bsGid() + ":" + bsDay());
+  if (h % 100 >= 25) { writeJSON(GIFT_KEY, { d: bsDay(), none: true, claimed: true }); return null; }
+  const t = (h >>> 8) % 20, rec = t < 10 ? { kind: "gift", credits: 5, title: "Surprise! 5 free credits", text: "A little gift for learning today. They are added to today’s credits." }
+    : t < 15 ? { kind: "big", credits: 10, title: "Big surprise! 10 free credits", text: "You are on a roll. Enjoy 10 extra credits today." }
+    : t < 18 ? { kind: "high", credits: 3, title: "A free High effort search", text: "3 extra credits, enough for one High effort search with cross-checks and research papers." }
+    : { kind: "plusday", credits: 0, title: "Surprise! A free day of Plus", text: "All five Loopy models are unlocked for the next 24 hours." };
+  rec.d = bsDay(); rec.claimed = false; writeJSON(GIFT_KEY, rec); return rec;
+}
+function bsSurpriseModal(rec) {
+  if (document.getElementById("gift") || !rec) return;
+  const claim = () => {
+    const w = readJSON(WB_KEY, {}), n0 = w && w.w === bsWeek() ? Number(w.n) || 0 : 0;
+    if (rec.credits) writeJSON(WB_KEY, { w: bsWeek(), n: n0 + rec.credits });
+    if (rec.kind === "plusday") writeJSON("dd-bonus-until", Math.max(Number(readJSON("dd-bonus-until", 0)) || 0, Date.now() + 864e5));
+    writeJSON(GIFT_KEY, Object.assign({}, rec, { claimed: true })); ov.remove(); try { celebrate(); } catch (_) {}
+    if (bsEl()) bsPaint(); showNotice(rec.title + (rec.credits ? "" : " Enjoy!"), "ok");
+  };
+  const ov = el("div", { class: "safe-ov", id: "gift", role: "dialog", "aria-modal": "true", "aria-label": rec.title },
+    el("div", { class: "safe-card gift" }, el("div", { class: "safe-ic gift-ic", "aria-hidden": "true" }, "★"), el("h3", {}, rec.title), el("p", {}, rec.text),
+      el("button", { class: "btn primary", type: "button", onclick: claim }, "Claim my gift"), el("button", { class: "btn", type: "button", onclick: () => ov.remove() }, "Later")));
+  document.body.append(ov);
+}
+async function bsSpend(cost) {
+  if (!cost) return true; await bsUseSync(); const L = bsLeft();
+  if (L.day < cost || L.week < cost) { bsLimitModal(L.week < cost ? "week" : "day", L); return false; }
+  const d = bsDay(), w = bsWeek(), n = L.used.day + cost, wn = L.used.week + cost; writeJSON(USE_KEY, { d, w, n, wn });
+  try {
+    const uid = store && store.authUid && store.authUid();
+    if (uid && store.setTop) {
+      const sd = _srv.day + cost, sw = _srv.week + cost;
+      store.setTop("searchUsage", uid + "_" + d, { n: sd, d, at: Date.now() }).then(() => { _srv.day = sd; }).catch(() => {});
+      store.setTop("searchWeek", uid + "_w" + w, { n: sw, w, at: Date.now() }).then(() => { _srv.week = sw; }).catch(() => {});
+    }
+  } catch (_) {}
+  return true;
 }
 // ----- the overlay: a big, calm workspace like a modern AI app -----
 const bsEl = () => document.getElementById("bsFull");
@@ -5012,7 +5090,7 @@ function bsMount() {
   const ov = el("div", { class: "bsfull", id: "bsFull", role: "dialog", "aria-modal": "true", "aria-label": "Loopy Search" }, bar, prog, scroll);
   document.body.append(ov); document.documentElement.classList.add("bs-open");
   let tick = false; scroll.addEventListener("scroll", () => { if (tick) return; tick = true; requestAnimationFrame(() => { tick = false; const p = $("bsProg"); if (p) p.style.width = Math.min(100, Math.round(scroll.scrollTop / Math.max(1, scroll.scrollHeight - scroll.clientHeight) * 100)) + "%"; }); }, { passive: true });
-  document.addEventListener("keydown", bsEsc); bsPaint(true);
+  document.addEventListener("keydown", bsEsc); bsPaint(true); bsUseSync().then(() => { if (bsEl()) { bsPaint(); setTimeout(() => { if (bsEl()) bsSurpriseModal(bsRollSurprise()); }, 600); } });
   if (bs.start) { const q = bs.start; bs.start = ""; bsSubmit(q); }
 }
 const bsEsc = (e) => { if (e.key === "Escape" && !document.querySelector(".overlay")) bsClose(); };
@@ -5052,6 +5130,7 @@ function mod2cautions(wiki) {
 async function bsRun(q, solved) {
   q = lsClean(q); if (q.length < 2) return;
   const bs = bsState(), id = ++bs.id; let lv = bs.level; if (!bsOpen(lv)) lv = IS_RGUKT ? 2 : 1; const size = bs.size || "standard";
+  if (!solved) { const cost = bsEffort(bs)[3], key = q + "|" + cost; if (bs.charged !== key) { if (!(await bsSpend(cost))) { bs.pending = q; bs.q = q; bsPaint(true); return; } bs.charged = key; } }
   bs.q = q; bs.busy = true; bs.tab = "all"; bs.lock = 0; bsSave(q); bsPaint(true);
   const topic = brainIntent(q, "").topic || q, short = ahWords(topic).slice(0, 3).join(" ") || topic;
   if (solved) { if (id !== bs.id) return; bs.res = { topic: q, solved: true, lv, size, board: lv >= 2 ? brainBoard(q, 3) : [], syl: [], imgs: [], models: [], page: "", report: null, papers: [] }; bs.ans = solved; bs.busy = false; bsPaint(true); return; }
@@ -5070,7 +5149,7 @@ async function bsRun(q, solved) {
   bs.res = res; bs.ans = ans || notFoundMsg(topic); bs.busy = false; bsPaint(true);
 }
 async function bsAsk(prefix) {
-  const bs = bsState(); if (!bs.res) return; const id = ++bs.id; bs.busy = true; bsPaint();
+  const bs = bsState(); if (!bs.res) return; if (!(await bsSpend(1))) return; const id = ++bs.id; bs.busy = true; bsPaint();
   const t = await brainReply(prefix + bs.res.topic, { topic: bs.res.topic }).catch(() => ""); if (id !== bs.id) return;
   bs.ans = t || notFoundMsg(bs.res.topic); bs.res.report = null; bs.busy = false; bsPaint(true);
 }
@@ -5132,11 +5211,13 @@ function brainView() {
   const rgNote = el("p", { class: "bs-model bsf-noprint" }, IS_RGUKT ? "Loopy Spark and Scholar are free for RGUKT students. Vision, Sage and Apex are part of Campus Loop Plus." : "Loopy Spark is free. Scholar, Vision, Sage and Apex are part of Campus Loop Plus.");
   const lockCard = bs.lock ? el("div", { class: "bs-lock", role: "status" }, el("strong", {}, bsName(bs.lock) + " is a Plus model"), el("p", {}, BS_LEVELS[bs.lock - 1][2] + ". " + (IS_RGUKT ? "Loopy Spark and Loopy Scholar are free for RGUKT students. Campus Loop Plus unlocks Loopy Vision, Sage and Apex." : "Loopy Spark is free for everyone. Campus Loop Plus unlocks Loopy Scholar, Vision, Sage and Apex.")), el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => bsLeave(() => showPanel("plus")) }, "See Campus Loop Plus"), el("button", { class: "btn sm", type: "button", onclick: () => { bs.lock = 0; bsPaint(); } }, "Stay on free models"))) : null;
   const easyBtn = el("button", { type: "button", class: "bs-easy" + (bs.easy !== false ? " on" : ""), "aria-pressed": String(bs.easy !== false), onclick: () => { bs.easy = bs.easy === false; bsPaint(); } }, "Easy words: " + (bs.easy !== false ? "On" : "Off"));
+  const offer = bsOffer(), offerBar = offer ? el("div", { class: "bs-offer bsf-noprint" }, el("b", {}, offer.title), offer.text ? el("span", {}, " " + offer.text) : null) : null, L = bsLeft(), pct = Math.round(Math.min(L.day / L.caps.day, L.week / L.caps.week) * 100);
+  const meter = el("div", { class: "bs-credits bsf-noprint" + (pct <= 20 ? " low" : "") }, el("div", { class: "bs-cr-row" }, el("span", {}, "Today: " + L.day + " of " + L.caps.day + " credits"), el("span", {}, "This week: " + L.week + " of " + L.caps.week)), el("i", {}, el("b", { style: "width:" + pct + "%" })), el("small", {}, "Low costs 1, Medium 2, High 3. Maths and conversions are free."));
   const bar = el("div", { class: "bs-sticky bsf-noprint" + (bs.res || bs.pending ? " compact" : "") }, form, sug);
-  const effNow = bsEffort(bs), effRow = el("div", { class: "bs-eff", role: "group", "aria-label": "Effort" }, el("small", {}, "Effort"), ...BS_EFFORTS.map(e => { const open = bsOpen(e[3]); return el("button", { type: "button", class: "bs-effb" + (effNow[0] === e[0] ? " on" : "") + (open ? "" : " locked"), "aria-pressed": String(effNow[0] === e[0]), title: e[2], onclick: () => { if (!open) { bs.lock = e[3]; bsPaint(); return; } bs.effort = e[0]; bs.lock = 0; if (bs.q && bs.res) bsRun(bs.q); else bsPaint(); } }, e[1] + (open ? "" : " \u{1F512}")); }), el("small", { class: "bs-effh" }, effNow[2]));
+  const effNow = bsEffort(bs), effRow = el("div", { class: "bs-eff", role: "group", "aria-label": "Effort" }, el("small", {}, "Effort"), ...BS_EFFORTS.map(e => { const open = bsOpen(e[3]); return el("button", { type: "button", class: "bs-effb" + (effNow[0] === e[0] ? " on" : "") + (open ? "" : " locked"), "aria-pressed": String(effNow[0] === e[0]), title: e[2], onclick: () => { if (!open) { bs.lock = e[3]; bsPaint(); return; } bs.effort = e[0]; bs.lock = 0; if (bs.q && bs.res) bsRun(bs.q); else bsPaint(); } }, e[1] + (open ? "" : " \u{1F512}")); }), el("small", { class: "bs-effh" }, effNow[2] + " \u00B7 costs " + effNow[3] + (effNow[3] === 1 ? " credit" : " credits")));
   const optRow = el("div", { class: "bs-optrow" }, easyBtn), compact = !!(bs.res || bs.pending);
   const opts = compact ? el("details", { class: "bs-opts", open: bs.lock || bs.optsOpen ? "" : null, ontoggle: (e) => { bs.optsOpen = e.target.open; } }, el("summary", {}, bsName(cur[0]) + " \u00B7 " + effNow[1] + " effort \u00B7 Easy words " + (bs.easy !== false ? "on" : "off") + "  \u2014 change"), lvBar, modelLine, rgNote, effRow, optRow) : null;
-  const head = el("div", { class: "bs-head bsf-noprint" }, ...(compact ? [opts] : [lvBar, modelLine, rgNote, effRow, optRow]), lockCard);
+  const head = el("div", { class: "bs-head bsf-noprint" }, ...(compact ? [opts] : [lvBar, modelLine, rgNote, effRow, optRow]), offerBar, meter, lockCard);
   const chips = (list, onTap) => el("div", { class: "bs-chips" }, ...list.map(t => el("button", { type: "button", class: "tp-sub", onclick: () => onTap(t) }, t)));
   if (bs.busy) return [bar, head, el("div", { class: "bsr-load", role: "status" }, el("div", { class: "bsr-orb" }), el("p", {}, "Loopy is preparing your " + ((BS_SIZES.find(x => x[0] === bs.size) || [])[1] || "answer").toLowerCase() + " on “" + bs.q + "”…"), el("div", { class: "tp-skel", "aria-hidden": "true" }, el("i", {}), el("i", {}), el("i", {})))];
   if (bs.pending) {
