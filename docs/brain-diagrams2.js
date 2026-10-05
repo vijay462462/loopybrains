@@ -1,5 +1,5 @@
 // More of Loopy's own diagrams: analog circuits, DSP, control systems and probability. Extends brain-diagrams.js.
-import { Cv, mk, D } from "./brain-diagrams.js?v=445";
+import { Cv, mk, D } from "./brain-diagrams.js?v=446";
 const done = (c) => c.root;
 const P = Cv.prototype;
 // Local-coordinate parts: each starts at (x, y) and ends L further along the (rotated) axis. Returns the absolute end pin.
@@ -257,4 +257,20 @@ D.sevenseg = { title: "Seven-segment display", cap: "Seven LED bars a to g make 
   const c = new Cv(400, 190, "Seven segment display"), seg = (x, y, lit) => { const S = { a: [8, 0, 28, 7], b: [36, 8, 7, 28], c: [36, 44, 7, 28], d: [8, 72, 28, 7], e: [0, 44, 7, 28], f: [0, 8, 7, 28], g: [8, 36, 28, 7] }; Object.keys(S).forEach(k => { const [dx, dy, w, h] = S[k]; c.add(mk("rect", { x: x + dx, y: y + dy, width: w, height: h, rx: 3, class: "dg-box " + (lit.includes(k) ? "on" : "off") })); c.txt(x + dx + w / 2, y + dy + h / 2 + 4, k, { a: "middle", c: "s" }); }); };
   seg(20, 20, "abcdef"); seg(150, 20, "bc"); seg(280, 20, "abdeg"); c.txt(41, 128, "0", { a: "middle", c: "b" }); c.txt(171, 128, "1", { a: "middle", c: "b" }); c.txt(301, 128, "2", { a: "middle", c: "b" });
   c.txt(200, 160, "for s₁s₀ = 00, 01, 10:  a = d = e = s₀′,  b = 1,  c = s₁′", { a: "middle", c: "g" }); return done(c); } };
+D.func16 = { title: "All 16 functions of two variables", cap: "Two inputs x, y have 4 rows, so there are 2⁴ = 16 possible functions. Eight of them are the standard gates: AND, OR, NAND, NOR, XOR, XNOR, NOT and the buffer.", draw() {
+  const c = new Cv(400, 204, "16 functions"), x0 = 38, cw = 22, y0 = 34, ch = 26, nm = { 1: "AND", 6: "XOR", 7: "OR", 8: "NOR", 9: "XNOR", 14: "NAND" };
+  c.txt(4, 24, "xy", { c: "s" }); for (let k = 0; k < 16; k++) { const x = x0 + k * cw; c.txt(x + cw / 2, 24, "F" + k, { a: "middle", c: nm[k] ? "m" : "s" });
+    for (let r = 0; r < 4; r++) { const v = (k >> (3 - r)) & 1; c.add(mk("rect", { x, y: y0 + r * ch, width: cw - 1, height: ch - 1, class: "dg-cell" + (nm[k] ? " hi" : "") })); c.txt(x + cw / 2, y0 + r * ch + 17, String(v), { a: "middle", c: v ? "one" : "zero" }); }
+    if (nm[k]) c.txt(x + cw / 2, y0 + 4 * ch + 14 + (k === 9 ? 11 : 0), nm[k], { a: "middle", c: "mn" }); }
+  ["00", "01", "10", "11"].forEach((l, r) => c.txt(x0 - 6, y0 + r * ch + 17, l, { a: "end", c: "m" })); c.txt(200, 192, "F0 = constant 0,  F15 = constant 1,  F3 = x,  F5 = y,  F10 = y′,  F12 = x′", { a: "middle", c: "s" }); return done(c); } };
+D.polarity = { title: "Positive and negative logic", cap: "The same voltage signal can mean 1 or 0. Positive logic: high voltage H is 1. Negative logic: low voltage L is 1. So one physical NAND gate is a NOR gate in negative logic.", draw() {
+  const c = new Cv(400, 210, "Positive and negative logic"), panel = (ox, t, hv, lv, cls) => { c.txt(ox + 80, 18, t, { a: "middle", c: cls }); c.wire([[ox + 30, 40], [ox + 160, 40]], "fb"); c.wire([[ox + 30, 110], [ox + 160, 110]], "fb");
+    c.txt(ox + 22, 44, "H", { a: "end", c: "s" }); c.txt(ox + 22, 114, "L", { a: "end", c: "s" }); c.wire([[ox + 40, 110], [ox + 85, 110], [ox + 85, 40], [ox + 150, 40]], cls === "b" ? "in" : "out");
+    c.box(ox + 36, 124, 44, 26, "H = " + hv, "ff"); c.box(ox + 88, 124, 44, 26, "L = " + lv, "off"); };
+  panel(8, "Positive logic", "1", "0", "b"); panel(208, "Negative logic", "0", "1", "g");
+  c.box(40, 162, 320, 36, "7400 gate:  positive logic → NAND|negative logic → NOR", "on"); return done(c); } };
+D.famtable = { title: "Typical logic-family numbers", cap: "Typical values from the textbook table (older chips). CMOS uses almost no power but was slower; ECL is the fastest; TTL is in between. Newer CMOS families are much faster today.", draw() {
+  const c = new Cv(400, 210, "Logic family table"), cols = [[8, 96, "Family"], [108, 56, "Fan-out"], [168, 66, "Power mW"], [238, 70, "Delay ns"], [312, 80, "Noise V"]],
+    rows = [["Standard TTL", 10, 10, 10, 0.4], ["Schottky TTL", 10, 22, 3, 0.4], ["LP Schottky", 20, 2, 10, 0.4], ["ECL", 25, 25, 2, 0.2], ["CMOS", 50, 0.1, 25, 3]];
+  cols.forEach(([x, w, t]) => c.box(x, 6, w, 26, t, "ff")); rows.forEach((r, i) => cols.forEach(([x, w], j) => { const best = (j === 2 && r[0] === "CMOS") || (j === 3 && r[0] === "ECL") || (j === 1 && r[0] === "CMOS") || (j === 4 && r[0] === "CMOS"); c.box(x, 38 + i * 32, w, 28, String(r[j]), best ? "on" : "off"); })); c.txt(200, 206, "green = best in that column", { a: "middle", c: "g" }); return done(c); } };
 export function drawDiagram2(key) { const d = D[key]; if (!d) return null; try { return { title: d.title, cap: d.cap, svg: d.draw() }; } catch (_) { return null; } }
