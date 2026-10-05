@@ -3285,3 +3285,10 @@ html.is-scrolling .skeleton, html.is-scrolling .tp-skel i, html.is-scrolling .av
   .sp2-chip { animation: none !important; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; } }
+
+.bs-subhead{display:flex;justify-content:space-between;align-items:center}
+.bs-edit{border:0;background:none;color:var(--accent);font:inherit;font-weight:700;padding:6px 8px;cursor:pointer}
+.bs-subj{display:inline-flex;align-items:center;gap:2px}
+.bs-x{border:0;background:var(--accent-soft);color:var(--ink);border-radius:50%;width:26px;height:26px;cursor:pointer;font-size:.75rem}
+.bs-addrow{display:flex;gap:8px;margin-top:8px}
+.bs-add{flex:1;min-width:0;border:1.5px solid var(--line);border-radius:999px;background:var(--sheet);color:var(--ink);font:inherit;font-size:16px;padding:9px 14px}

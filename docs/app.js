@@ -2051,14 +2051,14 @@ function renderEvents() {
 }
 // Explore: every tool in one tidy screen, so the home screen can stay simple.
 const EXPLORE = [
-  ["Study", [["__brain", "\u2728", "Loopy Brain"], ["quizBtn", "🧠", "Daily Quiz"], ["labBtn", "🧪", "Study Lab"], ["studyBtn", "📖", "Study Tools"], ["learnBtn", "📚", "Learn from IIT"], ["focusBtn", "🎯", "Focus mode"]]],
+  ["Study", [["__brain", "\u2728", "Loopy Brain"], ["__mysubj", "\u{1F4DA}", "My subjects"], ["quizBtn", "🧠", "Daily Quiz"], ["labBtn", "🧪", "Study Lab"], ["studyBtn", "📖", "Study Tools"], ["learnBtn", "📚", "Learn from IIT"], ["focusBtn", "🎯", "Focus mode"]]],
   ["Campus", [["__story", "📸", "Add a story"], ["eventsBtn", "🎉", "Events"], ["drivesBtn", "🏢", "Campus Drives"], ["leadersBtn", "🏆", "Top Helpers"], ["alumniBtn", "🎓", "Alumni", "alumni"]]],
   ["Career", [["careerBtn", "", "Career Guide"], ["__resume", "📄", "Resume builder"]]],
   ["More", [["__howto", "\u2753", "How to use"], ["__stickers", "🎴", "Sticker book"], ["__wardrobe", "👗", "Loopy\u2019s wardrobe"], ["__install", "📲", "Install app"], ["__plus", "⭐", "The Campus Loop Plus"], ["botBtn", "", "Loop Bot", "bot"], ["funBtn", "🎉", "Entertainment", "fun"], ["aboutBtn", "ℹ️", "About Us"]]],
 ];
 function renderExplore() {
   const back = el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back");
-  const go = (id) => { if (id === "__plus") { showPanel("plus"); return; } if (id === "__brain") { state.ai = state.ai || { msgs: [], busy: false, note: "" }; showPanel("ai"); return; } if (id === "__howto") { showPanel("howto"); return; } if (id === "__resume") { showPanel("resume"); return; } if (id === "__story") { openStoryAdd(); return; } if (id === "__stickers") { showPanel("stickers"); return; } if (id === "__wardrobe") { showPanel("wardrobe"); return; } if (id === "__install") { const ib = $("installBtn"); if (_pwaPrompt && ib) ib.click(); else showNotice("To install: open your browser menu and tap Add to Home screen.", ""); return; } const b = $(id); if (b) b.click(); };
+  const go = (id) => { if (id === "__plus") { showPanel("plus"); return; } if (id === "__brain") { state.ai = state.ai || { msgs: [], busy: false, note: "" }; showPanel("ai"); return; } if (id === "__howto") { showPanel("howto"); return; } if (id === "__mysubj") { state.bs = state.bs || { q: "", level: 2, tab: "all", busy: false, res: null, ans: "", id: 0, lock: 0 }; state.bs.res = null; state.bs.editSubj = true; showPanel("ai"); return; } if (id === "__resume") { showPanel("resume"); return; } if (id === "__story") { openStoryAdd(); return; } if (id === "__stickers") { showPanel("stickers"); return; } if (id === "__wardrobe") { showPanel("wardrobe"); return; } if (id === "__install") { const ib = $("installBtn"); if (_pwaPrompt && ib) ib.click(); else showNotice("To install: open your browser menu and tap Add to Home screen.", ""); return; } const b = $(id); if (b) b.click(); };
   return [el("h2", {}, "🧰 Explore"), el("p", { class: "hint" }, "Everything in " + BRAND + ", in one place."),
     ...EXPLORE.flatMap(([title, items]) => [el("div", { class: "label" }, title), el("div", { class: "plus-tiles" }, ...items.filter(it => !it[3] || !document.body.classList.contains("no-" + it[3])).map(([id, icon, label]) => el("button", { class: "plus-tile", type: "button", onclick: () => go(id) }, el("span", { class: "pt-i", "aria-hidden": "true" }, icon), el("strong", {}, label))))]),
     el("div", { class: "rowbtns" }, back)];
@@ -4921,11 +4921,15 @@ const BS_LEVELS = [
 ];
 const bsState = () => state.bs || (state.bs = { q: "", level: 2, tab: "all", busy: false, res: null, ans: "", id: 0, lock: 0 });
 const bsOpen = (lv) => !BS_LEVELS[lv - 1][3] || !plusLocked();
+const MYS_KEY = "dd-my-subjects";
+const mySubjects = () => { const r = readJSON(MYS_KEY, []); return Array.isArray(r) ? r.filter(x => typeof x === "string" && x.trim()).slice(0, 20) : []; };
+const saveSubjects = (a) => writeJSON(MYS_KEY, a.slice(0, 20));
 const bsRecent = () => { const r = readJSON(BS_KEY, []); return Array.isArray(r) ? r.filter(x => typeof x === "string").slice(0, 6) : []; };
 const bsSave = (q) => writeJSON(BS_KEY, [q, ...bsRecent().filter(x => x.toLowerCase() !== q.toLowerCase())].slice(0, 8));
 function bsPool() {
   const out = [], C = window.RGUKT_CURRICULUM;
   if (C) for (const y of Object.keys(C.data || {})) for (const br of Object.keys(C.data[y] || {})) for (const r of C.data[y][br]) out.push(String(r[0]));
+  out.push(...mySubjects());
   for (const d of state.doubts) if (!d.deleted && !isHidden(d) && d.title) out.push(String(d.title));
   return [...new Set(out)];
 }
@@ -4949,6 +4953,15 @@ async function bsAsk(prefix) {
   const t = await brainReply(prefix + bs.res.topic, { topic: bs.res.topic }).catch(() => ""); if (id !== bs.id) return;
   bs.ans = t || notFoundMsg(bs.res.topic); bs.busy = false; render();
 }
+function mySubjectsBlock(bs, go) {
+  const mine = mySubjects(), editing = !!bs.editSubj;
+  const input = el("input", { type: "text", class: "bs-add", maxlength: "40", placeholder: "Add a subject, e.g. Data Structures", "aria-label": "Add a subject", autocomplete: "off" });
+  const add = (e) => { e.preventDefault(); const t = lsClean(input.value); if (t.length < 2) return; saveSubjects([t, ...mine.filter(x => x.toLowerCase() !== t.toLowerCase())]); bs.editSubj = true; render(); };
+  return el("div", { class: "bs-blk" },
+    el("div", { class: "bs-subhead" }, el("small", { class: "hint" }, "My subjects"), mine.length ? el("button", { type: "button", class: "bs-edit", onclick: () => { bs.editSubj = !editing; render(); } }, editing ? "Done" : "Edit") : null),
+    mine.length ? el("div", { class: "bs-chips" }, ...mine.map(t => el("span", { class: "bs-subj" }, el("button", { type: "button", class: "tp-sub", onclick: () => go(t) }, t), editing ? el("button", { type: "button", class: "bs-x", "aria-label": "Remove " + t, onclick: () => { saveSubjects(mine.filter(x => x !== t)); render(); } }, "\u2715") : null))) : el("p", { class: "hint" }, "Add the subjects you study. Tap one to get an explanation, pictures, videos and notes. Works for every college."),
+    el("form", { class: "bs-addrow", onsubmit: add }, input, el("button", { class: "btn sm primary", type: "submit" }, "Add")));
+}
 function renderAI() {
   const back = el("button", { class: "btn", type: "button", onclick: () => showPanel("plus") }, "Back");
   const bs = bsState();
@@ -4967,7 +4980,8 @@ function renderAI() {
     const C = window.RGUKT_CURRICULUM, rows = C ? ((C.data[curState.year] || {})[curState.branch] || []).map(r => r[0]).slice(0, 8) : [], rec = bsRecent();
     return [head,
       rec.length ? el("div", { class: "bs-blk" }, el("small", { class: "hint" }, "Recent"), chips(rec, go)) : null,
-      rows.length ? el("div", { class: "bs-blk" }, el("small", { class: "hint" }, "Your subjects"), chips(rows, go)) : null,
+      mySubjectsBlock(bs, go),
+      rows.length ? el("div", { class: "bs-blk" }, el("small", { class: "hint" }, "Syllabus subjects"), chips(rows, go)) : null,
       el("div", { class: "bs-blk" }, el("small", { class: "hint" }, "Try asking"), chips(["Explain Dijkstra algorithm", "Solve x^2-5x+6=0", "Convert 5 km to miles", "Formula for Ohm's law", "Mean of 4, 8, 15, 16", "25 in binary"], go)),
       el("div", { class: "rowbtns" }, back)].filter(Boolean);
   }
