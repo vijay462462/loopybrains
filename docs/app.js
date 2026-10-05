@@ -1979,7 +1979,7 @@ function renderToday() {
       stat(pts, "points this week ⚡", "", () => showPanel("wboard")),
       QUIZ.length ? stat(quizDone ? "✓" : "Go", quizDone ? "quiz done 🧠" : "today's quiz 🧠", quizDone ? "" : "pulse", () => showPanel("quiz")) : null),
     el("div", { class: "today-chips" },
-      IS_RGUKT ? chip("\u{1F4D8} Semester subjects", "", () => { state.mode = "curriculum"; render(); try { $("sheet").scrollIntoView({ behavior: "smooth" }); } catch (_) {} }) : null,
+      IS_RGUKT ? chip("\u{1F4D8} Semester subjects", "", () => { state.mode = "curriculum"; render(); try { goSheet(); } catch (_) {} }) : null,
       left != null && left >= 0 && left <= 120 ? chip("⏳ " + (left === 0 ? "Exam today" : left + " days to exam"), left <= 7 ? "warn" : "", () => showPanel("planner")) : null,
       upcomingEvents().filter(e => e.startAt < Date.now() + 7 * 864e5).length ? chip("🎉 " + upcomingEvents().filter(e => e.startAt < Date.now() + 7 * 864e5).length + " event" + (upcomingEvents().filter(e => e.startAt < Date.now() + 7 * 864e5).length === 1 ? "" : "s") + " this week", "", () => showPanel("events")) : null,
       unansweredDoubts().length ? chip("🙋 " + unansweredDoubts().length + " doubt" + (unansweredDoubts().length === 1 ? "" : "s") + " need an answer", "pulse", showUnanswered) : null,
@@ -2991,7 +2991,7 @@ function openItem(id) {
   state.selected = id; state.mode = "view";
   try { history.replaceState(null, "", "#" + state.tab + "/" + id); } catch (_) {}
   render();
-  if (innerWidth <= 1000) $("sheet").scrollIntoView({ behavior: "smooth" });
+  goSheet();
 }
 
 function deptBanner() {
@@ -3483,7 +3483,7 @@ function subjectHub(count) {
   if (["ideas", "clubs", "challenges"].includes(state.tab) && state.group !== "All") return otherHub(count);
   if (!(state.tab === "doubts" || state.tab === "gate") || state.group === "All") return null;
   const g = state.group;
-  const toSheet = () => { render(); if (innerWidth <= 1000) $("sheet").scrollIntoView({ behavior: "smooth" }); };
+  const toSheet = () => { render(); goSheet(); };
   const study = (tab, set) => () => { state.mode = "resources"; resourceTab = tab; formulaOpen = null; syllabusSubj = null; syllabusUnit = null; mcqSubj = null; set(); toSheet(); };
   const acts = [
     el("button", { class: "btn primary sm", type: "button", onclick: openAsk }, "❓ Ask in " + g),
@@ -5534,7 +5534,7 @@ function alumniAdminRow(d) {
 const isAlumniProfile = (d) => (d.title || "").startsWith("🎓 ");
 const isAlumniJob = (d) => (d.title || "").startsWith("💼 ");
 function openAlumniPost(id) { state.tab = "clubs"; state.group = "All"; openItem(id); }
-function alumniGo(mode) { state.mode = mode; render(); if (innerWidth <= 1000) $("sheet").scrollIntoView({ behavior: "smooth" }); }
+function alumniGo(mode) { state.mode = mode; render(); goSheet(); }
 
 function alumniProfileCard(d) {
   const kv = alumniKV(d.body);
@@ -9016,7 +9016,7 @@ function openAsk() {
   state.mode = getName() ? "ask" : "name";
   if (!getName()) state.afterName = "ask";
   render();
-  if (innerWidth <= 1000) $("sheet").scrollIntoView({ behavior: "smooth" });
+  goSheet();
 }
 
 let sheetKey = "";
@@ -9481,6 +9481,8 @@ function restoreUI(s) {
   }
   requestAnimationFrame(() => { if (sheet) sheet.style.minHeight = ""; if (same) window.scrollTo(0, s.y); });
 }
+// Scroll to the open panel after the redraw has restored its scroll position (otherwise it snaps back and nothing seems to happen).
+function goSheet() { if (innerWidth > 1000) return; const run = () => { const sh = $("sheet"); if (sh) sh.scrollIntoView({ behavior: "smooth", block: "start" }); }; requestAnimationFrame(() => requestAnimationFrame(run)); setTimeout(run, 120); }
 function render() { const snap = snapUI(); try { renderCore(); } finally { restoreUI(snap); } }
 function renderCore() {
   try {
@@ -9577,7 +9579,7 @@ document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click
   render(); if (toJobs) { $("rail").scrollIntoView({ block: "start" }); return; } openAsk();
 }));
 $("askBtn").addEventListener("click", openAsk);
-const showPanel = (mode) => { state.mode = mode; render(); { const sh = $("sheet"); if (sh) { sh.classList.remove("enter"); void sh.offsetWidth; sh.classList.add("enter"); } } if (innerWidth <= 1000) $("sheet").scrollIntoView({ behavior: "smooth" }); };
+const showPanel = (mode) => { state.mode = mode; render(); { const sh = $("sheet"); if (sh) { sh.classList.remove("enter"); void sh.offsetWidth; sh.classList.add("enter"); } } goSheet(); };
 $("leadersBtn").addEventListener("click", () => showPanel("leaders"));
 $("networkBtn") && $("networkBtn").addEventListener("click", () => showPanel("network"));
 $("quizBtn").addEventListener("click", () => showPanel("quiz"));
