@@ -2617,3 +2617,7 @@ body.simple .tabs button[aria-selected="true"] { display: inline-flex; }
 .as-sym { display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 6px; -webkit-overflow-scrolling: touch; }
 .as-sy { flex: 0 0 auto; min-width: 42px; min-height: 42px; font-size: 1.25rem; border: 1px solid var(--line); border-radius: 12px; background: var(--sheet); color: var(--ink); cursor: pointer; }
 .as-sy:active { transform: scale(.94); background: var(--accent-soft); }
+
+/* Messages appear on screen (toast), not at the top of a long page */
+.notice:not([hidden]) { position: fixed; left: 12px; right: 12px; bottom: 104px; z-index: 90; max-width: 560px; margin: 0 auto; box-shadow: var(--shadow); color: var(--ink); background: var(--sheet); border: 1px solid var(--accent); cursor: pointer; }
+.notice.ok { border-color: var(--ok); }

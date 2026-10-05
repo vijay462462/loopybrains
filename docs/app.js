@@ -504,7 +504,12 @@ const likesFor = (id) => {
   return _likeMap.get(id) || EMPTY_LIST;
 };
 const liked = (id) => store && state.likes.some(l => l.ideaId === id && l.uid === store.uid);
-function showNotice(text, cls) { const n = $("notice"); n.textContent = text; n.hidden = !text; n.className = "notice" + (cls ? " " + cls : ""); }
+let _noticeTimer = 0;
+function showNotice(text, cls) {
+  const n = $("notice"); n.textContent = text; n.hidden = !text; n.className = "notice" + (cls ? " " + cls : "");
+  n.setAttribute("role", "status"); n.onclick = () => { n.hidden = true; };   // a toast on screen: tap it to close
+  clearTimeout(_noticeTimer); if (text && !/^Demo mode/.test(text)) _noticeTimer = setTimeout(() => { n.hidden = true; }, 12000);
+}
 function errText(e) {
   const code = String((e && e.code) || "");
   const msg = String((e && e.message) || "");
@@ -8287,22 +8292,27 @@ function renderView() {
   const replyTa = el("textarea", { id: "f-reply", name: "reply", maxlength: "5000", placeholder: state.tab === "doubts" ? "Explain step by step. Show the working, not only the result." : "Add a thought, an improvement, or offer to help build it." });
   const form = el("form", { class: "form", onsubmit: async (e) => {
     e.preventDefault();
+    const failMsg = $("f-reply-err"), fail = (m) => { if (failMsg) { failMsg.textContent = m; failMsg.hidden = !m; if (m) try { failMsg.scrollIntoView({ block: "center", behavior: "smooth" }); } catch (_) {} } if (m) showNotice(m); };
+    fail("");
     const body = form.elements.reply.value.trim();
     const pages = state.replyPages.slice();
     if (!body && !pages.length && !replyFiles.filter(f => f.url).length) return;
     if (!getName()) { state.afterName = "view"; state.mode = "name"; render(); return; }
-    if (hasBadWords(body)) { showNotice(LANGUAGE_MSG); return; }
-    if (isAcademicTab(state.tab)) { const prob = academicProblem("answer", body, pages.length > 0 || replyFiles.some(f => f.url)); if (prob) { const m = $("f-reply-msg"); if (m) { m.textContent = prob; m.hidden = false; } else showNotice(prob); return; } }
-    if (replyFiles.some(f => f.pct !== undefined)) { showNotice("Please wait for uploads to finish."); return; }
+    if (hasBadWords(body)) { fail(LANGUAGE_MSG); return; }
+    if (isAcademicTab(state.tab)) { const prob = academicProblem("answer", body, pages.length > 0 || replyFiles.some(f => f.url)); if (prob) { const m = $("f-reply-msg"); if (m) { m.textContent = prob; m.hidden = false; } fail(prob); return; } }
+    if (replyFiles.some(f => f.pct !== undefined)) { fail("Please wait for uploads to finish."); return; }
     const wait = postingBlocked();   // answers have no daily or hourly limit; only blocked or paused students are stopped
-    if (wait) { showNotice(wait); return; }
+    if (wait) { fail(wait); return; }
     if ((state.replyPriv || d.ansPrivate) && state.tab === "doubts" && d.ownerUid && !own) {
       try {
         const imgs = []; for (const u of pages.slice(0, 2)) imgs.push(await shrinkJpeg(u));
         const pid = d.id + "_" + store.uid;
         await store.set("privateAnswers", pid, { doubtId: d.id, toUid: d.ownerUid, ownerUid: store.uid, authorId: store.uid, authorName: state.replyAnon ? ANON : getName(), anonymous: state.replyAnon, body: body.slice(0, 5000), ...(imgs.length ? { imgs } : {}), createdAt: Date.now() });
         state.replyPages = []; state.replyPriv = false; form.reset(); showNotice("Sent privately. Only the asker can see it."); render();
-      } catch (er) { showNotice(er && er.code === "permission-denied" ? "You already sent a private answer to this doubt." : errText(er)); }
+      } catch (er) {
+        const had = state.privAns.some(x => x.doubtId === d.id && x.ownerUid === (store && store.uid));
+        fail(er && String(er.code || "").includes("permission-denied") ? (had ? "You already sent a private answer to this doubt." : "Your private answer could not be sent. Untick the private box to answer openly, or ask the admin to publish the latest security rules.") : errText(er));
+      }
       return;
     }
     const id = store.newId("replies");
@@ -8328,6 +8338,7 @@ function renderView() {
     store.uploadFile ? filePicker(replyFiles) : null,
     state.tab === "doubts" && d.ansPrivate && !own ? el("p", { class: "hint" }, "\u{1F512} The asker chose private answers. Yours goes only to them.") : state.tab === "doubts" && d.ownerUid && !own ? el("label", { class: "check" }, el("input", { type: "checkbox", id: "f-reply-priv", checked: state.replyPriv, onchange: (e) => { state.replyPriv = e.target.checked; } }), "\u{1F512} Send as a private answer (only the asker sees it)") : null,
     el("label", { class: "check" }, el("input", { type: "checkbox", id: "f-reply-anon", checked: state.replyAnon, onchange: (e) => { state.replyAnon = e.target.checked; } }), "🙈 Answer anonymously"),
+    el("p", { class: "hint st-err", id: "f-reply-err", role: "alert", hidden: true }),
     el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "submit" }, t.replyBtn)));
   out.push(form);
   return out;
