@@ -1966,7 +1966,9 @@ function renderToday() {
   bar.replaceChildren(lb, lb ? null : el("div", { class: "today-hero" }, el("button", { class: "today-close", type: "button", "aria-label": "Close this card", title: "Close for today", onclick: () => { writeJSON("dd-today-closed", dayStr()); todayKey = ""; renderToday(); } }, "\u2715"), NO_COLLEGE ? null : el("div", { class: "hero-crest" }, crestEl(54)), el("button", { class: "hero-loopy", type: "button", "aria-label": "Chat with Loopy", onclick: loopyTap }, loopyMini()),
     el("div", { class: "hero-text" }, el("small", { class: "hero-kicker" }, " " + COLLEGE), el("strong", { class: "today-hello" }, hello + (name ? ", " + name : "") + " 👋"), el("small", { class: "today-words" }, WORDS[dayNum() % WORDS.length])),
     el("button", { class: "hero-say", type: "button", onclick: loopyTap }, el("span", { class: "hero-say-dot" }), el("span", {}, loopyPrompt().label), el("b", {}, "Ask Loopy \u203A")),
-    el("button", { class: "hero-ask", type: "button", onclick: () => { const b = $("askBtn"); if (b) b.click(); } }, "❓ Ask a doubt")),
+    el("div", { class: "hero-acts" },
+      el("button", { class: "hero-ask", type: "button", onclick: () => { const b = $("askBtn"); if (b) b.click(); } }, "❓ Ask a doubt"),
+      el("button", { class: "hero-ask", type: "button", onclick: () => { state.ai = state.ai || { msgs: [], busy: false, note: "" }; showPanel("ai"); } }, "\u2728 Loopy Brain"))),
     (() => { if (newbie) return null; const t = loopyTip(), st = readJSON("dd-tip", {}); if (st.gone && st.day === dayStr()) return null;
       return el("div", { class: "today-tip" }, el("small", {}, "💡 Loopy\u2019s tip for today"), el("p", {}, t.text), el("div", { class: "rowbtns" }, t.cta ? el("button", { class: "btn sm primary", type: "button", onclick: t.cta[1] }, t.cta[0]) : null, el("button", { class: "btn sm", type: "button", onclick: () => { writeJSON("dd-tip", { ...readJSON("dd-tip", {}), day: dayStr(), gone: true }); todayKey = ""; renderToday(); } }, "Got it"))); })(),
     note ? el("div", { class: "today-note" }, el("strong", {}, "💬 " + (note.from ? "A note from " + note.from : "A note from your college")), el("p", {}, note.text), el("button", { class: "of-x", type: "button", "aria-label": "Dismiss note", onclick: () => { writeJSON("dd-note-gone", note.updatedAt); todayKey = ""; renderToday(); } }, "✕")) : null, null, 
@@ -2048,14 +2050,14 @@ function renderEvents() {
 }
 // Explore: every tool in one tidy screen, so the home screen can stay simple.
 const EXPLORE = [
-  ["Study", [["quizBtn", "🧠", "Daily Quiz"], ["labBtn", "🧪", "Study Lab"], ["studyBtn", "📖", "Study Tools"], ["learnBtn", "📚", "Learn from IIT"], ["focusBtn", "🎯", "Focus mode"]]],
+  ["Study", [["__brain", "\u2728", "Loopy Brain"], ["quizBtn", "🧠", "Daily Quiz"], ["labBtn", "🧪", "Study Lab"], ["studyBtn", "📖", "Study Tools"], ["learnBtn", "📚", "Learn from IIT"], ["focusBtn", "🎯", "Focus mode"]]],
   ["Campus", [["__story", "📸", "Add a story"], ["eventsBtn", "🎉", "Events"], ["drivesBtn", "🏢", "Campus Drives"], ["leadersBtn", "🏆", "Top Helpers"], ["alumniBtn", "🎓", "Alumni", "alumni"]]],
   ["Career", [["careerBtn", "", "Career Guide"], ["__resume", "📄", "Resume builder"]]],
-  ["More", [["__stickers", "🎴", "Sticker book"], ["__wardrobe", "👗", "Loopy\u2019s wardrobe"], ["__install", "📲", "Install app"], ["__plus", "⭐", "The Campus Loop Plus"], ["botBtn", "", "Loop Bot", "bot"], ["funBtn", "🎉", "Entertainment", "fun"], ["aboutBtn", "ℹ️", "About Us"]]],
+  ["More", [["__howto", "\u2753", "How to use"], ["__stickers", "🎴", "Sticker book"], ["__wardrobe", "👗", "Loopy\u2019s wardrobe"], ["__install", "📲", "Install app"], ["__plus", "⭐", "The Campus Loop Plus"], ["botBtn", "", "Loop Bot", "bot"], ["funBtn", "🎉", "Entertainment", "fun"], ["aboutBtn", "ℹ️", "About Us"]]],
 ];
 function renderExplore() {
   const back = el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back");
-  const go = (id) => { if (id === "__plus") { showPanel("plus"); return; } if (id === "__resume") { showPanel("resume"); return; } if (id === "__story") { openStoryAdd(); return; } if (id === "__stickers") { showPanel("stickers"); return; } if (id === "__wardrobe") { showPanel("wardrobe"); return; } if (id === "__install") { const ib = $("installBtn"); if (_pwaPrompt && ib) ib.click(); else showNotice("To install: open your browser menu and tap Add to Home screen.", ""); return; } const b = $(id); if (b) b.click(); };
+  const go = (id) => { if (id === "__plus") { showPanel("plus"); return; } if (id === "__brain") { state.ai = state.ai || { msgs: [], busy: false, note: "" }; showPanel("ai"); return; } if (id === "__howto") { showPanel("howto"); return; } if (id === "__resume") { showPanel("resume"); return; } if (id === "__story") { openStoryAdd(); return; } if (id === "__stickers") { showPanel("stickers"); return; } if (id === "__wardrobe") { showPanel("wardrobe"); return; } if (id === "__install") { const ib = $("installBtn"); if (_pwaPrompt && ib) ib.click(); else showNotice("To install: open your browser menu and tap Add to Home screen.", ""); return; } const b = $(id); if (b) b.click(); };
   return [el("h2", {}, "🧰 Explore"), el("p", { class: "hint" }, "Everything in " + BRAND + ", in one place."),
     ...EXPLORE.flatMap(([title, items]) => [el("div", { class: "label" }, title), el("div", { class: "plus-tiles" }, ...items.filter(it => !it[3] || !document.body.classList.contains("no-" + it[3])).map(([id, icon, label]) => el("button", { class: "plus-tile", type: "button", onclick: () => go(id) }, el("span", { class: "pt-i", "aria-hidden": "true" }, icon), el("strong", {}, label))))]),
     el("div", { class: "rowbtns" }, back)];

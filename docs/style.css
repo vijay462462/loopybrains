@@ -3221,3 +3221,16 @@ header.top #paletteBtn, #paletteBtn { border-radius: 999px; background: var(--ac
 .ai-send[disabled]{opacity:.5}
 .ai-fine{text-align:center;font-size:.78rem}
 @media (prefers-reduced-motion:reduce){.ai-dots i,.tp-skel i{animation:none}}
+
+/* Audience picker: stay inside the screen on every phone */
+.aud-box, .aud-box * { min-width: 0; max-width: 100%; box-sizing: border-box; }
+.aud-box { overflow: hidden; }
+.aud-segs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.aud-seg span { padding: 9px 2px; font-size: 12px; line-height: 1.2; overflow-wrap: anywhere; white-space: normal; }
+.aud-camps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.aud-camp { padding: 10px; gap: 6px; }
+.aud-camp .ac-nm { overflow-wrap: anywhere; line-height: 1.2; }
+.aud-sum { white-space: normal; overflow-wrap: anywhere; }
+@media (max-width: 360px) { .aud-camps { grid-template-columns: minmax(0, 1fr); } }
+.today-hero .hero-acts{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:8px}
+.today-hero .hero-acts .hero-ask{margin:0;grid-column:auto;padding:12px 6px;font-size:15px;min-width:0}
