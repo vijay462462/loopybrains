@@ -2974,3 +2974,8 @@ html, body, .sheet, .list { overflow-anchor: none; }
 .hd-pal[hidden] { display: none; }
 .hd-pal svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 @media (min-width: 701px) { .hd-pal { display: none !important; } }
+
+/* Colour button matches the bell: round, tinted, accent-coloured icon */
+header.top #paletteBtn, #paletteBtn { border-radius: 999px; background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line)); color: var(--accent); }
+@media (max-width: 700px) { header.top #paletteBtn { padding: 4px 9px; min-height: 0; height: 34px; min-width: 34px; right: 106px; border-radius: 999px; background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line)); color: var(--accent); } header.top #paletteBtn svg { width: 18px; height: 18px; } }
+@media (max-width: 700px) { header.top #themeBtn { border-radius: 999px; background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line)); min-height: 0; min-width: 34px; height: 34px; padding: 4px 8px; } }
