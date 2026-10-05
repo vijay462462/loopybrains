@@ -3480,3 +3480,12 @@ html.bs-open, html.bs-open body { overflow: hidden; }
 .sp2-row { animation: sp2In .45s ease both; }
 .sp2-row:nth-child(2) { animation-delay: .05s; } .sp2-row:nth-child(3) { animation-delay: .1s; } .sp2-row:nth-child(4) { animation-delay: .15s; } .sp2-row:nth-child(5) { animation-delay: .2s; } .sp2-row:nth-child(6) { animation-delay: .25s; }
 @media (prefers-reduced-motion: reduce) { .sp2-row { animation: none; } }
+
+/* ===== Diagrams drawn by Loopy ===== */
+.od-svg { width: 100%; height: auto; max-height: 220px; color: var(--ink, #e8ecf6); display: block; margin: 6px 0; }
+.od-svg .od-b { fill: none; stroke: currentColor; stroke-width: 2; }
+.od-svg .od-b.od-acc { fill: color-mix(in srgb, var(--accent, #7c5cff) 18%, transparent); stroke: var(--accent, #7c5cff); }
+.od-svg .od-l { stroke: currentColor; stroke-width: 2; fill: none; }
+.od-svg text { fill: currentColor; font: 600 13px/1 system-ui, sans-serif; }
+.od-svg text.od-s { font-size: 11px; font-weight: 500; opacity: .8; }
+.od-cap { margin: 4px 0 2px; font-weight: 600; }

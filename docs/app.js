@@ -4960,7 +4960,7 @@ function brainQuiz(wiki, n) {
   return qs;
 }
 let _solver = null;
-async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=432", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
+async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=433", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
 async function brainReply(text, chat) {
   const sv = await brainSolve(text); if (sv) return sv;
   const { kind, topic } = brainIntent(text, chat.topic || ""); chat.topic = topic;
@@ -5036,7 +5036,7 @@ async function safeSync() {
   } catch (_) { _safeLoaded = false; }
 }
 let _safeMod = null;
-const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=432", location.href).href); } catch (_) { return null; } };
+const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=433", location.href).href); } catch (_) { return null; } };
 function safeModal(title, lines, danger) {
   const prev = document.getElementById("safeModal"); if (prev) prev.remove();
   const ov = el("div", { class: "safe-ov", id: "safeModal", role: "alertdialog", "aria-modal": "true", "aria-label": title },
@@ -5074,7 +5074,7 @@ const bsFree = (lv) => lv <= 1 || IS_RGUKT;
 const BS_MODES = [["atlas", "Atlas", "Search anything", "Topics, doubts, maths and research, explained in easy words.", "Ask anything: a topic, doubt, problem or research idea"], ["launchpad", "Launchpad", "Project guide", "Turn an idea into a plan: objectives, tools, week-by-week steps, report outline and viva questions.", "Describe your project idea, e.g. IoT weather station"], ["forge", "Forge", "Find code", "Working code for classic problems in many languages, with the idea explained.", "e.g. binary search in Python"], ["aegis", "Aegis", "Learn security", "Understand how attacks work and how to defend, legally and safely.", "e.g. SQL injection, phishing, password safety"]];
 const bsModeInfo = (id) => BS_MODES.find(m => m[0] === id) || BS_MODES[0];
 let _modes = null;
-const brainModesMod = async () => { try { return _modes = _modes || await import(new URL("brain-modes.js?v=432", location.href).href); } catch (_) { return null; } };
+const brainModesMod = async () => { try { return _modes = _modes || await import(new URL("brain-modes.js?v=433", location.href).href); } catch (_) { return null; } };
 const PREF_KEY = "dd-bs-prefs", SAVED_KEY = "dd-bs-saved";
 const bsPrefs = () => { const p = readJSON(PREF_KEY, {}); return p && typeof p === "object" ? p : {}; };
 const bsState = () => state.bs || (state.bs = (() => { const p = bsPrefs(), ok = p.remember !== false;
@@ -5140,7 +5140,7 @@ function bsPool() {
 }
 const bsSuggest = (text) => { const n = text.trim().toLowerCase(); if (n.length < 2) return []; return bsPool().filter(t => t.toLowerCase().includes(n)).sort((a, b) => a.length - b.length).slice(0, 6); };
 let _report = null;
-const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=432", location.href).href); } catch (_) { return null; } };
+const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=433", location.href).href); } catch (_) { return null; } };
 async function bsPapers(q) {
   try {
     const j = await lsFetch("https://api.openalex.org/works?per-page=5&select=title,publication_year,cited_by_count,doi,open_access,authorships,abstract_inverted_index&search=" + encodeURIComponent(q));
@@ -5265,6 +5265,32 @@ function bsPaint(top) {
   const items = [...sc.querySelectorAll(".bsr-reveal")];
   if (!("IntersectionObserver" in window)) items.forEach(n => n.classList.add("in")); else { const io = new IntersectionObserver((es) => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), { root: sc, threshold: .08 }); items.forEach(n => io.observe(n)); }
 }
+// Diagrams drawn by Loopy itself (no internet needed) for core engineering topics.
+const SVGNS = "http://www.w3.org/2000/svg";
+function sv(tag, attrs, ...kids) { const n = document.createElementNS(SVGNS, tag); for (const k in attrs || {}) n.setAttribute(k, attrs[k]); kids.forEach(c => n.append(typeof c === "string" ? document.createTextNode(c) : c)); return n; }
+let _svN = 0;
+function svBase(w, h, title) {
+  const id = "odm" + (++_svN), root = sv("svg", { viewBox: "0 0 " + w + " " + h, role: "img", "aria-label": title, class: "od-svg" }, sv("defs", {}, sv("marker", { id, viewBox: "0 0 10 10", refX: "9", refY: "5", markerWidth: "7", markerHeight: "7", orient: "auto-start-reverse" }, sv("path", { d: "M0 0L10 5L0 10z", fill: "currentColor" }))));
+  const box = (x, y, bw, bh, label, cls) => { const g = sv("g", {}, sv("rect", { x, y, width: bw, height: bh, rx: 8, class: "od-b " + (cls || "") })); String(label).split("|").forEach((ln, i, a) => g.append(sv("text", { x: x + bw / 2, y: y + bh / 2 + 4 + (i - (a.length - 1) / 2) * 15, "text-anchor": "middle" }, ln))); root.append(g); };
+  const arrow = (x1, y1, x2, y2, cls) => root.append(sv("line", { x1, y1, x2, y2, class: "od-l " + (cls || ""), "marker-end": "url(#" + id + ")" }));
+  const line = (x1, y1, x2, y2) => root.append(sv("line", { x1, y1, x2, y2, class: "od-l" }));
+  const text = (x, y, t, anchor, cls) => root.append(sv("text", { x, y, "text-anchor": anchor || "start", class: cls || "" }, t));
+  return { root, box, arrow, line, text, id };
+}
+const OWN_DIAGRAMS = [
+  [/sequential logic/, "Sequential circuit: the output depends on the inputs and on the stored past", () => { const d = svBase(352, 160, "Sequential circuit block diagram"); d.text(4, 46, "Inputs"); d.arrow(50, 42, 95, 42); d.box(95, 16, 120, 56, "Combinational|logic"); d.arrow(215, 42, 275, 42); d.text(278, 46, "Outputs"); d.box(95, 112, 120, 38, "Memory|(flip-flops)", "od-acc"); d.arrow(135, 72, 135, 112); d.arrow(175, 112, 175, 72); d.text(128, 96, "next state", "end", "od-s"); d.text(182, 96, "present state", "start", "od-s"); d.arrow(40, 131, 95, 131); d.text(4, 135, "Clock"); return d.root; }],
+  [/combinational logic/, "Combinational circuit: the output depends only on the present inputs", () => { const d = svBase(352, 110, "Combinational circuit block diagram"); d.text(4, 56, "Inputs"); d.arrow(50, 52, 100, 52); d.box(100, 20, 130, 64, "Logic gates|(no memory)"); d.arrow(230, 52, 280, 52); d.text(284, 56, "Outputs"); d.text(165, 104, "Same inputs always give the same outputs", "middle", "od-s"); return d.root; }],
+  [/\b(flip-flop|latch)\b/, "D flip-flop: copies D to Q on the clock edge, then holds it", () => { const d = svBase(330, 140, "D flip-flop symbol"); d.box(110, 14, 110, 100, "D flip-|flop", "od-acc"); d.arrow(60, 40, 110, 40); d.text(40, 44, "D"); d.arrow(220, 40, 270, 40); d.text(276, 44, "Q"); d.arrow(220, 92, 270, 92); d.text(276, 96, "Q̅"); d.root.append(sv("path", { d: "M110 88 L124 96 L110 104", class: "od-l", fill: "none" })); d.line(60, 96, 110, 96); d.text(30, 100, "CLK"); d.text(165, 134, "On the rising clock edge: Q = D. Otherwise Q holds.", "middle", "od-s"); return d.root; }],
+  [/finite-state machine/, "State machine: states joined by transitions", () => { const d = svBase(330, 150, "Finite state machine diagram"); [[60, "S0"], [165, "S1"], [270, "S2"]].forEach(([x, t]) => { d.root.append(sv("circle", { cx: x, cy: 55, r: 24, class: "od-b od-acc" })); d.text(x, 60, t, "middle"); }); d.arrow(84, 55, 141, 55); d.text(112, 46, "a=1", "middle", "od-s"); d.arrow(189, 55, 246, 55); d.text(217, 46, "a=1", "middle", "od-s"); d.root.append(sv("path", { d: "M258 77 Q165 140 72 77", class: "od-l", fill: "none", "marker-end": "url(#" + d.id + ")" })); d.text(165, 128, "a=0 (reset)", "middle", "od-s"); d.arrow(12, 55, 36, 55); return d.root; }],
+  [/\badder\b/, "Half adder: Sum = A XOR B, Carry = A AND B", () => { const d = svBase(330, 130, "Half adder diagram"); d.text(6, 36, "A"); d.text(6, 94, "B"); d.line(24, 32, 70, 32); d.line(24, 90, 70, 90); d.line(70, 32, 70, 100); d.line(50, 90, 50, 58); d.arrow(70, 32, 120, 32); d.arrow(50, 58, 120, 58); d.arrow(70, 90, 120, 90); d.arrow(70, 100, 120, 100); d.box(120, 20, 90, 50, "XOR", "od-acc"); d.box(120, 78, 90, 34, "AND", "od-acc"); d.arrow(210, 45, 260, 45); d.text(266, 49, "Sum"); d.arrow(210, 95, 260, 95); d.text(266, 99, "Carry"); return d.root; }],
+  [/\bmultiplexer\b/, "2-to-1 multiplexer: S chooses which input reaches Y", () => { const d = svBase(330, 160, "Multiplexer symbol"); d.root.append(sv("polygon", { points: "100,10 190,35 190,95 100,120", class: "od-b od-acc" })); d.arrow(50, 45, 100, 45); d.text(30, 49, "I0"); d.arrow(50, 85, 100, 85); d.text(30, 89, "I1"); d.arrow(145, 150, 145, 108); d.text(145, 158, "S", "middle"); d.arrow(190, 65, 245, 65); d.text(250, 69, "Y"); d.text(145, 70, "MUX", "middle"); return d.root; }],
+  [/operational amplifier/, "Op-amp: amplifies the difference between its two inputs", () => { const d = svBase(330, 140, "Operational amplifier symbol"); d.root.append(sv("polygon", { points: "110,10 110,120 230,65", class: "od-b od-acc" })); d.arrow(50, 38, 110, 38); d.text(20, 42, "V−"); d.text(120, 42, "−"); d.arrow(50, 92, 110, 92); d.text(20, 96, "V+"); d.text(120, 96, "+"); d.arrow(230, 65, 285, 65); d.text(290, 69, "Vout"); return d.root; }],
+];
+function ownDiagram(text) {
+  const t = String(text || "").toLowerCase(), hit = OWN_DIAGRAMS.find(d => d[0].test(t)); if (!hit) return null;
+  let svg; try { svg = hit[2](); } catch (_) { return null; }
+  return el("section", { class: "bsr-card bsr-reveal in od" }, el("h3", {}, "Diagram"), svg, el("p", { class: "od-cap" }, hit[1]), el("small", { class: "hint" }, "Drawn by Loopy. A simple picture of the idea, not an exam-ready circuit."));
+}
 // Friendly small talk, so "hey hi" gets a real reply instead of a random article. Free: no credits and no network.
 function bsChat(q) {
   const t = String(q || "").toLowerCase().replace(/[^a-z\s']/g, " ").replace(/\s+/g, " ").trim(); if (!t || t.split(" ").length > 8) return "";
@@ -5358,8 +5384,9 @@ async function bsRun(q, solved) {
   const hard = mod && wiki && size !== "brief" && effN >= 2 ? mod.hardWords(wiki.intro + " " + wiki.sections.map(x => x.t).join(" "), size === "standard" ? 3 : 5) : [], defs = (await Promise.all(hard.map(brainDefine))).filter(Boolean);
   const readable = mod && wiki ? mod.readingLevel(wiki.intro + " " + wiki.sections.slice(0, 3).map(x => x.t).join(" ")) : null;
   const papersH = effN >= 3 && !(papers && papers.length) ? await bsPapers(T).catch(() => []) : papers, related = effN >= 3 && wiki ? await bsRelated(T).catch(() => []) : [];
-  const keyImgs = wiki ? (await ahArticleImages(wiki.title).catch(() => [])).slice(0, 2) : [];
-  const res = { uses: mod && wiki && size !== "brief" ? mod.uses(wiki, size === "full" ? 8 : size === "detailed" ? 6 : 4) : [], effort: eff, related, keyImgs, topic: T, easyCard: simpleOk, easyFn: mod ? mod.easy : null, readable, defs, wikiInfo: wiki ? { touched: wiki.touched, page: wiki.page } : null, caution: wiki ? mod2cautions(wiki) : [], simpleInfo: simpleOk ? { page: simpleOk.page } : null, lv, size, board: lv >= 2 ? brainBoard(T, 5) : [], syl: lv >= 2 ? brainSyllabus(T) : [], imgs: imgs.slice(0, 8), models, page: wiki ? wiki.page : "", papers: papersH, report: mod && wiki ? mod.buildReport(wiki, size) : null, hl: mod ? mod.highlight : null, deep: "", exam: "", quiz: "" };
+  let keyImgs = wiki ? (await ahArticleImages(wiki.title).catch(() => [])).slice(0, size === "brief" ? 2 : 6) : [];
+  if (wiki && keyImgs.length < 3) { const more = await ahCommons(short + " diagram").catch(() => []), have = new Set(keyImgs.map(x => x.thumb)); keyImgs = keyImgs.concat(more.filter(x => !have.has(x.thumb))).slice(0, size === "brief" ? 2 : 6); }
+  const res = { own: wiki ? ownDiagram(wiki.title + " " + T) : null, uses: mod && wiki && size !== "brief" ? mod.uses(wiki, size === "full" ? 8 : size === "detailed" ? 6 : 4) : [], effort: eff, related, keyImgs, topic: T, easyCard: simpleOk, easyFn: mod ? mod.easy : null, readable, defs, wikiInfo: wiki ? { touched: wiki.touched, page: wiki.page } : null, caution: wiki ? mod2cautions(wiki) : [], simpleInfo: simpleOk ? { page: simpleOk.page } : null, lv, size, board: lv >= 2 ? brainBoard(T, 5) : [], syl: lv >= 2 ? brainSyllabus(T) : [], imgs: imgs.slice(0, 8), models, page: wiki ? wiki.page : "", papers: papersH, report: mod && wiki ? mod.buildReport(wiki, size) : null, hl: mod ? mod.highlight : null, deep: "", exam: "", quiz: "" };
   if (lv >= 4 && wiki && !res.report) res.deep = wiki.sections.slice(0, 8).map(x => "- **" + x.h + ":** " + (brainSentences(x.t).slice(0, 2).join(" ") || x.t.slice(0, 240))).join("\n");
   if (lv >= 5) { [res.exam, res.quiz] = await Promise.all([brainReply("Exam answer for " + T, { topic: T }).catch(() => ""), brainReply("Quiz me on " + T, { topic: T }).catch(() => "")]); }
   bs.res = res; bs.ans = ans || notFoundMsg(topic); bs.busy = false; bsPaint(true);
@@ -5439,7 +5466,8 @@ function reportView(r, res, go) {
     const ez = res.easyCard ? brainSentences(res.easyCard.intro).slice(0, 4).join(" ") : (res.easyFn ? res.easyFn(r.intro.map(x => x.t).slice(0, 2).join(" ")) : "");
     if (ez) out.push(el("section", { class: "bsr-card easy bsr-reveal" }, el("h3", {}, "In easy words"), el("p", { class: "bsr-easy" }, ez), el("small", { class: "hint" }, res.easyCard ? "From Simple English Wikipedia, written in plain language." : "Hard words swapped for simple ones.")));
   }
-  { const fg = figsNode(res.keyImgs, "Key diagrams"); if (fg) out.push(fg); }
+  if (res.own) out.push(res.own);
+  { const fg = figsNode(res.keyImgs, "Diagrams and pictures"); if (fg) out.push(fg); }
   out.push(el("section", { class: "bsr-card bsr-reveal" }, el("h3", {}, "At a glance"), ...r.intro.map(x => sentNode(x, hl))));
   r.sections.forEach((sec, i) => out.push(el("section", { class: "bsr-card sec s" + (i % 6) + " bsr-reveal" }, el("h3", {}, el("span", { class: "bsr-n" }, String(i + 1)), sec.h), ...sec.sents.map(x => sentNode(x, hl)))));
   if (r.size !== "brief") out.push(usesNode(res.uses, r.title));
@@ -9516,7 +9544,8 @@ function ahQuery(title, typed) {
   return [...new Set([...ahWords(title).slice(0, 3), ...top])].slice(0, 5).join(" ");
 }
 const ahCache = new Map();
-const AH_SKIP = /icon|logo|symbol|flag|commons-|wikidata|wikipedia|edit-|ambox|question|padlock|stub|disambig|portal|button|arrow|ooui/i;
+const AH_SKIP = /icon|logo|flag|commons-|wikidata|wikipedia|edit-|ambox|question|padlock|stub|disambig|portal|ooui|crystal|nuvola|text-x|folder|\.ogg|\.webm|\.ogv/i;
+const AH_DIAGRAM = /diagram|circuit|schematic|block|flow|structure|truth|gate|wave|timing|symbol|graph|chart|model|architecture|layout|cycle|state|tree|network|table/i;
 async function ahCommons(q) {
   const com = await lsFetch("https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&gsrlimit=8&prop=imageinfo&iiprop=url|mime&iiurlwidth=360&format=json&origin=*&gsrsearch=" + encodeURIComponent(q)).catch(() => null);
   const imgs = [], pages = com && com.query && com.query.pages ? Object.values(com.query.pages).sort((a, b) => (a.index || 0) - (b.index || 0)) : [];
@@ -9537,7 +9566,7 @@ async function ahArticleImages(title) {   // the diagrams already used inside th
     if (!thumb.startsWith("https://upload.wikimedia.org/") || !/^File:/.test(it.title || "")) continue;
     out.push({ title: String(it.title).replace(/^File:/, "").replace(/\.[A-Za-z0-9]{2,4}$/, "").replace(/[_<>]/g, " ").slice(0, 80), thumb, page: "https://commons.wikimedia.org/wiki/" + encodeURIComponent(String(it.title).replace(/ /g, "_")) });
   }
-  return out;
+  return out.map((x, i) => ({ x, i, d: AH_DIAGRAM.test(x.title) ? 0 : 1 })).sort((a, b) => a.d - b.d || a.i - b.i).map(o => o.x);
 }
 async function ahLookup(q, topic) {
   const key = q + "|" + topic; if (ahCache.has(key)) return ahCache.get(key);
