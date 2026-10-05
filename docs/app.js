@@ -9259,27 +9259,20 @@ $("nameBtn").addEventListener("click", () => { state.afterName = null; showPanel
 $("search").addEventListener("input", (e) => { state.query = e.target.value; renderList(); });
 $("filter").addEventListener("change", (e) => { state.filter = e.target.value; renderList(); });
 
-// Theme toggle
-(function initTheme() {
-  try {
-    const saved = localStorage.getItem("dd-theme");
-    if (saved) document.documentElement.setAttribute("data-theme", saved);
-  } catch (_) {}
-})();
+// Theme toggle: Light, Dark (charcoal) and Black (true black for OLED screens). Black is a dark theme with data-tone="black".
+const THEME_CYCLE = ["light", "dark", "black"], THEME_ICON = { light: "\u{1F319}", dark: "\u{1F311}", black: "\u2600\uFE0F" }, THEME_NAME = { light: "Light", dark: "Dark", black: "Black" };
+const systemTheme = () => matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+function applyThemeName(n) { const r = document.documentElement; r.setAttribute("data-theme", n === "black" ? "dark" : n); if (n === "black") r.setAttribute("data-tone", "black"); else r.removeAttribute("data-tone"); }
+let currentTheme = (() => { try { const v = localStorage.getItem("dd-theme"); return THEME_CYCLE.includes(v) ? v : systemTheme(); } catch (_) { return systemTheme(); } })();
+applyThemeName(currentTheme);
 const themeBtn = document.getElementById("themeBtn");
 if (themeBtn) {
+  const label = () => { const nx = THEME_CYCLE[(THEME_CYCLE.indexOf(currentTheme) + 1) % 3]; themeBtn.textContent = THEME_ICON[nx]; themeBtn.title = themeBtn.ariaLabel = "Theme: " + THEME_NAME[currentTheme] + ". Tap for " + THEME_NAME[nx]; };
   themeBtn.addEventListener("click", () => {
-    const isDark = document.documentElement.getAttribute("data-theme") === "dark"
-      || (!document.documentElement.getAttribute("data-theme") && matchMedia("(prefers-color-scheme: dark)").matches);
-    const next = isDark ? "light" : "dark";
-    document.documentElement.setAttribute("data-theme", next);
-    themeBtn.textContent = next === "dark" ? "☀️" : "🌙";
-    try { localStorage.setItem("dd-theme", next); } catch (_) {}
+    currentTheme = THEME_CYCLE[(THEME_CYCLE.indexOf(currentTheme) + 1) % 3]; applyThemeName(currentTheme); label();
+    try { localStorage.setItem("dd-theme", currentTheme); } catch (_) {}
   });
-  // Set icon to match current theme
-  const isDark = document.documentElement.getAttribute("data-theme") === "dark"
-    || (!document.documentElement.getAttribute("data-theme") && matchMedia("(prefers-color-scheme: dark)").matches);
-  themeBtn.textContent = isDark ? "☀️" : "🌙";
+  label();
 }
 
 

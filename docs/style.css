@@ -2837,3 +2837,21 @@ body, body[data-tab] { --ta: #1a73e8; --tb: #1a73e8; }
 .rt-k-idea { --c: #1a73e8; } .rt-k-how { --c: #129eaf; } .rt-k-ex { --c: #188038; } .rt-k-warn { --c: #d93025; } .rt-k-try { --c: #e37400; } .rt-k-tip { --c: #5f6368; } .rt-k-formula { --c: #129eaf; }
 .pill.open { --pc: #1a73e8; } .pill.done { --pc: #188038; } .pill.urgent { --pc: #d93025; } .pill.bounty { --pc: #e37400; } .pill.mentor, .pill.via-pill { --pc: #129eaf; }
 .ai-badge { border-left-color: #5f6368; }
+
+/* ===== Better dark themes: clear layers, readable text and labels. "Black" is true black for OLED phones. ===== */
+:root { --raised: var(--sheet); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --paper: #16171a; --sheet: #1e2024; --raised: #25282d; --line: #353941; --ink: #eceef1; --muted: #a8afb8; --accent-soft: #263754; } }
+:root[data-theme="dark"] { --paper: #16171a; --sheet: #1e2024; --raised: #25282d; --line: #353941; --ink: #eceef1; --muted: #a8afb8; --accent-soft: #263754; }
+:root[data-tone="black"] { --paper: #000000; --sheet: #0c0d0e; --raised: #151618; --line: #2a2d31; --ink: #f2f4f6; --muted: #a9b0b8; --accent-soft: #14233d; }
+:root[data-theme="dark"] .item, :root[data-theme="dark"] .rt-card, :root[data-theme="dark"] .ans, :root[data-theme="dark"] .learn-card, :root[data-theme="dark"] .posted-card { background: var(--raised); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .item, :root:not([data-theme="light"]) .rt-card, :root:not([data-theme="light"]) .ans, :root:not([data-theme="light"]) .learn-card { background: var(--raised); } }
+:root[data-theme="dark"] .rt-k-idea, :root[data-theme="dark"] .rt-lab { --c: #8ab4f8; }
+:root[data-theme="dark"] .rt-k-how { --c: #7fd3de; } :root[data-theme="dark"] .rt-k-ex { --c: #81c995; } :root[data-theme="dark"] .rt-k-warn { --c: #f28b82; } :root[data-theme="dark"] .rt-k-try { --c: #fdba5c; } :root[data-theme="dark"] .rt-k-tip { --c: #b6bdc6; } :root[data-theme="dark"] .rt-k-formula { --c: #7fd3de; }
+:root[data-theme="dark"] .pill.open { --pc: #8ab4f8; } :root[data-theme="dark"] .pill.done { --pc: #81c995; } :root[data-theme="dark"] .pill.urgent { --pc: #f28b82; } :root[data-theme="dark"] .pill.bounty { --pc: #fdba5c; } :root[data-theme="dark"] .pill.mentor, :root[data-theme="dark"] .pill.via-pill { --pc: #7fd3de; }
+:root[data-theme="dark"] .pill.year-pill { --pc: #b6bdc6; }
+:root[data-theme="dark"] .rt-card { border-color: var(--line); }
+:root[data-theme="dark"] .hint, :root[data-theme="dark"] small { color: var(--muted); }
+:root[data-theme="dark"] .btn { background: var(--raised); border-color: var(--line); color: var(--ink); }
+:root[data-theme="dark"] .btn.primary { background: var(--btn); border-color: transparent; color: #fff; }
+:root[data-theme="dark"] input, :root[data-theme="dark"] select, :root[data-theme="dark"] textarea { background: var(--sheet); border-color: var(--line); color: var(--ink); }
+:root[data-theme="dark"] .bottom-nav { background: var(--sheet); }
