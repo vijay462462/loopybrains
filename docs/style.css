@@ -3394,3 +3394,9 @@ html.bs-open, html.bs-open body { overflow: hidden; }
 .bs-opts summary{cursor:pointer;padding:10px 0;font-weight:700;list-style:none;color:var(--ink)}
 .bs-opts summary::-webkit-details-marker{display:none}
 .bs-opts[open] summary{border-bottom:1px solid var(--line);margin-bottom:8px}
+
+.bs-eff{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:6px 0}
+.bs-eff>small{color:var(--muted);font-weight:700}.bs-effh{flex-basis:100%;color:var(--muted)}
+.bs-effb{border:1px solid var(--line);background:var(--sheet);color:var(--ink);border-radius:99px;font:inherit;font-size:.85rem;padding:7px 14px;cursor:pointer;min-height:36px}
+.bs-effb.on{background:var(--btn);color:var(--btn-ink);border-color:transparent}.bs-effb.locked{opacity:.8}
+.bsr-checks{list-style:none;margin:8px 0;padding:0;display:grid;gap:4px}.bsr-checks .ok{color:#15803d}.bsr-checks .no{color:var(--muted)}
