@@ -3070,3 +3070,6 @@ header.top #paletteBtn, #paletteBtn { border-radius: 999px; background: var(--ac
   .sp2-brand, .sp2-h, .sp2-sub, .sp2-chips, .sp2-guide, .sp2-go, .sp2-trust { animation: riseIn .55s ease both; }
   .sp2-h { animation-delay: .08s; } .sp2-sub { animation-delay: .16s; } .sp2-chips { animation-delay: .24s; } .sp2-guide { animation-delay: .32s; } .sp2-go { animation-delay: .4s; } .sp2-trust { animation-delay: .46s; }
 }
+
+.sp2-hint { margin: -4px auto 0; width: 100%; max-width: 30em; min-height: 2.8em; font-size: 13px; line-height: 1.4; color: rgb(244 239 228 / .72); text-align: left; }
+@media (max-height: 780px) { .sp2-hint { font-size: 12px; min-height: 2.4em; } }
