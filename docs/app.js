@@ -4968,7 +4968,7 @@ function brainQuiz(wiki, n) {
   return qs;
 }
 let _solver = null;
-async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=440", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
+async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=441", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
 async function brainReply(text, chat) {
   const sv = await brainSolve(text); if (sv) return sv;
   const { kind, topic } = brainIntent(text, chat.topic || ""); chat.topic = topic;
@@ -5044,7 +5044,7 @@ async function safeSync() {
   } catch (_) { _safeLoaded = false; }
 }
 let _safeMod = null;
-const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=440", location.href).href); } catch (_) { return null; } };
+const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=441", location.href).href); } catch (_) { return null; } };
 function safeModal(title, lines, danger) {
   const prev = document.getElementById("safeModal"); if (prev) prev.remove();
   const ov = el("div", { class: "safe-ov", id: "safeModal", role: "alertdialog", "aria-modal": "true", "aria-label": title },
@@ -5082,7 +5082,7 @@ const bsFree = (lv) => lv <= 1 || IS_RGUKT;
 const BS_MODES = [["atlas", "Atlas", "Search anything", "Topics, doubts, maths and research, explained in easy words.", "Ask anything: a topic, doubt, problem or research idea"], ["launchpad", "Launchpad", "Project guide", "Turn an idea into a plan: objectives, tools, week-by-week steps, report outline and viva questions.", "Describe your project idea, e.g. IoT weather station"], ["forge", "Forge", "Find code", "Working code for classic problems in many languages, with the idea explained.", "e.g. binary search in Python"], ["aegis", "Aegis", "Learn security", "Understand how attacks work and how to defend, legally and safely.", "e.g. SQL injection, phishing, password safety"]];
 const bsModeInfo = (id) => BS_MODES.find(m => m[0] === id) || BS_MODES[0];
 let _modes = null;
-const brainModesMod = async () => { try { return _modes = _modes || await import(new URL("brain-modes.js?v=440", location.href).href); } catch (_) { return null; } };
+const brainModesMod = async () => { try { return _modes = _modes || await import(new URL("brain-modes.js?v=441", location.href).href); } catch (_) { return null; } };
 const PREF_KEY = "dd-bs-prefs", SAVED_KEY = "dd-bs-saved";
 const bsPrefs = () => { const p = readJSON(PREF_KEY, {}); return p && typeof p === "object" ? p : {}; };
 const bsState = () => state.bs || (state.bs = (() => { const p = bsPrefs(), ok = p.remember !== false;
@@ -5149,17 +5149,17 @@ function bsPool() {
 const bsSuggest = (text) => { const n = text.trim().toLowerCase(); if (n.length < 2) return []; return bsPool().filter(t => t.toLowerCase().includes(n)).sort((a, b) => a.length - b.length).slice(0, 6); };
 let _report = null;
 let _packs = null, _dgm = null;
-const brainDiagramsMod = async () => { try { return _dgm = _dgm || await import(new URL("brain-diagrams2.js?v=440", location.href).href); } catch (_) { return null; } };
+const brainDiagramsMod = async () => { try { return _dgm = _dgm || await import(new URL("brain-diagrams2.js?v=441", location.href).href); } catch (_) { return null; } };
 // All Loopy Knowledge Packs (digital design first, then ECE subjects). Returns { find(q), refs }.
 const brainPacksMod = async () => {
   if (_packs) return _packs;
   try {
-    const [m1, m2, m3] = await Promise.all([import(new URL("brain-packs.js?v=440", location.href).href), import(new URL("brain-packs-ece.js?v=440", location.href).href), import(new URL("brain-simple.js?v=440", location.href).href).catch(() => ({ SIMPLE: {} }))]);
+    const [m1, m2, m3] = await Promise.all([import(new URL("brain-packs.js?v=441", location.href).href), import(new URL("brain-packs-ece.js?v=441", location.href).href), import(new URL("brain-simple.js?v=441", location.href).href).catch(() => ({ SIMPLE: {} }))]);
     _packs = { refs: m2.REFS || {}, simple: m3.SIMPLE || {}, find: (q) => { const a = m1.packScore(q), b = m2.packScore(q); return (b.len > a.len ? b.p : a.p) || null; } };
   } catch (_) { _packs = null; }
   return _packs;
 };
-const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=440", location.href).href); } catch (_) { return null; } };
+const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=441", location.href).href); } catch (_) { return null; } };
 async function bsPapers(q) {
   try {
     const j = await lsFetch("https://api.openalex.org/works?per-page=5&select=title,publication_year,cited_by_count,doi,open_access,authorships,abstract_inverted_index&search=" + encodeURIComponent(q));
@@ -5363,26 +5363,41 @@ function bsInlineStyles(src, dst) {
 async function bsImgData(url) {
   try { const r = await fetch(url, { mode: "cors", credentials: "omit" }); if (!r.ok) return ""; const b = await r.blob(); if (b.size > 2500000) return ""; return await new Promise((res) => { const f = new FileReader(); f.onload = () => res(String(f.result || "")); f.onerror = () => res(""); f.readAsDataURL(b); }); } catch (_) { return ""; }
 }
-// Draws the open result into a JPEG and returns a Blob. Uses only the page itself: no outside service.
-async function bsMakeJpeg() {
+// Draws the open result into HD JPEG pages (3x resolution, cut at card edges) and returns an array of Blobs. Uses only the page itself.
+async function bsMakeJpegs() {
   const sc = $("bsScroll"); if (!sc) throw new Error("nothing to save");
-  const W = Math.round(sc.clientWidth), H = Math.round(sc.scrollHeight);
+  const W = Math.round(sc.clientWidth), H = Math.round(sc.scrollHeight), HEAD = 46, scRect = sc.getBoundingClientRect();
+  // where it is safe to cut: the bottom edge of every card (measured on the real page, in css pixels from the top of the result)
+  const edges = [...sc.querySelectorAll(".bsr-card, .bsr-hero, .bs-card, .bs-blk, .bsr-welcome")].map(n => Math.round(n.getBoundingClientRect().bottom - scRect.top + sc.scrollTop + HEAD + 6)).filter(v => v > HEAD + 40).sort((x, y) => x - y);
   const clone = sc.cloneNode(true); bsInlineStyles(sc, clone);
   clone.querySelectorAll(".bsf-noprint, button, input, form, script").forEach(n => n.remove());
   clone.querySelectorAll(".bsr-reveal").forEach(n => { n.style.opacity = "1"; n.style.transform = "none"; });
   clone.style.cssText += ";overflow:visible;height:auto;max-height:none;width:" + W + "px;padding:0 0 16px;margin:0";
-  for (const im of [...clone.querySelectorAll("img")]) { const u = im.getAttribute("src") || ""; const d = /^https:\/\/upload\.wikimedia\.org\//.test(u) ? await bsImgData(u) : ""; if (d) { im.setAttribute("src", d); im.removeAttribute("srcset"); im.removeAttribute("loading"); } else im.remove(); }
+  const hd = (u) => u.replace(/\/(\d{2,4})px-/, "/1200px-");
+  for (const im of [...clone.querySelectorAll("img")]) { const u = im.getAttribute("src") || ""; let d = ""; if (/^https:\/\/upload\.wikimedia\.org\//.test(u)) { d = await bsImgData(hd(u)); if (!d) d = await bsImgData(u); } if (d) { im.setAttribute("src", d); im.removeAttribute("srcset"); im.removeAttribute("loading"); } else im.remove(); }
   const bg = (() => { let n = $("bsFull"); while (n) { const c = getComputedStyle(n).backgroundColor; if (c && c !== "rgba(0, 0, 0, 0)" && c !== "transparent") return c; n = n.parentElement; } return "#ffffff"; })();
   const ink = getComputedStyle(sc).color || "#111", topic = ((bsState().res || {}).topic || "Loopy Brain result").slice(0, 80), when = new Date().toLocaleDateString();
-  const head = document.createElement("div"); head.style.cssText = "padding:14px 16px 6px;font:700 15px system-ui,sans-serif;color:" + ink + ";"; head.textContent = "The Campus Loop · Loopy Brain";
+  const head = document.createElement("div"); head.style.cssText = "box-sizing:border-box;height:" + HEAD + "px;padding:14px 16px 0;font:700 15px system-ui,sans-serif;color:" + ink + ";"; head.textContent = "The Campus Loop · Loopy Brain";
   const foot = document.createElement("div"); foot.style.cssText = "padding:10px 16px 14px;font:500 12px system-ui,sans-serif;opacity:.7;color:" + ink + ";"; foot.textContent = topic + " · " + when + " · thecampusloop.co.in. Always check important facts in your textbook.";
   const wrap = document.createElement("div"); wrap.setAttribute("xmlns", "http://www.w3.org/1999/xhtml"); wrap.style.cssText = "width:" + W + "px;background:" + bg + ";"; wrap.append(head, clone, foot);
-  const totalH = Math.ceil(H * 1.06) + 90, xml = new XMLSerializer().serializeToString(wrap);
-  const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + totalH + '"><foreignObject x="0" y="0" width="100%" height="100%">' + xml + "</foreignObject></svg>";
+  // measure the real height: lay the finished sheet out off-screen once, so no blank space is left at the end
+  const wcss = wrap.style.cssText; wrap.style.cssText = wcss + ";position:fixed;left:-20000px;top:0;visibility:hidden"; document.body.append(wrap);
+  await Promise.all([...wrap.querySelectorAll("img")].map(i => (i.decode ? i.decode().catch(() => {}) : Promise.resolve())));
+  const total = Math.ceil(wrap.getBoundingClientRect().height) + 8; wrap.remove(); wrap.style.cssText = wcss;
+  const xml = new XMLSerializer().serializeToString(wrap);
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + total + '"><foreignObject x="0" y="0" width="100%" height="100%">' + xml + "</foreignObject></svg>";
   const img = new Image(); img.decoding = "async"; await new Promise((res, rej) => { img.onload = res; img.onerror = () => rej(new Error("image build failed")); img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg); });
-  const s = Math.max(0.5, Math.min(2, 15000 / totalH, Math.sqrt(36e6 / (W * totalH)))), cv = document.createElement("canvas"); cv.width = Math.round(W * s); cv.height = Math.round(totalH * s);
-  const g = cv.getContext("2d"); g.fillStyle = bg; g.fillRect(0, 0, cv.width, cv.height); g.scale(s, s); g.drawImage(img, 0, 0);
-  return await new Promise((res, rej) => { try { cv.toBlob((b) => b ? res(b) : rej(new Error("empty image")), "image/jpeg", 0.92); } catch (e) { rej(e); } });
+  const S = 3, MAXC = 1500, cuts = [0]; let y0 = 0;
+  while (total - y0 > MAXC) { const ok = edges.filter(e => e > y0 + 300 && e <= y0 + MAXC); y0 = ok.length ? ok[ok.length - 1] : y0 + MAXC; cuts.push(y0); }
+  cuts.push(total);
+  const blobs = [];
+  for (let k = 0; k < cuts.length - 1; k++) {
+    const sy = cuts[k], sh = cuts[k + 1] - sy, cv = document.createElement("canvas"); cv.width = W * S; cv.height = Math.round(sh * S);
+    const g = cv.getContext("2d"); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = "high"; g.fillStyle = bg; g.fillRect(0, 0, cv.width, cv.height); g.drawImage(img, 0, sy, W, sh, 0, 0, cv.width, cv.height);
+    blobs.push(await new Promise((res, rej) => { try { cv.toBlob((b) => b ? res(b) : rej(new Error("empty image")), "image/jpeg", 0.95); } catch (e) { rej(e); } }));
+    cv.width = cv.height = 1;
+  }
+  return blobs;
 }
 function bsExportSheet() {
   const old = document.getElementById("bsExport"); if (old) old.remove();
@@ -5390,16 +5405,19 @@ function bsExportSheet() {
   const body = el("div", { class: "bsx-sheet" }), back = el("div", { class: "bsx-back", id: "bsExport", role: "dialog", "aria-modal": "true", "aria-label": "Save this result", onclick: (e) => { if (e.target === back) close(); } }, body);
   const menu = () => body.replaceChildren(el("h3", {}, "Save this result"), el("p", { class: "hint" }, "Choose how you want to keep it."),
     el("button", { type: "button", class: "bsx-opt", onclick: () => { close(); setTimeout(() => { try { window.print(); } catch (_) {} }, 150); } }, el("b", {}, "\u{1F4C4} PDF"), el("small", {}, "Opens the print screen. Choose “Save as PDF”.")),
-    el("button", { type: "button", class: "bsx-opt", onclick: () => jpeg() }, el("b", {}, "\u{1F5BC}️ Picture (JPEG)"), el("small", {}, "One long picture. Save it to your gallery or send it on WhatsApp.")),
+    el("button", { type: "button", class: "bsx-opt", onclick: () => jpeg() }, el("b", {}, "\u{1F5BC}️ Picture (JPEG)"), el("small", {}, "HD pictures (3 times the screen size). Save to your gallery or send on WhatsApp.")),
     el("button", { type: "button", class: "btn", onclick: close }, "Cancel"));
   const jpeg = async () => {
-    body.replaceChildren(el("h3", {}, "Making your picture…"), el("p", { class: "hint", role: "status" }, "This takes a few seconds for long results."));
+    body.replaceChildren(el("h3", {}, "Making your HD pictures…"), el("p", { class: "hint", role: "status" }, "Long results are cut into pages. This takes a few seconds."));
     try {
-      const blob = await bsMakeJpeg(), url = URL.createObjectURL(blob), name = "loopy-brain-" + (((bsState().res || {}).topic || "result").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "result") + ".jpg";
-      const file = (() => { try { return new File([blob], name, { type: "image/jpeg" }); } catch (_) { return null; } })();
-      const dl = el("a", { class: "btn primary", href: url, download: name }, "⬇️ Download JPEG");
-      const share = file && navigator.canShare && navigator.canShare({ files: [file] }) ? el("button", { type: "button", class: "btn", onclick: async () => { try { await navigator.share({ files: [file], title: "Loopy Brain" }); } catch (_) {} } }, "Share") : null;
-      body.replaceChildren(el("h3", {}, "Your picture is ready"), el("div", { class: "bsx-prev" }, el("img", { src: url, alt: "Preview of your saved result" })), el("p", { class: "hint" }, "Tap Download, or press and hold the picture to save it."), el("div", { class: "rowbtns" }, dl, share, el("button", { type: "button", class: "btn", onclick: () => { try { URL.revokeObjectURL(url); } catch (_) {} close(); } }, "Close")));
+      const blobs = await bsMakeJpegs(), base = "loopy-brain-" + (((bsState().res || {}).topic || "result").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "result"), n = blobs.length;
+      const items = blobs.map((b, i) => { const name = base + (n > 1 ? "-page-" + (i + 1) : "") + ".jpg", url = URL.createObjectURL(b); let file = null; try { file = new File([b], name, { type: "image/jpeg" }); } catch (_) {} return { b, name, url, file }; });
+      const files = items.map(x => x.file).filter(Boolean), canShare = files.length && navigator.canShare && navigator.canShare({ files });
+      const freeAll = () => items.forEach(x => { try { URL.revokeObjectURL(x.url); } catch (_) {} });
+      const downloadAll = () => items.forEach((x, i) => setTimeout(() => { const a2 = document.createElement("a"); a2.href = x.url; a2.download = x.name; document.body.append(a2); a2.click(); a2.remove(); }, i * 350));
+      body.replaceChildren(el("h3", {}, "Your HD picture" + (n > 1 ? "s are" : " is") + " ready"), el("p", { class: "hint" }, n + (n === 1 ? " page" : " pages") + " · sharp, 3 times the screen size. Tap Download, or press and hold a picture to save it."),
+        el("div", { class: "bsx-pages" }, ...items.map((x, i) => el("figure", { class: "bsx-pg" }, el("img", { src: x.url, alt: "Page " + (i + 1) + " of " + n }), el("figcaption", {}, el("span", {}, "Page " + (i + 1) + " of " + n + " · " + Math.round(x.b.size / 1024) + " KB"), el("a", { href: x.url, download: x.name }, "Download"))))),
+        el("div", { class: "rowbtns" }, el("button", { type: "button", class: "btn primary", onclick: downloadAll }, "⬇️ Download all" + (n > 1 ? " (" + n + ")" : "")), canShare ? el("button", { type: "button", class: "btn", onclick: async () => { try { await navigator.share({ files, title: "Loopy Brain" }); } catch (_) {} } }, "Share") : null, el("button", { type: "button", class: "btn", onclick: () => { freeAll(); close(); } }, "Close")));
     } catch (_) {
       body.replaceChildren(el("h3", {}, "Could not make a picture"), el("p", { class: "hint" }, "Your browser blocked it. Please use the PDF option instead."), el("div", { class: "rowbtns" }, el("button", { type: "button", class: "btn primary", onclick: () => { close(); setTimeout(() => { try { window.print(); } catch (_) {} }, 150); } }, "Use PDF"), el("button", { type: "button", class: "btn", onclick: close }, "Close")));
     }

@@ -3537,3 +3537,8 @@ html.bs-open, html.bs-open body { overflow: hidden; }
 .bsx-prev { max-height: 52vh; overflow: auto; border-radius: 12px; border: 1px solid var(--line, #d9d4c7); background: #fff; }
 .bsx-prev img { display: block; width: 100%; height: auto; }
 @media print { .bsx-back { display: none !important; } }
+.bsx-pages { display: grid; gap: 10px; max-height: 50vh; overflow: auto; }
+.bsx-pg { margin: 0; border-radius: 12px; border: 1px solid var(--line, #d9d4c7); background: #fff; overflow: hidden; }
+.bsx-pg img { display: block; width: 100%; height: auto; }
+.bsx-pg figcaption { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 10px; font-size: 13px; color: #1f2433; background: #f4efe6; }
+.bsx-pg figcaption a { font-weight: 700; color: #0f2a5c; }

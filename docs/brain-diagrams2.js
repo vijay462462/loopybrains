@@ -1,5 +1,5 @@
 // More of Loopy's own diagrams: analog circuits, DSP, control systems and probability. Extends brain-diagrams.js.
-import { Cv, mk, D } from "./brain-diagrams.js?v=440";
+import { Cv, mk, D } from "./brain-diagrams.js?v=441";
 const done = (c) => c.root;
 const P = Cv.prototype;
 // Local-coordinate parts: each starts at (x, y) and ends L further along the (rotated) axis. Returns the absolute end pin.
