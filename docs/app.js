@@ -1366,6 +1366,7 @@ function trackNew(coll, rows) {
 // ---------- bottom navigation ----------
 // Line icons (inline SVG, drawn with code, no markup strings) for navigation.
 const ICON_PATHS = {
+  send: ["M12 19V5", "M5 12l7-7l7 7"],
   doubts: ["M12 3a9 9 0 1 0 0 18a9 9 0 0 0 0-18z", "M9.6 9.4a2.5 2.5 0 1 1 3.6 2.2c-.8.4-1.2 1-1.2 1.8", "M12 16.9v.1"],
   ideas: ["M9 18h6", "M10 21h4", "M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"],
   clubs: ["M3 10l9-6l9 6", "M5 10v8", "M9.5 10v8", "M14.5 10v8", "M19 10v8", "M3 20h18"],
@@ -4784,30 +4785,72 @@ function renderLoopySearch() {
     el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => showPanel(state.ls && state.ls.back || "plus") }, "Back")),
   ];
 }
+// Loopy AI chat: greeting, starter cards, formatted answers, quick follow-ups, sticky composer.
+function aiInline(t) {
+  const out = [], re = /(\*\*[^*]+\*\*|`[^`]+`)/g; let last = 0, m;
+  while ((m = re.exec(t))) { if (m.index > last) out.push(t.slice(last, m.index)); const x = m[0]; out.push(x[0] === "`" ? el("code", {}, x.slice(1, -1)) : el("strong", {}, x.slice(2, -2))); last = m.index + x.length; }
+  if (last < t.length) out.push(t.slice(last)); return out;
+}
+function aiFormat(text) {
+  const root = el("div", { class: "ai-rich" }); let list = null, lt = "", code = null;
+  const flush = () => { list = null; };
+  for (const raw of String(text || "").slice(0, 6000).split("\n")) {
+    if (/^```/.test(raw)) { if (code) { root.append(el("pre", {}, el("code", {}, code.join("\n")))); code = null; } else { flush(); code = []; } continue; }
+    if (code) { code.push(raw); continue; }
+    const ln = raw.trim(); if (!ln) { flush(); continue; }
+    let m;
+    if ((m = /^#{1,4}\s+(.*)$/.exec(ln))) { flush(); root.append(el("h4", {}, ...aiInline(m[1]))); }
+    else if ((m = /^(?:[-*•])\s+(.*)$/.exec(ln))) { if (!list || lt !== "ul") { list = el("ul", {}); lt = "ul"; root.append(list); } list.append(el("li", {}, ...aiInline(m[1]))); }
+    else if ((m = /^\d+[.)]\s+(.*)$/.exec(ln))) { if (!list || lt !== "ol") { list = el("ol", {}); lt = "ol"; root.append(list); } list.append(el("li", {}, ...aiInline(m[1]))); }
+    else { flush(); root.append(el("p", {}, ...aiInline(ln))); }
+  }
+  if (code) root.append(el("pre", {}, el("code", {}, code.join("\n"))));
+  return root;
+}
+const AI_STARTERS = [["\u{1F4A1}", "Explain a topic simply", "Explain "], ["\u{1F9EE}", "Solve step by step", "Solve step by step: "], ["\u{1F3AF}", "Quiz me", "Quiz me with 3 questions on "], ["\u{1F4DD}", "Exam answer format", "Write an exam-style answer for: "]];
 function renderAI() {
   const back = el("button", { class: "btn", type: "button", onclick: () => showPanel("plus") }, "Back");
-  if (plusLocked()) return [el("h2", {}, "AI study helper"), el("p", { class: "hint" }, "The AI study helper is part of The Campus Loop Plus."), el("div", { class: "rowbtns" }, back)];
-  if (!PLUS.functionsUrl) return [el("h2", {}, "AI study helper"), el("p", { class: "hint" }, "The AI helper is being set up and will switch on soon."), el("div", { class: "rowbtns" }, back)];
+  if (plusLocked()) return [el("h2", {}, "Loopy AI"), el("p", { class: "hint" }, "Loopy AI chat is part of The Campus Loop Plus."), el("div", { class: "rowbtns" }, back)];
+  if (!PLUS.functionsUrl) return [el("h2", {}, "Loopy AI"), el("p", { class: "hint" }, "Loopy AI is being set up and will switch on soon. The topic guide already works: pick any subject topic."), el("div", { class: "rowbtns" }, back)];
   const chat = state.ai || (state.ai = { msgs: [], busy: false, note: "" });
-  const box = el("textarea", { maxlength: "1000", rows: "3", placeholder: "Ask a study doubt, e.g. Explain Dijkstra with an example", "aria-label": "Your question" });
+  const box = el("textarea", { maxlength: "1000", rows: "1", class: "ai-in", placeholder: "Message Loopy AI", "aria-label": "Your question" });
   if (chat.prefill) { box.value = String(chat.prefill).slice(0, 1000); chat.prefill = ""; }
-  const send = async () => {
-    const text = box.value.trim(); if (!text || chat.busy) return;
+  const ask = async (text) => {
+    text = String(text || "").trim(); if (!text || chat.busy) return;
     chat.msgs.push({ role: "user", content: text }); chat.busy = true; chat.note = ""; render();
     try {
       const tok = store && store.idToken ? await store.idToken() : ""; if (!tok) throw new Error("Please connect to the internet and sign in first.");
       const r = await fetch(PLUS.functionsUrl.replace(/\/$/, "") + "/askAI", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + tok }, body: JSON.stringify({ messages: chat.msgs.slice(-8), college: SEL }) });
       const d = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(d.error || "The AI helper is busy. Try again.");
+      if (!r.ok) throw new Error(d.error || "Loopy AI is busy. Try again.");
       chat.msgs.push({ role: "assistant", content: String(d.reply || "") }); chat.note = typeof d.left === "number" ? d.left + " questions left today." : "";
-    } catch (e) { chat.msgs.pop(); chat.note = (e && e.message) || "Could not reach the AI helper."; box.value = text; }
+    } catch (e) { chat.msgs.pop(); chat.note = (e && e.message) || "Could not reach Loopy AI."; chat.prefill = text; }
     chat.busy = false; render();
   };
-  return [el("h2", {}, "AI study helper"), el("p", { class: "hint" }, "Ask academic doubts only. Answers can contain mistakes, so check important facts with your book or teacher."),
-    ...chat.msgs.map(m => el("div", { class: "ai-msg " + (m.role === "user" ? "me" : "bot") }, m.content)),
-    chat.busy ? el("p", { class: "hint", role: "status" }, "Thinking…") : null,
-    box, chat.note ? el("p", { class: "hint", role: "status" }, chat.note) : null,
-    el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", disabled: chat.busy ? "" : null, onclick: send }, "Ask"), chat.msgs.length ? el("button", { class: "btn sm", type: "button", onclick: () => { state.ai = null; render(); } }, "New chat") : null, back)].filter(Boolean);
+  const send = () => ask(box.value);
+  box.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); send(); } });
+  box.addEventListener("input", () => { box.style.height = "auto"; box.style.height = Math.min(box.scrollHeight, 140) + "px"; });
+  const lastUser = [...chat.msgs].reverse().find(m => m.role === "user");
+  const chips = ["Give an example", "Explain simpler", "Quiz me on this", "Exam answer"];
+  const bot = (m, i) => {
+    const isLast = i === chat.msgs.length - 1;
+    return el("div", { class: "ai-row bot" }, el("span", { class: "ai-av", "aria-hidden": "true" }, "L"),
+      el("div", { class: "ai-bub" }, el("small", { class: "ai-who" }, "Loopy AI"), aiFormat(m.content),
+        el("div", { class: "ai-acts" },
+          el("button", { type: "button", class: "ai-act", onclick: async (e) => { try { await navigator.clipboard.writeText(m.content); e.target.textContent = "Copied"; } catch (_) { e.target.textContent = "Press and hold to copy"; } } }, "Copy"),
+          lastUser && isLast ? el("button", { type: "button", class: "ai-act", onclick: () => openTopic(lastUser.content.slice(0, 80), "", "ai") }, "Open topic guide") : null,
+          isLast && !chat.busy ? el("button", { type: "button", class: "ai-act", onclick: () => { chat.msgs.pop(); const u = chat.msgs.pop(); if (u) ask(u.content); } }, "Try again") : null),
+        isLast && !chat.busy ? el("div", { class: "ai-chips" }, ...chips.map(c => el("button", { type: "button", class: "tp-sub", onclick: () => ask(c) }, c))) : null));
+  };
+  const hello = el("div", { class: "ai-hello" }, el("span", { class: "ai-av big", "aria-hidden": "true" }, "L"), el("h2", {}, "Hi " + (getName() || "there") + ", what shall we learn?"), el("p", { class: "hint" }, "Ask a study doubt, or pick one below. Loopy answers in clear steps with examples."),
+    el("div", { class: "ai-starters" }, ...AI_STARTERS.map(([ic, t, pre], i) => el("button", { type: "button", class: "ai-start c" + i, onclick: () => { box.value = pre; box.focus(); } }, el("span", { "aria-hidden": "true" }, ic), el("b", {}, t)))));
+  return [chat.msgs.length ? el("div", { class: "ai-top" }, el("strong", {}, "Loopy AI"), el("button", { class: "btn sm", type: "button", onclick: () => { state.ai = null; render(); } }, "New chat")) : null,
+    chat.msgs.length ? el("div", { class: "ai-thread" }, ...chat.msgs.map((m, i) => m.role === "user" ? el("div", { class: "ai-row me" }, el("div", { class: "ai-bub me" }, m.content)) : bot(m, i)),
+      chat.busy ? el("div", { class: "ai-row bot" }, el("span", { class: "ai-av", "aria-hidden": "true" }, "L"), el("div", { class: "ai-bub", role: "status" }, el("span", { class: "ai-dots" }, el("i", {}), el("i", {}), el("i", {})))) : null) : hello,
+    chat.note ? el("p", { class: "hint", role: "status" }, chat.note) : null,
+    el("div", { class: "ai-composer" }, box, el("button", { class: "ai-send", type: "button", "aria-label": "Send", disabled: chat.busy ? "" : null, onclick: send }, svgIcon ? svgIcon("send") : "↑")),
+    el("p", { class: "hint ai-fine" }, "Loopy AI can make mistakes. Check important facts with your book or teacher."),
+    el("div", { class: "rowbtns" }, back)].filter(Boolean);
 }
 // Invite friends: share your link; when a friend verifies their email you get +7 days of Plus and they get +3 (rewards are given by the server).
 function myRefCode() { const uid = store && store.authUid ? store.authUid() : ""; return uid && uid.length >= 10 ? uid.slice(0, 10) : ""; }
