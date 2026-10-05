@@ -4819,7 +4819,7 @@ async function brainWiki(q) {
   } catch (_) {}
   BRAIN_CACHE.set(key, out); return out;
 }
-function brainBoard(topic) {
+function brainBoard(topic, limit) {
   const w = ahWords(topic); if (!w.length) return [];
   const need = Math.max(1, Math.ceil(w.length * 0.6)), out = [];
   for (const d of state.doubts) {
@@ -4830,7 +4830,7 @@ function brainBoard(topic) {
     const best = reps.slice().sort((a, b) => ((b.id === d.resolvedReplyId) - (a.id === d.resolvedReplyId)) || (likesFor(b.id).length - likesFor(a.id).length))[0];
     out.push({ d, r: best, score: (best.id === d.resolvedReplyId ? 5 : 0) + likesFor(best.id).length });
   }
-  return out.sort((a, b) => b.score - a.score).slice(0, 2);
+  return out.sort((a, b) => b.score - a.score).slice(0, limit || 2);
 }
 function brainSyllabus(topic) {
   const C = window.RGUKT_CURRICULUM; if (!C) return [];
@@ -4850,7 +4850,10 @@ function brainQuiz(wiki, n) {
   }
   return qs;
 }
+let _solver = null;
+async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=412", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
 async function brainReply(text, chat) {
+  const sv = await brainSolve(text); if (sv) return sv;
   const { kind, topic } = brainIntent(text, chat.topic || ""); chat.topic = topic;
   if (topic.length < 2) return "Tell me the topic, for example **Dijkstra algorithm** or **Ohm's law**, and I will explain it.";
   const [wiki] = await Promise.all([brainWiki(topic)]);
@@ -4906,43 +4909,98 @@ function aiFormat(text) {
   if (code) root.append(el("pre", {}, el("code", {}, code.join("\n"))));
   return root;
 }
-const AI_STARTERS = [["\u{1F4A1}", "Explain a topic simply", "Explain "], ["\u{1F9EE}", "Solve step by step", "Solve step by step: "], ["\u{1F3AF}", "Quiz me", "Quiz me with 3 questions on "], ["\u{1F4DD}", "Exam answer format", "Write an exam-style answer for: "]];
+// ---------- Loopy Search: the search-engine face of Loopy Brain ----------
+const BS_KEY = "dd-bs-recent";
+const BS_LEVELS = [
+  [1, "Quick answer", "Instant answer and step-by-step solver", false],
+  [2, "Study pack", "Adds classmates’ best answers and your syllabus", false],
+  [3, "Visual", "Adds diagrams, pictures and 3D models", true],
+  [4, "Deep dive", "Adds the full explanation, videos and notes", true],
+  [5, "Exam mode", "Adds exam answer, quiz and practice plan", true],
+];
+const bsState = () => state.bs || (state.bs = { q: "", level: 2, tab: "all", busy: false, res: null, ans: "", id: 0, lock: 0 });
+const bsOpen = (lv) => !BS_LEVELS[lv - 1][3] || !plusLocked();
+const bsRecent = () => { const r = readJSON(BS_KEY, []); return Array.isArray(r) ? r.filter(x => typeof x === "string").slice(0, 6) : []; };
+const bsSave = (q) => writeJSON(BS_KEY, [q, ...bsRecent().filter(x => x.toLowerCase() !== q.toLowerCase())].slice(0, 8));
+function bsPool() {
+  const out = [], C = window.RGUKT_CURRICULUM;
+  if (C) for (const y of Object.keys(C.data || {})) for (const br of Object.keys(C.data[y] || {})) for (const r of C.data[y][br]) out.push(String(r[0]));
+  for (const d of state.doubts) if (!d.deleted && !isHidden(d) && d.title) out.push(String(d.title));
+  return [...new Set(out)];
+}
+const bsSuggest = (text) => { const n = text.trim().toLowerCase(); if (n.length < 2) return []; return bsPool().filter(t => t.toLowerCase().includes(n)).sort((a, b) => a.length - b.length).slice(0, 6); };
+async function bsRun(q) {
+  q = lsClean(q); if (q.length < 2) return;
+  const bs = bsState(), id = ++bs.id; let lv = bs.level; if (!bsOpen(lv)) lv = 2;
+  bs.q = q; bs.busy = true; bs.tab = "all"; bs.lock = 0; bsSave(q); render();
+  const topic = brainIntent(q, "").topic || q, short = ahWords(topic).slice(0, 3).join(" ") || topic, chat = { topic: "" };
+  const solved = await brainSolve(q);
+  if (solved) { if (id !== bs.id) return; bs.res = { topic: q, solved: true, lv, board: lv >= 2 ? brainBoard(q, 3) : [], syl: [], imgs: [], models: [], page: "" }; bs.ans = solved; bs.busy = false; render(); return; }
+  const [ans, imgs, models] = await Promise.all([brainReply(q, chat).catch(() => ""), lv >= 3 ? ahCommons(short + " diagram").catch(() => []) : [], lv >= 3 ? tpModels(short).catch(() => []) : []]);
+  if (id !== bs.id) return;
+  const T = chat.topic || topic, wiki = BRAIN_CACHE.get(T.toLowerCase()) || null, res = { topic: T, lv, board: lv >= 2 ? brainBoard(T, 5) : [], syl: lv >= 2 ? brainSyllabus(T) : [], imgs: imgs.slice(0, 8), models, page: wiki ? wiki.page : "", deep: "", exam: "", quiz: "" };
+  if (lv >= 4 && wiki) res.deep = wiki.sections.slice(0, 8).map(x => "- **" + x.h + ":** " + (brainSentences(x.t).slice(0, 2).join(" ") || x.t.slice(0, 240))).join("\n");
+  if (lv >= 5) { [res.exam, res.quiz] = await Promise.all([brainReply("Exam answer for " + T, { topic: T }).catch(() => ""), brainReply("Quiz me on " + T, { topic: T }).catch(() => "")]); }
+  bs.res = res; bs.ans = ans || notFoundMsg(topic); bs.busy = false; render();
+}
+async function bsAsk(prefix) {
+  const bs = bsState(); if (!bs.res) return; const id = ++bs.id; bs.busy = true; render();
+  const t = await brainReply(prefix + bs.res.topic, { topic: bs.res.topic }).catch(() => ""); if (id !== bs.id) return;
+  bs.ans = t || notFoundMsg(bs.res.topic); bs.busy = false; render();
+}
 function renderAI() {
   const back = el("button", { class: "btn", type: "button", onclick: () => showPanel("plus") }, "Back");
-  const chat = state.ai || (state.ai = { msgs: [], busy: false, note: "" });
-  const box = el("textarea", { maxlength: "1000", rows: "1", class: "ai-in", placeholder: "Message Loopy AI", "aria-label": "Your question" });
-  if (chat.prefill) { box.value = String(chat.prefill).slice(0, 1000); chat.prefill = ""; }
-  const ask = async (text) => {
-    text = String(text || "").trim(); if (!text || chat.busy) return;
-    chat.msgs.push({ role: "user", content: text }); chat.busy = true; chat.note = ""; render();
-    try { chat.msgs.push({ role: "assistant", content: await brainReply(text, chat) }); }
-    catch (e) { chat.msgs.pop(); chat.note = "Could not answer. Check your internet and try again."; chat.prefill = text; }
-    chat.busy = false; render();
-  };
-  const send = () => ask(box.value);
-  box.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); send(); } });
-  box.addEventListener("input", () => { box.style.height = "auto"; box.style.height = Math.min(box.scrollHeight, 140) + "px"; });
-  const lastUser = [...chat.msgs].reverse().find(m => m.role === "user");
-  const chips = ["Give an example", "Explain simpler", "Quiz me on this", "Exam answer"];
-  const bot = (m, i) => {
-    const isLast = i === chat.msgs.length - 1;
-    return el("div", { class: "ai-row bot" }, el("span", { class: "ai-av", "aria-hidden": "true" }, "L"),
-      el("div", { class: "ai-bub" }, el("small", { class: "ai-who" }, "Loopy Brain"), aiFormat(m.content),
-        el("div", { class: "ai-acts" },
-          el("button", { type: "button", class: "ai-act", onclick: async (e) => { try { await navigator.clipboard.writeText(m.content); e.target.textContent = "Copied"; } catch (_) { e.target.textContent = "Press and hold to copy"; } } }, "Copy"),
-          lastUser && isLast ? el("button", { type: "button", class: "ai-act", onclick: () => openTopic(lastUser.content.slice(0, 80), "", "ai") }, "Open topic guide") : null,
-          isLast && !chat.busy ? el("button", { type: "button", class: "ai-act", onclick: () => { chat.msgs.pop(); const u = chat.msgs.pop(); if (u) ask(u.content); } }, "Try again") : null),
-        isLast && !chat.busy ? el("div", { class: "ai-chips" }, ...chips.map(c => el("button", { type: "button", class: "tp-sub", onclick: () => ask(c) }, c))) : null));
-  };
-  const hello = el("div", { class: "ai-hello" }, el("span", { class: "ai-av big", "aria-hidden": "true" }, "L"), el("h2", {}, "Hi " + (getName() || "there") + ", what shall we learn?"), el("p", { class: "hint" }, "Type a topic or a doubt, or pick one below. Loopy Brain answers from your syllabus, your classmates and trusted sources."),
-    el("div", { class: "ai-starters" }, ...AI_STARTERS.map(([ic, t, pre], i) => el("button", { type: "button", class: "ai-start c" + i, onclick: () => { box.value = pre; box.focus(); } }, el("span", { "aria-hidden": "true" }, ic), el("b", {}, t)))));
-  return [chat.msgs.length ? el("div", { class: "ai-top" }, el("strong", {}, "Loopy AI"), el("button", { class: "btn sm", type: "button", onclick: () => { state.ai = null; render(); } }, "New chat")) : null,
-    chat.msgs.length ? el("div", { class: "ai-thread" }, ...chat.msgs.map((m, i) => m.role === "user" ? el("div", { class: "ai-row me" }, el("div", { class: "ai-bub me" }, m.content)) : bot(m, i)),
-      chat.busy ? el("div", { class: "ai-row bot" }, el("span", { class: "ai-av", "aria-hidden": "true" }, "L"), el("div", { class: "ai-bub", role: "status" }, el("span", { class: "ai-dots" }, el("i", {}), el("i", {}), el("i", {})))) : null) : hello,
-    chat.note ? el("p", { class: "hint", role: "status" }, chat.note) : null,
-    el("div", { class: "ai-composer" }, box, el("button", { class: "ai-send", type: "button", "aria-label": "Send", disabled: chat.busy ? "" : null, onclick: send }, svgIcon ? svgIcon("send") : "↑")),
-    el("p", { class: "hint ai-fine" }, "Loopy Brain answers from your syllabus, classmates' best answers and Wikipedia. Check important facts in your book."),
-    el("div", { class: "rowbtns" }, back)].filter(Boolean);
+  const bs = bsState();
+  if (state.ai && state.ai.prefill) { const p = String(state.ai.prefill); state.ai.prefill = ""; setTimeout(() => bsRun(p), 0); }
+  const input = el("input", { type: "search", class: "bs-in", maxlength: "80", placeholder: "Search any topic, doubt or problem", "aria-label": "Search", autocomplete: "off", enterkeyhint: "search", value: bs.q });
+  const sug = el("div", { class: "bs-sug", role: "listbox" });
+  const go = (t) => { sug.replaceChildren(); bsRun(t); };
+  input.addEventListener("input", () => sug.replaceChildren(...bsSuggest(input.value).map(t => el("button", { type: "button", class: "bs-s", role: "option", onclick: () => go(t) }, el("span", { "aria-hidden": "true" }, "\u{1F50E}"), t))));
+  const form = el("form", { class: "bs-bar", onsubmit: (e) => { e.preventDefault(); go(input.value); } }, el("span", { class: "bs-ic", "aria-hidden": "true" }, "✨"), input, el("button", { class: "bs-go", type: "submit", "aria-label": "Search" }, "Search"));
+  const setLevel = (lv) => { if (!bsOpen(lv)) { bs.lock = lv; render(); return; } bs.level = lv; bs.lock = 0; if (bs.q && bs.res) bsRun(bs.q); else render(); };
+  const lvBar = el("div", { class: "bs-lvs", role: "group", "aria-label": "Search level" }, ...BS_LEVELS.map(([n, t, , plus]) => { const open = bsOpen(n); return el("button", { type: "button", class: "bs-lv" + (bs.level === n && !bs.lock ? " on" : "") + (open ? "" : " locked"), "aria-pressed": String(bs.level === n), onclick: () => setLevel(n) }, el("b", {}, String(n)), el("span", {}, t), open ? null : el("i", { "aria-hidden": "true" }, "\u{1F512}")); }));
+  const lockCard = bs.lock ? el("div", { class: "bs-lock", role: "status" }, el("strong", {}, "Level " + bs.lock + ": " + BS_LEVELS[bs.lock - 1][1] + " is a Plus level"), el("p", {}, BS_LEVELS[bs.lock - 1][2] + ". Levels 1 and 2 are free for everyone. Campus Loop Plus unlocks levels 3 to 5."), el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => showPanel("plus") }, "See Campus Loop Plus"), el("button", { class: "btn sm", type: "button", onclick: () => { bs.lock = 0; render(); } }, "Stay on free levels"))) : null;
+  const head = el("div", { class: "bs-head" }, el("h2", {}, "Loopy Search"), el("p", { class: "hint" }, "Ask anything: topics, doubts, maths, conversions, formulas. Loopy shows steps, pictures, videos and notes."), form, sug, lvBar, lockCard);
+  const chips = (list, onTap) => el("div", { class: "bs-chips" }, ...list.map(t => el("button", { type: "button", class: "tp-sub", onclick: () => onTap(t) }, t)));
+  if (!bs.res && !bs.busy) {
+    const C = window.RGUKT_CURRICULUM, rows = C ? ((C.data[curState.year] || {})[curState.branch] || []).map(r => r[0]).slice(0, 8) : [], rec = bsRecent();
+    return [head,
+      rec.length ? el("div", { class: "bs-blk" }, el("small", { class: "hint" }, "Recent"), chips(rec, go)) : null,
+      rows.length ? el("div", { class: "bs-blk" }, el("small", { class: "hint" }, "Your subjects"), chips(rows, go)) : null,
+      el("div", { class: "bs-blk" }, el("small", { class: "hint" }, "Try asking"), chips(["Explain Dijkstra algorithm", "Solve x^2-5x+6=0", "Convert 5 km to miles", "Formula for Ohm's law", "Mean of 4, 8, 15, 16", "25 in binary"], go)),
+      el("div", { class: "rowbtns" }, back)].filter(Boolean);
+  }
+  if (bs.busy) return [head, el("div", { class: "tp-skel", "aria-hidden": "true" }, el("i", {}), el("i", {}), el("i", {})), el("p", { class: "hint", role: "status" }, "Searching for " + bs.q + "…"), el("div", { class: "rowbtns" }, back)];
+  const r = bs.res, q = r.topic, lv = r.lv;
+  const yt = (x) => "https://www.youtube.com/results?search_query=" + encodeURIComponent(q + " " + x), gg = (x) => "https://www.google.com/search?q=" + encodeURIComponent(q + " " + x);
+  const tabList = [["all", "All"]]; if (lv >= 2) tabList.push(["classmates", "Classmates" + (r.board.length ? " " + r.board.length : "")], ["syllabus", "Syllabus" + (r.syl.length ? " " + r.syl.length : "")]); if (lv >= 3) tabList.push(["images", "Pictures"], ["models", "3D"]); if (lv >= 4) tabList.push(["videos", "Videos"], ["notes", "Notes"]); if (lv >= 5) tabList.push(["exam", "Exam"]);
+  const tabBar = tabList.length > 1 ? el("div", { class: "bs-tabs", role: "tablist" }, ...tabList.map(([k, t]) => el("button", { type: "button", role: "tab", class: "bs-tab" + (bs.tab === k ? " on" : ""), "aria-selected": String(bs.tab === k), onclick: () => { bs.tab = k; render(); } }, t))) : null;
+  const kinds = r.solved ? [] : [["Quiz me on ", "Quiz me"], ["Give an example of ", "Example"], ["Explain simply: ", "Simpler"], ["Exam answer for ", "Exam answer"]];
+  const answer = el("section", { class: "bs-card ans" }, el("small", { class: "tp-kick" }, "Loopy Brain · Level " + lv), aiFormat(bs.ans),
+    el("div", { class: "bs-acts" }, ...kinds.map(([p, t]) => el("button", { type: "button", class: "tp-sub", onclick: () => bsAsk(p) }, t)), r.solved ? null : el("button", { type: "button", class: "tp-sub strong", onclick: () => openTopic(q, "", "ai") }, "Full topic guide →"), el("button", { type: "button", class: "tp-sub", onclick: () => { state.mode = "ask"; render(); } }, "Still stuck? Ask classmates")));
+  const doubtRow = ({ d, r: rep }) => el("div", { class: "bs-row" }, el("b", {}, d.title), el("small", {}, (d.subject || "") + (d.resolvedReplyId === rep.id ? " · solved" : "")), el("p", {}, String(rep.body).replace(/\s+/g, " ").slice(0, 220)), el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: () => { state.tab = "doubts"; openItem(d.id); } }, "Open this doubt")));
+  const sylRow = (x) => el("button", { type: "button", class: "bs-row link", onclick: () => openTopic(x.name, x.name, "ai") }, el("b", {}, x.name), el("small", {}, x.code + " · " + x.year + " · " + x.branch), el("span", {}, "Explain ›"));
+  const figs = el("div", { class: "tp-gal" }, ...r.imgs.map(it => el("button", { type: "button", class: "tp-fig", onclick: () => tpImageView(it), "aria-label": "Open " + it.title }, el("img", { src: it.thumb, alt: it.title, loading: "lazy", referrerpolicy: "no-referrer" }), el("small", {}, it.title))));
+  const mods = el("div", { class: "tp-gal" }, ...(r.models || []).map(m => el("button", { type: "button", class: "tp-fig m3", onclick: () => tpModelView(m), "aria-label": "View " + m.name + " in 3D" }, el("img", { src: m.thumb, alt: m.name, loading: "lazy", referrerpolicy: "no-referrer" }), el("span", { class: "tp-3dbadge" }, "3D"), el("small", {}, m.name))));
+  const watch = el("div", { class: "tp-chans" }, ...LS_CHANNELS.map(([c, t]) => outLink(yt(c), t, "tp-chan")), outLink(yt("animation"), "Animations", "tp-chan"), outLink(yt("solved example"), "Worked examples", "tp-chan"));
+  const notes = el("div", { class: "tp-chans" }, outLink(gg("lecture notes filetype:pdf"), "Lecture notes (PDF)", "tp-chan"), outLink(gg("previous year questions filetype:pdf"), "Previous questions", "tp-chan"), outLink(gg("site:nptel.ac.in"), "NPTEL", "tp-chan"), outLink(gg("site:geeksforgeeks.org OR site:tutorialspoint.com"), "Tutorials", "tp-chan"), r.page ? outLink(r.page, "Wikipedia", "tp-chan") : null);
+  const sect = (t, ...k) => el("section", { class: "bs-card" }, el("h3", {}, t), ...k.filter(Boolean));
+  const none = (t) => el("p", { class: "hint" }, t);
+  const examBox = () => sect("Exam mode", r.exam ? aiFormat(r.exam) : none("An exam answer needs a topic with a text source."), r.quiz ? aiFormat(r.quiz) : null, el("ul", { class: "tp-check" }, ...["Write the definition in one or two lines.", "Draw a neat, labelled diagram.", "State the formula or principle, with units.", "Give one worked example.", "List two applications and one limitation."].map(c => el("li", {}, c))));
+  const deepBox = () => r.deep ? sect("Deep dive", aiFormat(r.deep)) : null;
+  const imgBox = () => sect("Diagrams and pictures", r.imgs.length ? figs : none("No free diagram was found for this name."));
+  const modBox = () => sect("3D models", r.models && r.models.length ? mods : none("No 3D model found here."), outLink("https://sketchfab.com/search?type=models&q=" + encodeURIComponent(q), "Search 3D models", "btn sm"));
+  let body;
+  if (bs.tab === "classmates") body = [sect("Classmates’ best answers", ...(r.board.length ? r.board.map(doubtRow) : [none("No solved doubt on this yet. Post it as a doubt and your classmates will answer.")]))];
+  else if (bs.tab === "syllabus") body = [sect("In your syllabus", ...(r.syl.length ? r.syl.map(sylRow) : [none("This topic is not a subject name. Try the subject it belongs to.")]))];
+  else if (bs.tab === "images") body = [imgBox()];
+  else if (bs.tab === "models") body = [modBox()];
+  else if (bs.tab === "videos") body = [sect("Watch and learn", watch)];
+  else if (bs.tab === "notes") body = [sect("Notes and practice", notes)];
+  else if (bs.tab === "exam") body = [examBox()];
+  else body = [answer, lv >= 2 && r.board.length ? sect("Classmates’ answers", ...r.board.slice(0, 2).map(doubtRow)) : null, lv >= 2 && r.syl.length ? sect("In your syllabus", ...r.syl.map(sylRow)) : null, lv >= 3 && !r.solved ? imgBox() : null, lv >= 3 && !r.solved ? modBox() : null, lv >= 4 && !r.solved ? deepBox() : null, lv >= 4 && !r.solved ? sect("Watch and learn", watch) : null, lv >= 4 && !r.solved ? sect("Notes and practice", notes) : null, lv >= 5 && !r.solved ? examBox() : null,
+    lv < 5 && !bs.lock ? el("div", { class: "bs-more" }, el("small", { class: "hint" }, "Want more? " + (bsOpen(lv + 1) ? "Switch to level " + (lv + 1) + ": " + BS_LEVELS[lv][1] + "." : "Level " + (lv + 1) + " (" + BS_LEVELS[lv][1] + ") is part of Campus Loop Plus."))) : null];
+  return [head, tabBar, ...body.filter(Boolean), el("p", { class: "hint ai-fine" }, "Loopy Brain answers from your syllabus, your classmates’ best answers and Wikipedia. Check important facts in your textbook."), el("div", { class: "rowbtns" }, back)];
 }
 // Invite friends: share your link; when a friend verifies their email you get +7 days of Plus and they get +3 (rewards are given by the server).
 function myRefCode() { const uid = store && store.authUid ? store.authUid() : ""; return uid && uid.length >= 10 ? uid.slice(0, 10) : ""; }
