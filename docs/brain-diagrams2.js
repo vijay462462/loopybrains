@@ -1,5 +1,5 @@
 // More of Loopy's own diagrams: analog circuits, DSP, control systems and probability. Extends brain-diagrams.js.
-import { Cv, mk, D } from "./brain-diagrams.js?v=444";
+import { Cv, mk, D } from "./brain-diagrams.js?v=445";
 const done = (c) => c.root;
 const P = Cv.prototype;
 // Local-coordinate parts: each starts at (x, y) and ends L further along the (rotated) axis. Returns the absolute end pin.
@@ -217,4 +217,44 @@ D.bitsrange = { title: "How many bits do I need?", cap: "n bits can show 2ⁿ di
   const c = new Cv(400, 250, "Bits and range"); c.txt(20, 20, "bits n", { c: "s" }); c.txt(110, 20, "values 2ⁿ", { c: "s" }); c.txt(230, 20, "largest number", { c: "s" });
   [[4, 16, 15], [8, 256, 255], [10, 1024, 1023], [16, 65536, 65535]].forEach(([n, v, m], i) => { const y = 30 + i * 46; c.box(10, y, 70, 34, String(n), "ff"); c.box(100, y, 100, 34, String(v), "ff"); c.box(220, y, 120, 34, String(m), "on"); });
   c.txt(200, 232, "270 needs 9 bits because 256 ≤ 270 < 512", { a: "middle", c: "g" }); return done(c); } };
+D.switches = { title: "Switches make AND and OR", cap: "Switches in series work like AND: the light is on only if both are closed. Switches in parallel work like OR: the light is on if either is closed.", draw() {
+  const c = new Cv(400, 250, "Series and parallel switches");
+  c.txt(10, 16, "Series = AND   L = x₁ · x₂", { c: "b" }); c.wire([[20, 50], [60, 50]], "in"); c.box(60, 34, 56, 32, "S x₁", "ff"); c.wire([[116, 50], [150, 50]], "mid"); c.box(150, 34, 56, 32, "S x₂", "ff"); c.wire([[206, 50], [250, 50]], "mid"); c.box(250, 34, 66, 32, "Light L", "on"); c.dot(20, 50, "in");
+  c.txt(10, 112, "Parallel = OR   L = x₁ + x₂", { c: "m" }); c.wire([[20, 160], [60, 160], [60, 130], [100, 130]], "in"); c.wire([[60, 160], [60, 200], [100, 200]], "in"); c.box(100, 114, 56, 32, "S x₁", "ff"); c.box(100, 184, 56, 32, "S x₂", "ff");
+  c.wire([[156, 130], [190, 130], [190, 160]], "mid"); c.wire([[156, 200], [190, 200], [190, 160]], "mid"); c.wire([[190, 160], [250, 160]], "mid"); c.box(250, 144, 66, 32, "Light L", "on"); c.dot(60, 160, "in"); c.dot(190, 160, "mid");
+  c.txt(336, 54, "both closed", { c: "s" }); c.txt(336, 164, "any closed", { c: "s" }); return done(c); } };
+D.bvenn = { title: "Venn diagrams for AND, OR and NOT", cap: "Shaded area means the expression is 1. x·y is the overlap, x + y is both circles together, and x′ is everything outside the circle x.", draw() {
+  const c = new Cv(400, 190, "Boolean Venn diagrams");
+  const panel = (ox, title, kind) => { const cy = 75, R = 28, ax = ox + 44, bx = ox + 74, mx = ox + 59;
+    c.add(mk("rect", { x: ox, y: 20, width: 118, height: 110, rx: 6, class: kind === "n" ? "dg-grp g1" : "dg-cell", "fill-opacity": kind === "n" ? 0.25 : 1, "stroke-width": 1.5 }));
+    if (kind === "n") { c.add(mk("circle", { cx: mx, cy, r: 30, fill: "#fff", class: "dg-box off" })); c.txt(mx, cy + 4, "x", { a: "middle", c: "s" }); }
+    else { [ax, bx].forEach(q => c.add(mk("circle", { cx: q, cy, r: R, class: kind === "o" ? "dg-grp g2" : "dg-box off", "fill-opacity": kind === "o" ? 0.35 : 0.5 })));
+      if (kind === "a") c.add(mk("path", { d: "M" + mx + " " + (cy - 23.6) + "A28 28 0 0 1 " + mx + " " + (cy + 23.6) + "A28 28 0 0 1 " + mx + " " + (cy - 23.6) + "Z", class: "dg-grp g1", "fill-opacity": 0.7 }));
+      c.txt(ax - 14, cy + 4, "x", { a: "middle", c: "s" }); c.txt(bx + 14, cy + 4, "y", { a: "middle", c: "s" }); }
+    c.txt(mx, 152, title, { a: "middle", c: kind === "o" ? "g" : kind === "a" ? "b" : "m" }); };
+  panel(8, "x · y  (AND)", "a"); panel(140, "x + y  (OR)", "o"); panel(272, "x′  (NOT)", "n");
+  c.txt(200, 180, "shaded area = the places where the answer is 1", { a: "middle", c: "s" }); return done(c); } };
+D.kmap3pi = { title: "Prime implicants on a 3-variable map", cap: "f = Σm(0,1,2,3,7). The blue group of 4 gives x₁′. The green group of 2 gives x₂x₃. Both are essential, so f = x₁′ + x₂x₃.", draw() {
+  const c = new Cv(330, 190, "3-variable Karnaugh map"), x0 = 70, y0 = 40, cw = 56, ch = 46, cols = [0, 1, 3, 2], ones = new Set([0, 1, 2, 3, 7]);
+  c.txt(x0 + 2 * cw, 16, "x₁x₂", { a: "middle", c: "b" }); c.txt(24, y0 + ch + 4, "x₃", { c: "b" });
+  for (let r = 0; r < 2; r++) for (let k = 0; k < 4; k++) { const m = (cols[k] << 1) | r, x = x0 + k * cw, y = y0 + r * ch; c.add(mk("rect", { x, y, width: cw, height: ch, class: "dg-cell" })); c.txt(x + cw / 2, y + ch / 2 + 6, ones.has(m) ? "1" : "0", { a: "middle", c: ones.has(m) ? "one" : "zero" }); c.txt(x + cw - 4, y + 11, String(m), { a: "end", c: "mn" }); }
+  c.add(mk("rect", { x: x0 + 3, y: y0 + 3, width: 2 * cw - 6, height: 2 * ch - 6, rx: 12, class: "dg-grp g1" })); c.add(mk("rect", { x: x0 + cw + 8, y: y0 + ch + 8, width: 2 * cw - 16, height: ch - 16, rx: 10, class: "dg-grp g2" }));
+  ["00", "01", "11", "10"].forEach((l, i) => c.txt(x0 + i * cw + cw / 2, y0 - 6, l, { a: "middle", c: "m" })); ["0", "1"].forEach((l, i) => c.txt(x0 - 8, y0 + i * ch + ch / 2 + 4, l, { a: "end", c: "m" }));
+  c.txt(x0 + cw, y0 + 2 * ch + 22, "x₁′", { a: "middle", c: "b" }); c.txt(x0 + 2 * cw, y0 + 2 * ch + 22, "x₂x₃", { a: "middle", c: "g" }); return done(c); } };
+D.nandnand = { title: "AND–OR becomes NAND–NAND", cap: "f = x₂ + x₁x₃′. Replace every gate by a NAND (tie the inputs of a NAND together to make a NOT) and the same circuit works with only NAND gates.", draw() {
+  const c = new Cv(340, 300, "NAND only circuit"); c.txt(8, 14, "AND–OR form", { c: "b" }); c.txt(8, 154, "NAND–NAND form", { c: "g" });
+  [["x₁", 50], ["x₃", 98], ["x₂", 118], ["x₁", 190], ["x₃", 236], ["x₂", 274]].forEach(([t, y]) => c.txt(4, y + 4, t, { c: "b" }));
+  c.wire([[26, 98], [40, 98]], "in"); const n = c.gate("not", 40, 78); const a = c.gate("and", 120, 40); c.wire([[26, 50], [120, 50]], "in");
+  c.wire([n.o, [100, n.o[1]], [100, 70], [120, 70]], "mid"); const o = c.gate("or", 200, 70); c.wire([a.o, [180, a.o[1]], [180, 80], [204, 80]], "mid"); c.wire([[26, 118], [204, 118], [204, 100]], "in"); c.wire([o.o, [300, o.o[1]]], "out", true); c.txt(304, o.o[1] + 4, "f", { c: "g" });
+  const tie = (y, bx) => { c.wire([[26, y], [bx, y]], "in"); c.wire([[bx, y - 10], [bx, y + 10]], "in"); c.wire([[bx, y - 10], [bx + 6, y - 10]], "in"); c.wire([[bx, y + 10], [bx + 6, y + 10]], "in"); c.dot(bx, y, "in"); };
+  tie(236, 34); const nb = c.gate("nand", 40, 216); const nc = c.gate("nand", 120, 180); c.wire([[26, 194], [26, 190], [120, 190]], "in"); c.wire([nb.o, [105, nb.o[1]], [105, 210], [120, 210]], "mid");
+  tie(274, 110); const n2 = c.gate("nand", 120, 254); const fin = c.gate("nand", 210, 222); c.wire([nc.o, [190, nc.o[1]], [190, 232], [210, 232]], "mid"); c.wire([n2.o, [190, n2.o[1]], [190, 252], [210, 252]], "mid"); c.wire([fin.o, [320, fin.o[1]]], "out", true); c.txt(322, fin.o[1] + 4, "f", { c: "g" }); return done(c); } };
+D.cadflow = { title: "From idea to chip: the CAD flow", cap: "Design entry (a schematic or Verilog) goes through synthesis, simulation, physical design and timing checks before the chip is built or programmed.", draw() {
+  const c = new Cv(400, 330, "CAD design flow"), st = [["1  Design entry", "schematic or Verilog", "ff"], ["2  Synthesis", "turns the design into gates", "ff"], ["3  Functional simulation", "does it work? (no delays)", "on"], ["4  Physical design", "place and wire on the chip", "ff"], ["5  Timing simulation", "is it fast enough?", "on"], ["6  Chip configuration", "program the FPGA / make the chip", "ff"]];
+  st.forEach(([t, d, k], i) => { const y = 8 + i * 52; c.box(20, y, 260, 38, t + "|" + d, k); if (i < st.length - 1) c.wire([[150, y + 38], [150, y + 52]], "mid", true); });
+  c.wire([[280, 118], [320, 118], [320, 27], [280, 27]], "fb", true); c.txt(326, 70, "wrong?", { c: "m" }); c.txt(326, 84, "fix it", { c: "m" }); return done(c); } };
+D.sevenseg = { title: "Seven-segment display", cap: "Seven LED bars a to g make the digits. For the numbers 0, 1 and 2 only some bars are lit. Each bar is a logic function of the inputs.", draw() {
+  const c = new Cv(400, 190, "Seven segment display"), seg = (x, y, lit) => { const S = { a: [8, 0, 28, 7], b: [36, 8, 7, 28], c: [36, 44, 7, 28], d: [8, 72, 28, 7], e: [0, 44, 7, 28], f: [0, 8, 7, 28], g: [8, 36, 28, 7] }; Object.keys(S).forEach(k => { const [dx, dy, w, h] = S[k]; c.add(mk("rect", { x: x + dx, y: y + dy, width: w, height: h, rx: 3, class: "dg-box " + (lit.includes(k) ? "on" : "off") })); c.txt(x + dx + w / 2, y + dy + h / 2 + 4, k, { a: "middle", c: "s" }); }); };
+  seg(20, 20, "abcdef"); seg(150, 20, "bc"); seg(280, 20, "abdeg"); c.txt(41, 128, "0", { a: "middle", c: "b" }); c.txt(171, 128, "1", { a: "middle", c: "b" }); c.txt(301, 128, "2", { a: "middle", c: "b" });
+  c.txt(200, 160, "for s₁s₀ = 00, 01, 10:  a = d = e = s₀′,  b = 1,  c = s₁′", { a: "middle", c: "g" }); return done(c); } };
 export function drawDiagram2(key) { const d = D[key]; if (!d) return null; try { return { title: d.title, cap: d.cap, svg: d.draw() }; } catch (_) { return null; } }
