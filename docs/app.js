@@ -136,6 +136,9 @@ const KIND_PRESETS = {
   engineering: { exam: "GATE", bot: true,
     subjects: ["Maths", "Physics", "Chemistry", "English", "Programming", "Data Structures", "DBMS", "Operating Systems", "Networks", "Electronics", "Circuits", "Signals", "Mechanics", "Thermodynamics", "Machines", "Structures", "Other"],
     clubs: ["Coding Club", "AI/ML", "Robotics", "Electronics", "Startup Cell", "Research Society", "Cultural", "Sports", "NSS / NCC", "Other"], ideas: ["Project", "Startup", "Research", "Campus life", "Social impact", "Other"] },
+  premier: { exam: "GATE / Research", bot: true,
+    subjects: ["Maths", "Physics", "Chemistry", "Programming", "Data Structures and Algorithms", "Digital Logic", "Analog Circuits", "Signals and Systems", "Digital Signal Processing", "Control Systems", "Probability and Random Processes", "Communication Systems", "Electromagnetics", "VLSI", "Computer Architecture", "Operating Systems", "DBMS", "Networks", "Machine Learning", "Mechanics", "Thermodynamics", "Fluid Mechanics", "Structures", "Research and Thesis", "Placements and Internships", "GATE / CAT prep", "Other"],
+    clubs: ["Competitive Coding", "AI/ML", "Robotics", "Electronics and Embedded", "Entrepreneurship Cell", "Research Society", "Cultural", "Sports", "NSS / NCC", "Other"], ideas: ["Project", "Research", "Startup", "Hackathon", "Campus life", "Social impact", "Other"] },
   medical: { exam: "NEET PG", bot: false,
     subjects: ["Anatomy", "Physiology", "Biochemistry", "Pathology", "Pharmacology", "Microbiology", "Forensic Medicine", "Community Medicine", "Medicine", "Surgery", "OBG", "Pediatrics", "Other"],
     clubs: ["Medical Quiz", "Research Society", "Blood Donation", "Health Awareness", "Cultural", "Sports", "NSS / NCC", "Other"], ideas: ["Case discussion", "Research", "Health awareness", "Campus life", "Social impact", "Other"] },
@@ -153,7 +156,12 @@ const KIND_PRESETS = {
     clubs: ["Design Club", "Photography", "Cultural", "Sports", "NSS / NCC", "Other"], ideas: ["Design project", "Startup", "Research", "Campus life", "Social impact", "Other"] },
   general: { exam: "Competitive exams", bot: false, subjects: GENERIC_SUBJECTS, clubs: GENERIC_CLUBS, ideas: GENERIC_IDEAS },
 };
-function kindGroup(kind) {
+// Premier institutes: IITs, NITs, IISc, IISERs, IIITs, IIEST and BITS Pilani get their own group, with a subject list that fits their courses.
+const PREMIER_RE = /(^|\s)(IIT|IISc|IISER|IIITDM|IIIT|IIEST|MNNIT|MNIT|MANIT|VNIT|SVNIT|NIT)(\s|$|\()|ABV-IIITM|IIITM-K|BITS Pilani|Indian Institute of (Technology|Science)|Indian Institutes? of Science Education|National Institute of Technology\b(?!.*Teachers)/i;
+const isPremier = (name) => PREMIER_RE.test(String(name || ""));
+const premierLabel = (name) => { const n = String(name || ""); if (!PREMIER_RE.test(n)) return ""; return /IISc|Indian Institute of Science\b/.test(n) ? "IISc" : /IISER|Science Education/.test(n) ? "IISER" : /IIIT/.test(n) ? "IIIT" : /IIEST/.test(n) ? "IIEST" : /BITS/.test(n) ? "BITS Pilani" : /IIT\b|Indian Institute of Technology/.test(n) ? "IIT" : "NIT"; };
+function kindGroup(kind, name) {
+  if (name && isPremier(name)) return "premier";
   const k = String(kind || "").toLowerCase();
   if (/engineering|technical|technolog|national institute/.test(k)) return "engineering";
   if (/medical|health sciences/.test(k)) return "medical";
@@ -166,8 +174,8 @@ function kindGroup(kind) {
 async function loadTenant() {
   const slug = SEL; if (!slug || slug === "rgukt") return null;
   const dir = DIRECTORY.find(c => c.slug === slug);
-  const withDir = (t) => dir ? { ...t, room: "college-" + slug, examLabel: t.examLabel || ((window.COLLEGE_DATA || {})[slug] || {}).exam || KIND_PRESETS[kindGroup(dir.kind)].exam } : t;   // directory colleges always share one room
-  const fromDir = () => { const pr = KIND_PRESETS[kindGroup(dir.kind)], cd = (window.COLLEGE_DATA || {})[slug] || {}; return cleanTenant({ name: dir.name, room: "college-" + slug, clubs: cd.clubs || pr.clubs, subjects: cd.subjects || pr.subjects, ideaCategories: cd.ideas || pr.ideas, examLabel: cd.exam || pr.exam, features: { bot: cd.bot != null ? cd.bot === true : pr.bot } }, slug); };
+  const withDir = (t) => dir ? { ...t, room: "college-" + slug, examLabel: t.examLabel || ((window.COLLEGE_DATA || {})[slug] || {}).exam || KIND_PRESETS[kindGroup(dir.kind, dir.name)].exam } : t;   // directory colleges always share one room
+  const fromDir = () => { const pr = KIND_PRESETS[kindGroup(dir.kind, dir.name)], cd = (window.COLLEGE_DATA || {})[slug] || {}; return cleanTenant({ name: dir.name, room: "college-" + slug, clubs: cd.clubs || pr.clubs, subjects: cd.subjects || pr.subjects, ideaCategories: cd.ideas || pr.ideas, examLabel: cd.exam || pr.exam, features: { bot: cd.bot != null ? cd.bot === true : pr.bot } }, slug); };
   const key = "dd-tenant-" + slug; let cached = null;
   try { cached = JSON.parse(localStorage.getItem(key) || "null"); } catch (_) {}
   const fb = BASE_CFG.firebase || {};
@@ -1512,8 +1520,8 @@ function showWelcome(force, startId) {
           el("label", { class: "ab-agree" }, el("input", { type: "checkbox", id: "ob-terms", checked: readJSON("dd-terms", null) ? "" : null }), el("span", {}, "I meet the age rule for my college (RGUKT: B.Tech 2nd year or above; other colleges: 13 or older, with a parent's permission if under 18). I have read and agree to the ", el("a", { href: "terms.html", target: "_blank", rel: "noopener" }, "Terms of Use"), " and the ", el("a", { href: "privacy.html", target: "_blank", rel: "noopener" }, "Privacy Policy"), ".")))];
     } else if (sid === "college") {
       const badge = (slug, name, st) => { const [ca, cb] = slug === "rgukt" ? STATE_COLORS["Andhra Pradesh"] : collegeColors(slug, st || ""); const ini = name.replace(/\(.*?\)/g, "").split(/[\s-]+/).filter(w => /^[A-Za-z]/.test(w) && !/^(of|and|the|for|in)$/i.test(w)).slice(0, 2).map(w => w[0].toUpperCase()).join("") || "C"; const b = el("span", { class: "col-badge", "aria-hidden": "true" }, ini); b.style.setProperty("background", "linear-gradient(135deg," + ca + "," + cb + ")"); return b; };
-      const GRP = { all: "All", engineering: "Engineering", medical: "Medical", agri: "Agriculture", law: "Law", degree: "Degree", design: "Design", general: "Other" };
-      const all = [{ slug: "rgukt", name: "RGUKT AP", state: "Andhra Pradesh", sub: "Rajiv Gandhi University of Knowledge Technologies, Andhra Pradesh", grp: "engineering" }, ...DIRECTORY.filter(d => d.slug !== "rgukt").map(d => ({ slug: d.slug, name: d.name, state: d.state || "Andhra Pradesh", sub: [d.city, d.kind].filter(Boolean).join(" \u00B7 "), grp: kindGroup(d.kind) }))];
+      const GRP = { all: "All", premier: "\u2B50 Premier", engineering: "Engineering", medical: "Medical", agri: "Agriculture", law: "Law", degree: "Degree", design: "Design", general: "Other" };
+      const all = [{ slug: "rgukt", name: "RGUKT AP", state: "Andhra Pradesh", sub: "Rajiv Gandhi University of Knowledge Technologies, Andhra Pradesh", grp: "engineering" }, ...DIRECTORY.filter(d => d.slug !== "rgukt").map(d => ({ slug: d.slug, name: d.name, state: d.state || "Andhra Pradesh", sub: [d.city, premierLabel(d.name) || d.kind].filter(Boolean).join(" \u00B7 "), grp: kindGroup(d.kind, d.name) }))];
       const hl = (text, needle) => { if (!needle) return text; const k = text.toLowerCase().indexOf(needle); return k < 0 ? text : [text.slice(0, k), el("mark", {}, text.slice(k, k + needle.length)), text.slice(k + needle.length)]; };
       const peek = (c) => collegeFacts(c.slug, c.grp).chips;
       const list = el("div", { class: "ob-colist", role: "listbox", "aria-label": "Colleges" }), chosen = el("p", { class: "ob-chosen", role: "status" }, ""), count = el("p", { class: "ob-count", "aria-live": "polite" }, ""), types = el("div", { class: "ob-types", role: "tablist", "aria-label": "College type" });
@@ -1548,7 +1556,7 @@ function showWelcome(force, startId) {
       const fill = () => {
         drawPick(); if (pickSlug && !browsing) return;
         const needle = cq.trim().toLowerCase(), inState = all.filter(c => (cst === "All India" || c.state === cst) && (!needle || (c.name + " " + c.sub).toLowerCase().includes(needle)));
-        if (cst === "All India" && !needle) { types.replaceChildren(); count.textContent = ""; list.replaceChildren(el("p", { class: "hint" }, "Type your college or city to search all of India, or pick a state above.")); return; }
+        if (cst === "All India" && !needle) { types.replaceChildren(); count.textContent = ""; list.replaceChildren(el("p", { class: "hint" }, "Type your college or city to search all of India, or pick a state above."), el("p", { class: "hint" }, "Premier institutes:"), el("div", { class: "ob-types" }, ...["IIT", "NIT", "IISc", "IISER", "IIIT"].map(t => el("button", { type: "button", class: "ob-type", onclick: () => { q.value = t; cq = t; fill(); } }, t)))); return; }
         if (ctype !== "all" && !inState.some(c => c.grp === ctype)) ctype = "all";
         drawTypes(inState);
         const pool = inState.filter(c => ctype === "all" || c.grp === ctype), initial = (c) => (c.name.replace(/^the\s+/i, "")[0] || "").toUpperCase();
@@ -1625,7 +1633,7 @@ function showWelcome(force, startId) {
   document.addEventListener("keydown", onKey); paint(); document.body.append(box); fit();
 }
 // What we can honestly say about a college. Numbers are shown only when they come from a checked source; everything else says "standard setup".
-const GRP_NAME = { engineering: "engineering", medical: "medical", agri: "agriculture", law: "law", degree: "degree", design: "design", general: "general" };
+const GRP_NAME = { premier: "premier institute (IIT, NIT, IISc)", engineering: "engineering", medical: "medical", agri: "agriculture", law: "law", degree: "degree", design: "design", general: "general" };
 function collegeFacts(slug, grp) {
   if (slug === "rgukt") {
     const C = window.RGUKT_CURRICULUM, chips = [];
@@ -1635,7 +1643,7 @@ function collegeFacts(slug, grp) {
   }
   const cd = (window.COLLEGE_DATA || {})[slug];
   if (cd && cd.source) { let host = ""; try { host = new URL(cd.source).hostname.replace(/^www\./, ""); } catch (_) {} return { chips: ["Subjects from the official website"], note: "Subject names are taken from " + (host || "the official website") + ".", verified: true }; }
-  return { chips: ["Standard subject list for " + (GRP_NAME[grp] || "general") + " colleges"], note: "Not yet checked against the college\u2019s own website. Staff can customise it.", verified: false };
+  return { chips: [grp === "premier" ? "Subject list for IIT, NIT and IISc students" : "Standard subject list for " + (GRP_NAME[grp] || "general") + " colleges"], note: "Not yet checked against the college\u2019s own website. Staff can customise it.", verified: false };
 }
 // The "welcome to your college" reveal: a premium brand card shown once after a college is chosen or changed.
 function showCollegeReveal() {
@@ -1661,7 +1669,7 @@ function showCollegeReveal() {
         el("div", { class: "cr-ring" }, el("div", { class: "cr-crest" }, (TENANT && TENANT.crest) ? crestEl(92) : /^[A-Z0-9]{2,6}( [A-Z0-9]{2,6})?$/.test(String(COLLEGE).trim()) ? el("span", { class: "cr-mono cr-acr" }, ...String(COLLEGE).trim().split(" ").map((w, i) => el("b", { class: i ? "sub" : "" }, w))) : el("span", { class: "cr-mono" }, (() => { const w = String(COLLEGE).replace(/\(.*?\)/g, " ").split(/[^A-Za-z0-9]+/).filter(x => x && !/^(of|and|the|for|in)$/i.test(x)); return (w.length === 1 ? w[0].slice(0, 5) : w.slice(0, 3).map(x => x[0]).join("")).toUpperCase(); })()))), el("span", { class: "cr-chip" }, "Welcome to")),
       el("div", { class: "cr-body" },
         el("h2", {}, COLLEGE), el("p", { class: "cr-full" }, full), place ? el("p", { class: "cr-place" }, "\u{1F4CD} " + place) : null,
-        ...(() => { const f = collegeFacts(SEL, kindGroup(dir.kind || (IS_RGUKT ? "Engineering university" : ""))); return [el("div", { class: "cr-stats" }, ...f.chips.map(t => el("span", {}, t)), el("span", {}, "Private board for your college")), el("p", { class: "cr-src" + (f.verified ? " ok" : "") }, el("b", {}, f.verified ? "Verified source: " : "Standard setup: "), f.note)]; })(),
+        ...(() => { const f = collegeFacts(SEL, kindGroup(dir.kind || (IS_RGUKT ? "Engineering university" : ""), dir.name)); return [el("div", { class: "cr-stats" }, ...f.chips.map(t => el("span", {}, t)), el("span", {}, "Private board for your college")), el("p", { class: "cr-src" + (f.verified ? " ok" : "") }, el("b", {}, f.verified ? "Verified source: " : "Standard setup: "), f.note)]; })(),
         el("p", { class: "cr-disc" }, "Independent student community. Not run or endorsed by the college."),
         el("button", { class: "btn primary cr-go", type: "button", onclick: close }, "Enter " + (COLLEGE.length > 22 ? "my college" : COLLEGE) + " \u2192"))));
   ov.style.setProperty("--c1", c1); ov.style.setProperty("--c2", c2);
@@ -4960,7 +4968,7 @@ function brainQuiz(wiki, n) {
   return qs;
 }
 let _solver = null;
-async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=438", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
+async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=439", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
 async function brainReply(text, chat) {
   const sv = await brainSolve(text); if (sv) return sv;
   const { kind, topic } = brainIntent(text, chat.topic || ""); chat.topic = topic;
@@ -5036,7 +5044,7 @@ async function safeSync() {
   } catch (_) { _safeLoaded = false; }
 }
 let _safeMod = null;
-const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=438", location.href).href); } catch (_) { return null; } };
+const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=439", location.href).href); } catch (_) { return null; } };
 function safeModal(title, lines, danger) {
   const prev = document.getElementById("safeModal"); if (prev) prev.remove();
   const ov = el("div", { class: "safe-ov", id: "safeModal", role: "alertdialog", "aria-modal": "true", "aria-label": title },
@@ -5074,7 +5082,7 @@ const bsFree = (lv) => lv <= 1 || IS_RGUKT;
 const BS_MODES = [["atlas", "Atlas", "Search anything", "Topics, doubts, maths and research, explained in easy words.", "Ask anything: a topic, doubt, problem or research idea"], ["launchpad", "Launchpad", "Project guide", "Turn an idea into a plan: objectives, tools, week-by-week steps, report outline and viva questions.", "Describe your project idea, e.g. IoT weather station"], ["forge", "Forge", "Find code", "Working code for classic problems in many languages, with the idea explained.", "e.g. binary search in Python"], ["aegis", "Aegis", "Learn security", "Understand how attacks work and how to defend, legally and safely.", "e.g. SQL injection, phishing, password safety"]];
 const bsModeInfo = (id) => BS_MODES.find(m => m[0] === id) || BS_MODES[0];
 let _modes = null;
-const brainModesMod = async () => { try { return _modes = _modes || await import(new URL("brain-modes.js?v=438", location.href).href); } catch (_) { return null; } };
+const brainModesMod = async () => { try { return _modes = _modes || await import(new URL("brain-modes.js?v=439", location.href).href); } catch (_) { return null; } };
 const PREF_KEY = "dd-bs-prefs", SAVED_KEY = "dd-bs-saved";
 const bsPrefs = () => { const p = readJSON(PREF_KEY, {}); return p && typeof p === "object" ? p : {}; };
 const bsState = () => state.bs || (state.bs = (() => { const p = bsPrefs(), ok = p.remember !== false;
@@ -5141,17 +5149,17 @@ function bsPool() {
 const bsSuggest = (text) => { const n = text.trim().toLowerCase(); if (n.length < 2) return []; return bsPool().filter(t => t.toLowerCase().includes(n)).sort((a, b) => a.length - b.length).slice(0, 6); };
 let _report = null;
 let _packs = null, _dgm = null;
-const brainDiagramsMod = async () => { try { return _dgm = _dgm || await import(new URL("brain-diagrams2.js?v=438", location.href).href); } catch (_) { return null; } };
+const brainDiagramsMod = async () => { try { return _dgm = _dgm || await import(new URL("brain-diagrams2.js?v=439", location.href).href); } catch (_) { return null; } };
 // All Loopy Knowledge Packs (digital design first, then ECE subjects). Returns { find(q), refs }.
 const brainPacksMod = async () => {
   if (_packs) return _packs;
   try {
-    const [m1, m2, m3] = await Promise.all([import(new URL("brain-packs.js?v=438", location.href).href), import(new URL("brain-packs-ece.js?v=438", location.href).href), import(new URL("brain-simple.js?v=438", location.href).href).catch(() => ({ SIMPLE: {} }))]);
+    const [m1, m2, m3] = await Promise.all([import(new URL("brain-packs.js?v=439", location.href).href), import(new URL("brain-packs-ece.js?v=439", location.href).href), import(new URL("brain-simple.js?v=439", location.href).href).catch(() => ({ SIMPLE: {} }))]);
     _packs = { refs: m2.REFS || {}, simple: m3.SIMPLE || {}, find: (q) => { const a = m1.packScore(q), b = m2.packScore(q); return (b.len > a.len ? b.p : a.p) || null; } };
   } catch (_) { _packs = null; }
   return _packs;
 };
-const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=438", location.href).href); } catch (_) { return null; } };
+const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=439", location.href).href); } catch (_) { return null; } };
 async function bsPapers(q) {
   try {
     const j = await lsFetch("https://api.openalex.org/works?per-page=5&select=title,publication_year,cited_by_count,doi,open_access,authorships,abstract_inverted_index&search=" + encodeURIComponent(q));

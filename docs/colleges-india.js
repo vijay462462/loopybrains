@@ -626,7 +626,6 @@
   { slug: "iit-kharagpur", name: "IIT Kharagpur", city: "Kharagpur", state: "West Bengal", kind: "National institute" },
   { slug: "nit-durgapur", name: "NIT Durgapur", city: "Durgapur", state: "West Bengal", kind: "National institute" },
   { slug: "iim-calcutta", name: "IIM Calcutta", city: "Kolkata", state: "West Bengal", kind: "National institute" },
-  { slug: "iiest-shibpur", name: "IIEST Shibpur", city: "Howrah", state: "West Bengal", kind: "National institute" },
   { slug: "iiser-kolkata", name: "IISER Kolkata", city: "Mohanpur", state: "West Bengal", kind: "National institute" },
   { slug: "iiit-kalyani", name: "IIIT Kalyani", city: "Kalyani", state: "West Bengal", kind: "National institute" },
   { slug: "aiims-kalyani", name: "AIIMS Kalyani", city: "Kalyani", state: "West Bengal", kind: "Medical college" },
@@ -753,4 +752,11 @@
   { slug: "perunthalaivar-kamarajar-institute-of", name: "Perunthalaivar Kamarajar Institute of Engineering and", city: "Karaikal", state: "Puducherry", kind: "Engineering college" },
   { slug: "tagore-arts-college", name: "Tagore Arts College", city: "Puducherry", state: "Puducherry", kind: "Degree college" },
   { slug: "mahatma-gandhi-government-arts-and", name: "Mahatma Gandhi Government Arts and Science College", city: "Mahe", state: "Puducherry", kind: "Degree college" },
+  // Premier institutes added later (please verify names and cities, one line each).
+  { slug: "iiser-berhampur", name: "IISER Berhampur", city: "Berhampur", state: "Odisha", kind: "National institute" },
+  { slug: "iiest-shibpur", name: "IIEST Shibpur", city: "Howrah", state: "West Bengal", kind: "National institute" },
+  { slug: "iiit-raichur", name: "IIIT Raichur", city: "Raichur", state: "Karnataka", kind: "National institute" },
+  { slug: "iiit-bhagalpur", name: "IIIT Bhagalpur", city: "Bhagalpur", state: "Bihar", kind: "National institute" },
+  { slug: "iiit-agartala", name: "IIIT Agartala", city: "Agartala", state: "Tripura", kind: "National institute" },
+  { slug: "iiit-bhopal", name: "IIIT Bhopal", city: "Bhopal", state: "Madhya Pradesh", kind: "National institute" }
 );
