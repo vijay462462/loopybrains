@@ -15,12 +15,12 @@ export function offensive(text) {
   return ATTACK_NOW.test(t);
 }
 // ---------- Code ----------
-const LANGS = [["c++", "C++", /(?:^|[\s,(])(?:c\+\+|cpp)(?=$|[\s,).])/i], ["c#", "C sharp", /(?:^|[\s,(])(?:c#|csharp|c sharp)(?=$|[\s,).])/i], ["python", "Python", /\b(python|py)\b/i], ["java", "Java", /\bjava\b(?!script)/i], ["javascript", "JavaScript", /\b(javascript|js|node(?:js)?)\b/i], ["go", "Go", /\b(golang|go lang)\b/i], ["rust", "Rust", /\brust\b/i], ["php", "PHP", /\bphp\b/i], ["ruby", "Ruby", /\bruby\b/i], ["kotlin", "Kotlin", /\bkotlin\b/i], ["swift", "Swift", /\bswift\b/i], ["sql", "SQL", /\bsql\b/i], ["c", "C", /(?:^|[\s,(])c(?=$|[\s,).])(?![+#])/i]];
-export const CODE_LANGS = ["Python", "C", "C++", "Java", "JavaScript", "C sharp", "Go", "Rust", "PHP", "Ruby", "Kotlin", "Swift"];
+const LANGS = [["c++", "C++", /(?:^|[\s,(])(?:c\+\+|cpp)(?=$|[\s,).])/i], ["c#", "C sharp", /(?:^|[\s,(])(?:c#|csharp|c sharp)(?=$|[\s,).])/i], ["python", "Python", /\b(python|py)\b/i], ["java", "Java", /\bjava\b(?!script)/i], ["javascript", "JavaScript", /\b(javascript|js|node(?:js)?)\b/i], ["go", "Go", /\b(golang|go lang)\b/i], ["rust", "Rust", /\brust\b/i], ["php", "PHP", /\bphp\b/i], ["ruby", "Ruby", /\bruby\b/i], ["kotlin", "Kotlin", /\bkotlin\b/i], ["swift", "Swift", /\bswift\b/i], ["sql", "SQL", /\bsql\b/i], ["verilog", "Verilog", /\b(verilog|verlog|veriloge)\b/i], ["vhdl", "VHDL", /\bvhdl\b/i], ["matlab", "MATLAB", /\b(matlab|octave)\b/i], ["r", "R", /(?:^|[\s,(])r(?:\s+language|\s+programming)(?=$|[\s,).])/i], ["scala", "Scala", /\bscala\b/i], ["perl", "Perl", /\bperl\b/i], ["bash", "Bash", /\b(bash|shell script)\b/i], ["c", "C", /(?:^|[\s,(])c(?=$|[\s,).])(?![+#])/i]];
+export const CODE_LANGS = ["Python", "C", "C++", "Java", "JavaScript", "C sharp", "Go", "Rust", "PHP", "Ruby", "Kotlin", "Swift", "Verilog", "VHDL", "MATLAB", "R", "Scala", "Perl", "Bash"];
 export function parseCodeQuery(q) {
   let rest = String(q || "").trim(), lang = "";
   for (const [, name, re] of LANGS) { if (re.test(rest)) { lang = name; rest = rest.replace(re, " "); break; } }
-  rest = rest.replace(/\b(write|code|program|programs|source code|implementation|implement|snippet|example|examples|how to|how do (?:i|you|u)|in|using|with|a|an|the|for|of|to|me|show|give|please|create|make)\b/gi, " ").replace(/\s+/g, " ").trim();
+  rest = rest.replace(/\b(write|code|cod|program|programs|source code|implementation|implement|snippet|example|examples|how to|how do (?:i|you|u)|in|using|with|a|an|the|for|of|to|me|show|give|please|create|make|design)\b/gi, " ").replace(/\s+/g, " ").trim();
   return { lang: lang || "Python", task: rest || String(q || "").trim(), langGiven: !!lang };
 }
 const stripWiki = (t) => String(t || "").replace(/\{\{[^{}]*\}\}/g, "").replace(/\[\[(?:[^\]|]*\|)?([^\]]*)\]\]/g, "$1").replace(/'''?/g, "").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
@@ -78,4 +78,56 @@ export function buildProject(topic, wiki, papers) {
     viva: ["What problem does your project solve, and for whom?", "Why did you choose these tools instead of others?", "Draw and explain your block diagram.", "How did you test your project, and what were the results?", "What are the limits of your project?", "How could it be improved or scaled?", "What did you do that is different from existing solutions?", "Explain one challenge you faced and how you solved it."],
     papers: papers || [],
   };
+}
+
+// ---------- Hardware description (Verilog and VHDL) for common digital blocks ----------
+const VH = "library ieee;\nuse ieee.std_logic_1164.all;\nuse ieee.numeric_std.all;\n\n";
+export const HDL = [
+  { keys: ["half adder"], title: "Half adder", what: "Adds two single bits. sum = a XOR b, carry = a AND b.", table: "a b | sum carry\n0 0 |  0    0\n0 1 |  1    0\n1 0 |  1    0\n1 1 |  0    1",
+    Verilog: "module half_adder(input a, b, output sum, carry);\n  assign sum   = a ^ b;\n  assign carry = a & b;\nendmodule",
+    VHDL: VH + "entity half_adder is\n  port (a, b : in std_logic; sum, carry : out std_logic);\nend entity;\n\narchitecture rtl of half_adder is\nbegin\n  sum   <= a xor b;\n  carry <= a and b;\nend architecture;" },
+  { keys: ["full adder"], title: "Full adder", what: "Adds three bits (a, b and carry-in). Two half adders and an OR gate make one.", table: "a b cin | sum cout\n0 0 0   |  0    0\n0 1 0   |  1    0\n1 1 0   |  0    1\n1 1 1   |  1    1",
+    Verilog: "module full_adder(input a, b, cin, output sum, cout);\n  assign sum  = a ^ b ^ cin;\n  assign cout = (a & b) | (b & cin) | (a & cin);\nendmodule\n\n// Testbench: tries all 8 input combinations\nmodule tb_full_adder;\n  reg a, b, cin; wire sum, cout; integer i;\n  full_adder dut(a, b, cin, sum, cout);\n  initial begin\n    $monitor(\"a=%b b=%b cin=%b -> sum=%b cout=%b\", a, b, cin, sum, cout);\n    for (i = 0; i < 8; i = i + 1) begin\n      {a, b, cin} = i[2:0];\n      #10;\n    end\n    $finish;\n  end\nendmodule",
+    VHDL: VH + "entity full_adder is\n  port (a, b, cin : in std_logic; sum, cout : out std_logic);\nend entity;\n\narchitecture rtl of full_adder is\nbegin\n  sum  <= a xor b xor cin;\n  cout <= (a and b) or (b and cin) or (a and cin);\nend architecture;" },
+  { keys: ["4 bit adder", "four bit adder", "ripple carry", "4bit adder", "n bit adder", "adder 4"], title: "4-bit ripple-carry adder", what: "Four full adders in a chain: each carry-out feeds the next carry-in. Simple, but the carry has to ripple through, so it gets slower as bits grow.",
+    Verilog: "module adder4(input [3:0] a, b, input cin, output [3:0] sum, output cout);\n  wire c1, c2, c3;\n  full_adder fa0(a[0], b[0], cin, sum[0], c1);\n  full_adder fa1(a[1], b[1], c1,  sum[1], c2);\n  full_adder fa2(a[2], b[2], c2,  sum[2], c3);\n  full_adder fa3(a[3], b[3], c3,  sum[3], cout);\nendmodule\n// uses the full_adder module from the full adder example",
+    VHDL: VH + "entity adder4 is\n  port (a, b : in std_logic_vector(3 downto 0); cin : in std_logic;\n        sum : out std_logic_vector(3 downto 0); cout : out std_logic);\nend entity;\n\narchitecture rtl of adder4 is\n  signal total : unsigned(4 downto 0);\n  signal c     : unsigned(0 downto 0);\nbegin\n  c(0)  <= cin;\n  total <= resize(unsigned(a), 5) + resize(unsigned(b), 5) + resize(c, 5);\n  sum   <= std_logic_vector(total(3 downto 0));\n  cout  <= total(4);\nend architecture;" },
+  { keys: ["2 to 1 mux", "2:1 mux", "mux 2", "multiplexer", "mux"], title: "2-to-1 multiplexer", what: "Chooses between two inputs: output = b when sel is 1, otherwise a.",
+    Verilog: "module mux2(input a, b, sel, output y);\n  assign y = sel ? b : a;\nendmodule\n\n// 4-to-1 version\nmodule mux4(input [3:0] d, input [1:0] s, output y);\n  assign y = d[s];\nendmodule",
+    VHDL: VH + "entity mux2 is\n  port (a, b, sel : in std_logic; y : out std_logic);\nend entity;\n\narchitecture rtl of mux2 is\nbegin\n  y <= b when sel = '1' else a;\nend architecture;" },
+  { keys: ["d flip flop", "d flip-flop", "dff", "flip flop", "flipflop"], title: "D flip-flop (synchronous reset)", what: "Copies d to q on every rising clock edge, and clears q when rst is 1.",
+    Verilog: "module dff(input clk, rst, d, output reg q);\n  always @(posedge clk) begin\n    if (rst) q <= 1'b0;\n    else     q <= d;\n  end\nendmodule",
+    VHDL: VH + "entity dff is\n  port (clk, rst, d : in std_logic; q : out std_logic);\nend entity;\n\narchitecture rtl of dff is\nbegin\n  process (clk)\n  begin\n    if rising_edge(clk) then\n      if rst = '1' then q <= '0'; else q <= d; end if;\n    end if;\n  end process;\nend architecture;" },
+  { keys: ["counter", "up counter", "4 bit counter", "binary counter"], title: "4-bit up counter", what: "Counts 0 to 15 on each clock edge while en is 1, then wraps to 0. rst clears it.",
+    Verilog: "module counter4(input clk, rst, en, output reg [3:0] count);\n  always @(posedge clk) begin\n    if (rst)     count <= 4'd0;\n    else if (en) count <= count + 1'b1;\n  end\nendmodule",
+    VHDL: VH + "entity counter4 is\n  port (clk, rst, en : in std_logic; count : out std_logic_vector(3 downto 0));\nend entity;\n\narchitecture rtl of counter4 is\n  signal c : unsigned(3 downto 0) := (others => '0');\nbegin\n  process (clk)\n  begin\n    if rising_edge(clk) then\n      if rst = '1' then c <= (others => '0');\n      elsif en = '1' then c <= c + 1;\n      end if;\n    end if;\n  end process;\n  count <= std_logic_vector(c);\nend architecture;" },
+  { keys: ["decoder", "2 to 4 decoder", "2:4 decoder"], title: "2-to-4 decoder with enable", what: "Turns a 2-bit number into one of four output lines going high (only when en is 1).",
+    Verilog: "module decoder2to4(input [1:0] a, input en, output reg [3:0] y);\n  always @(*) begin\n    y = 4'b0000;\n    if (en) y[a] = 1'b1;\n  end\nendmodule",
+    VHDL: VH + "entity decoder2to4 is\n  port (a : in std_logic_vector(1 downto 0); en : in std_logic; y : out std_logic_vector(3 downto 0));\nend entity;\n\narchitecture rtl of decoder2to4 is\nbegin\n  process (a, en)\n  begin\n    y <= \"0000\";\n    if en = '1' then y(to_integer(unsigned(a))) <= '1'; end if;\n  end process;\nend architecture;" },
+  { keys: ["shift register", "sipo"], title: "4-bit shift register (serial in, parallel out)", what: "Shifts one new bit in on every clock edge and keeps the last four bits.",
+    Verilog: "module shift4(input clk, rst, din, output reg [3:0] q);\n  always @(posedge clk) begin\n    if (rst) q <= 4'b0000;\n    else     q <= {q[2:0], din};\n  end\nendmodule",
+    VHDL: VH + "entity shift4 is\n  port (clk, rst, din : in std_logic; q : out std_logic_vector(3 downto 0));\nend entity;\n\narchitecture rtl of shift4 is\n  signal r : std_logic_vector(3 downto 0) := (others => '0');\nbegin\n  process (clk)\n  begin\n    if rising_edge(clk) then\n      if rst = '1' then r <= (others => '0'); else r <= r(2 downto 0) & din; end if;\n    end if;\n  end process;\n  q <= r;\nend architecture;" },
+  { keys: ["comparator"], title: "4-bit comparator", what: "Compares two 4-bit numbers and says which is greater, equal or less.",
+    Verilog: "module comparator4(input [3:0] a, b, output gt, eq, lt);\n  assign gt = (a > b);\n  assign eq = (a == b);\n  assign lt = (a < b);\nendmodule",
+    VHDL: VH + "entity comparator4 is\n  port (a, b : in std_logic_vector(3 downto 0); gt, eq, lt : out std_logic);\nend entity;\n\narchitecture rtl of comparator4 is\nbegin\n  gt <= '1' when unsigned(a) > unsigned(b) else '0';\n  eq <= '1' when unsigned(a) = unsigned(b) else '0';\n  lt <= '1' when unsigned(a) < unsigned(b) else '0';\nend architecture;" },
+];
+export const HDL_TOOLS = [["EDA Playground (run Verilog or VHDL in the browser, free)", "https://edaplayground.com/"], ["Icarus Verilog + GTKWave (free simulator)", "https://steveicarus.github.io/iverilog/"], ["Vivado ML Edition (free, for FPGA boards)", "https://www.xilinx.com/support/download.html"], ["HDLBits (practice Verilog problems)", "https://hdlbits.01xz.net/wiki/Main_Page"]];
+export function hdlFind(task) {
+  const t = String(task || "").toLowerCase().replace(/[-_]/g, " ").replace(/\s+/g, " ");
+  const hits = HDL.filter(e => e.keys.some(k => t.includes(k)));
+  if (hits.length) return hits;
+  if (/\badder\b/.test(t)) return HDL.filter(e => /adder/.test(e.title.toLowerCase())).slice(0, 3);
+  if (/\bflip\b/.test(t)) return HDL.filter(e => /flip/.test(e.title.toLowerCase()));
+  return [];
+}
+// Suggests the engine that fits the question best, or "" when the current one is fine.
+export function suggestMode(q) {
+  const t = String(q || "").toLowerCase();
+  if (/\b(verilog|vhdl|systemverilog)\b/.test(t)) return "forge";
+  const lang = /\b(python|java|javascript|c\+\+|cpp|c#|golang|rust|php|ruby|kotlin|swift|matlab|sql|bash)\b|(?:^|\s)c(?:\s|$)/.test(t);
+  if (/\b(code|program|programs|source code|snippet|script|algorithm in)\b/.test(t) && (lang || /\b(code|program|snippet)\b/.test(t))) return "forge";
+  if (lang && /\b(in|using|with)\b/.test(t)) return "forge";
+  if (/\b(sql injection|xss|csrf|phishing|ransomware|malware|cyber ?security|ethical hacking|owasp|encryption|firewall)\b/.test(t)) return "aegis";
+  if (/\b(project idea|project on|mini project|major project|final year project|project report|capstone)\b/.test(t)) return "launchpad";
+  return "";
 }

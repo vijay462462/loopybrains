@@ -4922,7 +4922,7 @@ function brainQuiz(wiki, n) {
   return qs;
 }
 let _solver = null;
-async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=425", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
+async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=426", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
 async function brainReply(text, chat) {
   const sv = await brainSolve(text); if (sv) return sv;
   const { kind, topic } = brainIntent(text, chat.topic || ""); chat.topic = topic;
@@ -4998,7 +4998,7 @@ async function safeSync() {
   } catch (_) { _safeLoaded = false; }
 }
 let _safeMod = null;
-const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=425", location.href).href); } catch (_) { return null; } };
+const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=426", location.href).href); } catch (_) { return null; } };
 function safeModal(title, lines, danger) {
   const prev = document.getElementById("safeModal"); if (prev) prev.remove();
   const ov = el("div", { class: "safe-ov", id: "safeModal", role: "alertdialog", "aria-modal": "true", "aria-label": title },
@@ -5036,7 +5036,7 @@ const bsFree = (lv) => lv <= 1 || (IS_RGUKT && lv === 2);
 const BS_MODES = [["atlas", "Atlas", "Search anything", "Topics, doubts, maths and research, explained in easy words.", "Ask anything: a topic, doubt, problem or research idea"], ["launchpad", "Launchpad", "Project guide", "Turn an idea into a plan: objectives, tools, week-by-week steps, report outline and viva questions.", "Describe your project idea, e.g. IoT weather station"], ["forge", "Forge", "Find code", "Working code for classic problems in many languages, with the idea explained.", "e.g. binary search in Python"], ["aegis", "Aegis", "Learn security", "Understand how attacks work and how to defend, legally and safely.", "e.g. SQL injection, phishing, password safety"]];
 const bsModeInfo = (id) => BS_MODES.find(m => m[0] === id) || BS_MODES[0];
 let _modes = null;
-const brainModesMod = async () => { try { return _modes = _modes || await import(new URL("brain-modes.js?v=425", location.href).href); } catch (_) { return null; } };
+const brainModesMod = async () => { try { return _modes = _modes || await import(new URL("brain-modes.js?v=426", location.href).href); } catch (_) { return null; } };
 const PREF_KEY = "dd-bs-prefs", SAVED_KEY = "dd-bs-saved";
 const bsPrefs = () => { const p = readJSON(PREF_KEY, {}); return p && typeof p === "object" ? p : {}; };
 const bsState = () => state.bs || (state.bs = (() => { const p = bsPrefs(), ok = p.remember !== false;
@@ -5102,7 +5102,7 @@ function bsPool() {
 }
 const bsSuggest = (text) => { const n = text.trim().toLowerCase(); if (n.length < 2) return []; return bsPool().filter(t => t.toLowerCase().includes(n)).sort((a, b) => a.length - b.length).slice(0, 6); };
 let _report = null;
-const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=425", location.href).href); } catch (_) { return null; } };
+const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=426", location.href).href); } catch (_) { return null; } };
 async function bsPapers(q) {
   try {
     const j = await lsFetch("https://api.openalex.org/works?per-page=5&select=title,publication_year,cited_by_count,doi,open_access,authorships,abstract_inverted_index&search=" + encodeURIComponent(q));
@@ -5233,6 +5233,7 @@ async function bsSubmit(q) {
   if (!(await safetyGate(q))) return;
   { const mm = await brainModesMod(); if (mm && mm.offensive(q)) { safeModal("I can\u2019t help with attacking people or systems", ["Loopy Brain teaches security so you can defend, not so you can break into accounts, devices or websites. That could hurt real people and is against the law.", "Try Aegis to learn how attacks work and how to stop them, or practise legally on free labs such as PortSwigger Academy, picoCTF or TryHackMe."], false); return; } }
   const solved = await brainSolve(q); if (solved) { bs.pending = ""; bsRun(q, solved); return; }
+  { const mm = await brainModesMod(), sg = mm && mm.suggestMode ? mm.suggestMode(q) : ""; if (sg && sg !== (bs.mode || "atlas")) { const nm = (BS_MODES.find(x => x[0] === sg) || [])[1] || sg; bs.mode = sg; showNotice("This looks like a " + (sg === "forge" ? "code" : sg === "aegis" ? "security" : "project") + " question, so I switched to " + nm + " for a better answer.", "ok"); } }
   if (bs.mode && bs.mode !== "atlas") { bs.pending = ""; bsRun(q); return; }
   bs.pending = q; bs.res = null; bs.q = q; bsPaint(true);
 }
@@ -5300,7 +5301,9 @@ async function bsRunMode(mode, q, id, lv, size) {
   const res = { mode, lv, size, effort: bsEffort(bs), board: [], syl: [], imgs: [], models: [], papers: [], page: "", report: null, topic: q };
   if (mode === "forge") {
     const pq = mm.parseCodeQuery(q), sm = _solver || await brainSolve("1+1").then(() => _solver).catch(() => null);
-    const [rc, wk] = await Promise.all([rosettaFind(pq.task), brainWiki(pq.task + " algorithm", "en").catch(() => null)]);
+    const hdl = mm.hdlFind ? mm.hdlFind(pq.task) : [], hw = hdl.length && (pq.lang === "Verilog" || pq.lang === "VHDL" || !pq.langGiven);
+    if (hw) res.hdl = hdl.slice(0, 3);
+    const [rc, wk] = await Promise.all([hw || pq.lang === "Verilog" || pq.lang === "VHDL" ? null : rosettaFind(pq.task), brainWiki(pq.task + (hw ? "" : " algorithm"), "en").catch(() => null)]);
     { const rm = wk && wk.conf === "ok" ? await brainReportMod() : null; res.uses = rm ? rm.uses(wk, 4) : []; }
     const f = sm && sm.FORMULAS ? sm.FORMULAS.find(x => pq.task.toLowerCase().includes(x[0])) : null;
     Object.assign(res, { topic: pq.task, lang: pq.lang, langGiven: pq.langGiven, code: rc, wiki: wk && wk.conf === "ok" ? { title: wk.title, intro: brainSentences(wk.intro).slice(0, 2).join(" "), page: wk.page } : null, formula: f ? { name: f[1], text: f[2] } : null });
@@ -5401,14 +5404,20 @@ function modeHero(r, tag, text) { const m = bsModeInfo(r.mode); return el("secti
 const copyBtn = (text, label) => el("button", { type: "button", class: "btn sm bsf-noprint", onclick: async (e) => { try { await navigator.clipboard.writeText(text); e.target.textContent = "Copied"; } catch (_) { e.target.textContent = "Press and hold to copy"; } } }, label || "Copy");
 function codeView(r) {
   const bs = bsState(), c = r.code, out = [modeHero(r, "Code", "Working examples and the idea behind them. Run the code and change it to learn.")];
-  if (c) {
+  if (r.hdl && r.hdl.length) {
+    const lang = r.lang === "VHDL" ? "VHDL" : "Verilog", other = lang === "VHDL" ? "Verilog" : "VHDL";
+    const bs2 = bsState(), pick = bs2.hdlLang || lang;
+    out.push(el("section", { class: "bsr-card bsr-reveal in" }, el("div", { class: "bs-chips" }, ...["Verilog", "VHDL"].map(l => el("button", { type: "button", class: "tp-sub" + (l === pick ? " strong" : ""), onclick: () => { bs2.hdlLang = l; bsPaint(); } }, l)))));
+    r.hdl.forEach(h => out.push(el("section", { class: "bsr-card bsr-reveal in" }, el("h3", {}, h.title), el("p", {}, h.what), h.table ? el("pre", { class: "bsr-code" }, el("code", {}, h.table)) : null, el("pre", { class: "bsr-code" }, el("code", {}, h[pick] || h[lang] || h[other])), el("div", { class: "rowbtns" }, copyBtn(h[pick] || h[lang] || h[other], "Copy code")))));
+    out.push(el("section", { class: "bsr-card bsr-reveal" }, el("h3", {}, "Run it and practise"), el("div", { class: "tp-chans" }, ...[["EDA Playground (free, in browser)", "https://edaplayground.com/"], ["Icarus Verilog (free simulator)", "https://steveicarus.github.io/iverilog/"], ["HDLBits practice", "https://hdlbits.01xz.net/wiki/Main_Page"]].map(([t, u]) => outLink(u, t, "tp-chan"))), el("small", { class: "hint" }, "These designs are hand-checked classics. Simulate them with a testbench before using them on a board.")));
+  } else if (c) {
     const avail = Object.keys(c.codes), order = ["Python", "C", "C++", "Java", "JavaScript", "C sharp", "Go", "Rust", "PHP", "Ruby", "Kotlin", "Swift"], langs = [...order.filter(l => avail.includes(l)), ...avail.filter(l => !order.includes(l))].slice(0, 14);
     const want = bs.codeLang && c.codes[bs.codeLang] ? bs.codeLang : c.codes[r.lang] ? r.lang : langs[0], missing = !c.codes[r.lang];
     out.push(el("section", { class: "bsr-card bsr-reveal in" }, el("h3", {}, c.title), c.desc ? el("p", {}, c.desc) : null, missing ? el("p", { class: "hint" }, "No " + r.lang + " version of this task was found, so showing " + want + ". Pick another language below.") : null,
       el("div", { class: "bs-chips" }, ...langs.map(l => el("button", { type: "button", class: "tp-sub" + (l === want ? " strong" : ""), onclick: () => { bs.codeLang = l; bsPaint(); } }, l === "C sharp" ? "C#" : l))),
       el("pre", { class: "bsr-code" }, el("code", {}, c.codes[want])), el("div", { class: "rowbtns" }, copyBtn(c.codes[want], "Copy code"), outLink(c.url, "Open on Rosetta Code", "btn sm bsf-noprint")),
       el("small", { class: "hint" }, "Code from Rosetta Code (GNU Free Documentation License 1.2). Read it, run it and change it. Do not submit it as your own work.")));
-  } else out.push(el("section", { class: "bsr-card bsr-reveal in" }, el("h3", {}, "No ready-made code found"), el("p", {}, "I could not find a classic example for “" + r.topic + "”. Try a well-known task name, for example “binary search”, “factorial”, “bubble sort” or “Fibonacci”, and add the language."), el("div", { class: "bs-chips" }, ...["binary search in Python", "bubble sort in C", "factorial in Java", "fibonacci in JavaScript"].map(t => el("button", { type: "button", class: "tp-sub", onclick: () => { bs.charged = ""; bsSubmit(t); } }, t)))));
+  } else if (!(r.hdl && r.hdl.length)) out.push(el("section", { class: "bsr-card bsr-reveal in" }, el("h3", {}, "No ready-made code found"), el("p", {}, "I could not find a classic example for “" + r.topic + "”. Try a well-known task name, for example “binary search”, “factorial”, “bubble sort” or “Fibonacci”, and add the language."), el("div", { class: "bs-chips" }, ...["binary search in Python", "bubble sort in C", "factorial in Java", "fibonacci in JavaScript"].map(t => el("button", { type: "button", class: "tp-sub", onclick: () => { bs.charged = ""; bsSubmit(t); } }, t)))));
   if (r.uses && r.uses.length) out.push(usesNode(r.uses, r.topic));
   if (r.wiki) out.push(el("section", { class: "bsr-card bsr-reveal" }, el("h3", {}, "The idea"), el("p", {}, r.wiki.intro), r.wiki.page ? outLink(r.wiki.page, "Read " + r.wiki.title + " on Wikipedia", "linkbtn") : null));
   if (r.formula) out.push(el("section", { class: "bsr-card bsr-reveal" }, el("h3", {}, "Quick facts"), el("p", { class: "bsr-s bsr-formula" }, el("span", { class: "bsr-tag" }, r.formula.name), r.formula.text)));
