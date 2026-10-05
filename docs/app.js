@@ -4863,7 +4863,7 @@ function brainQuiz(wiki, n) {
   return qs;
 }
 let _solver = null;
-async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=422", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
+async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=423", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
 async function brainReply(text, chat) {
   const sv = await brainSolve(text); if (sv) return sv;
   const { kind, topic } = brainIntent(text, chat.topic || ""); chat.topic = topic;
@@ -4938,7 +4938,7 @@ async function safeSync() {
   } catch (_) { _safeLoaded = false; }
 }
 let _safeMod = null;
-const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=422", location.href).href); } catch (_) { return null; } };
+const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=423", location.href).href); } catch (_) { return null; } };
 function safeModal(title, lines, danger) {
   const prev = document.getElementById("safeModal"); if (prev) prev.remove();
   const ov = el("div", { class: "safe-ov", id: "safeModal", role: "alertdialog", "aria-modal": "true", "aria-label": title },
@@ -4988,7 +4988,7 @@ function bsPool() {
 }
 const bsSuggest = (text) => { const n = text.trim().toLowerCase(); if (n.length < 2) return []; return bsPool().filter(t => t.toLowerCase().includes(n)).sort((a, b) => a.length - b.length).slice(0, 6); };
 let _report = null;
-const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=422", location.href).href); } catch (_) { return null; } };
+const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=423", location.href).href); } catch (_) { return null; } };
 async function bsPapers(q) {
   try {
     const j = await lsFetch("https://api.openalex.org/works?per-page=5&select=title,publication_year,cited_by_count,doi,open_access,authorships,abstract_inverted_index&search=" + encodeURIComponent(q));
@@ -5024,7 +5024,7 @@ function bsLimitModal(kind, L) {
     el("div", { class: "safe-card" }, el("div", { class: "safe-ic", "aria-hidden": "true" }, "⏳"), el("h3", {}, day ? "Today’s Loopy credits are used up" : "This week’s Loopy credits are used up"),
       el("p", {}, day ? "You have used all " + L.caps.day + " credits for today. They come back at midnight, India time." : "You have used all " + L.caps.week + " credits for this week. They come back on Monday."),
       el("p", {}, "Maths, conversions and formulas are still free, and Low effort costs the least."),
-      !hasPlusNow() ? el("button", { class: "btn primary", type: "button", onclick: () => { close(); if (bsEl()) bsClose(true); showPanel("plus"); } }, "See Campus Loop Plus") : null,
+      !hasPlusNow() && !IS_RGUKT ? el("button", { class: "btn primary", type: "button", onclick: () => { close(); if (bsEl()) bsClose(true); showPanel("plus"); } }, "See Campus Loop Plus") : null,
       el("button", { class: "btn", type: "button", onclick: close }, "OK")));
   document.body.append(ov);
 }
@@ -5206,10 +5206,10 @@ function brainView() {
   input.addEventListener("input", () => sug.replaceChildren(...bsSuggest(input.value).map(t => el("button", { type: "button", class: "bs-s", role: "option", onclick: () => go(t) }, el("span", { "aria-hidden": "true" }, "\u{1F50E}"), t))));
   const form = el("form", { class: "bs-bar", onsubmit: (e) => { e.preventDefault(); input.blur(); go(input.value); } }, input, el("button", { class: "bs-go", type: "submit", "aria-label": "Search" }, "Search"));
   const setLevel = (lv) => { if (!bsOpen(lv)) { bs.lock = lv; bsPaint(); return; } bs.level = lv; bs.lock = 0; if (bs.q && bs.res) bsRun(bs.q); else bsPaint(); };
-  const lvBar = el("div", { class: "bs-lvs bsf-noprint", role: "group", "aria-label": "Loopy model" }, ...BS_LEVELS.map(([n, t, , plus]) => { const open = bsOpen(n); return el("button", { type: "button", class: "bs-lv" + (bs.level === n && !bs.lock ? " on" : "") + (open ? "" : " locked"), "aria-pressed": String(bs.level === n), onclick: () => setLevel(n) }, el("b", {}, String(n)), el("span", {}, t), el("i", { class: "bs-tier" + (bsFree(n) ? "" : " plus") }, bsFree(n) ? "FREE" : open ? "PLUS" : "\u{1F512} PLUS")); }));
+  const lvBar = el("div", { class: "bs-lvs bsf-noprint", role: "group", "aria-label": "Loopy model" }, ...BS_LEVELS.map(([n, t, , plus]) => { const open = bsOpen(n); return el("button", { type: "button", class: "bs-lv" + (bs.level === n && !bs.lock ? " on" : "") + (open ? "" : " locked"), "aria-pressed": String(bs.level === n), onclick: () => setLevel(n) }, el("b", {}, String(n)), el("span", {}, t), el("i", { class: "bs-tier" + (bsFree(n) ? "" : " plus") }, bsFree(n) ? "FREE" : open ? (IS_RGUKT ? "BONUS" : "PLUS") : IS_RGUKT ? "\u{1F512} LOCKED" : "\u{1F512} PLUS")); }));
   const cur = BS_LEVELS[(bs.lock || bs.level) - 1], modelLine = el("p", { class: "bs-model bsf-noprint" }, el("b", {}, bsName(cur[0])), " · " + cur[2] + " ", el("span", { class: "bs-dots", "aria-label": "Depth " + cur[0] + " of 5" }, "●".repeat(cur[0]) + "○".repeat(5 - cur[0])));
-  const rgNote = el("p", { class: "bs-model bsf-noprint" }, IS_RGUKT ? "Loopy Spark and Scholar are free for RGUKT students. Vision, Sage and Apex are part of Campus Loop Plus." : "Loopy Spark is free. Scholar, Vision, Sage and Apex are part of Campus Loop Plus.");
-  const lockCard = bs.lock ? el("div", { class: "bs-lock", role: "status" }, el("strong", {}, bsName(bs.lock) + " is a Plus model"), el("p", {}, BS_LEVELS[bs.lock - 1][2] + ". " + (IS_RGUKT ? "Loopy Spark and Loopy Scholar are free for RGUKT students. Campus Loop Plus unlocks Loopy Vision, Sage and Apex." : "Loopy Spark is free for everyone. Campus Loop Plus unlocks Loopy Scholar, Vision, Sage and Apex.")), el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => bsLeave(() => showPanel("plus")) }, "See Campus Loop Plus"), el("button", { class: "btn sm", type: "button", onclick: () => { bs.lock = 0; bsPaint(); } }, "Stay on free models"))) : null;
+  const rgNote = el("p", { class: "bs-model bsf-noprint" }, IS_RGUKT ? "Loopy Spark and Scholar are free for RGUKT students." : "Loopy Spark is free. Scholar, Vision, Sage and Apex are part of Campus Loop Plus.");
+  const lockCard = bs.lock ? el("div", { class: "bs-lock", role: "status" }, el("strong", {}, bsName(bs.lock) + (IS_RGUKT ? " is not part of the free RGUKT plan" : " is a Plus model")), el("p", {}, BS_LEVELS[bs.lock - 1][2] + ". " + (IS_RGUKT ? "Loopy Spark and Loopy Scholar are free for RGUKT students." : "Loopy Spark is free for everyone. Campus Loop Plus unlocks Loopy Scholar, Vision, Sage and Apex.")), el("div", { class: "rowbtns" }, IS_RGUKT ? null : el("button", { class: "btn sm primary", type: "button", onclick: () => bsLeave(() => showPanel("plus")) }, "See Campus Loop Plus"), el("button", { class: "btn sm", type: "button", onclick: () => { bs.lock = 0; bsPaint(); } }, "Stay on free models"))) : null;
   const easyBtn = el("button", { type: "button", class: "bs-easy" + (bs.easy !== false ? " on" : ""), "aria-pressed": String(bs.easy !== false), onclick: () => { bs.easy = bs.easy === false; bsPaint(); } }, "Easy words: " + (bs.easy !== false ? "On" : "Off"));
   const offer = bsOffer(), offerBar = offer ? el("div", { class: "bs-offer bsf-noprint" }, el("b", {}, offer.title), offer.text ? el("span", {}, " " + offer.text) : null) : null, L = bsLeft(), pct = Math.round(Math.min(L.day / L.caps.day, L.week / L.caps.week) * 100);
   const meter = el("div", { class: "bs-credits bsf-noprint" + (pct <= 20 ? " low" : "") }, el("div", { class: "bs-cr-row" }, el("span", {}, "Today: " + L.day + " of " + L.caps.day + " credits"), el("span", {}, "This week: " + L.week + " of " + L.caps.week)), el("i", {}, el("b", { style: "width:" + pct + "%" })), el("small", {}, "Low costs 1, Medium 2, High 3. Maths and conversions are free."));
@@ -5222,7 +5222,7 @@ function brainView() {
   if (bs.busy) return [bar, head, el("div", { class: "bsr-load", role: "status" }, el("div", { class: "bsr-orb" }), el("p", {}, "Loopy is preparing your " + ((BS_SIZES.find(x => x[0] === bs.size) || [])[1] || "answer").toLowerCase() + " on “" + bs.q + "”…"), el("div", { class: "tp-skel", "aria-hidden": "true" }, el("i", {}), el("i", {}), el("i", {})))];
   if (bs.pending) {
     return [bar, head, el("section", { class: "bsr-ask bsr-reveal in" }, el("small", {}, "Your question"), el("h2", {}, bs.pending), el("p", { class: "hint" }, "How much do you need?"),
-      el("div", { class: "bsr-sizes" }, ...BS_SIZES.map(([id, name, hint, need], i) => { const open = bsOpen(need); return el("button", { type: "button", class: "bsr-size z" + i + (bs.size === id ? " pre" : ""), onclick: () => bsPickSize(id) }, el("b", {}, name), el("span", {}, hint), open ? null : el("i", {}, "\u{1F512} Plus")); })))];
+      el("div", { class: "bsr-sizes" }, ...BS_SIZES.map(([id, name, hint, need], i) => { const open = bsOpen(need); return el("button", { type: "button", class: "bsr-size z" + i + (bs.size === id ? " pre" : ""), onclick: () => bsPickSize(id) }, el("b", {}, name), el("span", {}, hint), open ? null : el("i", {}, IS_RGUKT ? "\u{1F512} Locked" : "\u{1F512} Plus")); })))];
   }
   if (!bs.res) {
     const C = window.RGUKT_CURRICULUM, rows = C ? ((C.data[curState.year] || {})[curState.branch] || []).map(r => r[0]).slice(0, 8) : [], rec = bsRecent();
