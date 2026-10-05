@@ -4925,7 +4925,7 @@ function brainQuiz(wiki, n) {
   return qs;
 }
 let _solver = null;
-async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=429", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
+async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=430", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
 async function brainReply(text, chat) {
   const sv = await brainSolve(text); if (sv) return sv;
   const { kind, topic } = brainIntent(text, chat.topic || ""); chat.topic = topic;
@@ -5001,7 +5001,7 @@ async function safeSync() {
   } catch (_) { _safeLoaded = false; }
 }
 let _safeMod = null;
-const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=429", location.href).href); } catch (_) { return null; } };
+const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=430", location.href).href); } catch (_) { return null; } };
 function safeModal(title, lines, danger) {
   const prev = document.getElementById("safeModal"); if (prev) prev.remove();
   const ov = el("div", { class: "safe-ov", id: "safeModal", role: "alertdialog", "aria-modal": "true", "aria-label": title },
@@ -5039,7 +5039,7 @@ const bsFree = (lv) => lv <= 1 || (IS_RGUKT && lv === 2);
 const BS_MODES = [["atlas", "Atlas", "Search anything", "Topics, doubts, maths and research, explained in easy words.", "Ask anything: a topic, doubt, problem or research idea"], ["launchpad", "Launchpad", "Project guide", "Turn an idea into a plan: objectives, tools, week-by-week steps, report outline and viva questions.", "Describe your project idea, e.g. IoT weather station"], ["forge", "Forge", "Find code", "Working code for classic problems in many languages, with the idea explained.", "e.g. binary search in Python"], ["aegis", "Aegis", "Learn security", "Understand how attacks work and how to defend, legally and safely.", "e.g. SQL injection, phishing, password safety"]];
 const bsModeInfo = (id) => BS_MODES.find(m => m[0] === id) || BS_MODES[0];
 let _modes = null;
-const brainModesMod = async () => { try { return _modes = _modes || await import(new URL("brain-modes.js?v=429", location.href).href); } catch (_) { return null; } };
+const brainModesMod = async () => { try { return _modes = _modes || await import(new URL("brain-modes.js?v=430", location.href).href); } catch (_) { return null; } };
 const PREF_KEY = "dd-bs-prefs", SAVED_KEY = "dd-bs-saved";
 const bsPrefs = () => { const p = readJSON(PREF_KEY, {}); return p && typeof p === "object" ? p : {}; };
 const bsState = () => state.bs || (state.bs = (() => { const p = bsPrefs(), ok = p.remember !== false;
@@ -5105,7 +5105,7 @@ function bsPool() {
 }
 const bsSuggest = (text) => { const n = text.trim().toLowerCase(); if (n.length < 2) return []; return bsPool().filter(t => t.toLowerCase().includes(n)).sort((a, b) => a.length - b.length).slice(0, 6); };
 let _report = null;
-const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=429", location.href).href); } catch (_) { return null; } };
+const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=430", location.href).href); } catch (_) { return null; } };
 async function bsPapers(q) {
   try {
     const j = await lsFetch("https://api.openalex.org/works?per-page=5&select=title,publication_year,cited_by_count,doi,open_access,authorships,abstract_inverted_index&search=" + encodeURIComponent(q));
@@ -5243,12 +5243,41 @@ function bsChat(q) {
   if (/^((hey|hi|hii+|hello+|hlo|helo|hola|yo|namaste|hey there|hi there|hello there|good morning|good afternoon|good evening|gm)( |$))+(loopy|bro|there|buddy|friend|all)?$/.test(t) || /^(hey+|hi+|hello+|hlo|hola|yo|namaste)$/.test(t)) return pick(["Hi" + hi + "! I am Loopy.", "Hello" + hi + "! Nice to see you.", "Hey" + hi + "! Good to see you."]) + ask;
   return "";
 }
+// Fun answers for everyday questions: jokes, riddles, fun facts, mood, coin and dice. Free, instant, no network.
+const BSF_JOKES = ["Why did the student eat his homework? The teacher said it was a piece of cake! \u{1F370}", "Why was the computer cold? It left its Windows open! \u{1FA9F}", "Why do programmers prefer dark mode? Because light attracts bugs! \u{1F41B}", "I told my Wi-Fi we need to talk. Now we have a better connection. \u{1F4F6}", "Why did the math book look sad? It had too many problems. ➕", "What do you call a sleeping bull in class? A bulldozer! \u{1F634}", "Why was the equal sign so humble? It knew it was not less than or greater than anyone. \u{1F7F0}", "A SQL query walks into a bar, sees two tables and asks: can I join you? \u{1F37B}", "Why did the transistor go to school? To get a little more gain! ⚡", "How does a student fix a broken pencil? There is no point. ✏️", "Why did the scarecrow win a prize? He was outstanding in his field! \u{1F33E}", "Why was the stadium cool? It was full of fans! \u{1F3DF}️"];
+const BSF_RIDDLES = [["What has keys but cannot open locks?", "A keyboard! ⌨️"], ["What gets wetter the more it dries?", "A towel! \u{1F9FA}"], ["I speak without a mouth and hear without ears. What am I?", "An echo! \u{1F5E3}️"], ["What has a head and a tail but no body?", "A coin! \u{1FA99}"], ["The more you take, the more you leave behind. What am I?", "Footsteps! \u{1F463}"], ["What can travel around the world while staying in one corner?", "A stamp! ✉️"], ["What has hands but cannot clap?", "A clock! \u{1F570}️"]];
+const BSF_FACTS = ["Honey never spoils. Jars of honey over 3,000 years old were found in Egyptian tombs and were still safe to eat. \u{1F36F}", "A day on Venus is longer than a year on Venus. It spins very slowly. \u{1FA90}", "Octopuses have three hearts and blue blood. \u{1F419}", "The first computer bug was a real moth stuck inside a Harvard computer in 1947. \u{1F98B}", "Bananas are slightly radioactive because of potassium, but completely safe. \u{1F34C}", "Your brain uses about 20 percent of your body’s energy, even though it is only about 2 percent of your weight. \u{1F9E0}", "Light from the Sun takes about 8 minutes to reach Earth. ☀️", "Wombat poop is cube shaped. \u{1F9CA}", "The Eiffel Tower grows about 15 cm taller in summer because metal expands in the heat. \u{1F5FC}", "India has the most post offices of any country in the world. \u{1F4EE}", "A group of flamingos is called a flamboyance. \u{1F9A9}", "There are more possible chess games than atoms in the observable universe. ♟️"];
+const BSF_PUSH = ["You do not have to be perfect, you only have to be consistent. One small study session today beats a big plan for tomorrow. \u{1F4AA}", "Every topper was once confused in the same class you are in. Keep asking questions. \u{1F331}", "Study for 25 minutes, rest for 5, repeat. Your brain loves that rhythm. ⏱️", "Small steps every day. A chapter a day is 30 chapters a month. \u{1F4DA}", "Tough subject today? Break it into three tiny parts and finish only the first. You will feel the difference. ✅"];
+const BSF_BORED = ["Try this: pick any topic you know nothing about and search it here. Five minutes later you will know more than most people. \u{1F680}", "Challenge: take today’s Daily Quiz, then ask me for a riddle or a fun fact. \u{1F9E0}", "Ask me for a joke, a riddle, a fun fact, or flip a coin. I am ready! \u{1F3B2}"];
+let _funN = 0; const bsfPick = (a) => a[(_funN++ + Math.floor(Math.random() * a.length)) % a.length];
+function bsFun(q) {
+  const t = String(q || "").toLowerCase().replace(/[^a-z0-9\s']/g, " ").replace(/\s+/g, " ").trim(); if (!t || t.split(" ").length > 12) return "";
+  const name = ((readJSON("dd-name", "") || "") + "").split(" ")[0], hi = name ? ", " + name : "";
+  if (/\b(want to die|kill myself|end my life|suicide|self harm|hurt myself|no reason to live)\b/.test(t)) return "I am really sorry you are hurting" + hi + ". You matter, and you do not have to carry this alone. Please talk to someone you trust right now, a friend, a family member or a teacher. In India you can call Tele-MANAS, free and private, 24 hours: 14416. If you are in danger, call 112. I am here too. ❤️";
+  if (/^(explain|define|describe|what is|what are|what s|why does|why do|how does|how do|write|essay|theory|history|types of|difference|compare|notes|derive|prove)\b/.test(t) && !/^what s? ?(is )?(the )?(time|date|day)\b/.test(t) && !/^what is (the )?(time|date|day)\b/.test(t)) return "";
+  if (/\b(sad|depressed|stressed|stress|anxious|anxiety|lonely|tired|burnt out|burned out|overwhelmed|worried|scared|demotivated|unmotivated|feeling low|bad day)\b/.test(t) && /\b(i am|i m|im|i feel|feeling|so|very|really|today)\b/.test(t)) return "I am sorry you feel that way" + hi + ". It is okay, many students feel the same, especially in exam time. Take 3 slow breaths, drink some water, and do just one small task. If it keeps going for days, talk to a friend, a senior or a counsellor. You are doing better than you think. \u{1F917}\n\n" + bsfPick(BSF_PUSH);
+  if (/\b(joke|jokes|make me laugh|funny|laugh)\b/.test(t) && !/\b(about|history|meaning|define)\b/.test(t)) return bsfPick(BSF_JOKES) + "\n\nAsk again for another one! \u{1F604}";
+  if (/\b(riddle|puzzle me|brain teaser)\b/.test(t)) { const r = bsfPick(BSF_RIDDLES); return "Riddle time! \u{1F9E9}\n\n" + r[0] + "\n\nThink first... then read on.\n\nAnswer: " + r[1]; }
+  if (/\b(fun fact|interesting fact|amazing fact|random fact|did you know|tell me a fact|tell me something)\b/.test(t)) return "Fun fact! \u{1F92F}\n\n" + bsfPick(BSF_FACTS);
+  if (/\b(motivate|motivation|inspire|inspiration|encourage|cheer me)\b/.test(t) && !/\b(theory|letter|speech on)\b/.test(t)) return bsfPick(BSF_PUSH);
+  if (/\b(bored|boring|nothing to do)\b/.test(t)) return bsfPick(BSF_BORED);
+  if (/\b(flip a coin|toss a coin|coin toss|heads or tails)\b/.test(t)) return Math.random() < .5 ? "I flipped a coin... it is HEADS! \u{1FA99}" : "I flipped a coin... it is TAILS! \u{1FA99}";
+  if (/\b(roll a dice|roll a die|roll dice|throw a dice|dice roll)\b/.test(t)) return "I rolled the dice... you got a " + (1 + Math.floor(Math.random() * 6)) + "! \u{1F3B2}";
+  { const m = t.match(/\b(?:random number|pick a number|number)\s+(?:between|from)\s+(\d{1,6})\s+(?:and|to)\s+(\d{1,6})\b/); if (m) { const a = Math.min(+m[1], +m[2]), b = Math.max(+m[1], +m[2]); return "My pick between " + a + " and " + b + " is " + (a + Math.floor(Math.random() * (b - a + 1))) + ". \u{1F3AF}"; } }
+  if (/\b(what is|whats|what s|tell me)\b.*\b(time|date|day|today)\b/.test(t) && !/\b(complexity|travel|dilation|series|domain|value)\b/.test(t)) { const d = new Date(); return "It is " + d.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long", year: "numeric" }) + ", " + d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }) + " on your phone. ⏰ Make today count!"; }
+  if (/\b(who made you|who built you|who created you|who is your creator|who developed you|who owns you)\b/.test(t)) return "I was built for students, by a student, inside The Campus Loop. I am not a person and I am not a big company AI. I search trusted open sources and my own built-in guides to help you learn. \u{1F916}";
+  if (/\b(do you love me|i love you|marry me|be my (friend|girlfriend|boyfriend)|are you single)\b/.test(t)) return "Aww, thank you! \u{1F60A} I am a study helper, so I will stay your learning buddy. Let us put that energy into your next exam! What shall we learn?";
+  if (/\b(favou?rite (colou?r|food|subject|movie|song))\b/.test(t)) return "I love purple and gold, because that is what this app wears. \u{1F49C} My favourite subject is whatever you are curious about right now. What is yours?";
+  if (/\b(are you smart|are you intelligent|are you better than|you are (stupid|dumb|useless))\b/.test(t)) return "I am a helper that gets better with your feedback. \u{1F604} Tell me what went wrong using Feedback and ideas, and I will learn from it. Meanwhile, try me with a topic!";
+  if (/\b(good luck|wish me luck|exam tomorrow|exam today|have an exam)\b/.test(t) && t.split(" ").length < 9) return "Good luck" + hi + "! \u{1F340} Sleep well, revise only key points, carry your hall ticket and stay calm. You have prepared more than you think.";
+  return "";
+}
 async function bsSubmit(q) {
   q = lsClean(q); if (q.length < 2) return; const bs = bsState();
   if (/[^\u0000-\u024F\u2000-\u206F\u00A0-\u00FF]/.test(q) && ahWords(q).length === 0) { showNotice("Loopy Search works with English words for now. Please type your topic in English.", "err"); return; }
   if (!(await safetyGate(q))) return;
   { const mm = await brainModesMod(); if (mm && mm.offensive(q)) { safeModal("I can\u2019t help with attacking people or systems", ["Loopy Brain teaches security so you can defend, not so you can break into accounts, devices or websites. That could hurt real people and is against the law.", "Try Aegis to learn how attacks work and how to stop them, or practise legally on free labs such as PortSwigger Academy, picoCTF or TryHackMe."], false); return; } }
-  { const talk = bsChat(q); if (talk) { bs.pending = ""; bsRun(q, talk); return; } }
+  { const talk = bsChat(q) || bsFun(q); if (talk) { bs.pending = ""; bsRun(q, talk); return; } }
   const solved = await brainSolve(q); if (solved) { bs.pending = ""; bsRun(q, solved); return; }
   { const mm = await brainModesMod(), sg = mm && mm.suggestMode ? mm.suggestMode(q) : ""; if (sg && sg !== (bs.mode || "atlas")) { const nm = (BS_MODES.find(x => x[0] === sg) || [])[1] || sg; bs.mode = sg; showNotice("This looks like a " + (sg === "forge" ? "code" : sg === "aegis" ? "security" : "project") + " question, so I switched to " + nm + " for a better answer.", "ok"); } }
   if (bs.mode && bs.mode !== "atlas") { bs.pending = ""; bsRun(q); return; }
