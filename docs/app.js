@@ -1375,6 +1375,7 @@ function trackNew(coll, rows) {
 // ---------- bottom navigation ----------
 // Line icons (inline SVG, drawn with code, no markup strings) for navigation.
 const ICON_PATHS = {
+  mic: ["M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z", "M5 11a7 7 0 0 0 14 0", "M12 18v3"],
   atlas: ["M12 3a9 9 0 1 0 0 18a9 9 0 0 0 0-18z", "M15.5 8.5l-2 5l-5 2l2-5z"],
   launchpad: ["M4 9h16", "M6 5h12", "M5 9l1 10h12l1-10"],
   forge: ["M8 7l-5 5l5 5", "M16 7l5 5l-5 5", "M14 5l-4 14"],
@@ -4968,7 +4969,7 @@ function brainQuiz(wiki, n) {
   return qs;
 }
 let _solver = null;
-async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=441", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
+async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=442", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
 async function brainReply(text, chat) {
   const sv = await brainSolve(text); if (sv) return sv;
   const { kind, topic } = brainIntent(text, chat.topic || ""); chat.topic = topic;
@@ -5044,7 +5045,7 @@ async function safeSync() {
   } catch (_) { _safeLoaded = false; }
 }
 let _safeMod = null;
-const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=441", location.href).href); } catch (_) { return null; } };
+const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=442", location.href).href); } catch (_) { return null; } };
 function safeModal(title, lines, danger) {
   const prev = document.getElementById("safeModal"); if (prev) prev.remove();
   const ov = el("div", { class: "safe-ov", id: "safeModal", role: "alertdialog", "aria-modal": "true", "aria-label": title },
@@ -5082,7 +5083,7 @@ const bsFree = (lv) => lv <= 1 || IS_RGUKT;
 const BS_MODES = [["atlas", "Atlas", "Search anything", "Topics, doubts, maths and research, explained in easy words.", "Ask anything: a topic, doubt, problem or research idea"], ["launchpad", "Launchpad", "Project guide", "Turn an idea into a plan: objectives, tools, week-by-week steps, report outline and viva questions.", "Describe your project idea, e.g. IoT weather station"], ["forge", "Forge", "Find code", "Working code for classic problems in many languages, with the idea explained.", "e.g. binary search in Python"], ["aegis", "Aegis", "Learn security", "Understand how attacks work and how to defend, legally and safely.", "e.g. SQL injection, phishing, password safety"]];
 const bsModeInfo = (id) => BS_MODES.find(m => m[0] === id) || BS_MODES[0];
 let _modes = null;
-const brainModesMod = async () => { try { return _modes = _modes || await import(new URL("brain-modes.js?v=441", location.href).href); } catch (_) { return null; } };
+const brainModesMod = async () => { try { return _modes = _modes || await import(new URL("brain-modes.js?v=442", location.href).href); } catch (_) { return null; } };
 const PREF_KEY = "dd-bs-prefs", SAVED_KEY = "dd-bs-saved";
 const bsPrefs = () => { const p = readJSON(PREF_KEY, {}); return p && typeof p === "object" ? p : {}; };
 const bsState = () => state.bs || (state.bs = (() => { const p = bsPrefs(), ok = p.remember !== false;
@@ -5149,17 +5150,17 @@ function bsPool() {
 const bsSuggest = (text) => { const n = text.trim().toLowerCase(); if (n.length < 2) return []; return bsPool().filter(t => t.toLowerCase().includes(n)).sort((a, b) => a.length - b.length).slice(0, 6); };
 let _report = null;
 let _packs = null, _dgm = null;
-const brainDiagramsMod = async () => { try { return _dgm = _dgm || await import(new URL("brain-diagrams2.js?v=441", location.href).href); } catch (_) { return null; } };
+const brainDiagramsMod = async () => { try { return _dgm = _dgm || await import(new URL("brain-diagrams2.js?v=442", location.href).href); } catch (_) { return null; } };
 // All Loopy Knowledge Packs (digital design first, then ECE subjects). Returns { find(q), refs }.
 const brainPacksMod = async () => {
   if (_packs) return _packs;
   try {
-    const [m1, m2, m3] = await Promise.all([import(new URL("brain-packs.js?v=441", location.href).href), import(new URL("brain-packs-ece.js?v=441", location.href).href), import(new URL("brain-simple.js?v=441", location.href).href).catch(() => ({ SIMPLE: {} }))]);
-    _packs = { refs: m2.REFS || {}, simple: m3.SIMPLE || {}, find: (q) => { const a = m1.packScore(q), b = m2.packScore(q); return (b.len > a.len ? b.p : a.p) || null; } };
+    const [m1, m2, m3] = await Promise.all([import(new URL("brain-packs.js?v=442", location.href).href), import(new URL("brain-packs-ece.js?v=442", location.href).href), import(new URL("brain-simple.js?v=442", location.href).href).catch(() => ({ SIMPLE: {} }))]);
+    _packs = { all: [...m1.PACKS, ...m2.PACKS_ECE], refs: m2.REFS || {}, simple: m3.SIMPLE || {}, find: (q) => { const a = m1.packScore(q), b = m2.packScore(q); return (b.len > a.len ? b.p : a.p) || null; } };
   } catch (_) { _packs = null; }
   return _packs;
 };
-const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=441", location.href).href); } catch (_) { return null; } };
+const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=442", location.href).href); } catch (_) { return null; } };
 async function bsPapers(q) {
   try {
     const j = await lsFetch("https://api.openalex.org/works?per-page=5&select=title,publication_year,cited_by_count,doi,open_access,authorships,abstract_inverted_index&search=" + encodeURIComponent(q));
@@ -5430,7 +5431,7 @@ async function bsSubmit(q) {
   if (!(await safetyGate(q))) return;
   { const mm = await brainModesMod(); if (mm && mm.offensive(q)) { safeModal("I can\u2019t help with attacking people or systems", ["Loopy Brain teaches security so you can defend, not so you can break into accounts, devices or websites. That could hurt real people and is against the law.", "Try Aegis to learn how attacks work and how to stop them, or practise legally on free labs such as PortSwigger Academy, picoCTF or TryHackMe."], false); return; } }
   { const talk = bsChat(q) || bsFun(q); if (talk) { bs.pending = ""; bsRun(q, talk); return; } }
-  const solved = await brainSolve(q); if (solved) { bs.pending = ""; bsRun(q, solved); return; }
+  const solved = bs.forcePack ? null : await brainSolve(q); if (solved) { bs.pending = ""; bsRun(q, solved); return; }
   { const mm = await brainModesMod(), sg = mm && mm.suggestMode ? mm.suggestMode(q) : ""; if (sg && sg !== (bs.mode || "atlas")) { const nm = (BS_MODES.find(x => x[0] === sg) || [])[1] || sg; bs.mode = sg; showNotice("This looks like a " + (sg === "forge" ? "code" : sg === "aegis" ? "security" : "project") + " question, so I switched to " + nm + " for a better answer.", "ok"); } }
   if (bs.mode && bs.mode !== "atlas") { bs.pending = ""; bsRun(q); return; }
   bs.pending = q; bs.res = null; bs.q = q; bsPaint(true);
@@ -5465,7 +5466,7 @@ async function bsRun(q, solved) {
     const [ia, ib] = cmp ? await Promise.all([ahArticleImages(cmp.a.title).catch(() => []), ahArticleImages(cmp.b.title).catch(() => [])]) : [[], []];
     if (cmp && mod0) { bs.res = { usesA: mod0.uses(cmp.a, 3), usesB: mod0.uses(cmp.b, 3), imgsA: ia.slice(0, 2), imgsB: ib.slice(0, 2), topic: cmp.a.title + " vs " + cmp.b.title, lv, size, effort: bsEffort(bs), compare: Object.assign({ rows: mod0.compareRows(cmp.a, cmp.b), terms: mod0.compareTerms(cmp.a, cmp.b) }, cmp), easyFn: mod0.easy, board: lv >= 2 ? brainBoard(cmpIntent.a + " " + cmpIntent.b, 3) : [], syl: [], imgs: [], models: [], papers: [], page: "", report: null }; bs.ans = ""; bs.busy = false; bsPaint(true); return; }
   }
-  const pkm = await brainPacksMod(), pack = pkm ? pkm.find(q) : null; if (pack && pack.diagrams && pack.diagrams.length) await brainDiagramsMod();
+  const pkm = await brainPacksMod(), forced = bs.forcePack; bs.forcePack = ""; const pack = pkm ? ((forced && pkm.all.find(p => p.id === forced)) || pkm.find(q)) : null; if (pack && pack.diagrams && pack.diagrams.length) await brainDiagramsMod();
   const chat = { topic: "" };
   const [ans, imgs, models, papers] = await Promise.all([brainReply(q, chat).catch(() => ""), lv >= 3 ? ahCommons(short + " diagram").catch(() => []) : [], lv >= 3 ? tpModels(short).catch(() => []) : [], size === "full" && lv >= 4 ? bsPapers(topic) : []]);
   if (id !== bs.id) return;
@@ -5684,40 +5685,67 @@ function brainView() {
   if (safeBlocked()) return [el("section", { class: "bsr-blocked" }, el("div", { class: "safe-ic", "aria-hidden": "true" }, "!"), el("h2", {}, "Loopy Search is blocked"), ...SAFE_BLOCKED_LINES.map(t => el("p", {}, t)), el("div", { class: "rowbtns" }, back))];
   const input = el("input", { type: "search", class: "bs-in", maxlength: "120", placeholder: mi[4], "aria-label": "Search", autocomplete: "off", enterkeyhint: "search", value: bs.q });
   const sug = el("div", { class: "bs-sug", role: "listbox" });
+  { const EX = bs.mode === "forge" ? ["binary search in Python", "Verilog code for a counter", "bubble sort in C", "factorial in Java"] : bs.mode === "launchpad" ? ["IoT weather station", "attendance system with face recognition", "smart irrigation", "library website"] : bs.mode === "aegis" ? ["how SQL injection works", "spot a phishing email", "strong password habits", "what is two-factor login"] : ["explain the Bode plot", "half adder circuit", "Bayes theorem with an example", "difference between FIR and IIR"]; let i = 0; clearInterval(bs._phT);
+    if (!bs.res && !bs.pending) { input.placeholder = "Try: " + EX[0]; bs._phT = setInterval(() => { if (!document.body.contains(input)) { clearInterval(bs._phT); return; } if (input.value || document.activeElement === input) return; i = (i + 1) % EX.length; input.placeholder = "Try: " + EX[i]; }, 3200); } }
   const go = (t) => { sug.replaceChildren(); input.value = t; bsSubmit(t); };
   input.addEventListener("input", () => sug.replaceChildren(...bsSuggest(input.value).map(t => el("button", { type: "button", class: "bs-s", role: "option", onclick: () => go(t) }, el("span", { "aria-hidden": "true" }, "\u{1F50E}"), t))));
-  const form = el("form", { class: "bs-bar", onsubmit: (e) => { e.preventDefault(); input.blur(); go(input.value); } }, input, el("button", { class: "bs-go", type: "submit", "aria-label": "Search" }, "Search"));
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const mic = SR ? el("button", { class: "bs-mic", type: "button", "aria-label": "Search by voice", title: "Search by voice", onclick: () => {
+    if (mic.classList.contains("on")) { try { mic._rec && mic._rec.stop(); } catch (_) {} return; }
+    if (!readJSON("dd-voice-note", false)) { writeJSON("dd-voice-note", true); showNotice("Voice search uses your browser\u2019s speech service. Say your question after the beep.", ""); }
+    try { const rec = new SR(); mic._rec = rec; rec.lang = "en-IN"; rec.interimResults = false; rec.maxAlternatives = 1; mic.classList.add("on");
+      rec.onresult = (ev) => { const t = ev.results && ev.results[0] && ev.results[0][0] ? ev.results[0][0].transcript : ""; if (t) { input.value = t; go(t); } };
+      rec.onerror = () => { showNotice("I could not hear you. Please try again or type your question.", "err"); };
+      rec.onend = () => { mic.classList.remove("on"); }; rec.start(); } catch (_) { mic.classList.remove("on"); showNotice("Voice search is not available in this browser.", "err"); } } }, svgIcon("mic")) : null;
+  const clearBtn = el("button", { class: "bs-clear", type: "button", "aria-label": "Clear", hidden: bs.q ? null : "", onclick: () => { input.value = ""; clearBtn.hidden = true; sug.replaceChildren(); input.focus(); } }, "\u2715");
+  input.addEventListener("input", () => { clearBtn.hidden = !input.value; });
+  const form = el("form", { class: "bs-bar", onsubmit: (e) => { e.preventDefault(); input.blur(); go(input.value); } }, el("span", { class: "bs-lead", "aria-hidden": "true" }, svgIcon(bs.mode || "atlas")), input, clearBtn, mic, el("button", { class: "bs-go", type: "submit", "aria-label": "Search" }, "\u2192"));
   const setLevel = (lv) => { if (!bsOpen(lv)) { bs.lock = lv; bsPaint(); return; } bs.level = lv; bs.lock = 0; bsRemember(); if (bs.q && bs.res) bsRun(bs.q); else bsPaint(); };
   const lvBar = el("div", { class: "bs-lvs bsf-noprint", role: "group", "aria-label": "Loopy model" }, ...BS_LEVELS.map(([n, t, , plus]) => { const open = bsOpen(n); return el("button", { type: "button", class: "bs-lv" + (bs.level === n && !bs.lock ? " on" : "") + (open ? "" : " locked"), "aria-pressed": String(bs.level === n), onclick: () => setLevel(n) }, el("b", {}, String(n)), el("span", {}, t), el("i", { class: "bs-tier" + (bsFree(n) ? "" : " plus") }, bsFree(n) ? "FREE" : open ? (IS_RGUKT ? "BONUS" : "PLUS") : IS_RGUKT ? "\u{1F512} LOCKED" : "\u{1F512} PLUS")); }));
   const cur = BS_LEVELS[(bs.lock || bs.level) - 1], modelLine = el("p", { class: "bs-model bsf-noprint" }, el("b", {}, bsName(cur[0])), " · " + cur[2] + " ", el("span", { class: "bs-dots", "aria-label": "Depth " + cur[0] + " of 5" }, "●".repeat(cur[0]) + "○".repeat(5 - cur[0])));
   const rgNote = el("p", { class: "bs-model bsf-noprint" }, IS_RGUKT ? "All five Loopy models are free for RGUKT students." : "Loopy Spark is free. Scholar, Vision, Sage and Apex are part of Campus Loop Plus.");
   const lockCard = bs.lock ? el("div", { class: "bs-lock", role: "status" }, el("strong", {}, bsName(bs.lock) + (IS_RGUKT ? " is not part of the free RGUKT plan" : " is a Plus model")), el("p", {}, BS_LEVELS[bs.lock - 1][2] + ". " + (IS_RGUKT ? "All Loopy models are free for RGUKT students." : "Loopy Spark is free for everyone. Campus Loop Plus unlocks Loopy Scholar, Vision, Sage and Apex.")), el("div", { class: "rowbtns" }, IS_RGUKT ? null : el("button", { class: "btn sm primary", type: "button", onclick: () => bsLeave(() => showPanel("plus")) }, "See Campus Loop Plus"), el("button", { class: "btn sm", type: "button", onclick: () => { bs.lock = 0; bsPaint(); } }, "Stay on free models"))) : null;
   const setMode = (id) => { if (bs.mode === id) return; bs.mode = id; bsRemember(); bs.lock = 0; if (bs.q && bs.res && !bs.res.disambig) bsSubmit(bs.q); else bsPaint(); };
-  const modeBar = el("div", { class: "bs-modes bsf-noprint" + (bs.res ? " compact" : ""), role: "tablist", "aria-label": "Loopy Brain engine" }, ...BS_MODES.map(m => el("button", { type: "button", role: "tab", class: "bs-mode" + (bs.mode === m[0] ? " on" : ""), "aria-selected": String(bs.mode === m[0]), onclick: () => setMode(m[0]) }, svgIcon(m[0]), el("span", {}, el("b", {}, m[1]), el("small", {}, m[2])))));
+  const modeBar = el("div", { class: "bs-modes bsf-noprint" + (bs.res ? " compact" : " pills"), role: "tablist", "aria-label": "Loopy Brain engine" }, ...BS_MODES.map(m => el("button", { type: "button", role: "tab", class: "bs-mode" + (bs.mode === m[0] ? " on" : ""), "aria-selected": String(bs.mode === m[0]), onclick: () => setMode(m[0]) }, svgIcon(m[0]), el("span", {}, el("b", {}, m[1]), el("small", {}, m[2])))));
   const modeLine = el("p", { class: "bs-modeline bsf-noprint" }, el("b", {}, mi[1] + ": "), mi[3]);
   const easyBtn = el("button", { type: "button", class: "bs-easy" + (bs.easy !== false ? " on" : ""), "aria-pressed": String(bs.easy !== false), onclick: () => { bs.easy = bs.easy === false; bsRemember(); bsPaint(); } }, "Easy words: " + (bs.easy !== false ? "On" : "Off"));
   const offer = bsOffer(), offerBar = offer ? el("div", { class: "bs-offer bsf-noprint" }, el("b", {}, offer.title), offer.text ? el("span", {}, " " + offer.text) : null) : null, L = bsLeft(), pct = Math.round(Math.min(L.day / L.caps.day, L.week / L.caps.week) * 100);
   const meter = el("div", { class: "bs-credits bsf-noprint" + (pct <= 20 ? " low" : "") }, el("div", { class: "bs-cr-row" }, el("span", {}, "Today: " + L.day + " of " + L.caps.day + " credits"), el("span", {}, "This week: " + L.week + " of " + L.caps.week)), el("i", {}, el("b", { style: "width:" + pct + "%" })), el("small", {}, "Low costs 1, Medium 2, High 3. Maths and conversions are free."));
   const bar = el("div", { class: "bs-sticky bsf-noprint" + (bs.res || bs.pending ? " compact" : "") }, form, sug);
   const effNow = bsEffort(bs), effRow = el("div", { class: "bs-eff", role: "group", "aria-label": "Effort" }, el("small", {}, "Effort"), ...BS_EFFORTS.map(e => { const open = bsOpen(e[3]); return el("button", { type: "button", class: "bs-effb" + (effNow[0] === e[0] ? " on" : "") + (open ? "" : " locked"), "aria-pressed": String(effNow[0] === e[0]), title: e[2], onclick: () => { if (!open) { bs.lock = e[3]; bsPaint(); return; } bs.effort = e[0]; bs.lock = 0; bsRemember(); if (bs.q && bs.res) bsRun(bs.q); else bsPaint(); } }, e[1] + (open ? "" : " \u{1F512}")); }), el("small", { class: "bs-effh" }, effNow[2] + " \u00B7 costs " + effNow[3] + (effNow[3] === 1 ? " credit" : " credits")));
-  const optRow = el("div", { class: "bs-optrow" }, easyBtn), compact = !!(bs.res || bs.pending);
+  const optRow = el("div", { class: "bs-optrow" }, easyBtn), compact = true;
   const opts = compact ? el("details", { class: "bs-opts", open: bs.lock || bs.optsOpen ? "" : null, ontoggle: (e) => { bs.optsOpen = e.target.open; } }, el("summary", {}, mi[1] + " \u00B7 " + bsName(cur[0]) + " \u00B7 " + effNow[1] + " effort \u00B7 Easy words " + (bs.easy !== false ? "on" : "off") + "  \u2014 change"), lvBar, modelLine, rgNote, effRow, optRow) : null;
   const head = el("div", { class: "bs-head bsf-noprint" }, modeBar, bs.res ? null : modeLine, ...(compact ? [opts] : [lvBar, modelLine, rgNote, effRow, optRow]), offerBar, meter, lockCard);
   const chips = (list, onTap) => el("div", { class: "bs-chips" }, ...list.map(t => el("button", { type: "button", class: "tp-sub", onclick: () => onTap(t) }, t)));
-  if (bs.busy) return [bar, head, el("div", { class: "bsr-load", role: "status" }, el("div", { class: "bsr-orb" }), el("p", {}, "Loopy is preparing your " + ((BS_SIZES.find(x => x[0] === bs.size) || [])[1] || "answer").toLowerCase() + " on “" + bs.q + "”…"), el("div", { class: "tp-skel", "aria-hidden": "true" }, el("i", {}), el("i", {}), el("i", {})))];
+  if (bs.busy) return [bar, head, el("div", { class: "bsr-load", role: "status" }, el("div", { class: "bsr-orb" }), el("p", {}, "Loopy is preparing your " + ((BS_SIZES.find(x => x[0] === bs.size) || [])[1] || "answer").toLowerCase() + " on \u201C" + bs.q + "\u201D\u2026"),
+    el("ol", { class: "bsr-steps", "aria-hidden": "true" }, ...["Understanding your question", "Checking Loopy knowledge packs", "Reading Wikipedia and papers", "Writing it in easy words", "Drawing diagrams and examples"].map((t, i) => el("li", { class: "st" + (i + 1) }, el("span", { class: "dot" }), t))),
+    el("div", { class: "tp-skel", "aria-hidden": "true" }, el("i", {}), el("i", {}), el("i", {})))];
   if (bs.pending) {
     return [bar, head, el("section", { class: "bsr-ask bsr-reveal in" }, el("small", {}, "Your question"), el("h2", {}, bs.pending), el("p", { class: "hint" }, "How much do you need?"),
       el("div", { class: "bsr-sizes" }, ...BS_SIZES.map(([id, name, hint, need], i) => { const open = bsOpen(need); return el("button", { type: "button", class: "bsr-size z" + i + (bs.size === id ? " pre" : ""), onclick: () => bsPickSize(id) }, el("b", {}, name), el("span", {}, hint), open ? null : el("i", {}, IS_RGUKT ? "\u{1F512} Locked" : "\u{1F512} Plus")); })))];
   }
   if (!bs.res) {
     const C = window.RGUKT_CURRICULUM, rows = C ? ((C.data[curState.year] || {})[curState.branch] || []).map(r => r[0]).slice(0, 8) : [], rec = bsRecent();
-    return [el("div", { class: "bsr-welcome" }, el("h2", {}, "Loopy Brain"), el("p", { class: "bsr-tagline" }, "The student search engine. Search, build, code and stay safe."), el("p", { class: "hint" }, "Pick an engine, ask your question, and get an easy, colourful answer you can save or print as PDF.")), bar, head,
-      savedBlock(bs, go),
-      el("div", { class: "bs-blk" }, el("small", { class: "hint" }, "Help us make Loopy Brain better"), el("div", { class: "rowbtns" }, el("button", { type: "button", class: "btn sm", onclick: () => { state.fbCat = "Loopy Brain"; bsClose(); showPanel("feedback"); } }, "\u{1F4AC} Send feedback or an idea"))),
-      rec.length ? el("div", { class: "bs-blk" }, el("small", { class: "hint" }, "Recent"), chips(rec, go)) : null,
-      mySubjectsBlock(bs, go),
-      rows.length ? el("div", { class: "bs-blk" }, el("small", { class: "hint" }, "Syllabus subjects"), chips(rows, go)) : null,
-      el("div", { class: "bs-blk" }, el("small", { class: "hint" }, "Try asking"), chips(bs.mode === "launchpad" ? ["IoT weather station", "Student attendance system", "Face mask detection", "Smart irrigation", "Library management website"] : bs.mode === "forge" ? ["binary search in Python", "bubble sort in C", "factorial in Java", "fibonacci in JavaScript", "quick sort in C++"] : bs.mode === "aegis" ? ["SQL injection", "Phishing", "Password security", "Encryption", "Two factor authentication", "Ransomware"] : ["Explain black holes", "How do u compare sequential and combinational", "Solve x^2-5x+6=0", "How do vaccines work", "Convert 5 km to miles"], go)),
+    const hr = new Date().getHours(), greet = hr < 5 ? "Good night" : hr < 12 ? "Good morning" : hr < 17 ? "Good afternoon" : "Good evening", nm = String(getName() || "").trim().split(" ")[0];
+    const hero = el("section", { class: "bsh-hero" }, el("i", { class: "bsh-orb o1", "aria-hidden": "true" }), el("i", { class: "bsh-orb o2", "aria-hidden": "true" }),
+      el("p", { class: "bsh-hi" }, greet + (nm ? ", " + nm : "")), el("h2", { class: "bsh-h" }, "What do you want to ", el("span", {}, "learn"), " today?"),
+      el("p", { class: "bsh-sub" }, "Ask in your own words. Loopy answers in easy words, with diagrams and trusted sources."),
+      el("div", { class: "bsh-badges" }, el("span", {}, "\u2713 Textbook-based topics"), el("span", {}, "\u2713 Easy words"), el("span", {}, "\u2713 PDF and HD pictures")));
+    const TRY = { atlas: [["\u{1F4C8}", "Explain the Bode plot", "Control systems"], ["\u2795", "Half adder circuit", "Digital logic"], ["\u{1F3B2}", "Bayes theorem with an example", "Probability"], ["\u{1F50C}", "BJT biasing and the Q point", "Analog circuits"], ["\u{1F4E1}", "Sampling theorem and aliasing", "Signal processing"], ["\u{1F9EE}", "Compare FIR and IIR filters", "Signal processing"]],
+      launchpad: [["\u{1F326}\uFE0F", "IoT weather station", "Project plan"], ["\u{1F4F7}", "Student attendance system", "Project plan"], ["\u{1F331}", "Smart irrigation", "Project plan"], ["\u{1F4DA}", "Library management website", "Project plan"]],
+      forge: [["\u{1F50D}", "binary search in Python", "Code"], ["\u{1F9EE}", "Verilog code for a counter", "Hardware"], ["\u{1F4CA}", "bubble sort in C", "Code"], ["\u2615", "factorial in Java", "Code"]],
+      aegis: [["\u{1F489}", "SQL injection", "Security"], ["\u{1F3A3}", "Phishing", "Security"], ["\u{1F511}", "Password security", "Security"], ["\u{1F512}", "Two factor authentication", "Security"]] };
+    const tryBlock = el("div", { class: "bs-blk" }, el("small", { class: "bs-secthead" }, "Try asking"), el("div", { class: "bs-try" }, ...(TRY[bs.mode] || TRY.atlas).map(([ic, t, s]) => el("button", { type: "button", class: "bs-tc", onclick: () => go(t) }, el("i", { "aria-hidden": "true" }, ic), el("b", {}, t), el("small", {}, s)))));
+    if (!_packs && !bs._pkTried) { bs._pkTried = true; brainPacksMod().then(() => { if (bsEl() && !bsState().res) bsPaint(); }); }
+    const SUBJ = [["Digital electronics", "\u{1F522} Digital logic", "#6d28d9"], ["Analog electronic circuits", "\u{1F50C} Analog circuits", "#ea580c"], ["Digital signal processing", "\u{1F4C8} Signal processing", "#0891b2"], ["Control systems", "\u{1F39B}\uFE0F Control systems", "#16a34a"], ["Probability and random variables", "\u{1F3B2} Probability", "#db2777"]];
+    const allPk = _packs ? _packs.all : [], open = bs.packSubj;
+    const tiles = (bs.mode === "atlas" || !bs.mode) ? el("div", { class: "bs-blk" }, el("small", { class: "bs-secthead" }, "Browse textbook topics"), el("div", { class: "bs-tiles" }, ...SUBJ.map(([sub, label, col]) => { const n = allPk.filter(p => p.subject === sub).length; return el("button", { type: "button", class: "bs-tile" + (open === sub ? " on" : ""), "aria-expanded": String(open === sub), onclick: () => { bs.packSubj = open === sub ? "" : sub; bsPaint(); } }, el("b", {}, label), el("small", {}, n ? n + " topics" : "Tap to open")); }).map((n, i) => { n.style.setProperty("--tc", SUBJ[i][2]); return n; })),
+      open ? el("div", { class: "bs-chips bs-packlist" }, ...(allPk.filter(p => p.subject === open).length ? allPk.filter(p => p.subject === open).map(p => el("button", { type: "button", class: "tp-sub", onclick: () => { bs.forcePack = p.id; go(p.title.replace(/\\s*\\(.*?\\)\\s*/g, " ").trim()); } }, p.title)) : [el("small", { class: "hint" }, "Loading the topic list\u2026")])) : null) : null;
+    return [hero, bar, head, tryBlock, tiles,
+      rec.length ? el("div", { class: "bs-blk" }, el("small", { class: "bs-secthead" }, "Recent"), chips(rec, go)) : null,
+      rows.length ? el("div", { class: "bs-blk" }, el("small", { class: "bs-secthead" }, "Your syllabus"), chips(rows, go)) : null,
+      mySubjectsBlock(bs, go), savedBlock(bs, go),
+      el("div", { class: "bs-blk bs-fbk" }, el("small", { class: "hint" }, "Help us make Loopy Brain better"), el("div", { class: "rowbtns" }, el("button", { type: "button", class: "btn sm", onclick: () => { state.fbCat = "Loopy Brain"; bsClose(); showPanel("feedback"); } }, "\u{1F4AC} Send feedback or an idea"))),
       el("div", { class: "rowbtns" }, back)].filter(Boolean);
   }
   const r = bs.res, q = r.topic, lv = r.lv;

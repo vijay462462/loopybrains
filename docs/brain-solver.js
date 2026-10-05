@@ -87,7 +87,8 @@ export const FORMULAS = [
 ];
 function formula(t) {
   if (!/formula|equation|law|theorem|rule|identity|complexity|derivative|integral/.test(t)) return null;
-  const hits = FORMULAS.filter(([k, n]) => t.includes(k) || t.includes(n.toLowerCase())); if (!hits.length) return null;
+  const has = (w) => new RegExp("(^|[^a-z])" + String(w).toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "($|[^a-z])").test(t);
+  const hits = FORMULAS.filter(([k, n]) => has(k) || has(n)); if (!hits.length) return null;
   return "## " + (hits.length > 1 ? "Formulas" : hits[0][1]) + "\n" + hits.slice(0, 4).map(([, n, f]) => "- **" + n + ":** " + f).join("\n");
 }
 export function solve(text) {
