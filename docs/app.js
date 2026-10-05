@@ -9299,6 +9299,20 @@ let currentPalette = (() => { try { const v = localStorage.getItem("dd-palette")
 document.documentElement.setAttribute("data-palette", currentPalette);
 let updateThemeLabel = () => {};
 function setPalette(k) { if (!PALETTES[k]) return; currentPalette = k; document.documentElement.setAttribute("data-palette", k); try { localStorage.setItem("dd-palette", k); } catch (_) {} render(); }
+// Tap the colour button to switch to the next palette at once; hold it to open the full picker.
+function cyclePalette() {
+  const keys = Object.keys(PALETTES), nx = keys[(keys.indexOf(currentPalette) + 1) % keys.length]; setPalette(nx);
+  showNotice("Colours: " + PALETTES[nx][0] + ". Hold the button to see all colours.", "ok");
+  clearTimeout(_noticeTimer); _noticeTimer = setTimeout(() => { const n = $("notice"); if (n) n.hidden = true; }, 2600);
+}
+function bindPaletteButton(btn) {
+  let t = 0, long = false;
+  btn.addEventListener("pointerdown", () => { long = false; clearTimeout(t); t = setTimeout(() => { long = true; showPanel("appearance"); }, 550); });
+  ["pointerup", "pointerleave", "pointercancel"].forEach(ev => btn.addEventListener(ev, () => clearTimeout(t)));
+  btn.addEventListener("click", (e) => { e.preventDefault(); if (long) { long = false; return; } cyclePalette(); });
+  btn.addEventListener("contextmenu", (e) => e.preventDefault());
+  btn.setAttribute("aria-label", "Change colours. Hold to see all colours."); btn.title = "Tap: next colours. Hold: all colours";
+}
 function setThemeMode(n) { if (!THEME_CYCLE.includes(n)) return; currentTheme = n; applyThemeName(n); try { localStorage.setItem("dd-theme", n); } catch (_) {} updateThemeLabel(); render(); }
 function renderAppearance() {
   const back = el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back");
@@ -9306,14 +9320,14 @@ function renderAppearance() {
     el("span", { class: "pal-dots" }, ...cols.map(c => { const d = el("i", {}); d.style.setProperty("background", c); return d; })), el("b", {}, name));
   const group = (g) => Object.entries(PALETTES).filter(([, v]) => v[2] === g).map(opt);
   const modes = THEME_CYCLE.map(n => el("button", { type: "button", class: "btn sm", "aria-pressed": String(currentTheme === n), onclick: () => setThemeMode(n) }, THEME_NAME[n]));
-  return [el("h2", {}, "Colours and theme"), el("p", { class: "hint" }, "Pick the colours you like. Your choice is saved on this device."),
+  return [el("h2", {}, "Colours and theme"), el("p", { class: "hint" }, "Pick the colours you like. Your choice is saved on this device. Tip: tap the colour button at the top to switch to the next palette."),
     el("div", { class: "label" }, "Premium palettes"), el("div", { class: "pal-grid" }, ...group("p")),
     el("div", { class: "label" }, "Classic palettes"), el("div", { class: "pal-grid" }, ...group("c")),
     el("div", { class: "label" }, "Theme"), el("div", { class: "theme-seg" }, ...modes),
     el("div", { class: "rowbtns" }, back)];
 }
 const themeBtn = document.getElementById("themeBtn");
-if (themeBtn && themeBtn.parentNode) { const pb = el("button", { class: "chip", id: "paletteBtn", type: "button", "aria-label": "Choose colours", title: "Choose colours", onclick: () => showPanel("appearance") }, svgIcon("palette")); themeBtn.parentNode.insertBefore(pb, themeBtn); }
+if (themeBtn && themeBtn.parentNode) { const pb = el("button", { class: "chip", id: "paletteBtn", type: "button" }, svgIcon("palette")); bindPaletteButton(pb); themeBtn.parentNode.insertBefore(pb, themeBtn); }
 if (themeBtn) {
   const label = () => { const nx = THEME_CYCLE[(THEME_CYCLE.indexOf(currentTheme) + 1) % 3]; themeBtn.textContent = THEME_ICON[nx]; themeBtn.title = themeBtn.ariaLabel = "Theme: " + THEME_NAME[currentTheme] + ". Tap for " + THEME_NAME[nx]; };
   themeBtn.addEventListener("click", () => {
@@ -9596,7 +9610,7 @@ document.addEventListener("pointerdown", (e) => {
   addEventListener("orientationchange", quiet);
   const mk = () => { if (tab) return tab; tab = document.createElement("button"); tab.type = "button"; tab.className = "hd-tab"; tab.setAttribute("aria-label", "Show the top bar"); tab.textContent = "▾"; tab.hidden = true; tab.addEventListener("click", () => show()); document.body.append(tab); return tab; };
   let palBtn = null;
-  const mkPal = () => { if (palBtn) return palBtn; palBtn = document.createElement("button"); palBtn.type = "button"; palBtn.className = "hd-pal"; palBtn.setAttribute("aria-label", "Choose colours"); palBtn.title = "Choose colours"; palBtn.append(svgIcon("palette")); palBtn.hidden = true; palBtn.addEventListener("click", () => showPanel("appearance")); document.body.append(palBtn); return palBtn; };
+  const mkPal = () => { if (palBtn) return palBtn; palBtn = document.createElement("button"); palBtn.type = "button"; palBtn.className = "hd-pal"; palBtn.append(svgIcon("palette")); palBtn.hidden = true; bindPaletteButton(palBtn); document.body.append(palBtn); return palBtn; };
   const set = (h) => { if (h === hidden) return; hidden = h; document.body.classList.toggle("hd-hidden", h); mk().hidden = !h; mkPal().hidden = !h; try { hd.inert = h; } catch (_) {} };
   const arm = () => { clearTimeout(timer); timer = setTimeout(() => { if (sticky() && window.scrollY > 120 && !busy()) set(true); }, 6000); };
   const show = () => { set(false); arm(); };
