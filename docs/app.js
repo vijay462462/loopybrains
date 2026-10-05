@@ -4863,7 +4863,7 @@ function brainQuiz(wiki, n) {
   return qs;
 }
 let _solver = null;
-async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=421", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
+async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=422", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
 async function brainReply(text, chat) {
   const sv = await brainSolve(text); if (sv) return sv;
   const { kind, topic } = brainIntent(text, chat.topic || ""); chat.topic = topic;
@@ -4938,7 +4938,7 @@ async function safeSync() {
   } catch (_) { _safeLoaded = false; }
 }
 let _safeMod = null;
-const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=421", location.href).href); } catch (_) { return null; } };
+const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=422", location.href).href); } catch (_) { return null; } };
 function safeModal(title, lines, danger) {
   const prev = document.getElementById("safeModal"); if (prev) prev.remove();
   const ov = el("div", { class: "safe-ov", id: "safeModal", role: "alertdialog", "aria-modal": "true", "aria-label": title },
@@ -4988,7 +4988,7 @@ function bsPool() {
 }
 const bsSuggest = (text) => { const n = text.trim().toLowerCase(); if (n.length < 2) return []; return bsPool().filter(t => t.toLowerCase().includes(n)).sort((a, b) => a.length - b.length).slice(0, 6); };
 let _report = null;
-const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=421", location.href).href); } catch (_) { return null; } };
+const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=422", location.href).href); } catch (_) { return null; } };
 async function bsPapers(q) {
   try {
     const j = await lsFetch("https://api.openalex.org/works?per-page=5&select=title,publication_year,cited_by_count,doi,open_access,authorships,abstract_inverted_index&search=" + encodeURIComponent(q));
@@ -5001,7 +5001,7 @@ async function bsPapers(q) {
 }
 // ---------- Loopy Brain credits: daily and weekly limits ----------
 // A search costs 1 credit (Low), 2 (Medium) or 3 (High). Maths, conversions and formulas are free. Usage is also saved in the student's own record so clearing the browser does not reset it.
-const BS_CAPS = { free: { day: 10, week: 40 }, rgukt: { day: 30, week: 120 }, plus: { day: 150, week: 700 } };
+const BS_CAPS = { free: { day: 10, week: 40 }, rgukt: { day: 60, week: 300 }, plus: { day: 150, week: 700 } };
 const bsBase = () => hasPlusNow() ? BS_CAPS.plus : IS_RGUKT ? BS_CAPS.rgukt : BS_CAPS.free;
 const bsCaps = () => { const b = bsBase(), x = bsBonus(); return { day: b.day + x.day, week: b.week + x.week }; };
 const bsDay = () => Math.floor((Date.now() + 19800000) / 864e5), bsWeek = () => Math.floor((bsDay() + 3) / 7);   // India time; the week runs Monday to Sunday
