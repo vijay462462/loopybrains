@@ -1,5 +1,5 @@
 // More of Loopy's own diagrams: analog circuits, DSP, control systems and probability. Extends brain-diagrams.js.
-import { Cv, mk, D } from "./brain-diagrams.js?v=446";
+import { Cv, mk, D } from "./brain-diagrams.js?v=447";
 const done = (c) => c.root;
 const P = Cv.prototype;
 // Local-coordinate parts: each starts at (x, y) and ends L further along the (rotated) axis. Returns the absolute end pin.
@@ -273,4 +273,21 @@ D.famtable = { title: "Typical logic-family numbers", cap: "Typical values from 
   const c = new Cv(400, 210, "Logic family table"), cols = [[8, 96, "Family"], [108, 56, "Fan-out"], [168, 66, "Power mW"], [238, 70, "Delay ns"], [312, 80, "Noise V"]],
     rows = [["Standard TTL", 10, 10, 10, 0.4], ["Schottky TTL", 10, 22, 3, 0.4], ["LP Schottky", 20, 2, 10, 0.4], ["ECL", 25, 25, 2, 0.2], ["CMOS", 50, 0.1, 25, 3]];
   cols.forEach(([x, w, t]) => c.box(x, 6, w, 26, t, "ff")); rows.forEach((r, i) => cols.forEach(([x, w], j) => { const best = (j === 2 && r[0] === "CMOS") || (j === 3 && r[0] === "ECL") || (j === 1 && r[0] === "CMOS") || (j === 4 && r[0] === "CMOS"); c.box(x, 38 + i * 32, w, 28, String(r[j]), best ? "on" : "off"); })); c.txt(200, 206, "green = best in that column", { a: "middle", c: "g" }); return done(c); } };
+D.aoi = { title: "AND–OR–INVERT in two NAND/NOR forms", cap: "F = (AB + CD + E)′. The AND–NOR form and the NAND–AND form give the same function. A lone input E needs an inverter (a tied NAND) in the NAND–AND form.", draw() {
+  const c = new Cv(340, 330, "AND-OR-INVERT"); c.txt(8, 14, "AND–NOR", { c: "b" }); c.txt(8, 164, "NAND–AND", { c: "g" });
+  [["A", 34], ["B", 54], ["C", 84], ["D", 104], ["E", 129], ["A", 194], ["B", 214], ["C", 244], ["D", 264], ["E", 304]].forEach(([t, y]) => c.txt(4, y + 4, t, { c: "b" }));
+  const a1 = c.gate("and", 100, 24), a2 = c.gate("and", 100, 74), nr = c.gate("nor", 200, 50);
+  c.wire([[18, 34], [100, 34]], "in"); c.wire([[18, 54], [100, 54]], "in"); c.wire([[18, 84], [100, 84]], "in"); c.wire([[18, 104], [100, 104]], "in");
+  c.wire([a1.o, [170, a1.o[1]], [170, 60], [204, 60]], "mid"); c.wire([a2.o, [170, a2.o[1]], [170, 80], [204, 80]], "mid"); c.wire([[18, 129], [185, 129], [185, 70], [204, 70]], "in"); c.wire([nr.o, [310, nr.o[1]]], "out", true); c.txt(314, nr.o[1] + 4, "F", { c: "g" });
+  const n1 = c.gate("nand", 100, 174), n2 = c.gate("nand", 100, 224), n3 = c.gate("nand", 100, 284), fa = c.gate("and", 210, 214);
+  c.wire([[18, 194], [100, 194]], "in"); c.wire([[18, 214], [100, 214]], "in"); c.wire([[18, 244], [100, 244]], "in"); c.wire([[18, 264], [100, 264]], "in");
+  c.wire([[18, 304], [88, 304]], "in"); c.wire([[88, 294], [88, 314]], "in"); c.wire([[88, 294], [100, 294]], "in"); c.wire([[88, 314], [100, 314]], "in"); c.dot(88, 304, "in");
+  c.wire([n1.o, [180, n1.o[1]], [180, 224], [210, 224]], "mid"); c.wire([n2.o, [190, n2.o[1]], [190, 234], [210, 234]], "mid"); c.wire([n3.o, [200, n3.o[1]], [200, 244], [210, 244]], "mid"); c.wire([fa.o, [310, fa.o[1]]], "out", true); c.txt(314, fa.o[1] + 4, "F", { c: "g" }); return done(c); } };
+D.qmgroup = { title: "Quine–McCluskey: combine and tick", cap: "F = Σ(0,1,2,8,10,11,14,15). Combine terms that differ in one bit. Terms with no tick are the prime implicants: w′x′y′, x′z′ and wy.", draw() {
+  const c = new Cv(400, 330, "Quine McCluskey table");
+  c.txt(8, 16, "minterms", { c: "s" }); c.txt(120, 16, "pairs", { c: "s" }); c.txt(268, 16, "quads", { c: "s" });
+  [[0], [1, 2, 8], [10], [11, 14], [15]].reduce((y, grp) => { grp.forEach((m, i) => { c.box(8, y + i * 24, 70, 21, m + "  ✓", "off"); }); return y + grp.length * 24 + 8; }, 26);
+  [["0,1 (1)", 0], ["0,2 (2)", 1], ["0,8 (8)", 1], ["2,10 (8)", 1], ["8,10 (2)", 1], ["10,11 (1)", 1], ["10,14 (4)", 1], ["11,15 (4)", 1], ["14,15 (1)", 1]].forEach(([t, k], i) => c.box(104, 26 + i * 27, 104, 23, t + (k ? "  ✓" : ""), k ? "off" : "on"));
+  [["0,2,8,10 (2,8)", 26], ["10,11,14,15 (1,4)", 80]].forEach(([t, y]) => c.box(236, y, 150, 23, t, "on"));
+  c.txt(236, 140, "x′z′   (−0−0)", { c: "g" }); c.txt(236, 160, "wy     (1−1−)", { c: "g" }); c.txt(104, 286, "w′x′y′  (000−)", { c: "g" }); c.txt(200, 316, "F = w′x′y′ + x′z′ + wy", { a: "middle", c: "b" }); return done(c); } };
 export function drawDiagram2(key) { const d = D[key]; if (!d) return null; try { return { title: d.title, cap: d.cap, svg: d.draw() }; } catch (_) { return null; } }
