@@ -1,7 +1,7 @@
 // Loopy Knowledge Packs for ECE subjects. Standard textbook results (definitions, rules and formulas) written in our own words.
 // Always check important points against your prescribed textbook and syllabus.
 export const REFS = {
-  "Digital electronics": ["Best first book: M. Morris Mano, Digital Design", "Floyd, Digital Fundamentals", "Roth, Fundamentals of Logic Design", "Malvino & Leach, Digital Principles and Applications"],
+  "Digital electronics": ["Best first books: Brown & Vranesic, Fundamentals of Digital Logic with Verilog Design; M. Morris Mano, Digital Design", "Floyd, Digital Fundamentals", "Roth, Fundamentals of Logic Design", "Malvino & Leach, Digital Principles and Applications"],
   "Analog electronics": ["Best first book: Sedra & Smith, Microelectronic Circuits", "Millman & Halkias, Integrated Electronics", "Boylestad & Nashelsky, Electronic Devices and Circuit Theory"],
   "Analog electronic circuits": ["Best first book: Sedra & Smith, Microelectronic Circuits", "Millman & Halkias, Integrated Electronics", "Boylestad & Nashelsky, Electronic Devices and Circuit Theory", "R. A. Gayakwad, Op-Amp and Linear Integrated Circuits (op-amps and 555 timer)"],
   "Digital signal processing": ["Best first book: Proakis & Manolakis, Digital Signal Processing: Principles, Algorithms and Applications", "Oppenheim & Schafer, Discrete-Time Signal Processing", "S. K. Mitra, Digital Signal Processing: A Computer-Based Approach", "Oppenheim & Willsky, Signals and Systems"],

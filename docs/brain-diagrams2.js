@@ -1,5 +1,5 @@
 // More of Loopy's own diagrams: analog circuits, DSP, control systems and probability. Extends brain-diagrams.js.
-import { Cv, mk, D } from "./brain-diagrams.js?v=436";
+import { Cv, mk, D } from "./brain-diagrams.js?v=437";
 const done = (c) => c.root;
 const P = Cv.prototype;
 // Local-coordinate parts: each starts at (x, y) and ends L further along the (rotated) axis. Returns the absolute end pin.
@@ -186,4 +186,12 @@ D.acf = { title: "Autocorrelation and power spectral density", cap: "R(τ) and t
   const c = new Cv(420, 250, "Autocorrelation and PSD"); const panel = (x, y, lab, f, cls) => { c.txt(x, y - 12, lab, { c: "b" }); c.wire([[x, y + 60], [x + 150, y + 60]], "ax", true); c.wire([[x + 75, y + 70], [x + 75, y]], "ax"); c.curve(c.sample(60, (t) => [x + 75 + t * 70, y + 60 - f(t) * 52], -1, 1), cls, 3); };
   c.txt(4, 12, "White noise", { c: "m" }); c.add(mk("line", { x1: 100, y1: 74, x2: 100, y2: 22, class: "dg-w in", "stroke-width": 4 })); c.wire([[20, 74], [190, 74]], "ax", true); c.txt(100, 90, "R(τ)  spike at τ = 0", { a: "middle", c: "s" }); c.wire([[230, 74], [400, 74]], "ax", true); c.curve([[236, 48], [394, 48]], "out", 3); c.txt(318, 90, "PSD flat (all frequencies)", { a: "middle", c: "s" });
   c.txt(4, 132, "Low-pass noise", { c: "m" }); c.wire([[20, 214], [190, 214]], "ax", true); c.curve(c.sample(60, (t) => [105 + t * 80, 214 - 76 * Math.exp(-3 * Math.abs(t))], -1, 1), "in", 3); c.txt(100, 232, "R(τ) decays slowly", { a: "middle", c: "s" }); c.wire([[230, 214], [400, 214]], "ax", true); c.curve(c.sample(60, (t) => [315 + t * 80, 214 - 76 / (1 + 22 * t * t)], -1, 1), "out", 3); c.txt(318, 232, "PSD concentrated at low f", { a: "middle", c: "s" }); return done(c); } };
+
+D.designflow = { title: "The digital design process", cap: "Specify, design, simulate, build a prototype and test. If a step fails, loop back and fix it.", draw() {
+  const c = new Cv(450, 470, "Digital design process flowchart"); const diamond = (x, y, w, h, label, cls) => { c.add(mk("polygon", { points: [x + w / 2, y, x + w, y + h / 2, x + w / 2, y + h, x, y + h / 2].join(" "), class: "dg-box " + (cls || "on") })); c.txt(x + w / 2, y + h / 2 + 4, label, { a: "middle", c: "b" }); };
+  c.box(20, 6, 150, 34, "Required product", "on"); c.wire([[95, 40], [95, 56]], "in", true); c.box(20, 56, 150, 34, "Define specifications", "ff"); c.wire([[95, 90], [95, 106]], "in", true); c.box(20, 106, 150, 34, "Initial design", "ff"); c.wire([[95, 140], [95, 156]], "in", true); c.box(20, 156, 150, 34, "Simulation (CAD)", "ff");
+  c.wire([[95, 190], [95, 206]], "in", true); diamond(25, 206, 140, 56, "Design correct?"); c.wire([[165, 234], [230, 234], [230, 190]], "fb"); c.txt(180, 228, "No", { c: "m" }); c.box(200, 156, 130, 34, "Redesign", "off"); c.wire([[230, 173], [165, 173]], "fb", true);
+  c.wire([[95, 262], [95, 292]], "out", true); c.txt(104, 282, "Yes", { c: "g" }); c.box(20, 292, 150, 34, "Prototype", "ff"); c.wire([[95, 326], [95, 342]], "in", true); c.box(20, 342, 150, 34, "Testing", "ff"); c.wire([[95, 376], [95, 392]], "in", true); diamond(25, 392, 140, 56, "Meets specs?");
+  c.wire([[95, 448], [95, 462]], "out", true); c.txt(104, 460, "Yes", { c: "g" }); c.txt(100, 468, "", {}); c.box(200, 392, 130, 34, "Minor errors?", "off"); c.wire([[165, 420], [200, 410]], "fb", true); c.txt(172, 432, "No", { c: "m" }); c.box(200, 342, 130, 34, "Make corrections", "ff"); c.wire([[265, 392], [265, 376]], "out", true); c.txt(272, 386, "Yes", { c: "g" }); c.wire([[200, 359], [165, 359]], "out", true); c.wire([[330, 409], [360, 409], [360, 173], [330, 173]], "fb", true); c.txt(362, 300, "No: big errors,", { c: "m" }); c.txt(362, 314, "redesign", { c: "m" });
+  c.txt(246, 462, "Finished product", { a: "middle", c: "g" }); return done(c); } };
 export function drawDiagram2(key) { const d = D[key]; if (!d) return null; try { return { title: d.title, cap: d.cap, svg: d.draw() }; } catch (_) { return null; } }
