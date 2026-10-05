@@ -1992,7 +1992,7 @@ function renderToday() {
       storyGroups().length < STORY_ROW_MIN ? chip("📸 Add a story", "", () => openStoryAdd()) : null,
       chip("\u{1F50E} Curiosity" + (curioStreak() ? " \u{1F525}" + curioStreak() : ""), Object.keys(curioStore().why).includes(String(dayNum())) ? "" : "pulse", () => showPanel("curious")),
       reviseDueCount() > 0 ? chip("\u{1F0CF} Revise (" + reviseDueCount() + ")", "pulse", () => showPanel("revise")) : null,
-      (readJSON("dd-visits", { n: 1 }).n || 1) >= 3 && !fbDone() ? chip("\u{1F4AC} Give feedback", "", () => showPanel("feedback")) : null,
+      chip("\u{1F4AC} Feedback and ideas", "", () => { state.fbCat = ""; showPanel("feedback"); }),
       left == null && (readJSON("dd-visits", { n: 1 }).n || 1) >= 2 ? chip("\u23F3 Set your exam date", "", () => showPanel("planner")) : null,
       chip("🧰 Explore", "", () => showPanel("explore")))); 
   bar.hidden = false;
@@ -2066,11 +2066,11 @@ const EXPLORE = [
   ["Study", [["__brain", "\u2728", "Loopy Brain"], ["__mysubj", "\u{1F4DA}", "My subjects"], ["quizBtn", "🧠", "Daily Quiz"], ["labBtn", "🧪", "Study Lab"], ["studyBtn", "📖", "Study Tools"], ["learnBtn", "📚", "Learn from IIT"], ["focusBtn", "🎯", "Focus mode"]]],
   ["Campus", [["__story", "📸", "Add a story"], ["eventsBtn", "🎉", "Events"], ["drivesBtn", "🏢", "Campus Drives"], ["leadersBtn", "🏆", "Top Helpers"], ["alumniBtn", "🎓", "Alumni", "alumni"]]],
   ["Career", [["careerBtn", "", "Career Guide"], ["__resume", "📄", "Resume builder"]]],
-  ["More", [["__howto", "\u2753", "How to use"], ["__stickers", "🎴", "Sticker book"], ["__wardrobe", "👗", "Loopy\u2019s wardrobe"], ["__install", "📲", "Install app"], ["__plus", "⭐", "The Campus Loop Plus"], ["botBtn", "", "Loop Bot", "bot"], ["funBtn", "🎉", "Entertainment", "fun"], ["aboutBtn", "ℹ️", "About Us"]]],
+  ["More", [["__howto", "\u2753", "How to use"], ["__feedback", "\u{1F4AC}", "Feedback and ideas"], ["__stickers", "🎴", "Sticker book"], ["__wardrobe", "👗", "Loopy\u2019s wardrobe"], ["__install", "📲", "Install app"], ["__plus", "⭐", "The Campus Loop Plus"], ["botBtn", "", "Loop Bot", "bot"], ["funBtn", "🎉", "Entertainment", "fun"], ["aboutBtn", "ℹ️", "About Us"]]],
 ];
 function renderExplore() {
   const back = el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back");
-  const go = (id) => { if (id === "__plus") { showPanel("plus"); return; } if (id === "__brain") { state.ai = state.ai || { msgs: [], busy: false, note: "" }; showPanel("ai"); return; } if (id === "__howto") { showPanel("howto"); return; } if (id === "__mysubj") { state.bs = state.bs || { q: "", level: 2, tab: "all", busy: false, res: null, ans: "", id: 0, lock: 0 }; state.bs.res = null; state.bs.editSubj = true; showPanel("ai"); return; } if (id === "__resume") { showPanel("resume"); return; } if (id === "__story") { openStoryAdd(); return; } if (id === "__stickers") { showPanel("stickers"); return; } if (id === "__wardrobe") { showPanel("wardrobe"); return; } if (id === "__install") { const ib = $("installBtn"); if (_pwaPrompt && ib) ib.click(); else showNotice("To install: open your browser menu and tap Add to Home screen.", ""); return; } const b = $(id); if (b) b.click(); };
+  const go = (id) => { if (id === "__plus") { showPanel("plus"); return; } if (id === "__brain") { state.ai = state.ai || { msgs: [], busy: false, note: "" }; showPanel("ai"); return; } if (id === "__howto") { showPanel("howto"); return; } if (id === "__feedback") { state.fbCat = ""; showPanel("feedback"); return; } if (id === "__mysubj") { state.bs = state.bs || { q: "", level: 2, tab: "all", busy: false, res: null, ans: "", id: 0, lock: 0 }; state.bs.res = null; state.bs.editSubj = true; showPanel("ai"); return; } if (id === "__resume") { showPanel("resume"); return; } if (id === "__story") { openStoryAdd(); return; } if (id === "__stickers") { showPanel("stickers"); return; } if (id === "__wardrobe") { showPanel("wardrobe"); return; } if (id === "__install") { const ib = $("installBtn"); if (_pwaPrompt && ib) ib.click(); else showNotice("To install: open your browser menu and tap Add to Home screen.", ""); return; } const b = $(id); if (b) b.click(); };
   return [el("h2", {}, "🧰 Explore"), el("p", { class: "hint" }, "Everything in " + BRAND + ", in one place."),
     ...EXPLORE.flatMap(([title, items]) => [el("div", { class: "label" }, title), el("div", { class: "plus-tiles" }, ...items.filter(it => !it[3] || !document.body.classList.contains("no-" + it[3])).map(([id, icon, label]) => el("button", { class: "plus-tile", type: "button", onclick: () => go(id) }, el("span", { class: "pt-i", "aria-hidden": "true" }, icon), el("strong", {}, label))))]),
     el("div", { class: "rowbtns" }, back)];
@@ -2749,13 +2749,15 @@ function pushAskCard(d) {
 // ---------- Pilot feedback, doubt of the day ----------
 const FB_PAY = [["no", "No"], ["29", "₹29"], ["49", "₹49"], ["99", "₹99"], ["later", "Ask me later"]];
 const fbDone = () => readJSON("dd-fb-" + weekKey(), false);
+const FB_CATS = [["Suggestion", "\u{1F4A1} Suggestion"], ["Bug", "\u{1F41B} Something is wrong"], ["Feature", "\u2728 New feature idea"], ["Loopy Brain", "\u{1F50E} Loopy Brain"], ["Praise", "\u2764\uFE0F I love this"]];
 function renderFeedback() {
   { const g = connectingGate(); if (g) return g; }
-  const f = { rating: 0, pay: "later" }, say = el("p", { class: "hint", role: "status" }, "");
+  const f = { rating: 0, pay: "later", cat: state.fbCat || "Suggestion" }, say = el("p", { class: "hint", role: "status" }, "");
   const liked = el("textarea", { maxlength: "300", rows: "2", placeholder: "What do you like?", "aria-label": "What do you like" }), improve = el("textarea", { maxlength: "300", rows: "3", placeholder: "What should we fix or add?", "aria-label": "What should we improve" });
-  const stars = el("div", { class: "rowbtns", role: "radiogroup", "aria-label": "Rating" }), pays = el("div", { class: "rowbtns", role: "radiogroup", "aria-label": "Would you pay" });
+  const stars = el("div", { class: "rowbtns", role: "radiogroup", "aria-label": "Rating" }), cats = el("div", { class: "rowbtns", role: "radiogroup", "aria-label": "Type of feedback" }), pays = el("div", { class: "rowbtns", role: "radiogroup", "aria-label": "Would you pay" });
   const draw = () => {
     stars.replaceChildren(...[1, 2, 3, 4, 5].map(n => el("button", { class: "btn" + (f.rating === n ? " primary" : ""), type: "button", role: "radio", "aria-checked": String(f.rating === n), "aria-label": n + " out of 5", onclick: () => { f.rating = n; draw(); } }, n <= f.rating ? "★ " + n : "☆ " + n)));
+    cats.replaceChildren(...FB_CATS.map(([v, t]) => el("button", { class: "btn sm" + (f.cat === v ? " primary" : ""), type: "button", role: "radio", "aria-checked": String(f.cat === v), onclick: () => { f.cat = v; draw(); } }, t)));
     pays.replaceChildren(...FB_PAY.map(([v, t]) => el("button", { class: "btn sm" + (f.pay === v ? " primary" : ""), type: "button", role: "radio", "aria-checked": String(f.pay === v), onclick: () => { f.pay = v; draw(); } }, t)));
   };
   draw();
@@ -2763,17 +2765,18 @@ function renderFeedback() {
   return [
     el("h2", {}, "\u{1F4AC} Help us improve"),
     el("p", { class: "hint" }, "This takes 30 seconds. Your answers are private, are not shown with your name, and are read only by the team."),
+    el("div", { class: "label" }, "What is this about?"), cats,
     el("div", { class: "label" }, "How useful is " + BRAND + " for you?"), stars,
     el("div", { class: "label" }, "Would you pay each month for extra features?"), pays,
     el("div", { class: "label" }, "What do you like?"), liked,
-    el("div", { class: "label" }, "What should we improve?"), improve,
+    el("div", { class: "label" }, "Your suggestion or what should we fix?"), improve,
     el("p", { class: "guide-safe" }, el("b", {}, "Stay safe: "), "Do not write phone numbers, passwords or other people's names here."),
     el("div", { class: "rowbtns" },
       el("button", { class: "btn primary", type: "button", onclick: async (e) => {
         if (!f.rating) { say.textContent = "Please pick a rating from 1 to 5."; return; }
         if (!store || !store.setTop || !store.authUid()) { say.textContent = "Connect to the internet and try again."; return; }
         e.currentTarget.disabled = true;
-        try { await store.setTop("pilotFeedback", store.authUid() + "_" + weekKey(), { week: weekKey(), uid: store.authUid(), slug: battleSlug(), rating: f.rating, pay: f.pay, liked: liked.value.trim().slice(0, 300), improve: improve.value.trim().slice(0, 300), createdAt: Date.now() }); writeJSON("dd-fb-" + weekKey(), true); render(); }
+        try { await store.setTop("pilotFeedback", store.authUid() + "_" + weekKey(), { week: weekKey(), uid: store.authUid(), slug: battleSlug(), rating: f.rating, pay: f.pay, liked: liked.value.trim().slice(0, 300), improve: ("[" + f.cat + "] " + improve.value.trim()).slice(0, 300), createdAt: Date.now() }); writeJSON("dd-fb-" + weekKey(), true); render(); }
         catch (_) { say.textContent = "Could not send. Check your connection and try again."; e.currentTarget.disabled = false; }
       } }, "Send feedback"),
       el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")), say,
@@ -2818,7 +2821,7 @@ function notifItems() {
   if (QUIZ.length && !myQuizAnswer(dayNum())) items.push({ id: "quiz" + dayNum(), at: Date.now() - 1, icon: "\u{1F9E0}", text: "Today's quiz is waiting. It takes one minute.", go: () => showPanel("quiz"), fresh: true, todo: true });
   { const hw = helperOfWeek(); if (hw && mine.has(hw.id)) items.push({ id: "hotw" + weekKey(), at: Date.now() - 4, icon: "\u{1F3C5}", text: "You are Helper of the week with " + plural(hw.n, "answer") + ". Thank you!", go: () => showPanel("wardrobe"), fresh: !readJSON("dd-hotw-" + weekKey(), false) }); }
   if (!curioStore().why[String(dayNum())]) items.push({ id: "cur" + dayNum(), at: Date.now() - 3, icon: "\u{1F50E}", text: "Today\u2019s Why question is waiting. Guess first, then see the answer.", go: () => showPanel("curious"), fresh: true, todo: true });
-  if ((readJSON("dd-visits", { n: 1 }).n || 1) >= 3 && !fbDone()) items.push({ id: "fb" + weekKey(), at: Date.now() - 2, icon: "\u{1F4AC}", text: "Tell us how to improve " + BRAND + ". It takes 30 seconds.", go: () => showPanel("feedback"), fresh: true, todo: true });
+  if ((readJSON("dd-visits", { n: 1 }).n || 1) >= 2 && !fbDone()) items.push({ id: "fb" + weekKey(), at: Date.now() - 2, icon: "\u{1F4AC}", text: "Tell us how to improve " + BRAND + ". It takes 30 seconds.", go: () => showPanel("feedback"), fresh: true, todo: true });
   return items.sort((a, b) => b.at - a.at).slice(0, 25);
 }
 function renderBell() {
@@ -4922,7 +4925,7 @@ function brainQuiz(wiki, n) {
   return qs;
 }
 let _solver = null;
-async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=426", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
+async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=427", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
 async function brainReply(text, chat) {
   const sv = await brainSolve(text); if (sv) return sv;
   const { kind, topic } = brainIntent(text, chat.topic || ""); chat.topic = topic;
@@ -4998,7 +5001,7 @@ async function safeSync() {
   } catch (_) { _safeLoaded = false; }
 }
 let _safeMod = null;
-const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=426", location.href).href); } catch (_) { return null; } };
+const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=427", location.href).href); } catch (_) { return null; } };
 function safeModal(title, lines, danger) {
   const prev = document.getElementById("safeModal"); if (prev) prev.remove();
   const ov = el("div", { class: "safe-ov", id: "safeModal", role: "alertdialog", "aria-modal": "true", "aria-label": title },
@@ -5036,7 +5039,7 @@ const bsFree = (lv) => lv <= 1 || (IS_RGUKT && lv === 2);
 const BS_MODES = [["atlas", "Atlas", "Search anything", "Topics, doubts, maths and research, explained in easy words.", "Ask anything: a topic, doubt, problem or research idea"], ["launchpad", "Launchpad", "Project guide", "Turn an idea into a plan: objectives, tools, week-by-week steps, report outline and viva questions.", "Describe your project idea, e.g. IoT weather station"], ["forge", "Forge", "Find code", "Working code for classic problems in many languages, with the idea explained.", "e.g. binary search in Python"], ["aegis", "Aegis", "Learn security", "Understand how attacks work and how to defend, legally and safely.", "e.g. SQL injection, phishing, password safety"]];
 const bsModeInfo = (id) => BS_MODES.find(m => m[0] === id) || BS_MODES[0];
 let _modes = null;
-const brainModesMod = async () => { try { return _modes = _modes || await import(new URL("brain-modes.js?v=426", location.href).href); } catch (_) { return null; } };
+const brainModesMod = async () => { try { return _modes = _modes || await import(new URL("brain-modes.js?v=427", location.href).href); } catch (_) { return null; } };
 const PREF_KEY = "dd-bs-prefs", SAVED_KEY = "dd-bs-saved";
 const bsPrefs = () => { const p = readJSON(PREF_KEY, {}); return p && typeof p === "object" ? p : {}; };
 const bsState = () => state.bs || (state.bs = (() => { const p = bsPrefs(), ok = p.remember !== false;
@@ -5102,7 +5105,7 @@ function bsPool() {
 }
 const bsSuggest = (text) => { const n = text.trim().toLowerCase(); if (n.length < 2) return []; return bsPool().filter(t => t.toLowerCase().includes(n)).sort((a, b) => a.length - b.length).slice(0, 6); };
 let _report = null;
-const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=426", location.href).href); } catch (_) { return null; } };
+const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=427", location.href).href); } catch (_) { return null; } };
 async function bsPapers(q) {
   try {
     const j = await lsFetch("https://api.openalex.org/works?per-page=5&select=title,publication_year,cited_by_count,doi,open_access,authorships,abstract_inverted_index&search=" + encodeURIComponent(q));
@@ -5491,6 +5494,7 @@ function brainView() {
     const C = window.RGUKT_CURRICULUM, rows = C ? ((C.data[curState.year] || {})[curState.branch] || []).map(r => r[0]).slice(0, 8) : [], rec = bsRecent();
     return [el("div", { class: "bsr-welcome" }, el("h2", {}, "Loopy Brain"), el("p", { class: "bsr-tagline" }, "The student search engine. Search, build, code and stay safe."), el("p", { class: "hint" }, "Pick an engine, ask your question, and get an easy, colourful answer you can save or print as PDF.")), bar, head,
       savedBlock(bs, go),
+      el("div", { class: "bs-blk" }, el("small", { class: "hint" }, "Help us make Loopy Brain better"), el("div", { class: "rowbtns" }, el("button", { type: "button", class: "btn sm", onclick: () => { state.fbCat = "Loopy Brain"; bsClose(); showPanel("feedback"); } }, "\u{1F4AC} Send feedback or an idea"))),
       rec.length ? el("div", { class: "bs-blk" }, el("small", { class: "hint" }, "Recent"), chips(rec, go)) : null,
       mySubjectsBlock(bs, go),
       rows.length ? el("div", { class: "bs-blk" }, el("small", { class: "hint" }, "Syllabus subjects"), chips(rows, go)) : null,
