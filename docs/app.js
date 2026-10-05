@@ -4960,7 +4960,7 @@ function brainQuiz(wiki, n) {
   return qs;
 }
 let _solver = null;
-async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=433", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
+async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=434", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
 async function brainReply(text, chat) {
   const sv = await brainSolve(text); if (sv) return sv;
   const { kind, topic } = brainIntent(text, chat.topic || ""); chat.topic = topic;
@@ -5036,7 +5036,7 @@ async function safeSync() {
   } catch (_) { _safeLoaded = false; }
 }
 let _safeMod = null;
-const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=433", location.href).href); } catch (_) { return null; } };
+const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=434", location.href).href); } catch (_) { return null; } };
 function safeModal(title, lines, danger) {
   const prev = document.getElementById("safeModal"); if (prev) prev.remove();
   const ov = el("div", { class: "safe-ov", id: "safeModal", role: "alertdialog", "aria-modal": "true", "aria-label": title },
@@ -5074,7 +5074,7 @@ const bsFree = (lv) => lv <= 1 || IS_RGUKT;
 const BS_MODES = [["atlas", "Atlas", "Search anything", "Topics, doubts, maths and research, explained in easy words.", "Ask anything: a topic, doubt, problem or research idea"], ["launchpad", "Launchpad", "Project guide", "Turn an idea into a plan: objectives, tools, week-by-week steps, report outline and viva questions.", "Describe your project idea, e.g. IoT weather station"], ["forge", "Forge", "Find code", "Working code for classic problems in many languages, with the idea explained.", "e.g. binary search in Python"], ["aegis", "Aegis", "Learn security", "Understand how attacks work and how to defend, legally and safely.", "e.g. SQL injection, phishing, password safety"]];
 const bsModeInfo = (id) => BS_MODES.find(m => m[0] === id) || BS_MODES[0];
 let _modes = null;
-const brainModesMod = async () => { try { return _modes = _modes || await import(new URL("brain-modes.js?v=433", location.href).href); } catch (_) { return null; } };
+const brainModesMod = async () => { try { return _modes = _modes || await import(new URL("brain-modes.js?v=434", location.href).href); } catch (_) { return null; } };
 const PREF_KEY = "dd-bs-prefs", SAVED_KEY = "dd-bs-saved";
 const bsPrefs = () => { const p = readJSON(PREF_KEY, {}); return p && typeof p === "object" ? p : {}; };
 const bsState = () => state.bs || (state.bs = (() => { const p = bsPrefs(), ok = p.remember !== false;
@@ -5140,7 +5140,9 @@ function bsPool() {
 }
 const bsSuggest = (text) => { const n = text.trim().toLowerCase(); if (n.length < 2) return []; return bsPool().filter(t => t.toLowerCase().includes(n)).sort((a, b) => a.length - b.length).slice(0, 6); };
 let _report = null;
-const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=433", location.href).href); } catch (_) { return null; } };
+let _packs = null;
+const brainPacksMod = async () => { try { return _packs = _packs || await import(new URL("brain-packs.js?v=434", location.href).href); } catch (_) { return null; } };
+const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=434", location.href).href); } catch (_) { return null; } };
 async function bsPapers(q) {
   try {
     const j = await lsFetch("https://api.openalex.org/works?per-page=5&select=title,publication_year,cited_by_count,doi,open_access,authorships,abstract_inverted_index&search=" + encodeURIComponent(q));
@@ -5374,11 +5376,12 @@ async function bsRun(q, solved) {
     const [ia, ib] = cmp ? await Promise.all([ahArticleImages(cmp.a.title).catch(() => []), ahArticleImages(cmp.b.title).catch(() => [])]) : [[], []];
     if (cmp && mod0) { bs.res = { usesA: mod0.uses(cmp.a, 3), usesB: mod0.uses(cmp.b, 3), imgsA: ia.slice(0, 2), imgsB: ib.slice(0, 2), topic: cmp.a.title + " vs " + cmp.b.title, lv, size, effort: bsEffort(bs), compare: Object.assign({ rows: mod0.compareRows(cmp.a, cmp.b), terms: mod0.compareTerms(cmp.a, cmp.b) }, cmp), easyFn: mod0.easy, board: lv >= 2 ? brainBoard(cmpIntent.a + " " + cmpIntent.b, 3) : [], syl: [], imgs: [], models: [], papers: [], page: "", report: null }; bs.ans = ""; bs.busy = false; bsPaint(true); return; }
   }
+  const pkm = await brainPacksMod(), pack = pkm ? pkm.packFind(q) : null;
   const chat = { topic: "" };
   const [ans, imgs, models, papers] = await Promise.all([brainReply(q, chat).catch(() => ""), lv >= 3 ? ahCommons(short + " diagram").catch(() => []) : [], lv >= 3 ? tpModels(short).catch(() => []) : [], size === "full" && lv >= 4 ? bsPapers(topic) : []]);
   if (id !== bs.id) return;
   const T = chat.topic || topic, wiki0 = BRAIN_CACHE.get("en:" + T.toLowerCase()) || null, lowConf = !!(wiki0 && wiki0.conf === "low"), wiki = lowConf ? null : wiki0, mod = wiki ? await brainReportMod() : null;
-  if (lowConf) { bs.res = { topic: T, lv, size, disambig: wiki0.options || [], board: [], syl: [], imgs: [], models: [], papers: [], page: "", report: null }; bs.ans = ""; bs.busy = false; bsPaint(true); return; }
+  if (lowConf && !pack) { bs.res = { topic: T, lv, size, disambig: wiki0.options || [], board: [], syl: [], imgs: [], models: [], papers: [], page: "", report: null }; bs.ans = ""; bs.busy = false; bsPaint(true); return; }
   const eff = bsEffort(bs), effN = eff[3];
   const simple = wiki && effN >= 2 ? await brainWiki(T, "simple").catch(() => null) : null, simpleOk = simple && simple.intro && relHit(ahWords(T), ahWords(simple.title)) >= 1 ? simple : null;
   const hard = mod && wiki && size !== "brief" && effN >= 2 ? mod.hardWords(wiki.intro + " " + wiki.sections.map(x => x.t).join(" "), size === "standard" ? 3 : 5) : [], defs = (await Promise.all(hard.map(brainDefine))).filter(Boolean);
@@ -5386,7 +5389,7 @@ async function bsRun(q, solved) {
   const papersH = effN >= 3 && !(papers && papers.length) ? await bsPapers(T).catch(() => []) : papers, related = effN >= 3 && wiki ? await bsRelated(T).catch(() => []) : [];
   let keyImgs = wiki ? (await ahArticleImages(wiki.title).catch(() => [])).slice(0, size === "brief" ? 2 : 6) : [];
   if (wiki && keyImgs.length < 3) { const more = await ahCommons(short + " diagram").catch(() => []), have = new Set(keyImgs.map(x => x.thumb)); keyImgs = keyImgs.concat(more.filter(x => !have.has(x.thumb))).slice(0, size === "brief" ? 2 : 6); }
-  const res = { own: wiki ? ownDiagram(wiki.title + " " + T) : null, uses: mod && wiki && size !== "brief" ? mod.uses(wiki, size === "full" ? 8 : size === "detailed" ? 6 : 4) : [], effort: eff, related, keyImgs, topic: T, easyCard: simpleOk, easyFn: mod ? mod.easy : null, readable, defs, wikiInfo: wiki ? { touched: wiki.touched, page: wiki.page } : null, caution: wiki ? mod2cautions(wiki) : [], simpleInfo: simpleOk ? { page: simpleOk.page } : null, lv, size, board: lv >= 2 ? brainBoard(T, 5) : [], syl: lv >= 2 ? brainSyllabus(T) : [], imgs: imgs.slice(0, 8), models, page: wiki ? wiki.page : "", papers: papersH, report: mod && wiki ? mod.buildReport(wiki, size) : null, hl: mod ? mod.highlight : null, deep: "", exam: "", quiz: "" };
+  const res = { pack, own: wiki && !pack ? ownDiagram(wiki.title + " " + T) : null, uses: mod && wiki && size !== "brief" ? mod.uses(wiki, size === "full" ? 8 : size === "detailed" ? 6 : 4) : [], effort: eff, related, keyImgs, topic: T, easyCard: simpleOk, easyFn: mod ? mod.easy : null, readable, defs, wikiInfo: wiki ? { touched: wiki.touched, page: wiki.page } : null, caution: wiki ? mod2cautions(wiki) : [], simpleInfo: simpleOk ? { page: simpleOk.page } : null, lv, size, board: lv >= 2 ? brainBoard(T, 5) : [], syl: lv >= 2 ? brainSyllabus(T) : [], imgs: imgs.slice(0, 8), models, page: wiki ? wiki.page : "", papers: papersH, report: mod && wiki ? mod.buildReport(wiki, size) : null, hl: mod ? mod.highlight : null, deep: "", exam: "", quiz: "" };
   if (lv >= 4 && wiki && !res.report) res.deep = wiki.sections.slice(0, 8).map(x => "- **" + x.h + ":** " + (brainSentences(x.t).slice(0, 2).join(" ") || x.t.slice(0, 240))).join("\n");
   if (lv >= 5) { [res.exam, res.quiz] = await Promise.all([brainReply("Exam answer for " + T, { topic: T }).catch(() => ""), brainReply("Quiz me on " + T, { topic: T }).catch(() => "")]); }
   bs.res = res; bs.ans = ans || notFoundMsg(topic); bs.busy = false; bsPaint(true);
@@ -5457,6 +5460,22 @@ function sentNode(s, hl) {
   if (SENT_LABEL[s.type]) p.append(el("span", { class: "bsr-tag" }, SENT_LABEL[s.type]));
   for (const x of parts) p.append(x.hl ? el("mark", { class: "bsr-hl " + x.hl }, x.t) : document.createTextNode(x.t));
   return p;
+}
+// Loopy Knowledge Pack card set: our own written, textbook-based answer with a drawn diagram, formulas, an exam-ready answer and real-life uses.
+function packView(p, go) {
+  const out = [], card = (cls, h, ...k) => el("section", { class: "bsr-card bsr-reveal in " + cls }, h ? el("h3", {}, h) : null, ...k.filter(Boolean));
+  out.push(el("section", { class: "bsr-hero pk-hero bsr-reveal in" }, el("small", {}, "✓ Loopy Knowledge Pack · " + p.subject), el("h2", {}, p.title), el("p", {}, p.short), el("div", { class: "bsr-meta" }, el("span", {}, "Written for B.Tech students"), el("span", {}, "Checked first, before the web"))));
+  const dg = ownDiagram(p.title + " " + (p.diag || "")); if (dg) out.push(dg);
+  out.push(card("pk-points", "Key points", el("ul", { class: "bsr-bul" }, ...p.points.map(x => el("li", {}, x)))));
+  if (p.steps && p.steps.length) out.push(card("", "Step by step", el("ol", { class: "bsr-tl pk-steps" }, ...p.steps.map((x, i) => el("li", {}, el("b", {}, String(i + 1)), el("span", {}, x))))));
+  if (p.formulas && p.formulas.length) out.push(card("", "Formulas and rules", el("div", { class: "pk-forms" }, ...p.formulas.map(([n, t]) => el("div", { class: "pk-form" }, el("small", {}, n), el("code", {}, t))))));
+  if (p.example) out.push(card("pk-ex", "Worked example", el("p", { class: "bsr-s bsr-example" }, el("span", { class: "bsr-tag" }, "Example"), p.example.title), el("pre", { class: "bsr-code pk-pre" }, el("code", {}, p.example.text))));
+  out.push(card("pk-exam", "Write this in the exam", el("p", { class: "bsr-s bsr-definition" }, el("span", { class: "bsr-tag" }, "Answer"), p.exam), el("div", { class: "rowbtns bsf-noprint" }, copyBtn(p.exam, "Copy answer"))));
+  if (p.mistakes && p.mistakes.length) out.push(card("", "Common mistakes", ...p.mistakes.map(x => el("p", { class: "bsr-s bsr-caution" }, el("span", { class: "bsr-tag" }, "Watch out"), x))));
+  if (p.uses && p.uses.length) out.push(usesNode(p.uses.map(([t, x]) => ({ domain: "Real life", title: t, text: x })), p.title));
+  if (p.related && p.related.length) out.push(card("", "Learn next", el("div", { class: "bs-chips" }, ...p.related.map(t => el("button", { type: "button", class: "tp-sub", onclick: () => go(t) }, t)))));
+  out.push(el("p", { class: "hint pk-note" }, "Written for The Campus Loop from standard textbook rules. Found a mistake? Tap Feedback and ideas and tell us, and we will fix it. Always check with your syllabus and teacher."));
+  return out;
 }
 function reportView(r, res, go) {
   const hl = res.hl, words = [r.intro.map(x => x.t).join(" "), ...r.sections.map(s => s.sents.map(x => x.t).join(" "))].join(" ").split(/\s+/).length, mins = Math.max(1, Math.round(words / 200));
@@ -5639,7 +5658,7 @@ function brainView() {
   else if (bs.tab === "videos") body = [sect("Watch and learn", watch)];
   else if (bs.tab === "notes") body = [sect("Notes and practice", notes)];
   else if (bs.tab === "exam") body = [examBox()];
-  else body = [r.report ? null : answer, ...(r.report ? reportView(r.report, r, go) : []), lv >= 3 && !r.solved && r.size !== "brief" ? imgBox() : null, lv >= 3 && !r.solved && r.size !== "brief" ? modBox() : null, lv >= 4 && !r.solved && !r.report ? deepBox() : null, lv >= 4 && !r.solved && r.size !== "brief" ? sect("Watch and learn", watch) : null, lv >= 4 && !r.solved && r.size !== "brief" ? sect("Notes and practice", notes) : null, lv >= 5 && !r.solved ? examBox() : null,
+  else body = [r.pack ? null : r.report ? null : answer, ...(r.pack ? packView(r.pack, go) : []), r.pack && r.report ? el("h3", { class: "pk-more" }, "More from the web") : null, ...(r.report ? reportView(r.report, r, go) : []), lv >= 3 && !r.solved && r.size !== "brief" ? imgBox() : null, lv >= 3 && !r.solved && r.size !== "brief" ? modBox() : null, lv >= 4 && !r.solved && !r.report ? deepBox() : null, lv >= 4 && !r.solved && r.size !== "brief" ? sect("Watch and learn", watch) : null, lv >= 4 && !r.solved && r.size !== "brief" ? sect("Notes and practice", notes) : null, lv >= 5 && !r.solved ? examBox() : null,
     lv >= 2 && r.board.length ? sect("Classmates’ answers", ...r.board.slice(0, 2).map(doubtRow)) : null, lv >= 2 && r.syl.length ? sect("In your syllabus", ...r.syl.map(sylRow)) : null];
   const stamp = el("div", { class: "bsr-print" }, "The Campus Loop · Loopy Search · " + new Date().toLocaleDateString());
   return [bar, head, tabBar, stamp, ...body.filter(Boolean), r.report ? null : null, sizeRow, acts, el("p", { class: "hint ai-fine" }, "Loopy Brain builds answers from your syllabus, your classmates’ best answers, Wikipedia and open research. Check important facts in your textbook."), el("div", { class: "rowbtns bsf-noprint" }, el("button", { class: "btn", type: "button", onclick: () => { bs.res = null; bs.q = ""; bs.pending = ""; bsPaint(true); } }, "New search"), back)].filter(Boolean);
