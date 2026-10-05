@@ -12,7 +12,7 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com/recaptcha/; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://upload.wikimedia.org https://api.dicebear.com https://img.youtube.com data: blob:; media-src 'self' blob: https:; connect-src 'self' https://www.google.com/recaptcha/ https://en.wikipedia.org https://commons.wikimedia.org https://www.youtube.com https://upload.wikimedia.org https://asia-south1-doubt-desk-e6f39.cloudfunctions.net https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com wss://*.firebaseio.com https://*.supabase.co wss://*.supabase.co; frame-src https://www.youtube.com https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/; object-src 'none'; base-uri 'none'; form-action 'self'; worker-src 'self'; manifest-src 'self'; upgrade-insecure-requests;">
 
 <!-- PWA -->
-<link rel="manifest" href="manifest.json?v=399">
+<link rel="manifest" href="manifest.json?v=403">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -22,15 +22,15 @@
 <meta name="apple-mobile-web-app-title" content="The Campus Loop">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=399">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=403">
 
 <!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@500&display=swap">
-<link rel="stylesheet" href="style.css?v=399">
-<link rel="stylesheet" href="sparkbot.css?v=399">
-<link rel="stylesheet" href="player.css?v=399">
-<link rel="stylesheet" href="lab.css?v=399">
+<link rel="stylesheet" href="style.css?v=403">
+<link rel="stylesheet" href="sparkbot.css?v=403">
+<link rel="stylesheet" href="player.css?v=403">
+<link rel="stylesheet" href="lab.css?v=403">
 </head>
 <body>
 <div id="splash" class="splash sp2" role="status" aria-live="polite">
@@ -41,15 +41,14 @@
     <p class="splash-sub sp2-sub" id="splashSub">Where every doubt finds answers.</p>
     <div class="sp2-crest-slot" id="splashCrestSlot"></div>
   </div>
-  <div class="sp2-chips" id="splashChips" role="group" aria-label="What you can do">
-    <button type="button" class="sp2-chip c1" data-t="Post a doubt and get answers from classmates and seniors."><b>❓</b> Ask a doubt</button>
-    <button type="button" class="sp2-chip c2" data-t="One quiz question a day that counts for your college."><b>🧠</b> Daily quiz</button>
-    <button type="button" class="sp2-chip c3" data-t="Come back every day to grow your streak and unlock costumes."><b>🔥</b> Streaks</button>
-    <button type="button" class="sp2-chip c4" data-t="Join your college clubs and see what they are doing."><b>🏛</b> Clubs</button>
-    <button type="button" class="sp2-chip c5" data-t="Notices, placement drives and events from your college."><b>📢</b> Notices</button>
-    <button type="button" class="sp2-chip c6" data-t="Free previous papers and exam preparation."><b>📝</b> Papers</button>
-  </div>
-  <p class="sp2-hint" id="splashHint" aria-live="polite">Doubts, daily quiz, streaks, clubs, notices and papers, all in one place for your campus. Tap a feature to see what it does.</p>
+  <ul class="sp2-rows" id="splashChips" aria-label="What you can do">
+    <li class="sp2-row"><svg class="sp2-ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3a9 9 0 1 0 0 18a9 9 0 0 0 0-18z"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.6 2.2c-.8.4-1.2 1-1.2 1.8"/><path d="M12 16.9v.1"/></svg><div><b>Ask a doubt</b><span>Get answers from classmates and seniors.</span></div></li>
+    <li class="sp2-row"><svg class="sp2-ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M13 3L4.5 14H11l-1 7 8.5-11H12z"/></svg><div><b>Daily quiz</b><span>One quiz question a day for your college.</span></div></li>
+    <li class="sp2-row"><svg class="sp2-ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3c1 3 4 4.6 4 8.2a4 4 0 1 1-8 0c0-1.7.8-2.8 1.6-3.9C10.4 6.1 11.5 5.1 12 3z"/></svg><div><b>Streaks</b><span>Build a daily habit and unlock rewards.</span></div></li>
+    <li class="sp2-row"><svg class="sp2-ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 10l9-6l9 6"/><path d="M5 10v8"/><path d="M9.5 10v8"/><path d="M14.5 10v8"/><path d="M19 10v8"/><path d="M3 20h18"/></svg><div><b>Clubs</b><span>Join college clubs and follow updates.</span></div></li>
+    <li class="sp2-row"><svg class="sp2-ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15 9a4 4 0 0 1 0 6"/><path d="M18 7a7 7 0 0 1 0 10"/></svg><div><b>Notices</b><span>Placement drives, events and notices.</span></div></li>
+    <li class="sp2-row"><svg class="sp2-ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h6"/></svg><div><b>Papers</b><span>Free previous papers and exam prep.</span></div></li>
+  </ul>
   <div class="sp2-guide">
     <svg class="loopy" viewBox="0 0 200 220" width="92" height="101" role="img" aria-label="Loopy, The Campus Loop robot, waving hello">
     <defs>
@@ -80,7 +79,7 @@
   <button type="button" class="btn primary splash-go sp2-go" id="splashGo">Join my campus →</button>
   <p class="sp2-trust">Free for students. Independent, not run by any college.</p>
 </div>
-<script src="splash.js?v=399"></script>
+<script src="splash.js?v=403"></script>
 
 <!-- offline indicator -->
 <div id="offlineBar" class="offline-bar" hidden>📵 You're offline, showing cached posts</div>
@@ -169,16 +168,16 @@
 <!-- bottom navigation (mobile only) -->
 <nav class="bottom-nav" id="bottomNav" aria-label="Main navigation"></nav>
 
-<script defer src="config.js?v=399"></script>
-<script defer src="quiz.js?v=399"></script>
-<script defer src="plus-data.js?v=399"></script>
-<script defer src="colleges-ap.js?v=399"></script>
-<script defer src="colleges-ap2.js?v=399"></script>
-<script defer src="colleges-ap3.js?v=399"></script>
-<script defer src="college-data.js?v=399"></script>
-<script defer src="rgukt-curriculum.js?v=399"></script>
-<script defer src="colleges-india.js?v=399"></script>
-<script type="module" src="app.js?v=399"></script>
-<script src="lazy.js?v=399"></script>
+<script defer src="config.js?v=403"></script>
+<script defer src="quiz.js?v=403"></script>
+<script defer src="plus-data.js?v=403"></script>
+<script defer src="colleges-ap.js?v=403"></script>
+<script defer src="colleges-ap2.js?v=403"></script>
+<script defer src="colleges-ap3.js?v=403"></script>
+<script defer src="college-data.js?v=403"></script>
+<script defer src="rgukt-curriculum.js?v=403"></script>
+<script defer src="colleges-india.js?v=403"></script>
+<script type="module" src="app.js?v=403"></script>
+<script src="lazy.js?v=403"></script>
 </body>
 </html>
