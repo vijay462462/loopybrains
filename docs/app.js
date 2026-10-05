@@ -4257,7 +4257,7 @@ async function startCheckout(planKey, gift) {
 const PLUS_FEATURES = ["Plus gift link for a friend", "Group study rooms with a shared timer", "Scan handwritten notes into flashcards", "Live doubt sessions with seniors", "Placement preparation kit", "Offline downloads of papers", "Weekly leaderboard for Plus members", "More resume templates", "No ads, ever"];
 const PLUS_TILES = [
   ["\u{1F50E}", "Loopy AI Search", "Search any topic for a quick answer, pictures, videos and PDFs.", "loopysearch"],
-  ["", "Loopy Brain", "Ask any topic. Get a structured answer from your syllabus, classmates and trusted sources.", "ai"],
+  ["", "Loopy Brain", "Five Loopy models. Spark and Scholar are free for everyone, all five are free for RGUKT students. Vision, Sage and Apex are Plus elsewhere.", "ai"],
   ["📝", "Mock tests", "Timed subject and placement tests with a topic-wise report.", "mock"],
   ["📓", "Mistake notebook", "Questions you missed come back until you get them right.", "mistakes"],
   ["🗓️", "Exam planner", "A daily plan with spaced revision before your exam.", "planner"],
@@ -4270,7 +4270,7 @@ const PLUS_TILES = [
   ["🎯", "Goals and badges", "Weekly targets and badges to keep you going.", "goals"],
   ["⭐", "Plus star", "A star next to your nickname on every post.", ""],
 ];
-const PLUS_COMPARE = [["", "Free", "Plus"], ["Board, stories, quizzes, Study Lab", "✔", "✔"], ["Daily streaks and battles", "✔", "✔"], ["AI study helper", "–", "✔"], ["Mock tests and progress chart", "–", "✔"], ["Mistake notebook and exam planner", "–", "✔"], ["Paper vault", "–", "✔"], ["Weekly goals, badges, focus timer", "–", "✔"], ["Resume builder, weekly leaderboard", "–", "✔"], ["Cloud backup, themes, ⭐", "–", "✔"]];
+const PLUS_COMPARE = [["", "Free", "Plus"], ["Loopy Brain models", "Spark, Scholar", "All 5: + Vision, Sage, Apex"], ["Board, stories, quizzes, Study Lab", "✔", "✔"], ["Daily streaks and battles", "✔", "✔"], ["AI study helper", "–", "✔"], ["Mock tests and progress chart", "–", "✔"], ["Mistake notebook and exam planner", "–", "✔"], ["Paper vault", "–", "✔"], ["Weekly goals, badges, focus timer", "–", "✔"], ["Resume builder, weekly leaderboard", "–", "✔"], ["Cloud backup, themes, ⭐", "–", "✔"]];
 function renderPlus() {
   const acct = myAccount(), verified = acct.verified, has = state.plan.plus;
   const canBackup = !!store && !!store.getTop && verified && (!PLUS.enabled || has);
@@ -4913,14 +4913,16 @@ function aiFormat(text) {
 // ---------- Loopy Search: the search-engine face of Loopy Brain ----------
 const BS_KEY = "dd-bs-recent";
 const BS_LEVELS = [
-  [1, "Quick answer", "Instant answer and step-by-step solver", false],
-  [2, "Study pack", "Adds classmates’ best answers and your syllabus", false],
-  [3, "Visual", "Adds diagrams, pictures and 3D models", true],
-  [4, "Deep dive", "Adds the full explanation, videos and notes", true],
-  [5, "Exam mode", "Adds exam answer, quiz and practice plan", true],
+  [1, "Spark", "Instant answers and a step-by-step solver", false],
+  [2, "Scholar", "Adds your classmates\u2019 best answers and your syllabus", false],
+  [3, "Vision", "Adds diagrams, pictures and 3D models", true],
+  [4, "Sage", "Adds the full explanation, videos and notes", true],
+  [5, "Apex", "Adds the exam answer, a quiz and a practice plan", true],
 ];
+const bsName = (n) => "Loopy " + BS_LEVELS[n - 1][1];
+const hasPlusNow = () => IS_RGUKT || !!(state.plan && state.plan.plus) || trialLeft() > 0 || bonusLeft() > 0;   // RGUKT students: all five models are free during the pilot
 const bsState = () => state.bs || (state.bs = { q: "", level: 2, tab: "all", busy: false, res: null, ans: "", id: 0, lock: 0 });
-const bsOpen = (lv) => !BS_LEVELS[lv - 1][3] || !plusLocked();
+const bsOpen = (lv) => !BS_LEVELS[lv - 1][3] || hasPlusNow();
 const MYS_KEY = "dd-my-subjects";
 const mySubjects = () => { const r = readJSON(MYS_KEY, []); return Array.isArray(r) ? r.filter(x => typeof x === "string" && x.trim()).slice(0, 20) : []; };
 const saveSubjects = (a) => writeJSON(MYS_KEY, a.slice(0, 20));
@@ -4972,9 +4974,11 @@ function renderAI() {
   input.addEventListener("input", () => sug.replaceChildren(...bsSuggest(input.value).map(t => el("button", { type: "button", class: "bs-s", role: "option", onclick: () => go(t) }, el("span", { "aria-hidden": "true" }, "\u{1F50E}"), t))));
   const form = el("form", { class: "bs-bar", onsubmit: (e) => { e.preventDefault(); go(input.value); } }, el("span", { class: "bs-ic", "aria-hidden": "true" }, "✨"), input, el("button", { class: "bs-go", type: "submit", "aria-label": "Search" }, "Search"));
   const setLevel = (lv) => { if (!bsOpen(lv)) { bs.lock = lv; render(); return; } bs.level = lv; bs.lock = 0; if (bs.q && bs.res) bsRun(bs.q); else render(); };
-  const lvBar = el("div", { class: "bs-lvs", role: "group", "aria-label": "Search level" }, ...BS_LEVELS.map(([n, t, , plus]) => { const open = bsOpen(n); return el("button", { type: "button", class: "bs-lv" + (bs.level === n && !bs.lock ? " on" : "") + (open ? "" : " locked"), "aria-pressed": String(bs.level === n), onclick: () => setLevel(n) }, el("b", {}, String(n)), el("span", {}, t), open ? null : el("i", { "aria-hidden": "true" }, "\u{1F512}")); }));
-  const lockCard = bs.lock ? el("div", { class: "bs-lock", role: "status" }, el("strong", {}, "Level " + bs.lock + ": " + BS_LEVELS[bs.lock - 1][1] + " is a Plus level"), el("p", {}, BS_LEVELS[bs.lock - 1][2] + ". Levels 1 and 2 are free for everyone. Campus Loop Plus unlocks levels 3 to 5."), el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => showPanel("plus") }, "See Campus Loop Plus"), el("button", { class: "btn sm", type: "button", onclick: () => { bs.lock = 0; render(); } }, "Stay on free levels"))) : null;
-  const head = el("div", { class: "bs-head" }, el("h2", {}, "Loopy Search"), el("p", { class: "hint" }, "Ask anything: topics, doubts, maths, conversions, formulas. Loopy shows steps, pictures, videos and notes."), form, sug, lvBar, lockCard);
+  const lvBar = el("div", { class: "bs-lvs", role: "group", "aria-label": "Loopy model" }, ...BS_LEVELS.map(([n, t, , plus]) => { const open = bsOpen(n); return el("button", { type: "button", class: "bs-lv" + (bs.level === n && !bs.lock ? " on" : "") + (open ? "" : " locked"), "aria-pressed": String(bs.level === n), onclick: () => setLevel(n) }, el("b", {}, String(n)), el("span", {}, t), el("i", { class: "bs-tier" + (plus && !IS_RGUKT ? " plus" : "") }, !plus || IS_RGUKT ? "FREE" : open ? "PLUS" : "\u{1F512} PLUS")); }));
+  const cur = BS_LEVELS[(bs.lock || bs.level) - 1], modelLine = el("p", { class: "bs-model" }, el("b", {}, bsName(cur[0])), " \u00B7 " + cur[2] + " ", el("span", { class: "bs-dots", "aria-label": "Depth " + cur[0] + " of 5" }, "\u25CF".repeat(cur[0]) + "\u25CB".repeat(5 - cur[0])));
+  const lockCard = bs.lock ? el("div", { class: "bs-lock", role: "status" }, el("strong", {}, bsName(bs.lock) + " is a Plus model"), el("p", {}, BS_LEVELS[bs.lock - 1][2] + ". Loopy Spark and Loopy Scholar are free for everyone. Campus Loop Plus unlocks Loopy Vision, Loopy Sage and Loopy Apex."), el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => showPanel("plus") }, "See Campus Loop Plus"), el("button", { class: "btn sm", type: "button", onclick: () => { bs.lock = 0; render(); } }, "Stay on free levels"))) : null;
+  const rgNote = IS_RGUKT ? el("p", { class: "bs-model" }, "All five Loopy models are free for RGUKT students during the pilot.") : null;
+  const head = el("div", { class: "bs-head" }, el("h2", {}, "Loopy Search"), el("p", { class: "hint" }, "Ask anything: topics, doubts, maths, conversions, formulas. Loopy shows steps, pictures, videos and notes."), form, sug, lvBar, modelLine, rgNote, lockCard);
   const chips = (list, onTap) => el("div", { class: "bs-chips" }, ...list.map(t => el("button", { type: "button", class: "tp-sub", onclick: () => onTap(t) }, t)));
   if (!bs.res && !bs.busy) {
     const C = window.RGUKT_CURRICULUM, rows = C ? ((C.data[curState.year] || {})[curState.branch] || []).map(r => r[0]).slice(0, 8) : [], rec = bsRecent();
@@ -5014,7 +5018,7 @@ function renderAI() {
   else if (bs.tab === "notes") body = [sect("Notes and practice", notes)];
   else if (bs.tab === "exam") body = [examBox()];
   else body = [answer, lv >= 2 && r.board.length ? sect("Classmates’ answers", ...r.board.slice(0, 2).map(doubtRow)) : null, lv >= 2 && r.syl.length ? sect("In your syllabus", ...r.syl.map(sylRow)) : null, lv >= 3 && !r.solved ? imgBox() : null, lv >= 3 && !r.solved ? modBox() : null, lv >= 4 && !r.solved ? deepBox() : null, lv >= 4 && !r.solved ? sect("Watch and learn", watch) : null, lv >= 4 && !r.solved ? sect("Notes and practice", notes) : null, lv >= 5 && !r.solved ? examBox() : null,
-    lv < 5 && !bs.lock ? el("div", { class: "bs-more" }, el("small", { class: "hint" }, "Want more? " + (bsOpen(lv + 1) ? "Switch to level " + (lv + 1) + ": " + BS_LEVELS[lv][1] + "." : "Level " + (lv + 1) + " (" + BS_LEVELS[lv][1] + ") is part of Campus Loop Plus."))) : null];
+    lv < 5 && !bs.lock ? el("div", { class: "bs-more" }, el("small", { class: "hint" }, "Want more? " + (bsOpen(lv + 1) ? "Switch to " + bsName(lv + 1) + "." : bsName(lv + 1) + " is part of Campus Loop Plus."))) : null];
   return [head, tabBar, ...body.filter(Boolean), el("p", { class: "hint ai-fine" }, "Loopy Brain answers from your syllabus, your classmates’ best answers and Wikipedia. Check important facts in your textbook."), el("div", { class: "rowbtns" }, back)];
 }
 // Invite friends: share your link; when a friend verifies their email you get +7 days of Plus and they get +3 (rewards are given by the server).

@@ -3292,3 +3292,9 @@ html.is-scrolling .skeleton, html.is-scrolling .tp-skel i, html.is-scrolling .av
 .bs-x{border:0;background:var(--accent-soft);color:var(--ink);border-radius:50%;width:26px;height:26px;cursor:pointer;font-size:.75rem}
 .bs-addrow{display:flex;gap:8px;margin-top:8px}
 .bs-add{flex:1;min-width:0;border:1.5px solid var(--line);border-radius:999px;background:var(--sheet);color:var(--ink);font:inherit;font-size:16px;padding:9px 14px}
+
+.bs-tier{font-style:normal;font-size:.62rem;font-weight:800;letter-spacing:.06em;padding:2px 6px;border-radius:99px;background:var(--accent-soft);color:var(--ink)}
+.bs-tier.plus{background:#f6dcc5;color:#7a4a10}
+.bs-lv.on .bs-tier{background:rgb(255 255 255/.25);color:inherit}
+.bs-model{margin:4px 0 8px;font-size:.88rem;color:var(--muted)}.bs-model b{color:var(--ink)}
+.bs-dots{letter-spacing:.12em;color:var(--accent);white-space:nowrap}
