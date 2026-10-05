@@ -101,7 +101,7 @@ export const PACKS = [
     exam: "A finite state machine is a sequential circuit with a finite number of states. In a Moore machine the output depends only on the present state, whereas in a Mealy machine the output depends on both the present state and the present input. Design steps: state diagram, state table, state assignment, flip-flop input equations, output equations and logic diagram.",
     mistakes: ["Mixing up Moore and Mealy.", "Forgetting a transition for every input from every state.", "Using too few flip-flops for the number of states."],
     uses: [["Traffic lights", "Each light pattern is a state, and a timer input moves to the next."], ["Vending machines", "The state is the money inserted so far."], ["Network and game logic", "Protocols and game characters move between defined states."]], related: ["Sequential logic", "Flip-flops", "Counters"], diag: "finite-state machine" },
-  { id: "opamp", keys: ["operational amplifier", "op amp", "opamp", "inverting amplifier", "non inverting amplifier", "virtual ground", "virtual short"], title: "Operational amplifier (op-amp)", subject: "Analog electronics",
+  { id: "opamp", keys: ["operational amplifier", "op amp", "opamp", "ideal op amp", "virtual ground", "virtual short"], title: "Operational amplifier (op-amp)", subject: "Analog electronics",
     short: "An op-amp is a high-gain voltage amplifier with two inputs (inverting and non-inverting) and one output. It amplifies the difference between its inputs.",
     points: ["An ideal op-amp has infinite open-loop gain, infinite input resistance, zero output resistance and infinite bandwidth.", "With negative feedback, the two inputs are at almost the same voltage (virtual short). If the non-inverting input is grounded, the inverting input is at virtual ground.", "Inverting amplifier: the output is inverted, gain = −Rf/Rin. Non-inverting amplifier: gain = 1 + Rf/Rin, never less than 1.", "Op-amps are used as amplifiers, adders, integrators, differentiators, comparators and filters."],
     formulas: [["Inverting gain", "Av = −Rf / Rin"], ["Non-inverting gain", "Av = 1 + Rf / Rin"], ["Voltage follower", "Av = 1"], ["Integrator", "Vout = −(1/RC) ∫ Vin dt"]],
@@ -204,7 +204,7 @@ PACKS.push(
     exam: "A logic family is a group of compatible digital ICs made with the same technology. The main families are TTL, ECL and CMOS. Important characteristics are propagation delay, power dissipation, fan-out, fan-in and noise margin. CMOS has very low static power consumption and high noise immunity, TTL is fast with moderate power, and ECL is the fastest with the highest power consumption.",
     mistakes: ["Saying CMOS uses no power at all. It uses power while switching.", "Mixing up fan-in (inputs of a gate) and fan-out (loads an output can drive).", "Forgetting that unused TTL inputs float high."],
     uses: [["Mobile phones and laptops", "CMOS gives low power and long battery life."], ["High-speed communication equipment", "ECL was used where speed mattered most."], ["Hobby and lab circuits", "74-series TTL and CMOS chips are common in teaching labs."]], related: ["Logic gates", "Operational amplifier (op-amp)", "Memory (RAM and ROM types)"], diagrams: ["gates"] },
-  { id: "excite", keys: ["excitation table", "excitation tables", "characteristic table", "flip flop conversion", "convert flip flop", "state table", "state reduction", "state assignment"], title: "Excitation tables and flip-flop conversion", subject: "Digital electronics",
+  { id: "excite", keys: ["excitation table", "excitation tables", "characteristic table", "flip flop conversion", "convert flip flop", "state reduction", "state assignment"], title: "Excitation tables and flip-flop conversion", subject: "Digital electronics",
     short: "An excitation table tells which flip-flop inputs are needed to move from the present state Q to the next state Q+. It is used to design counters and state machines.",
     points: ["SR: 0→0: S=0, R=X. 0→1: S=1, R=0. 1→0: S=0, R=1. 1→1: S=X, R=0.", "JK: 0→0: J=0, K=X. 0→1: J=1, K=X. 1→0: J=X, K=1. 1→1: J=X, K=0.", "D: D = Q+.  T: T = Q ⊕ Q+ (T = 1 only when the state must change).", "X means don’t care: it can be 0 or 1, which helps to simplify the logic.", "To convert one flip-flop into another, write the excitation of the new one in terms of the old one."],
     steps: ["Draw the state diagram and state table.", "Choose the flip-flop type.", "For every present state and next state, read the needed inputs from the excitation table.", "Simplify each input with a K-map (use X as don’t care).", "Draw the circuit."],
@@ -246,4 +246,10 @@ export function packFind(q) {
   const t = " " + norm(q) + " "; let best = null, bl = 0;
   for (const p of PACKS) for (const k of p.keys) { const kk = norm(k); if (t.includes(" " + kk + " ") && kk.length > bl) { best = p; bl = kk.length; } }
   return best;
+}
+
+export function packScore(q) {
+  const t = " " + norm(q) + " "; let best = null, bl = 0;
+  for (const p of PACKS) for (const k of p.keys) { const kk = norm(k); if (t.includes(" " + kk + " ") && kk.length > bl) { best = p; bl = kk.length; } }
+  return { p: best, len: bl };
 }
