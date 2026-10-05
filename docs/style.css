@@ -3139,3 +3139,11 @@ header.top #paletteBtn, #paletteBtn { border-radius: 999px; background: var(--ac
 :root[data-palette] .splash.sp2 .sp2-h span { color: var(--accent); }
 :root[data-palette] .splash.sp2 .sp2-sub, :root[data-palette] .splash.sp2 .sp2-trust { color: var(--muted); }
 :root[data-palette] .splash.sp2 .sp2-go { background: var(--btn); color: var(--btn-ink); display: flex; align-items: center; justify-content: center; line-height: 1.2; }
+
+/* How to use this app */
+.howto-list { list-style: none; counter-reset: ht; margin: 6px 0 10px; padding: 0; display: grid; gap: 10px; }
+.howto-list li { counter-increment: ht; position: relative; padding: 2px 0 2px 38px; min-width: 0; }
+.howto-list li::before { content: counter(ht); position: absolute; left: 0; top: 0; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 700; background: var(--accent-soft); color: var(--accent); }
+.howto-list b { display: block; font-size: 1rem; line-height: 1.3; }
+.howto-list span { display: block; font-size: .9rem; line-height: 1.4; color: var(--muted); }
+.howto-list.big { gap: 14px; margin: 12px 0 16px; }

@@ -1834,22 +1834,38 @@ function loopyTip() {
 }
 // Curiosity hooks on the Today card: a first-steps quest for new students, today's quiz question as a teaser, and the latest helpful reply.
 function questSteps() {
-  const mine = store ? allMyIds() : new Set(), name = !!(getName() || "").trim();
-  const posted = state.doubts.some(d => mine.has(d.authorId)) || state.replies.some(r => mine.has(r.authorId)) || readJSON("dd-quest-post", false);
-  const quiz = (QUIZ.length ? !!myQuizAnswer(dayNum()) : true) || readJSON("dd-quest-quiz", false);
-  if (posted) writeJSON("dd-quest-post", true); if (quiz) writeJSON("dd-quest-quiz", true);
-  return [["✏️", "Set your nickname", name, () => { const b = $("nameBtn"); if (b) b.click(); }], ["💬", "Ask or answer one doubt", posted, () => { const b = $("askBtn"); if (b) b.click(); }], ["🧠", "Take today's quiz", quiz, () => showPanel("quiz")]];
+  const name = !!(getName() || "").trim();
+  return [["✏️", "Set your nickname", name, () => { const b = $("nameBtn"); if (b) b.click(); }]];
+}
+// How to use the app: six short steps. The home screen shows the first three until the student taps "Got it".
+const HOWTO = [
+  ["Ask a doubt", "Tap Ask a doubt, write your question and add a photo if it helps. Pick the subject so the right people see it."],
+  ["Help a classmate", "Open any doubt and tap Answer this doubt. Clear, correct answers earn you points."],
+  ["Take the daily quiz", "One question a day. Your answer counts for your college."],
+  ["Grow your streak", "Visit every day to build a streak and unlock rewards."],
+  ["Find notes and papers", "Use Subjects and Papers for syllabus, notes and previous question papers."],
+  ["Stay safe", "Never share phone numbers, passwords or private photos. Use Report if something is wrong."],
+];
+function howToCard() {
+  if (readJSON("dd-howto-done", false)) return null;
+  return el("div", { class: "quest howto" }, el("div", { class: "quest-head" }, el("strong", {}, "How to use this app")),
+    el("ol", { class: "howto-list" }, ...HOWTO.slice(0, 3).map(([t, d]) => el("li", {}, el("b", {}, t), el("span", {}, d)))),
+    el("div", { class: "rowbtns" },
+      el("button", { class: "btn sm primary", type: "button", onclick: () => { const b = $("askBtn"); if (b) b.click(); } }, "Ask a doubt"),
+      el("button", { class: "btn sm", type: "button", onclick: () => showPanel("howto") }, "See all steps"),
+      el("button", { class: "btn sm", type: "button", onclick: () => { writeJSON("dd-howto-done", true); todayKey = ""; renderToday(); } }, "Got it")));
+}
+function renderHowTo() {
+  return [el("h2", {}, "How to use " + BRAND),
+    el("ol", { class: "howto-list big" }, ...HOWTO.map(([t, d]) => el("li", {}, el("b", {}, t), el("span", {}, d)))),
+    el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back to the board"))];
 }
 function questCard() {
-  if (readJSON("dd-quest-done", false) || (readJSON("dd-visits", { n: 1 }).n || 1) > 21) return null;
   const steps = questSteps(), n = steps.filter(s => s[2]).length;
-  if (n === 3) { if (state.dataReady) { writeJSON("dd-quest-done", true); const until = Math.max(Number(readJSON("dd-bonus-until", 0)) || 0, Date.now()) + 864e5; writeJSON("dd-bonus-until", until); }
-    if (!readJSON("dd-quest-cele", false)) { writeJSON("dd-quest-cele", true); setTimeout(() => confetti(140), 200); }
-    return el("div", { class: "wow", role: "status" }, el("span", { class: "wow-conf", "aria-hidden": "true" }, "🎉 🎊"), el("strong", {}, "Wow, you finished your first steps!"), el("span", {}, "Welcome to the family. 🎁 1 free day of Plus studio is yours.")); }
-  return el("div", { class: "quest" }, el("div", { class: "quest-head" }, el("strong", {}, "Your first 3 steps"), el("small", {}, n + "/3")),
-    el("div", { class: "mock-bar" }, (() => { const s = el("span", {}); s.style.setProperty("width", Math.round(n * 100 / 3) + "%"); return s; })()),
-    ...steps.map(([ic, t, ok, fn]) => el("button", { class: "quest-step" + (ok ? " done" : ""), type: "button", disabled: ok ? "" : null, onclick: fn }, el("span", {}, ok ? "✔" : ic), el("b", {}, t), ok ? null : el("i", {}, "Start →"))),
-    el("small", { class: "hint" }, "Finish all three for a free day of Plus studio. 🎁"));
+  if (n < steps.length) return el("div", { class: "quest" }, el("div", { class: "quest-head" }, el("strong", {}, "Get started")),
+    ...steps.map(([ic, t, ok, fn]) => el("button", { class: "quest-step", type: "button", onclick: fn }, el("span", {}, ic), el("b", {}, t), el("i", {}, "Start →"))),
+    el("small", { class: "hint" }, "Your nickname is the only thing you need to join. No real name is shown."));
+  return howToCard();
 }
 function quizTeaser() {
   if (!QUIZ.length || myQuizAnswer(dayNum())) return null;
@@ -1920,15 +1936,15 @@ function boxButton() {
 }
 // Launch banner: a premium welcome-aboard banner on top of the home screen right after the welcome steps, until the first 3 steps are done or it is closed.
 function launchBanner(name) {
+  return null;   // the "Get started" card below already asks for the nickname, so no second banner
   if (!readJSON("dd-launch", false) || readJSON("dd-launch-gone", false)) return null;
   const steps = questSteps(), n = steps.filter(s => s[2]).length;
-  if (n === 3) return null;
-  const who = (name || "").trim();
+  if (n === steps.length) return null;
   return el("div", { class: "launch" }, el("div", { class: "launch-in" },
     el("div", { class: "launch-loopy" }, loopyMini()),
-    el("div", { class: "launch-text" }, el("small", {}, "NEW MEMBER · " + COLLEGE), el("strong", {}, "Welcome aboard" + (who ? ", " + who : "") + "! 🎉"), el("span", {}, "You are now part of the " + BRAND + " family. Finish your first 3 steps and unlock a free gift 🎁")),
-    el("div", { class: "launch-go" }, el("b", {}, n + "/3"), el("button", { class: "launch-btn", type: "button", onclick: () => { const q = document.querySelector(".quest"); if (q) q.scrollIntoView({ behavior: "smooth", block: "center" }); } }, "Start →")),
-    el("button", { class: "launch-x", type: "button", "aria-label": "Close banner", onclick: () => { writeJSON("dd-launch-gone", true); todayKey = ""; renderToday(); } }, "✕")));
+    el("div", { class: "launch-text" }, el("small", {}, "NEW MEMBER \u00B7 " + COLLEGE), el("strong", {}, "Welcome aboard!"), el("span", {}, "Set your nickname to join " + BRAND + ".")),
+    el("div", { class: "launch-go" }, el("button", { class: "launch-btn", type: "button", onclick: () => { const b = $("nameBtn"); if (b) b.click(); } }, "Start \u2192")),
+    el("button", { class: "launch-x", type: "button", "aria-label": "Close banner", onclick: () => { writeJSON("dd-launch-gone", true); todayKey = ""; renderToday(); } }, "\u2715")));
 }
 function renderToday() {
   try { checkNewCostume(); } catch (_) {}
@@ -5808,7 +5824,7 @@ function renderAbout() {
     el("h2", {}, "ℹ️ About " + BRAND),
     el("img", { class: "brand-banner", src: "brand/the-campus-loop-banner-1200x630.png", alt: BRAND + ". Where every doubt finds answers.", width: "1200", height: "630", loading: "lazy" }),
     el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => { try { window.open("about.html", "_blank", "noopener"); } catch (_) {} } }, "📄 Read our full story")),
-    el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: () => showWelcome(true) }, "👋 Show the welcome tour")),
+    el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: () => showWelcome(true) }, "👋 Show the welcome tour"), el("button", { class: "btn sm", type: "button", onclick: () => showPanel("howto") }, "How to use this app")),
     el("p", { class: "hint" }, el("a", { href: "terms.html", target: "_blank", rel: "noopener" }, "Terms"), " · ", el("a", { href: "privacy.html", target: "_blank", rel: "noopener" }, "Privacy"), " · ", el("a", { href: "refund.html", target: "_blank", rel: "noopener" }, "Refunds")),
     el("p", { class: "hint" }, "One free place to ask doubts, share ideas, prepare for GATE, plan your career and help your juniors."),
     el("div", { class: "learn-card" },
@@ -9184,6 +9200,7 @@ function renderCore() {
       state.mode === "focusplus" ? renderFocusPlus() :
       state.mode === "college" ? renderCollege() :
       state.mode === "appearance" ? renderAppearance() :
+      state.mode === "howto" ? renderHowTo() :
       state.mode === "about" ? renderAbout() :
       state.mode === "lab" ? renderLab() :
       state.mode === "fun" ? renderFun() :
@@ -9342,7 +9359,7 @@ if (themeBtn) {
 // Brand lockup from the brand guide: the monogram C, then "THE CAMPUS" in bold serif with wide spacing and a small spaced gold "LOOP".
 function brandLockup(title) {
   const words = String(title || "The Campus Loop").trim().split(/\s+/), last = words.length > 1 ? words.pop() : "", rest = words.join(" ") || String(title);
-  const src = document.querySelector(".sp2-bmark svg"); let mark = null;
+  const tpl = document.getElementById("brandMarkTpl"), src = (tpl && tpl.content && tpl.content.firstElementChild) || document.querySelector(".sp2-bmark svg"); let mark = null;
   if (src) {
     mark = src.cloneNode(true); mark.removeAttribute("width"); mark.removeAttribute("height"); mark.setAttribute("class", "bmark hd-mark"); mark.setAttribute("aria-hidden", "true"); mark.setAttribute("focusable", "false");
     mark.querySelectorAll("[id]").forEach(n => { n.id = n.id + "H"; });   // gradient ids must stay unique
