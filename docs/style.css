@@ -3525,3 +3525,5 @@ html.bs-open, html.bs-open body { overflow: hidden; }
 .dg-svg .dg-w.ax { stroke: currentColor; opacity: .7; stroke-width: 1.8; } .dg-svg .dg-fill.sat { fill: #fde68a; opacity: .45; } .dg-svg .dg-fill.cut { fill: #cbd5e1; opacity: .6; } .dg-svg .dg-fill.g { fill: #86efac; opacity: .55; } .dg-svg .dg-fill.r { fill: #fca5a5; opacity: .5; } .dg-svg .dg-fill.b { fill: #93c5fd; opacity: .5; } .dg-svg .dg-fill.p { fill: #d8b4fe; opacity: .5; }
 .dg-svg .dg-ucircle { fill: none; stroke: #9333ea; stroke-width: 2.4; stroke-dasharray: 6 4; } .dg-svg .dg-zero { fill: #fff; stroke: #2563eb; stroke-width: 2.4; }
 .dg-svg .dg-venn { stroke-width: 2.6; fill-opacity: .35; } .dg-svg .dg-venn.a { fill: #2563eb; stroke: #2563eb; } .dg-svg .dg-venn.b { fill: #16a34a; stroke: #16a34a; }
+.pk-simple .pk-sline { margin: 6px 0; font-size: 1.04em; line-height: 1.55; }
+.pk-simple h3 { margin-bottom: 4px; }

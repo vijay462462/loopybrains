@@ -4960,7 +4960,7 @@ function brainQuiz(wiki, n) {
   return qs;
 }
 let _solver = null;
-async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=437", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
+async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=438", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
 async function brainReply(text, chat) {
   const sv = await brainSolve(text); if (sv) return sv;
   const { kind, topic } = brainIntent(text, chat.topic || ""); chat.topic = topic;
@@ -5036,7 +5036,7 @@ async function safeSync() {
   } catch (_) { _safeLoaded = false; }
 }
 let _safeMod = null;
-const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=437", location.href).href); } catch (_) { return null; } };
+const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=438", location.href).href); } catch (_) { return null; } };
 function safeModal(title, lines, danger) {
   const prev = document.getElementById("safeModal"); if (prev) prev.remove();
   const ov = el("div", { class: "safe-ov", id: "safeModal", role: "alertdialog", "aria-modal": "true", "aria-label": title },
@@ -5074,7 +5074,7 @@ const bsFree = (lv) => lv <= 1 || IS_RGUKT;
 const BS_MODES = [["atlas", "Atlas", "Search anything", "Topics, doubts, maths and research, explained in easy words.", "Ask anything: a topic, doubt, problem or research idea"], ["launchpad", "Launchpad", "Project guide", "Turn an idea into a plan: objectives, tools, week-by-week steps, report outline and viva questions.", "Describe your project idea, e.g. IoT weather station"], ["forge", "Forge", "Find code", "Working code for classic problems in many languages, with the idea explained.", "e.g. binary search in Python"], ["aegis", "Aegis", "Learn security", "Understand how attacks work and how to defend, legally and safely.", "e.g. SQL injection, phishing, password safety"]];
 const bsModeInfo = (id) => BS_MODES.find(m => m[0] === id) || BS_MODES[0];
 let _modes = null;
-const brainModesMod = async () => { try { return _modes = _modes || await import(new URL("brain-modes.js?v=437", location.href).href); } catch (_) { return null; } };
+const brainModesMod = async () => { try { return _modes = _modes || await import(new URL("brain-modes.js?v=438", location.href).href); } catch (_) { return null; } };
 const PREF_KEY = "dd-bs-prefs", SAVED_KEY = "dd-bs-saved";
 const bsPrefs = () => { const p = readJSON(PREF_KEY, {}); return p && typeof p === "object" ? p : {}; };
 const bsState = () => state.bs || (state.bs = (() => { const p = bsPrefs(), ok = p.remember !== false;
@@ -5141,17 +5141,17 @@ function bsPool() {
 const bsSuggest = (text) => { const n = text.trim().toLowerCase(); if (n.length < 2) return []; return bsPool().filter(t => t.toLowerCase().includes(n)).sort((a, b) => a.length - b.length).slice(0, 6); };
 let _report = null;
 let _packs = null, _dgm = null;
-const brainDiagramsMod = async () => { try { return _dgm = _dgm || await import(new URL("brain-diagrams2.js?v=437", location.href).href); } catch (_) { return null; } };
+const brainDiagramsMod = async () => { try { return _dgm = _dgm || await import(new URL("brain-diagrams2.js?v=438", location.href).href); } catch (_) { return null; } };
 // All Loopy Knowledge Packs (digital design first, then ECE subjects). Returns { find(q), refs }.
 const brainPacksMod = async () => {
   if (_packs) return _packs;
   try {
-    const [m1, m2] = await Promise.all([import(new URL("brain-packs.js?v=437", location.href).href), import(new URL("brain-packs-ece.js?v=437", location.href).href)]);
-    _packs = { refs: m2.REFS || {}, find: (q) => { const a = m1.packScore(q), b = m2.packScore(q); return (b.len > a.len ? b.p : a.p) || null; } };
+    const [m1, m2, m3] = await Promise.all([import(new URL("brain-packs.js?v=438", location.href).href), import(new URL("brain-packs-ece.js?v=438", location.href).href), import(new URL("brain-simple.js?v=438", location.href).href).catch(() => ({ SIMPLE: {} }))]);
+    _packs = { refs: m2.REFS || {}, simple: m3.SIMPLE || {}, find: (q) => { const a = m1.packScore(q), b = m2.packScore(q); return (b.len > a.len ? b.p : a.p) || null; } };
   } catch (_) { _packs = null; }
   return _packs;
 };
-const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=437", location.href).href); } catch (_) { return null; } };
+const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=438", location.href).href); } catch (_) { return null; } };
 async function bsPapers(q) {
   try {
     const j = await lsFetch("https://api.openalex.org/works?per-page=5&select=title,publication_year,cited_by_count,doi,open_access,authorships,abstract_inverted_index&search=" + encodeURIComponent(q));
@@ -5474,9 +5474,10 @@ function sentNode(s, hl) {
 function packView(p, go) {
   const out = [], card = (cls, h, ...k) => el("section", { class: "bsr-card bsr-reveal in " + cls }, h ? el("h3", {}, h) : null, ...k.filter(Boolean));
   out.push(el("section", { class: "bsr-hero pk-hero bsr-reveal in" }, el("small", {}, "✓ Loopy Knowledge Pack · " + p.subject), el("h2", {}, p.title), el("p", {}, p.short), el("div", { class: "bsr-meta" }, el("span", {}, "Written for B.Tech students"), el("span", {}, "Checked first, before the web"))));
+  { const sm = _packs && _packs.simple && _packs.simple[p.id]; if (sm && sm.length) out.push(el("section", { class: "bsr-card easy bsr-reveal in pk-simple" }, el("h3", {}, "In simple words"), ...sm.map(t => el("p", { class: "pk-sline" }, t)))); }
   const keys = p.diagrams || [], drawn = _dgm ? keys.map(k => _dgm.drawDiagram2(k)).filter(Boolean) : [];
   if (drawn.length) {
-    drawn.forEach((d, i) => out.push(el("section", { class: "bsr-card bsr-reveal in dg-card" }, el("h3", {}, d.title), d.svg, el("p", { class: "od-cap" }, d.cap), i === 0 ? el("div", { class: "dg-key" }, el("span", {}, el("i", { class: "k-in" }), "input"), el("span", {}, el("i", { class: "k-mid" }), "inside the circuit"), el("span", {}, el("i", { class: "k-out" }), "output"), el("span", {}, el("i", { class: "k-clk" }), "clock or control"), el("span", {}, el("i", { class: "k-fb" }), "feedback")) : null, el("small", { class: "hint" }, "Drawn by Loopy to explain the idea. Use your own lab circuit rules in exams."))));
+    drawn.forEach((d, i) => out.push(el("section", { class: "bsr-card bsr-reveal in dg-card" }, el("h3", {}, d.title), d.svg, el("p", { class: "od-cap" }, d.cap), i === 0 && d.svg.querySelector(".dg-w.in, .dg-w.mid, .dg-w.out, .dg-w.clk, .dg-w.fb") ? el("div", { class: "dg-key" }, el("span", {}, el("i", { class: "k-in" }), "input"), el("span", {}, el("i", { class: "k-mid" }), "inside the circuit"), el("span", {}, el("i", { class: "k-out" }), "output"), el("span", {}, el("i", { class: "k-clk" }), "clock or control"), el("span", {}, el("i", { class: "k-fb" }), "feedback")) : null, el("small", { class: "hint" }, "Drawn by Loopy to explain the idea."))));
   } else { const dg = ownDiagram(p.title + " " + (p.diag || "")); if (dg) out.push(dg); }
   out.push(card("pk-points", "Key points", el("ul", { class: "bsr-bul" }, ...p.points.map(x => el("li", {}, x)))));
   if (p.steps && p.steps.length) out.push(card("", "Step by step", el("ol", { class: "bsr-tl pk-steps" }, ...p.steps.map((x, i) => el("li", {}, el("b", {}, String(i + 1)), el("span", {}, x))))));

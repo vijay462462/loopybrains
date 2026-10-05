@@ -1,5 +1,5 @@
 // More of Loopy's own diagrams: analog circuits, DSP, control systems and probability. Extends brain-diagrams.js.
-import { Cv, mk, D } from "./brain-diagrams.js?v=437";
+import { Cv, mk, D } from "./brain-diagrams.js?v=438";
 const done = (c) => c.root;
 const P = Cv.prototype;
 // Local-coordinate parts: each starts at (x, y) and ends L further along the (rotated) axis. Returns the absolute end pin.
@@ -194,4 +194,19 @@ D.designflow = { title: "The digital design process", cap: "Specify, design, sim
   c.wire([[95, 262], [95, 292]], "out", true); c.txt(104, 282, "Yes", { c: "g" }); c.box(20, 292, 150, 34, "Prototype", "ff"); c.wire([[95, 326], [95, 342]], "in", true); c.box(20, 342, 150, 34, "Testing", "ff"); c.wire([[95, 376], [95, 392]], "in", true); diamond(25, 392, 140, 56, "Meets specs?");
   c.wire([[95, 448], [95, 462]], "out", true); c.txt(104, 460, "Yes", { c: "g" }); c.txt(100, 468, "", {}); c.box(200, 392, 130, 34, "Minor errors?", "off"); c.wire([[165, 420], [200, 410]], "fb", true); c.txt(172, 432, "No", { c: "m" }); c.box(200, 342, 130, 34, "Make corrections", "ff"); c.wire([[265, 392], [265, 376]], "out", true); c.txt(272, 386, "Yes", { c: "g" }); c.wire([[200, 359], [165, 359]], "out", true); c.wire([[330, 409], [360, 409], [360, 173], [330, 173]], "fb", true); c.txt(362, 300, "No: big errors,", { c: "m" }); c.txt(362, 314, "redesign", { c: "m" });
   c.txt(246, 462, "Finished product", { a: "middle", c: "g" }); return done(c); } };
+
+D.layers = { title: "From a computer down to a transistor", cap: "A computer is built in layers. Each layer is made of many parts of the layer below it.", draw() {
+  const c = new Cv(400, 300, "Layers of digital hardware"); const L = [["Computer", "case, power supply, disks", "ff"], ["Motherboard (PCB)", "a board that carries many chips", "on"], ["Chip (IC)", "billions of transistors on silicon", "ff"], ["Logic gates", "AND, OR, NOT, flip-flops", "on"], ["Transistor", "a tiny electronic switch", "ff"]];
+  L.forEach(([t, s, k], i) => { const y = 8 + i * 58, x = 20 + i * 14, w = 360 - i * 28; c.box(x, y, w, 44, t + "|" + s, k); if (i < 4) c.wire([[200, y + 44], [200, y + 58]], "in", true); }); c.txt(386, 150, "contains", { a: "end", c: "s" }); return done(c); } };
+D.chiptypes = { title: "Three ways to build a logic circuit", cap: "A rough comparison. Standard chips are simple and fixed. An FPGA is programmed by you. An ASIC is made at a factory for one job.", draw() {
+  const c = new Cv(400, 300, "Chip types"); const cols = [["Standard chips", "fixed function", [1, 2, 1], "ff"], ["FPGA (PLD)", "you program it", [5, 3, 2], "on"], ["ASIC (custom)", "made in a factory", [1, 5, 5], "off"]], rows = ["Can change later", "Speed and size", "Start-up cost"], colr = ["#7c3aed", "#16a34a", "#ea580c"];
+  cols.forEach(([t, s, v, k], i) => { const x = 10 + i * 128; c.box(x, 10, 118, 48, t + "|" + s, k); v.forEach((n, r) => { const y = 82 + r * 66; c.txt(x + 4, y, rows[r], { c: "s" }); for (let j = 0; j < 5; j++) c.add(mk("rect", { x: x + 4 + j * 22, y: y + 8, width: 18, height: 18, rx: 4, fill: j < n ? colr[r] : "#e2e8f0", "fill-opacity": j < n ? ".85" : "1" })); }); });
+  c.txt(200, 290, "more filled boxes = more of it", { a: "middle", c: "s" }); return done(c); } };
+D.moore = { title: "Moore’s law: more transistors every year", cap: "The number of transistors on a chip roughly doubles about every two years. That is why chips got from thousands of transistors to billions.", draw() {
+  const c = new Cv(400, 250, "Moore law"); c.axes(60, 20, 320, 190, "year", "transistors"); const Y = (e) => 210 - (e - 3) * 22; [[3, "10³"], [6, "10⁶"], [9, "10⁹"], [11, "10¹¹"]].forEach(([e, t]) => { c.add(mk("line", { x1: 56, y1: Y(e), x2: 380, y2: Y(e), class: "dg-w ax", "stroke-dasharray": "2 5", "stroke-width": 1 })); c.txt(52, Y(e) + 4, t, { a: "end", c: "s" }); });
+  c.curve([[70, Y(3.4)], [370, Y(10.7)]], "out", 3.4); [[110, "1970s: thousands"], [210, "1990s: millions"], [316, "2010s+: billions"]].forEach(([x, t]) => { const e = 3.4 + (x - 70) / 300 * 7.3; c.dot(x, Y(e), "clk"); c.txt(x - 4, Y(e) - 10, t, { a: "middle", c: "m" }); }); c.txt(220, 238, "straight line on a log scale = doubling again and again", { a: "middle", c: "s" }); return done(c); } };
+D.dec2bin = { title: "Decimal to binary: divide by 2", cap: "Keep dividing by 2 and write each remainder. Read the remainders from the bottom up: 25 = 11001 in binary.", draw() {
+  const c = new Cv(400, 290, "Decimal to binary"); const rows = [[25, 12, 1], [12, 6, 0], [6, 3, 0], [3, 1, 1], [1, 0, 1]]; c.txt(20, 20, "Number ÷ 2", { c: "s" }); c.txt(170, 20, "Quotient", { c: "s" }); c.txt(290, 20, "Remainder", { c: "s" });
+  rows.forEach(([n, q, r], i) => { const y = 30 + i * 42; c.box(10, y, 120, 32, n + " ÷ 2", "ff"); c.box(150, y, 90, 32, "= " + q, "ff"); c.box(270, y, 90, 32, String(r), r ? "on" : "off"); });
+  c.wire([[376, 190], [376, 40]], "clk", true); c.txt(366, 238, "read upward", { a: "end", c: "m" }); c.txt(200, 262, "Answer: 1 1 0 0 1  =  11001₂", { a: "middle", c: "g" }); return done(c); } };
 export function drawDiagram2(key) { const d = D[key]; if (!d) return null; try { return { title: d.title, cap: d.cap, svg: d.draw() }; } catch (_) { return null; } }
