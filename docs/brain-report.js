@@ -73,3 +73,38 @@ export function hardWords(text, max) {
   const cnt = new Map(); for (const w of String(text || "").match(/\b[a-z]{10,}\b/g) || []) if (!COMMON.has(w)) cnt.set(w, (cnt.get(w) || 0) + 1);
   return [...cnt.entries()].sort((a, b) => b[1] - a[1] || b[0].length - a[0].length).slice(0, max || 4).map(x => x[0]);
 }
+
+// ---------- Compare two topics ----------
+const pickS = (sents, re) => sents.find(s => re.test(s)) || "";
+export function compareRows(wa, wb) {
+  const prep = (w) => { const intro = splitSentences(w.intro), all = splitSentences(w.intro + " " + w.sections.map(s => s.t).join(" ")); return { intro, all }; };
+  const A = prep(wa), B = prep(wb), rows = [];
+  const add = (label, a, b) => { if (a || b) rows.push({ label, a: a || "Not stated in the source.", b: b || "Not stated in the source." }); };
+  add("What it is", A.intro[0], B.intro[0]);
+  add("Key idea", A.intro[1] || (splitSentences(wa.sections[0] ? wa.sections[0].t : "")[0]), B.intro[1] || (splitSentences(wb.sections[0] ? wb.sections[0].t : "")[0]));
+  add("Used for", pickS(A.all, /\b(used|application|applications|employed|useful)\b/i), pickS(B.all, /\b(used|application|applications|employed|useful)\b/i));
+  add("Example", pickS(A.all, /\b(for example|for instance|such as|e\.g\.)/i), pickS(B.all, /\b(for example|for instance|such as|e\.g\.)/i));
+  add("Watch out", pickS(A.all, /\b(however|limitation|disadvantage|drawback|cannot|although|despite)\b/i), pickS(B.all, /\b(however|limitation|disadvantage|drawback|cannot|although|despite)\b/i));
+  return rows;
+}
+export function compareTerms(wa, wb) {
+  const ta = terms(wa.intro + " " + wa.sections.map(s => s.t).join(" "), wa.title, 12), tb = terms(wb.intro + " " + wb.sections.map(s => s.t).join(" "), wb.title, 12);
+  const both = ta.filter(x => tb.includes(x));
+  return { both, onlyA: ta.filter(x => !tb.includes(x)).slice(0, 6), onlyB: tb.filter(x => !ta.includes(x)).slice(0, 6) };
+}
+
+// ---------- Real-life uses ----------
+const DOMAINS = [["Healthcare", /\b(medic\w*|health\w*|hospital\w*|patient\w*|disease\w*|clinical|surgery|diagnos\w*|drug\w*)\b/i], ["Transport", /\b(vehicle\w*|cars?|aircraft|airplane\w*|trains?|traffic|navigation|roads?|ships?|railway\w*|gps|logistic\w*|aviation|automotive)\b/i], ["Communication", /\b(communicat\w*|network\w*|telecom\w*|phones?|mobile|radio|signals?|internet|wireless|5g|broadcast\w*)\b/i], ["Energy", /\b(power|energy|electric\w*|grid|batter\w*|solar|renewable|turbine\w*)\b/i], ["Finance", /\b(bank\w*|financ\w*|payments?|trading|stocks?|insurance|market\w*)\b/i], ["Education", /\b(educat\w*|schools?|students?|learning|teaching|universit\w*)\b/i], ["Security", /\b(security|encrypt\w*|authenticat\w*|defen[cs]e|military|surveillance|cyber\w*)\b/i], ["Entertainment", /\b(games?|gaming|music|video\w*|films?|movies?|streaming|audio|animation)\b/i], ["Manufacturing", /\b(factor\w*|manufactur\w*|industr\w*|robot\w*|assembly|production|machin\w*)\b/i], ["Agriculture", /\b(farm\w*|crops?|agricultur\w*|irrigation|soil)\b/i], ["Space", /\b(space\w*|rockets?|satellite\w*|astronom\w*|orbit\w*|telescope\w*)\b/i], ["Computing", /\b(computer\w*|software|processor\w*|chips?|memory|algorithm\w*|database\w*|cloud|programm\w*|digital|devices?)\b/i], ["Science", /\b(research|laborator\w*|experiment\w*|physics|chemistry|biolog\w*|scientist\w*)\b/i]];
+const USE_HEAD = /^(applications?|uses?|usage|in practice|real[- ]world|examples?|use cases?|applied|practical)\b/i, USE_SENT = /\b(?:is|are|can be|was|were|widely|commonly|often)?\s*(?:used|applied|employed|utili[sz]ed|useful|found)\s+(?:in|for|to|by|at|within)\b|\bapplications?\b|\bused to\b/i;
+export function domainOf(text) { const hit = DOMAINS.find(([, re]) => re.test(text)); return hit ? hit[0] : "Everyday life"; }
+function useTitle(s) {
+  const m = /\b(?:used|applied|employed|utili[sz]ed|useful|found)\s+(?:widely\s+)?(?:in|for|to|by|at|within)\s+([^,.;:()]+)/i.exec(s) || /\bapplications? (?:in|include|of)\s+([^,.;:()]+)/i.exec(s);
+  let raw = m ? m[1].trim() : s; raw = raw.split(/\s+(?:and|or|in|for|to|by|that|which|where|when)\s+/i).filter(Boolean)[0] || raw; raw = raw.split(/\s+/).slice(0, 6).join(" ");
+  return raw.charAt(0).toUpperCase() + raw.slice(1);
+}
+export function uses(wiki, max) {
+  const out = [], seen = new Set(), push = (s) => { const k = s.slice(0, 40).toLowerCase(); if (seen.has(k) || out.length >= (max || 5)) return; seen.add(k); out.push({ title: useTitle(s), text: s.length > 230 ? s.slice(0, 227).replace(/\s\S*$/, "") + "…" : s, domain: domainOf(s) }); };
+  for (const sec of wiki.sections) if (USE_HEAD.test(sec.h)) for (const s of splitSentences(sec.t).slice(0, 6)) push(s);
+  for (const s of splitSentences(wiki.intro + " " + wiki.sections.map(x => x.t).join(" "))) if (USE_SENT.test(s)) push(s);
+  return out;
+}
