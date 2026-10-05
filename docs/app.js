@@ -393,7 +393,7 @@ const state = {
   doubts: [], ideas: [], clubs: [], gate: [], jobs: [], challenges: [], chalScores: [], market: [], marketReports: [], marketRatings: [], marketInterests: [], replies: [], likes: [], plan: { plus: false, until: 0 }, papers: [], notices: [], drives: [], weekly: [], events: [], rsvps: [], blocked: [], profiles: [], stories: [], storyViews: [], storyAnswers: [], loaded: false,
   selected: null, mode: "intro", // intro | view | ask | edit | name | campus
   afterName: null,
-  replyPages: [], replyAnon: false, replyPriv: false, privAns: [], thanks: [], verified: {},
+  replyPages: [], replyAnon: false, replyPriv: false, replyAi: false, privAns: [], thanks: [], verified: {},
   campusFilter: "all", // "all" | campus name
   mktChip: "all",     // quick filter chip in the market
   mktSort: "newest",   // "newest" | "price_asc" | "price_desc" | "popular"
@@ -2481,6 +2481,25 @@ function aiCheckBox(key, question, get) {
   draw(); return box;
 }
 // What the asker sees: private answers for this doubt, with a way to share one with everyone.
+// AI-generated answers are labelled. Two sources: the author says AI helped, or an automatic check of the text. The automatic check can be wrong, so it only says "looks like".
+const AI_STRONG = /(as an ai\b|as a language model|i hope this helps|feel free to (ask|reach out)|let me know if you (have|need|want)|great question[!.]|^\s*certainly[!,]|^\s*absolutely[!,]|i (cannot|can't|do not|don't) have (personal|real-time))/im;
+const AI_MEDIUM = [/\*\*[^*\n]{2,}\*\*/, /^#{1,4}\s+\S/m, /```/, /it(?:'|’)s (?:important|worth) to note|it is (?:important|worth) to note|here(?:'|’)s a (?:breakdown|summary|step)|\bdelve\b|in today(?:'|’)s/i];
+function aiTextScore(text) {
+  const t = String(text || ""); if (t.length < 40) return 0;
+  let sc = AI_STRONG.test(t) ? 4 : 0;
+  for (const re of AI_MEDIUM) if (re.test(t)) sc += 2;
+  if (/\b(in conclusion|in summary|overall,|key takeaways?)\b/i.test(t)) sc += 1;
+  if ((t.match(/—/g) || []).length >= 2) sc += 1;
+  if ((t.match(/^\s*[-*•]\s+/gm) || []).length >= 4) sc += 1;
+  return sc;
+}
+function aiBadge(r) {
+  const declared = r && r.ai === true, auto = !declared && aiTextScore(r && r.body) >= 4;
+  if (!declared && !auto) return null;
+  return el("div", { class: "ai-badge" + (declared ? "" : " auto"), role: "note" },
+    el("b", {}, declared ? "\u{1F916} AI-GENERATED ANSWER" : "\u{1F916} LOOKS LIKE AN AI-GENERATED ANSWER"),
+    el("small", {}, declared ? "The author says AI helped write this answer. AI can be wrong, so check it with your notes, a teacher or a book." : "This is an automatic check and it can be wrong. If it is AI text, check it with your notes, a teacher or a book before you trust it."));
+}
 function privateAnswersFor(d) {
   const uid = store && store.uid, rankOf = (r) => r.rating === "best" ? 0 : r.rating === "helpful" ? 1 : (aiChecks.get("p" + r.id) || {}).verdict === "correct" ? 2 : 3;
   const rows = state.privAns.filter(x => x.doubtId === d.id && x.toUid === uid).sort((a, b) => rankOf(a) - rankOf(b) || a.createdAt - b.createdAt);
@@ -2500,6 +2519,7 @@ function privateAnswersFor(d) {
   return el("div", { class: "answers priv-box" }, el("div", { class: "label" }, "\u{1F512} " + rows.length + " private answer" + (rows.length === 1 ? "" : "s") + " (only you can see these)"),
     rows.length > 1 && !hasBest ? el("p", { class: "hint" }, "Several students answered. Read them all, use the AI check if you want, then pick the best one. Best earns the helper 7 points, helpful earns 2.") : null,
     ...rows.map(r => el("div", { class: "ans priv" + (r.rating === "best" ? " best" : "") }, el("div", { class: "who" }, avatarEl(avatarFor(r.authorName || "")), el("strong", {}, name(r)), r.rating === "best" ? el("span", { class: "pill open" }, "⭐ Best") : r.rating === "helpful" ? el("span", { class: "pill" }, "\u{1F44D} Helpful") : null, el("small", { class: "hint" }, ago(r.createdAt))),
+      aiBadge(r),
       r.body ? el("p", { class: "body" }, r.body) : null, ...(Array.isArray(r.imgs) ? r.imgs.filter(u => typeof u === "string" && u.startsWith("data:image/jpeg;base64,")).map((u, i) => el("img", { class: "priv-img", src: u, alt: "Photo " + (i + 1) + " from the answer", loading: "lazy" })) : []),
       aiCheckBox("p" + r.id, d.title + (d.body ? ". " + d.body : ""), async () => ({ answer: r.body || "", img: Array.isArray(r.imgs) && r.imgs[0] && r.imgs[0].length <= 340000 ? r.imgs[0] : "" })),
       r.rating === "best" && r.body ? studyNoteBox(d, r.body) : null,
@@ -2573,7 +2593,7 @@ function similarBox() {
 // Shares one private answer with everyone as a public reply from the asker (the answerer's name is kept).
 async function sharePrivateAnswer(d, r) {
   const id = store.newId("replies"), pages = (Array.isArray(r.imgs) ? r.imgs : []).slice(0, 2), pageIds = pages.map(u => { const pid = store.newId("pages"); pageCache.set(pid, u); return pid; });
-  const doc = { parentId: d.id, parentColl: "doubts", body: ("Solution (from " + (r.anonymous ? "a classmate" : r.authorName) + "): " + (r.body || "(see the photo)")).slice(0, 5000), authorId: store.uid, authorName: getName(), anonymous: false, createdAt: Date.now(), pages: pageIds, fileAttachments: [] };
+  const doc = { parentId: d.id, parentColl: "doubts", body: ("Solution (from " + (r.anonymous ? "a classmate" : r.authorName) + "): " + (r.body || "(see the photo)")).slice(0, 5000), authorId: store.uid, authorName: getName(), anonymous: false, createdAt: Date.now(), pages: pageIds, fileAttachments: [], ...(r.ai === true ? { ai: true } : {}) };
   doc.pages = await trySavePages(pages, id, pageIds); await store.set("replies", id, doc);
 }
 // ---------- Answer quality, study notes, duplicate links, subject experts and revision cards ----------
@@ -8277,6 +8297,7 @@ function renderView() {
     list.append(el("div", { class: "ans" + (best ? " best" : "") + (isMentor(r) ? " mentor" : "") },
       el("div", { class: "who" }, r.anonymous ? avatarEl("👤") : avatarEl(mine(r) ? getAvatar() : avatarFor(r.authorName || "")), el("strong", {}, who(r)), isMentor(r) && el("span", { class: "pill mentor" }, "🎓 " + MENTORS.get(r.authorId)), el("span", {}, ago(r.createdAt)), best && el("span", { class: "pill done" }, "Helped"), ...tools, reportButton("replies", r)),
       state.tab === "doubts" ? el("div", { class: "rowbtns q-row" }, qualityPill(answerQuality(r, "r" + r.id, best ? "best" : "")), state.verified[r.id] ? el("span", { class: "pill open" }, "\u2714 Verified by " + state.verified[r.id].byName) : null) : null,
+      isAcademicTab(state.tab) ? aiBadge(r) : null,
       r.body && r.body !== PAGE_ONLY && (isAcademicTab(state.tab) ? richAnswer(r.body, d.title + " " + (d.subject || "")) : el("p", { class: "body" }, r.body)),
       r.body && r.body !== PAGE_ONLY && renderYtCards(r.body),
       own && best && state.tab === "doubts" && r.body && !r.body.startsWith("\u{1F4DD} Study note") ? studyNoteBox(d, r.body) : null,
@@ -8307,8 +8328,9 @@ function renderView() {
       try {
         const imgs = []; for (const u of pages.slice(0, 2)) imgs.push(await shrinkJpeg(u));
         const pid = d.id + "_" + store.uid;
-        await store.set("privateAnswers", pid, { doubtId: d.id, toUid: d.ownerUid, ownerUid: store.uid, authorId: store.uid, authorName: state.replyAnon ? ANON : getName(), anonymous: state.replyAnon, body: body.slice(0, 5000), ...(imgs.length ? { imgs } : {}), createdAt: Date.now() });
-        state.replyPages = []; state.replyPriv = false; form.reset(); showNotice("Sent privately. Only the asker can see it."); render();
+        await store.set("privateAnswers", pid, { doubtId: d.id, toUid: d.ownerUid, ownerUid: store.uid, authorId: store.uid, authorName: state.replyAnon ? ANON : getName(), anonymous: state.replyAnon, body: body.slice(0, 5000), ...(imgs.length ? { imgs } : {}), ...(state.replyAi ? { ai: true } : {}), createdAt: Date.now() });
+        if (!state.replyAi && aiTextScore(body) >= 4) showNotice("Heads up: your answer looks AI-written, so others will see an AI label. Next time tick the AI box to be open about it.");
+        state.replyAi = false; state.replyPages = []; state.replyPriv = false; form.reset(); showNotice("Sent privately. Only the asker can see it."); render();
       } catch (er) {
         const had = state.privAns.some(x => x.doubtId === d.id && x.ownerUid === (store && store.uid));
         fail(er && String(er.code || "").includes("permission-denied") ? (had ? "You already sent a private answer to this doubt." : "Your private answer could not be sent. Untick the private box to answer openly, or ask the admin to publish the latest security rules.") : errText(er));
@@ -8318,7 +8340,8 @@ function renderView() {
     const id = store.newId("replies");
     const pageIds = pages.map(u => { const pid = store.newId("pages"); pageCache.set(pid, u); return pid; });
     const anonymous = state.replyAnon;
-    const doc = { parentId: d.id, parentColl: t.coll, body: (body || PAGE_ONLY).slice(0, 5000), authorId: store.uid, authorName: anonymous ? ANON : getName(), anonymous, createdAt: Date.now(), pages: pageIds, fileAttachments: replyFiles.filter(f => f.url) };
+    const doc = { parentId: d.id, parentColl: t.coll, body: (body || PAGE_ONLY).slice(0, 5000), authorId: store.uid, authorName: anonymous ? ANON : getName(), anonymous, createdAt: Date.now(), pages: pageIds, fileAttachments: replyFiles.filter(f => f.url), ...(state.replyAi ? { ai: true } : {}) };
+    const looksAi = !state.replyAi && aiTextScore(body) >= 4; state.replyAi = false;
     state.replies = [...state.replies, { id, ...doc }];
     state.replyPages = [];
     form.reset(); render();
@@ -8326,6 +8349,7 @@ function renderView() {
       doc.pages = await trySavePages(pages, id, pageIds);
       await store.set("replies", id, doc);
       if (t.coll === "doubts" && d.authorId !== store.uid) showdownScore("answer");
+      if (looksAi) showNotice("Heads up: your answer looks AI-written, so others will see an AI label. Next time tick the AI box to be open about it.");
     }
     catch (e2) { state.replies = state.replies.filter(x => x.id !== id); render(); showNotice(errText(e2)); }
   } },
@@ -8338,6 +8362,7 @@ function renderView() {
     store.uploadFile ? filePicker(replyFiles) : null,
     state.tab === "doubts" && d.ansPrivate && !own ? el("p", { class: "hint" }, "\u{1F512} The asker chose private answers. Yours goes only to them.") : state.tab === "doubts" && d.ownerUid && !own ? el("label", { class: "check" }, el("input", { type: "checkbox", id: "f-reply-priv", checked: state.replyPriv, onchange: (e) => { state.replyPriv = e.target.checked; } }), "\u{1F512} Send as a private answer (only the asker sees it)") : null,
     el("label", { class: "check" }, el("input", { type: "checkbox", id: "f-reply-anon", checked: state.replyAnon, onchange: (e) => { state.replyAnon = e.target.checked; } }), "🙈 Answer anonymously"),
+    isAcademicTab(state.tab) ? el("label", { class: "check" }, el("input", { type: "checkbox", id: "f-reply-ai", checked: state.replyAi, onchange: (e) => { state.replyAi = e.target.checked; } }), "\u{1F916} I used ChatGPT or another AI for this answer (it will show an AI label)") : null,
     el("p", { class: "hint st-err", id: "f-reply-err", role: "alert", hidden: true }),
     el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "submit" }, t.replyBtn)));
   out.push(form);

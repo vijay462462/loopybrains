@@ -106,6 +106,11 @@ await t("private: cannot be edited or deleted", async () => { await assertFails(
 // ---- private-answer mode, one answer per helper, ratings and thanks ----
 await env.withSecurityRulesDisabled(async (ctx) => { await setDoc(doc(ctx.firestore(), R + "/doubts", "dq3"), { title: "private q", ownerUid: "alice", authorId: "alice-device-1", ansPrivate: true }); });
 const reply = (db, uid, parent) => setDoc(doc(db, R + "/replies", "rp_" + uid + parent), { parentId: parent, parentColl: "doubts", body: "answer", authorId: uid + "-device-1", authorName: "H", createdAt: Date.now(), ownerUid: uid });
+await t("ai label: a reply or private answer may carry ai true; a non-boolean is refused", async () => {
+  const eve = env.authenticatedContext("eve").firestore(), rp = (extra, id) => setDoc(doc(eve, R + "/replies", id), { parentId: "dqx", parentColl: "doubts", body: "answer", authorId: "eve-device-1", authorName: "E", createdAt: Date.now(), ...extra });
+  await assertSucceeds(rp({ ai: true }, "rp_ai1")); await assertFails(rp({ ai: "yes" }, "rp_ai2")); await assertFails(rp({ aiFlag: true }, "rp_ai3"));
+  await assertSucceeds(pa(eve, "eve", "alice", { ai: true })); await assertFails(pa(env.authenticatedContext("fay").firestore(), "fay", "alice", { ai: "yes" }));
+});
 await t("private mode: others cannot answer publicly", () => assertFails(reply(bob, "bob", "dq3")));
 await t("private mode: the asker can still reply publicly, and normal doubts stay open", async () => { await assertSucceeds(reply(alice, "alice", "dq3")); await assertSucceeds(reply(bob, "bob", "dq1")); });
 await t("private answers: a second answer id for the same helper is refused (id must be doubt_uid)", () => assertFails(pa(bob, "bob", "alice", {}, "dq1_other")));
