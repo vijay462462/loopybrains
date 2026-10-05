@@ -52,3 +52,24 @@ export function buildReport(wiki, sizeId) {
   if (size.id === "full") R.revision = R.sections.map(s => ({ h: s.h, t: s.sents[0].t }));
   return R;
 }
+
+// ---------- Easy language helpers ----------
+const EASY = [["utilize", "use"], ["utilizes", "uses"], ["utilised", "used"], ["approximately", "about"], ["numerous", "many"], ["commence", "start"], ["demonstrate", "show"], ["demonstrates", "shows"], ["subsequently", "later"], ["consequently", "so"], ["therefore", "so"], ["additionally", "also"], ["regarding", "about"], ["obtain", "get"], ["require", "need"], ["requires", "needs"], ["sufficient", "enough"], ["assist", "help"], ["attempt", "try"], ["terminate", "end"], ["initial", "first"], ["modify", "change"], ["primarily", "mainly"], ["typically", "usually"], ["enables", "lets"], ["fundamental", "basic"], ["comprises", "is made of"], ["facilitate", "help"], ["constitutes", "makes up"], ["prior to", "before"], ["in order to", "to"], ["a number of", "some"], ["due to the fact that", "because"], ["in addition", "also"], ["however", "but"], ["whereas", "while"], ["thus", "so"], ["hence", "so"], ["commonly", "often"], ["considerable", "large"], ["significant", "important"], ["significantly", "a lot"], ["implement", "build"], ["implemented", "built"], ["acquire", "get"], ["observe", "see"], ["indicate", "show"], ["indicates", "shows"], ["employ", "use"], ["employs", "uses"], ["conceived", "thought up"], ["decomposes", "breaks down"]];
+const EASY_RE = EASY.map(([a, b]) => [new RegExp("\\b" + a + "\\b", "gi"), b]);
+export function easy(text) {
+  let s = String(text || "");
+  for (const [re, b] of EASY_RE) s = s.replace(re, (m) => m[0] === m[0].toUpperCase() ? b[0].toUpperCase() + b.slice(1) : b);
+  return s;
+}
+const syl = (w) => { w = w.toLowerCase().replace(/[^a-z]/g, ""); if (w.length <= 3) return 1; w = w.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/, "").replace(/^y/, ""); const m = w.match(/[aeiouy]{1,2}/g); return m ? m.length : 1; };
+export function readingLevel(text) {
+  const sents = splitSentences(text), words = String(text || "").match(/[A-Za-z']+/g) || [];
+  if (!sents.length || words.length < 12) return { score: 60, label: "Easy" };
+  const sy = words.reduce((a, w) => a + syl(w), 0), score = 206.835 - 1.015 * (words.length / sents.length) - 84.6 * (sy / words.length);
+  return { score: Math.round(score), label: score >= 60 ? "Easy" : score >= 40 ? "Medium" : "Hard" };
+}
+const COMMON = new Set("information university government development different important structure including american according following important national international following something everything throughout application applications environment introduced published available particular necessary education professional production relationship community management activities traditional experience technology".split(" "));
+export function hardWords(text, max) {
+  const cnt = new Map(); for (const w of String(text || "").match(/\b[a-z]{10,}\b/g) || []) if (!COMMON.has(w)) cnt.set(w, (cnt.get(w) || 0) + 1);
+  return [...cnt.entries()].sort((a, b) => b[1] - a[1] || b[0].length - a[0].length).slice(0, max || 4).map(x => x[0]);
+}

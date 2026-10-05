@@ -4810,19 +4810,26 @@ function brainIntent(text, prev) {
   if (topic.length < 2 && prev) topic = prev;
   return { kind, topic: topic.replace(/[?.!]+$/, "").trim() };
 }
-async function brainWiki(q) {
-  const key = q.toLowerCase(); if (BRAIN_CACHE.has(key)) return BRAIN_CACHE.get(key);
+async function brainWiki(q, lang) {
+  lang = lang === "simple" ? "simple" : "en"; const host = "https://" + lang + ".wikipedia.org", key = lang + ":" + q.toLowerCase(); if (BRAIN_CACHE.has(key)) return BRAIN_CACHE.get(key);
   let out = null;
   try {
-    const found = await lsFetch("https://en.wikipedia.org/w/api.php?action=query&list=search&srlimit=1&format=json&origin=*&srsearch=" + encodeURIComponent(q));
+    const found = await lsFetch(host + "/w/api.php?action=query&list=search&srlimit=1&format=json&origin=*&srsearch=" + encodeURIComponent(q));
     const hit = found && found.query && found.query.search && found.query.search[0];
     if (hit && typeof hit.title === "string") {
-      const j = await lsFetch("https://en.wikipedia.org/w/api.php?action=query&prop=extracts|info&inprop=url&explaintext=1&exsectionformat=wiki&redirects=1&format=json&origin=*&titles=" + encodeURIComponent(hit.title));
+      const j = await lsFetch(host + "/w/api.php?action=query&prop=extracts|info&inprop=url&explaintext=1&exsectionformat=wiki&redirects=1&format=json&origin=*&titles=" + encodeURIComponent(hit.title));
       const pg = j && j.query && j.query.pages ? Object.values(j.query.pages)[0] : null;
-      if (pg && pg.extract) { const p = tpSections(pg.extract, 3200); out = { title: String(pg.title || hit.title).slice(0, 100), intro: p.intro, sections: p.sections, page: typeof pg.fullurl === "string" && pg.fullurl.startsWith("https://en.wikipedia.org/") ? pg.fullurl : "" }; }
+      if (pg && pg.extract) { const p = tpSections(pg.extract, 3200); out = { title: String(pg.title || hit.title).slice(0, 100), intro: p.intro, sections: p.sections, lang, touched: typeof pg.touched === "string" ? pg.touched.slice(0, 10) : "", page: typeof pg.fullurl === "string" && pg.fullurl.startsWith(host + "/") ? pg.fullurl : "" }; }
     }
   } catch (_) {}
   BRAIN_CACHE.set(key, out); return out;
+}
+async function brainDefine(word) {
+  try {
+    const j = await lsFetch("https://en.wiktionary.org/api/rest_v1/page/definition/" + encodeURIComponent(word)), en = j && j.en && j.en[0], d = en && en.definitions && en.definitions[0];
+    const t = d && typeof d.definition === "string" ? d.definition.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim() : "";
+    return t ? { word, mean: t.length > 170 ? t.slice(0, 167).replace(/\s\S*$/, "") + "\u2026" : t, pos: en.partOfSpeech || "" } : null;
+  } catch (_) { return null; }
 }
 function brainBoard(topic, limit) {
   const w = ahWords(topic); if (!w.length) return [];
@@ -4856,12 +4863,12 @@ function brainQuiz(wiki, n) {
   return qs;
 }
 let _solver = null;
-async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=412", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
+async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=418", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
 async function brainReply(text, chat) {
   const sv = await brainSolve(text); if (sv) return sv;
   const { kind, topic } = brainIntent(text, chat.topic || ""); chat.topic = topic;
   if (topic.length < 2) return "Tell me the topic, for example **Dijkstra algorithm** or **Ohm's law**, and I will explain it.";
-  const [wiki] = await Promise.all([brainWiki(topic)]);
+  const [wiki] = await Promise.all([brainWiki(topic, "en")]);
   const board = brainBoard(topic), syl = brainSyllabus(topic), L = [];
   const title = wiki ? wiki.title : topic, intro = wiki ? brainSentences(wiki.intro) : [];
   if (kind === "quiz") {
@@ -4931,7 +4938,7 @@ async function safeSync() {
   } catch (_) { _safeLoaded = false; }
 }
 let _safeMod = null;
-const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=417", location.href).href); } catch (_) { return null; } };
+const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=418", location.href).href); } catch (_) { return null; } };
 function safeModal(title, lines, danger) {
   const prev = document.getElementById("safeModal"); if (prev) prev.remove();
   const ov = el("div", { class: "safe-ov", id: "safeModal", role: "alertdialog", "aria-modal": "true", "aria-label": title },
@@ -4977,7 +4984,7 @@ function bsPool() {
 }
 const bsSuggest = (text) => { const n = text.trim().toLowerCase(); if (n.length < 2) return []; return bsPool().filter(t => t.toLowerCase().includes(n)).sort((a, b) => a.length - b.length).slice(0, 6); };
 let _report = null;
-const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=417", location.href).href); } catch (_) { return null; } };
+const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=418", location.href).href); } catch (_) { return null; } };
 async function bsPapers(q) {
   try {
     const j = await lsFetch("https://api.openalex.org/works?per-page=5&select=title,publication_year,cited_by_count,doi,open_access,authorships,abstract_inverted_index&search=" + encodeURIComponent(q));
@@ -5037,8 +5044,11 @@ async function bsRun(q, solved) {
   const chat = { topic: "" };
   const [ans, imgs, models, papers] = await Promise.all([brainReply(q, chat).catch(() => ""), lv >= 3 ? ahCommons(short + " diagram").catch(() => []) : [], lv >= 3 ? tpModels(short).catch(() => []) : [], size === "full" && lv >= 4 ? bsPapers(topic) : []]);
   if (id !== bs.id) return;
-  const T = chat.topic || topic, wiki = BRAIN_CACHE.get(T.toLowerCase()) || null, mod = wiki ? await brainReportMod() : null;
-  const res = { topic: T, lv, size, board: lv >= 2 ? brainBoard(T, 5) : [], syl: lv >= 2 ? brainSyllabus(T) : [], imgs: imgs.slice(0, 8), models, page: wiki ? wiki.page : "", papers, report: mod && wiki ? mod.buildReport(wiki, size) : null, hl: mod ? mod.highlight : null, deep: "", exam: "", quiz: "" };
+  const T = chat.topic || topic, wiki = BRAIN_CACHE.get("en:" + T.toLowerCase()) || null, mod = wiki ? await brainReportMod() : null;
+  const simple = wiki ? await brainWiki(T, "simple").catch(() => null) : null, simpleOk = simple && simple.intro && relHit(ahWords(T), ahWords(simple.title)) >= 1 ? simple : null;
+  const hard = mod && wiki && size !== "brief" ? mod.hardWords(wiki.intro + " " + wiki.sections.map(x => x.t).join(" "), size === "standard" ? 3 : 5) : [], defs = (await Promise.all(hard.map(brainDefine))).filter(Boolean);
+  const readable = mod && wiki ? mod.readingLevel(wiki.intro + " " + wiki.sections.slice(0, 3).map(x => x.t).join(" ")) : null;
+  const res = { topic: T, easyCard: simpleOk, easyFn: mod ? mod.easy : null, readable, defs, wikiInfo: wiki ? { touched: wiki.touched, page: wiki.page } : null, simpleInfo: simpleOk ? { page: simpleOk.page } : null, lv, size, board: lv >= 2 ? brainBoard(T, 5) : [], syl: lv >= 2 ? brainSyllabus(T) : [], imgs: imgs.slice(0, 8), models, page: wiki ? wiki.page : "", papers, report: mod && wiki ? mod.buildReport(wiki, size) : null, hl: mod ? mod.highlight : null, deep: "", exam: "", quiz: "" };
   if (lv >= 4 && wiki && !res.report) res.deep = wiki.sections.slice(0, 8).map(x => "- **" + x.h + ":** " + (brainSentences(x.t).slice(0, 2).join(" ") || x.t.slice(0, 240))).join("\n");
   if (lv >= 5) { [res.exam, res.quiz] = await Promise.all([brainReply("Exam answer for " + T, { topic: T }).catch(() => ""), brainReply("Quiz me on " + T, { topic: T }).catch(() => "")]); }
   bs.res = res; bs.ans = ans || notFoundMsg(topic); bs.busy = false; bsPaint(true);
@@ -5068,13 +5078,25 @@ function reportView(r, res, go) {
   const hl = res.hl, words = [r.intro.map(x => x.t).join(" "), ...r.sections.map(s => s.sents.map(x => x.t).join(" "))].join(" ").split(/\s+/).length, mins = Math.max(1, Math.round(words / 200));
   const out = [];
   out.push(el("section", { class: "bsr-hero bsr-reveal" }, el("small", {}, bsName(res.lv) + " · " + (BS_SIZES.find(x => x[0] === r.size) || [])[1]), el("h2", {}, r.title), el("p", {}, r.tldr), el("div", { class: "bsr-meta" }, el("span", {}, mins + " min read"), el("span", {}, r.sections.length + (r.sections.length === 1 ? " section" : " sections")), res.imgs.length ? el("span", {}, res.imgs.length + (res.imgs.length === 1 ? " picture" : " pictures")) : null)));
+  if (bsState().easy !== false) {
+    const ez = res.easyCard ? brainSentences(res.easyCard.intro).slice(0, 4).join(" ") : (res.easyFn ? res.easyFn(r.intro.map(x => x.t).slice(0, 2).join(" ")) : "");
+    if (ez) out.push(el("section", { class: "bsr-card easy bsr-reveal" }, el("h3", {}, "In easy words"), el("p", { class: "bsr-easy" }, ez), el("small", { class: "hint" }, res.easyCard ? "From Simple English Wikipedia, written in plain language." : "Hard words swapped for simple ones.")));
+  }
   out.push(el("section", { class: "bsr-card bsr-reveal" }, el("h3", {}, "At a glance"), ...r.intro.map(x => sentNode(x, hl))));
   r.sections.forEach((sec, i) => out.push(el("section", { class: "bsr-card sec s" + (i % 6) + " bsr-reveal" }, el("h3", {}, el("span", { class: "bsr-n" }, String(i + 1)), sec.h), ...sec.sents.map(x => sentNode(x, hl)))));
   if (r.numbers.length) out.push(el("section", { class: "bsr-card bsr-reveal" }, el("h3", {}, "By the numbers"), el("div", { class: "bsr-nums" }, ...r.numbers.map(n => el("div", { class: "bsr-num" }, el("b", {}, n.value), el("small", {}, n.label))))));
   if (r.timeline.length) out.push(el("section", { class: "bsr-card bsr-reveal" }, el("h3", {}, "Timeline"), el("ol", { class: "bsr-tl" }, ...r.timeline.map(t => el("li", {}, el("b", {}, String(t.year)), el("span", {}, t.text))))));
+  if (res.defs && res.defs.length) out.push(el("section", { class: "bsr-card bsr-reveal" }, el("h3", {}, "Hard words made easy"), ...res.defs.map(d => el("div", { class: "bsr-def" }, el("b", {}, d.word), d.pos ? el("i", {}, d.pos) : null, el("p", {}, d.mean))), el("small", { class: "hint" }, "Meanings from Wiktionary.")));
   if (r.terms.length) out.push(el("section", { class: "bsr-card bsr-reveal" }, el("h3", {}, "Key names and terms"), el("p", { class: "hint" }, "Tap one to explore it next."), el("div", { class: "bs-chips" }, ...r.terms.map(t => el("button", { type: "button", class: "tp-sub", onclick: () => go(t) }, t)))));
   if (r.revision.length) out.push(el("section", { class: "bsr-card rev bsr-reveal" }, el("h3", {}, "Revision notes"), el("ul", {}, ...r.revision.map(x => el("li", {}, el("b", {}, x.h + ": "), x.t)))));
   if (res.papers && res.papers.length) out.push(el("section", { class: "bsr-card bsr-reveal" }, el("h3", {}, "Research papers"), ...res.papers.map(p => el("div", { class: "bsr-paper" }, el("b", {}, p.title), el("small", {}, [p.authors, p.year, p.cites + " citations"].filter(Boolean).join(" · ")), p.abs ? el("p", {}, p.abs.slice(0, 280) + (p.abs.length > 280 ? "…" : "")) : null, p.url ? outLink(p.url, p.oa ? "Open paper (free)" : "View paper", "btn sm") : null)), el("p", { class: "hint" }, "Papers come from OpenAlex, an open index of research.")));
+  { const both = !!(res.easyCard && res.wikiInfo), one = !!(res.wikiInfo || res.easyCard), lvl = both ? "High" : one ? "Medium" : "Low";
+    out.push(el("section", { class: "bsr-card src bsr-reveal" }, el("h3", {}, "Where this comes from"),
+      el("div", { class: "bsr-conf " + lvl.toLowerCase() }, el("b", {}, "Source match: " + lvl), el("span", {}, both ? "Two independent versions of the article agree on this topic." : one ? "One trusted source found. Check important facts in your book." : "No trusted source found. Treat this carefully.")),
+      el("div", { class: "tp-chans" }, res.wikiInfo && res.wikiInfo.page ? outLink(res.wikiInfo.page, "Wikipedia (English)" + (res.wikiInfo.touched ? " \u00B7 updated " + res.wikiInfo.touched : ""), "tp-chan") : null, res.simpleInfo && res.simpleInfo.page ? outLink(res.simpleInfo.page, "Simple English Wikipedia", "tp-chan") : null, res.papers && res.papers.length ? el("span", { class: "tp-chan" }, res.papers.length + (res.papers.length === 1 ? " research paper" : " research papers") + " (OpenAlex)") : null, res.board.length ? el("span", { class: "tp-chan" }, res.board.length + " classmate answers") : null),
+      res.readable ? el("p", { class: "hint" }, "Reading level of the source: " + res.readable.label + (res.readable.label === "Hard" ? ". Turn on easy words, or open the hard words above." : ".")) : null,
+      el("p", { class: "hint" }, "Loopy gathers and organises trusted sources. It is not a teacher, so check important facts in your textbook.")));
+  }
   return out;
 }
 function brainView() {
@@ -5084,22 +5106,26 @@ function brainView() {
   const sug = el("div", { class: "bs-sug", role: "listbox" });
   const go = (t) => { sug.replaceChildren(); input.value = t; bsSubmit(t); };
   input.addEventListener("input", () => sug.replaceChildren(...bsSuggest(input.value).map(t => el("button", { type: "button", class: "bs-s", role: "option", onclick: () => go(t) }, el("span", { "aria-hidden": "true" }, "\u{1F50E}"), t))));
-  const form = el("form", { class: "bs-bar", onsubmit: (e) => { e.preventDefault(); go(input.value); } }, input, el("button", { class: "bs-go", type: "submit", "aria-label": "Search" }, "Search"));
+  const form = el("form", { class: "bs-bar", onsubmit: (e) => { e.preventDefault(); input.blur(); go(input.value); } }, input, el("button", { class: "bs-go", type: "submit", "aria-label": "Search" }, "Search"));
   const setLevel = (lv) => { if (!bsOpen(lv)) { bs.lock = lv; bsPaint(); return; } bs.level = lv; bs.lock = 0; if (bs.q && bs.res) bsRun(bs.q); else bsPaint(); };
   const lvBar = el("div", { class: "bs-lvs bsf-noprint", role: "group", "aria-label": "Loopy model" }, ...BS_LEVELS.map(([n, t, , plus]) => { const open = bsOpen(n); return el("button", { type: "button", class: "bs-lv" + (bs.level === n && !bs.lock ? " on" : "") + (open ? "" : " locked"), "aria-pressed": String(bs.level === n), onclick: () => setLevel(n) }, el("b", {}, String(n)), el("span", {}, t), el("i", { class: "bs-tier" + (plus && !IS_RGUKT ? " plus" : "") }, !plus || IS_RGUKT ? "FREE" : open ? "PLUS" : "\u{1F512} PLUS")); }));
   const cur = BS_LEVELS[(bs.lock || bs.level) - 1], modelLine = el("p", { class: "bs-model bsf-noprint" }, el("b", {}, bsName(cur[0])), " · " + cur[2] + " ", el("span", { class: "bs-dots", "aria-label": "Depth " + cur[0] + " of 5" }, "●".repeat(cur[0]) + "○".repeat(5 - cur[0])));
   const rgNote = IS_RGUKT ? el("p", { class: "bs-model bsf-noprint" }, "All five Loopy models are free for RGUKT students during the pilot.") : null;
   const lockCard = bs.lock ? el("div", { class: "bs-lock", role: "status" }, el("strong", {}, bsName(bs.lock) + " is a Plus model"), el("p", {}, BS_LEVELS[bs.lock - 1][2] + ". Loopy Spark and Loopy Scholar are free for everyone. Campus Loop Plus unlocks Loopy Vision, Loopy Sage and Loopy Apex."), el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => bsLeave(() => showPanel("plus")) }, "See Campus Loop Plus"), el("button", { class: "btn sm", type: "button", onclick: () => { bs.lock = 0; bsPaint(); } }, "Stay on free models"))) : null;
-  const head = el("div", { class: "bs-head bsf-noprint" }, form, sug, lvBar, modelLine, rgNote, lockCard);
+  const easyBtn = el("button", { type: "button", class: "bs-easy" + (bs.easy !== false ? " on" : ""), "aria-pressed": String(bs.easy !== false), onclick: () => { bs.easy = bs.easy === false; bsPaint(); } }, "Easy words: " + (bs.easy !== false ? "On" : "Off"));
+  const bar = el("div", { class: "bs-sticky bsf-noprint" + (bs.res || bs.pending ? " compact" : "") }, form, sug);
+  const optRow = el("div", { class: "bs-optrow" }, easyBtn), compact = !!(bs.res || bs.pending);
+  const opts = compact ? el("details", { class: "bs-opts", open: bs.lock || bs.optsOpen ? "" : null, ontoggle: (e) => { bs.optsOpen = e.target.open; } }, el("summary", {}, bsName(cur[0]) + " \u00B7 Easy words " + (bs.easy !== false ? "on" : "off") + "  \u2014 change"), lvBar, modelLine, rgNote, optRow) : null;
+  const head = el("div", { class: "bs-head bsf-noprint" }, ...(compact ? [opts] : [lvBar, modelLine, rgNote, optRow]), lockCard);
   const chips = (list, onTap) => el("div", { class: "bs-chips" }, ...list.map(t => el("button", { type: "button", class: "tp-sub", onclick: () => onTap(t) }, t)));
-  if (bs.busy) return [head, el("div", { class: "bsr-load", role: "status" }, el("div", { class: "bsr-orb" }), el("p", {}, "Loopy is preparing your " + ((BS_SIZES.find(x => x[0] === bs.size) || [])[1] || "answer").toLowerCase() + " on “" + bs.q + "”…"), el("div", { class: "tp-skel", "aria-hidden": "true" }, el("i", {}), el("i", {}), el("i", {})))];
+  if (bs.busy) return [bar, head, el("div", { class: "bsr-load", role: "status" }, el("div", { class: "bsr-orb" }), el("p", {}, "Loopy is preparing your " + ((BS_SIZES.find(x => x[0] === bs.size) || [])[1] || "answer").toLowerCase() + " on “" + bs.q + "”…"), el("div", { class: "tp-skel", "aria-hidden": "true" }, el("i", {}), el("i", {}), el("i", {})))];
   if (bs.pending) {
-    return [head, el("section", { class: "bsr-ask bsr-reveal in" }, el("small", {}, "Your question"), el("h2", {}, bs.pending), el("p", { class: "hint" }, "How much do you need?"),
+    return [bar, head, el("section", { class: "bsr-ask bsr-reveal in" }, el("small", {}, "Your question"), el("h2", {}, bs.pending), el("p", { class: "hint" }, "How much do you need?"),
       el("div", { class: "bsr-sizes" }, ...BS_SIZES.map(([id, name, hint, need], i) => { const open = bsOpen(need); return el("button", { type: "button", class: "bsr-size z" + i + (bs.size === id ? " pre" : ""), onclick: () => bsPickSize(id) }, el("b", {}, name), el("span", {}, hint), open ? null : el("i", {}, "\u{1F512} Plus")); })))];
   }
   if (!bs.res) {
     const C = window.RGUKT_CURRICULUM, rows = C ? ((C.data[curState.year] || {})[curState.branch] || []).map(r => r[0]).slice(0, 8) : [], rec = bsRecent();
-    return [el("div", { class: "bsr-welcome" }, el("h2", {}, "What shall we explore?"), el("p", { class: "hint" }, "Topics, doubts, maths, research ideas, anything about the world. You choose how much you want, then Loopy builds a colourful report you can save as PDF.")), head,
+    return [el("div", { class: "bsr-welcome" }, el("h2", {}, "What shall we explore?"), el("p", { class: "hint" }, "Topics, doubts, maths, research ideas, anything about the world. Pick how much you want, and Loopy builds an easy, colourful report you can save as PDF.")), bar, head,
       rec.length ? el("div", { class: "bs-blk" }, el("small", { class: "hint" }, "Recent"), chips(rec, go)) : null,
       mySubjectsBlock(bs, go),
       rows.length ? el("div", { class: "bs-blk" }, el("small", { class: "hint" }, "Syllabus subjects"), chips(rows, go)) : null,
@@ -5137,7 +5163,7 @@ function brainView() {
   else body = [r.report ? null : answer, ...(r.report ? reportView(r.report, r, go) : []), lv >= 3 && !r.solved && r.size !== "brief" ? imgBox() : null, lv >= 3 && !r.solved && r.size !== "brief" ? modBox() : null, lv >= 4 && !r.solved && !r.report ? deepBox() : null, lv >= 4 && !r.solved && r.size !== "brief" ? sect("Watch and learn", watch) : null, lv >= 4 && !r.solved && r.size !== "brief" ? sect("Notes and practice", notes) : null, lv >= 5 && !r.solved ? examBox() : null,
     lv >= 2 && r.board.length ? sect("Classmates’ answers", ...r.board.slice(0, 2).map(doubtRow)) : null, lv >= 2 && r.syl.length ? sect("In your syllabus", ...r.syl.map(sylRow)) : null];
   const stamp = el("div", { class: "bsr-print" }, "The Campus Loop · Loopy Search · " + new Date().toLocaleDateString());
-  return [head, tabBar, stamp, ...body.filter(Boolean), r.report ? null : null, sizeRow, acts, el("p", { class: "hint ai-fine" }, "Loopy Brain builds answers from your syllabus, your classmates’ best answers, Wikipedia and open research. Check important facts in your textbook."), el("div", { class: "rowbtns bsf-noprint" }, el("button", { class: "btn", type: "button", onclick: () => { bs.res = null; bs.q = ""; bs.pending = ""; bsPaint(true); } }, "New search"), back)].filter(Boolean);
+  return [bar, head, tabBar, stamp, ...body.filter(Boolean), r.report ? null : null, sizeRow, acts, el("p", { class: "hint ai-fine" }, "Loopy Brain builds answers from your syllabus, your classmates’ best answers, Wikipedia and open research. Check important facts in your textbook."), el("div", { class: "rowbtns bsf-noprint" }, el("button", { class: "btn", type: "button", onclick: () => { bs.res = null; bs.q = ""; bs.pending = ""; bsPaint(true); } }, "New search"), back)].filter(Boolean);
 }
 function renderAI() {
   if (state.ai && state.ai.prefill) { bsState().start = String(state.ai.prefill); state.ai.prefill = ""; }

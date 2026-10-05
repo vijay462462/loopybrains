@@ -3373,3 +3373,24 @@ html.bs-open, html.bs-open body { overflow: hidden; }
 .safe-card h3 { margin: 0 0 8px; } .safe-card p { margin: 0 0 8px; line-height: 1.55; } .safe-card .btn { margin-top: 8px; }
 .bsr-blocked { text-align: center; padding: 40px 10px; } .bsr-blocked h2 { margin: 6px 0 10px; } .bsr-blocked p { color: var(--muted); }
 .bsr-plain{padding:4px 12px;margin-bottom:6px}
+
+/* easy language + source cards + sticky search */
+.bs-sticky{position:sticky;top:-17px;z-index:8;background:var(--paper);margin:0 -16px;padding:10px 16px 6px}
+.bs-sticky.compact{box-shadow:0 8px 18px -14px rgb(0 0 0/.35)}
+.bs-sticky.compact .bs-bar{margin:0}.bs-sticky.compact .bs-in{padding:10px 0;font-size:16px}.bs-sticky.compact .bs-go{padding:9px 16px}
+.bs-optrow{display:flex;gap:8px;margin:4px 0 8px}
+.bs-easy{border:1px solid var(--line);background:var(--sheet);color:var(--ink);border-radius:99px;font:inherit;font-size:.85rem;padding:7px 14px;cursor:pointer;min-height:36px}
+.bs-easy.on{background:color-mix(in srgb,#16a34a 18%,var(--sheet));border-color:#16a34a}
+.bsr-card.easy{background:color-mix(in srgb,#16a34a 12%,var(--sheet));border-left:6px solid #16a34a}
+.bsr-easy{font-size:1.08rem;line-height:1.7;margin:0 0 6px}
+.bsr-def{padding:8px 0;border-top:1px solid var(--line)}.bsr-def:first-of-type{border-top:0}.bsr-def b{font-size:1.02rem;color:var(--accent)}.bsr-def i{margin-left:8px;color:var(--muted);font-size:.8rem}.bsr-def p{margin:2px 0 0}
+.bsr-conf{display:grid;gap:2px;padding:10px 12px;border-radius:12px;margin-bottom:10px}
+.bsr-conf.high{background:color-mix(in srgb,#16a34a 15%,var(--sheet))}.bsr-conf.medium{background:color-mix(in srgb,#f59e0b 16%,var(--sheet))}.bsr-conf.low{background:color-mix(in srgb,#dc2626 14%,var(--sheet))}
+.bsr-conf span{color:var(--muted);font-size:.9rem}
+.bsfull .bs-bar{margin:6px 0}
+@media (min-width:700px){.bsfull .bs-in{font-size:19px}}
+
+.bs-opts{margin:4px 0 8px;border:1px solid var(--line);border-radius:14px;background:var(--sheet);padding:0 12px}
+.bs-opts summary{cursor:pointer;padding:10px 0;font-weight:700;list-style:none;color:var(--ink)}
+.bs-opts summary::-webkit-details-marker{display:none}
+.bs-opts[open] summary{border-bottom:1px solid var(--line);margin-bottom:8px}
