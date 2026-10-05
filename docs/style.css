@@ -3527,3 +3527,13 @@ html.bs-open, html.bs-open body { overflow: hidden; }
 .dg-svg .dg-venn { stroke-width: 2.6; fill-opacity: .35; } .dg-svg .dg-venn.a { fill: #2563eb; stroke: #2563eb; } .dg-svg .dg-venn.b { fill: #16a34a; stroke: #16a34a; }
 .pk-simple .pk-sline { margin: 6px 0; font-size: 1.04em; line-height: 1.55; }
 .pk-simple h3 { margin-bottom: 4px; }
+
+/* ===== Save as PDF or JPEG ===== */
+.bsx-back { position: fixed; inset: 0; z-index: 14500; display: grid; align-items: end; background: rgb(8 6 28 / .6); }
+.bsx-sheet { max-height: 92vh; overflow: auto; padding: 18px 16px calc(18px + env(safe-area-inset-bottom, 0px)); border-radius: 22px 22px 0 0; background: var(--sheet, #fff); color: var(--ink, #1f2433); display: grid; gap: 10px; }
+.bsx-sheet h3 { margin: 0; }
+.bsx-opt { display: grid; gap: 2px; text-align: left; padding: 14px; border-radius: 16px; border: 1px solid var(--line, #d9d4c7); background: color-mix(in srgb, var(--accent, #7c5cff) 8%, transparent); color: inherit; font: inherit; cursor: pointer; }
+.bsx-opt b { font-size: 1.05em; } .bsx-opt small { opacity: .75; }
+.bsx-prev { max-height: 52vh; overflow: auto; border-radius: 12px; border: 1px solid var(--line, #d9d4c7); background: #fff; }
+.bsx-prev img { display: block; width: 100%; height: auto; }
+@media print { .bsx-back { display: none !important; } }

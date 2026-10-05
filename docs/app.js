@@ -4968,7 +4968,7 @@ function brainQuiz(wiki, n) {
   return qs;
 }
 let _solver = null;
-async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=439", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
+async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=440", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
 async function brainReply(text, chat) {
   const sv = await brainSolve(text); if (sv) return sv;
   const { kind, topic } = brainIntent(text, chat.topic || ""); chat.topic = topic;
@@ -5044,7 +5044,7 @@ async function safeSync() {
   } catch (_) { _safeLoaded = false; }
 }
 let _safeMod = null;
-const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=439", location.href).href); } catch (_) { return null; } };
+const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=440", location.href).href); } catch (_) { return null; } };
 function safeModal(title, lines, danger) {
   const prev = document.getElementById("safeModal"); if (prev) prev.remove();
   const ov = el("div", { class: "safe-ov", id: "safeModal", role: "alertdialog", "aria-modal": "true", "aria-label": title },
@@ -5082,7 +5082,7 @@ const bsFree = (lv) => lv <= 1 || IS_RGUKT;
 const BS_MODES = [["atlas", "Atlas", "Search anything", "Topics, doubts, maths and research, explained in easy words.", "Ask anything: a topic, doubt, problem or research idea"], ["launchpad", "Launchpad", "Project guide", "Turn an idea into a plan: objectives, tools, week-by-week steps, report outline and viva questions.", "Describe your project idea, e.g. IoT weather station"], ["forge", "Forge", "Find code", "Working code for classic problems in many languages, with the idea explained.", "e.g. binary search in Python"], ["aegis", "Aegis", "Learn security", "Understand how attacks work and how to defend, legally and safely.", "e.g. SQL injection, phishing, password safety"]];
 const bsModeInfo = (id) => BS_MODES.find(m => m[0] === id) || BS_MODES[0];
 let _modes = null;
-const brainModesMod = async () => { try { return _modes = _modes || await import(new URL("brain-modes.js?v=439", location.href).href); } catch (_) { return null; } };
+const brainModesMod = async () => { try { return _modes = _modes || await import(new URL("brain-modes.js?v=440", location.href).href); } catch (_) { return null; } };
 const PREF_KEY = "dd-bs-prefs", SAVED_KEY = "dd-bs-saved";
 const bsPrefs = () => { const p = readJSON(PREF_KEY, {}); return p && typeof p === "object" ? p : {}; };
 const bsState = () => state.bs || (state.bs = (() => { const p = bsPrefs(), ok = p.remember !== false;
@@ -5149,17 +5149,17 @@ function bsPool() {
 const bsSuggest = (text) => { const n = text.trim().toLowerCase(); if (n.length < 2) return []; return bsPool().filter(t => t.toLowerCase().includes(n)).sort((a, b) => a.length - b.length).slice(0, 6); };
 let _report = null;
 let _packs = null, _dgm = null;
-const brainDiagramsMod = async () => { try { return _dgm = _dgm || await import(new URL("brain-diagrams2.js?v=439", location.href).href); } catch (_) { return null; } };
+const brainDiagramsMod = async () => { try { return _dgm = _dgm || await import(new URL("brain-diagrams2.js?v=440", location.href).href); } catch (_) { return null; } };
 // All Loopy Knowledge Packs (digital design first, then ECE subjects). Returns { find(q), refs }.
 const brainPacksMod = async () => {
   if (_packs) return _packs;
   try {
-    const [m1, m2, m3] = await Promise.all([import(new URL("brain-packs.js?v=439", location.href).href), import(new URL("brain-packs-ece.js?v=439", location.href).href), import(new URL("brain-simple.js?v=439", location.href).href).catch(() => ({ SIMPLE: {} }))]);
+    const [m1, m2, m3] = await Promise.all([import(new URL("brain-packs.js?v=440", location.href).href), import(new URL("brain-packs-ece.js?v=440", location.href).href), import(new URL("brain-simple.js?v=440", location.href).href).catch(() => ({ SIMPLE: {} }))]);
     _packs = { refs: m2.REFS || {}, simple: m3.SIMPLE || {}, find: (q) => { const a = m1.packScore(q), b = m2.packScore(q); return (b.len > a.len ? b.p : a.p) || null; } };
   } catch (_) { _packs = null; }
   return _packs;
 };
-const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=439", location.href).href); } catch (_) { return null; } };
+const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=440", location.href).href); } catch (_) { return null; } };
 async function bsPapers(q) {
   try {
     const j = await lsFetch("https://api.openalex.org/works?per-page=5&select=title,publication_year,cited_by_count,doi,open_access,authorships,abstract_inverted_index&search=" + encodeURIComponent(q));
@@ -5260,7 +5260,7 @@ function bsMount() {
     el("button", { type: "button", class: "bsf-back", "aria-label": "Close Loopy Search", onclick: () => bsClose() }, svgIcon("back")),
     el("strong", { class: "bsf-title" }, "Loopy Search"),
     el("button", { type: "button", class: "bsf-save", id: "bsSave", hidden: "", onclick: () => { const b = bsState(); if (!b.res) return; if (bsIsSaved(b.res)) { bsPutSaved(bsSavedList().filter(x => x.id !== "s" + fnv(b.res.topic.toLowerCase() + "|" + b.res.size))); showNotice("Removed from Saved.", "ok"); } else if (bsSaveOne(b.res, b.q)) showNotice("Saved. Find it under Saved on the search page.", "ok"); else showNotice("Could not save: this phone is out of space.", "err"); bsPaint(); } }, "Save"),
-    el("button", { type: "button", class: "bsf-pdf", id: "bsPdf", hidden: "", onclick: () => { try { window.print(); } catch (_) {} } }, "PDF"));
+    el("button", { type: "button", class: "bsf-pdf", id: "bsPdf", hidden: "", "aria-haspopup": "dialog", "aria-label": "Save as PDF or JPEG", onclick: () => bsExportSheet() }, "PDF/JPG"));
   const prog = el("div", { class: "bsf-prog" }, el("i", { id: "bsProg" }));
   const scroll = el("div", { class: "bsf-scroll", id: "bsScroll" });
   const ov = el("div", { class: "bsfull", id: "bsFull", role: "dialog", "aria-modal": "true", "aria-label": "Loopy Search" }, bar, prog, scroll);
@@ -5351,6 +5351,60 @@ function bsFun(q) {
   if (/\b(are you smart|are you intelligent|are you better than|you are (stupid|dumb|useless))\b/.test(t)) return "I am a helper that gets better with your feedback. \u{1F604} Tell me what went wrong using Feedback and ideas, and I will learn from it. Meanwhile, try me with a topic!";
   if (/\b(good luck|wish me luck|exam tomorrow|exam today|have an exam)\b/.test(t) && t.split(" ").length < 9) return "Good luck" + hi + "! \u{1F340} Sleep well, revise only key points, carry your hall ticket and stay calm. You have prepared more than you think.";
   return "";
+}
+// ---------- Save a result as PDF (print screen) or as a JPEG picture ----------
+const BS_SKIP_PROPS = /^(width|height|inline-size|block-size|min-|max-|perspective-origin|transform-origin|view-transition|anchor|position-|inset|container)/;
+function bsInlineStyles(src, dst) {
+  const cs = getComputedStyle(src), replaced = /^(img|svg|canvas)$/i.test(src.tagName) || src instanceof SVGElement; let s = "";
+  for (let i = 0; i < cs.length; i++) { const p = cs[i]; if (!replaced && BS_SKIP_PROPS.test(p)) continue; s += p + ":" + cs.getPropertyValue(p) + ";"; }
+  dst.style.cssText = s;
+  const sk = src.children, dk = dst.children; for (let i = 0; i < sk.length && i < dk.length; i++) bsInlineStyles(sk[i], dk[i]);
+}
+async function bsImgData(url) {
+  try { const r = await fetch(url, { mode: "cors", credentials: "omit" }); if (!r.ok) return ""; const b = await r.blob(); if (b.size > 2500000) return ""; return await new Promise((res) => { const f = new FileReader(); f.onload = () => res(String(f.result || "")); f.onerror = () => res(""); f.readAsDataURL(b); }); } catch (_) { return ""; }
+}
+// Draws the open result into a JPEG and returns a Blob. Uses only the page itself: no outside service.
+async function bsMakeJpeg() {
+  const sc = $("bsScroll"); if (!sc) throw new Error("nothing to save");
+  const W = Math.round(sc.clientWidth), H = Math.round(sc.scrollHeight);
+  const clone = sc.cloneNode(true); bsInlineStyles(sc, clone);
+  clone.querySelectorAll(".bsf-noprint, button, input, form, script").forEach(n => n.remove());
+  clone.querySelectorAll(".bsr-reveal").forEach(n => { n.style.opacity = "1"; n.style.transform = "none"; });
+  clone.style.cssText += ";overflow:visible;height:auto;max-height:none;width:" + W + "px;padding:0 0 16px;margin:0";
+  for (const im of [...clone.querySelectorAll("img")]) { const u = im.getAttribute("src") || ""; const d = /^https:\/\/upload\.wikimedia\.org\//.test(u) ? await bsImgData(u) : ""; if (d) { im.setAttribute("src", d); im.removeAttribute("srcset"); im.removeAttribute("loading"); } else im.remove(); }
+  const bg = (() => { let n = $("bsFull"); while (n) { const c = getComputedStyle(n).backgroundColor; if (c && c !== "rgba(0, 0, 0, 0)" && c !== "transparent") return c; n = n.parentElement; } return "#ffffff"; })();
+  const ink = getComputedStyle(sc).color || "#111", topic = ((bsState().res || {}).topic || "Loopy Brain result").slice(0, 80), when = new Date().toLocaleDateString();
+  const head = document.createElement("div"); head.style.cssText = "padding:14px 16px 6px;font:700 15px system-ui,sans-serif;color:" + ink + ";"; head.textContent = "The Campus Loop · Loopy Brain";
+  const foot = document.createElement("div"); foot.style.cssText = "padding:10px 16px 14px;font:500 12px system-ui,sans-serif;opacity:.7;color:" + ink + ";"; foot.textContent = topic + " · " + when + " · thecampusloop.co.in. Always check important facts in your textbook.";
+  const wrap = document.createElement("div"); wrap.setAttribute("xmlns", "http://www.w3.org/1999/xhtml"); wrap.style.cssText = "width:" + W + "px;background:" + bg + ";"; wrap.append(head, clone, foot);
+  const totalH = Math.ceil(H * 1.06) + 90, xml = new XMLSerializer().serializeToString(wrap);
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + totalH + '"><foreignObject x="0" y="0" width="100%" height="100%">' + xml + "</foreignObject></svg>";
+  const img = new Image(); img.decoding = "async"; await new Promise((res, rej) => { img.onload = res; img.onerror = () => rej(new Error("image build failed")); img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg); });
+  const s = Math.max(0.5, Math.min(2, 15000 / totalH, Math.sqrt(36e6 / (W * totalH)))), cv = document.createElement("canvas"); cv.width = Math.round(W * s); cv.height = Math.round(totalH * s);
+  const g = cv.getContext("2d"); g.fillStyle = bg; g.fillRect(0, 0, cv.width, cv.height); g.scale(s, s); g.drawImage(img, 0, 0);
+  return await new Promise((res, rej) => { try { cv.toBlob((b) => b ? res(b) : rej(new Error("empty image")), "image/jpeg", 0.92); } catch (e) { rej(e); } });
+}
+function bsExportSheet() {
+  const old = document.getElementById("bsExport"); if (old) old.remove();
+  const close = () => { const n = document.getElementById("bsExport"); if (n) n.remove(); };
+  const body = el("div", { class: "bsx-sheet" }), back = el("div", { class: "bsx-back", id: "bsExport", role: "dialog", "aria-modal": "true", "aria-label": "Save this result", onclick: (e) => { if (e.target === back) close(); } }, body);
+  const menu = () => body.replaceChildren(el("h3", {}, "Save this result"), el("p", { class: "hint" }, "Choose how you want to keep it."),
+    el("button", { type: "button", class: "bsx-opt", onclick: () => { close(); setTimeout(() => { try { window.print(); } catch (_) {} }, 150); } }, el("b", {}, "\u{1F4C4} PDF"), el("small", {}, "Opens the print screen. Choose “Save as PDF”.")),
+    el("button", { type: "button", class: "bsx-opt", onclick: () => jpeg() }, el("b", {}, "\u{1F5BC}️ Picture (JPEG)"), el("small", {}, "One long picture. Save it to your gallery or send it on WhatsApp.")),
+    el("button", { type: "button", class: "btn", onclick: close }, "Cancel"));
+  const jpeg = async () => {
+    body.replaceChildren(el("h3", {}, "Making your picture…"), el("p", { class: "hint", role: "status" }, "This takes a few seconds for long results."));
+    try {
+      const blob = await bsMakeJpeg(), url = URL.createObjectURL(blob), name = "loopy-brain-" + (((bsState().res || {}).topic || "result").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "result") + ".jpg";
+      const file = (() => { try { return new File([blob], name, { type: "image/jpeg" }); } catch (_) { return null; } })();
+      const dl = el("a", { class: "btn primary", href: url, download: name }, "⬇️ Download JPEG");
+      const share = file && navigator.canShare && navigator.canShare({ files: [file] }) ? el("button", { type: "button", class: "btn", onclick: async () => { try { await navigator.share({ files: [file], title: "Loopy Brain" }); } catch (_) {} } }, "Share") : null;
+      body.replaceChildren(el("h3", {}, "Your picture is ready"), el("div", { class: "bsx-prev" }, el("img", { src: url, alt: "Preview of your saved result" })), el("p", { class: "hint" }, "Tap Download, or press and hold the picture to save it."), el("div", { class: "rowbtns" }, dl, share, el("button", { type: "button", class: "btn", onclick: () => { try { URL.revokeObjectURL(url); } catch (_) {} close(); } }, "Close")));
+    } catch (_) {
+      body.replaceChildren(el("h3", {}, "Could not make a picture"), el("p", { class: "hint" }, "Your browser blocked it. Please use the PDF option instead."), el("div", { class: "rowbtns" }, el("button", { type: "button", class: "btn primary", onclick: () => { close(); setTimeout(() => { try { window.print(); } catch (_) {} }, 150); } }, "Use PDF"), el("button", { type: "button", class: "btn", onclick: close }, "Close")));
+    }
+  };
+  menu(); document.body.append(back);
 }
 async function bsSubmit(q) {
   q = lsClean(q); if (q.length < 2) return; const bs = bsState();
