@@ -4925,7 +4925,7 @@ function brainQuiz(wiki, n) {
   return qs;
 }
 let _solver = null;
-async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=427", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
+async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=428", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
 async function brainReply(text, chat) {
   const sv = await brainSolve(text); if (sv) return sv;
   const { kind, topic } = brainIntent(text, chat.topic || ""); chat.topic = topic;
@@ -5001,7 +5001,7 @@ async function safeSync() {
   } catch (_) { _safeLoaded = false; }
 }
 let _safeMod = null;
-const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=427", location.href).href); } catch (_) { return null; } };
+const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=428", location.href).href); } catch (_) { return null; } };
 function safeModal(title, lines, danger) {
   const prev = document.getElementById("safeModal"); if (prev) prev.remove();
   const ov = el("div", { class: "safe-ov", id: "safeModal", role: "alertdialog", "aria-modal": "true", "aria-label": title },
@@ -5039,7 +5039,7 @@ const bsFree = (lv) => lv <= 1 || (IS_RGUKT && lv === 2);
 const BS_MODES = [["atlas", "Atlas", "Search anything", "Topics, doubts, maths and research, explained in easy words.", "Ask anything: a topic, doubt, problem or research idea"], ["launchpad", "Launchpad", "Project guide", "Turn an idea into a plan: objectives, tools, week-by-week steps, report outline and viva questions.", "Describe your project idea, e.g. IoT weather station"], ["forge", "Forge", "Find code", "Working code for classic problems in many languages, with the idea explained.", "e.g. binary search in Python"], ["aegis", "Aegis", "Learn security", "Understand how attacks work and how to defend, legally and safely.", "e.g. SQL injection, phishing, password safety"]];
 const bsModeInfo = (id) => BS_MODES.find(m => m[0] === id) || BS_MODES[0];
 let _modes = null;
-const brainModesMod = async () => { try { return _modes = _modes || await import(new URL("brain-modes.js?v=427", location.href).href); } catch (_) { return null; } };
+const brainModesMod = async () => { try { return _modes = _modes || await import(new URL("brain-modes.js?v=428", location.href).href); } catch (_) { return null; } };
 const PREF_KEY = "dd-bs-prefs", SAVED_KEY = "dd-bs-saved";
 const bsPrefs = () => { const p = readJSON(PREF_KEY, {}); return p && typeof p === "object" ? p : {}; };
 const bsState = () => state.bs || (state.bs = (() => { const p = bsPrefs(), ok = p.remember !== false;
@@ -5105,7 +5105,7 @@ function bsPool() {
 }
 const bsSuggest = (text) => { const n = text.trim().toLowerCase(); if (n.length < 2) return []; return bsPool().filter(t => t.toLowerCase().includes(n)).sort((a, b) => a.length - b.length).slice(0, 6); };
 let _report = null;
-const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=427", location.href).href); } catch (_) { return null; } };
+const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=428", location.href).href); } catch (_) { return null; } };
 async function bsPapers(q) {
   try {
     const j = await lsFetch("https://api.openalex.org/works?per-page=5&select=title,publication_year,cited_by_count,doi,open_access,authorships,abstract_inverted_index&search=" + encodeURIComponent(q));
@@ -10554,5 +10554,5 @@ document.addEventListener("pointerdown", (e) => {
 // ---------- Scroll speed: pause decorative animations while the screen is moving ----------
 (function scrollSpeed() {
   const root = document.documentElement; let t = 0, on = false;
-  addEventListener("scroll", () => { if (!on) { on = true; root.classList.add("is-scrolling"); } clearTimeout(t); t = setTimeout(() => { on = false; root.classList.remove("is-scrolling"); }, 160); }, { passive: true });
+  addEventListener("scroll", () => { if (!on) { on = true; root.classList.add("is-scrolling"); } clearTimeout(t); t = setTimeout(() => { on = false; root.classList.remove("is-scrolling"); }, 160); }, { passive: true, capture: true });
 })();
