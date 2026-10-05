@@ -2888,3 +2888,27 @@ body, body[data-tab] { --ta: #4c6a4b; --tb: #4c6a4b; }
 :root[data-theme="dark"] .pill.open { --pc: #a9d49a; } :root[data-theme="dark"] .pill.done { --pc: #bfe3b0; } :root[data-theme="dark"] .pill.urgent { --pc: #f0a090; } :root[data-theme="dark"] .pill.bounty { --pc: #e9cf8a; } :root[data-theme="dark"] .pill.mentor, :root[data-theme="dark"] .pill.via-pill { --pc: #9ccbe0; } :root[data-theme="dark"] .pill.year-pill { --pc: #b3c9b1; }
 :root[data-theme="dark"] .rt-k-idea, :root[data-theme="dark"] .rt-lab { --c: #a9d49a; } :root[data-theme="dark"] .rt-k-how { --c: #9ccbe0; } :root[data-theme="dark"] .rt-k-ex { --c: #bfe3b0; } :root[data-theme="dark"] .rt-k-warn { --c: #f0a090; } :root[data-theme="dark"] .rt-k-try { --c: #e9cf8a; } :root[data-theme="dark"] .rt-k-tip { --c: #b3c9b1; } :root[data-theme="dark"] .rt-k-formula { --c: #9ccbe0; }
 .ai-badge { border-left-color: #5d7360; }
+
+/* ===== Responsive and steady: no jumping when a field or checkbox is tapped ===== */
+html { scroll-padding-top: 88px; scroll-padding-bottom: 96px; scroll-behavior: auto; overflow-anchor: auto; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body { overflow-x: clip; }
+img, svg, video, canvas { max-width: 100%; }
+.wrap, .sheet, .list, .rail, main { min-width: 0; }
+@media (max-width: 900px) {
+  input, select, textarea { font-size: 16px; }   /* stops the phone from zooming in when a field is tapped */
+  .kb .bottom-nav { display: none; }
+  .kb body, body.kb { padding-bottom: 16px; }
+}
+.check { display: flex; align-items: center; gap: 10px; min-height: 44px; cursor: pointer; }
+.check input[type="checkbox"], .check input[type="radio"] { width: 22px; height: 22px; flex: 0 0 auto; accent-color: var(--accent); margin: 0; }
+.btn, .chip, .tabs button, .bnav-btn { min-height: 40px; }
+.btn.sm { min-height: 36px; }
+@media (max-width: 360px) { .item h3 { font-size: .95rem; } .tabs button { padding-inline: 10px; } .bnav-label { font-size: .6rem; } }
+@media (min-width: 701px) and (max-width: 1000px) { .wrap { gap: 16px; } .sheet { padding: 18px; } }
+@media (min-width: 1400px) { .wrap { max-width: 1280px; } }
+@supports (padding: max(0px)) { body { padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); } }
+
+/* Cards are always laid out at their real height, so nothing below them shifts while scrolling or tapping */
+.item { content-visibility: visible; contain-intrinsic-size: none; }
+/* Scroll position is restored by the app after each redraw, so the browser must not also adjust it */
+html, body, .sheet, .list { overflow-anchor: none; }

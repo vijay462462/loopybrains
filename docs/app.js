@@ -9107,7 +9107,33 @@ function toggleFocus() {
   if (focusOn() && !isAcademicTab(state.tab)) { goTab("doubts"); try { history.replaceState(null, "", "#doubts"); } catch (_) {} return; }
   render();
 }
-function render() {
+// Redraws keep where you are: scroll position, the field you tapped (so the keyboard stays open), the caret and the text you typed.
+const uiView = () => state.tab + "|" + state.mode + "|" + state.selected;
+function snapUI() {
+  const a = document.activeElement, sheet = $("sheet");
+  const s = { y: window.scrollY, view: uiView(), sheetTop: sheet ? sheet.scrollTop : 0, h: sheet ? sheet.offsetHeight : 0 };
+  if (a && a !== document.body && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.closest("main, #sheet, #list, #rail, header, .wrap")) {
+    s.f = { tag: a.tagName, id: a.id || "", name: a.name || "", type: a.type || "", ph: a.getAttribute("placeholder") || "", label: a.getAttribute("aria-label") || "", value: a.value, ss: a.selectionStart, se: a.selectionEnd };
+  }
+  if (sheet && s.h) sheet.style.minHeight = s.h + "px";   // the page cannot shrink for a moment and pull the scroll position up
+  return s;
+}
+function restoreUI(s) {
+  const sheet = $("sheet"), same = s.view === uiView();
+  if (same) { window.scrollTo(0, s.y); if (sheet) sheet.scrollTop = s.sheetTop; }
+  const f = s.f;
+  if (f) {
+    const same2 = (e) => e.type === f.type && ((f.id && e.id === f.id) || (!f.id && f.name && e.name === f.name) || (!f.id && !f.name && ((f.ph && e.getAttribute("placeholder") === f.ph) || (f.label && e.getAttribute("aria-label") === f.label))));
+    const el2 = f.id ? document.getElementById(f.id) : [...document.querySelectorAll(f.tag.toLowerCase())].find(same2);
+    if (el2 && el2 !== document.activeElement && el2.type === f.type) {
+      if (!/^(checkbox|radio)$/.test(f.type) && el2.value === "" && f.value) el2.value = f.value;
+      try { el2.focus({ preventScroll: true }); if (f.ss != null && el2.setSelectionRange) el2.setSelectionRange(f.ss, f.se); } catch (_) {}
+    }
+  }
+  requestAnimationFrame(() => { if (sheet) sheet.style.minHeight = ""; if (same) window.scrollTo(0, s.y); });
+}
+function render() { const snap = snapUI(); try { renderCore(); } finally { restoreUI(snap); } }
+function renderCore() {
   try {
     document.body.dataset.tab = state.tab; applyFocus();
     renderHeader(); renderTrendBar(); renderStoryBar(); renderRail(); try { renderGuide(); } catch (_) {} renderList(); renderBottomNav(); try { if (IS_RGUKT && !readJSON("dd-rgukt-year", null) && !document.querySelector(".welcome")) showEligibility(); } catch (_) {} try { document.body.classList.toggle("simple", isSimple()); renderBell(); notifPing(); claimStudentIdOnce(); autoMailIds(); } catch (_) {}
@@ -9537,13 +9563,22 @@ document.addEventListener("pointerdown", (e) => {
   const hd = document.querySelector("header.top"); if (!hd) return;
   let lastY = window.scrollY, timer = 0, hidden = false, tab = null;
   const sticky = () => getComputedStyle(hd).position === "sticky";
-  const busy = () => { const a = document.activeElement; return !!((a && hd.contains(a) && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)) || hd.querySelector('[aria-expanded="true"]') || hd.classList.contains("filters-open")); };
+  let quietUntil = 0;
+  const quiet = () => { quietUntil = Date.now() + 700; };
+  const busy = () => { const a = document.activeElement; return !!((a && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)) || hd.querySelector('[aria-expanded="true"]') || hd.classList.contains("filters-open")); };
+  // While the on-screen keyboard opens or closes the page scrolls by itself; do not treat that as the student scrolling, and hide the bottom bar so it does not jump.
+  const kb = (on) => { document.body.classList.toggle("kb", on); quiet(); };
+  document.addEventListener("focusin", (e) => { if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) && !/^(checkbox|radio|button|submit)$/.test(e.target.type || "")) kb(true); else quiet(); });
+  document.addEventListener("focusout", () => { quiet(); setTimeout(() => { const a = document.activeElement; if (!(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) kb(false); }, 150); });
+  if (window.visualViewport) visualViewport.addEventListener("resize", quiet);
+  addEventListener("orientationchange", quiet);
   const mk = () => { if (tab) return tab; tab = document.createElement("button"); tab.type = "button"; tab.className = "hd-tab"; tab.setAttribute("aria-label", "Show the top bar"); tab.textContent = "▾"; tab.hidden = true; tab.addEventListener("click", () => show()); document.body.append(tab); return tab; };
   const set = (h) => { if (h === hidden) return; hidden = h; document.body.classList.toggle("hd-hidden", h); mk().hidden = !h; try { hd.inert = h; } catch (_) {} };
   const arm = () => { clearTimeout(timer); timer = setTimeout(() => { if (sticky() && window.scrollY > 120 && !busy()) set(true); }, 6000); };
   const show = () => { set(false); arm(); };
   addEventListener("scroll", () => {
     const y = window.scrollY, dy = y - lastY; if (Math.abs(dy) < 8) return; lastY = y;
+    if (Date.now() < quietUntil) return;
     if (y < 80 || dy < -14) show(); else if (dy > 14 && y > 160 && sticky() && !busy()) set(true); else arm();
   }, { passive: true });
   ["pointerdown", "keydown", "touchstart"].forEach(ev => addEventListener(ev, () => { if (!hidden) arm(); }, { passive: true }));
