@@ -3,3 +3,13 @@ firestore-export.sql
 tests/rules/node_modules
 tests/rules/*.log
 tests/rules/firestore.rules
+
+# Secrets and backups must never be uploaded
+backups/
+.env
+.env.*
+*serviceAccount*.json
+*service-account*.json
+*-firebase-adminsdk-*.json
+*credentials*.json
+*.pem

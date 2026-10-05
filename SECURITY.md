@@ -43,3 +43,33 @@ No critical problems were found. Rules deny everything that is not listed, secre
 
 ## Verified email to post (global switch)
 Admin dashboard, Overview, "Student safety". When on (`settings/posting.verifiedPosting = true`), the rules refuse every post, answer, story and profile write unless the user has a verified email, on every board including RGUKT. Reading stays open. The per-college `requireVerified` and `domains` settings still apply on top. Publish the latest `firestore.rules` first, then flip the switch. Turn it off to roll back instantly, no redeploy.
+
+## Update: Loopy Search, credits and backups (October 2026)
+**What changed and how it is protected**
+- **Loopy Brain (Atlas, Launchpad, Forge, Aegis) runs inside the app.** No AI key is used and no student text is sent to an AI company. It reads public sources (Wikipedia, Simple English Wikipedia, Wiktionary, OpenAlex, Rosetta Code, Wikimedia Commons, Sketchfab). Each is listed in the page's Content-Security-Policy, so the app cannot talk to anything else.
+- **Everything shown is built with `textContent`**, never `innerHTML`. Pictures are accepted only from `upload.wikimedia.org` and `media.sketchfab.com`. External links must start with `http://` or `https://` (`outLink` refuses anything else, so a `javascript:` link cannot be created).
+- **Saved reports and import files are treated as untrusted.** Imports are size-limited, shape-checked and links are re-validated. Launchpad and Aegis data in an imported file is rebuilt from the app's own templates.
+- **Sexual and romantic searches:** two warnings, then a permanent block, saved in `searchSafety/<uid>` (students can only add strikes; only an admin can remove a record). Requests to attack people, accounts or systems, or to write malware, are refused without a strike.
+- **Credits:** daily and weekly usage is saved in `searchUsage` and `searchWeek` (own documents only, today and this week only, rises by at most 30 per save, hard ceilings 600 a day and 3,000 a week). The tier limits themselves (RGUKT 400/2,500, other colleges 10/40, Plus 600/3,000) are enforced in the app; the ceilings are enforced by the server.
+- **Rules tests:** 84 now pass (53 + 31). Re-run after every rules change (command above).
+
+**Backups (do this weekly)**
+1. Firebase console › Project settings › Service accounts › *Generate new private key*. Save the file outside this folder (for example in Documents). Treat it like a bank password. If it is ever shared, delete that key in the console and make a new one. `.gitignore` blocks the usual file names as a safety net.
+2. Once: `cd functions && npm install`.
+3. Every week (PowerShell; Mac/Linux use `export`):
+   `$env:GOOGLE_APPLICATION_CREDENTIALS = "C:\Users\you\Documents\campusloop-key.json"`
+   `node scripts/backup_firestore.js --project doubt-desk-e6f39`
+   This saves `backups/<date>/` with one JSON file per collection and a `manifest.json` of counts and checksums. Keep the folder on an encrypted drive and delete old ones. Backups contain student posts, so never email or upload them.
+4. **Practise a restore** on a spare Firebase project or the emulator before you ever need it: `node scripts/restore_firestore.js backups/<date> --project <spare-project> --confirm`. Never restore straight onto live data. A round trip (including dates, nested data and placeholder documents) was tested and is identical.
+5. Also schedule Firestore's own export if you are on the Blaze plan (Firebase console › Firestore › Import/Export).
+
+**Your own weekly 10-minute check**
+- Firebase console › Usage: any daily limit above half used? Plan the Blaze upgrade (with a ₹1,000 budget alert) before you reach it.
+- Authentication › Users: sudden thousands of new users usually means a bot. Turn on App Check (APPCHECK.md), in monitor mode first, then enforce.
+- 2-step verification on the Google account that owns Firebase, GitHub and your domain. This is the most important single protection.
+- Reports and flags from students: moderate them (MODERATION.md).
+- Never paste keys or passwords into chats, screenshots or the repository.
+
+**Student data and the law (India)**
+- The app keeps a nickname, posts, a device id and small usage counters. Real names, phone numbers and passwords are not collected. Keep it that way.
+- Have a lawyer review the age text and Privacy Policy before the wider rollout, and decide how you will handle a student's request to see or delete their data (note the student's sign-in id, delete their records in the console, and record that you did it).
