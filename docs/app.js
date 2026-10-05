@@ -4258,7 +4258,7 @@ async function startCheckout(planKey, gift) {
 const PLUS_FEATURES = ["Plus gift link for a friend", "Group study rooms with a shared timer", "Scan handwritten notes into flashcards", "Live doubt sessions with seniors", "Placement preparation kit", "Offline downloads of papers", "Weekly leaderboard for Plus members", "More resume templates", "No ads, ever"];
 const PLUS_TILES = [
   ["\u{1F50E}", "Loopy AI Search", "Search any topic for a quick answer, pictures, videos and PDFs.", "loopysearch"],
-  ["", "Loopy Brain", "Five Loopy models. Spark and Scholar are free for everyone, all five are free for RGUKT students. Vision, Sage and Apex are Plus elsewhere.", "ai"],
+  ["", "Loopy Brain", "Five Loopy models. Spark and Scholar are free for everyone, and Vision is free for RGUKT students. The rest are Campus Loop Plus.", "ai"],
   ["📝", "Mock tests", "Timed subject and placement tests with a topic-wise report.", "mock"],
   ["📓", "Mistake notebook", "Questions you missed come back until you get them right.", "mistakes"],
   ["🗓️", "Exam planner", "A daily plan with spaced revision before your exam.", "planner"],
@@ -4271,7 +4271,7 @@ const PLUS_TILES = [
   ["🎯", "Goals and badges", "Weekly targets and badges to keep you going.", "goals"],
   ["⭐", "Plus star", "A star next to your nickname on every post.", ""],
 ];
-const PLUS_COMPARE = [["", "Free", "Plus"], ["Loopy Brain models", "Spark, Scholar", "All 5: + Vision, Sage, Apex"], ["Board, stories, quizzes, Study Lab", "✔", "✔"], ["Daily streaks and battles", "✔", "✔"], ["AI study helper", "–", "✔"], ["Mock tests and progress chart", "–", "✔"], ["Mistake notebook and exam planner", "–", "✔"], ["Paper vault", "–", "✔"], ["Weekly goals, badges, focus timer", "–", "✔"], ["Resume builder, weekly leaderboard", "–", "✔"], ["Cloud backup, themes, ⭐", "–", "✔"]];
+const PLUS_COMPARE = [["", "Free", "Plus"], ["Loopy Brain models", "Spark, Scholar (+ Vision for RGUKT)", "All 5: + Vision, Sage, Apex"], ["Board, stories, quizzes, Study Lab", "✔", "✔"], ["Daily streaks and battles", "✔", "✔"], ["AI study helper", "–", "✔"], ["Mock tests and progress chart", "–", "✔"], ["Mistake notebook and exam planner", "–", "✔"], ["Paper vault", "–", "✔"], ["Weekly goals, badges, focus timer", "–", "✔"], ["Resume builder, weekly leaderboard", "–", "✔"], ["Cloud backup, themes, ⭐", "–", "✔"]];
 function renderPlus() {
   const acct = myAccount(), verified = acct.verified, has = state.plan.plus;
   const canBackup = !!store && !!store.getTop && verified && (!PLUS.enabled || has);
@@ -4863,7 +4863,7 @@ function brainQuiz(wiki, n) {
   return qs;
 }
 let _solver = null;
-async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=418", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
+async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=419", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
 async function brainReply(text, chat) {
   const sv = await brainSolve(text); if (sv) return sv;
   const { kind, topic } = brainIntent(text, chat.topic || ""); chat.topic = topic;
@@ -4938,7 +4938,7 @@ async function safeSync() {
   } catch (_) { _safeLoaded = false; }
 }
 let _safeMod = null;
-const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=418", location.href).href); } catch (_) { return null; } };
+const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=419", location.href).href); } catch (_) { return null; } };
 function safeModal(title, lines, danger) {
   const prev = document.getElementById("safeModal"); if (prev) prev.remove();
   const ov = el("div", { class: "safe-ov", id: "safeModal", role: "alertdialog", "aria-modal": "true", "aria-label": title },
@@ -4968,9 +4968,11 @@ const BS_LEVELS = [
 ];
 const BS_SIZES = [["brief", "Brief", "A few lines", 1], ["standard", "Standard", "About one page, with key numbers", 2], ["detailed", "Detailed", "Several pages with timeline and key terms", 3], ["full", "Full report", "Research level: papers and revision notes", 4]];
 const bsName = (n) => "Loopy " + BS_LEVELS[n - 1][1];
-const hasPlusNow = () => IS_RGUKT || !!(state.plan && state.plan.plus) || trialLeft() > 0 || bonusLeft() > 0;   // RGUKT students: all five models are free during the pilot
+const hasPlusNow = () => !!(state.plan && state.plan.plus) || trialLeft() > 0 || bonusLeft() > 0;
+// Free models: Spark and Scholar for everyone, and Vision too for RGUKT students. Sage and Apex need Campus Loop Plus.
+const bsFree = (lv) => lv <= 2 || (IS_RGUKT && lv === 3);
 const bsState = () => state.bs || (state.bs = { q: "", level: 2, size: "standard", tab: "all", busy: false, res: null, ans: "", id: 0, lock: 0, pending: "" });
-const bsOpen = (lv) => !BS_LEVELS[lv - 1][3] || hasPlusNow();
+const bsOpen = (lv) => bsFree(lv) || hasPlusNow();
 const mySubjects = () => { const r = readJSON(MYS_KEY, []); return Array.isArray(r) ? r.filter(x => typeof x === "string" && x.trim()).slice(0, 20) : []; };
 const saveSubjects = (a) => writeJSON(MYS_KEY, a.slice(0, 20));
 const bsRecent = () => { const r = readJSON(BS_KEY, []); return Array.isArray(r) ? r.filter(x => typeof x === "string").slice(0, 6) : []; };
@@ -4984,7 +4986,7 @@ function bsPool() {
 }
 const bsSuggest = (text) => { const n = text.trim().toLowerCase(); if (n.length < 2) return []; return bsPool().filter(t => t.toLowerCase().includes(n)).sort((a, b) => a.length - b.length).slice(0, 6); };
 let _report = null;
-const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=418", location.href).href); } catch (_) { return null; } };
+const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=419", location.href).href); } catch (_) { return null; } };
 async function bsPapers(q) {
   try {
     const j = await lsFetch("https://api.openalex.org/works?per-page=5&select=title,publication_year,cited_by_count,doi,open_access,authorships,abstract_inverted_index&search=" + encodeURIComponent(q));
@@ -5108,10 +5110,10 @@ function brainView() {
   input.addEventListener("input", () => sug.replaceChildren(...bsSuggest(input.value).map(t => el("button", { type: "button", class: "bs-s", role: "option", onclick: () => go(t) }, el("span", { "aria-hidden": "true" }, "\u{1F50E}"), t))));
   const form = el("form", { class: "bs-bar", onsubmit: (e) => { e.preventDefault(); input.blur(); go(input.value); } }, input, el("button", { class: "bs-go", type: "submit", "aria-label": "Search" }, "Search"));
   const setLevel = (lv) => { if (!bsOpen(lv)) { bs.lock = lv; bsPaint(); return; } bs.level = lv; bs.lock = 0; if (bs.q && bs.res) bsRun(bs.q); else bsPaint(); };
-  const lvBar = el("div", { class: "bs-lvs bsf-noprint", role: "group", "aria-label": "Loopy model" }, ...BS_LEVELS.map(([n, t, , plus]) => { const open = bsOpen(n); return el("button", { type: "button", class: "bs-lv" + (bs.level === n && !bs.lock ? " on" : "") + (open ? "" : " locked"), "aria-pressed": String(bs.level === n), onclick: () => setLevel(n) }, el("b", {}, String(n)), el("span", {}, t), el("i", { class: "bs-tier" + (plus && !IS_RGUKT ? " plus" : "") }, !plus || IS_RGUKT ? "FREE" : open ? "PLUS" : "\u{1F512} PLUS")); }));
+  const lvBar = el("div", { class: "bs-lvs bsf-noprint", role: "group", "aria-label": "Loopy model" }, ...BS_LEVELS.map(([n, t, , plus]) => { const open = bsOpen(n); return el("button", { type: "button", class: "bs-lv" + (bs.level === n && !bs.lock ? " on" : "") + (open ? "" : " locked"), "aria-pressed": String(bs.level === n), onclick: () => setLevel(n) }, el("b", {}, String(n)), el("span", {}, t), el("i", { class: "bs-tier" + (bsFree(n) ? "" : " plus") }, bsFree(n) ? "FREE" : open ? "PLUS" : "\u{1F512} PLUS")); }));
   const cur = BS_LEVELS[(bs.lock || bs.level) - 1], modelLine = el("p", { class: "bs-model bsf-noprint" }, el("b", {}, bsName(cur[0])), " · " + cur[2] + " ", el("span", { class: "bs-dots", "aria-label": "Depth " + cur[0] + " of 5" }, "●".repeat(cur[0]) + "○".repeat(5 - cur[0])));
-  const rgNote = IS_RGUKT ? el("p", { class: "bs-model bsf-noprint" }, "All five Loopy models are free for RGUKT students during the pilot.") : null;
-  const lockCard = bs.lock ? el("div", { class: "bs-lock", role: "status" }, el("strong", {}, bsName(bs.lock) + " is a Plus model"), el("p", {}, BS_LEVELS[bs.lock - 1][2] + ". Loopy Spark and Loopy Scholar are free for everyone. Campus Loop Plus unlocks Loopy Vision, Loopy Sage and Loopy Apex."), el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => bsLeave(() => showPanel("plus")) }, "See Campus Loop Plus"), el("button", { class: "btn sm", type: "button", onclick: () => { bs.lock = 0; bsPaint(); } }, "Stay on free models"))) : null;
+  const rgNote = IS_RGUKT ? el("p", { class: "bs-model bsf-noprint" }, "Loopy Spark, Scholar and Vision are free for RGUKT students. Sage and Apex are part of Campus Loop Plus.") : null;
+  const lockCard = bs.lock ? el("div", { class: "bs-lock", role: "status" }, el("strong", {}, bsName(bs.lock) + " is a Plus model"), el("p", {}, BS_LEVELS[bs.lock - 1][2] + ". " + (IS_RGUKT ? "Loopy Spark, Scholar and Vision are free for RGUKT students. Campus Loop Plus unlocks Loopy Sage and Loopy Apex." : "Loopy Spark and Loopy Scholar are free for everyone. Campus Loop Plus unlocks Loopy Vision, Loopy Sage and Loopy Apex.")), el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => bsLeave(() => showPanel("plus")) }, "See Campus Loop Plus"), el("button", { class: "btn sm", type: "button", onclick: () => { bs.lock = 0; bsPaint(); } }, "Stay on free models"))) : null;
   const easyBtn = el("button", { type: "button", class: "bs-easy" + (bs.easy !== false ? " on" : ""), "aria-pressed": String(bs.easy !== false), onclick: () => { bs.easy = bs.easy === false; bsPaint(); } }, "Easy words: " + (bs.easy !== false ? "On" : "Off"));
   const bar = el("div", { class: "bs-sticky bsf-noprint" + (bs.res || bs.pending ? " compact" : "") }, form, sug);
   const optRow = el("div", { class: "bs-optrow" }, easyBtn), compact = !!(bs.res || bs.pending);
