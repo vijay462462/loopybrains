@@ -1,5 +1,5 @@
 // More of Loopy's own diagrams: analog circuits, DSP, control systems and probability. Extends brain-diagrams.js.
-import { Cv, mk, D } from "./brain-diagrams.js?v=443";
+import { Cv, mk, D } from "./brain-diagrams.js?v=444";
 const done = (c) => c.root;
 const P = Cv.prototype;
 // Local-coordinate parts: each starts at (x, y) and ends L further along the (rotated) axis. Returns the absolute end pin.
@@ -209,4 +209,12 @@ D.dec2bin = { title: "Decimal to binary: divide by 2", cap: "Keep dividing by 2 
   const c = new Cv(400, 290, "Decimal to binary"); const rows = [[25, 12, 1], [12, 6, 0], [6, 3, 0], [3, 1, 1], [1, 0, 1]]; c.txt(20, 20, "Number ÷ 2", { c: "s" }); c.txt(170, 20, "Quotient", { c: "s" }); c.txt(290, 20, "Remainder", { c: "s" });
   rows.forEach(([n, q, r], i) => { const y = 30 + i * 42; c.box(10, y, 120, 32, n + " ÷ 2", "ff"); c.box(150, y, 90, 32, "= " + q, "ff"); c.box(270, y, 90, 32, String(r), r ? "on" : "off"); });
   c.wire([[376, 190], [376, 40]], "clk", true); c.txt(366, 238, "read upward", { a: "end", c: "m" }); c.txt(200, 262, "Answer: 1 1 0 0 1  =  11001₂", { a: "middle", c: "g" }); return done(c); } };
+D.dacpath = { title: "Digital to analog: how a music player works", cap: "Music is stored as binary numbers (digital). A D/A converter turns them into a changing voltage (analog) that moves the speaker.", draw() {
+  const c = new Cv(400, 230, "Digital to analog"); c.box(10, 40, 100, 60, "Memory", "ff"); c.txt(60, 128, "1100100110", { a: "middle", c: "g" }); c.txt(60, 146, "1001000100 …", { a: "middle", c: "g" }); c.txt(60, 164, "digital", { a: "middle", c: "m" });
+  c.wire([[110, 70], [150, 70]], "mid", true); c.box(150, 40, 100, 60, "D/A", "on"); c.wire([[250, 70], [290, 70]], "out", true); c.box(290, 40, 100, 60, "Speaker", "ff");
+  c.curve([[160, 190], [190, 170], [220, 205], [250, 175], [280, 200], [310, 180], [340, 195]], "out", 2.5); c.txt(250, 224, "analog: a smoothly changing voltage", { a: "middle", c: "m" }); return done(c); } };
+D.bitsrange = { title: "How many bits do I need?", cap: "n bits can show 2ⁿ different values, from 0 up to 2ⁿ − 1. Pick the smallest n whose range reaches your number.", draw() {
+  const c = new Cv(400, 250, "Bits and range"); c.txt(20, 20, "bits n", { c: "s" }); c.txt(110, 20, "values 2ⁿ", { c: "s" }); c.txt(230, 20, "largest number", { c: "s" });
+  [[4, 16, 15], [8, 256, 255], [10, 1024, 1023], [16, 65536, 65535]].forEach(([n, v, m], i) => { const y = 30 + i * 46; c.box(10, y, 70, 34, String(n), "ff"); c.box(100, y, 100, 34, String(v), "ff"); c.box(220, y, 120, 34, String(m), "on"); });
+  c.txt(200, 232, "270 needs 9 bits because 256 ≤ 270 < 512", { a: "middle", c: "g" }); return done(c); } };
 export function drawDiagram2(key) { const d = D[key]; if (!d) return null; try { return { title: d.title, cap: d.cap, svg: d.draw() }; } catch (_) { return null; } }
