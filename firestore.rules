@@ -321,6 +321,21 @@ service cloud.firestore {
     }
     // Web-push tokens: a signed-in user stores only their OWN token document (id = their uid). Nobody can read tokens from the app;
     // only the server function that sends notifications can (it ignores these rules).
+    // Loopy Search safety: strikes for sexual or romantic searches. Students can only add strikes (never lower them or undo a block); admins can review or remove.
+    match /searchSafety/{uid} {
+      allow read: if request.auth != null && (request.auth.uid == uid || isAdmin());
+      allow create: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['warns', 'blocked', 'at'])
+        && request.resource.data.warns is int && request.resource.data.warns >= 1 && request.resource.data.warns <= 3
+        && request.resource.data.blocked is bool && request.resource.data.at is int;
+      allow update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['warns', 'blocked', 'at'])
+        && request.resource.data.warns is int && request.resource.data.warns >= resource.data.warns && request.resource.data.warns <= 3
+        && request.resource.data.blocked is bool && (!resource.data.blocked || request.resource.data.blocked == true)
+        && request.resource.data.at is int;
+      allow delete: if isAdmin();
+    }
+
     match /pushTokens/{uid} {
       allow get, list: if false;
       allow create, update: if request.auth != null && request.auth.uid == uid

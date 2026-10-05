@@ -128,5 +128,17 @@ await t("verified: students cannot verify, nor verify a missing answer", async (
 await t("verified: everyone signed in can read it", () => assertSucceeds(getDoc(doc(bob, R + "/verified", "rv1"))));
 await t("verified: cannot be edited, staff can withdraw", async () => { await assertFails(setDoc(doc(tess, R + "/verified", "rv1"), { replyId: "rv1", doubtId: "dq9", by: "tess", byName: "T", at: Date.now() })); const { deleteDoc } = await import("firebase/firestore"); await assertFails(deleteDoc(doc(alice, R + "/verified", "rv1"))); await assertSucceeds(deleteDoc(doc(tess, R + "/verified", "rv1"))); });
 await t("dupOf: a doubt can carry a duplicate link (owner edit)", async () => { await env.withSecurityRulesDisabled(async (ctx) => { await setDoc(doc(ctx.firestore(), R + "/doubts", "dq9"), { title: "same thing again", subject: "Maths", ownerUid: "alice", authorId: "alice-device-1", authorName: "A", createdAt: Date.now(), body: "" }); }); await assertSucceeds(updateDoc(doc(alice, R + "/doubts", "dq9"), { dupOf: "dq1" })); await assertFails(updateDoc(doc(bob, R + "/doubts", "dq9"), { dupOf: "dq2" })); });
+await t("search safety: a student can add strikes but never lower them or lift a block", async () => {
+  const gus = env.authenticatedContext("gus").firestore(), ref = doc(gus, "searchSafety", "gus");
+  await assertSucceeds(setDoc(ref, { warns: 1, blocked: false, at: Date.now() }));
+  await assertSucceeds(setDoc(ref, { warns: 2, blocked: false, at: Date.now() }));
+  await assertFails(setDoc(ref, { warns: 1, blocked: false, at: Date.now() }));
+  await assertSucceeds(setDoc(ref, { warns: 3, blocked: true, at: Date.now() }));
+  await assertFails(setDoc(ref, { warns: 3, blocked: false, at: Date.now() }));
+  await assertFails(setDoc(ref, { warns: 3, blocked: true, at: Date.now(), extra: 1 }));
+  await assertFails(setDoc(doc(env.authenticatedContext("hal").firestore(), "searchSafety", "gus"), { warns: 3, blocked: true, at: Date.now() }));
+  await assertFails(getDoc(doc(env.authenticatedContext("hal").firestore(), "searchSafety", "gus")));
+  await assertSucceeds(getDoc(ref));
+});
 console.log(`\n${pass} passed, ${fail} failed`);
 await env.cleanup(); process.exit(fail ? 1 : 0);
