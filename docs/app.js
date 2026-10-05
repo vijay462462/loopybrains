@@ -4278,7 +4278,7 @@ async function startCheckout(planKey, gift) {
 const PLUS_FEATURES = ["Plus gift link for a friend", "Group study rooms with a shared timer", "Scan handwritten notes into flashcards", "Live doubt sessions with seniors", "Placement preparation kit", "Offline downloads of papers", "Weekly leaderboard for Plus members", "More resume templates", "No ads, ever"];
 const PLUS_TILES = [
   ["\u{1F50E}", "Loopy AI Search", "Search any topic for a quick answer, pictures, videos and PDFs.", "loopysearch"],
-  ["", "Loopy Brain", "Five Loopy models. Spark is free for everyone, and Scholar is free for RGUKT students. The rest are Campus Loop Plus.", "ai"],
+  ["", "Loopy Brain", "Five Loopy models. All five are free for RGUKT students. Other colleges get Spark free, and the rest are Campus Loop Plus.", "ai"],
   ["📝", "Mock tests", "Timed subject and placement tests with a topic-wise report.", "mock"],
   ["📓", "Mistake notebook", "Questions you missed come back until you get them right.", "mistakes"],
   ["🗓️", "Exam planner", "A daily plan with spaced revision before your exam.", "planner"],
@@ -4925,7 +4925,7 @@ function brainQuiz(wiki, n) {
   return qs;
 }
 let _solver = null;
-async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=430", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
+async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=431", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
 async function brainReply(text, chat) {
   const sv = await brainSolve(text); if (sv) return sv;
   const { kind, topic } = brainIntent(text, chat.topic || ""); chat.topic = topic;
@@ -5001,7 +5001,7 @@ async function safeSync() {
   } catch (_) { _safeLoaded = false; }
 }
 let _safeMod = null;
-const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=430", location.href).href); } catch (_) { return null; } };
+const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=431", location.href).href); } catch (_) { return null; } };
 function safeModal(title, lines, danger) {
   const prev = document.getElementById("safeModal"); if (prev) prev.remove();
   const ov = el("div", { class: "safe-ov", id: "safeModal", role: "alertdialog", "aria-modal": "true", "aria-label": title },
@@ -5035,11 +5035,11 @@ const bsEffort = (bs) => { const want = BS_EFFORTS.findIndex(e => e[0] === bs.ef
 const bsName = (n) => "Loopy " + BS_LEVELS[n - 1][1];
 const hasPlusNow = () => !!(state.plan && state.plan.plus) || trialLeft() > 0 || bonusLeft() > 0;
 // Free models: Spark for everyone, and Scholar too for RGUKT students. Vision, Sage and Apex need Campus Loop Plus.
-const bsFree = (lv) => lv <= 1 || (IS_RGUKT && lv === 2);
+const bsFree = (lv) => lv <= 1 || IS_RGUKT;
 const BS_MODES = [["atlas", "Atlas", "Search anything", "Topics, doubts, maths and research, explained in easy words.", "Ask anything: a topic, doubt, problem or research idea"], ["launchpad", "Launchpad", "Project guide", "Turn an idea into a plan: objectives, tools, week-by-week steps, report outline and viva questions.", "Describe your project idea, e.g. IoT weather station"], ["forge", "Forge", "Find code", "Working code for classic problems in many languages, with the idea explained.", "e.g. binary search in Python"], ["aegis", "Aegis", "Learn security", "Understand how attacks work and how to defend, legally and safely.", "e.g. SQL injection, phishing, password safety"]];
 const bsModeInfo = (id) => BS_MODES.find(m => m[0] === id) || BS_MODES[0];
 let _modes = null;
-const brainModesMod = async () => { try { return _modes = _modes || await import(new URL("brain-modes.js?v=430", location.href).href); } catch (_) { return null; } };
+const brainModesMod = async () => { try { return _modes = _modes || await import(new URL("brain-modes.js?v=431", location.href).href); } catch (_) { return null; } };
 const PREF_KEY = "dd-bs-prefs", SAVED_KEY = "dd-bs-saved";
 const bsPrefs = () => { const p = readJSON(PREF_KEY, {}); return p && typeof p === "object" ? p : {}; };
 const bsState = () => state.bs || (state.bs = (() => { const p = bsPrefs(), ok = p.remember !== false;
@@ -5105,7 +5105,7 @@ function bsPool() {
 }
 const bsSuggest = (text) => { const n = text.trim().toLowerCase(); if (n.length < 2) return []; return bsPool().filter(t => t.toLowerCase().includes(n)).sort((a, b) => a.length - b.length).slice(0, 6); };
 let _report = null;
-const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=430", location.href).href); } catch (_) { return null; } };
+const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=431", location.href).href); } catch (_) { return null; } };
 async function bsPapers(q) {
   try {
     const j = await lsFetch("https://api.openalex.org/works?per-page=5&select=title,publication_year,cited_by_count,doi,open_access,authorships,abstract_inverted_index&search=" + encodeURIComponent(q));
@@ -5514,8 +5514,8 @@ function brainView() {
   const setLevel = (lv) => { if (!bsOpen(lv)) { bs.lock = lv; bsPaint(); return; } bs.level = lv; bs.lock = 0; bsRemember(); if (bs.q && bs.res) bsRun(bs.q); else bsPaint(); };
   const lvBar = el("div", { class: "bs-lvs bsf-noprint", role: "group", "aria-label": "Loopy model" }, ...BS_LEVELS.map(([n, t, , plus]) => { const open = bsOpen(n); return el("button", { type: "button", class: "bs-lv" + (bs.level === n && !bs.lock ? " on" : "") + (open ? "" : " locked"), "aria-pressed": String(bs.level === n), onclick: () => setLevel(n) }, el("b", {}, String(n)), el("span", {}, t), el("i", { class: "bs-tier" + (bsFree(n) ? "" : " plus") }, bsFree(n) ? "FREE" : open ? (IS_RGUKT ? "BONUS" : "PLUS") : IS_RGUKT ? "\u{1F512} LOCKED" : "\u{1F512} PLUS")); }));
   const cur = BS_LEVELS[(bs.lock || bs.level) - 1], modelLine = el("p", { class: "bs-model bsf-noprint" }, el("b", {}, bsName(cur[0])), " · " + cur[2] + " ", el("span", { class: "bs-dots", "aria-label": "Depth " + cur[0] + " of 5" }, "●".repeat(cur[0]) + "○".repeat(5 - cur[0])));
-  const rgNote = el("p", { class: "bs-model bsf-noprint" }, IS_RGUKT ? "Loopy Spark and Scholar are free for RGUKT students." : "Loopy Spark is free. Scholar, Vision, Sage and Apex are part of Campus Loop Plus.");
-  const lockCard = bs.lock ? el("div", { class: "bs-lock", role: "status" }, el("strong", {}, bsName(bs.lock) + (IS_RGUKT ? " is not part of the free RGUKT plan" : " is a Plus model")), el("p", {}, BS_LEVELS[bs.lock - 1][2] + ". " + (IS_RGUKT ? "Loopy Spark and Loopy Scholar are free for RGUKT students." : "Loopy Spark is free for everyone. Campus Loop Plus unlocks Loopy Scholar, Vision, Sage and Apex.")), el("div", { class: "rowbtns" }, IS_RGUKT ? null : el("button", { class: "btn sm primary", type: "button", onclick: () => bsLeave(() => showPanel("plus")) }, "See Campus Loop Plus"), el("button", { class: "btn sm", type: "button", onclick: () => { bs.lock = 0; bsPaint(); } }, "Stay on free models"))) : null;
+  const rgNote = el("p", { class: "bs-model bsf-noprint" }, IS_RGUKT ? "All five Loopy models are free for RGUKT students." : "Loopy Spark is free. Scholar, Vision, Sage and Apex are part of Campus Loop Plus.");
+  const lockCard = bs.lock ? el("div", { class: "bs-lock", role: "status" }, el("strong", {}, bsName(bs.lock) + (IS_RGUKT ? " is not part of the free RGUKT plan" : " is a Plus model")), el("p", {}, BS_LEVELS[bs.lock - 1][2] + ". " + (IS_RGUKT ? "All Loopy models are free for RGUKT students." : "Loopy Spark is free for everyone. Campus Loop Plus unlocks Loopy Scholar, Vision, Sage and Apex.")), el("div", { class: "rowbtns" }, IS_RGUKT ? null : el("button", { class: "btn sm primary", type: "button", onclick: () => bsLeave(() => showPanel("plus")) }, "See Campus Loop Plus"), el("button", { class: "btn sm", type: "button", onclick: () => { bs.lock = 0; bsPaint(); } }, "Stay on free models"))) : null;
   const setMode = (id) => { if (bs.mode === id) return; bs.mode = id; bsRemember(); bs.lock = 0; if (bs.q && bs.res && !bs.res.disambig) bsSubmit(bs.q); else bsPaint(); };
   const modeBar = el("div", { class: "bs-modes bsf-noprint" + (bs.res ? " compact" : ""), role: "tablist", "aria-label": "Loopy Brain engine" }, ...BS_MODES.map(m => el("button", { type: "button", role: "tab", class: "bs-mode" + (bs.mode === m[0] ? " on" : ""), "aria-selected": String(bs.mode === m[0]), onclick: () => setMode(m[0]) }, svgIcon(m[0]), el("span", {}, el("b", {}, m[1]), el("small", {}, m[2])))));
   const modeLine = el("p", { class: "bs-modeline bsf-noprint" }, el("b", {}, mi[1] + ": "), mi[3]);
