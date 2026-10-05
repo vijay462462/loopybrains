@@ -8322,6 +8322,9 @@ function renderView() {
       el("p", { class: "hint" }, "🛡️ Check the company's official website before applying. Never pay money for a job or internship.")));
   }
   if (d.body) { out.push(el("p", { class: "body" }, d.body)); const yc = renderYtCards(d.body); if (yc) out.push(yc); }
+  if (state.tab === "doubts" && !d.resolvedReplyId) out.push(el("div", { class: "tp-self" },
+    el("div", {}, el("strong", {}, "Don't want to wait for replies?"), el("small", {}, "Loopy AI explains this topic now: summary, diagrams, 3D models, videos and practice.")),
+    el("button", { class: "btn sm primary", type: "button", onclick: () => openTopic(d.title || g, g, "view") }, "\u2728 Explain with Loopy AI")));
   // AI Help panel
   if (state.tab === "doubts" || state.tab === "gate") {
     const aiOpen = state.aiPanel === d.id;

@@ -3186,3 +3186,5 @@ header.top #paletteBtn, #paletteBtn { border-radius: 999px; background: var(--ac
 .ovbody{flex:1;min-height:0;overflow:auto;display:flex;align-items:center;justify-content:center;padding:8px}
 .ovbody img{max-width:100%;max-height:100%;object-fit:contain;background:#fff}
 .tp-embed{width:100%;height:100%;border:0}
+.tp-self{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:var(--w1,var(--accent-soft));border-radius:14px;padding:12px;margin:10px 0}
+.tp-self>div{flex:1 1 200px;min-width:0}.tp-self small{display:block;color:var(--muted);margin-top:2px}
