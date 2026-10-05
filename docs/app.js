@@ -9294,19 +9294,21 @@ function applyThemeName(n) { const r = document.documentElement; r.setAttribute(
 let currentTheme = (() => { try { const v = localStorage.getItem("dd-theme"); return THEME_CYCLE.includes(v) ? v : systemTheme(); } catch (_) { return systemTheme(); } })();
 applyThemeName(currentTheme);
 // Colour palettes: the student chooses one (Forest is the default). Each has a light, dark and black version.
-const PALETTES = { forest: ["Forest", ["#2d452f", "#6b9d4a", "#cfe2ce"]], indigo: ["Indigo", ["#312c51", "#48426d", "#f0c38e"]], terracotta: ["Terracotta", ["#c9532f", "#c78a9a", "#5e8c74"]], ocean: ["Ocean", ["#1a73e8", "#8ab4f8", "#fdd663"]], slate: ["Slate", ["#2f3a46", "#9db4c8", "#e5e7eb"]] };
-let currentPalette = (() => { try { const v = localStorage.getItem("dd-palette"); return PALETTES[v] ? v : "forest"; } catch (_) { return "forest"; } })();
+const PALETTES = { royal: ["Royal", ["#0f2c52", "#e2bd64", "#f4f1ea"], "p"], emerald: ["Emerald", ["#0d4a38", "#e3cf94", "#f3f2ec"], "p"], burgundy: ["Burgundy", ["#5b1a2b", "#e9b49f", "#f6efeb"], "p"], obsidian: ["Obsidian", ["#181818", "#d4af37", "#f2f1ee"], "p"], forest: ["Forest", ["#2d452f", "#6b9d4a", "#cfe2ce"], "c"], indigo: ["Indigo", ["#312c51", "#48426d", "#f0c38e"], "c"], terracotta: ["Terracotta", ["#c9532f", "#c78a9a", "#5e8c74"], "c"], ocean: ["Ocean", ["#1a73e8", "#8ab4f8", "#fdd663"], "c"], slate: ["Slate", ["#2f3a46", "#9db4c8", "#e5e7eb"], "c"] };
+let currentPalette = (() => { try { const v = localStorage.getItem("dd-palette"); return PALETTES[v] ? v : "royal"; } catch (_) { return "royal"; } })();
 document.documentElement.setAttribute("data-palette", currentPalette);
 let updateThemeLabel = () => {};
 function setPalette(k) { if (!PALETTES[k]) return; currentPalette = k; document.documentElement.setAttribute("data-palette", k); try { localStorage.setItem("dd-palette", k); } catch (_) {} render(); }
 function setThemeMode(n) { if (!THEME_CYCLE.includes(n)) return; currentTheme = n; applyThemeName(n); try { localStorage.setItem("dd-theme", n); } catch (_) {} updateThemeLabel(); render(); }
 function renderAppearance() {
   const back = el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back");
-  const pal = Object.entries(PALETTES).map(([k, [name, cols]]) => el("button", { type: "button", class: "pal-opt" + (currentPalette === k ? " on" : ""), "aria-pressed": String(currentPalette === k), onclick: () => setPalette(k) },
-    el("span", { class: "pal-dots" }, ...cols.map(c => { const d = el("i", {}); d.style.setProperty("background", c); return d; })), el("b", {}, name)));
+  const opt = ([k, [name, cols]]) => el("button", { type: "button", class: "pal-opt" + (currentPalette === k ? " on" : ""), "aria-pressed": String(currentPalette === k), onclick: () => setPalette(k) },
+    el("span", { class: "pal-dots" }, ...cols.map(c => { const d = el("i", {}); d.style.setProperty("background", c); return d; })), el("b", {}, name));
+  const group = (g) => Object.entries(PALETTES).filter(([, v]) => v[2] === g).map(opt);
   const modes = THEME_CYCLE.map(n => el("button", { type: "button", class: "btn sm", "aria-pressed": String(currentTheme === n), onclick: () => setThemeMode(n) }, THEME_NAME[n]));
   return [el("h2", {}, "Colours and theme"), el("p", { class: "hint" }, "Pick the colours you like. Your choice is saved on this device."),
-    el("div", { class: "label" }, "Colour palette"), el("div", { class: "pal-grid" }, ...pal),
+    el("div", { class: "label" }, "Premium palettes"), el("div", { class: "pal-grid" }, ...group("p")),
+    el("div", { class: "label" }, "Classic palettes"), el("div", { class: "pal-grid" }, ...group("c")),
     el("div", { class: "label" }, "Theme"), el("div", { class: "theme-seg" }, ...modes),
     el("div", { class: "rowbtns" }, back)];
 }
@@ -9593,7 +9595,9 @@ document.addEventListener("pointerdown", (e) => {
   if (window.visualViewport) visualViewport.addEventListener("resize", quiet);
   addEventListener("orientationchange", quiet);
   const mk = () => { if (tab) return tab; tab = document.createElement("button"); tab.type = "button"; tab.className = "hd-tab"; tab.setAttribute("aria-label", "Show the top bar"); tab.textContent = "▾"; tab.hidden = true; tab.addEventListener("click", () => show()); document.body.append(tab); return tab; };
-  const set = (h) => { if (h === hidden) return; hidden = h; document.body.classList.toggle("hd-hidden", h); mk().hidden = !h; try { hd.inert = h; } catch (_) {} };
+  let palBtn = null;
+  const mkPal = () => { if (palBtn) return palBtn; palBtn = document.createElement("button"); palBtn.type = "button"; palBtn.className = "hd-pal"; palBtn.setAttribute("aria-label", "Choose colours"); palBtn.title = "Choose colours"; palBtn.append(svgIcon("palette")); palBtn.hidden = true; palBtn.addEventListener("click", () => showPanel("appearance")); document.body.append(palBtn); return palBtn; };
+  const set = (h) => { if (h === hidden) return; hidden = h; document.body.classList.toggle("hd-hidden", h); mk().hidden = !h; mkPal().hidden = !h; try { hd.inert = h; } catch (_) {} };
   const arm = () => { clearTimeout(timer); timer = setTimeout(() => { if (sticky() && window.scrollY > 120 && !busy()) set(true); }, 6000); };
   const show = () => { set(false); arm(); };
   addEventListener("scroll", () => {
