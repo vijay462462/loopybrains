@@ -1373,6 +1373,7 @@ const ICON_PATHS = {
   market: ["M3 4h2l2.4 11h10.2l2-8H6.5", "M9 20.2v.01", "M17 20.2v.01"],
   board: ["M8 4h8v5a4 4 0 0 1-8 0V4z", "M8 6H4v1a4 4 0 0 0 4 4", "M16 6h4v1a4 4 0 0 1-4 4", "M12 13v4", "M8 20h8", "M10 17h4"],
   more: ["M5 12v.01", "M12 12v.01", "M19 12v.01"],
+  palette: ["M12 3a9 9 0 1 0 0 18c1.1 0 1.8-.8 1.8-1.7 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-.9.8-1.7 1.7-1.7H17a4 4 0 0 0 4-4c0-4.4-4-8.2-9-8.2z", "M7.5 11v.01", "M10 7.5v.01", "M14.5 7.5v.01"],
 };
 function svgIcon(name) {
   const NS = "http://www.w3.org/2000/svg", svg = document.createElementNS(NS, "svg");
@@ -9181,6 +9182,7 @@ function renderCore() {
       state.mode === "resume" ? renderResume() :
       state.mode === "focusplus" ? renderFocusPlus() :
       state.mode === "college" ? renderCollege() :
+      state.mode === "appearance" ? renderAppearance() :
       state.mode === "about" ? renderAbout() :
       state.mode === "lab" ? renderLab() :
       state.mode === "fun" ? renderFun() :
@@ -9291,14 +9293,32 @@ const systemTheme = () => matchMedia("(prefers-color-scheme: dark)").matches ? "
 function applyThemeName(n) { const r = document.documentElement; r.setAttribute("data-theme", n === "black" ? "dark" : n); if (n === "black") r.setAttribute("data-tone", "black"); else r.removeAttribute("data-tone"); }
 let currentTheme = (() => { try { const v = localStorage.getItem("dd-theme"); return THEME_CYCLE.includes(v) ? v : systemTheme(); } catch (_) { return systemTheme(); } })();
 applyThemeName(currentTheme);
+// Colour palettes: the student chooses one (Forest is the default). Each has a light, dark and black version.
+const PALETTES = { forest: ["Forest", ["#2d452f", "#6b9d4a", "#cfe2ce"]], indigo: ["Indigo", ["#312c51", "#48426d", "#f0c38e"]], terracotta: ["Terracotta", ["#c9532f", "#c78a9a", "#5e8c74"]], ocean: ["Ocean", ["#1a73e8", "#8ab4f8", "#fdd663"]], slate: ["Slate", ["#2f3a46", "#9db4c8", "#e5e7eb"]] };
+let currentPalette = (() => { try { const v = localStorage.getItem("dd-palette"); return PALETTES[v] ? v : "forest"; } catch (_) { return "forest"; } })();
+document.documentElement.setAttribute("data-palette", currentPalette);
+let updateThemeLabel = () => {};
+function setPalette(k) { if (!PALETTES[k]) return; currentPalette = k; document.documentElement.setAttribute("data-palette", k); try { localStorage.setItem("dd-palette", k); } catch (_) {} render(); }
+function setThemeMode(n) { if (!THEME_CYCLE.includes(n)) return; currentTheme = n; applyThemeName(n); try { localStorage.setItem("dd-theme", n); } catch (_) {} updateThemeLabel(); render(); }
+function renderAppearance() {
+  const back = el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back");
+  const pal = Object.entries(PALETTES).map(([k, [name, cols]]) => el("button", { type: "button", class: "pal-opt" + (currentPalette === k ? " on" : ""), "aria-pressed": String(currentPalette === k), onclick: () => setPalette(k) },
+    el("span", { class: "pal-dots" }, ...cols.map(c => { const d = el("i", {}); d.style.setProperty("background", c); return d; })), el("b", {}, name)));
+  const modes = THEME_CYCLE.map(n => el("button", { type: "button", class: "btn sm", "aria-pressed": String(currentTheme === n), onclick: () => setThemeMode(n) }, THEME_NAME[n]));
+  return [el("h2", {}, "Colours and theme"), el("p", { class: "hint" }, "Pick the colours you like. Your choice is saved on this device."),
+    el("div", { class: "label" }, "Colour palette"), el("div", { class: "pal-grid" }, ...pal),
+    el("div", { class: "label" }, "Theme"), el("div", { class: "theme-seg" }, ...modes),
+    el("div", { class: "rowbtns" }, back)];
+}
 const themeBtn = document.getElementById("themeBtn");
+if (themeBtn && themeBtn.parentNode) { const pb = el("button", { class: "chip", id: "paletteBtn", type: "button", "aria-label": "Choose colours", title: "Choose colours", onclick: () => showPanel("appearance") }, svgIcon("palette")); themeBtn.parentNode.insertBefore(pb, themeBtn); }
 if (themeBtn) {
   const label = () => { const nx = THEME_CYCLE[(THEME_CYCLE.indexOf(currentTheme) + 1) % 3]; themeBtn.textContent = THEME_ICON[nx]; themeBtn.title = themeBtn.ariaLabel = "Theme: " + THEME_NAME[currentTheme] + ". Tap for " + THEME_NAME[nx]; };
   themeBtn.addEventListener("click", () => {
     currentTheme = THEME_CYCLE[(THEME_CYCLE.indexOf(currentTheme) + 1) % 3]; applyThemeName(currentTheme); label();
     try { localStorage.setItem("dd-theme", currentTheme); } catch (_) {}
   });
-  label();
+  label(); updateThemeLabel = label;
 }
 
 
