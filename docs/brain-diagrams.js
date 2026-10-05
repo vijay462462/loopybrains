@@ -100,5 +100,6 @@ D.parity = { title: "Even parity generator (3 data bits)", cap: "P = A\u2295B\u2
 const _or = D.nand_univ.draw; D.nand_univ.draw = function () { const r = _or(); const c = { g: r.firstChild, add(n) { this.g.append(n); return n; } }; const cv = Object.create(Cv.prototype); cv.root = r; cv.g = r.firstChild; const n1 = cv.gate("nand", 70, 208), n2 = cv.gate("nand", 70, 256), n3 = cv.gate("nand", 190, 232);
   cv.txt(10, 238, "A", { c: "b" }); cv.wire([[26, 234], [40, 234], [40, n1.a[1]], n1.a], "in"); cv.wire([[40, 234], [40, n1.b[1]], n1.b], "in"); cv.dot(40, 234); cv.txt(10, 286, "B", { c: "b" }); cv.wire([[26, 282], [40, 282], [40, n2.a[1]], n2.a], "in"); cv.wire([[40, 282], [40, n2.b[1]], n2.b], "in"); cv.dot(40, 282);
   cv.wire([n1.o, [150, n1.o[1]], [150, n3.a[1]], n3.a], "mid"); cv.wire([n2.o, [150, n2.o[1]], [150, n3.b[1]], n3.b], "mid"); cv.wire([n3.o, [300, n3.o[1]]], "out", true); cv.txt(306, n3.o[1] + 4, "A+B", { c: "g" }); r.setAttribute("viewBox", "0 0 380 310"); return r; };
-export const DIAGRAM_KEYS = Object.keys(D);
+export { Cv, mk, D };
+export const diagramKeys = () => Object.keys(D);
 export function drawDiagram(key) { const d = D[key]; if (!d) return null; try { return { title: d.title, cap: d.cap, svg: d.draw() }; } catch (_) { return null; } }
