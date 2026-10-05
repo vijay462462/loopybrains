@@ -5806,6 +5806,7 @@ function renderAbout() {
   const feature = (icon, title, text) => el("div", { class: "learn-card" }, el("strong", {}, icon + " " + title), el("p", { class: "hint" }, text));
   return [
     el("h2", {}, "ℹ️ About " + BRAND),
+    el("img", { class: "brand-banner", src: "brand/the-campus-loop-banner-1200x630.png", alt: BRAND + ". Where every doubt finds answers.", width: "1200", height: "630", loading: "lazy" }),
     el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => { try { window.open("about.html", "_blank", "noopener"); } catch (_) {} } }, "📄 Read our full story")),
     el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: () => showWelcome(true) }, "👋 Show the welcome tour")),
     el("p", { class: "hint" }, el("a", { href: "terms.html", target: "_blank", rel: "noopener" }, "Terms"), " · ", el("a", { href: "privacy.html", target: "_blank", rel: "noopener" }, "Privacy"), " · ", el("a", { href: "refund.html", target: "_blank", rel: "noopener" }, "Refunds")),
@@ -9338,11 +9339,22 @@ if (themeBtn) {
 }
 
 
+// Brand lockup from the brand guide: the monogram C, then "THE CAMPUS" in bold serif with wide spacing and a small spaced gold "LOOP".
+function brandLockup(title) {
+  const words = String(title || "The Campus Loop").trim().split(/\s+/), last = words.length > 1 ? words.pop() : "", rest = words.join(" ") || String(title);
+  const src = document.querySelector(".sp2-bmark svg"); let mark = null;
+  if (src) {
+    mark = src.cloneNode(true); mark.removeAttribute("width"); mark.removeAttribute("height"); mark.setAttribute("class", "bmark hd-mark"); mark.setAttribute("aria-hidden", "true"); mark.setAttribute("focusable", "false");
+    mark.querySelectorAll("[id]").forEach(n => { n.id = n.id + "H"; });   // gradient ids must stay unique
+    mark.querySelectorAll("*").forEach(n => { for (const a of ["fill", "stroke"]) { const v = n.getAttribute(a); if (v && v.includes("url(#")) n.setAttribute(a, v.replace(/url\(#([^)]+)\)/, "url(#$1H)")); } });
+  }
+  return [mark, el("span", { class: "bname" }, el("b", {}, rest.toUpperCase()), last ? el("i", {}, last.toUpperCase()) : null)].filter(Boolean);
+}
 // Update page title from config
 if (CFG.title) { document.title = CFG.title; }
 {
   const h1 = $("siteTitle");
-  if (h1) { const m = /^(.*?[a-z])([A-Z][a-z]*)$/.exec(CFG.title.trim()); const w = CFG.title.trim().split(/\s+/); if (w.length > 1) { const last = w.pop(); h1.replaceChildren(w.join(" ") + " ", el("span", {}, last)); } else if (m) h1.replaceChildren(m[1], el("span", {}, m[2])); else h1.textContent = CFG.title; }
+  if (h1) { try { h1.replaceChildren(...brandLockup(CFG.title)); } catch (_) { h1.textContent = CFG.title; } }
   const sc = $("streakChip"); if (sc) sc.addEventListener("click", () => showPanel("me"));
   const cb = $("collegeBtn"); if (cb) { cb.replaceChildren(...(TENANT && TENANT.crest ? [crestEl(22), " "] : ["🏫 "]), (TENANT ? TENANT.name : IS_RGUKT ? "RGUKT AP" : "Choose your college") + " ▾");
   try { if (TENANT && TENANT.crest) localStorage.setItem("dd-crest", TENANT.crest); else localStorage.removeItem("dd-crest"); localStorage.setItem("dd-college-name", COLLEGE || ""); } catch (_) {} cb.addEventListener("click", () => showPanel("college")); }

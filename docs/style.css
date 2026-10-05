@@ -3003,3 +3003,28 @@ header.top #paletteBtn, #paletteBtn { border-radius: 999px; background: var(--ac
   header.top .brand h1 { font-size: clamp(1rem, 4.8vw, 1.25rem); line-height: 1.15; padding-right: 86px; min-height: 36px; }
   @media (min-width: 400px) { header.top .brand h1 { white-space: nowrap; text-wrap: nowrap; } }
 }
+
+/* ===== Brand header: monogram C with the serif wordmark (see BRAND.md) ===== */
+.brand h1.brand-link { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; font-family: 'Bitstream Charter', Georgia, 'Times New Roman', serif; letter-spacing: normal; text-shadow: none; }
+.brand h1 .hd-mark { width: 38px; height: 38px; flex: 0 0 auto; display: block; filter: none; }
+.bname { display: grid; line-height: 1.05; text-align: left; font-family: 'Bitstream Charter', Georgia, 'Times New Roman', serif; }
+.bname b { font-size: 1rem; letter-spacing: .12em; font-weight: 700; color: var(--ink); }
+.bname i { font-style: normal; font-size: .62rem; letter-spacing: .6em; font-weight: 700; margin-top: 3px; background: linear-gradient(90deg, #b9770a, #f59e0b); -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; }
+:root[data-theme="dark"] .bname i { background: linear-gradient(90deg, #fde68a, #f59e0b); -webkit-background-clip: text; background-clip: text; }
+@media (min-width: 701px) {
+  .brand h1 .hd-mark { width: 58px; height: 58px; }
+  .bname b { font-size: 1.55rem; color: #fff; } .bname i { font-size: .8rem; background: linear-gradient(90deg, #fde68a, #f59e0b); -webkit-background-clip: text; background-clip: text; }
+}
+@media (max-width: 700px) { header.top .brand h1 { font-size: 1rem; } header.top .brand h1.brand-link { gap: 9px; } }
+.brand-banner { display: block; width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--line); margin: 6px 0 12px; }
+
+/* The mark's white cap needs a dark ground on light themes (the app icon uses the same navy) */
+:root[data-theme="light"] .brand h1 .hd-mark { background: #1b1466; border-radius: 10px; padding: 4px; box-sizing: border-box; }
+@media (min-width: 701px) { :root[data-theme="light"] .brand h1 .hd-mark { background: transparent; padding: 0; } }
+.bname b { white-space: nowrap; }
+@media (max-width: 380px) {
+  .brand h1 .hd-mark { width: 32px; height: 32px; }
+  header.top .brand h1.brand-link { gap: 7px; }
+  .bname b { font-size: .82rem; letter-spacing: .08em; }
+  .bname i { font-size: .56rem; letter-spacing: .5em; }
+}
