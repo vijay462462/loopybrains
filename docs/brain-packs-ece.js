@@ -8,6 +8,8 @@ export const REFS = {
   "Control systems": ["Best first book: Nagrath & Gopal, Control Systems Engineering", "K. Ogata, Modern Control Engineering", "Kuo & Golnaraghi, Automatic Control Systems", "N. Nise, Control Systems Engineering"],
   "Probability and random variables": ["Best first book: Papoulis & Pillai, Probability, Random Variables and Stochastic Processes", "P. Z. Peebles, Probability, Random Variables and Random Signal Principles", "S. Ross, A First Course in Probability", "J. Gubner, Probability and Random Processes for Electrical and Computer Engineers"],
 };
+// Packs whose key formulas were cross-checked against online course notes and reference sites (October 2026).
+export const CHECKED = ["poweramp", "oscillator", "pid", "fir", "nyq", "parity", "timeresp", "routh", "servo", "iir", "t555", "rlocus", "sfg", "fft", "ff", "excite", "codes", "subtractor", "complement", "families", "rproc", "contdist", "discdist", "moments", "diffamp", "ceamp", "fet", "sampling", "adc", "bode", "conv", "dtft", "ztrans", "probbasic", "bayes", "gauss", "adder", "kmap", "qm", "fsm", "counter", "hazard", "timingf", "rom", "memory", "bjtbias", "feedbackamp", "sserr", "statesp", "clt", "joint", "numsys", "dflow"];
 export const PACKS_ECE = [];
 const AEC = "Analog electronic circuits", DSP = "Digital signal processing", CS = "Control systems", PRB = "Probability and random variables";
 PACKS_ECE.push(

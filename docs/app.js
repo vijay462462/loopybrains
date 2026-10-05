@@ -4969,7 +4969,7 @@ function brainQuiz(wiki, n) {
   return qs;
 }
 let _solver = null;
-async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=442", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
+async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=443", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
 async function brainReply(text, chat) {
   const sv = await brainSolve(text); if (sv) return sv;
   const { kind, topic } = brainIntent(text, chat.topic || ""); chat.topic = topic;
@@ -5045,7 +5045,7 @@ async function safeSync() {
   } catch (_) { _safeLoaded = false; }
 }
 let _safeMod = null;
-const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=442", location.href).href); } catch (_) { return null; } };
+const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=443", location.href).href); } catch (_) { return null; } };
 function safeModal(title, lines, danger) {
   const prev = document.getElementById("safeModal"); if (prev) prev.remove();
   const ov = el("div", { class: "safe-ov", id: "safeModal", role: "alertdialog", "aria-modal": "true", "aria-label": title },
@@ -5083,7 +5083,7 @@ const bsFree = (lv) => lv <= 1 || IS_RGUKT;
 const BS_MODES = [["atlas", "Atlas", "Search anything", "Topics, doubts, maths and research, explained in easy words.", "Ask anything: a topic, doubt, problem or research idea"], ["launchpad", "Launchpad", "Project guide", "Turn an idea into a plan: objectives, tools, week-by-week steps, report outline and viva questions.", "Describe your project idea, e.g. IoT weather station"], ["forge", "Forge", "Find code", "Working code for classic problems in many languages, with the idea explained.", "e.g. binary search in Python"], ["aegis", "Aegis", "Learn security", "Understand how attacks work and how to defend, legally and safely.", "e.g. SQL injection, phishing, password safety"]];
 const bsModeInfo = (id) => BS_MODES.find(m => m[0] === id) || BS_MODES[0];
 let _modes = null;
-const brainModesMod = async () => { try { return _modes = _modes || await import(new URL("brain-modes.js?v=442", location.href).href); } catch (_) { return null; } };
+const brainModesMod = async () => { try { return _modes = _modes || await import(new URL("brain-modes.js?v=443", location.href).href); } catch (_) { return null; } };
 const PREF_KEY = "dd-bs-prefs", SAVED_KEY = "dd-bs-saved";
 const bsPrefs = () => { const p = readJSON(PREF_KEY, {}); return p && typeof p === "object" ? p : {}; };
 const bsState = () => state.bs || (state.bs = (() => { const p = bsPrefs(), ok = p.remember !== false;
@@ -5150,17 +5150,17 @@ function bsPool() {
 const bsSuggest = (text) => { const n = text.trim().toLowerCase(); if (n.length < 2) return []; return bsPool().filter(t => t.toLowerCase().includes(n)).sort((a, b) => a.length - b.length).slice(0, 6); };
 let _report = null;
 let _packs = null, _dgm = null;
-const brainDiagramsMod = async () => { try { return _dgm = _dgm || await import(new URL("brain-diagrams2.js?v=442", location.href).href); } catch (_) { return null; } };
+const brainDiagramsMod = async () => { try { return _dgm = _dgm || await import(new URL("brain-diagrams2.js?v=443", location.href).href); } catch (_) { return null; } };
 // All Loopy Knowledge Packs (digital design first, then ECE subjects). Returns { find(q), refs }.
 const brainPacksMod = async () => {
   if (_packs) return _packs;
   try {
-    const [m1, m2, m3] = await Promise.all([import(new URL("brain-packs.js?v=442", location.href).href), import(new URL("brain-packs-ece.js?v=442", location.href).href), import(new URL("brain-simple.js?v=442", location.href).href).catch(() => ({ SIMPLE: {} }))]);
-    _packs = { all: [...m1.PACKS, ...m2.PACKS_ECE], refs: m2.REFS || {}, simple: m3.SIMPLE || {}, find: (q) => { const a = m1.packScore(q), b = m2.packScore(q); return (b.len > a.len ? b.p : a.p) || null; } };
+    const [m1, m2, m3] = await Promise.all([import(new URL("brain-packs.js?v=443", location.href).href), import(new URL("brain-packs-ece.js?v=443", location.href).href), import(new URL("brain-simple.js?v=443", location.href).href).catch(() => ({ SIMPLE: {} }))]);
+    _packs = { checked: m2.CHECKED || [], all: [...m1.PACKS, ...m2.PACKS_ECE], refs: m2.REFS || {}, simple: m3.SIMPLE || {}, find: (q) => { const a = m1.packScore(q), b = m2.packScore(q); return (b.len > a.len ? b.p : a.p) || null; } };
   } catch (_) { _packs = null; }
   return _packs;
 };
-const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=442", location.href).href); } catch (_) { return null; } };
+const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=443", location.href).href); } catch (_) { return null; } };
 async function bsPapers(q) {
   try {
     const j = await lsFetch("https://api.openalex.org/works?per-page=5&select=title,publication_year,cited_by_count,doi,open_access,authorships,abstract_inverted_index&search=" + encodeURIComponent(q));
@@ -5479,7 +5479,7 @@ async function bsRun(q, solved) {
   const papersH = effN >= 3 && !(papers && papers.length) ? await bsPapers(T).catch(() => []) : papers, related = effN >= 3 && wiki ? await bsRelated(T).catch(() => []) : [];
   let keyImgs = wiki ? (await ahArticleImages(wiki.title).catch(() => [])).slice(0, size === "brief" ? 2 : 6) : [];
   if (wiki && keyImgs.length < 3) { const more = await ahCommons(short + " diagram").catch(() => []), have = new Set(keyImgs.map(x => x.thumb)); keyImgs = keyImgs.concat(more.filter(x => !have.has(x.thumb))).slice(0, size === "brief" ? 2 : 6); }
-  const res = { pack, own: wiki && !pack ? ownDiagram(wiki.title + " " + T) : null, uses: mod && wiki && size !== "brief" ? mod.uses(wiki, size === "full" ? 8 : size === "detailed" ? 6 : 4) : [], effort: eff, related, keyImgs, topic: T, easyCard: simpleOk, easyFn: mod ? mod.easy : null, readable, defs, wikiInfo: wiki ? { touched: wiki.touched, page: wiki.page } : null, caution: wiki ? mod2cautions(wiki) : [], simpleInfo: simpleOk ? { page: simpleOk.page } : null, lv, size, board: lv >= 2 ? brainBoard(T, 5) : [], syl: lv >= 2 ? brainSyllabus(T) : [], imgs: imgs.slice(0, 8), models, page: wiki ? wiki.page : "", papers: papersH, report: mod && wiki ? mod.buildReport(wiki, size) : null, hl: mod ? mod.highlight : null, deep: "", exam: "", quiz: "" };
+  const res = { pack, cross: pack && wiki ? bsCross(pack, wiki) : null, own: wiki && !pack ? ownDiagram(wiki.title + " " + T) : null, uses: mod && wiki && size !== "brief" ? mod.uses(wiki, size === "full" ? 8 : size === "detailed" ? 6 : 4) : [], effort: eff, related, keyImgs, topic: T, easyCard: simpleOk, easyFn: mod ? mod.easy : null, readable, defs, wikiInfo: wiki ? { touched: wiki.touched, page: wiki.page } : null, caution: wiki ? mod2cautions(wiki) : [], simpleInfo: simpleOk ? { page: simpleOk.page } : null, lv, size, board: lv >= 2 ? brainBoard(T, 5) : [], syl: lv >= 2 ? brainSyllabus(T) : [], imgs: imgs.slice(0, 8), models, page: wiki ? wiki.page : "", papers: papersH, report: mod && wiki ? mod.buildReport(wiki, size) : null, hl: mod ? mod.highlight : null, deep: "", exam: "", quiz: "" };
   if (lv >= 4 && wiki && !res.report) res.deep = wiki.sections.slice(0, 8).map(x => "- **" + x.h + ":** " + (brainSentences(x.t).slice(0, 2).join(" ") || x.t.slice(0, 240))).join("\n");
   if (lv >= 5) { [res.exam, res.quiz] = await Promise.all([brainReply("Exam answer for " + T, { topic: T }).catch(() => ""), brainReply("Quiz me on " + T, { topic: T }).catch(() => "")]); }
   bs.res = res; bs.ans = ans || notFoundMsg(topic); bs.busy = false; bsPaint(true);
@@ -5552,22 +5552,46 @@ function sentNode(s, hl) {
   return p;
 }
 // Loopy Knowledge Pack card set: our own written, textbook-based answer with a drawn diagram, formulas, an exam-ready answer and real-life uses.
-function packView(p, go) {
-  const out = [], card = (cls, h, ...k) => el("section", { class: "bsr-card bsr-reveal in " + cls }, h ? el("h3", {}, h) : null, ...k.filter(Boolean));
-  out.push(el("section", { class: "bsr-hero pk-hero bsr-reveal in" }, el("small", {}, "✓ Loopy Knowledge Pack · " + p.subject), el("h2", {}, p.title), el("p", {}, p.short), el("div", { class: "bsr-meta" }, el("span", {}, "Written for B.Tech students"), el("span", {}, "Checked first, before the web"))));
-  { const sm = _packs && _packs.simple && _packs.simple[p.id]; if (sm && sm.length) out.push(el("section", { class: "bsr-card easy bsr-reveal in pk-simple" }, el("h3", {}, "In simple words"), ...sm.map(t => el("p", { class: "pk-sline" }, t)))); }
+// Words that do not say anything about a topic (used by the accuracy cross-check).
+const PK_STOP = new Set("which their other there about would these those where while being between through because should could using usually every always never often also than then them they this that with from have more most only same such into does each when what your will can its not the and for are but".split(" "));
+// Deep check: how many of the pack's own key terms also appear in the Wikipedia article. A rough signal, not proof.
+function bsCross(pack, wiki) {
+  try {
+    const text = (String(wiki.intro || "") + " " + (wiki.sections || []).map(s => s.t || "").join(" ")).toLowerCase(); if (text.length < 200) return null;
+    const src = (pack.title + " " + pack.short + " " + pack.points.join(" ")).toLowerCase().match(/[a-z][a-z-]{4,}/g) || [], freq = new Map();
+    for (const w of src) if (!PK_STOP.has(w)) freq.set(w, (freq.get(w) || 0) + 1);
+    const terms = [...freq.entries()].sort((x, y) => y[1] - x[1] || y[0].length - x[0].length).slice(0, 14).map(e => e[0]);
+    if (terms.length < 6) return null;
+    const found = terms.filter(w => text.includes(w) || text.includes(w.slice(0, Math.max(5, w.length - 2)))).length;
+    return { found, total: terms.length, pct: Math.round(found / terms.length * 100), title: String(wiki.title || "").slice(0, 60) };
+  } catch (_) { return null; }
+}
+const PK_ICON = { "pk-points": "\u{1F4A1}", "pk-steps": "\u{1FA9C}", "pk-forms": "\u{1F9EE}", "pk-ex": "\u{1F9EA}", "pk-exam": "\u{1F4DD}", "pk-mist": "\u26A0\uFE0F", "pk-learn": "\u{1F517}", "pk-acc": "\u{1F50D}", "pk-refs": "\u{1F4DA}", "pk-simple": "\u{1F9D2}" };
+function packView(p, go, res) {
+  const out = [], card = (cls, h, ...k) => el("section", { class: "bsr-card pk-c bsr-reveal in " + cls }, h ? el("h3", {}, el("span", { class: "pk-ic", "aria-hidden": "true" }, PK_ICON[cls] || "\u2022"), h) : null, ...k.filter(Boolean));
+  out.push(el("section", { class: "bsr-hero pk-hero bsr-reveal in" }, el("small", {}, "\u2713 Loopy Knowledge Pack \u00B7 " + p.subject), el("h2", {}, p.title), el("p", {}, p.short), el("div", { class: "bsr-meta" }, el("span", {}, "Written for B.Tech students"), el("span", {}, "Checked first, before the web"))));
+  { const sm = _packs && _packs.simple && _packs.simple[p.id]; if (sm && sm.length) out.push(el("section", { class: "bsr-card easy pk-c pk-simple bsr-reveal in" }, el("h3", {}, el("span", { class: "pk-ic", "aria-hidden": "true" }, PK_ICON["pk-simple"]), "In simple words"), ...sm.map(t => el("p", { class: "pk-sline" }, t)))); }
+  if (p.formulas && p.formulas.length) out.push(el("section", { class: "pk-remember bsr-reveal in" }, el("small", {}, "\u2B50 Remember this"), el("div", { class: "pk-rgrid" }, ...p.formulas.slice(0, 2).map(([n, t]) => el("div", { class: "pk-rf" }, el("span", {}, n), el("code", {}, t))))));
   const keys = p.diagrams || [], drawn = _dgm ? keys.map(k => _dgm.drawDiagram2(k)).filter(Boolean) : [];
   if (drawn.length) {
     drawn.forEach((d, i) => out.push(el("section", { class: "bsr-card bsr-reveal in dg-card" }, el("h3", {}, d.title), d.svg, el("p", { class: "od-cap" }, d.cap), i === 0 && d.svg.querySelector(".dg-w.in, .dg-w.mid, .dg-w.out, .dg-w.clk, .dg-w.fb") ? el("div", { class: "dg-key" }, el("span", {}, el("i", { class: "k-in" }), "input"), el("span", {}, el("i", { class: "k-mid" }), "inside the circuit"), el("span", {}, el("i", { class: "k-out" }), "output"), el("span", {}, el("i", { class: "k-clk" }), "clock or control"), el("span", {}, el("i", { class: "k-fb" }), "feedback")) : null, el("small", { class: "hint" }, "Drawn by Loopy to explain the idea."))));
   } else { const dg = ownDiagram(p.title + " " + (p.diag || "")); if (dg) out.push(dg); }
-  out.push(card("pk-points", "Key points", el("ul", { class: "bsr-bul" }, ...p.points.map(x => el("li", {}, x)))));
-  if (p.steps && p.steps.length) out.push(card("", "Step by step", el("ol", { class: "bsr-tl pk-steps" }, ...p.steps.map((x, i) => el("li", {}, el("b", {}, String(i + 1)), el("span", {}, x))))));
-  if (p.formulas && p.formulas.length) out.push(card("", "Formulas and rules", el("div", { class: "pk-forms" }, ...p.formulas.map(([n, t]) => el("div", { class: "pk-form" }, el("small", {}, n), el("code", {}, t))))));
-  if (p.example) out.push(card("pk-ex", "Worked example", el("p", { class: "bsr-s bsr-example" }, el("span", { class: "bsr-tag" }, "Example"), p.example.title), el("pre", { class: "bsr-code pk-pre" }, el("code", {}, p.example.text))));
-  out.push(card("pk-exam", "Write this in the exam", el("p", { class: "bsr-s bsr-definition" }, el("span", { class: "bsr-tag" }, "Answer"), p.exam), el("div", { class: "rowbtns bsf-noprint" }, copyBtn(p.exam, "Copy answer"))));
-  if (p.mistakes && p.mistakes.length) out.push(card("", "Common mistakes", ...p.mistakes.map(x => el("p", { class: "bsr-s bsr-caution" }, el("span", { class: "bsr-tag" }, "Watch out"), x))));
+  out.push(card("pk-points", "Key points", el("ul", { class: "pk-bul" }, ...p.points.map(x => el("li", {}, x)))));
+  if (p.steps && p.steps.length) out.push(card("pk-steps", "Step by step", el("ol", { class: "pk-stepl" }, ...p.steps.map((x, i) => el("li", {}, el("b", {}, String(i + 1)), el("span", {}, x))))));
+  if (p.formulas && p.formulas.length) out.push(card("pk-forms", "Formulas and rules", el("div", { class: "pk-forms" }, ...p.formulas.map(([n, t]) => el("div", { class: "pk-form" }, el("small", {}, n), el("code", {}, t))))));
+  if (p.example) out.push(card("pk-ex", "Worked example", el("p", { class: "pk-extitle" }, p.example.title), el("pre", { class: "bsr-code pk-pre" }, el("code", {}, p.example.text))));
+  out.push(card("pk-exam", "Write this in the exam", el("p", { class: "pk-answer" }, el("span", { class: "bsr-tag" }, "Answer"), p.exam), el("div", { class: "rowbtns bsf-noprint" }, copyBtn(p.exam, "Copy answer"))));
+  if (p.mistakes && p.mistakes.length) out.push(card("pk-mist", "Common mistakes", ...p.mistakes.map(x => el("p", { class: "pk-warn" }, el("span", { class: "bsr-tag" }, "Watch out"), x))));
   if (p.uses && p.uses.length) out.push(usesNode(p.uses.map(([t, x]) => ({ domain: "Real life", title: t, text: x })), p.title));
-  if (p.related && p.related.length) out.push(card("", "Learn next", el("div", { class: "bs-chips" }, ...p.related.map(t => el("button", { type: "button", class: "tp-sub", onclick: () => go(t) }, t)))));
+  if (p.related && p.related.length) out.push(card("pk-learn", "Learn next", el("div", { class: "bs-chips" }, ...p.related.map(t => el("button", { type: "button", class: "tp-sub", onclick: () => go(t) }, t)))));
+  { const cx = res && res.cross, checked = _packs && _packs.checked && _packs.checked.includes(p.id), lvl = checked && cx && cx.pct >= 50 ? "High" : checked || (cx && cx.pct >= 50) ? "Good" : "Standard";
+    const row = (ok, t) => el("li", { class: ok === true ? "ok" : ok === "part" ? "part" : "no" }, (ok === true ? "\u2713 " : ok === "part" ? "\u223C " : "\u2022 ") + t);
+    out.push(card("pk-acc", "Accuracy check", el("div", { class: "pk-acclvl " + lvl.toLowerCase() }, el("b", {}, "Confidence: " + lvl), el("span", {}, lvl === "High" ? "Textbook rules, formulas checked online, and the topic matches Wikipedia." : lvl === "Good" ? "Written from textbook rules with at least one extra check." : "Written from textbook rules. Always compare with your textbook.")),
+      el("ul", { class: "pk-checks" }, row(true, "Written from standard textbook rules and formulas"), row(checked ? true : "part", checked ? "Key formulas cross-checked with online course notes and references (Oct 2026)" : "Not yet checked line by line against outside sources"),
+        cx ? row(cx.pct >= 50 ? true : "part", "Wikipedia check: " + cx.found + " of " + cx.total + " key terms also appear in \u201C" + cx.title + "\u201D") : row("part", "Wikipedia check not available for this search"), row(true, "Your syllabus and teacher decide what is asked in the exam")),
+      cx ? el("div", { class: "pk-meter", "aria-hidden": "true" }, el("i", {}, el("b", { class: "w" + Math.max(5, Math.min(100, Math.round(cx.pct / 5) * 5)) }))) : null,
+      el("small", { class: "hint" }, "This check compares key words. It is a signal, not a proof. Found a mistake? Tap Feedback and ideas.")));
+  }
   { const refs = (_packs && _packs.refs && _packs.refs[p.subject]) || []; if (refs.length) out.push(card("pk-refs", "Standard textbooks to read", el("ul", { class: "bsr-bul" }, ...refs.map(x => el("li", {}, x))), el("small", { class: "hint" }, "Check the chapter on this topic in your prescribed textbook and follow your syllabus. We only list the books, we do not copy from them."))); }
   out.push(el("p", { class: "hint pk-note" }, "Written for The Campus Loop from standard textbook rules. Found a mistake? Tap Feedback and ideas and tell us, and we will fix it. Always check with your syllabus and teacher."));
   return out;
@@ -5780,7 +5804,7 @@ function brainView() {
   else if (bs.tab === "videos") body = [sect("Watch and learn", watch)];
   else if (bs.tab === "notes") body = [sect("Notes and practice", notes)];
   else if (bs.tab === "exam") body = [examBox()];
-  else body = [r.pack ? null : r.report ? null : answer, ...(r.pack ? packView(r.pack, go) : []), r.pack && r.report ? el("h3", { class: "pk-more" }, "More from the web") : null, ...(r.report ? reportView(r.report, r, go) : []), lv >= 3 && !r.solved && r.size !== "brief" ? imgBox() : null, lv >= 3 && !r.solved && r.size !== "brief" ? modBox() : null, lv >= 4 && !r.solved && !r.report ? deepBox() : null, lv >= 4 && !r.solved && r.size !== "brief" ? sect("Watch and learn", watch) : null, lv >= 4 && !r.solved && r.size !== "brief" ? sect("Notes and practice", notes) : null, lv >= 5 && !r.solved ? examBox() : null,
+  else body = [r.pack ? null : r.report ? null : answer, ...(r.pack ? packView(r.pack, go, r) : []), r.pack && r.report ? el("h3", { class: "pk-more" }, "More from the web") : null, ...(r.report ? reportView(r.report, r, go) : []), lv >= 3 && !r.solved && r.size !== "brief" ? imgBox() : null, lv >= 3 && !r.solved && r.size !== "brief" ? modBox() : null, lv >= 4 && !r.solved && !r.report ? deepBox() : null, lv >= 4 && !r.solved && r.size !== "brief" ? sect("Watch and learn", watch) : null, lv >= 4 && !r.solved && r.size !== "brief" ? sect("Notes and practice", notes) : null, lv >= 5 && !r.solved ? examBox() : null,
     lv >= 2 && r.board.length ? sect("Classmates’ answers", ...r.board.slice(0, 2).map(doubtRow)) : null, lv >= 2 && r.syl.length ? sect("In your syllabus", ...r.syl.map(sylRow)) : null];
   const stamp = el("div", { class: "bsr-print" }, "The Campus Loop · Loopy Search · " + new Date().toLocaleDateString());
   return [bar, head, tabBar, stamp, ...body.filter(Boolean), r.report ? null : null, sizeRow, acts, el("p", { class: "hint ai-fine" }, "Loopy Brain builds answers from your syllabus, your classmates’ best answers, Wikipedia and open research. Check important facts in your textbook."), el("div", { class: "rowbtns bsf-noprint" }, el("button", { class: "btn", type: "button", onclick: () => { bs.res = null; bs.q = ""; bs.pending = ""; bsPaint(true); } }, "New search"), back)].filter(Boolean);
