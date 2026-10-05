@@ -241,7 +241,7 @@ const CATS = (CFG.ideaCategories && CFG.ideaCategories.length) ? CFG.ideaCategor
 const CLUBS = [...((CFG.clubs && CFG.clubs.length) ? CFG.clubs : ["Coding Club", "Other"])];
 if (!CLUBS.includes("Alumni")) CLUBS.push("Alumni");
 
-const PALETTE = ["#3b6fd4", "#2f8fa8", "#3f8f62", "#b7862b", "#6a79b8", "#b0566e", "#c0584a", "#2a8f8a", "#7a9a3c", "#c27a3d", "#64748b"];
+const PALETTE = ["#0f766e", "#2f6f9f", "#4b6a88", "#2a8f7a", "#5b6fa8", "#3d8b9c", "#6a7f8f", "#4f8a6e", "#5a78b4", "#3b7f8a", "#64748b"];
 const FB_VERSION = "10.12.2";
 const MOTTO = CFG.tagline || "Where every doubt finds answers.";
 // Captions that rotate under the title. Edit them in config.js under `captions`.
@@ -1364,9 +1364,25 @@ function trackNew(coll, rows) {
 }
 
 // ---------- bottom navigation ----------
+// Line icons (inline SVG, drawn with code, no markup strings) for navigation.
+const ICON_PATHS = {
+  doubts: ["M12 3a9 9 0 1 0 0 18a9 9 0 0 0 0-18z", "M9.6 9.4a2.5 2.5 0 1 1 3.6 2.2c-.8.4-1.2 1-1.2 1.8", "M12 16.9v.1"],
+  ideas: ["M9 18h6", "M10 21h4", "M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"],
+  clubs: ["M3 10l9-6l9 6", "M5 10v8", "M9.5 10v8", "M14.5 10v8", "M19 10v8", "M3 20h18"],
+  gate: ["M12 3a9 9 0 1 0 0 18a9 9 0 0 0 0-18z", "M12 8a4 4 0 1 0 0 8a4 4 0 0 0 0-8z", "M12 12v.01"],
+  market: ["M3 4h2l2.4 11h10.2l2-8H6.5", "M9 20.2v.01", "M17 20.2v.01"],
+  board: ["M8 4h8v5a4 4 0 0 1-8 0V4z", "M8 6H4v1a4 4 0 0 0 4 4", "M16 6h4v1a4 4 0 0 1-4 4", "M12 13v4", "M8 20h8", "M10 17h4"],
+  more: ["M5 12v.01", "M12 12v.01", "M19 12v.01"],
+};
+function svgIcon(name) {
+  const NS = "http://www.w3.org/2000/svg", svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("viewBox", "0 0 24 24"); svg.setAttribute("aria-hidden", "true"); svg.setAttribute("focusable", "false");
+  for (const d of ICON_PATHS[name] || []) { const p = document.createElementNS(NS, "path"); p.setAttribute("d", d); svg.append(p); }
+  return svg;
+}
 function renderBottomNav() {
   const nav = $('bottomNav'); if (!nav) return;
-  const icons = { doubts: '❓', ideas: '💡', clubs: '🏛', gate: '🎯', challenges: '🎮', market: '🛒' };
+  const icons = { doubts: 'doubts', ideas: 'ideas', clubs: 'clubs', gate: 'gate', challenges: 'gate', market: 'market' };
   const labels = { doubts: 'Doubts', ideas: 'Ideas', clubs: 'Clubs', gate: EXAM_LABEL.length > 8 ? EXAM_LABEL.split(/[ /]/)[0] : EXAM_LABEL, challenges: 'Challenges', market: 'Market' };
   nav.replaceChildren(
     ...['doubts', 'ideas', 'clubs', 'market', 'gate'].filter(tab => (!isSimple() || tab === 'doubts' || tab === 'ideas' || state.tab === tab) && (!focusOn() || isAcademicTab(tab)) && featureOn(tab === 'market' ? 'market' : 'doubts')).map(tab => {
@@ -1377,14 +1393,14 @@ function renderBottomNav() {
         state.selected = null; state.mode = 'intro'; state.gateYearPick = null; state.gateResView = null; $('search').value = '';
         try { history.replaceState(null, '', '#' + tab); } catch (_) {} render(); openAsk();
       } },
-        el('span', { class: 'bnav-icon' }, icons[tab]),
+        el('span', { class: 'bnav-icon' }, svgIcon(icons[tab])),
         el('span', { class: 'bnav-label' }, labels[tab]),
         cnt > 0 && el('span', { class: 'bnav-count' }, cnt > 99 ? '99+' : String(cnt))
       );
     }),
     el('button', { type: 'button', class: 'bnav-btn', onclick: () => showPanel('leaders') },
-      el('span', { class: 'bnav-icon' }, '🏆'), el('span', { class: 'bnav-label' }, 'Board')),
-    isSimple() ? el('button', { type: 'button', class: 'bnav-btn', onclick: () => setSimple(false) }, el('span', { class: 'bnav-icon' }, '⋯'), el('span', { class: 'bnav-label' }, 'More')) : null,
+      el('span', { class: 'bnav-icon' }, svgIcon('board')), el('span', { class: 'bnav-label' }, 'Board')),
+    isSimple() ? el('button', { type: 'button', class: 'bnav-btn', onclick: () => setSimple(false) }, el('span', { class: 'bnav-icon' }, svgIcon('more')), el('span', { class: 'bnav-label' }, 'More')) : null,
     el('button', { type: 'button', class: 'bnav-btn' + (!getName() ? ' bnav-pulse' : ''), onclick: () => { state.afterName = null; showPanel(getName() ? 'me' : 'name'); } },
       avatarEl(getName() ? getAvatar() : '👤', 'av bnav-av'), el('span', { class: 'bnav-label' }, getName() ? 'Me' : 'Profile'))
   );
@@ -2184,7 +2200,7 @@ function renderGuide() {
   const nx = g.next();
   box.replaceChildren(
     el("button", { class: "guide-x", type: "button", "aria-label": "Close this guide", onclick: () => { writeJSON(key, true); renderGuide(); } }, "\u2715"),
-    el("div", { class: "guide-head" }, el("span", { class: "guide-ic", "aria-hidden": "true" }, g.icon), el("div", {}, el("small", {}, "WHAT THIS IS FOR"), el("strong", {}, g.purpose))),
+    el("div", { class: "guide-head" }, el("span", { class: "guide-ic", "aria-hidden": "true" }, g.icon), el("div", {}, el("small", {}, "What this is for"), el("strong", {}, g.purpose))),
     el("ol", { class: "guide-steps" }, ...g.steps.map(s => el("li", {}, s))),
     g.safe ? el("p", { class: "guide-safe" }, el("b", {}, "Stay safe: "), g.safe) : null,
     el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", onclick: nx[1] }, nx[0]), el("button", { class: "btn sm", type: "button", onclick: () => showHowTo() }, "\u{1F4D6} Full guide")));
@@ -2292,7 +2308,7 @@ function curioBuddy(redo) {
 }
 function curioShare() {
   const o = curioStore(), names = Object.keys(o.myst).length, p = (store && allStats().get(store.uid)) || { asked: 0, likes: 0 };
-  return el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => shareResult({ kicker: "MY CURIOSITY", emoji: "\u{1F50E}", big: String(curioPoints(o)), line: "curiosity points · " + curioStreak(o) + "-day streak · " + names + " mystery topics · " + (p.asked || 0) + " questions asked" }) }, "\u{1F4E4} Share my curiosity card"));
+  return el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => shareResult({ kicker: "My curiosity", emoji: "\u{1F50E}", big: String(curioPoints(o)), line: "curiosity points · " + curioStreak(o) + "-day streak · " + names + " mystery topics · " + (p.asked || 0) + " questions asked" }) }, "\u{1F4E4} Share my curiosity card"));
 }
 function renderCurious() {
   loadCurio();
@@ -2309,7 +2325,7 @@ function renderCurious() {
     chosen != null ? el("p", {}, el("b", {}, chosen === why.a ? "✅ Right! " : "Good try. "), why.x) : el("p", { class: "hint" }, "Pick one before you read the answer. Guessing makes you remember it (+2 points).")) : null;
   // Mystery topic: locked until tapped
   const open = !!o.myst[today];
-  const mystCard = myst ? sec("\u{1F512}", "MYSTERY TOPIC", open ? el("strong", {}, myst.title) : el("strong", {}, "A topic you may not have seen yet"), el("p", { class: open ? "" : "hint" }, open ? myst.x : myst.h),
+  const mystCard = myst ? sec("\u{1F512}", "Mystery topic", open ? el("strong", {}, myst.title) : el("strong", {}, "A topic you may not have seen yet"), el("p", { class: open ? "" : "hint" }, open ? myst.x : myst.h),
     open ? el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: () => openLoopySearch(myst.title, "curious") }, "\u{1F50E} Search more on " + myst.title)) : el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => { const s = curioStore(); s.myst[today] = 1; curioSave(s); try { if (navigator.vibrate) navigator.vibrate(20); } catch (_) {} redo(); } }, "\u{1F513} Unlock it (+3 points)"))) : null;
   // Fact of the day
   const learned = !!o.fact[today];
@@ -2319,7 +2335,7 @@ function renderCurious() {
   const bq = bestQuestion();
   const bqCard = sec("\u{1F31F}", "BEST QUESTION THIS WEEK", bq ? el("strong", {}, String(bq.d.title || "").slice(0, 120)) : el("strong", {}, "No winner yet"), bq ? el("small", { class: "hint" }, bq.d.subject + " · " + bq.v + " vote" + (bq.v === 1 ? "" : "s") + " · asked by " + (bq.d.authorName || "a classmate")) : el("p", { class: "hint" }, "Ask a good question and ask classmates to vote for it."),
     el("p", { class: "hint" }, "Every vote on your question earns you 1 point (up to 10 a question). Vote for the questions that made you think."), bq ? el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: () => { state.tab = "doubts"; openItem(bq.d.id); } }, "Open the question")) : el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => openAsk() }, "❓ Ask a question")));
-  const tipCard = tip ? sec("\u{1F9ED}", "TIP OF THE WEEK", el("p", {}, tip), el("small", { class: "hint" }, "Written by the " + BRAND + " team. Seniors: share your own tip as an idea."), el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: () => { state.tab = "ideas"; openAsk(); } }, "\u{1F4A1} Share my tip"))) : null;
+  const tipCard = tip ? sec("\u{1F9ED}", "Tip of the week", el("p", {}, tip), el("small", { class: "hint" }, "Written by the " + BRAND + " team. Seniors: share your own tip as an idea."), el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: () => { state.tab = "ideas"; openAsk(); } }, "\u{1F4A1} Share my tip"))) : null;
   const prof = curioProf(), setProf = (k, v) => { const o2 = readJSON("dd-curio-prof", {}) || {}; o2[k] = v; writeJSON("dd-curio-prof", o2); redo(); };
   const BR = [["CSE", "CSE"], ["AI&ML", "AI&ML"], ["ECE", "ECE"], ["EEE", "EEE"], ["ME", "Mech"], ["CE", "Civil"], ["CHE", "Chem"], ["MME", "Metal"]];
   const picker = el("div", { class: "curio-pick" }, el("small", { class: "hint" }, prof.year ? "Showing content for Year " + prof.year + (prof.branch ? " " + prof.branch : "") : "Choose your year and branch for content made for you"),
@@ -2329,9 +2345,9 @@ function renderCurious() {
     el("h2", {}, "\u{1F50E} Curiosity corner"), picker,
     el("div", { class: "curio-stats" }, el("div", {}, el("b", {}, String(streak)), el("span", {}, "day curiosity streak \u{1F525}")), el("div", {}, el("b", {}, String(pts)), el("span", {}, "curiosity points"))),
     factCard, whyCard, mystCard, curioPuzzle(C, o, redo, today), curioMap(C),
-    sec("\u{1F4A5}", "IDEA SPARK THIS WEEK", el("strong", {}, (C.sparks && C.sparks.length ? C.sparks[week % C.sparks.length] : "What if...?")), el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => { state.tab = "ideas"; openAsk(); } }, "\u{1F4A1} Share my idea"))),
+    sec("\u{1F4A5}", "Idea spark this week", el("strong", {}, (C.sparks && C.sparks.length ? C.sparks[week % C.sparks.length] : "What if...?")), el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => { state.tab = "ideas"; openAsk(); } }, "\u{1F4A1} Share my idea"))),
     bqCard, curioBuddy(redo),
-    (() => { const n = C.now && C.now.length ? C.now[week % C.now.length] : null; return n ? sec("\u{1F30D}", "EXPLORE THIS WEEK", el("strong", {}, n[0]), el("p", { class: "hint" }, n[2]), el("div", { class: "rowbtns" }, outLink(n[1], "Open the official site", "btn sm"))) : null; })(),
+    (() => { const n = C.now && C.now.length ? C.now[week % C.now.length] : null; return n ? sec("\u{1F30D}", "Explore this week", el("strong", {}, n[0]), el("p", { class: "hint" }, n[2]), el("div", { class: "rowbtns" }, outLink(n[1], "Open the official site", "btn sm"))) : null; })(),
     tipCard, curioShare(),
     el("div", { class: "rowbtns" }, back),
   ].filter(Boolean);
@@ -2858,7 +2874,7 @@ function modeGuide(mode) {
     const nx = g.next;
     box.replaceChildren(
       el("button", { class: "guide-x", type: "button", "aria-label": "Close this guide", onclick: () => { writeJSON(key, true); draw(); } }, "✕"),
-      el("div", { class: "guide-head" }, el("span", { class: "guide-ic", "aria-hidden": "true" }, g.icon), el("div", {}, el("small", {}, "WHAT THIS IS FOR"), el("strong", {}, g.purpose))),
+      el("div", { class: "guide-head" }, el("span", { class: "guide-ic", "aria-hidden": "true" }, g.icon), el("div", {}, el("small", {}, "What this is for"), el("strong", {}, g.purpose))),
       el("ol", { class: "guide-steps" }, ...g.steps.map(t => el("li", {}, t))),
       g.safe ? el("p", { class: "guide-safe" }, el("b", {}, "Stay safe: "), g.safe) : null,
       nx ? el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => { if (nx[1] === "ask") openAsk(); else if (nx[1] === "intro") showUnanswered(); else if (MODE_GUIDE[nx[1]] || ["intro"].includes(nx[1])) { state.mock = null; state.mist = null; showPanel(nx[1]); } } }, nx[0])) : null);
@@ -4061,7 +4077,7 @@ function streakCard() {
     next ? el("div", {}, bar, el("small", { class: "hint" }, (next[0] - n) + " more day" + (next[0] - n === 1 ? "" : "s") + " to unlock " + next[3] + " (" + next[1] + ")")) : el("small", { class: "hint" }, "You unlocked every frame. Legend!"),
     el("div", { class: "rowbtns" },
       !days.has(today) ? el("button", { class: "btn sm primary", type: "button", onclick: () => showPanel("quiz") }, "🧠 Today's quiz") : null,
-      n >= 1 ? el("button", { class: "btn sm", type: "button", onclick: () => shareResult({ kicker: "MY STREAK", emoji: "🔥", big: n + (n === 1 ? " day" : " days"), line: tier ? tier[2] + " " + tier[1] + " · " + (state.myBest || n) + " best" : "Learning every day" }) }, "📸 Share my streak") : null));
+      n >= 1 ? el("button", { class: "btn sm", type: "button", onclick: () => shareResult({ kicker: "My streak", emoji: "🔥", big: n + (n === 1 ? " day" : " days"), line: tier ? tier[2] + " " + tier[1] + " · " + (state.myBest || n) + " best" : "Learning every day" }) }, "📸 Share my streak") : null));
 }
 // A picture card to post on WhatsApp or Instagram stories. Drawn on a canvas, nothing is uploaded.
 function wrapLines(g, text, maxW) {
@@ -4138,7 +4154,7 @@ function renderShowdown(kind) {
   return [
     el("h3", {}, icon + " " + label + " showdown"),
     el("p", { class: "hint" }, "This week: " + daysLeft + (daysLeft === 1 ? " day" : " days") + " left. " + (kind === "idea" ? "Each idea you share scores 1 for your college (up to 5 a week per student)." : "Each answer you give to a classmate's doubt scores 1 for your college (up to 20 a week per student).") + " Score = per student, so small colleges compete fairly. A college needs 3 students to be ranked."),
-    kind === "idea" ? el("div", { class: "learn-card" }, el("small", { class: "tag" }, "THIS WEEK'S INNOVATION PROMPT"), el("strong", {}, prompt), el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => { state.tab = "ideas"; state.mode = "ask"; render(); } }, "\u{1F4A1} Share my idea"))) : el("div", { class: "learn-card" }, el("small", { class: "tag" }, "HOW TO SCORE"), el("strong", {}, "Answer a classmate's doubt"), el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => showUnanswered() }, "\u{1F64B} See open doubts"))),
+    kind === "idea" ? el("div", { class: "learn-card" }, el("small", { class: "tag" }, "THIS WEEK'S INNOVATION PROMPT"), el("strong", {}, prompt), el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => { state.tab = "ideas"; state.mode = "ask"; render(); } }, "\u{1F4A1} Share my idea"))) : el("div", { class: "learn-card" }, el("small", { class: "tag" }, "How to score"), el("strong", {}, "Answer a classmate's doubt"), el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => showUnanswered() }, "\u{1F64B} See open doubts"))),
     verified ? null : el("p", { class: "guide-safe" }, el("b", {}, "Verify your email to score: "), "Only students with a verified email can add points. This stops fake accounts from cheating. Open Profile to verify."),
     list, el("button", { class: "btn sm", type: "button", onclick: load }, "↻ Refresh"),
   ];
@@ -5040,7 +5056,7 @@ function renderSubject(C, r) {
     el("h2", {}, "\u{1F4D8} " + name),
     el("p", { class: "hint" }, code + " · " + credits + " credit" + (credits === 1 ? "" : "s") + " · " + yl(curState.year) + " · " + (C.branches[curState.branch] || curState.branch)),
     el("div", { class: "guide-card" },
-      el("div", { class: "guide-head" }, el("span", { class: "guide-ic", "aria-hidden": "true" }, "\u{1F4C4}"), el("div", {}, el("small", {}, "OFFICIAL SYLLABUS"), el("strong", {}, "Unit-wise topics are in the RGUKT document"))),
+      el("div", { class: "guide-head" }, el("span", { class: "guide-ic", "aria-hidden": "true" }, "\u{1F4C4}"), el("div", {}, el("small", {}, "Official syllabus"), el("strong", {}, "Unit-wise topics are in the RGUKT document"))),
       el("p", { class: "hint" }, found ? "Unit topics below come from the official RGUKT syllabus. The PDF has the full detail. Look for " : "Open the syllabus PDF from the RGUKT website and look for " + code.split(" / ")[0] + ". It lists the topics of every unit."),
       el("div", { class: "rowbtns" }, pdf ? outLink(pdf[0], "\u{1F4C4} " + pdf[1], "btn sm primary") : null, ...(pdf ? [] : RGUKT_SYLLABUS_PAGES.map(([u, t]) => outLink(u, "\u{1F517} " + t, "btn sm primary")))),
       pdf ? null : el("p", { class: "hint" }, "The syllabus file for this branch is not published as one PDF. Use these official curriculum pages."),
@@ -8408,7 +8424,7 @@ const RT_KEYS = new Set("voltage current resistance capacitance inductance imped
 const RT_CONN = new Set("because therefore hence thus so since if then however but while whereas when unless otherwise finally first second next also".split(" "));
 const RT_WARN = new Set("not never cannot can't don't doesn't without except only avoid wrong".split(" "));
 const RT_RE = /(https?:\/\/\S+)|([A-Za-z0-9_()\[\]\.\^\/]+(?:\s*(?:=|≈|≠|≤|≥|→|\+|×|÷|\^)\s*[A-Za-z0-9_()\[\]\.\^\/-]+)+)|(\d+(?:\.\d+)?\s?(?:mV|kV|V|mA|µA|uA|A|kΩ|MΩ|Ω|kHz|MHz|GHz|Hz|mW|kW|W|pF|nF|µF|uF|F|mH|H|cm|mm|km|kg|ms|µs|ns|N|J|K|°C|dB)(?![A-Za-z])|\d+(?:\.\d+)?%)|(\b[A-Z][A-Z0-9]{1,}\b)|([A-Za-z][A-Za-z'’-]*)/g;
-const RT_LABELS = { idea: ["idea", "\u{1F4A1} Idea"], definition: ["idea", "\u{1F4D8} Definition"], summary: ["idea", "\u{1F4CC} Summary"], answer: ["idea", "✅ Answer"], "how it works": ["how", "⚙️ How it works"], why: ["how", "\u{1F9E0} Why"], example: ["ex", "\u{1F4DD} Example"], "real life": ["ex", "\u{1F30D} Real life"], "common mistake": ["warn", "⚠️ Common mistake"], mistake: ["warn", "⚠️ Mistake"], "try this": ["try", "❓ Try this"], note: ["tip", "\u{1F4CE} Note"], tip: ["tip", "✨ Tip"], formula: ["formula", "\u{1D453}ₓ Formula"] };
+const RT_LABELS = { idea: ["idea", "Idea"], definition: ["idea", "Definition"], summary: ["idea", "Summary"], answer: ["idea", "Answer"], "how it works": ["how", "How it works"], why: ["how", "Why"], example: ["ex", "Example"], "real life": ["ex", "Real life"], "common mistake": ["warn", "Common mistake"], mistake: ["warn", "Mistake"], "try this": ["try", "Try this"], note: ["tip", "Note"], tip: ["tip", "Tip"], formula: ["formula", "Formula"] };
 function rtRole(t) {
   if (/\b(for example|for instance|e\.g\.|such as)/i.test(t)) return "ex";
   if (/\b(because|therefore|hence|thus|since|as a result)\b/i.test(t)) return "why";
@@ -8443,7 +8459,7 @@ function richAnswer(text, topicText) {
     const lab = /^(?:[\p{Extended_Pictographic}️\s]*)(idea|definition|summary|answer|how it works|why|example|real[- ]?life|common mistake|mistake|try this|note|tip|formula|step\s*\d+)\s*[:：–-]\s*(.*)$/iu.exec(raw);
     const num = /^(\d{1,2})[.)]\s+(.*)$/.exec(raw), bul = /^[-*•]\s+(.*)$/.exec(raw);
     if (lab) {
-      ol = ul = null; const key = lab[1].toLowerCase().replace(/-/g, " ").replace(/\s+/g, " "), kind = /^step/.test(key) ? ["how", "\u{1F522} " + lab[1].replace(/^./, c => c.toUpperCase())] : RT_LABELS[key] || ["tip", lab[1]];
+      ol = ul = null; const key = lab[1].toLowerCase().replace(/-/g, " ").replace(/\s+/g, " "), kind = /^step/.test(key) ? ["how", lab[1].replace(/^./, c => c.toUpperCase())] : RT_LABELS[key] || ["tip", lab[1]];
       root.append(el("div", { class: "rt-card rt-k-" + kind[0] }, el("b", { class: "rt-lab" }, kind[1]), el("div", { class: "rt-txt" }, ...rtSentences(lab[2], topic))));
     } else if (num) {
       ul = null; if (!ol) { ol = el("ol", { class: "rt-ol" }); root.append(ol); }
@@ -9521,3 +9537,42 @@ document.addEventListener("pointerdown", (e) => {
   btn.appendChild(rip);
   setTimeout(() => rip.remove(), 600);
 });
+
+// ---------- Header that hides when not in use ----------
+// On phones the top bar slides away after a few idle seconds or when you scroll down. It comes back when you scroll up, reach the top, tap the small tab, or focus something in it.
+(function autoHideHeader() {
+  const hd = document.querySelector("header.top"); if (!hd) return;
+  let lastY = window.scrollY, timer = 0, hidden = false, tab = null;
+  const sticky = () => getComputedStyle(hd).position === "sticky";
+  const busy = () => { const a = document.activeElement; return !!((a && hd.contains(a) && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)) || hd.querySelector('[aria-expanded="true"]') || hd.classList.contains("filters-open")); };
+  const mk = () => { if (tab) return tab; tab = document.createElement("button"); tab.type = "button"; tab.className = "hd-tab"; tab.setAttribute("aria-label", "Show the top bar"); tab.textContent = "▾"; tab.hidden = true; tab.addEventListener("click", () => show()); document.body.append(tab); return tab; };
+  const set = (h) => { if (h === hidden) return; hidden = h; document.body.classList.toggle("hd-hidden", h); mk().hidden = !h; try { hd.inert = h; } catch (_) {} };
+  const arm = () => { clearTimeout(timer); timer = setTimeout(() => { if (sticky() && window.scrollY > 120 && !busy()) set(true); }, 6000); };
+  const show = () => { set(false); arm(); };
+  addEventListener("scroll", () => {
+    const y = window.scrollY, dy = y - lastY; if (Math.abs(dy) < 8) return; lastY = y;
+    if (y < 80 || dy < -14) show(); else if (dy > 14 && y > 160 && sticky() && !busy()) set(true); else arm();
+  }, { passive: true });
+  ["pointerdown", "keydown", "touchstart"].forEach(ev => addEventListener(ev, () => { if (!hidden) arm(); }, { passive: true }));
+  hd.addEventListener("focusin", () => { if (hidden) show(); });
+  arm();
+})();
+
+
+// ---------- Plain interface text: no emoji in labels, chips and buttons ----------
+// Emoji stay in posts and answers. Buttons that are only an emoji (reactions) are left alone.
+(function plainChrome() {
+  const RE = /^[\s\p{Extended_Pictographic}️‍]+/u;
+  const SEL = ".pill, .tabs button, .trend-label, .btn, .linkbtn, .today-chip, .label, .spot-k, .tag, .guide-head small, .posted-card b, .ai-badge b";
+  let queued = false;
+  const run = () => {
+    queued = false;
+    document.querySelectorAll(SEL).forEach(n => {
+      if (n.closest(".rt, .as-sym, .ah-imgs")) return;
+      const t = n.firstChild; if (!t || t.nodeType !== 3 || !RE.test(t.nodeValue)) return;
+      const rest = t.nodeValue.replace(RE, ""); if (rest.trim().length >= 2) t.nodeValue = rest;
+    });
+  };
+  new MutationObserver(() => { if (!queued) { queued = true; requestAnimationFrame(run); } }).observe(document.body, { childList: true, subtree: true });
+  run();
+})();
