@@ -2635,3 +2635,7 @@ body.simple .tabs button[aria-selected="true"] { display: inline-flex; }
 .posted-card { margin: 10px 0; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--ok); background: var(--ok-soft); }
 .posted-card b { color: var(--ok); }
 .posted-card p { margin: 4px 0 8px; }
+
+.ans.flash { animation: ansflash 2.2s ease-out; }
+@keyframes ansflash { 0%, 60% { box-shadow: 0 0 0 3px var(--accent), 0 0 24px var(--accent); } 100% { box-shadow: none; } }
+@media (prefers-reduced-motion: reduce) { .ans.flash { animation: none; outline: 3px solid var(--accent); } }

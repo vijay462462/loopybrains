@@ -8283,23 +8283,6 @@ function renderView() {
   if (state.tab === "doubts") out.push(expertHelp(d));
   if (state.tab === "doubts") { try { const dc = dupCard(d); if (dc) out.push(dc); const ex = expertsLine(d); if (ex) out.push(ex); } catch (_) {} }
   if (state.tab === "doubts" && own) { const pv = privateAnswersFor(d); if (pv) out.push(pv); }
-  const sentPriv = state.tab === "doubts" && !own && state.privAns.some(x => x.doubtId === d.id && x.ownerUid === (store && store.uid));
-  const jp = state.justPosted, justPosted = isAcademicTab(state.tab) && jp && jp.doubtId === d.id && state.replies.some(x => x.id === jp.id && !x.deleted);
-  if (sentPriv) { out.push(el("div", { class: "posted-card" }, el("b", {}, "\u{1F512} Sent privately"), el("p", { class: "hint" }, "Only the asker can see your answer. You can send one private answer to each doubt. Thank you for helping! \u{1F389}"))); return out; }
-  if (justPosted) {
-    const mineR = state.replies.find(x => x.id === jp.id);
-    out.push(el("div", { class: "posted-card" }, el("b", {}, "\u2705 Your answer is posted"), el("p", { class: "hint" }, "It is on the board now. Thank you for helping a classmate! \u{1F389}"),
-      el("div", { class: "rowbtns" },
-        el("button", { class: "btn sm", type: "button", onclick: async (e) => {
-          const b = e.currentTarget; b.disabled = true;
-          try { const urls = []; for (const pid of (mineR.pages || []).slice(0, MAX_PAGES)) { const u = await loadPage(pid); if (u) urls.push(u); }
-            await softDelete("replies", mineR.id); state.replyPages = urls; state.replyDraft = mineR.body === PAGE_ONLY ? "" : mineR.body; state.replyAi = mineR.ai === true; state.justPosted = null; render(); }
-          catch (er) { b.disabled = false; showNotice(errText(er)); }
-        } }, "\u270F\uFE0F Edit"),
-        el("button", { class: "btn sm danger", type: "button", onclick: (e) => confirmDelete(e.currentTarget, async () => { await softDelete("replies", mineR.id); state.justPosted = null; render(); }) }, "\u{1F5D1}\uFE0F Delete"),
-        el("button", { class: "btn sm primary", type: "button", onclick: () => { state.justPosted = null; render(); } }, "\u2795 Add another answer"))));
-    return out;
-  }
   const list = el("div", { class: "answers" }, el("div", { class: "label" }, reps.length ? reps.length + " " + t.replyNoun + (reps.length === 1 ? "" : "s") : "No " + t.replyNoun + "s yet"));
   for (const r of reps) {
     if (isHidden(r)) { list.append(el("div", { class: "ans" }, el("p", { class: "hint" }, "🚩 This answer was hidden after reports from classmates."))); continue; }
@@ -8310,7 +8293,7 @@ function renderView() {
       if (best) await store.update("doubts", d.id, { resolvedReplyId: null });
       await softDelete("replies", r.id);
     }) }, "Delete"));
-    list.append(el("div", { class: "ans" + (best ? " best" : "") + (isMentor(r) ? " mentor" : "") },
+    list.append(el("div", { id: "ans-" + r.id, class: "ans" + (best ? " best" : "") + (isMentor(r) ? " mentor" : "") },
       el("div", { class: "who" }, r.anonymous ? avatarEl("👤") : avatarEl(mine(r) ? getAvatar() : avatarFor(r.authorName || "")), el("strong", {}, who(r)), isMentor(r) && el("span", { class: "pill mentor" }, "🎓 " + MENTORS.get(r.authorId)), el("span", {}, ago(r.createdAt)), best && el("span", { class: "pill done" }, "Helped"), ...tools, reportButton("replies", r)),
       state.tab === "doubts" ? el("div", { class: "rowbtns q-row" }, qualityPill(answerQuality(r, "r" + r.id, best ? "best" : "")), state.verified[r.id] ? el("span", { class: "pill open" }, "\u2714 Verified by " + state.verified[r.id].byName) : null) : null,
       isAcademicTab(state.tab) ? aiBadge(r) : null,
@@ -8323,6 +8306,28 @@ function renderView() {
       reactionBar(r)));
   }
   out.push(list);
+  const sentPriv = state.tab === "doubts" && !own && state.privAns.some(x => x.doubtId === d.id && x.ownerUid === (store && store.uid));
+  const jp = state.justPosted, justPosted = isAcademicTab(state.tab) && jp && jp.doubtId === d.id && state.replies.some(x => x.id === jp.id && !x.deleted);
+  if (sentPriv) { out.push(el("div", { class: "posted-card" }, el("b", {}, "\u{1F512} Sent privately"), el("p", { class: "hint" }, "Only the asker can see your answer. You can send one private answer to each doubt. Thank you for helping! \u{1F389}"))); return out; }
+  if (justPosted) {
+    const mineR = state.replies.find(x => x.id === jp.id);
+    const nextDoubt = () => { const u = unansweredDoubts().filter(x => x.id !== d.id); return u.find(x => x.subject === d.subject) || u[0]; };
+    out.push(el("div", { class: "posted-card" }, el("b", {}, "\u2705 Your answer is posted"), el("p", { class: "hint" }, "It is on the board now. Thank you for helping a classmate! \u{1F389} When the asker marks it helpful you earn 2 points, and 7 for the best answer."),
+      el("div", { class: "rowbtns" },
+        el("button", { class: "btn sm primary", type: "button", onclick: () => { const a = document.getElementById("ans-" + jp.id); if (a) { a.scrollIntoView({ behavior: "smooth", block: "center" }); a.classList.add("flash"); setTimeout(() => a.classList.remove("flash"), 2200); } } }, "\u{1F440} See my answer"),
+        el("a", { class: "btn sm wa", href: "https://wa.me/?text=" + encodeURIComponent("I just answered a doubt on The Campus Loop: " + d.title + " " + itemLink(d.id)), target: "_blank", rel: "noopener noreferrer" }, "\u{1F4E4} Share on WhatsApp"),
+        el("button", { class: "btn sm", type: "button", onclick: () => { const n = nextDoubt(); if (!n) { showNotice("Great job! There are no unanswered doubts right now."); return; } state.justPosted = null; openItem(n.id); try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch (_) {} } }, "\u{1F64B} Help another classmate")),
+      el("div", { class: "rowbtns" },
+        el("button", { class: "btn sm", type: "button", onclick: async (e) => {
+          const b = e.currentTarget; b.disabled = true;
+          try { const urls = []; for (const pid of (mineR.pages || []).slice(0, MAX_PAGES)) { const u = await loadPage(pid); if (u) urls.push(u); }
+            await softDelete("replies", mineR.id); state.replyPages = urls; state.replyDraft = mineR.body === PAGE_ONLY ? "" : mineR.body; state.replyAi = mineR.ai === true; state.justPosted = null; render(); }
+          catch (er) { b.disabled = false; showNotice(errText(er)); }
+        } }, "\u270F\uFE0F Edit"),
+        el("button", { class: "btn sm danger", type: "button", onclick: (e) => confirmDelete(e.currentTarget, async () => { await softDelete("replies", mineR.id); state.justPosted = null; render(); }) }, "\u{1F5D1}\uFE0F Delete"),
+        el("button", { class: "btn sm primary", type: "button", onclick: () => { state.justPosted = null; render(); } }, "\u2795 Add another answer"))));
+    return out;
+  }
 
   if (state.tab === "doubts" && d.ansPrivate && !own && state.privAns.some(x => x.doubtId === d.id && x.ownerUid === (store && store.uid))) { const sent = state.privAns.find(x => x.doubtId === d.id && x.ownerUid === store.uid); out.push(el("div", { class: "learn-card" }, el("strong", {}, "\u{1F512} You sent your private answer"), el("p", { class: "hint" }, sent.rating === "best" ? "\u2B50 The asker picked it as the best answer. Thank you!" : sent.rating === "helpful" ? "\u{1F44D} The asker marked it helpful." : "The asker will pick the best answer. Helpful answers earn 2 points and the best answer earns 7.")));  return out; }
   const replyFiles = [];
