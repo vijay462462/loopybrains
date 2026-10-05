@@ -3265,3 +3265,23 @@ header.top #paletteBtn, #paletteBtn { border-radius: 999px; background: var(--ac
 .bs-more{text-align:center;margin:6px 0 10px}
 .bs-lvs,.bs-tabs{flex-wrap:wrap;overflow:visible}
 .bs-lv{padding:6px 10px}
+
+/* ===== Scroll speed: smooth like a premium app ===== */
+html { -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; }
+button, a, .btn, [role="button"], .item, .tp-fig, .bs-lv, .bs-tab { touch-action: manipulation; }
+/* own compositor layers for the bars that stay on screen */
+.bottom-nav, .hd-tab, .hd-pal { transform: translateZ(0); backface-visibility: hidden; will-change: transform; }
+.item, .tp-sec, .bs-card, .quest { contain: layout style; }
+/* while the finger moves the page, stop the loops that repaint behind it */
+html.is-scrolling .hero-loopy, html.is-scrolling .loopy-mini, html.is-scrolling [class^="lp-"], html.is-scrolling [class*=" lp-"],
+html.is-scrolling .sp2-bg i, html.is-scrolling .sp2-chip, html.is-scrolling .cr-orb, html.is-scrolling h1 span,
+html.is-scrolling .today-chip.pulse, html.is-scrolling .today-stat.pulse, html.is-scrolling .hero-say-dot, html.is-scrolling .ticker-dot,
+html.is-scrolling .boxbtn-ico, html.is-scrolling .launch-in::before, html.is-scrolling .launch-in::after, html.is-scrolling .wow-conf,
+html.is-scrolling .skeleton, html.is-scrolling .tp-skel i, html.is-scrolling .av-hero, html.is-scrolling .bnav-pulse .bnav-icon { animation-play-state: paused !important; }
+@media (max-width: 760px) {
+  /* blur effects are the most expensive thing on a mid-range Android: drop them on phones */
+  .tabs button, .college-btn, #themeBtn, .chip, .welcome, .cr, .ss-back, .new-toast { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+  .sp2-bg i, .cr-orb { filter: none !important; }
+  .sp2-chip { animation: none !important; }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; } }

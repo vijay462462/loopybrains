@@ -422,6 +422,7 @@ function el(tag, attrs = {}, ...kids) {
     else if (k === "style" && typeof v === "string") applyStyle(n, v);
     else n.setAttribute(k, v === true ? "" : v);
   }
+  if (tag === "img") { n.setAttribute("decoding", "async"); if (!n.hasAttribute("loading")) n.setAttribute("loading", "lazy"); }
   if ((tag === "input" && !["checkbox", "radio", "file", "submit", "button"].includes(attrs.type)) || tag === "textarea") if (!n.hasAttribute("autocomplete")) n.setAttribute("autocomplete", "off");
   for (const k of kids.flat()) if (k != null && k !== false) n.append(k instanceof Node ? k : String(k));
   return n;
@@ -10001,4 +10002,11 @@ document.addEventListener("pointerdown", (e) => {
   };
   new MutationObserver(() => { if (!queued) { queued = true; requestAnimationFrame(run); } }).observe(document.body, { childList: true, subtree: true });
   run();
+})();
+
+
+// ---------- Scroll speed: pause decorative animations while the screen is moving ----------
+(function scrollSpeed() {
+  const root = document.documentElement; let t = 0, on = false;
+  addEventListener("scroll", () => { if (!on) { on = true; root.classList.add("is-scrolling"); } clearTimeout(t); t = setTimeout(() => { on = false; root.classList.remove("is-scrolling"); }, 160); }, { passive: true });
 })();
