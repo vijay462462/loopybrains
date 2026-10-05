@@ -241,7 +241,7 @@ const CATS = (CFG.ideaCategories && CFG.ideaCategories.length) ? CFG.ideaCategor
 const CLUBS = [...((CFG.clubs && CFG.clubs.length) ? CFG.clubs : ["Coding Club", "Other"])];
 if (!CLUBS.includes("Alumni")) CLUBS.push("Alumni");
 
-const PALETTE = ["#0f766e", "#2f6f9f", "#4b6a88", "#2a8f7a", "#5b6fa8", "#3d8b9c", "#6a7f8f", "#4f8a6e", "#5a78b4", "#3b7f8a", "#64748b"];
+const PALETTE = ["#1a73e8", "#188038", "#e8710a", "#d93025", "#129eaf", "#3f51b5", "#795548", "#5f6368", "#7b8a1e", "#a0527c", "#455a64"];
 const FB_VERSION = "10.12.2";
 const MOTTO = CFG.tagline || "Where every doubt finds answers.";
 // Captions that rotate under the title. Edit them in config.js under `captions`.
