@@ -566,7 +566,7 @@ async function firebaseStore(conf, prefix = "") {
   const [{ initializeApp }, fs, st, au] = await Promise.all([import(base + "firebase-app.js"), import(base + "firebase-firestore.js"), import(base + "firebase-storage.js"), import(base + "firebase-auth.js")]);
   const app = initializeApp(conf);
   // App Check (optional): proves requests come from this real app and not from a script. Needs a reCAPTCHA v3 site key in config.js (see APPCHECK.md).
-  try { const ak = ((window.DOUBT_DESK_CONFIG || {}).appCheck || {}).siteKey; if (/^[A-Za-z0-9_-]{20,80}$/.test(ak || "")) { const ac = await import(base + "firebase-app-check.js"); ac.initializeAppCheck(app, { provider: new ac.ReCaptchaV3Provider(ak), isTokenAutoRefreshEnabled: true }); } } catch (e) { console.warn("App Check not started:", e && e.code || e); }
+  try { const ak = ((window.DOUBT_DESK_CONFIG || {}).appCheck || {}).siteKey; if (/^[A-Za-z0-9_-]{20,80}$/.test(ak || "")) { const ac = await import(base + "firebase-app-check.js"); ac.initializeAppCheck(app, { provider: (((window.DOUBT_DESK_CONFIG || {}).appCheck || {}).provider === "enterprise") ? new ac.ReCaptchaEnterpriseProvider(ak) : new ac.ReCaptchaV3Provider(ak), isTokenAutoRefreshEnabled: true }); } } catch (e) { console.warn("App Check not started:", e && e.code || e); }
   const db = fs.getFirestore(app);
   const storage = st.getStorage(app);
   // Anonymous sign-in: no account, no password. It gives every browser a verified session so the
@@ -4970,7 +4970,7 @@ function brainQuiz(wiki, n) {
   return qs;
 }
 let _solver = null;
-async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=451", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
+async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=452", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
 async function brainReply(text, chat) {
   const sv = await brainSolve(text); if (sv) return sv;
   const { kind, topic } = brainIntent(text, chat.topic || ""); chat.topic = topic;
@@ -5046,7 +5046,7 @@ async function safeSync() {
   } catch (_) { _safeLoaded = false; }
 }
 let _safeMod = null;
-const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=451", location.href).href); } catch (_) { return null; } };
+const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=452", location.href).href); } catch (_) { return null; } };
 function safeModal(title, lines, danger) {
   const prev = document.getElementById("safeModal"); if (prev) prev.remove();
   const ov = el("div", { class: "safe-ov", id: "safeModal", role: "alertdialog", "aria-modal": "true", "aria-label": title },
@@ -5084,7 +5084,7 @@ const bsFree = (lv) => lv <= 1 || IS_RGUKT;
 const BS_MODES = [["atlas", "Atlas", "Search anything", "Topics, doubts, maths and research, explained in easy words.", "Ask anything: a topic, doubt, problem or research idea"], ["launchpad", "Launchpad", "Project guide", "Turn an idea into a plan: objectives, tools, week-by-week steps, report outline and viva questions.", "Describe your project idea, e.g. IoT weather station"], ["forge", "Forge", "Find code", "Working code for classic problems in many languages, with the idea explained.", "e.g. binary search in Python"], ["aegis", "Aegis", "Learn security", "Understand how attacks work and how to defend, legally and safely.", "e.g. SQL injection, phishing, password safety"]];
 const bsModeInfo = (id) => BS_MODES.find(m => m[0] === id) || BS_MODES[0];
 let _modes = null;
-const brainModesMod = async () => { try { return _modes = _modes || await import(new URL("brain-modes.js?v=451", location.href).href); } catch (_) { return null; } };
+const brainModesMod = async () => { try { return _modes = _modes || await import(new URL("brain-modes.js?v=452", location.href).href); } catch (_) { return null; } };
 const PREF_KEY = "dd-bs-prefs", SAVED_KEY = "dd-bs-saved";
 const bsPrefs = () => { const p = readJSON(PREF_KEY, {}); return p && typeof p === "object" ? p : {}; };
 const bsState = () => state.bs || (state.bs = (() => { const p = bsPrefs(), ok = p.remember !== false;
@@ -5151,12 +5151,12 @@ function bsPool() {
 const bsSuggest = (text) => { const n = text.trim().toLowerCase(); if (n.length < 2) return []; return bsPool().filter(t => t.toLowerCase().includes(n)).sort((a, b) => a.length - b.length).slice(0, 6); };
 let _report = null;
 let _packs = null, _dgm = null;
-const brainDiagramsMod = async () => { try { return _dgm = _dgm || await import(new URL("brain-diagrams2.js?v=451", location.href).href); } catch (_) { return null; } };
+const brainDiagramsMod = async () => { try { return _dgm = _dgm || await import(new URL("brain-diagrams2.js?v=452", location.href).href); } catch (_) { return null; } };
 // All Loopy Knowledge Packs (digital design first, then ECE subjects). Returns { find(q), refs }.
 const brainPacksMod = async () => {
   if (_packs) return _packs;
   try {
-    const [m1, m2, m3] = await Promise.all([import(new URL("brain-packs.js?v=451", location.href).href), import(new URL("brain-packs-ece.js?v=451", location.href).href), import(new URL("brain-simple.js?v=451", location.href).href).catch(() => ({ SIMPLE: {} }))]);
+    const [m1, m2, m3] = await Promise.all([import(new URL("brain-packs.js?v=452", location.href).href), import(new URL("brain-packs-ece.js?v=452", location.href).href), import(new URL("brain-simple.js?v=452", location.href).href).catch(() => ({ SIMPLE: {} }))]);
     const base = [...m1.PACKS, ...m2.PACKS_ECE], hubs = m2.makeHubs(base), fix = m2.makeFixer(base), nq = (t) => String(t || "").toLowerCase().replace(/[-_/]/g, " ").replace(/[^a-z0-9\s+]/g, " ").replace(/\s+/g, " ").trim();
     const hubKey = (q) => { const t = nq(q).replace(/^(what is|what are|explain|tell me about|about|notes on|notes|syllabus of|syllabus|all topics of|topics in|learn|study)\s+/, "").replace(/\s+(notes|syllabus|subject|topics|course|basics|introduction|overview)$/, "").trim(); return hubs.find(h => h.keys.some(k => nq(k) === t)) || null; };
     const one = (q) => { const a = m1.packScore(q), b = m2.packScore(q); return (b.len > a.len ? b.p : a.p) || null; };
@@ -5164,7 +5164,7 @@ const brainPacksMod = async () => {
   } catch (_) { _packs = null; }
   return _packs;
 };
-const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=451", location.href).href); } catch (_) { return null; } };
+const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=452", location.href).href); } catch (_) { return null; } };
 async function bsPapers(q) {
   try {
     const j = await lsFetch("https://api.openalex.org/works?per-page=5&select=title,publication_year,cited_by_count,doi,open_access,authorships,abstract_inverted_index&search=" + encodeURIComponent(q));
