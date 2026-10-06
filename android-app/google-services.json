@@ -8,14 +8,15 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:530725630149:android:0000000000000000",
+        "mobilesdk_app_id": "1:530725630149:android:43fd3e76afd98c93bdc0ac",
         "android_info": {
           "package_name": "com.thecampusloop.app"
         }
       },
+      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBulu10AZTsX2dWS7IWkMhpRrfyxoiyvyE"
+          "current_key": "AIzaSyBLRR6pf_iyKRrxSfu9mwbx-bfpAxjxNsM"
         }
       ],
       "services": {
