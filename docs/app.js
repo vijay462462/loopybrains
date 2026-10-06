@@ -5291,7 +5291,7 @@ function bsPaint(top) {
   sc.replaceChildren(...nodes); sc.scrollTop = top ? 0 : keep;
   const pdf = $("bsPdf"); if (pdf) pdf.hidden = !bsState().res; const sv = $("bsSave"); if (sv) { const r0 = bsState().res; sv.hidden = !r0 || !!r0.disambig; sv.textContent = r0 && bsIsSaved(r0) ? "Saved \u2713" : "Save"; sv.classList.toggle("on", !!(r0 && bsIsSaved(r0))); }
   const items = [...sc.querySelectorAll(".bsr-reveal")];
-  if (!("IntersectionObserver" in window)) items.forEach(n => n.classList.add("in")); else { const io = new IntersectionObserver((es) => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), { root: sc, threshold: .08 }); items.forEach(n => io.observe(n)); }
+  if (!("IntersectionObserver" in window)) items.forEach(n => n.classList.add("in")); else { const io = new IntersectionObserver((es) => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), { threshold: .08 }); items.forEach(n => io.observe(n)); requestAnimationFrame(() => { if (!sc.parentNode) return; const sv = sc.getBoundingClientRect(); items.forEach(n => { try { const r = n.getBoundingClientRect(); if (r.top < sv.bottom && r.bottom > sv.top) n.classList.add("in"); } catch (_) {} }); }); }
 }
 // Diagrams drawn by Loopy itself (no internet needed) for core engineering topics.
 const SVGNS = "http://www.w3.org/2000/svg";

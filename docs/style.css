@@ -3664,8 +3664,9 @@ html.is-scrolling .bsh-orb { animation-play-state: paused !important; }
 .bsfull.calm .bsf-bar { background: transparent; border-bottom: 0; }
 .bsfull.calm .bsf-prog { opacity: .6; }
 .bsf-night { flex: none; width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); background: transparent; color: var(--ink); font-size: 17px; cursor: pointer; }
-.bsfull.calm .bsf-scroll { display: flex; flex-direction: column; padding-bottom: 0; }
-.bsfull.calm .bsf-scroll > * { flex: none; }
+.bsfull.calm .bsf-scroll { display: block; padding-bottom: 0; }
+.bsfull.calm .bsf-scroll:has(.bsc-hero) { display: flex; flex-direction: column; }
+.bsfull.calm .bsf-scroll:has(.bsc-hero) > * { flex: none; }
 .bsc-hero { flex: 1 1 auto !important; min-height: 36vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 14px; padding: 18px 8px; }
 .bsc-mark { width: 62px; height: 62px; animation: bscSpin 28s linear infinite; }
 .bsc-hi { margin: 0; font: 400 clamp(2rem, 9vw, 2.7rem)/1.12 Georgia, "Iowan Old Style", "Times New Roman", serif; letter-spacing: -.01em; }
@@ -3692,6 +3693,15 @@ html.is-scrolling .bsh-orb { animation-play-state: paused !important; }
 .bs-sheet-h { display: block; margin: 4px 2px 6px; color: var(--muted); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; font-size: .7rem; }
 .bs-foot { margin: 7px 8px 0; text-align: center; font-size: .72rem; color: var(--muted); }
 .bs-dock .bs-sug { margin: 0 4px 8px; }
+/* Desktop / laptop responsive fixes for Loopy Search */
+@media (min-width: 700px) {
+  /* Align top bar icons with the 820px content column */
+  .bsf-bar { padding-left: max(16px, calc((100% - 820px) / 2 + 12px)); padding-right: max(16px, calc((100% - 820px) / 2 + 12px)); }
+  /* Dock: sensible top spacing in block (non-flex) scroll context */
+  .bs-dock { margin-top: 20px; }
+  /* Hero: slightly shorter on landscape/desktop so content shows sooner */
+  .bsc-hero { min-height: 28vh; padding-top: 10px; }
+}
 /* quiet loading */
 .bsr-load.calm { padding: 8vh 6px 4vh; text-align: center; }
 .bsr-mark { width: 54px; height: 54px; display: block; margin: 0 auto 18px; animation: bscSpin 3.2s linear infinite; }
