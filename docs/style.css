@@ -3766,3 +3766,9 @@ html.is-scrolling .bsh-orb { animation-play-state: paused !important; }
 .bs-sp { display: none; }
 .bs-comp .bs-go { flex: none; }
 @media (max-width: 460px) { .bs-chip-e { display: none; } .bs-plus span { display: none; } .bs-plus { padding: 0 11px; } }
+/* the C of the brand mark turns around the cap while Loopy reads */
+.bsc-brand.live { display: block; }
+.bs-spinc { transform-box: fill-box; transform-origin: center; }
+.bsr-load .bs-spinc { animation: bscSpin 2.4s linear infinite; }
+.bsc-hero .bs-spinc { animation: bscSpin 14s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .bs-spinc { animation: none !important; } }

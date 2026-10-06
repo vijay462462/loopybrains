@@ -4970,7 +4970,7 @@ function brainQuiz(wiki, n) {
   return qs;
 }
 let _solver = null;
-async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=450", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
+async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=451", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
 async function brainReply(text, chat) {
   const sv = await brainSolve(text); if (sv) return sv;
   const { kind, topic } = brainIntent(text, chat.topic || ""); chat.topic = topic;
@@ -5046,7 +5046,7 @@ async function safeSync() {
   } catch (_) { _safeLoaded = false; }
 }
 let _safeMod = null;
-const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=450", location.href).href); } catch (_) { return null; } };
+const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=451", location.href).href); } catch (_) { return null; } };
 function safeModal(title, lines, danger) {
   const prev = document.getElementById("safeModal"); if (prev) prev.remove();
   const ov = el("div", { class: "safe-ov", id: "safeModal", role: "alertdialog", "aria-modal": "true", "aria-label": title },
@@ -5084,7 +5084,7 @@ const bsFree = (lv) => lv <= 1 || IS_RGUKT;
 const BS_MODES = [["atlas", "Atlas", "Search anything", "Topics, doubts, maths and research, explained in easy words.", "Ask anything: a topic, doubt, problem or research idea"], ["launchpad", "Launchpad", "Project guide", "Turn an idea into a plan: objectives, tools, week-by-week steps, report outline and viva questions.", "Describe your project idea, e.g. IoT weather station"], ["forge", "Forge", "Find code", "Working code for classic problems in many languages, with the idea explained.", "e.g. binary search in Python"], ["aegis", "Aegis", "Learn security", "Understand how attacks work and how to defend, legally and safely.", "e.g. SQL injection, phishing, password safety"]];
 const bsModeInfo = (id) => BS_MODES.find(m => m[0] === id) || BS_MODES[0];
 let _modes = null;
-const brainModesMod = async () => { try { return _modes = _modes || await import(new URL("brain-modes.js?v=450", location.href).href); } catch (_) { return null; } };
+const brainModesMod = async () => { try { return _modes = _modes || await import(new URL("brain-modes.js?v=451", location.href).href); } catch (_) { return null; } };
 const PREF_KEY = "dd-bs-prefs", SAVED_KEY = "dd-bs-saved";
 const bsPrefs = () => { const p = readJSON(PREF_KEY, {}); return p && typeof p === "object" ? p : {}; };
 const bsState = () => state.bs || (state.bs = (() => { const p = bsPrefs(), ok = p.remember !== false;
@@ -5151,12 +5151,12 @@ function bsPool() {
 const bsSuggest = (text) => { const n = text.trim().toLowerCase(); if (n.length < 2) return []; return bsPool().filter(t => t.toLowerCase().includes(n)).sort((a, b) => a.length - b.length).slice(0, 6); };
 let _report = null;
 let _packs = null, _dgm = null;
-const brainDiagramsMod = async () => { try { return _dgm = _dgm || await import(new URL("brain-diagrams2.js?v=450", location.href).href); } catch (_) { return null; } };
+const brainDiagramsMod = async () => { try { return _dgm = _dgm || await import(new URL("brain-diagrams2.js?v=451", location.href).href); } catch (_) { return null; } };
 // All Loopy Knowledge Packs (digital design first, then ECE subjects). Returns { find(q), refs }.
 const brainPacksMod = async () => {
   if (_packs) return _packs;
   try {
-    const [m1, m2, m3] = await Promise.all([import(new URL("brain-packs.js?v=450", location.href).href), import(new URL("brain-packs-ece.js?v=450", location.href).href), import(new URL("brain-simple.js?v=450", location.href).href).catch(() => ({ SIMPLE: {} }))]);
+    const [m1, m2, m3] = await Promise.all([import(new URL("brain-packs.js?v=451", location.href).href), import(new URL("brain-packs-ece.js?v=451", location.href).href), import(new URL("brain-simple.js?v=451", location.href).href).catch(() => ({ SIMPLE: {} }))]);
     const base = [...m1.PACKS, ...m2.PACKS_ECE], hubs = m2.makeHubs(base), fix = m2.makeFixer(base), nq = (t) => String(t || "").toLowerCase().replace(/[-_/]/g, " ").replace(/[^a-z0-9\s+]/g, " ").replace(/\s+/g, " ").trim();
     const hubKey = (q) => { const t = nq(q).replace(/^(what is|what are|explain|tell me about|about|notes on|notes|syllabus of|syllabus|all topics of|topics in|learn|study)\s+/, "").replace(/\s+(notes|syllabus|subject|topics|course|basics|introduction|overview)$/, "").trim(); return hubs.find(h => h.keys.some(k => nq(k) === t)) || null; };
     const one = (q) => { const a = m1.packScore(q), b = m2.packScore(q); return (b.len > a.len ? b.p : a.p) || null; };
@@ -5164,7 +5164,7 @@ const brainPacksMod = async () => {
   } catch (_) { _packs = null; }
   return _packs;
 };
-const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=450", location.href).href); } catch (_) { return null; } };
+const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=451", location.href).href); } catch (_) { return null; } };
 async function bsPapers(q) {
   try {
     const j = await lsFetch("https://api.openalex.org/works?per-page=5&select=title,publication_year,cited_by_count,doi,open_access,authorships,abstract_inverted_index&search=" + encodeURIComponent(q));
@@ -5712,6 +5712,16 @@ function securityView(r) {
   out.push(card("Learn more, legally", el("div", { class: "tp-chans" }, ...links.map(([t, u]) => outLink(u, t, "tp-chan"))), el("small", { class: "hint" }, "Hacking systems you do not own is a crime. Report cyber fraud at cybercrime.gov.in or call 1930 in India.")));
   return out;
 }
+function brandSpin(cls) {
+  const A = (n, a, ...k) => sv(n, a, ...k), stops = (arr) => arr.map(([o, c, op]) => A("stop", { offset: o, "stop-color": c, "stop-opacity": op == null ? 1 : op }));
+  const defs = A("defs", {}, A("linearGradient", { id: "bsBg", x1: 0, y1: 0, x2: 1, y2: 1 }, ...stops([[0, "#1b1466"], [.55, "#0f0a3d"], [1, "#070522"]])), A("radialGradient", { id: "bsGa", cx: .2, cy: .05, r: .9 }, ...stops([[0, "#a855f7", .5], [1, "#a855f7", 0]])), A("radialGradient", { id: "bsGb", cx: .92, cy: .98, r: .75 }, ...stops([[0, "#f59e0b", .38], [1, "#f59e0b", 0]])), A("linearGradient", { id: "bsRing", x1: 0, y1: 0, x2: 1, y2: 1 }, ...stops([[0, "#22d3ee"], [.35, "#6366f1"], [.7, "#d946ef"], [1, "#fb923c"]])), A("linearGradient", { id: "bsGold", x1: 0, y1: 0, x2: 1, y2: 1 }, ...stops([[0, "#fde68a"], [.5, "#f59e0b"], [1, "#fcd34d"]])));
+  const ring = A("g", { class: "bs-spinc" }, A("circle", { cx: 512, cy: 410, r: 238, fill: "none", stroke: "url(#bsRing)", "stroke-width": 72, "stroke-linecap": "round", "stroke-dasharray": "1100 396", transform: "rotate(45 512 410)" }));
+  const root = A("svg", { viewBox: "0 0 1024 1024", class: cls, role: "img", "aria-label": "The Campus Loop" }, defs, A("rect", { width: 1024, height: 1024, rx: 230, fill: "url(#bsBg)" }), A("rect", { width: 1024, height: 1024, rx: 230, fill: "url(#bsGa)" }), A("rect", { width: 1024, height: 1024, rx: 230, fill: "url(#bsGb)" }), ring,
+    A("path", { d: "M330 400 L512 322 L694 400 L512 478 Z", fill: "#fff" }), A("path", { d: "M404 448 v70 q108 58 216 0 v-70", fill: "none", stroke: "#e0e7ff", "stroke-width": 22, "stroke-linejoin": "round" }), A("path", { d: "M694 400 v96", stroke: "url(#bsGold)", "stroke-width": 10, "stroke-linecap": "round" }), A("circle", { cx: 694, cy: 508, r: 17, fill: "url(#bsGold)" }),
+    A("text", { x: 512, y: 842, "text-anchor": "middle", "font-size": 112, "font-weight": 700, "letter-spacing": 4, fill: "#fff", "font-family": "Georgia, 'Times New Roman', serif" }, "THE CAMPUS"), A("rect", { x: 262, y: 880, width: 215, height: 3, rx: 1.5, fill: "url(#bsGold)" }), A("rect", { x: 547, y: 880, width: 215, height: 3, rx: 1.5, fill: "url(#bsGold)" }), A("path", { d: "M512 868 l13 14 -13 14 -13 -14z", fill: "url(#bsGold)" }),
+    A("text", { x: 512, y: 956, "text-anchor": "middle", "font-size": 64, "font-weight": 700, "letter-spacing": 30, fill: "#fcd34d", "font-family": "Georgia, 'Times New Roman', serif" }, "LOOP"));
+  return root;
+}
 function loopyMark(cls) {
   const r = sv("svg", { viewBox: "0 0 64 64", class: cls, "aria-hidden": "true" }), cols = ["#f59e0b", "#f97316", "#ef4444", "#d946ef", "#6366f1", "#22d3ee", "#10b981", "#eab308"];
   for (let i = 0; i < 8; i++) r.append(sv("line", { x1: 32, y1: 32 - (i % 2 ? 14 : 8), x2: 32, y2: 32 - (i % 2 ? 29 : 25), stroke: cols[i], "stroke-width": 4.6, "stroke-linecap": "round", transform: "rotate(" + i * 45 + " 32 32)" }));
@@ -5769,7 +5779,7 @@ function brainViewInner(ui) {
   const foot = el("p", { class: "bs-foot bsf-noprint" }, "Today: " + L.day + " of " + L.caps.day + " credits \u00B7 Check important facts");
   ui.bar = bar; ui.head = head; ui.dock = el("div", { class: "bs-dock bsf-noprint" }, sheet, sug, form, foot);
   const chips = (list, onTap) => el("div", { class: "bs-chips" }, ...list.map(t => el("button", { type: "button", class: "tp-sub", onclick: () => onTap(t) }, t)));
-  if (bs.busy) return [bar, head, el("div", { class: "bsr-load calm", role: "status", "aria-live": "polite" }, el("div", { class: "bsc-orbit sm", "aria-hidden": "true" }, el("i", { class: "r1" }), el("i", { class: "r2" }), el("b", { class: "d1" }), el("b", { class: "d2" }), el("b", { class: "d3" }), el("img", { class: "bsc-brand", src: "icon-192.png", alt: "", width: "56", height: "56" })), el("p", { class: "bsr-think" }, "Loopy is thinking\u2026"),
+  if (bs.busy) return [bar, head, el("div", { class: "bsr-load calm", role: "status", "aria-live": "polite" }, el("div", { class: "bsc-orbit sm", "aria-hidden": "true" }, el("i", { class: "r1" }), el("i", { class: "r2" }), el("b", { class: "d1" }), el("b", { class: "d2" }), el("b", { class: "d3" }), brandSpin("bsc-brand live")), el("p", { class: "bsr-think" }, "Loopy is thinking\u2026"),
     el("div", { class: "bsr-lines", "aria-hidden": "true" }, el("i", {}), el("i", {}), el("i", {})))];
   if (bs.pending) {
     return [bar, head, el("section", { class: "bsr-ask bsr-reveal in" }, el("small", {}, "Your question"), el("h2", {}, bs.pending), el("p", { class: "hint" }, "How much do you need?"),
@@ -5778,7 +5788,7 @@ function brainViewInner(ui) {
   if (!bs.res) {
     const C = window.RGUKT_CURRICULUM, rows = C ? ((C.data[curState.year] || {})[curState.branch] || []).map(r => r[0]).slice(0, 8) : [], rec = bsRecent();
     const hr = new Date().getHours(), greet = hr < 5 ? "Good night" : hr < 12 ? "Good morning" : hr < 17 ? "Good afternoon" : "Good evening", nm = String(getName() || "").trim().split(" ")[0];
-    const hero = el("section", { class: "bsc-hero" }, el("div", { class: "bsc-orbit", "aria-hidden": "true" }, el("i", { class: "r1" }), el("i", { class: "r2" }), el("b", { class: "d1" }), el("b", { class: "d2" }), el("b", { class: "d3" }), el("img", { class: "bsc-brand", src: "icon-192.png", alt: "The Campus Loop", width: "84", height: "84" })), el("h2", { class: "bsc-hi" }, greet + (nm ? ", " : ""), nm ? el("span", {}, nm) : null), el("p", { class: "bsc-sub" }, "Ask your syllabus anything. Easy words, diagrams, exact answers."));
+    const hero = el("section", { class: "bsc-hero" }, el("div", { class: "bsc-orbit", "aria-hidden": "true" }, el("i", { class: "r1" }), el("i", { class: "r2" }), el("b", { class: "d1" }), el("b", { class: "d2" }), el("b", { class: "d3" }), brandSpin("bsc-brand live")), el("h2", { class: "bsc-hi" }, greet + (nm ? ", " : ""), nm ? el("span", {}, nm) : null), el("p", { class: "bsc-sub" }, "Ask your syllabus anything. Easy words, diagrams, exact answers."));
     const TRY = { atlas: [["\u{1F4C8}", "Explain the Bode plot", "Control systems"], ["\u2795", "Half adder circuit", "Digital logic"], ["\u{1F3B2}", "Bayes theorem with an example", "Probability"], ["\u{1F50C}", "BJT biasing and the Q point", "Analog circuits"], ["\u{1F4E1}", "Sampling theorem and aliasing", "Signal processing"], ["\u{1F9EE}", "Compare FIR and IIR filters", "Signal processing"]],
       launchpad: [["\u{1F326}\uFE0F", "IoT weather station", "Project plan"], ["\u{1F4F7}", "Student attendance system", "Project plan"], ["\u{1F331}", "Smart irrigation", "Project plan"], ["\u{1F4DA}", "Library management website", "Project plan"]],
       forge: [["\u{1F50D}", "binary search in Python", "Code"], ["\u{1F9EE}", "Verilog code for a counter", "Hardware"], ["\u{1F4CA}", "bubble sort in C", "Code"], ["\u2615", "factorial in Java", "Code"]],
