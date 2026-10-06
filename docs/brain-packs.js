@@ -238,7 +238,7 @@ PACKS.push(
     mistakes: ["Using blocking (=) assignments for flip-flops. Use non-blocking (<=).", "Forgetting a default value, which creates an unwanted latch.", "Mixing up simulation-only code with code that can be built into hardware.", "Writing the output last in a gate primitive. The output comes first: and (y, x1, x2).", "Using a signal in an always block without declaring it reg."],
     uses: [["Designing chips and FPGAs", "Engineers write HDL instead of drawing millions of gates."], ["Testing before manufacture", "Simulation finds bugs before spending money on a chip."]], related: ["Half and full adder", "Flip-flops (SR, D, JK, T)", "Finite state machines (Moore and Mealy)"], diagrams: [] },
 );
-const DMAP = { gates: ["gates", "nand_univ"], kmap: ["kmap4"], ff: ["ffsym", "srlatch", "timing"], adder: ["halfadder", "fulladder"], mux: ["mux2"], decoder: ["dec24"], counter: ["ripple"], shift: ["sipo"] };
+const DMAP = { gates: ["gates", "gatetruth", "nand_univ"], kmap: ["kmap4"], ff: ["ffsym", "srlatch", "timing"], adder: ["halfadder", "fulladder"], mux: ["mux2"], decoder: ["dec24"], counter: ["ripple"], shift: ["sipo"] };
 PACKS.forEach(p => { if (!p.diagrams) p.diagrams = DMAP[p.id] || []; });
 PACKS.push(
   { id: "dvsa", keys: ["digital and analog", "analog and digital", "digital vs analog", "analog vs digital", "digital information", "analog information", "bits needed", "minimum number of bits", "how many bits", "d a converter", "range of binary number"], title: "Digital and analog information; how many bits", subject: "Digital electronics",

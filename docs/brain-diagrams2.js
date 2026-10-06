@@ -1,5 +1,5 @@
 // More of Loopy's own diagrams: analog circuits, DSP, control systems and probability. Extends brain-diagrams.js.
-import { Cv, mk, D } from "./brain-diagrams.js?v=447";
+import { Cv, mk, D } from "./brain-diagrams.js?v=448";
 const done = (c) => c.root;
 const P = Cv.prototype;
 // Local-coordinate parts: each starts at (x, y) and ends L further along the (rotated) axis. Returns the absolute end pin.
@@ -290,4 +290,9 @@ D.qmgroup = { title: "Quine–McCluskey: combine and tick", cap: "F = Σ(0,1,2,8
   [["0,1 (1)", 0], ["0,2 (2)", 1], ["0,8 (8)", 1], ["2,10 (8)", 1], ["8,10 (2)", 1], ["10,11 (1)", 1], ["10,14 (4)", 1], ["11,15 (4)", 1], ["14,15 (1)", 1]].forEach(([t, k], i) => c.box(104, 26 + i * 27, 104, 23, t + (k ? "  ✓" : ""), k ? "off" : "on"));
   [["0,2,8,10 (2,8)", 26], ["10,11,14,15 (1,4)", 80]].forEach(([t, y]) => c.box(236, y, 150, 23, t, "on"));
   c.txt(236, 140, "x′z′   (−0−0)", { c: "g" }); c.txt(236, 160, "wy     (1−1−)", { c: "g" }); c.txt(104, 286, "w′x′y′  (000−)", { c: "g" }); c.txt(200, 316, "F = w′x′y′ + x′z′ + wy", { a: "middle", c: "b" }); return done(c); } };
+D.gatetruth = { title: "Truth tables of all the gates", cap: "Read across each row. AND is 1 only for 11. OR is 0 only for 00. NAND and NOR are the opposites of AND and OR. XOR is 1 when the inputs differ; XNOR is 1 when they are equal.", draw() {
+  const c = new Cv(400, 190, "Gate truth tables"), cols = ["A", "B", "AND", "OR", "NAND", "NOR", "XOR", "XNOR"], f = [(a, b) => a, (a, b) => b, (a, b) => a & b, (a, b) => a | b, (a, b) => 1 - (a & b), (a, b) => 1 - (a | b), (a, b) => a ^ b, (a, b) => 1 - (a ^ b)], x0 = 10, cw = 47;
+  cols.forEach((t, j) => c.box(x0 + j * cw, 6, cw - 4, 26, t, j < 2 ? "ff" : "on"));
+  for (let r = 0; r < 4; r++) { const a = r >> 1, b = r & 1; f.forEach((fn, j) => { const v = fn(a, b); c.add(mk("rect", { x: x0 + j * cw, y: 38 + r * 30, width: cw - 4, height: 26, rx: 6, class: "dg-cell" })); c.txt(x0 + j * cw + (cw - 4) / 2, 38 + r * 30 + 18, String(v), { a: "middle", c: j < 2 ? "b" : v ? "one" : "zero" }); }); }
+  c.txt(200, 176, "NOT: 0 → 1 and 1 → 0.   Buffer: output = input.", { a: "middle", c: "s" }); return done(c); } };
 export function drawDiagram2(key) { const d = D[key]; if (!d) return null; try { return { title: d.title, cap: d.cap, svg: d.draw() }; } catch (_) { return null; } }

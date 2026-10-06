@@ -419,6 +419,44 @@ PACKS_ECE.push(
 );
 
 const nrm = (t) => String(t || "").toLowerCase().replace(/[-_/]/g, " ").replace(/[^a-z0-9\s+]/g, " ").replace(/\s+/g, " ").trim();
+
+// Subject hubs: one overview page per subject, built from the packs so it never goes out of date.
+const HUBS = [
+  { id: "hub_dld", subject: "Digital electronics", name: "Digital Logic Design (DLD)", keys: ["digital logic design", "digital logic", "dld", "digital electronics", "digital circuits", "digital systems", "digital design", "logic design", "digital techniques", "switching theory", "digital logic circuits"], diagrams: ["gates", "designflow"],
+    blurb: "Digital Logic Design is the study of circuits that work with only 0 and 1: how to write numbers, combine them with gates, simplify the logic, and build adders, multiplexers, flip-flops, counters and memories.",
+    units: [["Basics and number systems", ["dvsa", "dflow", "numsys", "complement", "codes"]], ["Boolean algebra and logic gates", ["swlogic", "huntington", "boolean", "venn", "gates", "func16", "polarity", "families"]], ["Simplifying logic", ["sop", "canonical", "kmap", "minim", "qm", "nandnor", "twolevel", "synth"]], ["Combinational circuits", ["adder", "subtractor", "comparator", "mux", "decoder", "parity", "sevenseg", "comb", "hazard", "rom"]], ["Sequential circuits", ["ff", "excite", "seq", "counter", "shift", "fsm", "timingf"]], ["Memory, Verilog and CAD", ["memory", "hdl", "cad"]]] },
+  { id: "hub_aec", subject: "Analog electronic circuits", name: "Analog Electronic Circuits", keys: ["analog electronic circuits", "analog electronics", "analog circuits", "analog electronic circuit", "electronic circuits", "electronic devices and circuits", "edc", "aec", "analog electronic"], diagrams: ["diodeIV"],
+    blurb: "Analog Electronic Circuits covers diodes, transistors, amplifiers, feedback, oscillators and op-amps: the parts that handle signals which vary smoothly, like sound and sensor voltages.",
+    units: [["Diodes and power supplies", ["diode", "rectifier", "zenerreg", "clipclamp", "regulator"]], ["Transistors", ["bjt", "bjtbias", "ceamp", "fet"]], ["Amplifiers and feedback", ["diffamp", "feedbackamp", "poweramp", "freqresp"]], ["Op-amps, oscillators and timers", ["opamp", "opampapp", "oscillator", "t555"]]] },
+  { id: "hub_dsp", subject: "Digital signal processing", name: "Digital Signal Processing (DSP)", keys: ["digital signal processing", "dsp", "signal processing", "discrete time signal processing", "digital signal processing basics"], diagrams: ["sampling"],
+    blurb: "Digital Signal Processing is how computers and chips analyse and change signals such as sound, images and radio after turning them into numbers.",
+    units: [["Signals, systems and sampling", ["dspsig", "sampling", "adc", "conv"]], ["Transforms", ["ztrans", "dtft", "fft"]], ["Filters and multirate", ["fir", "iir", "multirate"]]] },
+  { id: "hub_cs", subject: "Control systems", name: "Control Systems", keys: ["control systems", "control engineering", "control system engineering", "automatic control", "control theory", "linear control systems", "cs subject"], diagrams: ["closedloop"],
+    blurb: "Control Systems is the study of making a machine or process behave the way we want, using feedback: from modelling and stability to Bode plots, root locus and PID control.",
+    units: [["Modelling", ["cstypes", "tf", "blockred", "sfg"]], ["Time domain and stability", ["timeresp", "sserr", "routh", "rlocus"]], ["Frequency domain", ["bode", "nyq"]], ["Design and components", ["pid", "statesp", "servo"]]] },
+  { id: "hub_prb", subject: "Probability and random variables", name: "Probability and Random Variables", keys: ["probability and random variables", "probability and random processes", "probability theory and random processes", "random variables and processes", "probability and statistics", "ptsp", "prp", "probability random variables"], diagrams: ["bell"],
+    blurb: "Probability and Random Variables gives the maths of uncertainty: chances of events, random variables and their distributions, and how noise and signals are described statistically.",
+    units: [["Probability basics", ["probbasic", "bayes", "rv", "moments"]], ["Distributions", ["discdist", "contdist", "gauss"]], ["Several variables and processes", ["joint", "clt", "rproc"]]] },
+];
+export function makeHubs(all) {
+  const byId = {}; all.forEach(p => { byId[p.id] = p; });
+  return HUBS.map(h => {
+    const pk = all.filter(p => p.subject === h.subject), used = new Set(), points = [];
+    h.units.forEach(([nm, ids], i) => { const ps = ids.map(id => byId[id]).filter(Boolean); ps.forEach(p => used.add(p.id)); if (ps.length) points.push("Unit " + (i + 1) + " — " + nm + ": " + ps.map(p => p.title).join("; ") + "."); });
+    const rest = pk.filter(p => !used.has(p.id)); if (rest.length) points.push("More: " + rest.map(p => p.title).join("; ") + ".");
+    const order = [...used, ...rest.map(p => p.id)].map(id => byId[id]).filter(Boolean);
+    return { id: h.id, hub: true, subject: h.subject, keys: h.keys, title: h.name + ": all topics", short: h.blurb + " Tap any topic below to open its own page with diagrams, formulas and exam answers.", points,
+      steps: h.units.map(([nm]) => "Study: " + nm + "."), formulas: [], example: { title: "How to use this map", text: "1. Read the units in order.\n2. Open a topic below and read “In simple words” first.\n3. Look at the diagram, then the formulas and the worked example.\n4. Finish with the exam answer and the common mistakes.\n\nTip: you can also type a topic, for example “" + (order[0] ? order[0].title : "topic") + "”." },
+      exam: h.name + " is studied in units: " + h.units.map(([nm]) => nm).join("; ") + ".", mistakes: ["Skipping the basics. Later units use the earlier ones.", "Reading only theory. Draw the diagram and solve one example for each topic."], uses: [], related: order.map(p => p.title), diagrams: h.diagrams };
+  });
+}
+// Fix small typing mistakes (for example “logic gare”) by matching each word to the nearest word used in pack keys.
+const lev = (a, b) => { const m = a.length, n = b.length; if (Math.abs(m - n) > 2) return 9; let prev = Array.from({ length: n + 1 }, (_, j) => j); for (let i = 1; i <= m; i++) { const cur = [i]; for (let j = 1; j <= n; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); prev = cur; } return prev[n]; };
+export function makeFixer(all) {
+  const vocab = new Set(); all.forEach(p => p.keys.forEach(k => nrm(k).split(" ").forEach(w => { if (w.length >= 4) vocab.add(w); })));
+  const list = [...vocab];
+  return (q) => { let changed = false; const out = nrm(q).split(" ").map(w => { if (w.length < 4 || vocab.has(w)) return w; const lim = w.length <= 5 ? 1 : 2; let best = w, bd = 9; for (const v of list) { const d = lev(w, v); if (d < bd && d <= lim) { bd = d; best = v; } } if (best !== w) changed = true; return best; }).join(" "); return changed ? out : null; };
+}
 // Best matching pack for a question, with the length of the matching key phrase (longer = more specific).
 export function packScore(q) {
   const t = " " + nrm(q) + " "; let best = null, bl = 0;
