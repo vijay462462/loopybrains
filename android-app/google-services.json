@@ -9,7 +9,7 @@
     {
       "client_info": {
         "mobilesdk_app_id": "1:530725630149:android:43fd3e76afd98c93bdc0ac",
-        "android_info": {
+        "android_client_info": {
           "package_name": "com.thecampusloop.app"
         }
       },
