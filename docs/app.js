@@ -1382,6 +1382,7 @@ const ICON_PATHS = {
   aegis: ["M12 3l8 3v6c0 4.5-3.2 8.2-8 9c-4.8-.8-8-4.5-8-9V6z", "M9 12l2 2l4-4"],
   back: ["M15 5l-7 7l7 7"],
   send: ["M12 19V5", "M5 12l7-7l7 7"],
+  send: ["M12 19V5", "M5 12l7-7l7 7"],
   doubts: ["M12 3a9 9 0 1 0 0 18a9 9 0 0 0 0-18z", "M9.6 9.4a2.5 2.5 0 1 1 3.6 2.2c-.8.4-1.2 1-1.2 1.8", "M12 16.9v.1"],
   ideas: ["M9 18h6", "M10 21h4", "M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"],
   clubs: ["M3 10l9-6l9 6", "M5 10v8", "M9.5 10v8", "M14.5 10v8", "M19 10v8", "M3 20h18"],
@@ -4969,7 +4970,7 @@ function brainQuiz(wiki, n) {
   return qs;
 }
 let _solver = null;
-async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=448", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
+async function brainSolve(text) { try { _solver = _solver || await import(new URL("brain-solver.js?v=449", location.href).href); return _solver.solve(text); } catch (_) { return null; } }
 async function brainReply(text, chat) {
   const sv = await brainSolve(text); if (sv) return sv;
   const { kind, topic } = brainIntent(text, chat.topic || ""); chat.topic = topic;
@@ -5045,7 +5046,7 @@ async function safeSync() {
   } catch (_) { _safeLoaded = false; }
 }
 let _safeMod = null;
-const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=448", location.href).href); } catch (_) { return null; } };
+const safeMod = async () => { try { return _safeMod = _safeMod || await import(new URL("brain-safety.js?v=449", location.href).href); } catch (_) { return null; } };
 function safeModal(title, lines, danger) {
   const prev = document.getElementById("safeModal"); if (prev) prev.remove();
   const ov = el("div", { class: "safe-ov", id: "safeModal", role: "alertdialog", "aria-modal": "true", "aria-label": title },
@@ -5083,7 +5084,7 @@ const bsFree = (lv) => lv <= 1 || IS_RGUKT;
 const BS_MODES = [["atlas", "Atlas", "Search anything", "Topics, doubts, maths and research, explained in easy words.", "Ask anything: a topic, doubt, problem or research idea"], ["launchpad", "Launchpad", "Project guide", "Turn an idea into a plan: objectives, tools, week-by-week steps, report outline and viva questions.", "Describe your project idea, e.g. IoT weather station"], ["forge", "Forge", "Find code", "Working code for classic problems in many languages, with the idea explained.", "e.g. binary search in Python"], ["aegis", "Aegis", "Learn security", "Understand how attacks work and how to defend, legally and safely.", "e.g. SQL injection, phishing, password safety"]];
 const bsModeInfo = (id) => BS_MODES.find(m => m[0] === id) || BS_MODES[0];
 let _modes = null;
-const brainModesMod = async () => { try { return _modes = _modes || await import(new URL("brain-modes.js?v=448", location.href).href); } catch (_) { return null; } };
+const brainModesMod = async () => { try { return _modes = _modes || await import(new URL("brain-modes.js?v=449", location.href).href); } catch (_) { return null; } };
 const PREF_KEY = "dd-bs-prefs", SAVED_KEY = "dd-bs-saved";
 const bsPrefs = () => { const p = readJSON(PREF_KEY, {}); return p && typeof p === "object" ? p : {}; };
 const bsState = () => state.bs || (state.bs = (() => { const p = bsPrefs(), ok = p.remember !== false;
@@ -5150,12 +5151,12 @@ function bsPool() {
 const bsSuggest = (text) => { const n = text.trim().toLowerCase(); if (n.length < 2) return []; return bsPool().filter(t => t.toLowerCase().includes(n)).sort((a, b) => a.length - b.length).slice(0, 6); };
 let _report = null;
 let _packs = null, _dgm = null;
-const brainDiagramsMod = async () => { try { return _dgm = _dgm || await import(new URL("brain-diagrams2.js?v=448", location.href).href); } catch (_) { return null; } };
+const brainDiagramsMod = async () => { try { return _dgm = _dgm || await import(new URL("brain-diagrams2.js?v=449", location.href).href); } catch (_) { return null; } };
 // All Loopy Knowledge Packs (digital design first, then ECE subjects). Returns { find(q), refs }.
 const brainPacksMod = async () => {
   if (_packs) return _packs;
   try {
-    const [m1, m2, m3] = await Promise.all([import(new URL("brain-packs.js?v=448", location.href).href), import(new URL("brain-packs-ece.js?v=448", location.href).href), import(new URL("brain-simple.js?v=448", location.href).href).catch(() => ({ SIMPLE: {} }))]);
+    const [m1, m2, m3] = await Promise.all([import(new URL("brain-packs.js?v=449", location.href).href), import(new URL("brain-packs-ece.js?v=449", location.href).href), import(new URL("brain-simple.js?v=449", location.href).href).catch(() => ({ SIMPLE: {} }))]);
     const base = [...m1.PACKS, ...m2.PACKS_ECE], hubs = m2.makeHubs(base), fix = m2.makeFixer(base), nq = (t) => String(t || "").toLowerCase().replace(/[-_/]/g, " ").replace(/[^a-z0-9\s+]/g, " ").replace(/\s+/g, " ").trim();
     const hubKey = (q) => { const t = nq(q).replace(/^(what is|what are|explain|tell me about|about|notes on|notes|syllabus of|syllabus|all topics of|topics in|learn|study)\s+/, "").replace(/\s+(notes|syllabus|subject|topics|course|basics|introduction|overview)$/, "").trim(); return hubs.find(h => h.keys.some(k => nq(k) === t)) || null; };
     const one = (q) => { const a = m1.packScore(q), b = m2.packScore(q); return (b.len > a.len ? b.p : a.p) || null; };
@@ -5163,7 +5164,7 @@ const brainPacksMod = async () => {
   } catch (_) { _packs = null; }
   return _packs;
 };
-const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=448", location.href).href); } catch (_) { return null; } };
+const brainReportMod = async () => { try { return _report = _report || await import(new URL("brain-report.js?v=449", location.href).href); } catch (_) { return null; } };
 async function bsPapers(q) {
   try {
     const j = await lsFetch("https://api.openalex.org/works?per-page=5&select=title,publication_year,cited_by_count,doi,open_access,authorships,abstract_inverted_index&search=" + encodeURIComponent(q));
@@ -5258,17 +5259,21 @@ async function bsSpend(cost) {
 }
 // ----- the overlay: a big, calm workspace like a modern AI app -----
 const bsEl = () => document.getElementById("bsFull");
+const bsNightOn = () => { try { return localStorage.getItem("dd-bs-night") !== "0"; } catch (_) { return true; } };
+function bsApplyNight() { const o = bsEl(); if (!o) return; const on = bsNightOn(); o.classList.toggle("night", on); const nb = $("bsNight"); if (nb) { nb.textContent = on ? "\u2600" : "\u263E"; nb.setAttribute("aria-label", on ? "Switch to light look" : "Switch to night look"); }
+  applyThemeName(on && currentTheme !== "dark" && currentTheme !== "black" ? "dark" : currentTheme); }
 function bsMount() {
   if (bsEl()) return; const bs = bsState();
   const bar = el("div", { class: "bsf-bar" },
     el("button", { type: "button", class: "bsf-back", "aria-label": "Close Loopy Search", onclick: () => bsClose() }, svgIcon("back")),
-    el("strong", { class: "bsf-title" }, "Loopy Search"),
+    el("img", { class: "bsf-brand", src: "icon-192.png", alt: "", width: "28", height: "28" }), el("strong", { class: "bsf-title" }, "Loopy Search"),
+    el("button", { type: "button", class: "bsf-night", id: "bsNight", onclick: () => { try { localStorage.setItem("dd-bs-night", bsNightOn() ? "0" : "1"); } catch (_) {} bsApplyNight(); } }, "\u2600"),
     el("button", { type: "button", class: "bsf-save", id: "bsSave", hidden: "", onclick: () => { const b = bsState(); if (!b.res) return; if (bsIsSaved(b.res)) { bsPutSaved(bsSavedList().filter(x => x.id !== "s" + fnv(b.res.topic.toLowerCase() + "|" + b.res.size))); showNotice("Removed from Saved.", "ok"); } else if (bsSaveOne(b.res, b.q)) showNotice("Saved. Find it under Saved on the search page.", "ok"); else showNotice("Could not save: this phone is out of space.", "err"); bsPaint(); } }, "Save"),
     el("button", { type: "button", class: "bsf-pdf", id: "bsPdf", hidden: "", "aria-haspopup": "dialog", "aria-label": "Save as PDF or JPEG", onclick: () => bsExportSheet() }, "PDF/JPG"));
   const prog = el("div", { class: "bsf-prog" }, el("i", { id: "bsProg" }));
   const scroll = el("div", { class: "bsf-scroll", id: "bsScroll" });
-  const ov = el("div", { class: "bsfull", id: "bsFull", role: "dialog", "aria-modal": "true", "aria-label": "Loopy Search" }, bar, prog, scroll);
-  document.body.append(ov); document.documentElement.classList.add("bs-open");
+  const ov = el("div", { class: "bsfull calm", id: "bsFull", role: "dialog", "aria-modal": "true", "aria-label": "Loopy Search" }, bar, prog, scroll);
+  document.body.append(ov); document.documentElement.classList.add("bs-open"); bsApplyNight();
   let tick = false; scroll.addEventListener("scroll", () => { if (tick) return; tick = true; requestAnimationFrame(() => { tick = false; const p = $("bsProg"); if (p) p.style.width = Math.min(100, Math.round(scroll.scrollTop / Math.max(1, scroll.scrollHeight - scroll.clientHeight) * 100)) + "%"; }); }, { passive: true });
   document.addEventListener("keydown", bsEsc); bsPaint(true); bsUseSync().then(() => { if (bsEl()) { bsPaint(); setTimeout(() => { if (bsEl()) bsSurpriseModal(bsRollSurprise()); }, 600); } });
   if (bs.start) { const q = bs.start; bs.start = ""; bsSubmit(q); }
@@ -5276,7 +5281,7 @@ function bsMount() {
 const bsEsc = (e) => { if (e.key === "Escape" && !document.querySelector(".overlay")) bsClose(); };
 function bsClose(keepMode) {
   bsFlushUsage();
-  const o = bsEl(); if (o) o.remove(); document.documentElement.classList.remove("bs-open"); document.removeEventListener("keydown", bsEsc);
+  const o = bsEl(); if (o) o.remove(); document.documentElement.classList.remove("bs-open"); applyThemeName(currentTheme); document.removeEventListener("keydown", bsEsc);
   if (!keepMode && state.mode === "ai") { state.mode = "intro"; render(); }
 }
 function bsLeave(fn) { bsClose(true); fn(); }
@@ -5707,13 +5712,22 @@ function securityView(r) {
   out.push(card("Learn more, legally", el("div", { class: "tp-chans" }, ...links.map(([t, u]) => outLink(u, t, "tp-chan"))), el("small", { class: "hint" }, "Hacking systems you do not own is a crime. Report cyber fraud at cybercrime.gov.in or call 1930 in India.")));
   return out;
 }
+function loopyMark(cls) {
+  const r = sv("svg", { viewBox: "0 0 64 64", class: cls, "aria-hidden": "true" }), cols = ["#f59e0b", "#f97316", "#ef4444", "#d946ef", "#6366f1", "#22d3ee", "#10b981", "#eab308"];
+  for (let i = 0; i < 8; i++) r.append(sv("line", { x1: 32, y1: 32 - (i % 2 ? 14 : 8), x2: 32, y2: 32 - (i % 2 ? 29 : 25), stroke: cols[i], "stroke-width": 4.6, "stroke-linecap": "round", transform: "rotate(" + i * 45 + " 32 32)" }));
+  return r;
+}
 function brainView() {
+  const ui = {}, out = brainViewInner(ui), skip = new Set([ui.bar, ui.head]);
+  return [...out.filter(n => !skip.has(n)), ui.dock].filter(Boolean);
+}
+function brainViewInner(ui) {
   const bs = bsState(), mi = bsModeInfo(bs.mode), back = el("button", { class: "btn", type: "button", onclick: () => bsClose() }, "Close");
   if (safeBlocked()) return [el("section", { class: "bsr-blocked" }, el("div", { class: "safe-ic", "aria-hidden": "true" }, "!"), el("h2", {}, "Loopy Search is blocked"), ...SAFE_BLOCKED_LINES.map(t => el("p", {}, t)), el("div", { class: "rowbtns" }, back))];
-  const input = el("input", { type: "search", class: "bs-in", maxlength: "120", placeholder: mi[4], "aria-label": "Search", autocomplete: "off", enterkeyhint: "search", value: bs.q });
+  const input = el("input", { type: "search", class: "bs-in", maxlength: "120", placeholder: "Ask Loopy anything\u2026", "aria-label": "Search", autocomplete: "off", enterkeyhint: "search", value: bs.q });
   const sug = el("div", { class: "bs-sug", role: "listbox" });
   { const EX = bs.mode === "forge" ? ["binary search in Python", "Verilog code for a counter", "bubble sort in C", "factorial in Java"] : bs.mode === "launchpad" ? ["IoT weather station", "attendance system with face recognition", "smart irrigation", "library website"] : bs.mode === "aegis" ? ["how SQL injection works", "spot a phishing email", "strong password habits", "what is two-factor login"] : ["explain the Bode plot", "half adder circuit", "Bayes theorem with an example", "difference between FIR and IIR"]; let i = 0; clearInterval(bs._phT);
-    if (!bs.res && !bs.pending) { input.placeholder = "Try: " + EX[0]; bs._phT = setInterval(() => { if (!document.body.contains(input)) { clearInterval(bs._phT); return; } if (input.value || document.activeElement === input) return; i = (i + 1) % EX.length; input.placeholder = "Try: " + EX[i]; }, 3200); } }
+    if (!bs.res && !bs.pending) { input.placeholder = "Ask Loopy: " + EX[0]; bs._phT = setInterval(() => { if (!document.body.contains(input)) { clearInterval(bs._phT); return; } if (input.value || document.activeElement === input) return; i = (i + 1) % EX.length; input.placeholder = "Ask Loopy: " + EX[i]; }, 3200); } }
   const go = (t) => { sug.replaceChildren(); input.value = t; bsSubmit(t); };
   input.addEventListener("input", () => sug.replaceChildren(...bsSuggest(input.value).map(t => el("button", { type: "button", class: "bs-s", role: "option", onclick: () => go(t) }, el("span", { "aria-hidden": "true" }, "\u{1F50E}"), t))));
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -5726,7 +5740,13 @@ function brainView() {
       rec.onend = () => { mic.classList.remove("on"); }; rec.start(); } catch (_) { mic.classList.remove("on"); showNotice("Voice search is not available in this browser.", "err"); } } }, svgIcon("mic")) : null;
   const clearBtn = el("button", { class: "bs-clear", type: "button", "aria-label": "Clear", hidden: bs.q ? null : "", onclick: () => { input.value = ""; clearBtn.hidden = true; sug.replaceChildren(); input.focus(); } }, "\u2715");
   input.addEventListener("input", () => { clearBtn.hidden = !input.value; });
-  const form = el("form", { class: "bs-bar", onsubmit: (e) => { e.preventDefault(); input.blur(); go(input.value); } }, el("span", { class: "bs-lead", "aria-hidden": "true" }, svgIcon(bs.mode || "atlas")), input, clearBtn, mic, el("button", { class: "bs-go", type: "submit", "aria-label": "Search" }, "\u2192"));
+  const goBtn = el("button", { class: "bs-go", type: "submit", "aria-label": "Search" }, svgIcon("send"));
+  const toggleSheet = () => { bs.sheet = !bs.sheet; const sh = $("bsSheet"); if (sh) sh.hidden = !(bs.sheet || bs.lock); const pl = $("bsPlus"); if (pl) { pl.classList.toggle("on", !!bs.sheet); pl.setAttribute("aria-expanded", String(!!bs.sheet)); } };
+  input.value = bs.draft != null ? bs.draft : bs.q; input.addEventListener("input", () => { bs.draft = input.value; });
+  const curL = BS_LEVELS[(bs.lock || bs.level) - 1], effC = bsEffort(bs);
+  const plusBtn = el("button", { type: "button", class: "bs-plus" + (bs.sheet ? " on" : ""), id: "bsPlus", "aria-label": "Engines and options", "aria-expanded": String(!!bs.sheet), onclick: toggleSheet }, "+");
+  const chipBtn = el("button", { type: "button", class: "bs-chip", "aria-label": "Change model and effort", onclick: toggleSheet }, el("b", {}, bsName(curL[0])), el("span", {}, effC[1]));
+  const form = el("form", { class: "bs-comp", onsubmit: (e) => { e.preventDefault(); input.blur(); bs.draft = null; go(input.value); } }, el("div", { class: "bs-comp-top" }, input, clearBtn), el("div", { class: "bs-comp-row" }, plusBtn, chipBtn, el("span", { class: "bs-sp" }), mic, goBtn));
   const setLevel = (lv) => { if (!bsOpen(lv)) { bs.lock = lv; bsPaint(); return; } bs.level = lv; bs.lock = 0; bsRemember(); if (bs.q && bs.res) bsRun(bs.q); else bsPaint(); };
   const lvBar = el("div", { class: "bs-lvs bsf-noprint", role: "group", "aria-label": "Loopy model" }, ...BS_LEVELS.map(([n, t, , plus]) => { const open = bsOpen(n); return el("button", { type: "button", class: "bs-lv" + (bs.level === n && !bs.lock ? " on" : "") + (open ? "" : " locked"), "aria-pressed": String(bs.level === n), onclick: () => setLevel(n) }, el("b", {}, String(n)), el("span", {}, t), el("i", { class: "bs-tier" + (bsFree(n) ? "" : " plus") }, bsFree(n) ? "FREE" : open ? (IS_RGUKT ? "BONUS" : "PLUS") : IS_RGUKT ? "\u{1F512} LOCKED" : "\u{1F512} PLUS")); }));
   const cur = BS_LEVELS[(bs.lock || bs.level) - 1], modelLine = el("p", { class: "bs-model bsf-noprint" }, el("b", {}, bsName(cur[0])), " · " + cur[2] + " ", el("span", { class: "bs-dots", "aria-label": "Depth " + cur[0] + " of 5" }, "●".repeat(cur[0]) + "○".repeat(5 - cur[0])));
@@ -5743,10 +5763,12 @@ function brainView() {
   const optRow = el("div", { class: "bs-optrow" }, easyBtn), compact = true;
   const opts = compact ? el("details", { class: "bs-opts", open: bs.lock || bs.optsOpen ? "" : null, ontoggle: (e) => { bs.optsOpen = e.target.open; } }, el("summary", {}, mi[1] + " \u00B7 " + bsName(cur[0]) + " \u00B7 " + effNow[1] + " effort \u00B7 Easy words " + (bs.easy !== false ? "on" : "off") + "  \u2014 change"), lvBar, modelLine, rgNote, effRow, optRow) : null;
   const head = el("div", { class: "bs-head bsf-noprint" }, modeBar, bs.res ? null : modeLine, ...(compact ? [opts] : [lvBar, modelLine, rgNote, effRow, optRow]), offerBar, meter, lockCard);
+  const sheet = el("div", { class: "bs-sheet bsf-noprint", id: "bsSheet", hidden: bs.sheet || bs.lock ? null : "" }, el("small", { class: "bs-sheet-h" }, "Engine"), modeBar, modeLine, el("small", { class: "bs-sheet-h" }, "Model and effort"), lvBar, modelLine, rgNote, effRow, optRow, offerBar, meter, lockCard);
+  const foot = el("p", { class: "bs-foot bsf-noprint" }, "Today: " + L.day + " of " + L.caps.day + " credits \u00B7 Loopy can make mistakes. Check important facts.");
+  ui.bar = bar; ui.head = head; ui.dock = el("div", { class: "bs-dock bsf-noprint" }, sheet, sug, form, foot);
   const chips = (list, onTap) => el("div", { class: "bs-chips" }, ...list.map(t => el("button", { type: "button", class: "tp-sub", onclick: () => onTap(t) }, t)));
-  if (bs.busy) return [bar, head, el("div", { class: "bsr-load", role: "status" }, el("div", { class: "bsr-orb" }), el("p", {}, "Loopy is preparing your " + ((BS_SIZES.find(x => x[0] === bs.size) || [])[1] || "answer").toLowerCase() + " on \u201C" + bs.q + "\u201D\u2026"),
-    el("ol", { class: "bsr-steps", "aria-hidden": "true" }, ...["Understanding your question", "Checking Loopy knowledge packs", "Reading Wikipedia and papers", "Writing it in easy words", "Drawing diagrams and examples"].map((t, i) => el("li", { class: "st" + (i + 1) }, el("span", { class: "dot" }), t))),
-    el("div", { class: "tp-skel", "aria-hidden": "true" }, el("i", {}), el("i", {}), el("i", {})))];
+  if (bs.busy) return [bar, head, el("div", { class: "bsr-load calm", role: "status", "aria-live": "polite" }, el("img", { class: "bsr-brand", src: "icon-192.png", alt: "", width: "44", height: "44" }), loopyMark("bsr-mark"), el("p", { class: "bsr-think" }, "Loopy is thinking\u2026"),
+    el("div", { class: "bsr-lines", "aria-hidden": "true" }, el("i", {}), el("i", {}), el("i", {})))];
   if (bs.pending) {
     return [bar, head, el("section", { class: "bsr-ask bsr-reveal in" }, el("small", {}, "Your question"), el("h2", {}, bs.pending), el("p", { class: "hint" }, "How much do you need?"),
       el("div", { class: "bsr-sizes" }, ...BS_SIZES.map(([id, name, hint, need], i) => { const open = bsOpen(need); return el("button", { type: "button", class: "bsr-size z" + i + (bs.size === id ? " pre" : ""), onclick: () => bsPickSize(id) }, el("b", {}, name), el("span", {}, hint), open ? null : el("i", {}, IS_RGUKT ? "\u{1F512} Locked" : "\u{1F512} Plus")); })))];
@@ -5754,10 +5776,7 @@ function brainView() {
   if (!bs.res) {
     const C = window.RGUKT_CURRICULUM, rows = C ? ((C.data[curState.year] || {})[curState.branch] || []).map(r => r[0]).slice(0, 8) : [], rec = bsRecent();
     const hr = new Date().getHours(), greet = hr < 5 ? "Good night" : hr < 12 ? "Good morning" : hr < 17 ? "Good afternoon" : "Good evening", nm = String(getName() || "").trim().split(" ")[0];
-    const hero = el("section", { class: "bsh-hero" }, el("i", { class: "bsh-orb o1", "aria-hidden": "true" }), el("i", { class: "bsh-orb o2", "aria-hidden": "true" }),
-      el("p", { class: "bsh-hi" }, greet + (nm ? ", " + nm : "")), el("h2", { class: "bsh-h" }, "What do you want to ", el("span", {}, "learn"), " today?"),
-      el("p", { class: "bsh-sub" }, "Ask in your own words. Loopy answers in easy words, with diagrams and trusted sources."),
-      el("div", { class: "bsh-badges" }, el("span", {}, "\u2713 Textbook-based topics"), el("span", {}, "\u2713 Easy words"), el("span", {}, "\u2713 PDF and HD pictures")));
+    const hero = el("section", { class: "bsc-hero" }, el("img", { class: "bsc-brand", src: "icon-192.png", alt: "The Campus Loop", width: "72", height: "72" }), el("small", { class: "bsc-kick" }, "THE CAMPUS LOOP \u00B7 LOOPY SEARCH"), el("h2", { class: "bsc-hi" }, "Hey there" + (nm ? ", " + nm : "")), el("p", { class: "bsc-sub" }, "What do you want to learn today?"));
     const TRY = { atlas: [["\u{1F4C8}", "Explain the Bode plot", "Control systems"], ["\u2795", "Half adder circuit", "Digital logic"], ["\u{1F3B2}", "Bayes theorem with an example", "Probability"], ["\u{1F50C}", "BJT biasing and the Q point", "Analog circuits"], ["\u{1F4E1}", "Sampling theorem and aliasing", "Signal processing"], ["\u{1F9EE}", "Compare FIR and IIR filters", "Signal processing"]],
       launchpad: [["\u{1F326}\uFE0F", "IoT weather station", "Project plan"], ["\u{1F4F7}", "Student attendance system", "Project plan"], ["\u{1F331}", "Smart irrigation", "Project plan"], ["\u{1F4DA}", "Library management website", "Project plan"]],
       forge: [["\u{1F50D}", "binary search in Python", "Code"], ["\u{1F9EE}", "Verilog code for a counter", "Hardware"], ["\u{1F4CA}", "bubble sort in C", "Code"], ["\u2615", "factorial in Java", "Code"]],
