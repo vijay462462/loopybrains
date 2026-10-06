@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "530725630149",
+    "project_id": "doubt-desk-e6f39",
+    "project_url": "https://doubt-desk-e6f39.firebaseio.com",
+    "storage_bucket": "doubt-desk-e6f39.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:530725630149:android:0000000000000000",
+        "android_info": {
+          "package_name": "com.rguktspark.app"
+        }
+      },
+      "api_key": [
+        {
+          "current_key": "AIzaSyBulu10AZTsX2dWS7IWkMhpRrfyxoiyvyE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

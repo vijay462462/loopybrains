@@ -10,5 +10,10 @@
   "android": {
     "allowMixedContent": false,
     "backgroundColor": "#1a1033"
+  },
+  "plugins": {
+    "FirebaseAppCheck": {
+      "tokenAutoRefreshEnabled": true
+    }
   }
 }
