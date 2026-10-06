@@ -15,5 +15,6 @@ if command -v python3 >/dev/null; then
   python3 scripts/audit_data.py >/dev/null || fail=1
   python3 -m unittest discover -s tests -p "test_*.py" >/dev/null 2>&1 || { echo "PYTHON TOOL TESTS FAILED (run: python3 -m unittest discover -s tests -p \"test_*.py\")"; fail=1; }
 fi
+node tests/packs.test.mjs || fail=1
 [ $fail = 0 ] && echo "All checks passed (version $v)"
 exit $fail
