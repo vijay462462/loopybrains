@@ -27,13 +27,13 @@ Android only. The website itself (in Chrome) can still be screenshotted; only th
 ### Step 1 — Register the Android app in Firebase Console
 1. Open [Firebase Console](https://console.firebase.google.com) → **Project settings** (gear icon) → **Your apps**.
 2. Click **Add app** → choose **Android**.
-3. Enter package name: `com.rguktspark.app`
+3. Enter package name: `com.thecampusloop.app`
 4. Click **Register app**, then **Download google-services.json**.
 5. Click through the remaining screens (no code changes needed — the project already handles everything).
 
 ### Step 2 — Enable Play Integrity in App Check
 1. Firebase Console → **App Check** → **Apps** tab.
-2. Find the Android app (`com.rguktspark.app`) → click **Configure**.
+2. Find the Android app (`com.thecampusloop.app`) → click **Configure**.
 3. Choose **Play Integrity** → click **Save**.
 4. You do **not** need to enforce yet — leave it in monitoring mode until you see clean traffic.
 
