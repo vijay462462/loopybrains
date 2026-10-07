@@ -5387,7 +5387,7 @@ async function bsMakeJpegs() {
   const bg = (() => { let n = $("bsFull"); while (n) { const c = getComputedStyle(n).backgroundColor; if (c && c !== "rgba(0, 0, 0, 0)" && c !== "transparent") return c; n = n.parentElement; } return "#ffffff"; })();
   const ink = getComputedStyle(sc).color || "#111", topic = ((bsState().res || {}).topic || "Loopy Brain result").slice(0, 80), when = new Date().toLocaleDateString();
   const head = document.createElement("div"); head.style.cssText = "box-sizing:border-box;height:" + HEAD + "px;padding:14px 16px 0;font:700 15px system-ui,sans-serif;color:" + ink + ";"; head.textContent = "The Campus Loop · Loopy Brain";
-  const foot = document.createElement("div"); foot.style.cssText = "padding:10px 16px 14px;font:500 12px system-ui,sans-serif;opacity:.7;color:" + ink + ";"; foot.textContent = topic + " · " + when + " · thecampusloop.co.in. Always check important facts in your textbook.";
+  const foot = document.createElement("div"); foot.style.cssText = "padding:10px 16px 14px;font:500 12px system-ui,sans-serif;opacity:.7;color:" + ink + ";"; foot.textContent = topic + " · " + when + " · loopybrains.com. Always check important facts in your textbook.";
   const wrap = document.createElement("div"); wrap.setAttribute("xmlns", "http://www.w3.org/1999/xhtml"); wrap.style.cssText = "width:" + W + "px;background:" + bg + ";"; wrap.append(head, clone, foot);
   // measure the real height: lay the finished sheet out off-screen once, so no blank space is left at the end
   const wcss = wrap.style.cssText; wrap.style.cssText = wcss + ";position:fixed;left:-20000px;top:0;visibility:hidden"; document.body.append(wrap);
