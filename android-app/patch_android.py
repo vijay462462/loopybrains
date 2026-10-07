@@ -1,7 +1,22 @@
-"""Run after `npx cap add android`. Turns on Android's FLAG_SECURE so screenshots and
-screen recordings come out black and the recent-apps preview is blank for the whole app."""
-import glob, re, sys
+"""Run after `npx cap add android`. Does three things:
+1. Copies google-services.json into the Android project (needed by Firebase App Check).
+2. Turns on FLAG_SECURE so screenshots / screen recordings are black.
+3. Disables cloud backup of app data."""
+import glob, os, re, shutil, sys
 
+# ── 1. google-services.json ──────────────────────────────────────────────────
+# The CI workflow writes the real file from a secret before this script runs.
+# Fall back to the template committed in the repo so the build still compiles.
+gsj_src = "google-services.json"
+gsj_dst = "android/app/google-services.json"
+if not os.path.exists(gsj_dst):
+    if os.path.exists(gsj_src):
+        shutil.copy(gsj_src, gsj_dst)
+        print("google-services.json copied to", gsj_dst)
+    else:
+        print("WARNING: google-services.json not found; Firebase App Check will not work")
+
+# ── 2. FLAG_SECURE ────────────────────────────────────────────────────────────
 files = glob.glob("android/app/src/main/java/**/MainActivity.java", recursive=True)
 if not files:
     sys.exit("MainActivity.java not found. Did `npx cap add android` run?")
@@ -24,7 +39,7 @@ public class MainActivity extends BridgeActivity {{
 """)
 print("FLAG_SECURE added to", path)
 
-# Do not let Android back up the app's data to the cloud.
+# ── 3. No cloud backup ────────────────────────────────────────────────────────
 mf = "android/app/src/main/AndroidManifest.xml"
 x = open(mf).read()
 x = x.replace('android:allowBackup="true"', 'android:allowBackup="false"')

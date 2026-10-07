@@ -566,7 +566,7 @@ async function firebaseStore(conf, prefix = "") {
   const [{ initializeApp }, fs, st, au] = await Promise.all([import(base + "firebase-app.js"), import(base + "firebase-firestore.js"), import(base + "firebase-storage.js"), import(base + "firebase-auth.js")]);
   const app = initializeApp(conf);
   // App Check (optional): proves requests come from this real app and not from a script. Needs a reCAPTCHA v3 site key in config.js (see APPCHECK.md).
-  try { const ak = ((window.DOUBT_DESK_CONFIG || {}).appCheck || {}).siteKey; if (/^[A-Za-z0-9_-]{20,80}$/.test(ak || "")) { const ac = await import(base + "firebase-app-check.js"); ac.initializeAppCheck(app, { provider: (((window.DOUBT_DESK_CONFIG || {}).appCheck || {}).provider === "enterprise") ? new ac.ReCaptchaEnterpriseProvider(ak) : new ac.ReCaptchaV3Provider(ak), isTokenAutoRefreshEnabled: true }); } } catch (e) { console.warn("App Check not started:", e && e.code || e); }
+  try { const appCfg = ((window.DOUBT_DESK_CONFIG || {}).appCheck || {}); const ak = appCfg.siteKey; const isNative = !!(window.Capacitor?.isNativePlatform?.()); const nativePlugin = isNative && window.Capacitor?.Plugins?.FirebaseAppCheck; if (nativePlugin) { const ac = await import(base + "firebase-app-check.js"); ac.initializeAppCheck(app, { provider: new ac.CustomProvider({ getToken: async () => { const r = await nativePlugin.getToken({ forceRefresh: false }); return { token: r.token, expireTimeMillis: r.expireTimeMillis ?? (Date.now() + 3600000) }; } }), isTokenAutoRefreshEnabled: true }); } else if (!isNative && /^[A-Za-z0-9_-]{20,80}$/.test(ak || "")) { const ac = await import(base + "firebase-app-check.js"); ac.initializeAppCheck(app, { provider: appCfg.provider === "enterprise" ? new ac.ReCaptchaEnterpriseProvider(ak) : new ac.ReCaptchaV3Provider(ak), isTokenAutoRefreshEnabled: true }); } } catch (e) { console.warn("App Check not started:", e && e.code || e); }
   const db = fs.getFirestore(app);
   const storage = st.getStorage(app);
   // Anonymous sign-in: no account, no password. It gives every browser a verified session so the
@@ -5291,7 +5291,7 @@ function bsPaint(top) {
   sc.replaceChildren(...nodes); sc.scrollTop = top ? 0 : keep;
   const pdf = $("bsPdf"); if (pdf) pdf.hidden = !bsState().res; const sv = $("bsSave"); if (sv) { const r0 = bsState().res; sv.hidden = !r0 || !!r0.disambig; sv.textContent = r0 && bsIsSaved(r0) ? "Saved \u2713" : "Save"; sv.classList.toggle("on", !!(r0 && bsIsSaved(r0))); }
   const items = [...sc.querySelectorAll(".bsr-reveal")];
-  if (!("IntersectionObserver" in window)) items.forEach(n => n.classList.add("in")); else { const io = new IntersectionObserver((es) => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), { root: sc, threshold: .08 }); items.forEach(n => io.observe(n)); }
+  if (!("IntersectionObserver" in window)) items.forEach(n => n.classList.add("in")); else { const io = new IntersectionObserver((es) => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), { threshold: .08 }); items.forEach(n => io.observe(n)); requestAnimationFrame(() => { if (!sc.parentNode) return; const sv = sc.getBoundingClientRect(); items.forEach(n => { try { const r = n.getBoundingClientRect(); if (r.top < sv.bottom && r.bottom > sv.top) n.classList.add("in"); } catch (_) {} }); }); }
 }
 // Diagrams drawn by Loopy itself (no internet needed) for core engineering topics.
 const SVGNS = "http://www.w3.org/2000/svg";
@@ -5387,7 +5387,7 @@ async function bsMakeJpegs() {
   const bg = (() => { let n = $("bsFull"); while (n) { const c = getComputedStyle(n).backgroundColor; if (c && c !== "rgba(0, 0, 0, 0)" && c !== "transparent") return c; n = n.parentElement; } return "#ffffff"; })();
   const ink = getComputedStyle(sc).color || "#111", topic = ((bsState().res || {}).topic || "Loopy Brain result").slice(0, 80), when = new Date().toLocaleDateString();
   const head = document.createElement("div"); head.style.cssText = "box-sizing:border-box;height:" + HEAD + "px;padding:14px 16px 0;font:700 15px system-ui,sans-serif;color:" + ink + ";"; head.textContent = "The Campus Loop · Loopy Brain";
-  const foot = document.createElement("div"); foot.style.cssText = "padding:10px 16px 14px;font:500 12px system-ui,sans-serif;opacity:.7;color:" + ink + ";"; foot.textContent = topic + " · " + when + " · thecampusloop.co.in. Always check important facts in your textbook.";
+  const foot = document.createElement("div"); foot.style.cssText = "padding:10px 16px 14px;font:500 12px system-ui,sans-serif;opacity:.7;color:" + ink + ";"; foot.textContent = topic + " · " + when + " · loopybrains.com. Always check important facts in your textbook.";
   const wrap = document.createElement("div"); wrap.setAttribute("xmlns", "http://www.w3.org/1999/xhtml"); wrap.style.cssText = "width:" + W + "px;background:" + bg + ";"; wrap.append(head, clone, foot);
   // measure the real height: lay the finished sheet out off-screen once, so no blank space is left at the end
   const wcss = wrap.style.cssText; wrap.style.cssText = wcss + ";position:fixed;left:-20000px;top:0;visibility:hidden"; document.body.append(wrap);

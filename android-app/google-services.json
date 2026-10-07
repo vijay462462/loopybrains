@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "530725630149",
+    "project_id": "doubt-desk-e6f39",
+    "project_url": "https://doubt-desk-e6f39.firebaseio.com",
+    "storage_bucket": "doubt-desk-e6f39.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:530725630149:android:43fd3e76afd98c93bdc0ac",
+        "android_client_info": {
+          "package_name": "com.thecampusloop.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBLRR6pf_iyKRrxSfu9mwbx-bfpAxjxNsM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

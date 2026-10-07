@@ -27,6 +27,16 @@ jobs:
         run: npm install
       - name: Create the Android project
         run: npx cap add android
+      - name: Write real google-services.json (Play Integrity App Check)
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -n "$GOOGLE_SERVICES_JSON" ]; then
+            echo "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+            echo "✓ google-services.json written from secret"
+          else
+            echo "⚠ GOOGLE_SERVICES_JSON secret not set – using template (Play Integrity disabled)"
+          fi
       - name: App icon (optional, a failure here does not stop the build)
         continue-on-error: true
         run: npx --yes @capacitor/assets generate --android --iconBackgroundColor '#9333ea' --iconBackgroundColorDark '#4f46e5'

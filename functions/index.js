@@ -20,7 +20,7 @@ const KEY_ID = defineSecret("RAZORPAY_KEY_ID");
 const KEY_SECRET = defineSecret("RAZORPAY_KEY_SECRET");
 const WEBHOOK_SECRET = defineSecret("RAZORPAY_WEBHOOK_SECRET");
 const ANTHROPIC_KEY = defineSecret("ANTHROPIC_API_KEY");
-const SITE_URL = defineString("SITE_URL");            // e.g. https://thecampusloop.co.in/  (also used for CORS)
+const SITE_URL = defineString("SITE_URL");            // e.g. https://loopybrains.com/  (also used for CORS)
 
 // Prices in paise (1 rupee = 100 paise). Keep in step with `plus` in docs/config.js.
 const PLANS = {
@@ -32,7 +32,7 @@ const PLANS = {
 const DAY = 86400000;
 // ---------- Security helpers ----------
 // Only our own site may call these functions from a browser (a token is also required, this is a second wall).
-const ALLOWED_ORIGINS = ["https://thecampusloop.co.in", "https://www.thecampusloop.co.in", "https://vijay462462.github.io", "http://localhost:8000", "http://127.0.0.1:8000"];
+const ALLOWED_ORIGINS = ["https://loopybrains.com", "https://www.loopybrains.com", "https://thecampusloop.co.in", "https://www.thecampusloop.co.in", "https://vijay462462.github.io", "http://localhost:8000", "http://127.0.0.1:8000"];
 // Per-student rate limit kept in Firestore (collection `rateLimits`, server-only). Returns false when the student has used up their allowance.
 async function allow(uid, key, max, windowMs) {
   const ref = db.collection("rateLimits").doc(uid + "_" + key + "_" + Math.floor(Date.now() / windowMs));

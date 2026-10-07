@@ -1,5 +1,5 @@
 {
-  "appId": "com.rguktspark.app",
+  "appId": "com.thecampusloop.app",
   "appName": "The Campus Loop",
   "webDir": "www",
   "server": {
@@ -10,5 +10,10 @@
   "android": {
     "allowMixedContent": false,
     "backgroundColor": "#1a1033"
+  },
+  "plugins": {
+    "FirebaseAppCheck": {
+      "tokenAutoRefreshEnabled": true
+    }
   }
 }
