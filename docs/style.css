@@ -3848,3 +3848,28 @@ body header.top .tabs button[aria-selected="true"] { color: #0d1030; }
   :root[data-palette="midnight"] header.top #askBtn { background: linear-gradient(135deg, var(--gold-2), var(--gold)); color: var(--gold-ink); border-color: transparent; font-weight: 800; }
   :root[data-palette="midnight"] .brand h1 span { color: var(--gold-2); }
 }
+/* ===== Premium layout: one calm structure on laptops (phones keep their own compact bar) ===== */
+:root[data-palette="midnight"] .splash.sp2 { --w1:#2b2d7a; --w2:#3a3d9e; --w3:#51367f; --w4:#8a6a2a; --w5:#6b2a45; --w6:#3e4468; }
+:root[data-palette="midnight"] .sp2-row { border-color: rgb(232 205 143 / .22); }
+:root[data-palette="midnight"] .sp2-row .sp2-ic { color: var(--gold-2); }
+@media (min-width: 901px) {
+  header.top { padding: 26px 30px 22px; gap: 18px; }
+  header.top .brand { width: 100%; max-width: none; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "title trust trust" "tag streak college" "stories stories stories" "exams exams exams" "tabs tabs tabs"; align-items: center; gap: 6px 12px; }
+  header.top .brand > h1 { grid-area: title; margin: 0; }
+  header.top .brand > #tagline { grid-area: tag; margin: 0; opacity: .8; }
+  header.top .brand > #trustBar { grid-area: trust; justify-self: end; margin: 0; flex-wrap: nowrap; }
+  header.top .brand > #collegeBtn { grid-area: college; justify-self: end; margin: 0; }
+  header.top .brand > #streakChip { grid-area: streak; justify-self: end; margin: 0; }
+  header.top .brand > #storyBar { grid-area: stories; }
+  header.top .brand > #exams { grid-area: exams; }
+  header.top .brand > .tabs { grid-area: tabs; justify-self: start; margin-top: 14px; }
+  header.top .hdr-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  header.top .hdr-actions::after { content: ""; order: 3; flex: 0 0 100%; height: 0; }
+  header.top .hdr-actions > .tools-toggle, header.top .hdr-actions > #paletteBtn, header.top .hdr-actions > #notifBtn, header.top .hdr-actions > #themeBtn, header.top .hdr-actions > #nameBtn { order: 1; }
+  header.top .hdr-actions > #nameBtn { margin-left: auto; }
+  header.top .hdr-actions > #askBtn { order: 2; padding: 11px 24px; font-size: 15px; }
+  header.top .hdr-actions > .chip.tool { order: 4; flex: 0 0 calc((100% - 30px) / 4); min-width: 0; justify-content: flex-start; }
+  header.top .hdr-actions > .chip.tool .cl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+  header.top .hdr-actions > .filter-toggle { order: 5; display: none !important; }
+  header.top .campus-bar, header.top .trending-inline { margin-top: 2px; }
+}

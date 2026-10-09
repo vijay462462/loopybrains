@@ -10319,7 +10319,7 @@ window.addEventListener("pageshow", () => { if (document.visibilityState === "vi
 const focusOn = () => { try { return localStorage.getItem("dd-focus") === "1"; } catch (_) { return false; } };
 function applyFocus() {
   const on = focusOn(); document.body.classList.toggle("focus", on);
-  const b = $("focusBtn"); if (b) { b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); b.querySelector(".cl").textContent = on ? "Focus mode is ON · tap to turn off" : "Focus mode · academics only"; }
+  const b = $("focusBtn"); if (b) { b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); b.querySelector(".cl").textContent = on ? "Focus mode is ON" : "Focus mode"; }
 }
 function toggleFocus() {
   try { localStorage.setItem("dd-focus", focusOn() ? "0" : "1"); } catch (_) {}
