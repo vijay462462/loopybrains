@@ -5,9 +5,9 @@
     <linearGradient id="lbGold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f7e6b0"/><stop offset=".5" stop-color="#d8b565"/><stop offset="1" stop-color="#b08a3c"/></linearGradient>
     <linearGradient id="lbSpark" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6d6"/><stop offset="1" stop-color="#e8cd8f"/></linearGradient>
   </defs>
-  <rect width="1024" height="1024" rx="230" fill="url(#bg)"/><rect width="1024" height="1024" rx="230" fill="url(#glow)"/>
-  <rect x="14" y="14" width="996" height="996" rx="218" fill="none" stroke="#e8cd8f" stroke-opacity=".28" stroke-width="4"/>
-  <g transform="translate(26 96) scale(1.9)">
+  <rect width="1024" height="1024" rx="0" fill="url(#bg)"/><rect width="1024" height="1024" rx="0" fill="url(#glow)"/>
+  
+  <g transform="translate(112 162) scale(1.5)">
     <path d="M256 292C206 222 100 226 92 300 88 372 190 384 256 292 322 200 424 214 428 292 432 372 326 380 256 292Z" transform="translate(0 -36)" fill="none" stroke="url(#lbGold)" stroke-width="46" stroke-linecap="round" stroke-linejoin="round"/>
     <g fill="#fff6d6" stroke="#141846" stroke-width="5"><circle cx="158" cy="206" r="15"/><circle cx="365" cy="192" r="15"/><circle cx="370" cy="319" r="15"/><circle cx="148" cy="321" r="15"/></g>
     <path d="M256 54l12 38 38 12-38 12-12 38-12-38-38-12 38-12z" fill="url(#lbSpark)"/>

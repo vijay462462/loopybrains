@@ -1,4 +1,4 @@
-// Placement practice bank for Loopy Brain Plus. s = topic, q = question, o = four options, a = number of the correct option (0 to 3), e = explanation.
+// Placement practice bank for Loopy Brains Plus. s = topic, q = question, o = four options, a = number of the correct option (0 to 3), e = explanation.
 window.CL_PLACEMENT = [
   { s: "Quant", q: "A 150 m long train passes a pole in 15 seconds. What is its speed in km/h?", o: ["30", "36", "40", "45"], a: 1, e: "150/15 = 10 m/s, and 10 × 18/5 = 36 km/h." },
   { s: "Quant", q: "What is 20% of 50% of 400?", o: ["20", "40", "60", "80"], a: 1, e: "50% of 400 = 200; 20% of 200 = 40." },
@@ -27,7 +27,7 @@ window.CL_PLACEMENT = [
   { s: "Verbal", q: "Which spelling is correct?", o: ["Acommodation", "Accomodation", "Accommodation", "Accommadation"], a: 2, e: "Accommodation has double c and double m." },
   { s: "Tech", q: "In C, what does printf(\"%d\", 5/2); print?", o: ["2", "2.5", "3", "0"], a: 0, e: "Both operands are integers, so integer division gives 2." },
   { s: "Tech", q: "What is the time complexity of binary search on a sorted array?", o: ["O(n)", "O(log n)", "O(n log n)", "O(1)"], a: 1, e: "Each step halves the search range." },
-  { s: "Tech", q: "In Python, what is len(\"Loopy Brain\")?", o: ["9", "10", "11", "12"], a: 1, e: "Campus = 6 letters, Loop = 4 letters, total 10." },
+  { s: "Tech", q: "In Python, what is len(\"Loopy Brains\")?", o: ["9", "10", "11", "12"], a: 1, e: "Campus = 6 letters, Loop = 4 letters, total 10." },
   { s: "Tech", q: "Which data structure follows LIFO (last in, first out)?", o: ["Queue", "Stack", "Heap", "Tree"], a: 1, e: "A stack pops the most recently pushed item first." },
   { s: "Tech", q: "Which SQL keyword removes duplicate rows from a SELECT result?", o: ["UNIQUE", "DISTINCT", "DIFFERENT", "REMOVE"], a: 1, e: "SELECT DISTINCT returns each row only once." },
   { s: "Tech", q: "In Python, what does print(2 ** 3 ** 2) show?", o: ["64", "512", "36", "256"], a: 1, e: "** is right-associative: 3**2 = 9, then 2**9 = 512." },
