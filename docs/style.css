@@ -3782,3 +3782,36 @@ html.is-scrolling .bsh-orb { animation-play-state: paused !important; }
 .bsr-load .bs-spinc { animation: bscSpin 2.4s linear infinite; }
 .bsc-hero .bs-spinc { animation: bscSpin 14s linear infinite; }
 @media (prefers-reduced-motion: reduce) { .bs-spinc { animation: none !important; } }
+/* Premium polish: one icon language (thin line icons), even heights, calmer glass chips, clear hover and focus states */
+.ic { display: inline-block; flex: none; vertical-align: middle; }
+header.top .hdr-actions .chip:not(.filter-toggle), header.top .hdr-actions .btn, header.top .tabs button, header.top .college-btn, header.top .trust-chip, header.top .streak-chip {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; line-height: 1;
+}
+header.top .tabs button { gap: 7px; font-weight: 650; letter-spacing: .01em; }
+header.top .tabs button .ic { opacity: .85; }
+header.top .tabs button[aria-selected="true"] .ic { opacity: 1; }
+header.top .hdr-actions .chip.tool { font-weight: 600; letter-spacing: .01em; }
+header.top .hdr-actions .chip.tool .ci { display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
+header.top .hdr-actions .chip, header.top .tabs button, header.top .college-btn {
+  transition: transform .15s ease, background-color .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+header.top .trust-chip { gap: 5px; font-weight: 600; }
+header.top .trust-chip .ic { opacity: .9; }
+header.top .college-btn { gap: 6px; }
+#themeBtn { width: 40px; padding: 0; }
+@media (hover: hover) {
+  header.top .hdr-actions .chip:hover, header.top .tabs button:hover:not([aria-selected="true"]) { transform: translateY(-1px); background-color: rgb(255 255 255 / .22); border-color: rgb(255 255 255 / .55); }
+}
+header.top .hdr-actions .chip:focus-visible, header.top .tabs button:focus-visible, header.top .college-btn:focus-visible, header.top .btn:focus-visible {
+  outline: 2px solid #fff; outline-offset: 2px; box-shadow: 0 0 0 5px rgb(255 255 255 / .22);
+}
+header.top .btn.primary#askBtn { font-weight: 700; box-shadow: 0 8px 20px -10px rgb(0 0 0 / .55); }
+@media (min-width: 721px) {
+  header.top .hdr-actions { gap: 10px; align-items: center; }
+  header.top .hdr-actions .chip.tool { padding: 5px 16px 5px 6px; min-height: 42px; background: rgb(255 255 255 / .1); border-color: rgb(255 255 255 / .22); backdrop-filter: blur(8px); }
+  header.top .hdr-actions .chip.tool .ci { width: 30px; height: 30px; border-radius: 10px; background: rgb(255 255 255 / .16); font-size: 0; }
+  header.top .hdr-actions .chip.tool .ci .ic { width: 17px; height: 17px; }
+}
+@media (prefers-reduced-motion: reduce) { header.top .hdr-actions .chip, header.top .tabs button, header.top .college-btn { transition: none; transform: none !important; } }
+header.top [hidden], header.top .hdr-actions [hidden] { display: none !important; }
+header.top .college-btn { display: flex; width: fit-content; }
