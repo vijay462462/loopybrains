@@ -435,6 +435,27 @@ function el(tag, attrs = {}, ...kids) {
   for (const k of kids.flat()) if (k != null && k !== false) n.append(k instanceof Node ? k : String(k));
   return n;
 }
+// Line icons (static, trusted markup) that replace emoji so every icon shares one weight, size and colour.
+const ICONS = {
+  lock: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+  shield: '<path d="M12 3 4 6v6c0 5 3.4 8.2 8 9 4.6-.8 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/>',
+  ban: '<circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/>',
+  check: '<path d="m4 12 5 5L20 6"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/>',
+  chat: '<path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.2A8.4 8.4 0 1 1 21 11.5z"/>',
+  school: '<path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 2 9 2 12 0v-5"/>',
+  moon: '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
+  contrast: '<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/>',
+  bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/>',
+  grid: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+};
+function icon(name, size = 16) {
+  const doc = new DOMParser().parseFromString('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + (ICONS[name] || "") + "</svg>", "image/svg+xml");
+  const n = document.importNode(doc.documentElement, true);
+  n.setAttribute("class", "ic"); n.setAttribute("width", size); n.setAttribute("height", size); n.setAttribute("aria-hidden", "true");
+  return n;
+}
 function ago(ts) {
   const s = Math.max(0, (Date.now() - ts) / 1000);
   if (s < 60) return "just now";
@@ -2138,10 +2159,10 @@ function renderTrust() {
   const bar = $("trustBar"); if (!bar) return;
   const students = state.profiles.length, posts = ["doubts", "ideas", "clubs", "gate", "jobs", "challenges"].reduce((n, k) => n + (state[k] || []).length, 0);
   const key = students + "/" + posts + "/" + NO_COLLEGE; if (key === trustKey) return; trustKey = key;
-  const chips = [["🔒", "Anonymous sign-in"], ["🛡️", "Moderated"], ["🚫", "No ads"], ["✔", "Verified students"]];
-  if (!NO_COLLEGE && students >= 10) chips.unshift(["👥", students + " students"]);
-  if (!NO_COLLEGE && posts >= 25) chips.splice(1, 0, ["💬", posts + " posts"]);
-  bar.replaceChildren(...chips.map(([i, t]) => el("span", { class: "trust-chip" }, i + " " + t)), el("a", { class: "trust-link", href: "privacy.html", target: "_blank", rel: "noopener" }, "Privacy"));
+  const chips = [["lock", "Anonymous sign-in"], ["shield", "Moderated"], ["ban", "No ads"], ["check", "Verified students"]];
+  if (!NO_COLLEGE && students >= 10) chips.unshift(["users", students + " students"]);
+  if (!NO_COLLEGE && posts >= 25) chips.splice(1, 0, ["chat", posts + " posts"]);
+  bar.replaceChildren(...chips.map(([i, t]) => el("span", { class: "trust-chip" }, icon(i, 13), t)), el("a", { class: "trust-link", href: "privacy.html", target: "_blank", rel: "noopener" }, "Privacy"));
 }
 function renderHeader() {
   renderTrust(); renderToday();
@@ -2200,7 +2221,7 @@ function renderHeader() {
     const open = document.querySelector("header.top").classList.contains("filters-open");
     const yr = (state.tab === "doubts" || state.tab === "gate") ? (state.yearFilter === "All" ? "All years" : state.yearFilter) : null;
     const camp = state.campusFilter === "all" ? "All campuses" : state.campusFilter;
-    ft.replaceChildren(el("span", {}, "🎚️ Filters · " + camp + (yr ? " · " + yr : "")), el("span", {}, open ? "▲" : "▼"));
+    ft.replaceChildren(el("span", {}, "Filters · " + camp + (yr ? " · " + yr : "")), el("span", {}, open ? "▲" : "▼"));
     ft.classList.toggle("on", state.campusFilter !== "all" || (yr && state.yearFilter !== "All"));
     ft.setAttribute("aria-expanded", String(open));
   }
@@ -2838,7 +2859,7 @@ function renderBell() {
   let b = $("notifBtn");
   if (!b) { const host = $("themeBtn"); if (!host || !host.parentNode) return; b = el("button", { class: "chip", id: "notifBtn", type: "button", "aria-label": "Notifications", title: "Notifications", onclick: () => showPanel("notifs") }); host.parentNode.insertBefore(b, host); }
   const n = notifItems().filter(i => i.fresh).length;
-  b.replaceChildren(el("span", { "aria-hidden": "true" }, "\u{1F514}"), n ? el("i", { class: "bell-n" }, n > 9 ? "9+" : String(n)) : null);
+  b.replaceChildren(icon("bell", 18), n ? el("i", { class: "bell-n" }, n > 9 ? "9+" : String(n)) : null);
   b.setAttribute("aria-label", n ? n + " new notifications" : "Notifications");
 }
 // While the app is open in the background, new answers can also appear as a phone notification (only after the student allows it).
@@ -10441,7 +10462,7 @@ $("focusBtn") && $("focusBtn").addEventListener("click", toggleFocus);
   const acts = document.querySelector(".hdr-actions"); if (!acts) return;
   let open = false; try { open = localStorage.getItem("dd-tools-open") === "1"; } catch (_) {}
   const b = el("button", { type: "button", class: "chip tools-toggle", "aria-expanded": String(open) }, "");
-  const paint = () => { acts.classList.toggle("tools-closed", !open); b.setAttribute("aria-expanded", String(open)); b.textContent = open ? "🧰 Fewer tools ▴" : "🧰 More tools ▾"; };
+  const paint = () => { acts.classList.toggle("tools-closed", !open); b.setAttribute("aria-expanded", String(open)); b.replaceChildren(icon("grid", 16), open ? "Fewer tools ▴" : "More tools ▾"); };
   b.addEventListener("click", () => { open = !open; try { localStorage.setItem("dd-tools-open", open ? "1" : "0"); } catch (_) {} paint(); });
   acts.prepend(b); paint();
 })();
@@ -10470,7 +10491,7 @@ document.addEventListener("click", (e) => { const b = e.target.closest && e.targ
   addEventListener("touchmove", (e) => { if (!on) return; dy = e.touches[0].clientY - y0; const dx = Math.abs(e.touches[0].clientX - Number(ind.dataset.x || 0)); if (dy < 8 || dx > dy) { if (dy < 0) on = false; return; } show(dy > 70 ? "Release to refresh" : "Pull to refresh", dy > 70 ? "↑" : "↓", dy * 0.6); }, { passive: true });
   addEventListener("touchend", () => { if (!on) return; on = false; if (dy > 70) refresh(); else hide(); }, { passive: true });
 })();
-try { const gt = document.querySelector('.tabs [data-tab="gate"]'); if (gt) gt.textContent = "🎯 " + EXAM_LABEL; } catch (_) {}
+try { const gt = document.querySelector('.tabs [data-tab="gate"]'); if (gt) { const ic = gt.querySelector("svg"); gt.replaceChildren(...(ic ? [ic, " "] : []), EXAM_LABEL); } } catch (_) {}
 maybeWelcome();
 try { showCollegeReveal(); } catch (_) {}
 maybeMilestone();
@@ -10490,7 +10511,7 @@ $("search").addEventListener("input", (e) => { state.query = e.target.value; ren
 $("filter").addEventListener("change", (e) => { state.filter = e.target.value; renderList(); });
 
 // Theme toggle: Light, Dark (charcoal) and Black (true black for OLED screens). Black is a dark theme with data-tone="black".
-const THEME_CYCLE = ["light", "dark", "black"], THEME_ICON = { light: "\u{1F319}", dark: "\u{1F311}", black: "\u2600\uFE0F" }, THEME_NAME = { light: "Light", dark: "Dark", black: "Black" };
+const THEME_CYCLE = ["light", "dark", "black"], THEME_ICON = { light: "moon", dark: "contrast", black: "sun" }, THEME_NAME = { light: "Light", dark: "Dark", black: "Black" };
 const systemTheme = () => matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 function applyThemeName(n) { const r = document.documentElement; r.setAttribute("data-theme", n === "black" ? "dark" : n); if (n === "black") r.setAttribute("data-tone", "black"); else r.removeAttribute("data-tone"); }
 let currentTheme = (() => { try { const v = localStorage.getItem("dd-theme"); return THEME_CYCLE.includes(v) ? v : systemTheme(); } catch (_) { return systemTheme(); } })();
@@ -10531,7 +10552,7 @@ function renderAppearance() {
 const themeBtn = document.getElementById("themeBtn");
 if (themeBtn && themeBtn.parentNode) { const pb = el("button", { class: "chip", id: "paletteBtn", type: "button" }, svgIcon("palette")); bindPaletteButton(pb); themeBtn.parentNode.insertBefore(pb, themeBtn); }
 if (themeBtn) {
-  const label = () => { const nx = THEME_CYCLE[(THEME_CYCLE.indexOf(currentTheme) + 1) % 3]; themeBtn.textContent = THEME_ICON[nx]; themeBtn.title = themeBtn.ariaLabel = "Theme: " + THEME_NAME[currentTheme] + ". Tap for " + THEME_NAME[nx]; };
+  const label = () => { const nx = THEME_CYCLE[(THEME_CYCLE.indexOf(currentTheme) + 1) % 3]; themeBtn.replaceChildren(icon(THEME_ICON[nx], 18)); themeBtn.title = themeBtn.ariaLabel = "Theme: " + THEME_NAME[currentTheme] + ". Tap for " + THEME_NAME[nx]; };
   themeBtn.addEventListener("click", () => {
     currentTheme = THEME_CYCLE[(THEME_CYCLE.indexOf(currentTheme) + 1) % 3]; applyThemeName(currentTheme); label();
     try { localStorage.setItem("dd-theme", currentTheme); } catch (_) {}
@@ -10557,7 +10578,7 @@ if (CFG.title) { document.title = CFG.title; }
   const h1 = $("siteTitle");
   if (h1) { try { h1.replaceChildren(...brandLockup(CFG.title)); } catch (_) { h1.textContent = CFG.title; } }
   const sc = $("streakChip"); if (sc) sc.addEventListener("click", () => showPanel("me"));
-  const cb = $("collegeBtn"); if (cb) { cb.replaceChildren(...(TENANT && TENANT.crest ? [crestEl(22), " "] : ["🏫 "]), (TENANT ? TENANT.name : IS_RGUKT ? "RGUKT AP" : "Choose your college") + " ▾");
+  const cb = $("collegeBtn"); if (cb) { cb.replaceChildren(...(TENANT && TENANT.crest ? [crestEl(22), " "] : [icon("school", 15), " "]), (TENANT ? TENANT.name : IS_RGUKT ? "RGUKT AP" : "Choose your college") + " ▾");
   try { if (TENANT && TENANT.crest) localStorage.setItem("dd-crest", TENANT.crest); else localStorage.removeItem("dd-crest"); localStorage.setItem("dd-college-name", COLLEGE || ""); } catch (_) {} cb.addEventListener("click", () => showPanel("college")); }
 }
 
