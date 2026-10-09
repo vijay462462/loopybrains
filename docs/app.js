@@ -1796,11 +1796,11 @@ document.addEventListener("pointermove", (e) => {
     s.style.setProperty("--ex", (dx / d * 1.6).toFixed(2) + "px"); s.style.setProperty("--ey", (dy / d * 1.2).toFixed(2) + "px");
   });
 }, { passive: true });
-// Loopy Brains brand mark: a gold neural loop (infinity shape with nodes) and a spark (trusted static markup, parsed as SVG).
+// Loopy Brains brand mark: an LB monogram inside an open coral loop (trusted static markup, parsed as SVG).
 let _bmN = 0;
 function brandMark(size = 64) {
-  const u = ++_bmN, g = "bmRing" + u, sp = "bmGold" + u;
-  const doc = new DOMParser().parseFromString('<svg class="bmark" viewBox="56 0 408 408" width="' + size + '" height="' + size + '" role="img" aria-label="Loopy Brains">' + '<defs><linearGradient id="' + g + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f7e6b0"/><stop offset=".5" stop-color="#d8b565"/><stop offset="1" stop-color="#b08a3c"/></linearGradient><linearGradient id="' + sp + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6d6"/><stop offset="1" stop-color="#e8cd8f"/></linearGradient></defs><path d="M256 292C206 222 100 226 92 300 88 372 190 384 256 292 322 200 424 214 428 292 432 372 326 380 256 292Z" transform="translate(0 -36)" fill="none" stroke="url(#' + g + ')" stroke-width="46" stroke-linecap="round" stroke-linejoin="round"/><g fill="#fff6d6" stroke="#0b3d2e" stroke-width="5"><circle cx="158" cy="206" r="15"/><circle cx="365" cy="192" r="15"/><circle cx="370" cy="319" r="15"/><circle cx="148" cy="321" r="15"/></g><path d="M256 54l12 38 38 12-38 12-12 38-12-38-38-12 38-12z" fill="url(#' + sp + ')"/>' + "</svg>", "image/svg+xml");
+  const u = ++_bmN, g = "bmRing" + u;
+  const doc = new DOMParser().parseFromString('<svg class="bmark" viewBox="0 0 512 512" width="' + size + '" height="' + size + '" role="img" aria-label="Loopy Brains">' + '<defs><linearGradient id="' + g + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffb4a3"/><stop offset="1" stop-color="#ff6f59"/></linearGradient></defs><circle cx="256" cy="256" r="196" fill="none" stroke="url(#' + g + ')" stroke-width="30" stroke-linecap="round" stroke-dasharray="960 272" transform="rotate(-75 256 256)"/><circle cx="404" cy="132" r="17" fill="#fff4ec"/><g fill="none" stroke="#fff4ec" stroke-width="34" stroke-linecap="round" stroke-linejoin="round" transform="translate(-41 0)"><path d="M194 168V340H234"/><path d="M302 168V340"/><path d="M302 168H336C366 168 380 188 380 210C380 234 364 252 330 252H302"/><path d="M302 252H338C378 252 394 274 394 298C394 322 376 340 338 340H302"/></g>' + "</svg>", "image/svg+xml");
   const n = document.importNode(doc.documentElement, true); n.setAttribute("aria-hidden", "true"); n.removeAttribute("role"); n.removeAttribute("aria-label"); return n;
 }
 function loopyMini(costume) {
@@ -2021,7 +2021,7 @@ function renderToday() {
     el("button", { class: "hero-say", type: "button", onclick: loopyTap }, el("span", { class: "hero-say-dot" }), el("span", {}, loopyPrompt().label), el("b", {}, "Ask Loopy \u203A")),
     el("div", { class: "hero-acts" },
       el("button", { class: "hero-ask", type: "button", onclick: () => { const b = $("askBtn"); if (b) b.click(); } }, "❓ Ask a doubt"),
-      el("button", { class: "hero-ask", type: "button", onclick: () => { state.ai = state.ai || { msgs: [], busy: false, note: "" }; showPanel("ai"); } }, "\u2728 Loopy Brain"))),
+      el("button", { class: "hero-ask", type: "button", onclick: () => { state.ai = state.ai || { msgs: [], busy: false, note: "" }; showPanel("ai"); } }, "\u2728 Loopy AI"))),
     (() => { if (newbie) return null; const t = loopyTip(), st = readJSON("dd-tip", {}); if (st.gone && st.day === dayStr()) return null;
       return el("div", { class: "today-tip" }, el("small", {}, "💡 Loopy\u2019s tip for today"), el("p", {}, t.text), el("div", { class: "rowbtns" }, t.cta ? el("button", { class: "btn sm primary", type: "button", onclick: t.cta[1] }, t.cta[0]) : null, el("button", { class: "btn sm", type: "button", onclick: () => { writeJSON("dd-tip", { ...readJSON("dd-tip", {}), day: dayStr(), gone: true }); todayKey = ""; renderToday(); } }, "Got it"))); })(),
     note ? el("div", { class: "today-note" }, el("strong", {}, "💬 " + (note.from ? "A note from " + note.from : "A note from your college")), el("p", {}, note.text), el("button", { class: "of-x", type: "button", "aria-label": "Dismiss note", onclick: () => { writeJSON("dd-note-gone", note.updatedAt); todayKey = ""; renderToday(); } }, "✕")) : null, null, 
@@ -2110,7 +2110,7 @@ function renderEvents() {
 }
 // Explore: every tool in one tidy screen, so the home screen can stay simple.
 const EXPLORE = [
-  ["Study", [["__brain", "\u2728", "Loopy Brain"], ["__mysubj", "\u{1F4DA}", "My subjects"], ["quizBtn", "🧠", "Daily Quiz"], ["labBtn", "🧪", "Study Lab"], ["studyBtn", "📖", "Study Tools"], ["learnBtn", "📚", "Learn from IIT"], ["focusBtn", "🎯", "Focus mode"]]],
+  ["Study", [["__brain", "\u2728", "Loopy AI"], ["__mysubj", "\u{1F4DA}", "My subjects"], ["quizBtn", "🧠", "Daily Quiz"], ["labBtn", "🧪", "Study Lab"], ["studyBtn", "📖", "Study Tools"], ["learnBtn", "📚", "Learn from IIT"], ["focusBtn", "🎯", "Focus mode"]]],
   ["Campus", [["__story", "📸", "Add a story"], ["eventsBtn", "🎉", "Events"], ["drivesBtn", "🏢", "Campus Drives"], ["leadersBtn", "🏆", "Top Helpers"], ["alumniBtn", "🎓", "Alumni", "alumni"]]],
   ["Career", [["careerBtn", "", "Career Guide"], ["__resume", "📄", "Resume builder"]]],
   ["More", [["__howto", "\u2753", "How to use"], ["__feedback", "\u{1F4AC}", "Feedback and ideas"], ["__stickers", "🎴", "Sticker book"], ["__wardrobe", "👗", "Loopy\u2019s wardrobe"], ["__install", "📲", "Install app"], ["__plus", "⭐", "Loopy Brains Plus"], ["botBtn", "", "Loop Bot", "bot"], ["funBtn", "🎉", "Entertainment", "fun"], ["aboutBtn", "ℹ️", "About Us"]]],
@@ -2826,7 +2826,7 @@ function pushAskCard(d) {
 // ---------- Pilot feedback, doubt of the day ----------
 const FB_PAY = [["no", "No"], ["29", "₹29"], ["49", "₹49"], ["99", "₹99"], ["later", "Ask me later"]];
 const fbDone = () => readJSON("dd-fb-" + weekKey(), false);
-const FB_CATS = [["Suggestion", "\u{1F4A1} Suggestion"], ["Bug", "\u{1F41B} Something is wrong"], ["Feature", "\u2728 New feature idea"], ["Loopy Brain", "\u{1F50E} Loopy Brain"], ["Praise", "\u2764\uFE0F I love this"]];
+const FB_CATS = [["Suggestion", "\u{1F4A1} Suggestion"], ["Bug", "\u{1F41B} Something is wrong"], ["Feature", "\u2728 New feature idea"], ["Loopy AI", "\u{1F50E} Loopy AI"], ["Praise", "\u2764\uFE0F I love this"]];
 function renderFeedback() {
   { const g = connectingGate(); if (g) return g; }
   const f = { rating: 0, pay: "later", cat: state.fbCat || "Suggestion" }, say = el("p", { class: "hint", role: "status" }, "");
@@ -4355,7 +4355,7 @@ async function startCheckout(planKey, gift) {
 const PLUS_FEATURES = ["Plus gift link for a friend", "Group study rooms with a shared timer", "Scan handwritten notes into flashcards", "Live doubt sessions with seniors", "Placement preparation kit", "Offline downloads of papers", "Weekly leaderboard for Plus members", "More resume templates", "No ads, ever"];
 const PLUS_TILES = [
   ["\u{1F50E}", "Loopy AI Search", "Search any topic for a quick answer, pictures, videos and PDFs.", "loopysearch"],
-  ["", "Loopy Brain", "Five Loopy models. All five are free for RGUKT students. Other colleges get Spark free, and the rest are Loopy Brains Plus.", "ai"],
+  ["", "Loopy AI", "Five Loopy models. All five are free for RGUKT students. Other colleges get Spark free, and the rest are Loopy Brains Plus.", "ai"],
   ["📝", "Mock tests", "Timed subject and placement tests with a topic-wise report.", "mock"],
   ["📓", "Mistake notebook", "Questions you missed come back until you get them right.", "mistakes"],
   ["🗓️", "Exam planner", "A daily plan with spaced revision before your exam.", "planner"],
@@ -4368,7 +4368,7 @@ const PLUS_TILES = [
   ["🎯", "Goals and badges", "Weekly targets and badges to keep you going.", "goals"],
   ["⭐", "Plus star", "A star next to your nickname on every post.", ""],
 ];
-const PLUS_COMPARE = [["", "Free", "Plus"], ["Loopy Brain models", "Spark (+ Scholar for RGUKT)", "All 5: + Scholar, Vision, Sage, Apex"], ["Board, stories, quizzes, Study Lab", "✔", "✔"], ["Daily streaks and battles", "✔", "✔"], ["AI study helper", "–", "✔"], ["Mock tests and progress chart", "–", "✔"], ["Mistake notebook and exam planner", "–", "✔"], ["Paper vault", "–", "✔"], ["Weekly goals, badges, focus timer", "–", "✔"], ["Resume builder, weekly leaderboard", "–", "✔"], ["Cloud backup, themes, ⭐", "–", "✔"]];
+const PLUS_COMPARE = [["", "Free", "Plus"], ["Loopy AI models", "Spark (+ Scholar for RGUKT)", "All 5: + Scholar, Vision, Sage, Apex"], ["Board, stories, quizzes, Study Lab", "✔", "✔"], ["Daily streaks and battles", "✔", "✔"], ["AI study helper", "–", "✔"], ["Mock tests and progress chart", "–", "✔"], ["Mistake notebook and exam planner", "–", "✔"], ["Paper vault", "–", "✔"], ["Weekly goals, badges, focus timer", "–", "✔"], ["Resume builder, weekly leaderboard", "–", "✔"], ["Cloud backup, themes, ⭐", "–", "✔"]];
 function renderPlus() {
   const acct = myAccount(), verified = acct.verified, has = state.plan.plus;
   const canBackup = !!store && !!store.getTop && verified && (!PLUS.enabled || has);
@@ -4623,7 +4623,7 @@ function renderPapers() {
         el("button", { class: "btn sm", type: "button", onclick: () => { if (done.has(p.id)) done.delete(p.id); else { done.add(p.id); bump("papers", 1); } writeJSON("dd-papers-done", [...done].slice(-500)); render(); } }, done.has(p.id) ? "✔ Practised" : "Mark practised")))) : [el("p", { class: "hint" }, "No papers match.")]),
     el("div", { class: "rowbtns" }, back)].filter(Boolean);
 }
-// Loopy Brain chat: answers are built in the app from the syllabus, board answers and Wikipedia. No outside AI service is called.
+// Loopy AI chat: answers are built in the app from the syllabus, board answers and Wikipedia. No outside AI service is called.
 // Loopy AI Search: type any topic and get a quick answer with a picture (from Wikipedia, read-only), then the best places to watch, read and practise it. Free, needs no sign-in, and only reads public pages.
 const LS_LEVELS = { quick: ["⚡ Quick idea", "explained simply"], deep: ["\u{1F52C} Deep lecture", "full lecture"], exam: ["\u{1F3AF} Exam prep", "important questions previous year"] };
 const LS_CHANNELS = [["NPTEL", "NPTEL (IITs)"], ["MIT OpenCourseWare", "MIT OpenCourseWare"], ["Khan Academy", "Khan Academy"], ["Neso Academy", "Neso Academy"], ["Gate Smashers", "Gate Smashers"], ["3Blue1Brown", "3Blue1Brown (visual maths)"]];
@@ -4889,7 +4889,7 @@ function renderLoopySearch() {
     el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => showPanel(state.ls && state.ls.back || "plus") }, "Back")),
   ];
 }
-// ---------- Loopy Brain: Loopy's own answer engine ----------
+// ---------- Loopy AI: Loopy's own answer engine ----------
 // No outside AI. It reads three sources: your college's syllabus, the best answers classmates already posted on the board, and Wikipedia text.
 // It then builds a structured answer. It grows smarter every time students answer doubts.
 const BRAIN_CACHE = new Map();
@@ -5132,7 +5132,7 @@ async function safetyGate(q) {
   safeModal(n === 1 ? "Warning 1 of 2" : "Final warning: 2 of 2", n === 1 ? ["Loopy Search is only for learning. Sexual and romantic content is not allowed, so this search was not run.", "If you try again you will get a final warning."] : ["Sexual and romantic searches are not allowed. This is your final warning.", "One more attempt will block your Loopy Search access permanently."], n === 2);
   return false;
 }
-// ---------- Loopy Search: full-screen search workspace of Loopy Brain ----------
+// ---------- Loopy Search: full-screen search workspace of Loopy AI ----------
 const BS_KEY = "dd-bs-recent", MYS_KEY = "dd-my-subjects";
 const BS_LEVELS = [
   [1, "Spark", "Instant answers and a step-by-step solver", false],
@@ -5242,7 +5242,7 @@ async function bsPapers(q) {
     }).filter(p => p.title);
   } catch (_) { return []; }
 }
-// ---------- Loopy Brain credits: daily and weekly limits ----------
+// ---------- Loopy AI credits: daily and weekly limits ----------
 // A search costs 1 credit (Low), 2 (Medium) or 3 (High). Maths, conversions and formulas are free. Usage is also saved in the student's own record so clearing the browser does not reset it.
 const BS_CAPS = { free: { day: 10, week: 40 }, rgukt: { day: 400, week: 2500 }, plus: { day: 600, week: 3000 } };
 const bsBase = () => hasPlusNow() ? BS_CAPS.plus : IS_RGUKT ? BS_CAPS.rgukt : BS_CAPS.free;
@@ -5452,8 +5452,8 @@ async function bsMakeJpegs() {
   const hd = (u) => u.replace(/\/(\d{2,4})px-/, "/1200px-");
   for (const im of [...clone.querySelectorAll("img")]) { const u = im.getAttribute("src") || ""; let d = ""; if (/^https:\/\/upload\.wikimedia\.org\//.test(u)) { d = await bsImgData(hd(u)); if (!d) d = await bsImgData(u); } if (d) { im.setAttribute("src", d); im.removeAttribute("srcset"); im.removeAttribute("loading"); } else im.remove(); }
   const bg = (() => { let n = $("bsFull"); while (n) { const c = getComputedStyle(n).backgroundColor; if (c && c !== "rgba(0, 0, 0, 0)" && c !== "transparent") return c; n = n.parentElement; } return "#ffffff"; })();
-  const ink = getComputedStyle(sc).color || "#111", topic = ((bsState().res || {}).topic || "Loopy Brain result").slice(0, 80), when = new Date().toLocaleDateString();
-  const head = document.createElement("div"); head.style.cssText = "box-sizing:border-box;height:" + HEAD + "px;padding:14px 16px 0;font:700 15px system-ui,sans-serif;color:" + ink + ";"; head.textContent = "Loopy Brains · Loopy Brain";
+  const ink = getComputedStyle(sc).color || "#111", topic = ((bsState().res || {}).topic || "Loopy AI result").slice(0, 80), when = new Date().toLocaleDateString();
+  const head = document.createElement("div"); head.style.cssText = "box-sizing:border-box;height:" + HEAD + "px;padding:14px 16px 0;font:700 15px system-ui,sans-serif;color:" + ink + ";"; head.textContent = "Loopy Brains · Loopy AI";
   const foot = document.createElement("div"); foot.style.cssText = "padding:10px 16px 14px;font:500 12px system-ui,sans-serif;opacity:.7;color:" + ink + ";"; foot.textContent = topic + " · " + when + " · loopybrains.com. Always check important facts in your textbook.";
   const wrap = document.createElement("div"); wrap.setAttribute("xmlns", "http://www.w3.org/1999/xhtml"); wrap.style.cssText = "width:" + W + "px;background:" + bg + ";"; wrap.append(head, clone, foot);
   // measure the real height: lay the finished sheet out off-screen once, so no blank space is left at the end
@@ -5493,7 +5493,7 @@ function bsExportSheet() {
       const downloadAll = () => items.forEach((x, i) => setTimeout(() => { const a2 = document.createElement("a"); a2.href = x.url; a2.download = x.name; document.body.append(a2); a2.click(); a2.remove(); }, i * 350));
       body.replaceChildren(el("h3", {}, "Your HD picture" + (n > 1 ? "s are" : " is") + " ready"), el("p", { class: "hint" }, n + (n === 1 ? " page" : " pages") + " · sharp, 3 times the screen size. Tap Download, or press and hold a picture to save it."),
         el("div", { class: "bsx-pages" }, ...items.map((x, i) => el("figure", { class: "bsx-pg" }, el("img", { src: x.url, alt: "Page " + (i + 1) + " of " + n }), el("figcaption", {}, el("span", {}, "Page " + (i + 1) + " of " + n + " · " + Math.round(x.b.size / 1024) + " KB"), el("a", { href: x.url, download: x.name }, "Download"))))),
-        el("div", { class: "rowbtns" }, el("button", { type: "button", class: "btn primary", onclick: downloadAll }, "⬇️ Download all" + (n > 1 ? " (" + n + ")" : "")), canShare ? el("button", { type: "button", class: "btn", onclick: async () => { try { await navigator.share({ files, title: "Loopy Brain" }); } catch (_) {} } }, "Share") : null, el("button", { type: "button", class: "btn", onclick: () => { freeAll(); close(); } }, "Close")));
+        el("div", { class: "rowbtns" }, el("button", { type: "button", class: "btn primary", onclick: downloadAll }, "⬇️ Download all" + (n > 1 ? " (" + n + ")" : "")), canShare ? el("button", { type: "button", class: "btn", onclick: async () => { try { await navigator.share({ files, title: "Loopy AI" }); } catch (_) {} } }, "Share") : null, el("button", { type: "button", class: "btn", onclick: () => { freeAll(); close(); } }, "Close")));
     } catch (_) {
       body.replaceChildren(el("h3", {}, "Could not make a picture"), el("p", { class: "hint" }, "Your browser blocked it. Please use the PDF option instead."), el("div", { class: "rowbtns" }, el("button", { type: "button", class: "btn primary", onclick: () => { close(); setTimeout(() => { try { window.print(); } catch (_) {} }, 150); } }, "Use PDF"), el("button", { type: "button", class: "btn", onclick: close }, "Close")));
     }
@@ -5504,7 +5504,7 @@ async function bsSubmit(q) {
   q = lsClean(q); if (q.length < 2) return; const bs = bsState();
   if (/[^\u0000-\u024F\u2000-\u206F\u00A0-\u00FF]/.test(q) && ahWords(q).length === 0) { showNotice("Loopy Search works with English words for now. Please type your topic in English.", "err"); return; }
   if (!(await safetyGate(q))) return;
-  { const mm = await brainModesMod(); if (mm && mm.offensive(q)) { safeModal("I can\u2019t help with attacking people or systems", ["Loopy Brain teaches security so you can defend, not so you can break into accounts, devices or websites. That could hurt real people and is against the law.", "Try Aegis to learn how attacks work and how to stop them, or practise legally on free labs such as PortSwigger Academy, picoCTF or TryHackMe."], false); return; } }
+  { const mm = await brainModesMod(); if (mm && mm.offensive(q)) { safeModal("I can\u2019t help with attacking people or systems", ["Loopy AI teaches security so you can defend, not so you can break into accounts, devices or websites. That could hurt real people and is against the law.", "Try Aegis to learn how attacks work and how to stop them, or practise legally on free labs such as PortSwigger Academy, picoCTF or TryHackMe."], false); return; } }
   { const talk = bsChat(q) || bsFun(q); if (talk) { bs.pending = ""; bsRun(q, talk); return; } }
   const solved = bs.forcePack ? null : await brainSolve(q); if (solved) { bs.pending = ""; bsRun(q, solved); return; }
   { const mm = await brainModesMod(), sg = mm && mm.suggestMode ? mm.suggestMode(q) : ""; if (sg && sg !== (bs.mode || "atlas")) { const nm = (BS_MODES.find(x => x[0] === sg) || [])[1] || sg; bs.mode = sg; showNotice("This looks like a " + (sg === "forge" ? "code" : sg === "aegis" ? "security" : "project") + " question, so I switched to " + nm + " for a better answer.", "ok"); } }
@@ -5780,14 +5780,14 @@ function securityView(r) {
   return out;
 }
 function brandSpin(cls) {
-  const A = (n, a, ...k) => sv(n, a, ...k), stops = (arr) => arr.map(([o, c, op]) => A("stop", { offset: o, "stop-color": c, "stop-opacity": op == null ? 1 : op }));
-  const defs = A("defs", {}, A("linearGradient", { id: "bsBg", x1: 0, y1: 0, x2: 1, y2: 1 }, ...stops([[0, "#1b1466"], [.55, "#0f0a3d"], [1, "#070522"]])), A("radialGradient", { id: "bsGa", cx: .2, cy: .05, r: .9 }, ...stops([[0, "#a855f7", .5], [1, "#a855f7", 0]])), A("radialGradient", { id: "bsGb", cx: .92, cy: .98, r: .75 }, ...stops([[0, "#f59e0b", .38], [1, "#f59e0b", 0]])), A("linearGradient", { id: "bsRing", x1: 0, y1: 0, x2: 1, y2: 1 }, ...stops([[0, "#22d3ee"], [.35, "#6366f1"], [.7, "#d946ef"], [1, "#fb923c"]])), A("linearGradient", { id: "bsGold", x1: 0, y1: 0, x2: 1, y2: 1 }, ...stops([[0, "#fde68a"], [.5, "#f59e0b"], [1, "#fcd34d"]])));
-  const ring = A("g", { class: "bs-spinc" }, A("circle", { cx: 512, cy: 410, r: 238, fill: "none", stroke: "url(#bsRing)", "stroke-width": 72, "stroke-linecap": "round", "stroke-dasharray": "1100 396", transform: "rotate(45 512 410)" }));
-  const root = A("svg", { viewBox: "0 0 1024 1024", class: cls, role: "img", "aria-label": "Loopy Brains" }, defs, A("rect", { width: 1024, height: 1024, rx: 230, fill: "url(#bsBg)" }), A("rect", { width: 1024, height: 1024, rx: 230, fill: "url(#bsGa)" }), A("rect", { width: 1024, height: 1024, rx: 230, fill: "url(#bsGb)" }), ring,
-    A("path", { d: "M330 400 L512 322 L694 400 L512 478 Z", fill: "#fff" }), A("path", { d: "M404 448 v70 q108 58 216 0 v-70", fill: "none", stroke: "#e0e7ff", "stroke-width": 22, "stroke-linejoin": "round" }), A("path", { d: "M694 400 v96", stroke: "url(#bsGold)", "stroke-width": 10, "stroke-linecap": "round" }), A("circle", { cx: 694, cy: 508, r: 17, fill: "url(#bsGold)" }),
-    A("text", { x: 512, y: 842, "text-anchor": "middle", "font-size": 112, "font-weight": 700, "letter-spacing": 4, fill: "#fff", "font-family": "Georgia, 'Times New Roman', serif" }, "LOOPY"), A("rect", { x: 262, y: 880, width: 215, height: 3, rx: 1.5, fill: "url(#bsGold)" }), A("rect", { x: 547, y: 880, width: 215, height: 3, rx: 1.5, fill: "url(#bsGold)" }), A("path", { d: "M512 868 l13 14 -13 14 -13 -14z", fill: "url(#bsGold)" }),
-    A("text", { x: 512, y: 956, "text-anchor": "middle", "font-size": 64, "font-weight": 700, "letter-spacing": 30, fill: "#fcd34d", "font-family": "Georgia, 'Times New Roman', serif" }, "BRAINS"));
-  return root;
+  // Loopy AI logo: the LB monogram stays still while the coral loop around it turns (it turns faster while Loopy is thinking).
+  const A = (n, a, ...k) => sv(n, a, ...k), stop = (o, c) => A("stop", { offset: o, "stop-color": c });
+  const defs = A("defs", {}, A("linearGradient", { id: "bsBg", x1: 0, y1: 0, x2: 1, y2: 1 }, stop(0, "#18909a"), stop(.55, "#0a4f56"), stop(1, "#052e33")), A("linearGradient", { id: "bsRing", x1: 0, y1: 0, x2: 1, y2: 1 }, stop(0, "#ffb4a3"), stop(1, "#ff6f59")));
+  const ring = A("g", { class: "bs-spinc" }, A("circle", { cx: 256, cy: 256, r: 196, fill: "none", stroke: "url(#bsRing)", "stroke-width": 30, "stroke-linecap": "round", "stroke-dasharray": "960 272", transform: "rotate(-75 256 256)" }), A("circle", { cx: 404, cy: 132, r: 17, fill: "#fff4ec" }));
+  const lb = A("g", { fill: "none", stroke: "#fff4ec", "stroke-width": 34, "stroke-linecap": "round", "stroke-linejoin": "round", transform: "translate(-41 0)" }, A("path", { d: "M194 168V340H234" }), A("path", { d: "M302 168V340" }), A("path", { d: "M302 168H336C366 168 380 188 380 210C380 234 364 252 330 252H302" }), A("path", { d: "M302 252H338C378 252 394 274 394 298C394 322 376 340 338 340H302" }));
+  return A("svg", { viewBox: "0 0 1024 1024", class: cls, role: "img", "aria-label": "Loopy AI" }, defs, A("rect", { width: 1024, height: 1024, rx: 230, fill: "url(#bsBg)" }), A("g", { transform: "translate(206 70) scale(1.2)" }, ring, lb),
+    A("text", { x: 512, y: 826, "text-anchor": "middle", "font-size": 110, "font-weight": 700, "letter-spacing": 6, fill: "#fff4ec", "font-family": "Georgia, 'Times New Roman', serif" }, "LOOPY"),
+    A("text", { x: 512, y: 944, "text-anchor": "middle", "font-size": 84, "font-weight": 700, "letter-spacing": 40, fill: "#ff8a73", "font-family": "Georgia, 'Times New Roman', serif" }, "AI"));
 }
 function loopyMark(cls) {
   const r = sv("svg", { viewBox: "0 0 64 64", class: cls, "aria-hidden": "true" }), cols = ["#f59e0b", "#f97316", "#ef4444", "#d946ef", "#6366f1", "#22d3ee", "#10b981", "#eab308"];
@@ -5832,7 +5832,7 @@ function brainViewInner(ui) {
   const rgNote = el("p", { class: "bs-model bsf-noprint" }, IS_RGUKT ? "All five Loopy models are free for RGUKT students." : "Loopy Spark is free. Scholar, Vision, Sage and Apex are part of Loopy Brains Plus.");
   const lockCard = bs.lock ? el("div", { class: "bs-lock", role: "status" }, el("strong", {}, bsName(bs.lock) + (IS_RGUKT ? " is not part of the free RGUKT plan" : " is a Plus model")), el("p", {}, BS_LEVELS[bs.lock - 1][2] + ". " + (IS_RGUKT ? "All Loopy models are free for RGUKT students." : "Loopy Spark is free for everyone. Loopy Brains Plus unlocks Loopy Scholar, Vision, Sage and Apex.")), el("div", { class: "rowbtns" }, IS_RGUKT ? null : el("button", { class: "btn sm primary", type: "button", onclick: () => bsLeave(() => showPanel("plus")) }, "See Loopy Brains Plus"), el("button", { class: "btn sm", type: "button", onclick: () => { bs.lock = 0; bsPaint(); } }, "Stay on free models"))) : null;
   const setMode = (id) => { if (bs.mode === id) return; bs.mode = id; bsRemember(); bs.lock = 0; if (bs.q && bs.res && !bs.res.disambig) bsSubmit(bs.q); else bsPaint(); };
-  const modeBar = el("div", { class: "bs-modes bsf-noprint" + (bs.res ? " compact" : " pills"), role: "tablist", "aria-label": "Loopy Brain engine" }, ...BS_MODES.map(m => el("button", { type: "button", role: "tab", class: "bs-mode" + (bs.mode === m[0] ? " on" : ""), "aria-selected": String(bs.mode === m[0]), onclick: () => setMode(m[0]) }, svgIcon(m[0]), el("span", {}, el("b", {}, m[1]), el("small", {}, m[2])))));
+  const modeBar = el("div", { class: "bs-modes bsf-noprint" + (bs.res ? " compact" : " pills"), role: "tablist", "aria-label": "Loopy AI engine" }, ...BS_MODES.map(m => el("button", { type: "button", role: "tab", class: "bs-mode" + (bs.mode === m[0] ? " on" : ""), "aria-selected": String(bs.mode === m[0]), onclick: () => setMode(m[0]) }, svgIcon(m[0]), el("span", {}, el("b", {}, m[1]), el("small", {}, m[2])))));
   const modeLine = el("p", { class: "bs-modeline bsf-noprint" }, el("b", {}, mi[1] + ": "), mi[3]);
   const easyBtn = el("button", { type: "button", class: "bs-easy" + (bs.easy !== false ? " on" : ""), "aria-pressed": String(bs.easy !== false), onclick: () => { bs.easy = bs.easy === false; bsRemember(); bsPaint(); } }, "Easy words: " + (bs.easy !== false ? "On" : "Off"));
   const offer = bsOffer(), offerBar = offer ? el("div", { class: "bs-offer bsf-noprint" }, el("b", {}, offer.title), offer.text ? el("span", {}, " " + offer.text) : null) : null, L = bsLeft(), pct = Math.round(Math.min(L.day / L.caps.day, L.week / L.caps.week) * 100);
@@ -5855,7 +5855,7 @@ function brainViewInner(ui) {
   if (!bs.res) {
     const C = window.RGUKT_CURRICULUM, rows = C ? ((C.data[curState.year] || {})[curState.branch] || []).map(r => r[0]).slice(0, 8) : [], rec = bsRecent();
     const hr = new Date().getHours(), greet = hr < 5 ? "Good night" : hr < 12 ? "Good morning" : hr < 17 ? "Good afternoon" : "Good evening", nm = String(getName() || "").trim().split(" ")[0];
-    const hero = el("section", { class: "bsc-hero" }, el("div", { class: "bsc-orbit", "aria-hidden": "true" }, el("i", { class: "r1" }), el("i", { class: "r2" }), el("b", { class: "d1" }), el("b", { class: "d2" }), el("b", { class: "d3" }), brandSpin("bsc-brand live")), el("h2", { class: "bsc-hi" }, greet + (nm ? ", " : ""), nm ? el("span", {}, nm) : null), el("p", { class: "bsc-sub" }, "Ask your syllabus anything. Easy words, diagrams, exact answers."));
+    const hero = el("section", { class: "bsc-hero" }, el("div", { class: "bsc-orbit", "aria-hidden": "true" }, el("i", { class: "r1" }), el("i", { class: "r2" }), el("b", { class: "d1" }), el("b", { class: "d2" }), el("b", { class: "d3" }), brandSpin("bsc-brand live")), el("h2", { class: "bsc-hi" }, greet + (nm ? ", " : ""), nm ? el("span", {}, nm) : null), el("small", { class: "bsc-cap" }, "Loopy AI \u00B7 your 24\u00D77 study partner"), el("p", { class: "bsc-sub" }, "Ask your syllabus anything. Easy words, diagrams, exact answers."));
     const TRY = { atlas: [["\u{1F4C8}", "Explain the Bode plot", "Control systems"], ["\u2795", "Half adder circuit", "Digital logic"], ["\u{1F3B2}", "Bayes theorem with an example", "Probability"], ["\u{1F50C}", "BJT biasing and the Q point", "Analog circuits"], ["\u{1F4E1}", "Sampling theorem and aliasing", "Signal processing"], ["\u{1F9EE}", "Compare FIR and IIR filters", "Signal processing"]],
       launchpad: [["\u{1F326}\uFE0F", "IoT weather station", "Project plan"], ["\u{1F4F7}", "Student attendance system", "Project plan"], ["\u{1F331}", "Smart irrigation", "Project plan"], ["\u{1F4DA}", "Library management website", "Project plan"]],
       forge: [["\u{1F50D}", "binary search in Python", "Code"], ["\u{1F9EE}", "Verilog code for a counter", "Hardware"], ["\u{1F4CA}", "bubble sort in C", "Code"], ["\u2615", "factorial in Java", "Code"]],
@@ -5870,13 +5870,13 @@ function brainViewInner(ui) {
       rec.length ? el("div", { class: "bs-blk" }, el("small", { class: "bs-secthead" }, "Recent"), chips(rec, go)) : null,
       rows.length ? el("div", { class: "bs-blk" }, el("small", { class: "bs-secthead" }, "Your syllabus"), chips(rows, go)) : null,
       mySubjectsBlock(bs, go), savedBlock(bs, go),
-      el("div", { class: "bs-blk bs-fbk" }, el("small", { class: "hint" }, "Help us make Loopy Brain better"), el("div", { class: "rowbtns" }, el("button", { type: "button", class: "btn sm", onclick: () => { state.fbCat = "Loopy Brain"; bsClose(); showPanel("feedback"); } }, "\u{1F4AC} Send feedback or an idea"))),
+      el("div", { class: "bs-blk bs-fbk" }, el("small", { class: "hint" }, "Help us make Loopy AI better"), el("div", { class: "rowbtns" }, el("button", { type: "button", class: "btn sm", onclick: () => { state.fbCat = "Loopy AI"; bsClose(); showPanel("feedback"); } }, "\u{1F4AC} Send feedback or an idea"))),
       el("div", { class: "rowbtns" }, back)].filter(Boolean);
   }
   const r = bs.res, q = r.topic, lv = r.lv;
   const noteCard = r.savedId ? (() => { const ta = el("textarea", { rows: "3", maxlength: "500", class: "bs-note", placeholder: "Write your own notes here", "aria-label": "My notes" }); ta.value = r.note || ""; return el("section", { class: "bsr-card note bsf-noprint" }, el("h3", {}, "My notes"), ta, el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => { const l = bsSavedList(); const it = l.find(x => x.id === r.savedId); if (it) { it.note = ta.value.slice(0, 500); bsPutSaved(l); r.note = it.note; showNotice("Note saved.", "ok"); } } }, "Save note"), el("small", { class: "hint" }, "Saved on this phone. Reading this is free and works offline."))); })() : null;
   if (r.disambig) return [bar, head, el("section", { class: "bsr-card bsr-reveal in" }, el("h3", {}, "I am not sure what you mean"), el("p", {}, "I could not find a clear article for \u201C" + bs.q + "\u201D, and I would rather ask than show you the wrong answer."), r.disambig.length ? el("p", { class: "hint" }, "Did you mean one of these?") : el("p", { class: "hint" }, "Try the full name of the topic, or add the subject, for example \u201Csequential logic\u201D."), el("div", { class: "bs-chips" }, ...r.disambig.map(t => el("button", { type: "button", class: "tp-sub", onclick: () => { bs.charged = ""; bsSubmit(t); } }, t)))), el("div", { class: "rowbtns bsf-noprint" }, el("button", { class: "btn", type: "button", onclick: () => { bs.res = null; bs.q = ""; bs.pending = ""; bsPaint(true); } }, "New search"), back)];
-  if (r.mode && r.mode !== "atlas") return [bar, head, noteCard, ...(r.mode === "forge" ? codeView(r) : r.mode === "launchpad" ? projectView(r) : securityView(r)), el("p", { class: "hint ai-fine" }, "Loopy Brain gives guidance for learning. Check important facts and follow your college rules."), el("div", { class: "rowbtns bsf-noprint" }, el("button", { class: "btn", type: "button", onclick: () => { bs.res = null; bs.q = ""; bs.pending = ""; bsPaint(true); } }, "New search"), back)];
+  if (r.mode && r.mode !== "atlas") return [bar, head, noteCard, ...(r.mode === "forge" ? codeView(r) : r.mode === "launchpad" ? projectView(r) : securityView(r)), el("p", { class: "hint ai-fine" }, "Loopy AI gives guidance for learning. Check important facts and follow your college rules."), el("div", { class: "rowbtns bsf-noprint" }, el("button", { class: "btn", type: "button", onclick: () => { bs.res = null; bs.q = ""; bs.pending = ""; bsPaint(true); } }, "New search"), back)];
   if (r.compare) return [bar, head, noteCard, ...compareView(r), el("div", { class: "rowbtns bsf-noprint" }, el("button", { class: "btn", type: "button", onclick: () => { bs.res = null; bs.q = ""; bs.pending = ""; bsPaint(true); } }, "New search"), back)];
   const yt = (x) => "https://www.youtube.com/results?search_query=" + encodeURIComponent(q + " " + x), gg = (x) => "https://www.google.com/search?q=" + encodeURIComponent(q + " " + x);
   const tabList = [["all", "All"]]; if (lv >= 2) tabList.push(["classmates", "Classmates" + (r.board.length ? " " + r.board.length : "")], ["syllabus", "Syllabus" + (r.syl.length ? " " + r.syl.length : "")]); if (lv >= 3) tabList.push(["images", "Pictures"], ["models", "3D"]); if (lv >= 4) tabList.push(["videos", "Videos"], ["notes", "Notes"]); if (lv >= 5) tabList.push(["exam", "Exam"]);
@@ -5908,7 +5908,7 @@ function brainViewInner(ui) {
   else body = [r.pack ? null : r.report ? null : answer, ...(r.pack ? packView(r.pack, go, r) : []), r.pack && r.report ? el("h3", { class: "pk-more" }, "More from the web") : null, ...(r.report ? reportView(r.report, r, go) : []), lv >= 3 && !r.solved && r.size !== "brief" ? imgBox() : null, lv >= 3 && !r.solved && r.size !== "brief" ? modBox() : null, lv >= 4 && !r.solved && !r.report ? deepBox() : null, lv >= 4 && !r.solved && r.size !== "brief" ? sect("Watch and learn", watch) : null, lv >= 4 && !r.solved && r.size !== "brief" ? sect("Notes and practice", notes) : null, lv >= 5 && !r.solved ? examBox() : null,
     lv >= 2 && r.board.length ? sect("Classmates’ answers", ...r.board.slice(0, 2).map(doubtRow)) : null, lv >= 2 && r.syl.length ? sect("In your syllabus", ...r.syl.map(sylRow)) : null];
   const stamp = el("div", { class: "bsr-print" }, "Loopy Brains · Loopy Search · " + new Date().toLocaleDateString());
-  return [bar, head, tabBar, stamp, ...body.filter(Boolean), r.report ? null : null, sizeRow, acts, el("p", { class: "hint ai-fine" }, "Loopy Brain builds answers from your syllabus, your classmates’ best answers, Wikipedia and open research. Check important facts in your textbook."), el("div", { class: "rowbtns bsf-noprint" }, el("button", { class: "btn", type: "button", onclick: () => { bs.res = null; bs.q = ""; bs.pending = ""; bsPaint(true); } }, "New search"), back)].filter(Boolean);
+  return [bar, head, tabBar, stamp, ...body.filter(Boolean), r.report ? null : null, sizeRow, acts, el("p", { class: "hint ai-fine" }, "Loopy AI builds answers from your syllabus, your classmates’ best answers, Wikipedia and open research. Check important facts in your textbook."), el("div", { class: "rowbtns bsf-noprint" }, el("button", { class: "btn", type: "button", onclick: () => { bs.res = null; bs.q = ""; bs.pending = ""; bsPaint(true); } }, "New search"), back)].filter(Boolean);
 }
 function renderAI() {
   if (state.ai && state.ai.prefill) { bsState().start = String(state.ai.prefill); state.ai.prefill = ""; }
@@ -7063,7 +7063,7 @@ function renderAbout() {
   const feature = (icon, title, text) => el("div", { class: "learn-card" }, el("strong", {}, icon + " " + title), el("p", { class: "hint" }, text));
   return [
     el("h2", {}, "ℹ️ About " + BRAND),
-    el("img", { class: "brand-banner", src: "brand/the-campus-loop-banner-1200x630.png", alt: BRAND + ". Where every doubt finds answers.", width: "1200", height: "630", loading: "lazy" }),
+    el("img", { class: "brand-banner", src: "brand/loopy-brains-banner-1200x630.png", alt: BRAND + ". Where every doubt finds answers.", width: "1200", height: "630", loading: "lazy" }),
     el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => { try { window.open("about.html", "_blank", "noopener"); } catch (_) {} } }, "📄 Read our full story")),
     el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: () => showWelcome(true) }, "👋 Show the welcome tour"), el("button", { class: "btn sm", type: "button", onclick: () => showPanel("howto") }, "How to use this app")),
     el("p", { class: "hint" }, el("a", { href: "terms.html", target: "_blank", rel: "noopener" }, "Terms"), " · ", el("a", { href: "privacy.html", target: "_blank", rel: "noopener" }, "Privacy"), " · ", el("a", { href: "refund.html", target: "_blank", rel: "noopener" }, "Refunds")),
@@ -10564,8 +10564,8 @@ function applyThemeName(n) { const r = document.documentElement; r.setAttribute(
 let currentTheme = (() => { try { const v = localStorage.getItem("dd-theme"); return THEME_CYCLE.includes(v) ? v : systemTheme(); } catch (_) { return systemTheme(); } })();
 applyThemeName(currentTheme);
 // Colour palettes: the student chooses one (Forest is the default). Each has a light, dark and black version.
-const PALETTES = { midnight: ["Midnight", ["#171a45", "#c9a45c", "#f6f4ee"], "p"], royal: ["Royal", ["#0f2c52", "#e2bd64", "#f4f1ea"], "p"], emerald: ["Emerald", ["#0d4a38", "#e3cf94", "#f3f2ec"], "p"], burgundy: ["Burgundy", ["#5b1a2b", "#e9b49f", "#f6efeb"], "p"], obsidian: ["Obsidian", ["#181818", "#d4af37", "#f2f1ee"], "p"], forest: ["Forest", ["#2d452f", "#6b9d4a", "#cfe2ce"], "c"], indigo: ["Indigo", ["#312c51", "#48426d", "#f0c38e"], "c"], terracotta: ["Terracotta", ["#c9532f", "#c78a9a", "#5e8c74"], "c"], ocean: ["Ocean", ["#1a73e8", "#8ab4f8", "#fdd663"], "c"], slate: ["Slate", ["#2f3a46", "#9db4c8", "#e5e7eb"], "c"] };
-let currentPalette = (() => { try { const v = localStorage.getItem("dd-palette"); return PALETTES[v] ? v : "emerald"; } catch (_) { return "emerald"; } })();
+const PALETTES = { tealcoral: ["Teal and coral", ["#0a4f56", "#ff6f59", "#f3f7f6"], "p"], midnight: ["Midnight", ["#171a45", "#c9a45c", "#f6f4ee"], "p"], royal: ["Royal", ["#0f2c52", "#e2bd64", "#f4f1ea"], "p"], emerald: ["Emerald", ["#0d4a38", "#e3cf94", "#f3f2ec"], "p"], burgundy: ["Burgundy", ["#5b1a2b", "#e9b49f", "#f6efeb"], "p"], obsidian: ["Obsidian", ["#181818", "#d4af37", "#f2f1ee"], "p"], forest: ["Forest", ["#2d452f", "#6b9d4a", "#cfe2ce"], "c"], indigo: ["Indigo", ["#312c51", "#48426d", "#f0c38e"], "c"], terracotta: ["Terracotta", ["#c9532f", "#c78a9a", "#5e8c74"], "c"], ocean: ["Ocean", ["#1a73e8", "#8ab4f8", "#fdd663"], "c"], slate: ["Slate", ["#2f3a46", "#9db4c8", "#e5e7eb"], "c"] };
+let currentPalette = (() => { try { const v = localStorage.getItem("dd-palette"); return PALETTES[v] ? v : "tealcoral"; } catch (_) { return "tealcoral"; } })();
 document.documentElement.setAttribute("data-palette", currentPalette);
 let updateThemeLabel = () => {};
 function setPalette(k) { if (!PALETTES[k]) return; currentPalette = k; document.documentElement.setAttribute("data-palette", k); try { localStorage.setItem("dd-palette", k); } catch (_) {} render(); }
