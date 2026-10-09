@@ -1,4 +1,4 @@
-// Colleges for Loopy Brain picker in every other state and union territory of India (Andhra Pradesh is in colleges-ap*.js).
+// Colleges for Loopy Brains picker in every other state and union territory of India (Andhra Pradesh is in colleges-ap*.js).
 // Each state has its main central, state, national-institute and private universities plus well-known colleges.
 // Compiled from public knowledge, so it is a starting point: please correct names and add the missing colleges (one line each).
 // Every college opens its own board at ?c=<slug> in the room "college-<slug>".

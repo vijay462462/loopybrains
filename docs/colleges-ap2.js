@@ -1,4 +1,4 @@
-// More colleges for Loopy Brain picker: engineering, medical and degree colleges of Andhra Pradesh.
+// More colleges for Loopy Brains picker: engineering, medical and degree colleges of Andhra Pradesh.
 // Added from public knowledge, so please check the names and add the ones that are missing (one line each).
 // Same rules as colleges-ap.js: slug = link name, and each college gets its own board in the room "college-<slug>".
 (window.COLLEGE_DIRECTORY = window.COLLEGE_DIRECTORY || []).push(

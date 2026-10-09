@@ -72,8 +72,8 @@ function pickCollege() {
 try { const r = new URLSearchParams(location.search).get("ref"); if (r && /^[A-Za-z0-9_-]{10}$/.test(r) && !localStorage.getItem("dd-ref")) localStorage.setItem("dd-ref", r); } catch (_) {}
 try { const g = new URLSearchParams(location.search).get("gift"); if (g && /^[A-HJ-NP-Z2-9]{12}$/i.test(g)) localStorage.setItem("dd-gift", g.toUpperCase()); } catch (_) {}
 const SEL = pickCollege(), NO_COLLEGE = SEL === "", IS_RGUKT = SEL === "rgukt";
-const BRAND = BASE_CFG.brand || "Loopy Brain";
-// Loopy Brain Plus (optional paid plan). enabled:false = free early access and a waitlist; see PREMIUM.md to go live.
+const BRAND = BASE_CFG.brand || "Loopy Brains";
+// Loopy Brains Plus (optional paid plan). enabled:false = free early access and a waitlist; see PREMIUM.md to go live.
 const MEDIA = { gallery: false, profilePhoto: false, ...(BASE_CFG.media || {}) };   // photos: camera only and no profile photos, to stop misuse (see config.js)
 const PUSH = { vapidKey: "", ...(BASE_CFG.push || {}) };
 const PLUS = { enabled: false, monthly: 49, yearly: 399, functionsUrl: "", ...(BASE_CFG.plus || {}) };
@@ -446,6 +446,12 @@ const ICONS = {
   school: '<path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 2 9 2 12 0v-5"/>',
   moon: '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
   contrast: '<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/>',
+  flame: '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
+  target: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+  briefcase: '<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>',
+  book: '<path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/>',
+  bulb: '<path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1V17h6v-.2c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/>',
+  arrow: '<path d="M7 17 17 7M8 7h9v9"/>',
   bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/>',
   grid: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
@@ -1611,7 +1617,7 @@ function showWelcome(force, startId) {
           el("p", { class: "hl" }, "Maybe you are far from home. Maybe exam week feels heavy. Maybe it seems everyone else already knows the answer."),
           el("p", { class: "hl" }, "They don\u2019t. We didn\u2019t either."),
           el("p", { class: "hl" }, "Here no question is small and nobody studies alone. Seniors who once sat where you sit are ready to help, and one day you will help someone too."),
-          el("p", { class: "hl sign" }, "We are glad you are here. Loopy Brain team")),
+          el("p", { class: "hl sign" }, "We are glad you are here. Loopy Brains team")),
         el("p", { class: "ob-say" }, "So, what should I call you?"), inp];
     } else if (sid === "interests") {
       body = [el("div", { class: "ob-loopy" }, loopyMini()), el("h2", {}, (who ? "Nice to meet you, " + who : "Nice to meet you") + "! \u{1F44B}"), el("p", { class: "ob-say" }, "What brings you here? Pick any. I will tailor your home screen."),
@@ -1781,10 +1787,11 @@ document.addEventListener("pointermove", (e) => {
     s.style.setProperty("--ex", (dx / d * 1.6).toFixed(2) + "px"); s.style.setProperty("--ey", (dy / d * 1.2).toFixed(2) + "px");
   });
 }, { passive: true });
-// Loopy Brain brand mark: a C-shaped loop wearing a graduation cap (trusted static markup, parsed as SVG).
+// Loopy Brains brand mark: a gold neural loop (infinity shape with nodes) and a spark (trusted static markup, parsed as SVG).
 let _bmN = 0;
 function brandMark(size = 64) {
-  const doc = new DOMParser().parseFromString("<svg class=\"bmark\" viewBox=\"220 120 584 580\" width=\""+size+"\" height=\""+size+"\" role=\"img\" aria-label=\"Loopy Brain\"><defs><linearGradient id=\"bmRing"+(++_bmN)+"\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0\" stop-color=\"#22d3ee\"/><stop offset=\".35\" stop-color=\"#6366f1\"/><stop offset=\".7\" stop-color=\"#d946ef\"/><stop offset=\"1\" stop-color=\"#fb923c\"/></linearGradient><linearGradient id=\"bmGold"+(++_bmN)+"\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0\" stop-color=\"#fde68a\"/><stop offset=\".5\" stop-color=\"#f59e0b\"/><stop offset=\"1\" stop-color=\"#fcd34d\"/></linearGradient></defs><circle cx=\"512\" cy=\"410\" r=\"238\" fill=\"none\" stroke=\"url(#bmRing"+(++_bmN)+")\" stroke-width=\"72\" stroke-linecap=\"round\" stroke-dasharray=\"1100 396\" transform=\"rotate(45 512 410)\"/><path d=\"M330 400 L512 322 L694 400 L512 478 Z\" fill=\"#ffffff\"/><path d=\"M404 448 v70 q108 58 216 0 v-70\" fill=\"none\" stroke=\"#e0e7ff\" stroke-width=\"22\" stroke-linejoin=\"round\"/><path d=\"M694 400 v96\" stroke=\"url(#bmGold"+(++_bmN)+")\" stroke-width=\"10\" stroke-linecap=\"round\"/><circle cx=\"694\" cy=\"508\" r=\"17\" fill=\"url(#bmGold"+(++_bmN)+")\"/></svg>", "image/svg+xml");
+  const u = ++_bmN, g = "bmRing" + u, sp = "bmGold" + u;
+  const doc = new DOMParser().parseFromString('<svg class="bmark" viewBox="56 0 408 408" width="' + size + '" height="' + size + '" role="img" aria-label="Loopy Brains">' + '<defs><linearGradient id="' + g + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f7e6b0"/><stop offset=".5" stop-color="#d8b565"/><stop offset="1" stop-color="#b08a3c"/></linearGradient><linearGradient id="' + sp + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6d6"/><stop offset="1" stop-color="#e8cd8f"/></linearGradient></defs><path d="M256 292C206 222 100 226 92 300 88 372 190 384 256 292 322 200 424 214 428 292 432 372 326 380 256 292Z" transform="translate(0 -36)" fill="none" stroke="url(#' + g + ')" stroke-width="46" stroke-linecap="round" stroke-linejoin="round"/><g fill="#fff6d6" stroke="#141846" stroke-width="5"><circle cx="158" cy="206" r="15"/><circle cx="365" cy="192" r="15"/><circle cx="370" cy="319" r="15"/><circle cx="148" cy="321" r="15"/></g><path d="M256 54l12 38 38 12-38 12-12 38-12-38-38-12 38-12z" fill="url(#' + sp + ')"/>' + "</svg>", "image/svg+xml");
   const n = document.importNode(doc.documentElement, true); n.setAttribute("aria-hidden", "true"); n.removeAttribute("role"); n.removeAttribute("aria-label"); return n;
 }
 function loopyMini(costume) {
@@ -2097,7 +2104,7 @@ const EXPLORE = [
   ["Study", [["__brain", "\u2728", "Loopy Brain"], ["__mysubj", "\u{1F4DA}", "My subjects"], ["quizBtn", "🧠", "Daily Quiz"], ["labBtn", "🧪", "Study Lab"], ["studyBtn", "📖", "Study Tools"], ["learnBtn", "📚", "Learn from IIT"], ["focusBtn", "🎯", "Focus mode"]]],
   ["Campus", [["__story", "📸", "Add a story"], ["eventsBtn", "🎉", "Events"], ["drivesBtn", "🏢", "Campus Drives"], ["leadersBtn", "🏆", "Top Helpers"], ["alumniBtn", "🎓", "Alumni", "alumni"]]],
   ["Career", [["careerBtn", "", "Career Guide"], ["__resume", "📄", "Resume builder"]]],
-  ["More", [["__howto", "\u2753", "How to use"], ["__feedback", "\u{1F4AC}", "Feedback and ideas"], ["__stickers", "🎴", "Sticker book"], ["__wardrobe", "👗", "Loopy\u2019s wardrobe"], ["__install", "📲", "Install app"], ["__plus", "⭐", "Loopy Brain Plus"], ["botBtn", "", "Loop Bot", "bot"], ["funBtn", "🎉", "Entertainment", "fun"], ["aboutBtn", "ℹ️", "About Us"]]],
+  ["More", [["__howto", "\u2753", "How to use"], ["__feedback", "\u{1F4AC}", "Feedback and ideas"], ["__stickers", "🎴", "Sticker book"], ["__wardrobe", "👗", "Loopy\u2019s wardrobe"], ["__install", "📲", "Install app"], ["__plus", "⭐", "Loopy Brains Plus"], ["botBtn", "", "Loop Bot", "bot"], ["funBtn", "🎉", "Entertainment", "fun"], ["aboutBtn", "ℹ️", "About Us"]]],
 ];
 function renderExplore() {
   const back = el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back");
@@ -2254,6 +2261,36 @@ const TAB_GUIDE = {
   market: { safe: "Meet in a public place on campus. Do not pay in advance.", icon: "\u{1F6D2}", purpose: "Buy and sell books, notes, electronics and hostel items with your college mates.", steps: ["Pick a category, or search for what you need.", "Message the seller and meet in a public place on campus.", "Selling? Tap Post an item with a clear photo and price."], next: () => ["\u{1F3F7}\uFE0F Sell something", () => openAsk()] },
   gate: { safe: "Use papers from official or trusted sources.", icon: "\u{1F3AF}", purpose: "Exam preparation: previous papers, tips and discussions for your exam.", steps: ["Pick your branch and subject.", "Open the previous papers and try them with a timer.", "Stuck on a question? Post it in the discussion."], next: () => ["\u{1F4DD} Open previous papers", () => { const b = document.querySelector(".pyq-panel, .subj-chip"); if (b) b.scrollIntoView({ behavior: "smooth" }); }] },
 };
+// Home block on top of the Doubts feed: a greeting, one big call to action and four shortcut tiles.
+function renderHome() {
+  const box = $("homeBento"); if (!box) return;
+  const show = state.tab === "doubts" && state.group === "All" && !state.query.trim() && !NO_COLLEGE && !state.selected;
+  if (!show) { box.hidden = true; return; }
+  const live = (arr) => (arr || []).filter(x => !x.deleted);
+  const n = state.myStreak || 0, gateN = live(state.gate).length, clubN = live(state.clubs).length;
+  const jobsN = live(state.jobs).filter(d => { const dl = jobDaysLeft(d); return dl == null || dl >= 0; }).length;
+  const main = [
+    { ic: "flame", val: n + (n === 1 ? " day" : " days"), label: "Quiz streak", go: () => showPanel("quiz") },
+    { tab: "gate", ic: "target", val: EXAM_LABEL, label: gateN ? gateN + " papers and tips" : "Papers and prep", go: () => goTab("gate") },
+    { tab: "clubs", ic: "users", val: "Clubs", label: clubN ? clubN + (clubN === 1 ? " post" : " posts") : "Find your people", go: () => goTab("clubs") },
+    { tab: "jobs", ic: "briefcase", val: "Jobs", label: jobsN ? jobsN + (jobsN === 1 ? " drive open" : " drives open") : "Placement prep", go: () => goTab("jobs") },
+  ].filter(t => !t.tab || (featureOn(t.tab) && !isSimple()));
+  const extra = [
+    { ic: "bulb", val: "Daily Quiz", label: "One question a day", go: () => showPanel("quiz") },
+    { ic: "book", val: "Study Tools", label: "Notes and formulas", go: () => showPanel("resources") },
+    { ic: "chat", val: "Loop Bot", label: "Ask anything", go: () => { const b = $("botBtn"); if (b) b.click(); } },
+    { ic: "users", val: "Top Helpers", label: "Campus leaders", go: () => showPanel("leaders") },
+  ];
+  const tiles = [...main, ...extra.filter(x => !main.some(m => m.val === x.val))].slice(0, 4);
+  const name = (getName() || "").trim();
+  box.hidden = false;
+  box.replaceChildren(
+    el("p", { class: "hb-hi" }, name ? "Hi " + name : "Hi there"),
+    el("p", { class: "hb-sub" }, "Pick up where you left off."),
+    el("button", { type: "button", class: "hb-cta", onclick: () => openAsk() },
+      el("span", { class: "hb-cta-t" }, el("b", {}, TABS.doubts.ask), el("small", {}, "Get answers from seniors")), icon("arrow", 26)),
+    el("div", { class: "hb-grid" }, tiles.map(t => el("button", { type: "button", class: "hb-tile", onclick: t.go }, icon(t.ic, 24), el("b", {}, t.val), el("small", {}, t.label)))));
+}
 function renderGuide() {
   const box = $("guideBar"); if (!box) return;
   const g = TAB_GUIDE[state.tab]; if (!g || NO_COLLEGE || state.query.trim()) { box.hidden = true; return; }
@@ -2434,7 +2471,7 @@ function showEligibility() {
     el("p", { class: "hint" }, "This is your own declaration. Please answer honestly. Details are in the ", el("a", { href: "terms.html", target: "_blank", rel: "noopener" }, "Terms"), ".")));
   document.body.append(ov);
 }
-// ---------- Short Loopy Brain ID: STATE-COLLEGE-4 digits, for example AP-RGU-4821 ----------
+// ---------- Short Loopy Brains ID: STATE-COLLEGE-4 digits, for example AP-RGU-4821 ----------
 // Made from the sign-in id with a fixed mix, so it is the same on every visit and needs no server. It is for sharing and support, never for signing in.
 const STATE_CODES = { "Andhra Pradesh": "AP", "Telangana": "TS", "Tamil Nadu": "TN", "Karnataka": "KA", "Kerala": "KL", "Maharashtra": "MH", "Delhi": "DL", "Uttar Pradesh": "UP", "West Bengal": "WB", "Gujarat": "GJ", "Rajasthan": "RJ", "Madhya Pradesh": "MP", "Punjab": "PB", "Odisha": "OD", "Bihar": "BR", "Assam": "AS", "Haryana": "HR", "Jammu and Kashmir": "JK", "Uttarakhand": "UK", "Jharkhand": "JH", "Chhattisgarh": "CG", "Himachal Pradesh": "HP", "Puducherry": "PY", "Goa": "GA", "Meghalaya": "ML", "Manipur": "MN", "Chandigarh": "CH", "Tripura": "TR", "Nagaland": "NL", "Arunachal Pradesh": "AR", "Mizoram": "MZ", "Sikkim": "SK", "Ladakh": "LA", "Andaman and Nicobar Islands": "AN", "Lakshadweep": "LD", "Dadra and Nagar Haveli and Daman and Diu": "DD" };
 function clCodes() {
@@ -2471,7 +2508,7 @@ async function claimStudentIdOnce() {
 }
 function idCard() {
   const uid = store && store.uid; if (!uid) return null; const id = campusId(uid), final = id === readJSON("dd-clid", ""), say = el("small", { class: "hint", role: "status" }, "");
-  return el("div", { class: "learn-card id-card" }, el("small", { class: "tag" }, "\u{1F194} YOUR LOOPY BRAIN ID"), el("strong", { class: "id-code" }, id),
+  return el("div", { class: "learn-card id-card" }, el("small", { class: "tag" }, "\u{1F194} YOUR LOOPY BRAINS ID"), el("strong", { class: "id-code" }, id),
     el("small", { class: "hint" }, final ? "Your own number, never reused. Share it with friends or quote it when you write to support. It is not a password." : "Temporary number. Your final number is issued when the server is connected. It is not a password."),
     el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: async () => { try { await navigator.clipboard.writeText(id); say.textContent = "Copied."; } catch (_) { say.textContent = id; } } }, "\u{1F4CB} Copy")), say);
 }
@@ -4285,9 +4322,9 @@ function inviteCard() {
       try { await navigator.clipboard.writeText(text + " " + url); note.textContent = "Link copied. Paste it in your class group."; } catch (_) { note.textContent = url; }
     } }, "Share invite link")), note);
 }
-// ---------- Loopy Brain Plus ----------
+// ---------- Loopy Brains Plus ----------
 function plusCard() {
-  return el("div", { class: "learn-card" }, el("strong", {}, "⭐ Loopy Brain Plus" + (state.plan.plus ? " (active)" : "")),
+  return el("div", { class: "learn-card" }, el("strong", {}, "⭐ Loopy Brains Plus" + (state.plan.plus ? " (active)" : "")),
     el("p", { class: "hint" }, PLUS.enabled ? "Cloud backup of your study tools, a ⭐ badge and more." : "Early access is free while we build it. Tell us what you would like."),
     el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => { loadPlan().then(() => { if (state.mode === "plus") render(); }); showPanel("plus"); } }, "See Plus")));
 }
@@ -4309,7 +4346,7 @@ async function startCheckout(planKey, gift) {
 const PLUS_FEATURES = ["Plus gift link for a friend", "Group study rooms with a shared timer", "Scan handwritten notes into flashcards", "Live doubt sessions with seniors", "Placement preparation kit", "Offline downloads of papers", "Weekly leaderboard for Plus members", "More resume templates", "No ads, ever"];
 const PLUS_TILES = [
   ["\u{1F50E}", "Loopy AI Search", "Search any topic for a quick answer, pictures, videos and PDFs.", "loopysearch"],
-  ["", "Loopy Brain", "Five Loopy models. All five are free for RGUKT students. Other colleges get Spark free, and the rest are Loopy Brain Plus.", "ai"],
+  ["", "Loopy Brain", "Five Loopy models. All five are free for RGUKT students. Other colleges get Spark free, and the rest are Loopy Brains Plus.", "ai"],
   ["📝", "Mock tests", "Timed subject and placement tests with a topic-wise report.", "mock"],
   ["📓", "Mistake notebook", "Questions you missed come back until you get them right.", "mistakes"],
   ["🗓️", "Exam planner", "A daily plan with spaced revision before your exam.", "planner"],
@@ -4404,9 +4441,9 @@ function renderPlus() {
       PLUS.enabled ? el("p", { class: "hint" }, "Pay safely by UPI, card or net banking (Razorpay). Your plan switches on within a minute of paying." + (verified ? "" : " Verify your email first (Profile › Verify your email) so we can attach the plan to you.")) : el("div", {}, el("p", { class: "hint" }, "Payments open soon. Everything below is free while we build Plus. Tap Notify me and we will tell you the day it opens" + (offerOn() ? ", and you get the " + offerOn().label.toLowerCase() + " price of ₹" + offerOn().yearly + " for the first year." : ".")), wemail));
   };
   return [
-    el("h2", {}, "⭐ Loopy Brain Plus" + (has ? " (active)" : "")),
+    el("h2", {}, "⭐ Loopy Brains Plus" + (has ? " (active)" : "")),
     has ? el("div", { class: "plus-hero" }, "Welcome, Plus member. Your studio is ready.") : null,
-    el("p", { class: "hint" }, has && state.plan.college ? "🎓 " + COLLEGE + " provides Plus for every student until " + new Date(state.plan.until).toLocaleDateString() + ". Enjoy, and thank your college!" : has ? "Thank you for supporting Loopy Brain. Your plan is active until " + new Date(state.plan.until).toLocaleDateString() + "." : PLUS.enabled ? "Extras for students who want more. Everything free today stays free." : "Early access: everything below that already works is free while we build Plus. Everything free today stays free."),
+    el("p", { class: "hint" }, has && state.plan.college ? "🎓 " + COLLEGE + " provides Plus for every student until " + new Date(state.plan.until).toLocaleDateString() + ". Enjoy, and thank your college!" : has ? "Thank you for supporting Loopy Brains. Your plan is active until " + new Date(state.plan.until).toLocaleDateString() + "." : PLUS.enabled ? "Extras for students who want more. Everything free today stays free." : "Early access: everything below that already works is free while we build Plus. Everything free today stays free."),
     (!plusLocked() ? coachCard() : null),
     plansBlock(),
     msg,
@@ -4440,7 +4477,7 @@ function renderPlus() {
     el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")),
   ].filter(Boolean);
 }
-// Loopy Brain Plus studio: timed mock tests (subjects or placement), progress chart, mistake notebook and exam planner. Data stays on this phone.
+// Loopy Brains Plus studio: timed mock tests (subjects or placement), progress chart, mistake notebook and exam planner. Data stays on this phone.
 const MOCK_N = 15, MOCK_SECS = 20 * 60;
 const trialLeft = () => { const t = Number(readJSON("dd-trial-start", 0)) || 0, d = Number(PLUS.trialDays) || 0; return t && d ? Math.max(0, Math.ceil((t + d * 864e5 - Date.now()) / 864e5)) : 0; };
 const bonusLeft = () => Math.max(0, Math.ceil(((Number(readJSON("dd-bonus-until", 0)) || 0) - Date.now()) / 864e5));
@@ -4502,7 +4539,7 @@ function scoreBars(bySub) {
 }
 function renderMock() {
   const m = state.mock, back = el("button", { class: "btn", type: "button", onclick: () => { if (state.mock) clearInterval(state.mock.tick); state.mock = null; showPanel("plus"); } }, "Back");
-  if (plusLocked()) return [el("h2", {}, "📝 Mock tests"), el("p", { class: "hint" }, "Mock tests are part of Loopy Brain Plus."), el("div", { class: "rowbtns" }, back)];
+  if (plusLocked()) return [el("h2", {}, "📝 Mock tests"), el("p", { class: "hint" }, "Mock tests are part of Loopy Brains Plus."), el("div", { class: "rowbtns" }, back)];
   if (!m) {
     const hist = mockHistory();
     return [el("h2", {}, "📝 Mock tests"), el("p", { class: "hint" }, MOCK_N + " questions, " + (MOCK_SECS / 60) + " minutes, then a subject-wise report. Questions you miss go to your Mistake notebook."),
@@ -4559,7 +4596,7 @@ function coachCard() {
 // Previous-year paper vault (Plus): papers are added by the admin as links; students filter, open and tick off what they have practised.
 function renderPapers() {
   const back = el("button", { class: "btn", type: "button", onclick: () => showPanel("plus") }, "Back");
-  if (plusLocked()) return [el("h2", {}, "📚 Paper vault"), el("p", { class: "hint" }, "The previous-year paper vault is part of Loopy Brain Plus."), el("div", { class: "rowbtns" }, back)];
+  if (plusLocked()) return [el("h2", {}, "📚 Paper vault"), el("p", { class: "hint" }, "The previous-year paper vault is part of Loopy Brains Plus."), el("div", { class: "rowbtns" }, back)];
   const all = state.papers.slice().sort((a, b) => (b.year - a.year) || String(a.subject).localeCompare(b.subject)), done = new Set(readJSON("dd-papers-done", []));
   if (!all.length) return [el("h2", {}, "📚 Paper vault"), el("p", { class: "hint" }, "No papers have been added for " + COLLEGE + " yet. Your admin adds them from the admin dashboard."), el("div", { class: "rowbtns" }, back)];
   const f = state.paperFilter || (state.paperFilter = { subject: "", year: "", q: "" });
@@ -5100,7 +5137,7 @@ const BS_EFFORTS = [["low", "Low", "Fast: one trusted source", 1], ["medium", "M
 const bsEffort = (bs) => { const want = BS_EFFORTS.findIndex(e => e[0] === bs.effort); let i = want < 0 ? 1 : want; while (i > 0 && !bsOpen(BS_EFFORTS[i][3])) i--; return BS_EFFORTS[i]; };
 const bsName = (n) => "Loopy " + BS_LEVELS[n - 1][1];
 const hasPlusNow = () => !!(state.plan && state.plan.plus) || trialLeft() > 0 || bonusLeft() > 0;
-// Free models: Spark for everyone, and Scholar too for RGUKT students. Vision, Sage and Apex need Loopy Brain Plus.
+// Free models: Spark for everyone, and Scholar too for RGUKT students. Vision, Sage and Apex need Loopy Brains Plus.
 const bsFree = (lv) => lv <= 1 || IS_RGUKT;
 const BS_MODES = [["atlas", "Atlas", "Search anything", "Topics, doubts, maths and research, explained in easy words.", "Ask anything: a topic, doubt, problem or research idea"], ["launchpad", "Launchpad", "Project guide", "Turn an idea into a plan: objectives, tools, week-by-week steps, report outline and viva questions.", "Describe your project idea, e.g. IoT weather station"], ["forge", "Forge", "Find code", "Working code for classic problems in many languages, with the idea explained.", "e.g. binary search in Python"], ["aegis", "Aegis", "Learn security", "Understand how attacks work and how to defend, legally and safely.", "e.g. SQL injection, phishing, password safety"]];
 const bsModeInfo = (id) => BS_MODES.find(m => m[0] === id) || BS_MODES[0];
@@ -5131,7 +5168,7 @@ async function bsOpenSaved(id) {
   bsPaint(true);
 }
 function bsExportSaved() {
-  const data = JSON.stringify({ app: "Loopy Brain", kind: "loopy-saved", v: 1, items: bsSavedList() }, null, 1), u = URL.createObjectURL(new Blob([data], { type: "application/json" })), a = document.createElement("a");
+  const data = JSON.stringify({ app: "Loopy Brains", kind: "loopy-saved", v: 1, items: bsSavedList() }, null, 1), u = URL.createObjectURL(new Blob([data], { type: "application/json" })), a = document.createElement("a");
   a.href = u; a.download = "loopy-saved-" + new Date().toISOString().slice(0, 10) + ".json"; a.click(); setTimeout(() => URL.revokeObjectURL(u), 2000);
 }
 // Imported files are untrusted: keep only simple, validated pieces and rebuild everything else from our own templates.
@@ -5221,7 +5258,7 @@ function bsLimitModal(kind, L) {
     el("div", { class: "safe-card" }, el("div", { class: "safe-ic", "aria-hidden": "true" }, "⏳"), el("h3", {}, day ? "Today’s Loopy credits are used up" : "This week’s Loopy credits are used up"),
       el("p", {}, day ? "You have used all " + L.caps.day + " credits for today. They come back at midnight, India time." : "You have used all " + L.caps.week + " credits for this week. They come back on Monday."),
       el("p", {}, "Maths, conversions and formulas are still free, and Low effort costs the least."),
-      !hasPlusNow() && !IS_RGUKT ? el("button", { class: "btn primary", type: "button", onclick: () => { close(); if (bsEl()) bsClose(true); showPanel("plus"); } }, "See Loopy Brain Plus") : null,
+      !hasPlusNow() && !IS_RGUKT ? el("button", { class: "btn primary", type: "button", onclick: () => { close(); if (bsEl()) bsClose(true); showPanel("plus"); } }, "See Loopy Brains Plus") : null,
       el("button", { class: "btn", type: "button", onclick: close }, "OK")));
   document.body.append(ov);
 }
@@ -5348,7 +5385,7 @@ function bsChat(q) {
   if (/^(thanks?|thank you|thx|ty|thanku|thank u)( so much| a lot| loopy)?$/.test(t)) return pick(["You are welcome" + hi + "! Happy to help. Ask me anything else anytime.", "Anytime" + hi + "! Keep learning, you are doing great."]);
   if (/^(bye|goodbye|good night|gn|see you|see ya|tata|cya)( loopy)?$/.test(t)) return "Bye" + hi + "! Come back whenever you have a doubt. Good luck with your studies.";
   if (/(how are you|how r u|how are u|hows it going|how is it going|whats up|what s up|wassup|sup)\b/.test(t) && !/\b(compare|difference|what is|define)\b/.test(t)) return "I am fine, thank you" + hi + "! How are you?" + ask;
-  if (/^(who are you|what are you|what is your name|your name|who is loopy|are you ai|are you a robot)$/.test(t)) return "I am Loopy, the study helper inside Loopy Brain. I find explanations, pictures, code, project plans and security guides for students. I make mistakes sometimes, so check important facts with your books and teachers.";
+  if (/^(who are you|what are you|what is your name|your name|who is loopy|are you ai|are you a robot)$/.test(t)) return "I am Loopy, the study helper inside Loopy Brains. I find explanations, pictures, code, project plans and security guides for students. I make mistakes sometimes, so check important facts with your books and teachers.";
   if (/^(what can you do|help|help me|how to use|what do you do|how do you work)$/.test(t)) return "I can explain topics in easy words, solve maths and conversions, find code in Forge, plan projects in Launchpad and teach security in Aegis. Type a topic and press Search." ;
   if (/^((hey|hi|hii+|hello+|hlo|helo|hola|yo|namaste|hey there|hi there|hello there|good morning|good afternoon|good evening|gm)( |$))+(loopy|bro|there|buddy|friend|all)?$/.test(t) || /^(hey+|hi+|hello+|hlo|hola|yo|namaste)$/.test(t)) return pick(["Hi" + hi + "! I am Loopy.", "Hello" + hi + "! Nice to see you.", "Hey" + hi + "! Good to see you."]) + ask;
   return "";
@@ -5375,7 +5412,7 @@ function bsFun(q) {
   if (/\b(roll a dice|roll a die|roll dice|throw a dice|dice roll)\b/.test(t)) return "I rolled the dice... you got a " + (1 + Math.floor(Math.random() * 6)) + "! \u{1F3B2}";
   { const m = t.match(/\b(?:random number|pick a number|number)\s+(?:between|from)\s+(\d{1,6})\s+(?:and|to)\s+(\d{1,6})\b/); if (m) { const a = Math.min(+m[1], +m[2]), b = Math.max(+m[1], +m[2]); return "My pick between " + a + " and " + b + " is " + (a + Math.floor(Math.random() * (b - a + 1))) + ". \u{1F3AF}"; } }
   if (/\b(what is|whats|what s|tell me)\b.*\b(time|date|day|today)\b/.test(t) && !/\b(complexity|travel|dilation|series|domain|value)\b/.test(t)) { const d = new Date(); return "It is " + d.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long", year: "numeric" }) + ", " + d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }) + " on your phone. ⏰ Make today count!"; }
-  if (/\b(who made you|who built you|who created you|who is your creator|who developed you|who owns you)\b/.test(t)) return "I was built for students, by a student, inside Loopy Brain. I am not a person and I am not a big company AI. I search trusted open sources and my own built-in guides to help you learn. \u{1F916}";
+  if (/\b(who made you|who built you|who created you|who is your creator|who developed you|who owns you)\b/.test(t)) return "I was built for students, by a student, inside Loopy Brains. I am not a person and I am not a big company AI. I search trusted open sources and my own built-in guides to help you learn. \u{1F916}";
   if (/\b(do you love me|i love you|marry me|be my (friend|girlfriend|boyfriend)|are you single)\b/.test(t)) return "Aww, thank you! \u{1F60A} I am a study helper, so I will stay your learning buddy. Let us put that energy into your next exam! What shall we learn?";
   if (/\b(favou?rite (colou?r|food|subject|movie|song))\b/.test(t)) return "I love purple and gold, because that is what this app wears. \u{1F49C} My favourite subject is whatever you are curious about right now. What is yours?";
   if (/\b(are you smart|are you intelligent|are you better than|you are (stupid|dumb|useless))\b/.test(t)) return "I am a helper that gets better with your feedback. \u{1F604} Tell me what went wrong using Feedback and ideas, and I will learn from it. Meanwhile, try me with a topic!";
@@ -5407,7 +5444,7 @@ async function bsMakeJpegs() {
   for (const im of [...clone.querySelectorAll("img")]) { const u = im.getAttribute("src") || ""; let d = ""; if (/^https:\/\/upload\.wikimedia\.org\//.test(u)) { d = await bsImgData(hd(u)); if (!d) d = await bsImgData(u); } if (d) { im.setAttribute("src", d); im.removeAttribute("srcset"); im.removeAttribute("loading"); } else im.remove(); }
   const bg = (() => { let n = $("bsFull"); while (n) { const c = getComputedStyle(n).backgroundColor; if (c && c !== "rgba(0, 0, 0, 0)" && c !== "transparent") return c; n = n.parentElement; } return "#ffffff"; })();
   const ink = getComputedStyle(sc).color || "#111", topic = ((bsState().res || {}).topic || "Loopy Brain result").slice(0, 80), when = new Date().toLocaleDateString();
-  const head = document.createElement("div"); head.style.cssText = "box-sizing:border-box;height:" + HEAD + "px;padding:14px 16px 0;font:700 15px system-ui,sans-serif;color:" + ink + ";"; head.textContent = "Loopy Brain · Loopy Brain";
+  const head = document.createElement("div"); head.style.cssText = "box-sizing:border-box;height:" + HEAD + "px;padding:14px 16px 0;font:700 15px system-ui,sans-serif;color:" + ink + ";"; head.textContent = "Loopy Brains · Loopy Brain";
   const foot = document.createElement("div"); foot.style.cssText = "padding:10px 16px 14px;font:500 12px system-ui,sans-serif;opacity:.7;color:" + ink + ";"; foot.textContent = topic + " · " + when + " · loopybrains.com. Always check important facts in your textbook.";
   const wrap = document.createElement("div"); wrap.setAttribute("xmlns", "http://www.w3.org/1999/xhtml"); wrap.style.cssText = "width:" + W + "px;background:" + bg + ";"; wrap.append(head, clone, foot);
   // measure the real height: lay the finished sheet out off-screen once, so no blank space is left at the end
@@ -5622,7 +5659,7 @@ function packView(p, go, res) {
       el("small", { class: "hint" }, "This check compares key words. It is a signal, not a proof. Found a mistake? Tap Feedback and ideas.")));
   }
   { const refs = (_packs && _packs.refs && _packs.refs[p.subject]) || []; if (refs.length) out.push(card("pk-refs", "Standard textbooks to read", el("ul", { class: "bsr-bul" }, ...refs.map(x => el("li", {}, x))), el("small", { class: "hint" }, "Check the chapter on this topic in your prescribed textbook and follow your syllabus. We only list the books, we do not copy from them."))); }
-  out.push(el("p", { class: "hint pk-note" }, "Written for Loopy Brain from standard textbook rules. Found a mistake? Tap Feedback and ideas and tell us, and we will fix it. Always check with your syllabus and teacher."));
+  out.push(el("p", { class: "hint pk-note" }, "Written for Loopy Brains from standard textbook rules. Found a mistake? Tap Feedback and ideas and tell us, and we will fix it. Always check with your syllabus and teacher."));
   return out;
 }
 function reportView(r, res, go) {
@@ -5737,10 +5774,10 @@ function brandSpin(cls) {
   const A = (n, a, ...k) => sv(n, a, ...k), stops = (arr) => arr.map(([o, c, op]) => A("stop", { offset: o, "stop-color": c, "stop-opacity": op == null ? 1 : op }));
   const defs = A("defs", {}, A("linearGradient", { id: "bsBg", x1: 0, y1: 0, x2: 1, y2: 1 }, ...stops([[0, "#1b1466"], [.55, "#0f0a3d"], [1, "#070522"]])), A("radialGradient", { id: "bsGa", cx: .2, cy: .05, r: .9 }, ...stops([[0, "#a855f7", .5], [1, "#a855f7", 0]])), A("radialGradient", { id: "bsGb", cx: .92, cy: .98, r: .75 }, ...stops([[0, "#f59e0b", .38], [1, "#f59e0b", 0]])), A("linearGradient", { id: "bsRing", x1: 0, y1: 0, x2: 1, y2: 1 }, ...stops([[0, "#22d3ee"], [.35, "#6366f1"], [.7, "#d946ef"], [1, "#fb923c"]])), A("linearGradient", { id: "bsGold", x1: 0, y1: 0, x2: 1, y2: 1 }, ...stops([[0, "#fde68a"], [.5, "#f59e0b"], [1, "#fcd34d"]])));
   const ring = A("g", { class: "bs-spinc" }, A("circle", { cx: 512, cy: 410, r: 238, fill: "none", stroke: "url(#bsRing)", "stroke-width": 72, "stroke-linecap": "round", "stroke-dasharray": "1100 396", transform: "rotate(45 512 410)" }));
-  const root = A("svg", { viewBox: "0 0 1024 1024", class: cls, role: "img", "aria-label": "Loopy Brain" }, defs, A("rect", { width: 1024, height: 1024, rx: 230, fill: "url(#bsBg)" }), A("rect", { width: 1024, height: 1024, rx: 230, fill: "url(#bsGa)" }), A("rect", { width: 1024, height: 1024, rx: 230, fill: "url(#bsGb)" }), ring,
+  const root = A("svg", { viewBox: "0 0 1024 1024", class: cls, role: "img", "aria-label": "Loopy Brains" }, defs, A("rect", { width: 1024, height: 1024, rx: 230, fill: "url(#bsBg)" }), A("rect", { width: 1024, height: 1024, rx: 230, fill: "url(#bsGa)" }), A("rect", { width: 1024, height: 1024, rx: 230, fill: "url(#bsGb)" }), ring,
     A("path", { d: "M330 400 L512 322 L694 400 L512 478 Z", fill: "#fff" }), A("path", { d: "M404 448 v70 q108 58 216 0 v-70", fill: "none", stroke: "#e0e7ff", "stroke-width": 22, "stroke-linejoin": "round" }), A("path", { d: "M694 400 v96", stroke: "url(#bsGold)", "stroke-width": 10, "stroke-linecap": "round" }), A("circle", { cx: 694, cy: 508, r: 17, fill: "url(#bsGold)" }),
     A("text", { x: 512, y: 842, "text-anchor": "middle", "font-size": 112, "font-weight": 700, "letter-spacing": 4, fill: "#fff", "font-family": "Georgia, 'Times New Roman', serif" }, "LOOPY"), A("rect", { x: 262, y: 880, width: 215, height: 3, rx: 1.5, fill: "url(#bsGold)" }), A("rect", { x: 547, y: 880, width: 215, height: 3, rx: 1.5, fill: "url(#bsGold)" }), A("path", { d: "M512 868 l13 14 -13 14 -13 -14z", fill: "url(#bsGold)" }),
-    A("text", { x: 512, y: 956, "text-anchor": "middle", "font-size": 64, "font-weight": 700, "letter-spacing": 30, fill: "#fcd34d", "font-family": "Georgia, 'Times New Roman', serif" }, "BRAIN"));
+    A("text", { x: 512, y: 956, "text-anchor": "middle", "font-size": 64, "font-weight": 700, "letter-spacing": 30, fill: "#fcd34d", "font-family": "Georgia, 'Times New Roman', serif" }, "BRAINS"));
   return root;
 }
 function loopyMark(cls) {
@@ -5783,8 +5820,8 @@ function brainViewInner(ui) {
   const setLevel = (lv) => { if (!bsOpen(lv)) { bs.lock = lv; bsPaint(); return; } bs.level = lv; bs.lock = 0; bsRemember(); if (bs.q && bs.res) bsRun(bs.q); else bsPaint(); };
   const lvBar = el("div", { class: "bs-lvs bsf-noprint", role: "group", "aria-label": "Loopy model" }, ...BS_LEVELS.map(([n, t, , plus]) => { const open = bsOpen(n); return el("button", { type: "button", class: "bs-lv" + (bs.level === n && !bs.lock ? " on" : "") + (open ? "" : " locked"), "aria-pressed": String(bs.level === n), onclick: () => setLevel(n) }, el("b", {}, String(n)), el("span", {}, t), el("i", { class: "bs-tier" + (bsFree(n) ? "" : " plus") }, bsFree(n) ? "FREE" : open ? (IS_RGUKT ? "BONUS" : "PLUS") : IS_RGUKT ? "\u{1F512} LOCKED" : "\u{1F512} PLUS")); }));
   const cur = BS_LEVELS[(bs.lock || bs.level) - 1], modelLine = el("p", { class: "bs-model bsf-noprint" }, el("b", {}, bsName(cur[0])), " · " + cur[2] + " ", el("span", { class: "bs-dots", "aria-label": "Depth " + cur[0] + " of 5" }, "●".repeat(cur[0]) + "○".repeat(5 - cur[0])));
-  const rgNote = el("p", { class: "bs-model bsf-noprint" }, IS_RGUKT ? "All five Loopy models are free for RGUKT students." : "Loopy Spark is free. Scholar, Vision, Sage and Apex are part of Loopy Brain Plus.");
-  const lockCard = bs.lock ? el("div", { class: "bs-lock", role: "status" }, el("strong", {}, bsName(bs.lock) + (IS_RGUKT ? " is not part of the free RGUKT plan" : " is a Plus model")), el("p", {}, BS_LEVELS[bs.lock - 1][2] + ". " + (IS_RGUKT ? "All Loopy models are free for RGUKT students." : "Loopy Spark is free for everyone. Loopy Brain Plus unlocks Loopy Scholar, Vision, Sage and Apex.")), el("div", { class: "rowbtns" }, IS_RGUKT ? null : el("button", { class: "btn sm primary", type: "button", onclick: () => bsLeave(() => showPanel("plus")) }, "See Loopy Brain Plus"), el("button", { class: "btn sm", type: "button", onclick: () => { bs.lock = 0; bsPaint(); } }, "Stay on free models"))) : null;
+  const rgNote = el("p", { class: "bs-model bsf-noprint" }, IS_RGUKT ? "All five Loopy models are free for RGUKT students." : "Loopy Spark is free. Scholar, Vision, Sage and Apex are part of Loopy Brains Plus.");
+  const lockCard = bs.lock ? el("div", { class: "bs-lock", role: "status" }, el("strong", {}, bsName(bs.lock) + (IS_RGUKT ? " is not part of the free RGUKT plan" : " is a Plus model")), el("p", {}, BS_LEVELS[bs.lock - 1][2] + ". " + (IS_RGUKT ? "All Loopy models are free for RGUKT students." : "Loopy Spark is free for everyone. Loopy Brains Plus unlocks Loopy Scholar, Vision, Sage and Apex.")), el("div", { class: "rowbtns" }, IS_RGUKT ? null : el("button", { class: "btn sm primary", type: "button", onclick: () => bsLeave(() => showPanel("plus")) }, "See Loopy Brains Plus"), el("button", { class: "btn sm", type: "button", onclick: () => { bs.lock = 0; bsPaint(); } }, "Stay on free models"))) : null;
   const setMode = (id) => { if (bs.mode === id) return; bs.mode = id; bsRemember(); bs.lock = 0; if (bs.q && bs.res && !bs.res.disambig) bsSubmit(bs.q); else bsPaint(); };
   const modeBar = el("div", { class: "bs-modes bsf-noprint" + (bs.res ? " compact" : " pills"), role: "tablist", "aria-label": "Loopy Brain engine" }, ...BS_MODES.map(m => el("button", { type: "button", role: "tab", class: "bs-mode" + (bs.mode === m[0] ? " on" : ""), "aria-selected": String(bs.mode === m[0]), onclick: () => setMode(m[0]) }, svgIcon(m[0]), el("span", {}, el("b", {}, m[1]), el("small", {}, m[2])))));
   const modeLine = el("p", { class: "bs-modeline bsf-noprint" }, el("b", {}, mi[1] + ": "), mi[3]);
@@ -5861,7 +5898,7 @@ function brainViewInner(ui) {
   else if (bs.tab === "exam") body = [examBox()];
   else body = [r.pack ? null : r.report ? null : answer, ...(r.pack ? packView(r.pack, go, r) : []), r.pack && r.report ? el("h3", { class: "pk-more" }, "More from the web") : null, ...(r.report ? reportView(r.report, r, go) : []), lv >= 3 && !r.solved && r.size !== "brief" ? imgBox() : null, lv >= 3 && !r.solved && r.size !== "brief" ? modBox() : null, lv >= 4 && !r.solved && !r.report ? deepBox() : null, lv >= 4 && !r.solved && r.size !== "brief" ? sect("Watch and learn", watch) : null, lv >= 4 && !r.solved && r.size !== "brief" ? sect("Notes and practice", notes) : null, lv >= 5 && !r.solved ? examBox() : null,
     lv >= 2 && r.board.length ? sect("Classmates’ answers", ...r.board.slice(0, 2).map(doubtRow)) : null, lv >= 2 && r.syl.length ? sect("In your syllabus", ...r.syl.map(sylRow)) : null];
-  const stamp = el("div", { class: "bsr-print" }, "Loopy Brain · Loopy Search · " + new Date().toLocaleDateString());
+  const stamp = el("div", { class: "bsr-print" }, "Loopy Brains · Loopy Search · " + new Date().toLocaleDateString());
   return [bar, head, tabBar, stamp, ...body.filter(Boolean), r.report ? null : null, sizeRow, acts, el("p", { class: "hint ai-fine" }, "Loopy Brain builds answers from your syllabus, your classmates’ best answers, Wikipedia and open research. Check important facts in your textbook."), el("div", { class: "rowbtns bsf-noprint" }, el("button", { class: "btn", type: "button", onclick: () => { bs.res = null; bs.q = ""; bs.pending = ""; bsPaint(true); } }, "New search"), back)].filter(Boolean);
 }
 function renderAI() {
@@ -5909,7 +5946,7 @@ function ftFinish() {
 }
 function renderFocusPlus() {
   const back = el("button", { class: "btn", type: "button", onclick: () => { if (state.ft && state.ft.tick) clearInterval(state.ft.tick); state.ft = null; showPanel("plus"); } }, "Back");
-  if (plusLocked()) return [el("h2", {}, "⏱️ Focus timer"), el("p", { class: "hint" }, "The focus timer is part of Loopy Brain Plus."), el("div", { class: "rowbtns" }, back)];
+  if (plusLocked()) return [el("h2", {}, "⏱️ Focus timer"), el("p", { class: "hint" }, "The focus timer is part of Loopy Brains Plus."), el("div", { class: "rowbtns" }, back)];
   const f = state.ft || (state.ft = { idle: true, msg: "" }), log = studyLog(), days = Array.from({ length: 7 }, (_, i) => { const d = new Date(Date.now() - (6 - i) * 864e5); return [d.toLocaleDateString(undefined, { weekday: "short" }), log[dayStr(d)] || 0]; });
   const max = Math.max(60, ...days.map(x => x[1])), total = days.reduce((a, x) => a + x[1], 0), mm = (ms) => Math.floor(ms / 6e4) + ":" + String(Math.floor(ms % 6e4 / 1e3)).padStart(2, "0");
   const start = (kind) => { const mins = kind === "focus" ? FOCUS_MIN : BREAK_MIN; const n = { kind, end: Date.now() + mins * 6e4, done: false }; n.tick = setInterval(() => { const l = n.end - Date.now(); if (state.mode !== "focusplus" || state.ft !== n) { clearInterval(n.tick); return; } if (l <= 0) { ftFinish(); return; } const t = document.querySelector("[data-ft]"); if (t) t.textContent = mm(l); }, 1000); state.ft = n; render(); };
@@ -5950,7 +5987,7 @@ async function redeemPendingGift() {
 function giftCard() {
   const has = state.plan.plus, say = el("p", { class: "hint", role: "status" }, "");
   const link = (c) => location.origin + location.pathname + "?c=" + encodeURIComponent(SEL) + "&gift=" + c;
-  const share = async (c) => { const text = "I gifted you Loopy Brain Plus! Open this link to claim it: " + link(c); try { if (navigator.share) { await navigator.share({ title: BRAND, text, url: link(c) }); return; } } catch (_) { return; } try { await navigator.clipboard.writeText(text); say.textContent = "✅ Gift link copied. Paste it in WhatsApp."; } catch (_) { say.textContent = link(c); } };
+  const share = async (c) => { const text = "I gifted you Loopy Brains Plus! Open this link to claim it: " + link(c); try { if (navigator.share) { await navigator.share({ title: BRAND, text, url: link(c) }); return; } } catch (_) { return; } try { await navigator.clipboard.writeText(text); say.textContent = "✅ Gift link copied. Paste it in WhatsApp."; } catch (_) { say.textContent = link(c); } };
   if (!PLUS.enabled) return el("div", { class: "learn-card plus-list" }, el("strong", {}, "🎁 Gift Plus to a friend"), el("p", { class: "hint" }, "Gifts open when payments open. You will pay once, get a link, and your friend gets the days."));
   if (giftsState.list === null) loadGifts();
   const buyGift = (key, label) => el("button", { class: "btn sm", type: "button", onclick: async (e) => { e.currentTarget.disabled = true; try { await startCheckout(key, true); say.textContent = "The payment page opened. After you pay, come back here (tap Refresh) to get the gift link."; } catch (err) { say.textContent = err.message || "Could not start the payment."; } e.currentTarget.disabled = false; } }, label);
@@ -5978,7 +6015,7 @@ function resumeDoc(d) {
 }
 function renderResume() {
   const back = el("button", { class: "btn", type: "button", onclick: () => showPanel("plus") }, "Back");
-  if (plusLocked()) return [el("h2", {}, "📄 Resume builder"), el("p", { class: "hint" }, "The resume builder is part of Loopy Brain Plus."), el("div", { class: "rowbtns" }, back)];
+  if (plusLocked()) return [el("h2", {}, "📄 Resume builder"), el("p", { class: "hint" }, "The resume builder is part of Loopy Brains Plus."), el("div", { class: "rowbtns" }, back)];
   const d = resumeData(), prev = el("div", { class: "resume-wrap" }), save = () => { writeJSON("dd-resume", d); prev.replaceChildren(resumeDoc(d)); };
   const inp = (label, get, set, max, ph, area) => { const f = el(area ? "textarea" : "input", { maxlength: String(max), placeholder: ph || label, "aria-label": label }); f.value = get(); f.addEventListener("input", () => { set(f.value.slice(0, max)); save(); }); return f; };
   const row = (...kids) => el("div", { class: "two" }, ...kids);
@@ -6007,7 +6044,7 @@ function renderResume() {
 // Weekly Plus leaderboard: points from focus minutes, mock tests, mistakes cleared and papers practised. Resets every Monday.
 function renderWeeklyBoard() {
   const back = el("button", { class: "btn", type: "button", onclick: () => showPanel("plus") }, "Back");
-  if (plusLocked()) return [el("h2", {}, "🏅 Weekly leaderboard"), el("p", { class: "hint" }, "The weekly leaderboard is for Loopy Brain Plus members."), el("div", { class: "rowbtns" }, back)];
+  if (plusLocked()) return [el("h2", {}, "🏅 Weekly leaderboard"), el("p", { class: "hint" }, "The weekly leaderboard is for Loopy Brains Plus members."), el("div", { class: "rowbtns" }, back)];
   syncWeekly();
   const uid = store && store.authUid ? store.authUid() : "", rows = state.weekly.slice().sort((a, b) => b.points - a.points || a.updatedAt - b.updatedAt), mine = rows.findIndex(r => r.uid === uid), medal = ["🥇", "🥈", "🥉"];
   const left = (() => { const ms = weekStartMs() + 7 * 864e5 - Date.now(), d = Math.floor(ms / 864e5), h = Math.floor(ms % 864e5 / 36e5); return d + "d " + h + "h"; })();
@@ -6023,7 +6060,7 @@ const GOAL_DEFS = [["tests", "📝 Take 3 mock tests", 3], ["cleared", "📓 Cle
 const PLUS_BADGES = [["🥉", "First mock", l => l.tests >= 1], ["🥈", "5 mocks done", l => l.tests >= 5], ["🏆", "Ace: 90%+ in a test", l => l.best >= 90], ["🧹", "Mistake slayer (20)", l => l.cleared >= 20], ["📚", "Paper warrior (10)", l => l.papers >= 10], ["🗓️", "Planner set", () => !!readJSON("dd-exam-plan", null)], ["⏱️", "Focused: 10 hours", l => (l.mins || 0) >= 600], ["🌳", "Family: 7 days", () => (readJSON("dd-visits", { n: 0 }).n || 0) >= 7], ["🏆", "Family: 30 days", () => (readJSON("dd-visits", { n: 0 }).n || 0) >= 30]];
 function renderGoals() {
   const back = el("button", { class: "btn", type: "button", onclick: () => showPanel("plus") }, "Back");
-  if (plusLocked()) return [el("h2", {}, "🎯 Goals and badges"), el("p", { class: "hint" }, "Goals and badges are part of Loopy Brain Plus."), el("div", { class: "rowbtns" }, back)];
+  if (plusLocked()) return [el("h2", {}, "🎯 Goals and badges"), el("p", { class: "hint" }, "Goals and badges are part of Loopy Brains Plus."), el("div", { class: "rowbtns" }, back)];
   const g = goalStats(), l = lifeStats(), allDone = GOAL_DEFS.every(([k, , n]) => (g[k] || 0) >= n), got = PLUS_BADGES.filter(b => b[2](l)).length;
   return [el("h2", {}, "🎯 Goals and badges"), allDone ? el("div", { class: "wow", role: "status" }, el("span", { class: "wow-conf", "aria-hidden": "true" }, "🎉 🎊"), el("strong", {}, "Wow, all weekly goals done!")) : el("p", { class: "hint" }, "Weekly goals reset every Monday."),
     el("div", { class: "learn-card plus-list" }, el("strong", {}, "This week"), ...GOAL_DEFS.map(([k, label, n]) => { const v = Math.min(n, g[k] || 0), bar = el("div", { class: "mock-bar" }, el("span", {})); bar.firstChild.style.setProperty("width", Math.round(v * 100 / n) + "%"); return el("div", {}, el("div", { class: "rowbtns" }, el("span", {}, label), el("b", {}, v + "/" + n)), bar); })),
@@ -6035,7 +6072,7 @@ function renderGoals() {
 // Mistake notebook: questions you missed come back until you answer them right.
 function renderMistakes() {
   const back = el("button", { class: "btn", type: "button", onclick: () => { state.mist = null; showPanel("plus"); } }, "Back"), list = mistakeList();
-  if (plusLocked()) return [el("h2", {}, "📓 Mistake notebook"), el("p", { class: "hint" }, "The mistake notebook is part of Loopy Brain Plus."), el("div", { class: "rowbtns" }, back)];
+  if (plusLocked()) return [el("h2", {}, "📓 Mistake notebook"), el("p", { class: "hint" }, "The mistake notebook is part of Loopy Brains Plus."), el("div", { class: "rowbtns" }, back)];
   if (!list.length) return [el("h2", {}, "📓 Mistake notebook"), el("p", { class: "hint" }, "Nothing here yet. Questions you get wrong in a mock test are saved here so you can practise them again."), el("div", { class: "rowbtns" }, back)];
   const st = state.mist || (state.mist = { i: Math.floor(Math.random() * list.length), pick: -1 });
   const q = list[st.i % list.length], answered = st.pick >= 0;
@@ -6062,7 +6099,7 @@ function buildPlan(subjects, examDate) {
 }
 function renderPlanner() {
   const back = el("button", { class: "btn", type: "button", onclick: () => showPanel("plus") }, "Back");
-  if (plusLocked()) return [el("h2", {}, "🗓️ Exam planner"), el("p", { class: "hint" }, "The exam planner is part of Loopy Brain Plus."), el("div", { class: "rowbtns" }, back)];
+  if (plusLocked()) return [el("h2", {}, "🗓️ Exam planner"), el("p", { class: "hint" }, "The exam planner is part of Loopy Brains Plus."), el("div", { class: "rowbtns" }, back)];
   const saved = readJSON("dd-exam-plan", null) || {}, name = el("input", { maxlength: "40", placeholder: "Exam name, e.g. Semester 3", value: saved.name || "", "aria-label": "Exam name" }),
     date = el("input", { type: "date", value: saved.date || "", "aria-label": "Exam date" }), subs = el("textarea", { maxlength: "300", placeholder: "Subjects, separated by commas", "aria-label": "Subjects" }, saved.subjects || ""),
     msg = el("p", { class: "hint", role: "status" }, "");
@@ -6621,7 +6658,7 @@ const funShuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--
 const funBest = (k, v) => { try { const o = JSON.parse(localStorage.getItem("dd-fun-best") || "{}"); if (v === undefined) return o[k]; o[k] = v; localStorage.setItem("dd-fun-best", JSON.stringify(o)); } catch (_) {} return undefined; };
 
 const yt = (q) => "https://www.youtube.com/results?search_query=" + encodeURIComponent(q);
-// Official YouTube jukeboxes. These are copyrighted songs streamed by the rights holders on YouTube; Loopy Brain only links out.
+// Official YouTube jukeboxes. These are copyrighted songs streamed by the rights holders on YouTube; Loopy Brains only links out.
 const FUN_JUKE = [
   ["🎤 Telugu directors",[["M. M. Keeravani","M M Keeravani hits jukebox"], ["Devi Sri Prasad","Devi Sri Prasad hits jukebox"], ["S. Thaman","S Thaman hits jukebox"], ["Mani Sharma","Mani Sharma hits jukebox"], ["Ilaiyaraaja (Telugu)","Ilaiyaraaja (Telugu) hits jukebox"], ["A. R. Rahman (Telugu)","A R Rahman (Telugu) hits jukebox"], ["Koti","Koti hits jukebox"], ["Raj-Koti","Raj Koti hits jukebox"], ["Chakri","Chakri hits jukebox"], ["Anup Rubens","Anup Rubens hits jukebox"], ["Mickey J Meyer","Mickey J Meyer hits jukebox"], ["Kalyani Malik","Kalyani Malik hits jukebox"], ["R. P. Patnaik","R P Patnaik hits jukebox"], ["Gopi Sundar","Gopi Sundar hits jukebox"], ["Ghibran","Ghibran hits jukebox"], ["Bheems Ceciroleo","Bheems Ceciroleo hits jukebox"], ["Radhan","Radhan hits jukebox"], ["Vishal Chandrashekhar","Vishal Chandrashekhar hits jukebox"], ["Sai Kartheek","Sai Kartheek hits jukebox"], ["Harris Jayaraj (Telugu)","Harris Jayaraj (Telugu) hits jukebox"], ["Vidyasagar (Telugu)","Vidyasagar (Telugu) hits jukebox"], ["Ramesh Naidu","Ramesh Naidu hits jukebox"], ["K. Chakravarthy","K Chakravarthy hits jukebox"], ["Satyam","Satyam hits jukebox"], ["K. V. Mahadevan","K V Mahadevan hits jukebox"], ["Ghantasala","Ghantasala hits jukebox"], ["Ramana Gogula","Ramana Gogula hits jukebox"], ["M. M. Srilekha","M M Srilekha hits jukebox"], ["Vandemataram Srinivas","Vandemataram Srinivas hits jukebox"], ["Sri Kommineni","Sri Kommineni hits jukebox"], ["S. V. Krishna Reddy","S V Krishna Reddy hits jukebox"], ["Joshua Sridhar","Joshua Sridhar hits jukebox"], ["Shravan Bharadwaj","Shravan Bharadwaj hits jukebox"], ["Prashanth R Vihari","Prashanth R Vihari hits jukebox"], ["Sekhar Chandra","Sekhar Chandra hits jukebox"], ["Leon James (Telugu)","Leon James (Telugu) hits jukebox"], ["Sunil Kashyap","Sunil Kashyap hits jukebox"], ["Phani Kalyan","Phani Kalyan hits jukebox"], ["Mahati Swara Sagar","Mahati Swara Sagar hits jukebox"], ["Praveen Lakkaraju","Praveen Lakkaraju hits jukebox"], ["Gowra Hari","Gowra Hari hits jukebox"], ["Sricharan Pakala","Sricharan Pakala hits jukebox"], ["Achu Rajamani","Achu Rajamani hits jukebox"], ["Jakes Bejoy (Telugu)","Jakes Bejoy (Telugu) hits jukebox"], ["Hesham Abdul Wahab","Hesham Abdul Wahab hits jukebox"], ["Justin Prabhakaran (Telugu)","Justin Prabhakaran (Telugu) hits jukebox"], ["Anirudh (Telugu)","Anirudh (Telugu) hits jukebox"], ["Vijaya Bhaskar","Vijaya Bhaskar hits jukebox"], ["Pendyala Nageswara Rao","Pendyala Nageswara Rao hits jukebox"], ["Saluri Rajeswara Rao","Saluri Rajeswara Rao hits jukebox"], ["T. V. Raju","T V Raju hits jukebox"], ["Adi Narayana Rao","Adi Narayana Rao hits jukebox"], ["J. V. Raghavulu","J V Raghavulu hits jukebox"], ["S. Rajeswara Rao","S Rajeswara Rao hits jukebox"], ["Harshavardhan Rameshwar","Harshavardhan Rameshwar hits jukebox"], ["Ajay Arasada","Ajay Arasada hits jukebox"], ["Vijay Bulganin","Vijay Bulganin hits jukebox"], ["Chaitan Bharadwaj","Chaitan Bharadwaj hits jukebox"], ["Sagar Mahati","Sagar Mahati hits jukebox"], ["Shakthikanth Karthick","Shakthikanth Karthick hits jukebox"], ["Karthik Rodriguez","Karthik Rodriguez hits jukebox"], ["Raghu Kunche","Raghu Kunche hits jukebox"], ["Madhavapeddi Suresh","Madhavapeddi Suresh hits jukebox"], ["Chellapilla Satyam","Chellapilla Satyam hits jukebox"], ["Ram Miriyala","Ram Miriyala hits jukebox"], ["Kaala Bhairava","Kaala Bhairava hits jukebox"], ["S. A. Rajkumar (Telugu)","S A Rajkumar (Telugu) hits jukebox"], ["Deva (Telugu)","Deva (Telugu) hits jukebox"], ["Rajan-Nagendra (Telugu)","Rajan Nagendra (Telugu) hits jukebox"], ["Vijay Antony (Telugu)","Vijay Antony (Telugu) hits jukebox"], ["Santhosh Narayanan (Telugu)","Santhosh Narayanan (Telugu) hits jukebox"], ["Yuvan Shankar Raja (Telugu)","Yuvan Shankar Raja (Telugu) hits jukebox"], ["Rajesh Murugesan (Telugu)","Rajesh Murugesan (Telugu) hits jukebox"], ["Gopi Sundar (Telugu)","Gopi Sundar (Telugu) hits jukebox"]]],
   ["🎙️ Telugu playlists",[["Telugu melodies","Telugu melody songs video jukebox"], ["Telugu love songs","Telugu love songs jukebox"], ["Telugu mass beats","Telugu mass songs jukebox"], ["Telugu 90s hits","90s Telugu hit songs jukebox"], ["Telugu 2000s hits","2000s Telugu hit songs jukebox"], ["Telugu folk (Janapada)","Telugu folk songs jukebox"], ["Telugu devotional","Telugu devotional songs jukebox"], ["Telugu friendship songs","Telugu friendship songs jukebox"], ["Telugu old golden hits","Telugu old golden hits jukebox"], ["Telugu duets","Telugu duet songs jukebox"], ["Telugu sad songs","Telugu emotional sad songs jukebox"], ["Telugu college songs","Telugu college life songs jukebox"]]],
@@ -6801,7 +6838,7 @@ function moviesView() {
       outLink("https://www.google.com/search?q=" + encodeURIComponent("new " + label + " movies releasing this week OTT and theatres"), "🗓️ This week", "linkbtn"),
       outLink("https://www.google.com/search?q=" + encodeURIComponent(label + " movie reviews and ratings " + yr), "⭐ Reviews", "linkbtn")))),
     watch,
-    el("p", { class: "hint" }, "Watch movies only in theatres or on official OTT apps. Piracy sites are illegal and often carry viruses and scams. Loopy Brain does not host any movie."));
+    el("p", { class: "hint" }, "Watch movies only in theatres or on official OTT apps. Piracy sites are illegal and often carry viruses and scams. Loopy Brains does not host any movie."));
 }
 
 function memoryGame() {
@@ -6874,7 +6911,7 @@ function renderFun() {
       body.replaceChildren(
         chillPlayer(),
         el("div", { class: "label" }, "🎬 Music director and singer jukeboxes"),
-        el("p", { class: "hint" }, "Tap a name to open official jukeboxes on YouTube. These are copyrighted songs streamed by the rights holders, so Loopy Brain only links to them. Listen on YouTube with low volume and earphones."),
+        el("p", { class: "hint" }, "Tap a name to open official jukeboxes on YouTube. These are copyrighted songs streamed by the rights holders, so Loopy Brains only links to them. Listen on YouTube with low volume and earphones."),
         el("details", { class: "fun-det", open: true },
           el("summary", {}, "🆕 Latest released songs (" + FUN_NEW.length + ")"),
           el("p", { class: "hint" }, "Newest uploads first, from official channels. Pick this week or this month."),
@@ -6927,7 +6964,7 @@ function renderFun() {
 function renderLab() {
   return [
     el("h2", {}, "🧪 Study Lab"),
-    el("p", { class: "hint" }, "Power tools for students. Everything is saved only on this phone, and the focus timer keeps running while you use other parts of Loopy Brain."),
+    el("p", { class: "hint" }, "Power tools for students. Everything is saved only on this phone, and the focus timer keeps running while you use other parts of Loopy Brains."),
     window.SparkLab ? window.SparkLab.mount() : (needLazy(), el("p", { class: "hint" }, "Loading the Study Lab\u2026")),
     el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")),
   ];
@@ -7027,7 +7064,7 @@ function renderAbout() {
       el("p", {}, "Built by students, for students."),
       el("p", {}, "Dedicated to our students: advanced, disciplined and obedient learners who work hard, respect their teachers and lift each other up. You are the reason Spark exists.")),
     el("div", { class: "label" }, "🎯 Our mission"),
-    el("p", {}, "Every student should have a senior to ask, a clear path after graduation, and quality study material, without paying for any of it. Loopy Brain brings these together so no doubt stays unanswered and no student feels lost after B.Tech 4th year."),
+    el("p", {}, "Every student should have a senior to ask, a clear path after graduation, and quality study material, without paying for any of it. Loopy Brains brings these together so no doubt stays unanswered and no student feels lost after B.Tech 4th year."),
     el("div", { class: "label" }, "What you get"),
     feature("❓", "Doubts", "Ask by subject, year (B.Tech 1st to 4th year) and campus. Peers answer, you mark the best answer, and helpers earn points."),
     feature("💡", "Ideas, Clubs and Challenges", "Share project ideas, join clubs and take part in challenges and hackathons."),
@@ -7040,9 +7077,9 @@ function renderAbout() {
     el("div", { class: "label" }, "🔒 Privacy and safety"),
     el("p", {}, "No login and no password. Your device gets a random ID so your posts stay yours. You can post anonymously, report anything inappropriate and edit your own posts. We do not sell or share your data."),
     el("div", { class: "label" }, "💚 Free to use"),
-    el("p", {}, "The board, quizzes, study tools and every resource we link to are free, with no ads. An optional paid plan, Loopy Brain Plus, is being prepared for extras. Nothing that is free today will be taken away."),
+    el("p", {}, "The board, quizzes, study tools and every resource we link to are free, with no ads. An optional paid plan, Loopy Brains Plus, is being prepared for extras. Nothing that is free today will be taken away."),
     el("div", { class: "label" }, "⚠️ Please note"),
-    el("p", { class: "hint" }, "Loopy Brain is a student community platform. Always confirm official dates, fees, results and rules on your college's official websites before acting on them. Career and scholarship details can change, so check the official links."),
+    el("p", { class: "hint" }, "Loopy Brains is a student community platform. Always confirm official dates, fees, results and rules on your college's official websites before acting on them. Career and scholarship details can change, so check the official links."),
     IS_RGUKT && el("div", { class: "label" }, "🔗 Official RGUKT campuses"),
     IS_RGUKT && el("div", { class: "rowbtns" },
       outLink("https://www.rguktn.ac.in", "Nuzvid", "linkbtn"),
@@ -9551,7 +9588,7 @@ function renderView() {
     out.push(el("div", { class: "posted-card" }, el("b", {}, "\u2705 Your answer is posted"), el("p", { class: "hint" }, "It is on the board now. Thank you for helping a classmate! \u{1F389} When the asker marks it helpful you earn 2 points, and 7 for the best answer."),
       el("div", { class: "rowbtns" },
         el("button", { class: "btn sm primary", type: "button", onclick: () => { const a = document.getElementById("ans-" + jp.id); if (a) { a.scrollIntoView({ behavior: "smooth", block: "center" }); a.classList.add("flash"); setTimeout(() => a.classList.remove("flash"), 2200); } } }, "\u{1F440} See my answer"),
-        el("a", { class: "btn sm wa", href: "https://wa.me/?text=" + encodeURIComponent("I just answered a doubt on Loopy Brain: " + d.title + " " + itemLink(d.id)), target: "_blank", rel: "noopener noreferrer" }, "\u{1F4E4} Share on WhatsApp"),
+        el("a", { class: "btn sm wa", href: "https://wa.me/?text=" + encodeURIComponent("I just answered a doubt on Loopy Brains: " + d.title + " " + itemLink(d.id)), target: "_blank", rel: "noopener noreferrer" }, "\u{1F4E4} Share on WhatsApp"),
         el("button", { class: "btn sm", type: "button", onclick: () => { const n = nextDoubt(); if (!n) { showNotice("Great job! There are no unanswered doubts right now."); return; } state.justPosted = null; openItem(n.id); try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch (_) {} } }, "\u{1F64B} Help another classmate")),
       el("div", { class: "rowbtns" },
         el("button", { class: "btn sm", type: "button", onclick: async (e) => {
@@ -10358,7 +10395,7 @@ function render() { const snap = snapUI(); try { renderCore(); } finally { resto
 function renderCore() {
   try {
     document.body.dataset.tab = state.tab; applyFocus();
-    renderHeader(); renderTrendBar(); renderStoryBar(); renderRail(); try { renderGuide(); } catch (_) {} renderList(); renderBottomNav(); try { if (IS_RGUKT && !readJSON("dd-rgukt-year", null) && !document.querySelector(".welcome")) showEligibility(); } catch (_) {} try { document.body.classList.toggle("simple", isSimple()); renderBell(); notifPing(); claimStudentIdOnce(); autoMailIds(); } catch (_) {}
+    renderHeader(); renderTrendBar(); renderStoryBar(); renderRail(); try { renderGuide(); } catch (_) {} try { renderHome(); } catch (_) {} renderList(); renderBottomNav(); try { if (IS_RGUKT && !readJSON("dd-rgukt-year", null) && !document.querySelector(".welcome")) showEligibility(); } catch (_) {} try { document.body.classList.toggle("simple", isSimple()); renderBell(); notifPing(); claimStudentIdOnce(); autoMailIds(); } catch (_) {}
     // Forms keep what the student is typing while live updates arrive.
     const key = ["ask", "edit", "name", "alumniJoin", "alumniJob", "fun", "lab", "college", "plus"].includes(state.mode) ? state.mode + state.tab : "";
     if (key && key === sheetKey) return;
@@ -10561,9 +10598,9 @@ if (themeBtn) {
 }
 
 
-// Brand lockup from the brand guide: the monogram C, then "LOOPY" in bold serif with wide spacing and a small spaced gold "BRAIN".
+// Brand lockup from the brand guide: the monogram C, then "LOOPY" in bold serif with wide spacing and a small spaced gold "BRAINS".
 function brandLockup(title) {
-  const words = String(title || "Loopy Brain").trim().split(/\s+/), last = words.length > 1 ? words.pop() : "", rest = words.join(" ") || String(title);
+  const words = String(title || "Loopy Brains").trim().split(/\s+/), last = words.length > 1 ? words.pop() : "", rest = words.join(" ") || String(title);
   const tpl = document.getElementById("brandMarkTpl"), src = (tpl && tpl.content && tpl.content.firstElementChild) || document.querySelector(".sp2-bmark svg"); let mark = null;
   if (src) {
     mark = src.cloneNode(true); mark.removeAttribute("width"); mark.removeAttribute("height"); mark.setAttribute("class", "bmark hd-mark"); mark.setAttribute("aria-hidden", "true"); mark.setAttribute("focusable", "false");
