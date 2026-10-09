@@ -3,9 +3,9 @@
   "appName": "The Campus Loop",
   "webDir": "www",
   "server": {
-    "url": "https://vijay462462.github.io/rgukt-spark/",
+    "url": "https://loopybrains.com/",
     "cleartext": false,
-    "allowNavigation": ["vijay462462.github.io"]
+    "allowNavigation": ["loopybrains.com", "www.loopybrains.com"]
   },
   "android": {
     "allowMixedContent": false,
