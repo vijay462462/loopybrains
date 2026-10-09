@@ -1532,11 +1532,12 @@ function showWelcome(force, startId) {
     try { if (getName() && store && store.handleClaim && !myHandle() && !readJSON("dd-loopid-skip", false) && !readJSON("dd-loopid-shown", false)) { writeJSON("dd-loopid-shown", true); setTimeout(() => showPanel("loopid"), 400); } } catch (_) {} };
   const onKey = (e) => { if (e.key === "Escape") finish(); };
   const saveStep = () => { if (STEPS[step] === "college" && pickSlug && pickSlug !== curSlug) { try { sessionStorage.setItem("dd-ob-resume", "name"); localStorage.setItem("dd-state", cst); } catch (_) {} document.removeEventListener("keydown", onKey); switchCollege(pickSlug); return; } if (STEPS[step] === "name") { const v = nameVal.trim().slice(0, 30); if (v) setName(v); } if (STEPS[step] === "interests") writeJSON("dd-interests", [...picked]); };
+  let aboutReady = false;   // the About step may only be passed after the text was really scrolled through (or read) and the terms box is ticked
   let paintedAt = 0;   // a tap that lands right after a step appears (double tap, ghost click) must not skip that step
-  const go = (d) => { if (performance.now() - paintedAt < 900) return; if (d > 0 && STEPS[step] === "college" && !pickSlug) { const c = box.querySelector(".ob-chosen"); if (c) { c.classList.remove("shake"); void c.offsetWidth; c.classList.add("shake"); } return; } saveStep(); step = Math.max(0, Math.min(TOTAL - 1, step + d)); paint(); };
+  const go = (d) => { if (performance.now() - paintedAt < 1200) return; if (d > 0 && STEPS[step] === "about" && !aboutReady) return; if (d > 0 && STEPS[step] === "college" && !pickSlug) { const c = box.querySelector(".ob-chosen"); if (c) { c.classList.remove("shake"); void c.offsetWidth; c.classList.add("shake"); } return; } saveStep(); step = Math.max(0, Math.min(TOTAL - 1, step + d)); paint(); };
   const start = (fn) => () => { saveStep(); finish(); setTimeout(fn, 120); };
   function paint() {
-    paintedAt = performance.now();
+    paintedAt = performance.now(); aboutReady = false;
     const last = step === TOTAL - 1, who = nameVal.trim() ? nameVal.trim().split(/\s+/)[0] : "";
     const bar = el("div", { class: "ob-bar", "aria-hidden": "true" }, ...Array.from({ length: TOTAL }, (_, k) => el("span", { class: k <= step ? "on" : "" })));
     let body;
@@ -1630,25 +1631,27 @@ function showWelcome(force, startId) {
         el("div", { class: "ob-start" }, ...starters.map(([t, fn, pri]) => el("button", { class: "btn" + (pri ? " primary" : ""), type: "button", onclick: start(fn) }, t)))];
     }
     box.replaceChildren(el("div", { class: "welcome-card ob-card" }, el("button", { class: "welcome-skip", type: "button", onclick: finish }, "Skip"), bar, el("div", { class: "ob-step ob-s-" + sid }, ...body),
-      el("div", { class: "rowbtns" }, step > 0 ? el("button", { class: "btn", type: "button", onclick: () => go(-1) }, "Back") : null, last ? el("button", { class: "btn", type: "button", onclick: finish }, "Close") : el("button", { class: "btn primary", type: "button", onclick: () => go(1) }, sid === "about" ? "Continue" : sid === "college" ? (pickSlug && pickSlug !== curSlug ? "Continue with " + (pickName.length > 16 ? pickName.slice(0, 15) + "\u2026" : pickName) : "Continue") : "Next"))));
+      el("div", { class: "rowbtns" }, step > 0 ? el("button", { class: "btn", type: "button", onclick: () => go(-1) }, "Back") : null, last ? el("button", { class: "btn", type: "button", onclick: finish }, "Close") : el("button", { class: "btn primary", type: "button", onclick: () => go(1), disabled: sid === "about" }, sid === "about" ? "Continue" : sid === "college" ? (pickSlug && pickSlug !== curSlug ? "Continue with " + (pickName.length > 16 ? pickName.slice(0, 15) + "\u2026" : pickName) : "Continue") : "Next"))));
     const f = box.querySelector("input") || box.querySelector(".btn.primary"); if (f && sid !== "about") f.focus();
     // The About step: Continue switches on once the whole text has been scrolled through AND the terms box is ticked.
     if (sid === "about") {
       const stepEl = box.querySelector(".ob-step"), nextBtn = box.querySelector(".ob-card > .rowbtns .btn.primary"), skipBtn = box.querySelector(".welcome-skip"), agree = box.querySelector("#ob-terms");
       if (stepEl && nextBtn && agree) {
         const hint = el("p", { class: "ob-scrollhint", role: "status" }, "");
-        const atEnd = () => stepEl.scrollTop + stepEl.clientHeight >= stepEl.scrollHeight - 12;
+        let reached = false;
+        const atEnd = () => stepEl.scrollTop + stepEl.clientHeight >= stepEl.scrollHeight - 12, fits = () => stepEl.scrollHeight <= stepEl.clientHeight + 12;
         const update = () => {
-          const end = atEnd(), ok = end && agree.checked;
+          const end = reached, ok = end && agree.checked; aboutReady = ok;
           nextBtn.disabled = !ok; nextBtn.classList.toggle("locked", !ok); if (ok) nextBtn.removeAttribute("aria-disabled"); else nextBtn.setAttribute("aria-disabled", "true");
           if (skipBtn) skipBtn.hidden = !agree.checked;
-          hint.textContent = !end ? "\u2193 Scroll to read everything" : !agree.checked ? "Tick the box to agree to the terms" : "";
+          hint.textContent = !end ? (fits() ? "Please read the text above" : "\u2193 Scroll to read everything") : !agree.checked ? "Tick the box to agree to the terms" : "";
           if (!hint.textContent) hint.remove(); else if (!hint.isConnected) stepEl.parentNode.insertBefore(hint, stepEl.nextSibling);
           if (end) stepEl.style.maskImage = stepEl.style.webkitMaskImage = "none";
         };
         agree.addEventListener("change", () => { if (agree.checked) writeJSON("dd-terms", { v: 1, at: Date.now() }); else { try { localStorage.removeItem("dd-terms"); } catch (_) {} } try { if (navigator.vibrate) navigator.vibrate(8); } catch (_) {} update(); });
-        stepEl.addEventListener("scroll", update, { passive: true });
+        stepEl.addEventListener("scroll", () => { if (atEnd() && stepEl.scrollTop > 0) reached = true; update(); }, { passive: true });
         requestAnimationFrame(() => { update(); setTimeout(update, 600); });
+        setTimeout(() => { if (box.isConnected && fits()) { reached = true; update(); } }, 5000);   // a short text that needs no scrolling unlocks after a few seconds of reading
       }
     }
   }
