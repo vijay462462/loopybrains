@@ -2,7 +2,7 @@
 
 Static PWA for RGUKT AP students (other colleges can be added), built by a non-technical student founder (Vijay). **Keep explanations in plain, step-by-step language and say which website or console each step happens in.** The user can only be guided through consoles by screenshot and cannot paste secrets here. Never ask for or print secret keys.
 
-**Brand:** renamed from "The Campus Loop" to **Loopy Brains** (user-facing text only). Logo: a gold neural infinity loop (four nodes) with a spark, as an **LB monogram** (monoline "LB" in warm white) inside an open coral loop with a dot, on deep teal; sources in `docs/brand/loopy-brains-*.svg`, exported to `docs/icon*.png`, `favicon-32.png`, `apple-touch-icon.png`, the share banner and `android-app/assets/`. **"Loopy Brain" (singular) is the in-app knowledge-pack search feature**; the brand is "Loopy Brains" (plural, matches the domain). Wordmark is LOOPY over BRAINS.
+**Brand:** renamed from "The Campus Loop" to **Loopy Brains** (user-facing text only). Logo (chosen by the owner from five models): an **LB monogram** (monoline "LB" in warm white) inside an open coral loop with a dot, on deep teal; sources in `docs/brand/loopy-brains-*.svg`, exported to `docs/icon*.png`, `favicon-32.png`, `apple-touch-icon.png`, the share banner and `android-app/assets/`. **"Loopy Brain" (singular) is the in-app knowledge-pack search feature**; the brand is "Loopy Brains" (plural, matches the domain). Wordmark is LOOPY over BRAINS.
 
 Features: class board (doubts, ideas, clubs, challenges, jobs, market, GATE), Loopy Brain (knowledge-pack search and answer engine, works without sign-in), Loop Bot, daily quiz and streaks, Study Lab and tools, college data, Plus (paid) plan, push alerts.
 
