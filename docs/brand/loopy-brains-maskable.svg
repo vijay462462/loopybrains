@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="Loopy Brains">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#232a78"/><stop offset=".55" stop-color="#141846"/><stop offset="1" stop-color="#0a0d2b"/></linearGradient>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1a6b50"/><stop offset=".55" stop-color="#0b3d2e"/><stop offset="1" stop-color="#06241b"/></linearGradient>
     <radialGradient id="glow" cx=".78" cy=".12" r=".7"><stop offset="0" stop-color="#e8cd8f" stop-opacity=".34"/><stop offset="1" stop-color="#e8cd8f" stop-opacity="0"/></radialGradient>
     <linearGradient id="lbGold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f7e6b0"/><stop offset=".5" stop-color="#d8b565"/><stop offset="1" stop-color="#b08a3c"/></linearGradient>
     <linearGradient id="lbSpark" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6d6"/><stop offset="1" stop-color="#e8cd8f"/></linearGradient>
@@ -9,7 +9,7 @@
   
   <g transform="translate(112 162) scale(1.5)">
     <path d="M256 292C206 222 100 226 92 300 88 372 190 384 256 292 322 200 424 214 428 292 432 372 326 380 256 292Z" transform="translate(0 -36)" fill="none" stroke="url(#lbGold)" stroke-width="46" stroke-linecap="round" stroke-linejoin="round"/>
-    <g fill="#fff6d6" stroke="#141846" stroke-width="5"><circle cx="158" cy="206" r="15"/><circle cx="365" cy="192" r="15"/><circle cx="370" cy="319" r="15"/><circle cx="148" cy="321" r="15"/></g>
+    <g fill="#fff6d6" stroke="#0b3d2e" stroke-width="5"><circle cx="158" cy="206" r="15"/><circle cx="365" cy="192" r="15"/><circle cx="370" cy="319" r="15"/><circle cx="148" cy="321" r="15"/></g>
     <path d="M256 54l12 38 38 12-38 12-12 38-12-38-38-12 38-12z" fill="url(#lbSpark)"/>
   </g>
 </svg>

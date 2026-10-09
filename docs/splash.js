@@ -2,6 +2,7 @@
 // the CSS also fades it out by itself after a few seconds.
 (function () {
   var el = document.getElementById("splash"); if (!el) return;
+  var ver = ""; try { var vm = ((document.currentScript && document.currentScript.src) || "").match(/[?&]v=(\d+)/); ver = vm ? vm[1] : ""; } catch (e) {}
   var seen = false; try { seen = sessionStorage.getItem("dd-splash") === "1"; sessionStorage.setItem("dd-splash", "1"); } catch (e) {}
   if (seen) { el.remove(); return; }
   var name = "", first = true, college = "";
@@ -23,9 +24,10 @@
     var crest = localStorage.getItem("dd-crest") || "", cname = localStorage.getItem("dd-college-name") || "";
     if (cname && cname.toLowerCase() !== "your college") { var box = document.createElement("div"); box.className = "splash-crest"; if (/^data:image\/(png|jpeg|webp);base64,/.test(crest)) { var im = document.createElement("img"); im.src = crest; im.alt = ""; box.appendChild(im); } var nm = document.createElement("span"); nm.textContent = cname; box.appendChild(nm); var slot = document.getElementById("splashCrestSlot"); if (slot) slot.appendChild(box); else title.parentNode.insertBefore(box, title.nextSibling); }
   } catch (e) {}
+  try { var tr = el.querySelector(".sp2-trust"); if (tr && ver) tr.textContent = tr.textContent + "  \u00B7  v" + ver; } catch (e) {}
   el.setAttribute("data-live", "1");                    // JS is running: switch off the CSS safety timer
   var done = false;
-  function close() { if (done) return; done = true; clearInterval(typer); try { document.dispatchEvent(new Event("splash-closed")); } catch (e) {} el.classList.add("splash-out"); setTimeout(function () { if (el.parentNode) el.remove(); }, 450); }
+  function close() { if (done) return; done = true; clearInterval(typer); try { document.dispatchEvent(new Event("splash-closed")); } catch (e) {} el.classList.add("splash-out"); setTimeout(function () { if (el.parentNode) el.remove(); }, 200); }
   var go = document.getElementById("splashGo"); if (go) { if (!first) go.textContent = "Continue \u2192"; go.addEventListener("click", close); }
   // The line under the headline never changes. A tapped feature is explained in its own hint line, which goes back to the overview after a few seconds.
   var hint = document.getElementById("splashHint"), hintBase = hint ? hint.textContent : "", hintTimer = 0;
