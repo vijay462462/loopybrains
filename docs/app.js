@@ -1522,6 +1522,7 @@ const WELCOME = [
   ["🙏", "Respect for everyone", "We honour our students, teachers and staff. Speak kindly, help your juniors, thank those who help you, and treat every person here the way you want your own family to be treated. Together we grow."],
   ["", "Study smarter", "Daily quiz, Study Lab, flashcards, CGPA tools, jobs and papers, all in one place. Everything on the board is free. Plus adds extras like mock tests and an AI helper."],
 ];
+let welcomePending = false;   // the first-run steps are about to open or are open: other pop-ups (college welcome card, year question) wait for them
 function showWelcome(force, startId) {
   if (document.getElementById("welcome")) return;
   const STEPS = ["about", "college", "name", "interests", "ready"], curSlug = TENANT ? TENANT.slug : IS_RGUKT ? "rgukt" : "";
@@ -1529,7 +1530,7 @@ function showWelcome(force, startId) {
   const picked = new Set(readJSON("dd-interests", []));
   let step = Math.max(0, STEPS.indexOf(startId || "about")), nameVal = (getName() || "").trim(), pickSlug = curSlug, pickName = curSlug ? COLLEGE : "", cq = "", ctype = "all", cst = (() => { try { return localStorage.getItem("dd-state") || ""; } catch (_) { return ""; } })() || (curSlug && curSlug !== "rgukt" ? ((DIRECTORY.find(c => c.slug === curSlug) || {}).state || "") : "") || "Andhra Pradesh";
   const TOTAL = STEPS.length, box = el("div", { id: "welcome", class: "welcome", role: "dialog", "aria-modal": "true", "aria-label": "Welcome to " + BRAND });
-  const finish = () => { try { sessionStorage.removeItem("dd-ob-splash"); localStorage.setItem("dd-welcome-done", "1"); if (!localStorage.getItem("dd-launch-gone")) { localStorage.setItem("dd-launch", "1"); } } catch (_) {} if (STEPS[step] === "ready") setTimeout(() => confetti(130), 250); document.removeEventListener("keydown", onKey); box.remove(); todayKey = ""; try { renderHeader(); } catch (_) {}
+  const finish = () => { welcomePending = false; setTimeout(() => { try { render(); } catch (_) {} }, 350); try { sessionStorage.removeItem("dd-ob-splash"); localStorage.setItem("dd-welcome-done", "1"); if (!localStorage.getItem("dd-launch-gone")) { localStorage.setItem("dd-launch", "1"); } } catch (_) {} if (STEPS[step] === "ready") setTimeout(() => confetti(130), 250); document.removeEventListener("keydown", onKey); box.remove(); todayKey = ""; try { renderHeader(); } catch (_) {}
     try { if (getName() && store && store.handleClaim && !myHandle() && !readJSON("dd-loopid-skip", false) && !readJSON("dd-loopid-shown", false)) { writeJSON("dd-loopid-shown", true); setTimeout(() => showPanel("loopid"), 400); } } catch (_) {} };
   const onKey = (e) => { if (e.key === "Escape") finish(); };
   const saveStep = () => { if (STEPS[step] === "college" && pickSlug && pickSlug !== curSlug) { try { sessionStorage.setItem("dd-ob-resume", "name"); localStorage.setItem("dd-state", cst); } catch (_) {} document.removeEventListener("keydown", onKey); switchCollege(pickSlug); return; } if (STEPS[step] === "name") { const v = nameVal.trim().slice(0, 30); if (v) setName(v); } if (STEPS[step] === "interests") writeJSON("dd-interests", [...picked]); };
@@ -1699,7 +1700,7 @@ function showCollegeReveal() {
     mk("path", { d: "M200 38 V22", stroke: "rgb(255 255 255 / .5)", "stroke-width": 2 }), mk("path", { d: "M200 22 l16 5 -16 5z", fill: "#fde68a" }),
     mk("rect", { x: 96, y: 86, width: 48, height: 34, fill: "rgb(255 255 255 / .1)" }), mk("rect", { x: 256, y: 82, width: 52, height: 38, fill: "rgb(255 255 255 / .1)" }),
     mk("circle", { cx: 70, cy: 100, r: 14, fill: "rgb(255 255 255 / .09)" }), mk("circle", { cx: 336, cy: 98, r: 16, fill: "rgb(255 255 255 / .09)" }));
-  const close = () => { try { localStorage.setItem("dd-revealed", SEL); } catch (_) {} ov.classList.add("out"); setTimeout(() => ov.remove(), 260); try { confetti(); } catch (_) {} };
+  const close = () => { try { localStorage.setItem("dd-revealed", SEL); } catch (_) {} ov.classList.add("out"); setTimeout(() => ov.remove(), 260); setTimeout(() => { try { render(); } catch (_) {} }, 400); try { confetti(); } catch (_) {} };
   const ov = el("div", { class: "cr", role: "dialog", "aria-modal": "true", "aria-label": "Welcome to " + COLLEGE },
     el("div", { class: "cr-card" },
       el("div", { class: "cr-art" }, el("i", { class: "cr-orb a" }), el("i", { class: "cr-orb b" }), el("i", { class: "cr-orb c" }), sky,
@@ -1710,12 +1711,12 @@ function showCollegeReveal() {
         el("p", { class: "cr-disc" }, "Independent student community. Not run or endorsed by the college."),
         el("button", { class: "btn primary cr-go", type: "button", onclick: close }, "Enter " + (COLLEGE.length > 22 ? "my college" : COLLEGE) + " \u2192"))));
   ov.style.setProperty("--c1", c1); ov.style.setProperty("--c2", c2);
-  const open = () => document.body.append(ov);
+  const open = () => { if (welcomePending || document.getElementById("welcome")) { setTimeout(open, 400); return; } document.body.append(ov); };
   if (document.getElementById("splash")) document.addEventListener("splash-closed", () => setTimeout(open, 60), { once: true }); else open();
 }
 function maybeWelcome() {
   let resume = ""; try { resume = sessionStorage.getItem("dd-ob-resume") || ""; sessionStorage.removeItem("dd-ob-resume"); } catch (_) {}
-  const open = (start) => { const viaSplash = !!document.getElementById("splash"); const go = () => setTimeout(() => { try { if (viaSplash) sessionStorage.setItem("dd-ob-splash", "1"); } catch (_) {} showWelcome(false, start); }, 60); if (document.getElementById("splash")) document.addEventListener("splash-closed", go, { once: true }); else go(); };
+  const open = (start) => { welcomePending = true; const viaSplash = !!document.getElementById("splash"); const go = () => setTimeout(() => { try { if (viaSplash) sessionStorage.setItem("dd-ob-splash", "1"); } catch (_) {} showWelcome(false, start); if (!document.getElementById("welcome")) welcomePending = false; }, 60); if (document.getElementById("splash")) document.addEventListener("splash-closed", go, { once: true }); else go(); };
   if (resume) { try { sessionStorage.setItem("dd-ob-shown", "1"); } catch (_) {} open(resume); return; }   // just picked a college: continue with the name step
   if (NO_COLLEGE) { try { sessionStorage.setItem("dd-ob-shown", "1"); } catch (_) {} open(); return; }      // brand-new visitors choose their college first
   // welcomeEveryVisit (config.js): show the welcome steps after the opening screen on every visit (handy for testing). Set it to false before launch.
@@ -10403,7 +10404,7 @@ function render() { const snap = snapUI(); try { renderCore(); } finally { resto
 function renderCore() {
   try {
     document.body.dataset.tab = state.tab; applyFocus();
-    renderHeader(); renderTrendBar(); renderStoryBar(); renderRail(); try { renderGuide(); } catch (_) {} try { renderHome(); } catch (_) {} renderList(); renderBottomNav(); try { if (IS_RGUKT && !readJSON("dd-rgukt-year", null) && !document.querySelector(".welcome")) showEligibility(); } catch (_) {} try { document.body.classList.toggle("simple", isSimple()); renderBell(); notifPing(); claimStudentIdOnce(); autoMailIds(); } catch (_) {}
+    renderHeader(); renderTrendBar(); renderStoryBar(); renderRail(); try { renderGuide(); } catch (_) {} try { renderHome(); } catch (_) {} renderList(); renderBottomNav(); try { if (IS_RGUKT && !readJSON("dd-rgukt-year", null) && !welcomePending && !document.querySelector(".welcome, .cr, #splash")) showEligibility(); } catch (_) {} try { document.body.classList.toggle("simple", isSimple()); renderBell(); notifPing(); claimStudentIdOnce(); autoMailIds(); } catch (_) {}
     // Forms keep what the student is typing while live updates arrive.
     const key = ["ask", "edit", "name", "alumniJoin", "alumniJob", "fun", "lab", "college", "plus"].includes(state.mode) ? state.mode + state.tab : "";
     if (key && key === sheetKey) return;
