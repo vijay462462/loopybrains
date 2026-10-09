@@ -1,7 +1,7 @@
 # RGUKT Spark Android app
 
 A thin Android wrapper (Capacitor) around the website. It loads
-https://vijay462462.github.io/rgukt-spark/ so website updates reach the app immediately,
+https://loopybrains.com/ so website updates reach the app immediately,
 and it turns on Android's `FLAG_SECURE`, so **screenshots, screen recording and the
 recent-apps preview are blocked inside the app**.
 

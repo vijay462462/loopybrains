@@ -7031,8 +7031,8 @@ function renderAbout() {
     el("div", { class: "label" }, "🤝 Get involved"),
     el("p", { class: "hint" }, "Found a bug or have an idea? Post it in the Ideas tab or ask Loop Bot. You can also see the code and report issues on GitHub."),
     el("div", { class: "rowbtns" },
-      outLink("https://github.com/vijay462462/rgukt-spark", "GitHub", "linkbtn"),
-      outLink("https://github.com/vijay462462/rgukt-spark/issues", "Report an issue", "linkbtn")),
+      outLink("https://github.com/vijay462462/loopybrains", "GitHub", "linkbtn"),
+      outLink("https://github.com/vijay462462/loopybrains/issues", "Report an issue", "linkbtn")),
     el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")),
   ];
 }

@@ -6,7 +6,7 @@ Features: class board (doubts, ideas, challenges), Loopy Brain (in-app knowledge
 
 ## Architecture
 - **Frontend**: plain JS/CSS/HTML in `docs/` (no build step), served by GitHub Pages. Entry `docs/index.html`, logic `docs/app.js`, config `docs/config.js`. Loopy Brain lives in `docs/brain-*.js`.
-- **Service worker** `docs/sw.js`: cache name `spark-vNNN`. Every module import in `docs/index.html` and `docs/sw.js` carries `?v=NNN`. **Bump all of them together (currently 457) whenever a cached file changes.**
+- **Service worker** `docs/sw.js`: cache name `spark-vNNN`. Every module import in `docs/index.html` and `docs/sw.js` carries `?v=NNN`. **Bump all of them together (currently 458) whenever a cached file changes.**
 - **Backend**: Firebase project `doubt-desk-e6f39` (Firestore, Auth anonymous sign-in, Storage). Rules in `firestore.rules`. Cloud Functions in `functions/index.js` (Razorpay, push, Anthropic key; CORS allow-list `ALLOWED_ORIGINS`).
 - **App Check**: web uses reCAPTCHA v3 (`docs/config.js` `appCheck.siteKey`); native Android uses Play Integrity via `@capacitor-firebase/app-check`. `docs/app.js` (~line 569): native + plugin present → plugin; browser → reCAPTCHA; native without plugin → skip App Check entirely. Never fall back to reCAPTCHA when native.
 - **Android app** `android-app/`: Capacitor 6 WebView wrapper loading the website URL in `capacitor.config.json`. Package `com.thecampusloop.app`. Built by `.github/workflows/build-android.yml` (debug APK). `patch_android.py` adds FLAG_SECURE and copies `google-services.json`; the workflow overwrites it from the `GOOGLE_SERVICES_JSON` secret.
