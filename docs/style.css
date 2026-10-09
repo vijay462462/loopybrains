@@ -3960,3 +3960,41 @@ body header.top .tabs button[aria-selected="true"] { color: #0d1030; }
   :root:not([data-theme="light"]) header.top .tabs button[aria-selected="true"], :root:not([data-theme="light"]) header.top .tabs button[aria-selected="true"] .ic { color: #191407 !important; }
 }
 @media (min-width: 1200px) { header.top .brand h1 .hd-mark { width: 50px; height: 50px; } }
+/* ===== Page 1 (welcome) and page 2 (About / first-run steps): one-screen, thumb-friendly layout that fits any phone ===== */
+:root .splash.sp2 { display: flex; flex-direction: column; justify-content: flex-start; gap: 14px; padding: calc(env(safe-area-inset-top, 0px) + 18px) 18px 0; overflow-y: auto; overscroll-behavior: contain; text-align: left; }
+:root .splash.sp2 .sp2-main { display: grid; gap: 10px; width: 100%; max-width: 34rem; margin: 0 auto; }
+:root .splash.sp2 .sp2-h { font-size: clamp(1.55rem, 6.6vw, 2.3rem); line-height: 1.12; margin: 6px 0 0; font-weight: 750; letter-spacing: -.015em; }
+:root .splash.sp2 .sp2-sub { margin: 0; font-size: .98rem; }
+:root .splash.sp2 .sp2-rows { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 34rem; margin: 0 auto; border: 0; padding: 0; }
+:root .splash.sp2 .sp2-row { display: grid; grid-template-columns: 38px minmax(0, 1fr); align-items: start; gap: 10px; min-height: 0; padding: 12px; border-radius: 18px; background: var(--sheet); color: var(--ink); border: 1px solid var(--line); box-shadow: var(--shadow); background-image: none; animation: none; }
+:root .splash.sp2 .sp2-row::after { display: none; }
+:root .splash.sp2 .sp2-row .sp2-ic { width: 38px; height: 38px; padding: 8px; border-radius: 12px; background: var(--accent-soft); color: var(--accent); border: 0; }
+:root .splash.sp2 .sp2-row b { color: var(--ink); font-size: .95rem; font-weight: 700; }
+:root .splash.sp2 .sp2-row span { color: var(--muted); font-size: .78rem; line-height: 1.3; margin-top: 2px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+:root .splash.sp2 .sp2-guide { display: none; }
+@media (min-height: 800px) { :root .splash.sp2 .sp2-guide { display: flex; } }
+:root .splash.sp2 .sp2-go { position: sticky; bottom: 0; width: 100%; max-width: 34rem; margin: auto auto 0; padding: 16px 20px; border-radius: 18px; font-size: 1.05rem; font-weight: 800; background: linear-gradient(135deg, var(--gold-2, #e8cd8f), var(--gold, #c9a45c)); color: var(--gold-ink, #1d1606); border: 0; box-shadow: 0 -14px 24px 6px var(--paper), 0 16px 28px -16px rgb(201 164 92 / .9); }
+:root .splash.sp2 .sp2-trust { text-align: center; margin: 0 auto; padding: 4px 0 calc(14px + env(safe-area-inset-bottom, 0px)); background: var(--paper); width: 100%; max-width: 34rem; }
+@media (min-width: 700px) { :root .splash.sp2 { padding-top: 40px; } :root .splash.sp2 .sp2-rows { grid-template-columns: repeat(3, 1fr); max-width: 44rem; } :root .splash.sp2 .sp2-main, :root .splash.sp2 .sp2-go, :root .splash.sp2 .sp2-trust { max-width: 44rem; } }
+/* Page 2: a full-height sheet on phones, a calm centred card on larger screens */
+:root .welcome { padding: 0; place-items: stretch; background: var(--paper); backdrop-filter: none; }
+:root .welcome .welcome-card.ob-card { width: 100%; max-width: 34rem; margin: 0 auto; height: 100dvh; max-height: none; border-radius: 0; box-shadow: none; border: 0; background: var(--paper); text-align: left; align-items: stretch; padding: calc(env(safe-area-inset-top, 0px) + 14px) 20px calc(14px + env(safe-area-inset-bottom, 0px)); gap: 12px; }
+:root .welcome .ob-card > .ob-step { text-align: left; padding: 4px 2px 18px; }
+:root .welcome .ob-card h2 { font-size: clamp(1.5rem, 6vw, 1.9rem); line-height: 1.15; letter-spacing: -.01em; text-align: left; font-weight: 750; }
+:root .welcome .ob-card .ob-say, :root .welcome .ob-card p { text-align: left; color: var(--muted); font-size: 1rem; line-height: 1.55; }
+:root .welcome .ob-bar span { height: 6px; background: var(--line); } 
+:root .welcome .ob-bar span.on, :root .welcome .ob-bar span.done { background: var(--gold, #c9a45c); }
+:root .welcome .ab-list { gap: 10px; }
+:root .welcome .ab-pillar { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 14px; align-items: center; padding: 14px; border-radius: 20px; background: var(--sheet); border: 1px solid var(--line); box-shadow: var(--shadow); }
+:root .welcome .ab-pillar > span { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 14px; background: var(--accent-soft); font-size: 22px; }
+:root .welcome .ab-pillar b { font-size: 1.02rem; color: var(--ink); } :root .welcome .ab-pillar small { color: var(--muted); font-size: .9rem; line-height: 1.4; opacity: 1; }
+:root .welcome .ob-card > .rowbtns { width: 100%; padding: 8px 0 0; }
+:root .welcome .ob-card > .rowbtns .btn { flex: 1; min-height: 52px; border-radius: 16px; font-weight: 800; font-size: 1.02rem; }
+:root .welcome .ob-card > .rowbtns .btn.primary { background: linear-gradient(135deg, var(--gold-2, #e8cd8f), var(--gold, #c9a45c)); color: var(--gold-ink, #1d1606); border: 0; box-shadow: 0 14px 26px -16px rgb(201 164 92 / .9); }
+:root .welcome .ob-card > .rowbtns .btn.primary:disabled, :root .welcome .ob-card > .rowbtns .btn.primary[disabled] { background: transparent; color: var(--muted); border: 1.5px dashed var(--line); box-shadow: none; opacity: 1; }
+:root .welcome .ob-scrollhint { color: var(--accent); font-weight: 700; }
+@media (min-width: 700px) { :root .welcome { background: rgb(9 11 24 / .7); backdrop-filter: blur(6px); place-items: center; padding: 24px; } :root .welcome .welcome-card.ob-card { height: auto; max-height: min(92dvh, 760px); border-radius: 28px; padding: 28px 28px 22px; box-shadow: 0 30px 70px -30px rgb(0 0 0 / .7); border: 1px solid var(--line); } }
+:root .welcome .ob-card h2, :root .welcome .ob-card h3 { text-align: left !important; }
+:root .welcome .ob-card .ob-step { justify-items: stretch; }
+@media (max-height: 600px) { :root .splash.sp2 .sp2-row span { display: none; } :root .splash.sp2 { gap: 10px; } :root .splash.sp2 .sp2-h { font-size: 1.45rem; } }
+@media (max-width: 340px) { :root .splash.sp2 .sp2-row span { display: none; } :root .splash.sp2 .sp2-row { padding: 10px; } }
