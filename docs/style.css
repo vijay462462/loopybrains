@@ -4009,3 +4009,16 @@ body header.top .tabs button[aria-selected="true"] { color: #0d1030; }
 :root[data-palette="tealcoral"]:not([data-theme="dark"]) .brand h1 i { background: linear-gradient(90deg, #f27a60, #d9482f); -webkit-background-clip: text; background-clip: text; }
 @media (prefers-color-scheme: dark) { :root[data-palette="tealcoral"]:not([data-theme="light"]) .brand h1 i { background: linear-gradient(90deg, #ffb4a3, #ff8a73); -webkit-background-clip: text; background-clip: text; } }
 :root[data-palette="tealcoral"][data-theme="dark"] .brand h1 i { background: linear-gradient(90deg, #ffb4a3, #ff8a73); -webkit-background-clip: text; background-clip: text; }
+/* ===== Loopy AI screen follows the brand colours (teal and coral); the LB logo stays still while its coral loop turns ===== */
+.bsc-orbit .r1, .bsc-orbit .r2 { background: conic-gradient(from 0deg, #5fd0c8, #18909a, #ff6f59, #ffb4a3, #5fd0c8) border-box; }
+.bsc-orbit b { background: #ff8a73; box-shadow: 0 0 14px 2px rgb(255 138 115 / .7); }
+.bsc-orbit .d2 { background: #5fd0c8; box-shadow: 0 0 14px 2px rgb(95 208 200 / .7); }
+.bsc-orbit .d3 { background: #ffb4a3; box-shadow: 0 0 14px 2px rgb(255 180 163 / .7); }
+.bsc-orbit .bsc-brand, .bsc-orbit.sm .bsc-brand, .bsc-brand { box-shadow: 0 14px 40px -8px rgb(24 144 154 / .7), 0 0 0 1px rgb(255 255 255 / .08); }
+.bsc-orbit .bsc-brand { width: 96px; height: 96px; }
+.bsc-hi span { background: linear-gradient(90deg, #18909a, #ff6f59); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.bsc-cap { display: block; margin: 6px 0 2px; font-size: .74rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); text-align: center; }
+.bsr-load .bs-spinc, .bsc-brand.thinking .bs-spinc { animation: bscSpin 1.6s linear infinite; }
+.bsf-prog i { background: linear-gradient(90deg, #5fd0c8, #18909a, #ff6f59, #ffb4a3); }
+.bsr-orb { background: conic-gradient(#5fd0c8, #18909a, #ff6f59, #ffb4a3, #5fd0c8); }
+.bsfull .bs-bar { background: linear-gradient(var(--sheet), var(--sheet)) padding-box, linear-gradient(120deg, #5fd0c8, #18909a, #ff6f59, #ffb4a3) border-box; box-shadow: 0 14px 34px -16px rgb(24 144 154 / .6), 0 2px 8px rgb(0 0 0 / .05); }
