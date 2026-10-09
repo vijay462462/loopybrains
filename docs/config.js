@@ -1,9 +1,9 @@
 // Doubt Desk settings. Edit this file to change subjects or connect the database.
 window.DOUBT_DESK_CONFIG = {
   // Product name shown across the app. Change it here to rename everything.
-  brand: "The Campus Loop",
+  brand: "Loopy Brain",
 
-  // The Campus Loop Plus (optional paid plan). Keep enabled:false until payments are set up (see PREMIUM.md).
+  // Loopy Brain Plus (optional paid plan). Keep enabled:false until payments are set up (see PREMIUM.md).
   // monthly / yearly are prices in rupees; functionsUrl is the address of the deployed payment functions.
   // Photos. To stop misuse the app is camera-only for photos in doubts, answers and stories, and profile photos are off (avatars are used).
   // Set gallery: true to allow choosing existing pictures, and profilePhoto: true to allow profile photos again.
@@ -27,7 +27,7 @@ window.DOUBT_DESK_CONFIG = {
   about: { founder: "Vijay M", college: "", email: "v.bhaskar462@gmail.com" },
 
   // Site title shown in the header
-  title: "The Campus Loop",
+  title: "Loopy Brain",
 
   // Paste your Firebase web app config here (Firebase console > Project settings > Your apps).
   firebase: {

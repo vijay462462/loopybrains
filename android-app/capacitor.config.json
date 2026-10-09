@@ -1,6 +1,6 @@
 {
   "appId": "com.thecampusloop.app",
-  "appName": "The Campus Loop",
+  "appName": "Loopy Brain",
   "webDir": "www",
   "server": {
     "url": "https://loopybrains.com/",

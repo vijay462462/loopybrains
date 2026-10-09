@@ -8,16 +8,16 @@
   try { name = (localStorage.getItem("dd-name") || "").trim().split(/\s+/)[0] || ""; first = !localStorage.getItem("dd-welcome-done") && !name; college = localStorage.getItem("dd-college") || ""; } catch (e) {}
   var h = new Date().getHours(), part = h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
   var title = document.getElementById("splashTitle"), sub = document.getElementById("splashSub");
-  if (!first && name) { title.textContent = part + ", " + name + " \u{1F44B}"; sub.textContent = "Welcome back to The Campus Loop family."; }
-  else if (!first) { title.textContent = "Welcome back to The Campus Loop family"; }
+  if (!first && name) { title.textContent = part + ", " + name + " \u{1F44B}"; sub.textContent = "Welcome back to Loopy Brain family."; }
+  else if (!first) { title.textContent = "Welcome back to Loopy Brain family"; }
   try {
     var note = JSON.parse(localStorage.getItem("dd-welcome-note") || "null");
     if (note && note.text) { var p = document.createElement("p"); p.className = "splash-note"; p.textContent = "\u201C" + note.text + "\u201D"; if (note.from) { var s = document.createElement("small"); s.textContent = ",  " + note.from; p.appendChild(s); } sub.parentNode.insertBefore(p, sub.nextSibling); }
   } catch (e) {}
   var bubble = document.getElementById("splashBubble"), visits = 1;
   try { visits = (JSON.parse(localStorage.getItem("dd-visits") || "{}").n || 0) + 1; } catch (e) {}
-  var say = first ? "Hello, I\u2019m Loopy, your guide on The Campus Loop. Ask your doubts without hesitation, learn something new every day, and grow together with your campus."
-    : name ? "Welcome back, " + name + ". This is day " + visits + " with The Campus Loop. Today\u2019s quiz is ready when you are." : "Welcome back. I\u2019m Loopy. Today\u2019s quiz and your campus feed are ready.";
+  var say = first ? "Hello, I\u2019m Loopy, your guide on Loopy Brain. Ask your doubts without hesitation, learn something new every day, and grow together with your campus."
+    : name ? "Welcome back, " + name + ". This is day " + visits + " with Loopy Brain. Today\u2019s quiz is ready when you are." : "Welcome back. I\u2019m Loopy. Today\u2019s quiz and your campus feed are ready.";
   var i = 0, typer = setInterval(function () { if (!bubble) { clearInterval(typer); return; } i += 2; bubble.textContent = say.slice(0, i); if (i >= say.length) clearInterval(typer); }, 28);
   try {
     var crest = localStorage.getItem("dd-crest") || "", cname = localStorage.getItem("dd-college-name") || "";
