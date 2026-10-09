@@ -3782,3 +3782,195 @@ html.is-scrolling .bsh-orb { animation-play-state: paused !important; }
 .bsr-load .bs-spinc { animation: bscSpin 2.4s linear infinite; }
 .bsc-hero .bs-spinc { animation: bscSpin 14s linear infinite; }
 @media (prefers-reduced-motion: reduce) { .bs-spinc { animation: none !important; } }
+
+/* ===== PREMIUM UI UPGRADE v458 ===== */
+
+/* -- Per-tab richer header gradients (royal palette) -- */
+:root[data-palette="royal"] body[data-tab="doubts"]     { --ta:#2e6e1a; --tb:#1b4f2e; }
+:root[data-palette="royal"] body[data-tab="ideas"]      { --ta:#b8600a; --tb:#8a3d08; }
+:root[data-palette="royal"] body[data-tab="clubs"]      { --ta:#0a7a70; --tb:#0e5c88; }
+:root[data-palette="royal"] body[data-tab="challenges"] { --ta:#b31c3a; --tb:#8a1c00; }
+:root[data-palette="royal"] body[data-tab="jobs"]       { --ta:#1b3a68; --tb:#2a5298; }
+:root[data-palette="royal"] body[data-tab="market"]     { --ta:#0f6636; --tb:#147a60; }
+:root[data-palette="royal"] body[data-tab="gate"]       { --ta:#1a3c8c; --tb:#0d2e6a; }
+
+:root[data-palette="royal"][data-theme="dark"] body[data-tab="doubts"]     { --ta:#3d8c22; --tb:#2a6040; }
+:root[data-palette="royal"][data-theme="dark"] body[data-tab="ideas"]      { --ta:#d07a20; --tb:#a85010; }
+:root[data-palette="royal"][data-theme="dark"] body[data-tab="clubs"]      { --ta:#16a397; --tb:#1480b0; }
+:root[data-palette="royal"][data-theme="dark"] body[data-tab="challenges"] { --ta:#e02040; --tb:#c03010; }
+:root[data-palette="royal"][data-theme="dark"] body[data-tab="jobs"]       { --ta:#e0bb62; --tb:#c09040; }
+:root[data-palette="royal"][data-theme="dark"] body[data-tab="market"]     { --ta:#16a856; --tb:#18a892; }
+:root[data-palette="royal"][data-theme="dark"] body[data-tab="gate"]       { --ta:#4a6fdc; --tb:#2048a8; }
+
+/* -- Smoother rich header with shimmer effect -- */
+:root[data-palette="royal"] header.top {
+  background: linear-gradient(135deg, var(--ta) 0%, var(--tb) 55%, color-mix(in srgb,var(--ta) 70%,#000) 100%);
+  box-shadow: 0 2px 20px -4px color-mix(in srgb, var(--ta) 60%, transparent);
+}
+
+/* -- Tab page slide-in animation -- */
+@keyframes tabPageIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.tab-enter .listcol > *,
+.tab-enter .sheet > * {
+  animation: tabPageIn .3s cubic-bezier(.22,.68,0,1.2) both;
+}
+.tab-enter .listcol > *:nth-child(2) { animation-delay: .04s; }
+.tab-enter .listcol > *:nth-child(3) { animation-delay: .08s; }
+.tab-enter .listcol > *:nth-child(4) { animation-delay: .11s; }
+.tab-enter .sheet > *:nth-child(2) { animation-delay: .05s; }
+@media (prefers-reduced-motion: reduce) {
+  .tab-enter .listcol > *, .tab-enter .sheet > * { animation: none; }
+}
+
+/* -- Distinct list layouts per tab -- */
+
+/* Ideas: masonry-style 2-column grid */
+body[data-tab="ideas"] .list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+body[data-tab="ideas"] .list .card {
+  border-radius: 16px;
+  break-inside: avoid;
+  border-left: 3px solid var(--ta);
+  transition: transform .18s, box-shadow .18s;
+}
+body[data-tab="ideas"] .list .card:hover { transform: translateY(-3px); box-shadow: 0 8px 22px -10px var(--ta); }
+@media (max-width: 680px) {
+  body[data-tab="ideas"] .list { grid-template-columns: 1fr; }
+}
+
+/* Clubs: large feature card grid */
+body[data-tab="clubs"] .list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+}
+body[data-tab="clubs"] .list .card {
+  border-radius: 20px;
+  padding: 18px 16px;
+  background: linear-gradient(155deg, color-mix(in srgb, var(--ta) 8%, var(--sheet)), var(--sheet));
+  border: 1px solid color-mix(in srgb, var(--ta) 20%, var(--line));
+  box-shadow: 0 4px 18px -10px color-mix(in srgb, var(--ta) 40%, transparent);
+  transition: transform .18s, box-shadow .18s;
+}
+body[data-tab="clubs"] .list .card:hover { transform: translateY(-4px) scale(1.01); box-shadow: 0 10px 28px -10px color-mix(in srgb, var(--ta) 55%, transparent); }
+
+/* Challenges: wide impactful cards with bold left accent */
+body[data-tab="challenges"] .list {
+  display: grid;
+  gap: 12px;
+}
+body[data-tab="challenges"] .list .card {
+  border-radius: 16px;
+  border-left: 5px solid var(--ta);
+  background: linear-gradient(110deg, color-mix(in srgb, var(--ta) 7%, var(--sheet)) 0%, var(--sheet) 50%);
+  box-shadow: 0 3px 16px -8px color-mix(in srgb, var(--ta) 50%, transparent);
+}
+
+/* Jobs: table-row list layout */
+body[data-tab="jobs"] .list {
+  display: grid;
+  gap: 8px;
+}
+body[data-tab="jobs"] .list .card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  padding: 10px 14px;
+  background: var(--sheet);
+  box-shadow: 0 1px 6px -3px color-mix(in srgb, var(--ta) 20%, transparent);
+  transition: background .15s, box-shadow .15s;
+}
+body[data-tab="jobs"] .list .card:hover { background: color-mix(in srgb, var(--ta) 6%, var(--sheet)); box-shadow: 0 4px 14px -6px color-mix(in srgb, var(--ta) 40%, transparent); }
+
+/* Market: product grid */
+body[data-tab="market"] .list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+}
+body[data-tab="market"] .list .card {
+  border-radius: 18px;
+  text-align: center;
+  padding: 16px 12px 14px;
+  background: linear-gradient(165deg, color-mix(in srgb, var(--ta) 9%, var(--sheet)), var(--sheet));
+  border: 1px solid color-mix(in srgb, var(--ta) 18%, var(--line));
+  box-shadow: 0 2px 14px -8px color-mix(in srgb, var(--ta) 35%, transparent);
+  transition: transform .18s, box-shadow .18s;
+}
+body[data-tab="market"] .list .card:hover { transform: scale(1.025); box-shadow: 0 8px 24px -10px color-mix(in srgb, var(--ta) 55%, transparent); }
+@media (max-width: 400px) {
+  body[data-tab="market"] .list { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* GATE: academic study layout */
+body[data-tab="gate"] .list {
+  display: grid;
+  gap: 10px;
+}
+body[data-tab="gate"] .list .card {
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--ta) 25%, var(--line));
+  border-bottom: 3px solid var(--ta);
+  padding: 14px 16px;
+  background: color-mix(in srgb, var(--ta) 4%, var(--sheet));
+  box-shadow: 0 2px 10px -6px color-mix(in srgb, var(--ta) 30%, transparent);
+}
+
+/* -- Enhanced guide card -- */
+.guide-card {
+  border-left: 4px solid var(--accent) !important;
+  box-shadow: 0 6px 28px -14px var(--accent), 0 1px 4px -1px color-mix(in srgb, var(--accent) 15%, transparent) !important;
+}
+.guide-head { gap: 10px; }
+.guide-ic {
+  background: linear-gradient(135deg, var(--ta, var(--accent)), var(--tb, var(--accent))) !important;
+  box-shadow: 0 4px 12px -4px color-mix(in srgb, var(--accent) 50%, transparent);
+}
+
+/* -- Floating help FAB -- */
+.help-fab {
+  position: fixed;
+  bottom: calc(env(safe-area-inset-bottom,0px) + 76px);
+  right: 16px;
+  z-index: 120;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  font-size: 1.3rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  background: linear-gradient(135deg, var(--ta, var(--accent)), var(--tb, var(--accent)));
+  box-shadow: 0 6px 20px -6px color-mix(in srgb, var(--accent) 70%, transparent), 0 2px 6px rgb(0 0 0 / .18);
+  transition: transform .18s, box-shadow .18s, opacity .2s;
+  display: grid;
+  place-items: center;
+}
+.help-fab:hover { transform: scale(1.1); box-shadow: 0 10px 28px -8px color-mix(in srgb, var(--accent) 80%, transparent); }
+.help-fab:active { transform: scale(.95); }
+.help-fab[hidden] { display: none; }
+@media (min-width: 1100px) {
+  .help-fab { bottom: 24px; right: 24px; }
+}
+
+/* ===== END PREMIUM UI UPGRADE ===== */
+
+/* Guide bar highlight on FAB click */
+@keyframes guidePulse {
+  0%,100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 0%, transparent); }
+  40%      { box-shadow: 0 0 0 8px color-mix(in srgb, var(--accent) 30%, transparent); }
+}
+#guideBar.guide-highlight .guide-card {
+  animation: guidePulse .9s ease both;
+}

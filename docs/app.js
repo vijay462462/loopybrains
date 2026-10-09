@@ -10862,3 +10862,37 @@ document.addEventListener("pointerdown", (e) => {
   const root = document.documentElement; let t = 0, on = false;
   addEventListener("scroll", () => { if (!on) { on = true; root.classList.add("is-scrolling"); } clearTimeout(t); t = setTimeout(() => { on = false; root.classList.remove("is-scrolling"); }, 160); }, { passive: true, capture: true });
 })();
+
+
+// ---------- Tab page-transition animation ----------
+(function tabTransition() {
+  const layout = document.querySelector('.layout');
+  if (!layout) return;
+  let lastTab = '';
+  const observer = new MutationObserver(() => {
+    const tab = document.body.dataset.tab;
+    if (!tab || tab === lastTab) return;
+    lastTab = tab;
+    layout.classList.remove('tab-enter');
+    void layout.offsetWidth; // reflow
+    layout.classList.add('tab-enter');
+  });
+  observer.observe(document.body, { attributes: true, attributeFilter: ['data-tab'] });
+  layout.addEventListener('animationend', () => {}, { passive: true });
+})();
+
+
+// ---------- Floating help FAB ----------
+(function helpFab() {
+  const fab = document.getElementById('helpFab');
+  if (!fab) return;
+  fab.addEventListener('click', () => {
+    const bar = document.getElementById('guideBar');
+    if (bar) {
+      bar.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      bar.classList.add('guide-highlight');
+      setTimeout(() => bar.classList.remove('guide-highlight'), 1400);
+    }
+    if (typeof renderGuide === 'function') renderGuide(true);
+  });
+})();
