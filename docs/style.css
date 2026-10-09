@@ -3998,3 +3998,14 @@ body header.top .tabs button[aria-selected="true"] { color: #0d1030; }
 :root .welcome .ob-card .ob-step { justify-items: stretch; }
 @media (max-height: 600px) { :root .splash.sp2 .sp2-row span { display: none; } :root .splash.sp2 { gap: 10px; } :root .splash.sp2 .sp2-h { font-size: 1.45rem; } }
 @media (max-width: 340px) { :root .splash.sp2 .sp2-row span { display: none; } :root .splash.sp2 .sp2-row { padding: 10px; } }
+/* Back button at the top of every panel and opened post */
+.sheet-topback { display: inline-flex; align-items: center; gap: 6px; margin: 0 0 12px; padding: 8px 14px 8px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--accent-soft); color: var(--accent); font: inherit; font-weight: 700; font-size: .92rem; cursor: pointer; }
+.sheet-topback:active { transform: scale(.97); }
+@media (hover: hover) { .sheet-topback:hover { border-color: color-mix(in srgb, var(--gold, #c9a45c) 60%, var(--line)); } }
+.sheet-topback:focus-visible { outline: 2px solid var(--gold, #c9a45c); outline-offset: 2px; }
+/* First-run pages: same look as the rest (neutral cards, light inputs, gold main buttons) */
+:root .welcome .ob-heart { background: var(--sheet); border: 1px solid var(--line); box-shadow: var(--shadow); border-radius: 22px; color: var(--ink); }
+:root .welcome .ob-heart p, :root .welcome .ob-heart b { color: inherit; }
+:root .welcome .ob-card input[type="text"], :root .welcome .ob-card input[type="search"] { background: var(--sheet); color: var(--ink); border: 1.5px solid var(--line); border-radius: 16px; min-height: 52px; box-shadow: none; }
+:root .welcome .ob-card input[type="text"]:focus, :root .welcome .ob-card input[type="search"]:focus { border-color: var(--gold, #c9a45c); outline: 0; box-shadow: 0 0 0 4px color-mix(in srgb, var(--gold, #c9a45c) 28%, transparent); }
+:root .welcome .ob-start .btn.primary { background: linear-gradient(135deg, var(--gold-2, #e8cd8f), var(--gold, #c9a45c)); color: var(--gold-ink, #1d1606); border: 0; font-weight: 800; }
