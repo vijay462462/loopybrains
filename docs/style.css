@@ -3815,3 +3815,36 @@ header.top .btn.primary#askBtn { font-weight: 700; box-shadow: 0 8px 20px -10px 
 @media (prefers-reduced-motion: reduce) { header.top .hdr-actions .chip, header.top .tabs button, header.top .college-btn { transition: none; transform: none !important; } }
 header.top [hidden], header.top .hdr-actions [hidden] { display: none !important; }
 header.top .college-btn { display: flex; width: fit-content; }
+/* ===== Premium look (final layer): the Midnight palette is defined at the end of this file; these are shared polish rules ===== */
+:root { --gold: #c9a45c; --gold-2: #e8cd8f; --gold-ink: #1d1606; --radius: 16px; }
+/* Header: deep midnight with a soft gold glow and a fine gold edge */
+body header.top .tabs button[aria-selected="true"] { color: #0d1030; }
+/* Cards and surfaces */
+.item, .learn-card, .rt-card, .ans, .plus-tile, .plan-card { border-radius: var(--radius); border: 1px solid var(--line); box-shadow: var(--shadow); }
+.item { transition: transform .18s ease, box-shadow .2s ease, border-color .2s ease; }
+@media (hover: hover) { .item:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--gold) 55%, var(--line)); } }
+.welcome-card, .sheet, .modal { border-radius: 20px; }
+/* Buttons: ink-indigo primary, gold on dark */
+.btn.primary, .sheet .btn.primary { background: var(--btn); color: var(--btn-ink); border-color: transparent; box-shadow: 0 10px 22px -12px color-mix(in srgb, var(--btn) 70%, transparent), inset 0 1px 0 rgb(255 255 255 / .18); }
+.btn.primary:hover { filter: brightness(1.12); }
+/* Bottom bar: calm, with a gold active marker */
+.bnav-btn.active { color: var(--accent); }
+.bnav-btn.active::after { content: ""; display: block; width: 18px; height: 3px; margin: 2px auto 0; border-radius: 3px; background: var(--gold); }
+:focus-visible { outline-color: var(--gold); }
+
+/* Midnight palette: deep indigo, champagne gold, warm ivory */
+:root[data-palette="midnight"] { --paper:#f6f4ee;--sheet:#ffffff;--raised:#ffffff;--grid:#efece3;--ink:#14172b;--muted:#5d6277;--line:#e3dfd2;--accent:#2e2f86;--accent-soft:#e4e9f2;--btn:#171a45;--btn-ink:#ffffff;--mark:#e8cd8f;--mark-ink:#14172b;--ok:#2f7a55;--ok-soft:#e1efe7;--danger:#b3382f;--g1:#2e2f86;--g2:#2e2f86;--g3:#2e2f86;--g4:#2e2f86;--grad:#2e2f86;--shadow:0 1px 2px rgb(15 32 56 / .14);--rt-term:#14172b;--rt-key:#2e2f86;--rt-num:#946b12;--rt-conn:#5d6277;--rt-warn:#b3382f;--rt-topic:#2e2f86;--rt-eq:#2f7a55;--pill-open:#2e2f86;--pill-done:#2f7a55;--pill-urgent:#b3382f;--pill-bounty:#946b12;--pill-mentor:#2f6aa0;--pill-year:#5d6277;--k-idea:#2e2f86;--k-how:#2f6aa0;--k-ex:#2f7a55;--k-warn:#b3382f;--k-try:#946b12;--k-tip:#5d6277;--k-formula:#2f6aa0;--hdr:#171a45;--hdr-brand:#c9a45c;--splash:#07081a;--cr-a:#171a45;--cr-b:#3a3d9e; }
+:root[data-palette="midnight"][data-theme="dark"] { --paper:#090b18;--sheet:#11142a;--raised:#171b36;--grid:#090b18;--ink:#eceef9;--muted:#9aa1c0;--line:#252a4d;--accent:#e0c27a;--accent-soft:#1f2244;--btn:#e0c27a;--btn-ink:#1a1405;--mark:#e0c27a;--mark-ink:#1a1405;--ok:#8fd1ae;--ok-soft:#18382b;--danger:#f0a095;--g1:#e0c27a;--g2:#e0c27a;--g3:#e0c27a;--g4:#e0c27a;--grad:#e0c27a;--shadow:0 1px 2px rgb(0 0 0 / .4);--rt-term:#eceef9;--rt-key:#e0c27a;--rt-num:#e0c27a;--rt-conn:#9aa1c0;--rt-warn:#f0a095;--rt-topic:#e0c27a;--rt-eq:#8fd1ae;--pill-open:#e0c27a;--pill-done:#8fd1ae;--pill-urgent:#f0a095;--pill-bounty:#e0c27a;--pill-mentor:#8db8e8;--pill-year:#9aa1c0;--k-idea:#e0c27a;--k-how:#8db8e8;--k-ex:#8fd1ae;--k-warn:#f0a095;--k-try:#e0c27a;--k-tip:#9aa1c0;--k-formula:#8db8e8;--hdr:#11142a;--hdr-brand:#e0c27a;--splash:#07081a;--cr-a:#171a45;--cr-b:#3a3d9e; color-scheme: dark; }
+:root[data-palette="midnight"][data-theme="dark"][data-tone="black"] { --paper:#000000;--sheet:#0a0c1a;--raised:#11142a;--grid:#090b18;--ink:#eceef9;--muted:#9aa1c0;--line:#20244a;--accent:#e0c27a;--accent-soft:#1b1f40;--btn:#e0c27a;--btn-ink:#1a1405;--mark:#e0c27a;--mark-ink:#1a1405;--ok:#8fd1ae;--ok-soft:#18382b;--danger:#f0a095;--g1:#e0c27a;--g2:#e0c27a;--g3:#e0c27a;--g4:#e0c27a;--grad:#e0c27a;--shadow:0 1px 2px rgb(0 0 0 / .4);--rt-term:#eceef9;--rt-key:#e0c27a;--rt-num:#e0c27a;--rt-conn:#9aa1c0;--rt-warn:#f0a095;--rt-topic:#e0c27a;--rt-eq:#8fd1ae;--pill-open:#e0c27a;--pill-done:#8fd1ae;--pill-urgent:#f0a095;--pill-bounty:#e0c27a;--pill-mentor:#8db8e8;--pill-year:#9aa1c0;--k-idea:#e0c27a;--k-how:#8db8e8;--k-ex:#8fd1ae;--k-warn:#f0a095;--k-try:#e0c27a;--k-tip:#9aa1c0;--k-formula:#8db8e8;--hdr:#11142a;--hdr-brand:#e0c27a;--splash:#07081a;--cr-a:#171a45;--cr-b:#3a3d9e; }
+:root[data-palette="midnight"] .splash.sp2 { --w1:#2e2f86;--w2:#2f6aa0;--w3:#2f7a55;--w4:#946b12;--w5:#b3382f;--w6:#5d6277; }
+:root[data-palette="midnight"] { --grad: linear-gradient(120deg, #171a45, #3a3d9e 58%, #6a4fa8); --shadow: 0 1px 2px rgb(20 23 43 / .05), 0 14px 34px -18px rgb(20 23 43 / .28); }
+:root[data-palette="midnight"][data-theme="dark"] { --shadow: 0 1px 2px rgb(0 0 0 / .5), 0 18px 40px -20px rgb(0 0 0 / .8); --grad: #e0c27a; }
+@media (min-width: 701px) {
+  :root[data-palette="midnight"] header.top {
+    background: radial-gradient(90% 120% at 100% 0%, rgb(201 164 92 / .22), transparent 50%), linear-gradient(135deg, #0d1030, #1a1e55 62%, #2a2670);
+    border: 1px solid rgb(201 164 92 / .3); border-radius: 22px;
+    box-shadow: 0 28px 56px -30px rgb(13 16 48 / .85), inset 0 1px 0 rgb(255 255 255 / .06);
+  }
+  :root[data-palette="midnight"] header.top #askBtn { background: linear-gradient(135deg, var(--gold-2), var(--gold)); color: var(--gold-ink); border-color: transparent; font-weight: 800; }
+  :root[data-palette="midnight"] .brand h1 span { color: var(--gold-2); }
+}
