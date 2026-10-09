@@ -1532,9 +1532,11 @@ function showWelcome(force, startId) {
     try { if (getName() && store && store.handleClaim && !myHandle() && !readJSON("dd-loopid-skip", false) && !readJSON("dd-loopid-shown", false)) { writeJSON("dd-loopid-shown", true); setTimeout(() => showPanel("loopid"), 400); } } catch (_) {} };
   const onKey = (e) => { if (e.key === "Escape") finish(); };
   const saveStep = () => { if (STEPS[step] === "college" && pickSlug && pickSlug !== curSlug) { try { sessionStorage.setItem("dd-ob-resume", "name"); localStorage.setItem("dd-state", cst); } catch (_) {} document.removeEventListener("keydown", onKey); switchCollege(pickSlug); return; } if (STEPS[step] === "name") { const v = nameVal.trim().slice(0, 30); if (v) setName(v); } if (STEPS[step] === "interests") writeJSON("dd-interests", [...picked]); };
-  const go = (d) => { if (d > 0 && STEPS[step] === "college" && !pickSlug) { const c = box.querySelector(".ob-chosen"); if (c) { c.classList.remove("shake"); void c.offsetWidth; c.classList.add("shake"); } return; } saveStep(); step = Math.max(0, Math.min(TOTAL - 1, step + d)); paint(); };
+  let paintedAt = 0;   // a tap that lands right after a step appears (double tap, ghost click) must not skip that step
+  const go = (d) => { if (performance.now() - paintedAt < 900) return; if (d > 0 && STEPS[step] === "college" && !pickSlug) { const c = box.querySelector(".ob-chosen"); if (c) { c.classList.remove("shake"); void c.offsetWidth; c.classList.add("shake"); } return; } saveStep(); step = Math.max(0, Math.min(TOTAL - 1, step + d)); paint(); };
   const start = (fn) => () => { saveStep(); finish(); setTimeout(fn, 120); };
   function paint() {
+    paintedAt = performance.now();
     const last = step === TOTAL - 1, who = nameVal.trim() ? nameVal.trim().split(/\s+/)[0] : "";
     const bar = el("div", { class: "ob-bar", "aria-hidden": "true" }, ...Array.from({ length: TOTAL }, (_, k) => el("span", { class: k <= step ? "on" : "" })));
     let body;
