@@ -23,21 +23,20 @@ Features: class board (doubts, ideas, challenges), Loopy Brain (in-app knowledge
 - Never delete Google Cloud API keys; edit their website restrictions instead.
 
 ## Git workflow
-- Develop on branch `claude/kind-curie-dzx5ih`; local branch is `fix-loopy-laptop`. Local remote `origin` is wrong (`vijay462462/vijay`); the correct remote is **`rgukt`** (push with `git push -u rgukt fix-loopy-laptop:claude/kind-curie-dzx5ih`).
-- PR #1 (domain move, App Check, Android package) is merged into `main`. New work needs a new PR.
+- Cloud sessions use `origin` = `vijay462462/loopybrains` and a branch like `claude/<name>`; always branch from the latest `main`. (On the owner's laptop an older setup used remote `rgukt` and branch `fix-loopy-laptop`; check `git remote -v` first, the remote named `origin` may be wrong there.)
+- PRs #1 and #4 to #9 are merged into `main` (domain move, App Check fix, Android URL, package upgrades, premium look, app shell, Loopy Brains rename and logo, Home screen). New work needs a new PR.
 - The user can only be guided through consoles by screenshot; they cannot paste secrets here. Never ask for or print secret keys.
 
-## Current status (2026-10-09)
-- Done: reCAPTCHA site key set, Loopy Search desktop fix, Android App Check code, package rename, `GOOGLE_SERVICES_JSON` secret added, DNS + GitHub Pages custom domain + HTTPS working, site loads on loopybrains.com, API key referrers and reCAPTCHA domains include loopybrains.com.
-- **Blocking bug**: on loopybrains.com sign-in fails with `auth/firebase-app-check-token-is-invalid`. DevTools shows `exchangeRecaptchaV3Token` returning **400**. Firebase App Check → Apps has: "The Campus Loop" web app (registered, provider shown as "Fraud Defense"), "loopybrains" web app (not registered), "loopybrains" Android app (not registered).
-- Last Android build failed (wrong JSON key name). Fixed in repo, but the `GOOGLE_SERVICES_JSON` secret must contain the corrected JSON and the workflow must be re-run.
+## Current status (2026-10-10)
+- Done: web sign-in fixed (App Check provider set to `enterprise` in `docs/config.js` because all three Firebase apps use "Fraud Defense"); site live on loopybrains.com with HTTPS; all three apps registered in Firebase App Check (monitoring mode); Android app code points at `https://loopybrains.com/`; functions packages upgraded (`firebase-admin` 14, `firebase-functions` 7, `nodemailer` 10, Node 22) with a lockfile; `npm audit` clean; SECURITY.md updated; brand renamed to **Loopy Brains** with a new logo and icons; Midnight palette (indigo, champagne gold, ivory) is the default; laptop layout is a left sidebar (1200px+), phones keep the compact bar and bottom nav; Home tiles block on the Doubts feed.
+- Waiting on the owner: rebuild the Android app (GitHub Actions) and test sign-in on a phone; deploy the functions (`firebase deploy --only functions`, Node 22, `SITE_URL=https://loopybrains.com/`) and test one payment link and one AI question.
+- Not yet checked with real data: Home tile numbers and the new post-card styling (testing so far was offline).
+- Not done on purpose: chat-style screen and campus rank card from the mockups; the animated mark inside Loopy Brain search results still shows the old C-and-cap mark; older concept files in `docs/brand/` still show the old name.
 
 ## Next steps
-1. Fix the web 400: confirm which web app ID `docs/config.js` uses (`...:web:02a51823f13de09ebdc0ac`); register that app with reCAPTCHA v3 and the secret key, or, if "Fraud Defense" means Enterprise, set `appCheck.provider: "enterprise"` in `docs/config.js` (and bump cache version). Read the Network → Response body of the 400 for the exact reason.
-2. Register the Android app in App Check with Play Integrity (SHA-256 optional for now). Keep everything in monitoring mode.
-3. Update the `GOOGLE_SERVICES_JSON` secret with `android_client_info` JSON, re-run **Build Android app**, install the APK.
-4. Add `loopybrains.com` / `www.loopybrains.com` to Firebase Auth authorized domains if missing.
-5. Point `android-app/capacitor.config.json` (`server.url`, `allowNavigation`) at `https://loopybrains.com/`.
-6. Run `firebase deploy --only functions` with `SITE_URL=https://loopybrains.com/`.
-7. After 3–5 days of clean App Check traffic, enforce App Check.
-8. Later: Firebase security hardening, add Mano Chapter 4 (Combinational Logic) to knowledge packs.
+1. Android: confirm the `GOOGLE_SERVICES_JSON` secret has `android_client_info` JSON, re-run **Build Android app**, uninstall the old app, install the new APK, test sign-in (uses Play Integrity).
+2. Firebase console: confirm `loopybrains.com` and `www.loopybrains.com` are in Authentication > Settings > Authorized domains.
+3. Deploy functions (see above) and test payments and the AI answer.
+4. After 3 to 5 days, if Firebase > App Check > APIs shows Verified near 100% for Firestore and Authentication, switch them from Monitoring to Enforced.
+5. Look at the phone Home screen and post cards with real data and polish them; then consider the rank card and chat-style screen.
+6. Later: Firebase security hardening, add Mano Chapter 4 (Combinational Logic) to knowledge packs.
