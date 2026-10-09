@@ -9,13 +9,16 @@ const { onRequest } = require("firebase-functions/v2/https");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { onDocumentCreated } = require("firebase-functions/v2/firestore");
 const { defineSecret, defineString } = require("firebase-functions/params");
-const admin = require("firebase-admin");
+const { initializeApp } = require("firebase-admin/app");
+const { getAuth } = require("firebase-admin/auth");
+const { getFirestore, FieldValue } = require("firebase-admin/firestore");
+const { getMessaging } = require("firebase-admin/messaging");
 const crypto = require("crypto");
 const nodemailer = require("nodemailer");
 const Razorpay = require("razorpay");
 
-admin.initializeApp();
-const db = admin.firestore();
+initializeApp();
+const db = getFirestore();
 const KEY_ID = defineSecret("RAZORPAY_KEY_ID");
 const KEY_SECRET = defineSecret("RAZORPAY_KEY_SECRET");
 const WEBHOOK_SECRET = defineSecret("RAZORPAY_WEBHOOK_SECRET");
@@ -67,7 +70,7 @@ exports.checkPromo = onRequest({ cors: ALLOWED_ORIGINS, region: "asia-south1", m
     if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
     const m = /^Bearer (.+)$/.exec(req.get("Authorization") || "");
     if (!m) return res.status(401).json({ error: "Please sign in first." });
-    const pu = await admin.auth().verifyIdToken(m[1]);
+    const pu = await getAuth().verifyIdToken(m[1]);
     if (!(await allow(pu.uid, "promo", 15, 3600000))) return res.status(429).json({ error: "Too many tries. Please wait a while and try again." });
     const b = req.body || {}, p = await promoFor(b.code, b.plan);
     return p.error ? res.status(400).json({ error: p.error }) : res.json({ code: p.code, percent: p.percent, plan: p.plan });
@@ -79,7 +82,7 @@ exports.createPaymentLink = onRequest({ secrets: [KEY_ID, KEY_SECRET], cors: ALL
     if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
     const m = /^Bearer (.+)$/.exec(req.get("Authorization") || "");
     if (!m) return res.status(401).json({ error: "Please sign in first." });
-    const user = await admin.auth().verifyIdToken(m[1]);
+    const user = await getAuth().verifyIdToken(m[1]);
     if (!user.email || user.email_verified !== true) return res.status(403).json({ error: "Verify your email first." });
     const plan = PLANS[(req.body || {}).plan];
     if (!plan) return res.status(400).json({ error: "Unknown plan." });
@@ -128,7 +131,7 @@ exports.razorpayWebhook = onRequest({ secrets: [WEBHOOK_SECRET], region: "asia-s
         tx.set(entRef, { plan: "plus", until: from + plan.days * DAY, updatedAt: now });
       }
       tx.set(payRef, { uid: notes.uid, plan: notes.plan, amount: link.amount_paid, linkId: link.id, code: notes.code || "", createdAt: now });
-      if (notes.code) tx.set(db.collection("promoCodes").doc(notes.code), { used: admin.firestore.FieldValue.increment(1) }, { merge: true });
+      if (notes.code) tx.set(db.collection("promoCodes").doc(notes.code), { used: FieldValue.increment(1) }, { merge: true });
     });
     return res.sendStatus(200);
   } catch (e) {
@@ -163,7 +166,7 @@ exports.askAI = onRequest({ secrets: [ANTHROPIC_KEY], cors: ALLOWED_ORIGINS, reg
     if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
     const m = /^Bearer (.+)$/.exec(req.get("Authorization") || "");
     if (!m) return res.status(401).json({ error: "Please sign in first." });
-    const user = await admin.auth().verifyIdToken(m[1]);
+    const user = await getAuth().verifyIdToken(m[1]);
     const [ent, adm] = await Promise.all([db.collection("entitlements").doc(user.uid).get(), db.collection("admins").doc(user.uid).get()]);
     let paid = ent.exists && Number(ent.data().until) > Date.now();
     if (!paid) {                                                                  // college bundle: the college's Plus is on AND the e-mail belongs to that college
@@ -241,9 +244,9 @@ exports.notifyOnReply = onDocumentCreated({ document: "rooms/{room}/replies/{id}
     const tSnap = await db.collection("pushTokens").doc(owner).get(); if (!tSnap.exists) return;
     const tokens = (tSnap.data().tokens || []).filter(t => typeof t === "string").slice(0, 5); if (!tokens.length) return;
     const title = String(d.title || "your doubt").replace(/[\u0000-\u001F<>]/g, " ").slice(0, 60);
-    const res = await admin.messaging().sendEachForMulticast({ tokens, data: { title: "New answer", body: "Someone answered your doubt: " + title, tag: "a" + event.params.id, hash: "#doubts/" + r.parentId.replace(/[^A-Za-z0-9_-]/g, "").slice(0, 60) }, webpush: { headers: { Urgency: "normal", TTL: "86400" } } });
+    const res = await getMessaging().sendEachForMulticast({ tokens, data: { title: "New answer", body: "Someone answered your doubt: " + title, tag: "a" + event.params.id, hash: "#doubts/" + r.parentId.replace(/[^A-Za-z0-9_-]/g, "").slice(0, 60) }, webpush: { headers: { Urgency: "normal", TTL: "86400" } } });
     const dead = tokens.filter((_, i) => !res.responses[i].success && /registration-token-not-registered|invalid-registration-token|invalid-argument/.test((res.responses[i].error && res.responses[i].error.code) || ""));
-    if (dead.length) await db.collection("pushTokens").doc(owner).set({ tokens: tokens.filter(t => !dead.includes(t)).length ? tokens.filter(t => !dead.includes(t)) : admin.firestore.FieldValue.delete(), updatedAt: Date.now() }, { merge: true }).catch(() => {});
+    if (dead.length) await db.collection("pushTokens").doc(owner).set({ tokens: tokens.filter(t => !dead.includes(t)).length ? tokens.filter(t => !dead.includes(t)) : FieldValue.delete(), updatedAt: Date.now() }, { merge: true }).catch(() => {});
   } catch (e) { console.error("notifyOnReply", e); }
 });
 
@@ -257,7 +260,7 @@ exports.claimStudentId = onRequest({ cors: ALLOWED_ORIGINS, region: "asia-south1
     if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
     const m = /^Bearer (.+)$/.exec(req.get("Authorization") || "");
     if (!m) return res.status(401).json({ error: "Please sign in first." });
-    const user = await admin.auth().verifyIdToken(m[1]);
+    const user = await getAuth().verifyIdToken(m[1]);
     const slug = String((req.body || {}).slug || ""), st = String((req.body || {}).st || "");
     if (!/^[a-z0-9-]{2,40}$/.test(slug) || !/^[A-Z]{2}$/.test(st)) return res.status(400).json({ error: "Bad request." });
     if (!(await allow(user.uid, "claimId", 10, 86400000))) return res.status(429).json({ error: "Too many tries today." });
@@ -301,7 +304,7 @@ exports.verifyAnswer = onRequest({ secrets: [ANTHROPIC_KEY], cors: ALLOWED_ORIGI
   try {
     if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
     const m = /^Bearer (.+)$/.exec(req.get("Authorization") || ""); if (!m) return res.status(401).json({ error: "Please sign in first." });
-    const user = await admin.auth().verifyIdToken(m[1]);
+    const user = await getAuth().verifyIdToken(m[1]);
     if (!(await planPaid(user, String((req.body || {}).college || "")))) return res.status(403).json({ error: "The premium verifier is part of The Campus Loop Plus." });
     const q = cleanTxt((req.body || {}).question, 1500), a = cleanTxt((req.body || {}).answer, 3000), img = typeof (req.body || {}).img === "string" ? req.body.img : "";
     if (q.length < 3 || (!a && !img)) return res.status(400).json({ error: "Nothing to verify." });
@@ -322,7 +325,7 @@ exports.studyNote = onRequest({ secrets: [ANTHROPIC_KEY], cors: ALLOWED_ORIGINS,
   try {
     if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
     const m = /^Bearer (.+)$/.exec(req.get("Authorization") || ""); if (!m) return res.status(401).json({ error: "Please sign in first." });
-    const user = await admin.auth().verifyIdToken(m[1]);
+    const user = await getAuth().verifyIdToken(m[1]);
     if (!(await planPaid(user, String((req.body || {}).college || "")))) return res.status(403).json({ error: "Study notes are part of The Campus Loop Plus." });
     const q = cleanTxt((req.body || {}).question, 1500), a = cleanTxt((req.body || {}).answer, 3000); if (q.length < 3 || !a) return res.status(400).json({ error: "Nothing to summarise." });
     if (!(await allow(user.uid, "studyNote", 20, 86400000))) return res.status(429).json({ error: "Too many notes today." });
@@ -340,7 +343,7 @@ exports.claimReferral = onRequest({ cors: ALLOWED_ORIGINS, region: "asia-south1"
     if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
     const m = /^Bearer (.+)$/.exec(req.get("Authorization") || "");
     if (!m) return res.status(401).json({ error: "Please sign in first." });
-    const user = await admin.auth().verifyIdToken(m[1]);
+    const user = await getAuth().verifyIdToken(m[1]);
     if (!user.email || user.email_verified !== true) return res.status(403).json({ error: "Verify your email first." });
     const code = String((req.body || {}).code || "");
     if (!/^[A-Za-z0-9_-]{10}$/.test(code)) return res.status(400).json({ error: "That invite code is not valid." });
@@ -374,7 +377,7 @@ exports.claimReferral = onRequest({ cors: ALLOWED_ORIGINS, region: "asia-south1"
 const bearerUser = async (req, res) => {
   const m = /^Bearer (.+)$/.exec(req.get("Authorization") || "");
   if (!m) { res.status(401).json({ error: "Please sign in first." }); return null; }
-  const user = await admin.auth().verifyIdToken(m[1]);
+  const user = await getAuth().verifyIdToken(m[1]);
   if (!user.email || user.email_verified !== true) { res.status(403).json({ error: "Verify your email first." }); return null; }
   return user;
 };
@@ -456,7 +459,7 @@ exports.emailMyIds = onRequest({ secrets: [SMTP_USER, SMTP_PASS], cors: ALLOWED_
     if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
     const m = /^Bearer (.+)$/.exec(req.get("Authorization") || "");
     if (!m) return res.status(401).json({ error: "Please sign in first." });
-    const user = await admin.auth().verifyIdToken(m[1]);
+    const user = await getAuth().verifyIdToken(m[1]);
     if (!user.email || user.email_verified !== true) return res.status(403).json({ error: "Verify your email first." });
     if (!(await allow(user.uid, "emailIds", 3, 86400000))) return res.status(429).json({ error: "You can email your IDs 3 times a day." });
     const clean = (v, n) => String(v || "").replace(/[\u0000-\u001F<>&"']/g, " ").replace(/\s+/g, " ").trim().slice(0, n);
@@ -482,7 +485,7 @@ exports.sendReportNow = onRequest({ secrets: [SMTP_USER, SMTP_PASS], cors: ALLOW
     if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
     const m = /^Bearer (.+)$/.exec(req.get("Authorization") || "");
     if (!m) return res.status(401).json({ error: "Please sign in first." });
-    const user = await admin.auth().verifyIdToken(m[1]);
+    const user = await getAuth().verifyIdToken(m[1]);
     const adm = await db.collection("admins").doc(user.uid).get();
     if (!adm.exists || user.email_verified !== true) return res.status(403).json({ error: "Admins only." });
     const slug = String((req.body || {}).slug || "");
