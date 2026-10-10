@@ -5422,6 +5422,32 @@ function bsClose(keepMode) {
   if (!keepMode && state.mode === "ai") { state.mode = "intro"; render(); }
 }
 function bsLeave(fn) { bsClose(true); fn(); }
+// Analog Electronic Circuits study page (23EC2101, ECE/EEE E2): packs in syllabus unit order.
+const AEC_UNITS = [
+  ["I. Semiconductor diodes and applications", "PN junction, rectifiers, Zener regulator, clippers and clampers", ["diode", "rectifier", "zenerreg", "clipclamp"]],
+  ["II. Transistor characteristics and biasing", "BJT regions, configurations, biasing circuits and Q point", ["bjt", "bjtbias"]],
+  ["III. Small-signal amplifiers and frequency response", "CE amplifier, h-parameters, hybrid-π model and frequency response", ["ceamp", "freqresp"]],
+  ["IV. Field-effect transistors and feedback amplifiers", "MOSFET, JFET and negative feedback topologies", ["fet", "feedbackamp"]],
+  ["V. Operational amplifiers", "Differential amplifier, CMRR, ideal op-amp and op-amp circuits", ["diffamp", "opampapp"]],
+  ["VI. Power amplifiers, oscillators, 555 timer and regulators", "Class A/B/AB/C power amps, Barkhausen criterion, 555 timer, multivibrators and voltage regulators", ["poweramp", "oscillator", "t555", "regulator"]],
+];
+function aecHub(allPk, bs, go) {
+  const byId = new Map(allPk.map(p => [p.id, p])), seenArr = readJSON("dd-aec-seen", []), seen = new Set(Array.isArray(seenArr) ? seenArr.filter(x => typeof x === "string") : []);
+  const units = AEC_UNITS.map(([name, sub, ids]) => ({ name, sub, packs: ids.map(i => byId.get(i)).filter(Boolean) })).filter(u => u.packs.length);
+  const total = units.reduce((a, u) => a + u.packs.length, 0), done = units.reduce((a, u) => a + u.packs.filter(p => seen.has(p.id)).length, 0);
+  const next = units.flatMap(u => u.packs).find(p => !seen.has(p.id));
+  const openPack = (p) => { seen.add(p.id); writeJSON("dd-aec-seen", [...seen].slice(0, 60)); bs.forcePack = p.id; bs.autoSize = bsOpen(2) ? "standard" : "brief"; go(p.title.replace(/\s*\(.*?\)\s*/g, " ").trim()); };
+  const firstOpen = units.findIndex(u => u.packs.some(p => !seen.has(p.id)));
+  return el("section", { class: "dld-hub" },
+    el("div", { class: "dld-head" }, el("small", {}, "Subject · 23EC2101"), el("h3", {}, "Analog Electronic Circuits"), el("p", {}, "Six units, in the order taught at RGUKT (ECE & EEE, E2). Tap a topic to learn it with easy explanations, a diagram, exam questions and common mistakes."),
+      el("div", { class: "dld-prog", role: "group", "aria-label": "Progress" }, el("progress", { max: String(total), value: String(done) }), el("span", {}, done + " of " + total + " topics studied")),
+      next ? el("button", { type: "button", class: "btn primary dld-go", onclick: () => openPack(next) }, (done ? "Continue: " : "Start: ") + next.title) : el("p", { class: "dld-fin" }, "You have opened every topic. Revise any topic below.")),
+    ...units.map((u, i) => { const n = u.packs.filter(p => seen.has(p.id)).length;
+      return el("details", Object.assign({ class: "dld-unit" }, (i === firstOpen || (firstOpen < 0 && i === 0)) ? { open: "" } : {}),
+        el("summary", {}, el("span", { class: "dld-num" }, String(i + 1)), el("span", { class: "dld-ut" }, el("b", {}, u.name), el("small", {}, u.sub)), el("span", { class: "dld-cnt" }, n + "/" + u.packs.length)),
+        el("div", { class: "dld-list" }, ...u.packs.map(p => { const sh = String(p.short || "").split(/(?<=\.)\s/)[0].slice(0, 110);
+          return el("button", { type: "button", class: "dld-topic" + (seen.has(p.id) ? " done" : ""), onclick: () => openPack(p) }, el("span", { class: "dld-tick", "aria-hidden": "true" }, seen.has(p.id) ? "✓" : ""), el("span", { class: "dld-tt" }, el("b", {}, p.title), el("small", {}, sh))); }))); }));
+}
 // Digital Logic Design study page: the textbook topic packs in syllabus order, with progress kept on this phone.
 const DLD_UNITS = [
   ["I. Number systems, logic gates and Boolean algebra", "Digital vs analog, number systems, codes, gates, laws and De Morgan", ["dvsa", "numsys", "complement", "signed", "twoscomp", "radixcomp", "codes", "swlogic", "polarity", "gates", "boolean", "huntington", "venn", "func16", "nandnor"]],
@@ -6006,7 +6032,7 @@ function brainViewInner(ui) {
     const SUBJ = [["Digital electronics", "\u{1F522} Digital logic", "#fb923c"], ["Analog electronic circuits", "\u{1F50C} Analog circuits", "#ea580c"], ["Digital signal processing", "\u{1F4C8} Signal processing", "#0891b2"], ["Control systems", "\u{1F39B}\uFE0F Control systems", "#16a34a"], ["Probability and random variables", "\u{1F3B2} Probability", "#f97316"]];
     const allPk = _packs ? _packs.all : [], open = bs.packSubj;
     const tiles = (bs.mode === "atlas" || !bs.mode) ? el("div", { class: "bs-blk" }, el("small", { class: "bs-secthead" }, "Browse textbook topics"), el("div", { class: "bs-tiles" }, ...SUBJ.map(([sub, label, col]) => { const n = allPk.filter(p => p.subject === sub).length; return el("button", { type: "button", class: "bs-tile" + (open === sub ? " on" : ""), "aria-expanded": String(open === sub), onclick: () => { bs.packSubj = open === sub ? "" : sub; bsPaint(); } }, el("b", {}, label), el("small", {}, n ? n + " topics" : "Tap to open")); }).map((n, i) => { n.style.setProperty("--tc", SUBJ[i][2]); return n; })),
-      open === "Digital electronics" && allPk.length ? dldHub(allPk, bs, go) : open ? el("div", { class: "bs-chips bs-packlist" }, ...(allPk.filter(p => p.subject === open).length ? allPk.filter(p => p.subject === open).map(p => el("button", { type: "button", class: "tp-sub", onclick: () => { bs.forcePack = p.id; go(p.title.replace(/\\s*\\(.*?\\)\\s*/g, " ").trim()); } }, p.title)) : [el("small", { class: "hint" }, "Loading the topic list\u2026")])) : null) : null;
+      open === "Digital electronics" && allPk.length ? dldHub(allPk, bs, go) : open === "Analog electronic circuits" && allPk.length ? aecHub(allPk, bs, go) : open ? el("div", { class: "bs-chips bs-packlist" }, ...(allPk.filter(p => p.subject === open).length ? allPk.filter(p => p.subject === open).map(p => el("button", { type: "button", class: "tp-sub", onclick: () => { bs.forcePack = p.id; go(p.title.replace(/\s*\(.*?\)\s*/g, " ").trim()); } }, p.title)) : [el("small", { class: "hint" }, "Loading the topic list\u2026")])) : null) : null;
     return [hero, ...thinkingEls, bar, head, tryBlock, tiles,
       rec.length ? el("div", { class: "bs-blk" }, el("small", { class: "bs-secthead" }, "Recent"), chips(rec, go)) : null,
       rows.length ? el("div", { class: "bs-blk" }, el("small", { class: "bs-secthead" }, "Your syllabus"), chips(rows, go)) : null,
