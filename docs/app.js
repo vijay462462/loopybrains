@@ -109,8 +109,8 @@ const shiftColor = (hex, dh, dl) => { const [h, sat, l] = hexToHsl(hex); return 
 // [main colour, partner colour] for each state, picked from its flag, landscape or culture.
 const STATE_COLORS = {
   "Andhra Pradesh": ["#e11d48", "#f59e0b"], "Telangana": ["#15803d", "#f97316"], "Tamil Nadu": ["#b91c1c", "#f59e0b"], "Karnataka": ["#dc2626", "#eab308"],
-  "Kerala": ["#15803d", "#facc15"], "Maharashtra": ["#ea580c", "#1d4ed8"], "Gujarat": ["#f97316", "#0d9488"], "Rajasthan": ["#db2777", "#f59e0b"],
-  "Punjab": ["#2563eb", "#f97316"], "Haryana": ["#16a34a", "#ca8a04"], "Delhi": ["#166534", "#f43f5e"], "Uttar Pradesh": ["#d97706", "#9333ea"],
+  "Kerala": ["#15803d", "#facc15"], "Maharashtra": ["#ea580c", "#1d4ed8"], "Gujarat": ["#f97316", "#0d9488"], "Rajasthan": ["#f97316", "#f59e0b"],
+  "Punjab": ["#2563eb", "#f97316"], "Haryana": ["#16a34a", "#ca8a04"], "Delhi": ["#166534", "#f43f5e"], "Uttar Pradesh": ["#d97706", "#16a34a"],
   "Bihar": ["#ca8a04", "#16a34a"], "West Bengal": ["#e11d48", "#2563eb"], "Odisha": ["#0891b2", "#f59e0b"], "Assam": ["#16a34a", "#dc2626"],
   "Madhya Pradesh": ["#0d9488", "#a16207"], "Chhattisgarh": ["#15803d", "#9a3412"], "Jharkhand": ["#047857", "#f59e0b"], "Uttarakhand": ["#1d4ed8", "#16a34a"],
   "Himachal Pradesh": ["#0284c7", "#16a34a"], "Jammu and Kashmir": ["#0891b2", "#e11d48"], "Ladakh": ["#1d4ed8", "#f97316"], "Goa": ["#0ea5e9", "#f59e0b"],
@@ -1808,7 +1808,7 @@ function loopyMini(costume) {
   const id = costume || equippedCostume();
   const svg = mk("svg", { viewBox: "0 0 60 60", width: "46", height: "46", class: "loopy-mini" + ((new Date().getHours() >= 23 || new Date().getHours() < 5) ? " lp-sleepy" : ""), "aria-hidden": "true" });
   const defs = mk("defs", {}), g1 = mk("linearGradient", { id: "lpmPh", x1: 0, y1: 0, x2: 1, y2: 1 }), g2 = mk("linearGradient", { id: "lpmCape", x1: 0, y1: 0, x2: 1, y2: 1 });
-  [["0", "#f9a8d4"], ["0.5", "#f97316"], ["1", "#16a34a"]].forEach(([o, c]) => g1.append(mk("stop", { offset: o, "stop-color": c }))); [["0", "#f97316"], ["1", "#7e22ce"]].forEach(([o, c]) => g2.append(mk("stop", { offset: o, "stop-color": c }))); defs.append(g1, g2);
+  [["0", "#f9a8d4"], ["0.5", "#f97316"], ["1", "#16a34a"]].forEach(([o, c]) => g1.append(mk("stop", { offset: o, "stop-color": c }))); [["0", "#f97316"], ["1", "#166534"]].forEach(([o, c]) => g2.append(mk("stop", { offset: o, "stop-color": c }))); defs.append(g1, g2);
   svg.append(defs, mk("path", { d: "M15 44 L3 59 L57 59 L45 44 Z", fill: "url(#lpmCape)" }));
   svg.append(mk("line", { x1: 30, y1: 6, x2: 30, y2: 12, stroke: "#c4b5fd", "stroke-width": 3, "stroke-linecap": "round" }), mk("circle", { cx: 30, cy: 5, r: 3.5, fill: "#fde047" }),
     mk("rect", { x: 8, y: 12, width: 44, height: 38, rx: 15, fill: "#fff", stroke: "#4ade80", "stroke-width": 2.5 }), mk("rect", { x: 13, y: 18, width: 34, height: 25, rx: 11, fill: "#1e1757" }),
@@ -4220,7 +4220,7 @@ function wrapLines(g, text, maxW) {
 }
 async function shareResult({ kicker, emoji, big, line }) {
   const W = 1080, H = 1350, cv = document.createElement("canvas"); cv.width = W; cv.height = H; const g = cv.getContext("2d");
-  const [a, b] = BRAND_COLORS || (IS_RGUKT ? STATE_COLORS["Andhra Pradesh"] : ["#fb923c", "#db2777"]);
+  const [a, b] = BRAND_COLORS || (IS_RGUKT ? STATE_COLORS["Andhra Pradesh"] : ["#fb923c", "#f97316"]);
   const bg = g.createLinearGradient(0, 0, W, H); bg.addColorStop(0, a); bg.addColorStop(0.55, "#fb923c"); bg.addColorStop(1, b); g.fillStyle = bg; g.fillRect(0, 0, W, H);
   g.fillStyle = "rgba(255,255,255,.08)"; g.beginPath(); g.arc(W - 60, 180, 320, 0, 7); g.fill(); g.beginPath(); g.arc(120, H - 120, 380, 0, 7); g.fill();
   g.strokeStyle = "#fff"; g.lineWidth = 26; g.lineCap = "round"; g.beginPath(); g.arc(150, 150, 58, 0.75, 5.53); g.stroke();   // the C of the logo
@@ -5812,7 +5812,7 @@ function loopyMark(cls) {
 }
 function brainView() {
   const ui = {}, out = brainViewInner(ui), skip = new Set([ui.bar, ui.head]);
-  return [...out.filter(n => !skip.has(n)), ui.dock].filter(Boolean);
+  return [...(ui.thinking || []), ...out.filter(n => !skip.has(n)), ui.dock].filter(Boolean);
 }
 function brainViewInner(ui) {
   const bs = bsState(), mi = bsModeInfo(bs.mode), back = el("button", { class: "btn", type: "button", onclick: () => bsClose() }, "Close");
@@ -5864,7 +5864,7 @@ function brainViewInner(ui) {
   const chips = (list, onTap) => el("div", { class: "bs-chips" }, ...list.map(t => el("button", { type: "button", class: "tp-sub", onclick: () => onTap(t) }, t)));
   const thinkingEls = bs.busy ? [el("p", { class: "bsr-yq" }, el("small", {}, "Your question"), el("b", {}, bs.q || bs.pending || "")), el("div", { class: "bsr-load calm", role: "status", "aria-live": "polite" }, el("div", { class: "bsc-orbit sm", "aria-hidden": "true" }, el("i", { class: "r1" }), el("i", { class: "r2" }), el("b", { class: "d1" }), el("b", { class: "d2" }), el("b", { class: "d3" }), brandSpin("bsc-brand live")), el("p", { class: "bsr-think" }, "Loopy is thinking\u2026"),
     el("div", { class: "bsr-lines", "aria-hidden": "true" }, el("i", {}), el("i", {}), el("i", {})))] : [];
-  if (bs.busy && bs.res) return [bar, head, ...thinkingEls];
+  ui.thinking = bs.busy && bs.res ? thinkingEls : [];
   if (bs.pending) {
     return [bar, head, el("section", { class: "bsr-ask bsr-reveal in" }, el("small", {}, "Your question"), el("h2", {}, bs.pending), el("p", { class: "hint" }, "How much do you need?"),
       el("div", { class: "bsr-sizes" }, ...BS_SIZES.map(([id, name, hint, need], i) => { const open = bsOpen(need); return el("button", { type: "button", class: "bsr-size z" + i + (bs.size === id ? " pre" : ""), onclick: () => bsPickSize(id) }, el("b", {}, name), el("span", {}, hint), open ? null : el("i", {}, IS_RGUKT ? "\u{1F512} Locked" : "\u{1F512} Plus")); })))];
@@ -5879,7 +5879,7 @@ function brainViewInner(ui) {
       aegis: [["\u{1F489}", "SQL injection", "Security"], ["\u{1F3A3}", "Phishing", "Security"], ["\u{1F511}", "Password security", "Security"], ["\u{1F512}", "Two factor authentication", "Security"]] };
     const tryBlock = el("div", { class: "bs-blk" }, el("small", { class: "bs-secthead" }, "Try asking"), el("div", { class: "bs-try" }, ...(TRY[bs.mode] || TRY.atlas).map(([ic, t, s]) => el("button", { type: "button", class: "bs-tc", onclick: () => go(t) }, el("i", { "aria-hidden": "true" }, ic), el("b", {}, t), el("small", {}, s)))));
     if (!_packs && !bs._pkTried) { bs._pkTried = true; brainPacksMod().then(() => { if (bsEl() && !bsState().res) bsPaint(); }); }
-    const SUBJ = [["Digital electronics", "\u{1F522} Digital logic", "#fb923c"], ["Analog electronic circuits", "\u{1F50C} Analog circuits", "#ea580c"], ["Digital signal processing", "\u{1F4C8} Signal processing", "#0891b2"], ["Control systems", "\u{1F39B}\uFE0F Control systems", "#16a34a"], ["Probability and random variables", "\u{1F3B2} Probability", "#db2777"]];
+    const SUBJ = [["Digital electronics", "\u{1F522} Digital logic", "#fb923c"], ["Analog electronic circuits", "\u{1F50C} Analog circuits", "#ea580c"], ["Digital signal processing", "\u{1F4C8} Signal processing", "#0891b2"], ["Control systems", "\u{1F39B}\uFE0F Control systems", "#16a34a"], ["Probability and random variables", "\u{1F3B2} Probability", "#f97316"]];
     const allPk = _packs ? _packs.all : [], open = bs.packSubj;
     const tiles = (bs.mode === "atlas" || !bs.mode) ? el("div", { class: "bs-blk" }, el("small", { class: "bs-secthead" }, "Browse textbook topics"), el("div", { class: "bs-tiles" }, ...SUBJ.map(([sub, label, col]) => { const n = allPk.filter(p => p.subject === sub).length; return el("button", { type: "button", class: "bs-tile" + (open === sub ? " on" : ""), "aria-expanded": String(open === sub), onclick: () => { bs.packSubj = open === sub ? "" : sub; bsPaint(); } }, el("b", {}, label), el("small", {}, n ? n + " topics" : "Tap to open")); }).map((n, i) => { n.style.setProperty("--tc", SUBJ[i][2]); return n; })),
       open ? el("div", { class: "bs-chips bs-packlist" }, ...(allPk.filter(p => p.subject === open).length ? allPk.filter(p => p.subject === open).map(p => el("button", { type: "button", class: "tp-sub", onclick: () => { bs.forcePack = p.id; go(p.title.replace(/\\s*\\(.*?\\)\\s*/g, " ").trim()); } }, p.title)) : [el("small", { class: "hint" }, "Loading the topic list\u2026")])) : null) : null;
@@ -9991,7 +9991,7 @@ function renderCampusPicker() {
 
 // ---------- profile photo (DP) and 24-hour stories ----------
 const STORY_ROW_MIN = 3, STORY_MS = 86400000, STORY_SHOW = 5500, STORY_DAILY_MAX = 10;
-const STORY_BG = [["#15803d", "#2563eb"], ["#db2777", "#f97316"], ["#059669", "#0ea5e9"], ["#f59e0b", "#ef4444"], ["#eaf7ee", "#22c55e"], ["#0d9488", "#84cc16"], ["#9333ea", "#f97316"], ["#0f3d22", "#334155"]];
+const STORY_BG = [["#15803d", "#2563eb"], ["#f97316", "#f97316"], ["#059669", "#0ea5e9"], ["#f59e0b", "#ef4444"], ["#eaf7ee", "#22c55e"], ["#0d9488", "#84cc16"], ["#16a34a", "#f97316"], ["#0f3d22", "#334155"]];
 const DP_OK = /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]{20,40000}$/;
 const IMG_OK = /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]{20,700000}$/;
 const getDp = () => { if (!MEDIA.profilePhoto) return ""; try { const v = localStorage.getItem("dd-dp"); return DP_OK.test(v || "") ? v : ""; } catch (_) { return ""; } };
