@@ -1,4 +1,4 @@
-// Loopy Knowledge Packs: answers written for Campus Loop from standard textbook rules. Checked first, before any outside source.
+// Loopy Knowledge Packs: answers written for Loopy Brains from standard textbook rules. Checked first, before any outside source.
 // Fields: keys (phrases to match), title, short (exact definition), points, steps, formulas [name, text], example, exam, mistakes, uses [title, text], related, diag (text that picks Loopy's own diagram).
 export const PACKS = [
   { id: "gates", keys: ["logic gate", "logic gates", "and gate", "or gate", "not gate", "nand gate", "nor gate", "xor gate", "universal gate", "universal gates"], title: "Logic gates", subject: "Digital electronics",

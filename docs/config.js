@@ -1,16 +1,16 @@
 // Doubt Desk settings. Edit this file to change subjects or connect the database.
 window.DOUBT_DESK_CONFIG = {
   // Product name shown across the app. Change it here to rename everything.
-  brand: "The Campus Loop",
+  brand: "Loopy Brains",
 
-  // The Campus Loop Plus (optional paid plan). Keep enabled:false until payments are set up (see PREMIUM.md).
+  // Loopy Brains Plus (optional paid plan). Keep enabled:false until payments are set up (see PREMIUM.md).
   // monthly / yearly are prices in rupees; functionsUrl is the address of the deployed payment functions.
   // Photos. To stop misuse the app is camera-only for photos in doubts, answers and stories, and profile photos are off (avatars are used).
   // Set gallery: true to allow choosing existing pictures, and profilePhoto: true to allow profile photos again.
   media: { gallery: false, profilePhoto: false },
   // App Check: paste the reCAPTCHA v3 SITE key (public) from Firebase console > App Check. Leave empty until you have registered the app (steps in APPCHECK.md).
-  appCheck: { siteKey: "6LcDueEtAAAAACnpgxodE6KX1rQ6PZg1gGSrhxC6", provider: "v3" },   // provider: "v3" (reCAPTCHA v3) or "enterprise" (Google Cloud Fraud Defense / reCAPTCHA Enterprise)
-  // Surprise offers for Loopy Brain credits. Add one line per offer. from and to are dates (India time). The offer adds extra credits to every student while it runs.
+  appCheck: { siteKey: "6LcDueEtAAAAACnpgxodE6KX1rQ6PZg1gGSrhxC6", provider: "enterprise" },   // provider: "v3" (reCAPTCHA v3) or "enterprise" (Google Cloud Fraud Defense / reCAPTCHA Enterprise)
+  // Surprise offers for Loopy AI credits. Add one line per offer. from and to are dates (India time). The offer adds extra credits to every student while it runs.
   // Example: { id: "festival", title: "Festival offer", text: "Extra credits all weekend", bonusDay: 10, bonusWeek: 20, from: "2026-10-20", to: "2026-10-25" }
   brainOffers: [],
   // Background push alerts (needs the push function deployed). Paste the Web Push certificate key from Firebase console > Project settings > Cloud Messaging. It is a public key, safe to publish.
@@ -27,7 +27,7 @@ window.DOUBT_DESK_CONFIG = {
   about: { founder: "Vijay M", college: "", email: "v.bhaskar462@gmail.com" },
 
   // Site title shown in the header
-  title: "The Campus Loop",
+  title: "Loopy Brains",
 
   // Paste your Firebase web app config here (Firebase console > Project settings > Your apps).
   firebase: {
