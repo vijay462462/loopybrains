@@ -4043,8 +4043,7 @@ body header.top .tabs button[aria-selected="true"] { color: #0d1030; }
 .hb-hero { background: linear-gradient(150deg, #0f3d22 0%, #166534 55%, #16a34a 100%); color: #fff; border-radius: 22px; padding: 16px; margin: 0 0 14px; box-shadow: var(--shadow); position: relative; overflow: hidden; }
 .hb-hero::after { content: ""; position: absolute; right: -50px; top: -50px; width: 180px; height: 180px; border-radius: 50%; background: radial-gradient(circle, rgb(255 154 133 / .28), transparent 70%); pointer-events: none; }
 .hb-hero-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; position: relative; z-index: 1; }
-.hb-promo { display: block; width: calc(100% + 32px); margin: -4px -16px 12px; object-fit: cover; height: 140px; }
-.hb-wordmark { margin: 4px 0 14px; }
+.hb-promo { display: block; width: 72%; height: auto; margin: 0 auto 14px; object-fit: contain; mix-blend-mode: screen; }
 .hb-close { width: 34px; height: 34px; border-radius: 50%; border: 1px solid rgb(255 255 255 / .25); background: rgb(255 255 255 / .1); color: #fff; font-size: 20px; line-height: 1; cursor: pointer; }
 .hb-chip { background: #fb923c; color: #2b1000; font-weight: 800; font-size: 12px; letter-spacing: .06em; padding: 6px 12px; border-radius: 12px; }
 .hb-hero-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; position: relative; z-index: 1; width: 100%; }
