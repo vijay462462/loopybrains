@@ -1,4 +1,4 @@
-// Third batch of colleges for The Campus Loop picker (engineering, medical and degree colleges of Andhra Pradesh).
+// Third batch of colleges for Loopy Brains picker (engineering, medical and degree colleges of Andhra Pradesh).
 // Added from public knowledge, so please check the names and fix or add colleges (one line each).
 (window.COLLEGE_DIRECTORY = window.COLLEGE_DIRECTORY || []).push(
   { slug: "vignan-women", name: "Vignan Institute of Engineering for Women", city: "Visakhapatnam", kind: "Engineering college" },

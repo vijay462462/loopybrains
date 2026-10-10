@@ -54,7 +54,7 @@
 .sp-rowbtns .sp-ic { width: 32px; height: 32px; font-size: .85rem; }
 /* mini player */
 .sp-mini { position: fixed; left: 8px; right: 8px; bottom: calc(env(safe-area-inset-bottom, 0px) + 74px); z-index: 40; display: flex; align-items: center; gap: 6px;
-  padding: 8px 10px 12px; border-radius: 16px; color: #fff; background: linear-gradient(120deg, #1e1b4b, #581c87); box-shadow: 0 12px 30px -10px rgb(0 0 0 / .6); overflow: hidden; }
+  padding: 8px 10px 12px; border-radius: 16px; color: #fff; background: linear-gradient(120deg, #0f3d22, #581c87); box-shadow: 0 12px 30px -10px rgb(0 0 0 / .6); overflow: hidden; }
 .sp-mini[hidden] { display: none; }
 @media (min-width: 901px) { .sp-mini { bottom: 14px; left: auto; right: 14px; width: 340px; } }
 .sp-mtext { flex: 1; min-width: 0; display: grid; text-align: left; border: 0; background: transparent; color: inherit; cursor: pointer; padding: 0; }
@@ -62,4 +62,4 @@
 .sp-mtext small { opacity: .75; }
 .sp-mbtn { width: 38px; height: 38px; border-radius: 50%; border: 0; background: rgb(255 255 255 / .18); color: #fff; font-size: 1rem; cursor: pointer; }
 .sp-mbar { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: rgb(255 255 255 / .2); }
-.sp-mbar-fill { display: block; height: 100%; background: linear-gradient(90deg, #22d3ee, #f472b6); }
+.sp-mbar-fill { display: block; height: 100%; background: linear-gradient(90deg, #86efac, #f472b6); }

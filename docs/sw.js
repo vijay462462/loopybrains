@@ -1,41 +1,41 @@
 // RGUKT Spark service worker, v36
 // Cache versioned assets only. Never cache index.html so updates deploy instantly.
-const CACHE = 'spark-v465';
+const CACHE = 'spark-v466';
 const SHELL = [
-  './style.css?v=465',
-  './brain-solver.js?v=465',
-  './brain-report.js?v=465',
-  './brain-safety.js?v=465',
-  './brain-modes.js?v=465',
-  './brain-packs.js?v=465',
-  './brain-diagrams.js?v=465',
-  './brain-diagrams2.js?v=465',
-  './brain-packs-ece.js?v=465',
-  './brain-simple.js?v=465',
-  './sparkbot.css?v=465',
-  './config.js?v=465',
-  './quiz.js?v=465',
-  './splash.js?v=465',
-  './plus-data.js?v=465',
-  './colleges-ap.js?v=465',
-  './colleges-ap2.js?v=465',
-  './colleges-ap3.js?v=465',
-  './college-data.js?v=465',
-  './rgukt-curriculum.js?v=465',
-  './curiosity.js?v=465',
-  './rgukt-units.js?v=465',
-  './lazy.js?v=465',
-  './colleges-india.js?v=465',
-  './app.js?v=465',
-  './sparkbot.js?v=465',
-  './player.js?v=465',
-  './player.css?v=465',
-  './tools-core.js?v=465',
-  './tools-math.js?v=465',
-  './tools-eng.js?v=465',
-  './tools-life.js?v=465',
-  './lab.js?v=465',
-  './lab.css?v=465',
+  './style.css?v=466',
+  './brain-solver.js?v=466',
+  './brain-report.js?v=466',
+  './brain-safety.js?v=466',
+  './brain-modes.js?v=466',
+  './brain-packs.js?v=466',
+  './brain-diagrams.js?v=466',
+  './brain-diagrams2.js?v=466',
+  './brain-packs-ece.js?v=466',
+  './brain-simple.js?v=466',
+  './sparkbot.css?v=466',
+  './config.js?v=466',
+  './quiz.js?v=466',
+  './splash.js?v=466',
+  './plus-data.js?v=466',
+  './colleges-ap.js?v=466',
+  './colleges-ap2.js?v=466',
+  './colleges-ap3.js?v=466',
+  './college-data.js?v=466',
+  './rgukt-curriculum.js?v=466',
+  './curiosity.js?v=466',
+  './rgukt-units.js?v=466',
+  './lazy.js?v=466',
+  './colleges-india.js?v=466',
+  './app.js?v=466',
+  './sparkbot.js?v=466',
+  './player.js?v=466',
+  './player.css?v=466',
+  './tools-core.js?v=466',
+  './tools-math.js?v=466',
+  './tools-eng.js?v=466',
+  './tools-life.js?v=466',
+  './lab.js?v=466',
+  './lab.css?v=466',
   './manifest.json',
   './icon.svg',
   './icon-192.png',
@@ -43,6 +43,9 @@ const SHELL = [
   './icon-maskable-512.png',
   './apple-touch-icon.png',
   './favicon-32.png',
+  './brand/loopy-brains-promo-480.png',
+  './brand/loopy-brains-wordmark-480.png',
+  './brand/loopy-brains-wordmark-56h.png',
 ];
 
 self.addEventListener('install', e => {
@@ -81,7 +84,7 @@ self.addEventListener('fetch', e => {
 // Web push (needs the push server to be switched on). Data-only messages: we build the notification here so nothing private is shown on a locked screen.
 self.addEventListener('push', e => {
   let d = {}; try { d = e.data ? e.data.json() : {}; } catch (_) {}
-  const data = d.data || d, title = String(data.title || 'The Campus Loop').slice(0, 60), body = String(data.body || 'You have a new update.').slice(0, 120);
+  const data = d.data || d, title = String(data.title || 'Loopy Brains').slice(0, 60), body = String(data.body || 'You have a new update.').slice(0, 120);
   e.waitUntil(self.registration.showNotification(title, { body, icon: './icon-192.png', badge: './favicon-32.png', tag: String(data.tag || 'campusloop').slice(0, 60), data: { url: './' + (/^#[a-z]{3,12}(\/[A-Za-z0-9_-]{1,60})?$/.test(String(data.hash || '')) ? data.hash : '') } }));
 });
 self.addEventListener('notificationclick', e => {
