@@ -8617,14 +8617,9 @@ function renderGateIntro() {
     { name: "Official GATE Papers", sub: "All years, IIT Kanpur archive", emoji: "📄", url: "https://gate.iitk.ac.in/GATE_past_papers.html" },
     { name: "NPTEL Notes (PDF)", sub: "Subject-wise free lecture notes", emoji: "📚", url: "https://nptel.ac.in/courses" },
     { name: "SWAYAM Free Courses", sub: "Govt platform, IIT/NIT faculty", emoji: "🇮🇳", url: "https://swayam.gov.in" },
-    { name: "MADE Easy Books", sub: "Handbooks & workbooks", emoji: "📘", url: "https://madeeasypublications.org" },
-    { name: "ACE Academy", sub: "Study material & test series", emoji: "📗", url: "https://aceenggacademy.com" },
-    { name: "GATE Academy", sub: "Notes, books & video classes", emoji: "📙", url: "https://thegateacademy.com" },
   ];
   const GATE_PRACTICE = [
-    { name: "PW GATE App", sub: "Mock tests & video lectures", emoji: "🔥", url: "https://pw.live" },
-    { name: "Testbook GATE", sub: "Full mock test series", emoji: "📝", url: "https://testbook.com/gate" },
-    { name: "Unacademy GATE", sub: "Live tests + quizzes", emoji: "🎯", url: "https://unacademy.com/goal/gate" },
+    { name: "PW GATE App", sub: "Free video lectures on YouTube", emoji: "🔥", url: "https://www.youtube.com/@PWGATEWallah" },
     { name: "GATE Overflow", sub: "CSE PYQ solutions community", emoji: "💬", url: "https://gateoverflow.in" },
   ];
   if (state.gateResView) return renderGateResourceDetail(state.gateResView);
