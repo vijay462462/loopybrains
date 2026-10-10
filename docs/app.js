@@ -1814,9 +1814,9 @@ function loopyMini(costume) {
     mk("rect", { x: 8, y: 12, width: 44, height: 38, rx: 15, fill: "#fff", stroke: "#a78bfa", "stroke-width": 2.5 }), mk("rect", { x: 13, y: 18, width: 34, height: 25, rx: 11, fill: "#1e1757" }),
     mk("ellipse", { cx: 23, cy: 28, rx: 3.4, ry: 4.6, fill: "#67e8f9", class: "lp-eyes" }), mk("ellipse", { cx: 37, cy: 28, rx: 3.4, ry: 4.6, fill: "#67e8f9", class: "lp-eyes" }), mk("path", { d: "M25 36q5 4.5 10 0", fill: "none", stroke: "#fde68a", "stroke-width": 2.4, "stroke-linecap": "round" }));
   svg.append(mk("path", { d: "M10 30 Q8 9 30 9 Q52 9 50 30", fill: "none", stroke: "url(#lpmPh)", "stroke-width": 3, "stroke-linecap": "round" }), mk("rect", { x: 3.5, y: 25, width: 7, height: 15, rx: 3.5, fill: "url(#lpmPh)" }), mk("rect", { x: 49.5, y: 25, width: 7, height: 15, rx: 3.5, fill: "url(#lpmPh)" }));
-  if (id === "none") svg.append(mk("path", { d: "M6 15 L30 3 L54 15 L30 22 Z", fill: "#4c1d95", stroke: "#f9a8d4", "stroke-width": 1.2 }), mk("rect", { x: 19, y: 15.5, width: 22, height: 5, rx: 2.5, fill: "#6d28d9" }), mk("path", { d: "M54 15 L54 29", stroke: "#f9a8d4", "stroke-width": 1.5, "stroke-linecap": "round" }), mk("circle", { cx: 54, cy: 31, r: 2.2, fill: "#f9a8d4" }));
+  if (id === "none") svg.append(mk("path", { d: "M6 15 L30 3 L54 15 L30 22 Z", fill: "#052a2e", stroke: "#f9a8d4", "stroke-width": 1.2 }), mk("rect", { x: 19, y: 15.5, width: 22, height: 5, rx: 2.5, fill: "#ff8a73" }), mk("path", { d: "M54 15 L54 29", stroke: "#f9a8d4", "stroke-width": 1.5, "stroke-linecap": "round" }), mk("circle", { cx: 54, cy: 31, r: 2.2, fill: "#f9a8d4" }));
   if (id === "cap") svg.append(mk("path", { d: "M11 13 L30 3 L49 13 L30 21 Z", fill: "#1e1757", stroke: "#fde047", "stroke-width": 1 }), mk("rect", { x: 22, y: 14, width: 16, height: 5, rx: 2, fill: "#312e81" }), mk("path", { d: "M49 13 L49 22", stroke: "#fde047", "stroke-width": 1.6, "stroke-linecap": "round" }), mk("circle", { cx: 49, cy: 23, r: 2, fill: "#fde047" }));
-  if (id === "phones") svg.append(mk("path", { d: "M9 32 A21 21 0 0 1 51 32", fill: "none", stroke: "#f472b6", "stroke-width": 3.6, "stroke-linecap": "round" }), mk("rect", { x: 3, y: 27, width: 8, height: 14, rx: 4, fill: "#f472b6" }), mk("rect", { x: 49, y: 27, width: 8, height: 14, rx: 4, fill: "#f472b6" }));
+  if (id === "phones") svg.append(mk("path", { d: "M9 32 A21 21 0 0 1 51 32", fill: "none", stroke: "#ffb4a3", "stroke-width": 3.6, "stroke-linecap": "round" }), mk("rect", { x: 3, y: 27, width: 8, height: 14, rx: 4, fill: "#ffb4a3" }), mk("rect", { x: 49, y: 27, width: 8, height: 14, rx: 4, fill: "#ffb4a3" }));
   if (id === "shades") svg.append(mk("rect", { x: 14, y: 22.5, width: 14, height: 10, rx: 4.5, fill: "#0b0b1c" }), mk("rect", { x: 32, y: 22.5, width: 14, height: 10, rx: 4.5, fill: "#0b0b1c" }), mk("path", { d: "M28 26 h4", stroke: "#0b0b1c", "stroke-width": 2 }), mk("path", { d: "M16.5 25 l5 0", stroke: "#fff", "stroke-width": 1.2, opacity: ".6", "stroke-linecap": "round" }));
   if (id === "mask") svg.append(mk("path", { d: "M10 24 h40 v9 q-20 6 -40 0 z", fill: "#ef4444" }), mk("ellipse", { cx: 23, cy: 28.5, rx: 4.6, ry: 4.4, fill: "#fff" }), mk("ellipse", { cx: 37, cy: 28.5, rx: 4.6, ry: 4.4, fill: "#fff" }), mk("ellipse", { cx: 23, cy: 28.5, rx: 2.6, ry: 3.4, fill: "#67e8f9", class: "lp-eyes" }), mk("ellipse", { cx: 37, cy: 28.5, rx: 2.6, ry: 3.4, fill: "#67e8f9", class: "lp-eyes" }));
   if (id === "crown") svg.append(mk("path", { d: "M14 14 L17 3 L24 9 L30 1.5 L36 9 L43 3 L46 14 Z", fill: "#fbbf24", stroke: "#b45309", "stroke-width": 1 }), mk("circle", { cx: 17, cy: 3.5, r: 1.8, fill: "#f43f5e" }), mk("circle", { cx: 30, cy: 2, r: 1.8, fill: "#38bdf8" }), mk("circle", { cx: 43, cy: 3.5, r: 1.8, fill: "#f43f5e" }));
@@ -2280,7 +2280,7 @@ function renderHome() {
   const name = (getName() || "").trim().split(/\s+/)[0] || "";
   const college = COLLEGE || "Your campus";
   const chip = college.replace(/RGUKT\s*/i, "").trim().slice(0, 6).toUpperCase() || college.slice(0, 5).toUpperCase();
-  const mascot = `<svg class="hb-mascot-svg" viewBox="0 0 120 130" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="hbBodyG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6d28d9"/><stop offset="1" stop-color="#3b0764"/></linearGradient></defs><polygon points="60,98 12,130 108,130" fill="url(#hbBodyG)"/><circle cx="60" cy="60" r="36" fill="#1e293b"/><circle cx="60" cy="60" r="32" fill="#0f172a"/><ellipse cx="46" cy="57" rx="8.5" ry="10" fill="#22d3ee"/><ellipse cx="74" cy="57" rx="8.5" ry="10" fill="#22d3ee"/><ellipse cx="46" cy="55" rx="5" ry="6.5" fill="#67e8f9" opacity=".55"/><ellipse cx="74" cy="55" rx="5" ry="6.5" fill="#67e8f9" opacity=".55"/><path d="M45 73 Q60 84 75 73" stroke="#fbbf24" stroke-width="3.5" fill="none" stroke-linecap="round"/><rect x="12" y="48" width="14" height="22" rx="7" fill="#f472b6"/><rect x="94" y="48" width="14" height="22" rx="7" fill="#f472b6"/><circle cx="19" cy="59" r="5" fill="#fda4af"/><circle cx="101" cy="59" r="5" fill="#fda4af"/><rect x="28" y="28" width="64" height="9" rx="2" fill="#4c1d95"/><polygon points="60,8 26,30 94,30" fill="#5b21b6"/><line x1="84" y1="24" x2="90" y2="38" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"/><circle cx="90" cy="41" r="4.5" fill="#fbbf24"/></svg>`;
+  const mascot = `<svg class="hb-mascot-svg" viewBox="0 0 120 130" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="hbBodyG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff8a73"/><stop offset="1" stop-color="#d9482f"/></linearGradient></defs><polygon points="60,98 12,130 108,130" fill="url(#hbBodyG)"/><circle cx="60" cy="60" r="36" fill="#e8f4f2"/><circle cx="60" cy="60" r="32" fill="#072f34"/><ellipse cx="46" cy="57" rx="8.5" ry="10" fill="#22d3ee"/><ellipse cx="74" cy="57" rx="8.5" ry="10" fill="#22d3ee"/><ellipse cx="46" cy="55" rx="5" ry="6.5" fill="#67e8f9" opacity=".55"/><ellipse cx="74" cy="55" rx="5" ry="6.5" fill="#67e8f9" opacity=".55"/><path d="M45 73 Q60 84 75 73" stroke="#fbbf24" stroke-width="3.5" fill="none" stroke-linecap="round"/><rect x="12" y="48" width="14" height="22" rx="7" fill="#ffb4a3"/><rect x="94" y="48" width="14" height="22" rx="7" fill="#ffb4a3"/><circle cx="19" cy="59" r="5" fill="#fff4ec"/><circle cx="101" cy="59" r="5" fill="#fff4ec"/><rect x="28" y="28" width="64" height="9" rx="2" fill="#052a2e"/><polygon points="60,8 26,30 94,30" fill="#0a4f56"/><line x1="84" y1="24" x2="90" y2="38" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"/><circle cx="90" cy="41" r="4.5" fill="#fbbf24"/></svg>`;
   box.hidden = false;
   box.replaceChildren(
     el("div", { class: "hb-hero" },
@@ -2289,7 +2289,7 @@ function renderHome() {
         el("div", { class: "hb-chip" }, chip)
       ),
       el("div", { class: "hb-hero-row" },
-        el("div", { class: "hb-mascot", innerHTML: mascot }),
+        (() => { const m = el("div", { class: "hb-mascot" }); m.append(new DOMParser().parseFromString(mascot, "image/svg+xml").documentElement); return m; })(),
         el("div", { class: "hb-greet-col" },
           el("p", { class: "hb-college-name" }, college),
           el("h2", { class: "hb-greet" }, greet + (name ? ", " + name : "") + " 👋"),
@@ -4220,8 +4220,8 @@ function wrapLines(g, text, maxW) {
 }
 async function shareResult({ kicker, emoji, big, line }) {
   const W = 1080, H = 1350, cv = document.createElement("canvas"); cv.width = W; cv.height = H; const g = cv.getContext("2d");
-  const [a, b] = BRAND_COLORS || (IS_RGUKT ? STATE_COLORS["Andhra Pradesh"] : ["#6d28d9", "#db2777"]);
-  const bg = g.createLinearGradient(0, 0, W, H); bg.addColorStop(0, a); bg.addColorStop(0.55, "#6d28d9"); bg.addColorStop(1, b); g.fillStyle = bg; g.fillRect(0, 0, W, H);
+  const [a, b] = BRAND_COLORS || (IS_RGUKT ? STATE_COLORS["Andhra Pradesh"] : ["#ff8a73", "#db2777"]);
+  const bg = g.createLinearGradient(0, 0, W, H); bg.addColorStop(0, a); bg.addColorStop(0.55, "#ff8a73"); bg.addColorStop(1, b); g.fillStyle = bg; g.fillRect(0, 0, W, H);
   g.fillStyle = "rgba(255,255,255,.08)"; g.beginPath(); g.arc(W - 60, 180, 320, 0, 7); g.fill(); g.beginPath(); g.arc(120, H - 120, 380, 0, 7); g.fill();
   g.strokeStyle = "#fff"; g.lineWidth = 26; g.lineCap = "round"; g.beginPath(); g.arc(150, 150, 58, 0.75, 5.53); g.stroke();   // the C of the logo
   g.fillStyle = "#fde047"; g.beginPath(); g.moveTo(228, 120); g.lineTo(238, 146); g.lineTo(264, 150); g.lineTo(238, 156); g.lineTo(228, 182); g.lineTo(218, 156); g.lineTo(192, 150); g.lineTo(218, 146); g.closePath(); g.fill();
@@ -5876,7 +5876,7 @@ function brainViewInner(ui) {
       aegis: [["\u{1F489}", "SQL injection", "Security"], ["\u{1F3A3}", "Phishing", "Security"], ["\u{1F511}", "Password security", "Security"], ["\u{1F512}", "Two factor authentication", "Security"]] };
     const tryBlock = el("div", { class: "bs-blk" }, el("small", { class: "bs-secthead" }, "Try asking"), el("div", { class: "bs-try" }, ...(TRY[bs.mode] || TRY.atlas).map(([ic, t, s]) => el("button", { type: "button", class: "bs-tc", onclick: () => go(t) }, el("i", { "aria-hidden": "true" }, ic), el("b", {}, t), el("small", {}, s)))));
     if (!_packs && !bs._pkTried) { bs._pkTried = true; brainPacksMod().then(() => { if (bsEl() && !bsState().res) bsPaint(); }); }
-    const SUBJ = [["Digital electronics", "\u{1F522} Digital logic", "#6d28d9"], ["Analog electronic circuits", "\u{1F50C} Analog circuits", "#ea580c"], ["Digital signal processing", "\u{1F4C8} Signal processing", "#0891b2"], ["Control systems", "\u{1F39B}\uFE0F Control systems", "#16a34a"], ["Probability and random variables", "\u{1F3B2} Probability", "#db2777"]];
+    const SUBJ = [["Digital electronics", "\u{1F522} Digital logic", "#ff8a73"], ["Analog electronic circuits", "\u{1F50C} Analog circuits", "#ea580c"], ["Digital signal processing", "\u{1F4C8} Signal processing", "#0891b2"], ["Control systems", "\u{1F39B}\uFE0F Control systems", "#16a34a"], ["Probability and random variables", "\u{1F3B2} Probability", "#db2777"]];
     const allPk = _packs ? _packs.all : [], open = bs.packSubj;
     const tiles = (bs.mode === "atlas" || !bs.mode) ? el("div", { class: "bs-blk" }, el("small", { class: "bs-secthead" }, "Browse textbook topics"), el("div", { class: "bs-tiles" }, ...SUBJ.map(([sub, label, col]) => { const n = allPk.filter(p => p.subject === sub).length; return el("button", { type: "button", class: "bs-tile" + (open === sub ? " on" : ""), "aria-expanded": String(open === sub), onclick: () => { bs.packSubj = open === sub ? "" : sub; bsPaint(); } }, el("b", {}, label), el("small", {}, n ? n + " topics" : "Tap to open")); }).map((n, i) => { n.style.setProperty("--tc", SUBJ[i][2]); return n; })),
       open ? el("div", { class: "bs-chips bs-packlist" }, ...(allPk.filter(p => p.subject === open).length ? allPk.filter(p => p.subject === open).map(p => el("button", { type: "button", class: "tp-sub", onclick: () => { bs.forcePack = p.id; go(p.title.replace(/\\s*\\(.*?\\)\\s*/g, " ").trim()); } }, p.title)) : [el("small", { class: "hint" }, "Loading the topic list\u2026")])) : null) : null;
@@ -9988,7 +9988,7 @@ function renderCampusPicker() {
 
 // ---------- profile photo (DP) and 24-hour stories ----------
 const STORY_ROW_MIN = 3, STORY_MS = 86400000, STORY_SHOW = 5500, STORY_DAILY_MAX = 10;
-const STORY_BG = [["#7c3aed", "#2563eb"], ["#db2777", "#f97316"], ["#059669", "#0ea5e9"], ["#f59e0b", "#ef4444"], ["#1e293b", "#6366f1"], ["#0d9488", "#84cc16"], ["#9333ea", "#ec4899"], ["#0f172a", "#334155"]];
+const STORY_BG = [["#7c3aed", "#2563eb"], ["#db2777", "#f97316"], ["#059669", "#0ea5e9"], ["#f59e0b", "#ef4444"], ["#e8f4f2", "#6366f1"], ["#0d9488", "#84cc16"], ["#9333ea", "#ec4899"], ["#072f34", "#334155"]];
 const DP_OK = /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]{20,40000}$/;
 const IMG_OK = /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]{20,700000}$/;
 const getDp = () => { if (!MEDIA.profilePhoto) return ""; try { const v = localStorage.getItem("dd-dp"); return DP_OK.test(v || "") ? v : ""; } catch (_) { return ""; } };
@@ -10946,147 +10946,24 @@ document.addEventListener("pointerdown", (e) => {
 })();
 
 
-// ---------- Tab page-transition animation ----------
-(function tabTransition() {
-  const layout = document.querySelector('.layout');
-  if (!layout) return;
-  let lastTab = '';
-  const observer = new MutationObserver(() => {
-    const tab = document.body.dataset.tab;
-    if (!tab || tab === lastTab) return;
-    lastTab = tab;
-    layout.classList.remove('tab-enter');
-    void layout.offsetWidth; // reflow
-    layout.classList.add('tab-enter');
-  });
-  observer.observe(document.body, { attributes: true, attributeFilter: ['data-tab'] });
-  layout.addEventListener('animationend', () => {}, { passive: true });
-})();
-
-
-// ---------- Floating help FAB ----------
-(function helpFab() {
-  const fab = document.getElementById('helpFab');
-  if (!fab) return;
-  fab.addEventListener('click', () => {
-    const bar = document.getElementById('guideBar');
-    if (bar) {
-      bar.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      bar.classList.add('guide-highlight');
-      setTimeout(() => bar.classList.remove('guide-highlight'), 1400);
-    }
-    if (typeof renderGuide === 'function') renderGuide(true);
-  });
-})();
-
-
-// ---------- Header scroll-shrink ----------
-(function headerShrink() {
-  const THRESHOLD = 40;
-  const root = document.documentElement;
-  let ticking = false;
-  const update = () => {
-    root.classList.toggle('is-scrolled', window.scrollY > THRESHOLD);
-    ticking = false;
+// ---------- Back / Next between class-board sections ----------
+(function sectionNav() {
+  const ORDER = ["doubts", "ideas", "clubs", "challenges", "jobs", "market", "gate"];
+  const bar = document.createElement("div"); bar.className = "sec-nav"; bar.hidden = true;
+  const mkBtn = (cls, label) => { const b = document.createElement("button"); b.type = "button"; b.className = "sec-btn " + cls; b.textContent = label; return b; };
+  const prev = mkBtn("sec-prev", "Back"), next = mkBtn("sec-next", "Next"), mid = document.createElement("span"); mid.className = "sec-mid";
+  bar.append(prev, mid, next);
+  const list = () => ORDER.filter(t => TABS[t] && (t === "doubts" || featureOn(t)));
+  const sync = () => {
+    const l = list(), i = l.indexOf(state.tab);
+    if (i < 0 || state.selected || state.query.trim()) { bar.hidden = true; return; }
+    if (bar.hidden) bar.hidden = false; prev.disabled = i === 0; next.disabled = i === l.length - 1;
+    const t = (i + 1) + " / " + l.length; if (mid.textContent !== t) mid.textContent = t;
+    prev.onclick = () => { if (i > 0) { goTab(l[i - 1]); window.scrollTo({ top: 0, behavior: "smooth" }); } };
+    next.onclick = () => { if (i < l.length - 1) { goTab(l[i + 1]); window.scrollTo({ top: 0, behavior: "smooth" }); } };
   };
-  addEventListener('scroll', () => {
-    if (!ticking) { ticking = true; requestAnimationFrame(update); }
-  }, { passive: true });
-  update();
-})();
-
-
-// ---------- Scroll-reveal for cards ----------
-(function scrollReveal() {
-  if (!window.IntersectionObserver) return;
-  const SEL = '.pcard, .guide-card, .listcard, .quiz-card, .ai-card, .market-card, .job-row, .club-card';
-  let obs;
-  const init = () => {
-    document.querySelectorAll(SEL).forEach(el => {
-      if (!el.dataset.sr) { el.dataset.sr = '1'; el.classList.add('sr-hidden'); obs.observe(el); }
-    });
-  };
-  obs = new IntersectionObserver((entries) => {
-    entries.forEach(e => {
-      if (e.isIntersecting) { e.target.classList.remove('sr-hidden'); e.target.classList.add('sr-visible'); obs.unobserve(e.target); }
-    });
-  }, { threshold: 0.08 });
-  init();
-  new MutationObserver(init).observe(document.body, { childList: true, subtree: true });
-})();
-
-
-// ---------- Page nav (prev / next tab arrows on mobile) ----------
-// ---------- Deck-nav: full-page section prev/next + swipe ----------
-(function deckNav() {
-  const TABS   = ['class','loopy','quiz','tools','college','plus'];
-  const LABELS = ['Class','Loopy AI','Quiz','Tools','College','Plus'];
-  const ICONS  = ['🏛️','🤖','📝','🔧','🎓','⭐'];
-
-  const getIdx  = () => Math.max(0, TABS.indexOf(document.body.dataset.tab || TABS[0]));
-  const goTo    = (id) => {
-    const btn = document.querySelector(`.bnav-btn[data-tab="${id}"]`);
-    if (btn) btn.click();
-  };
-
-  // Build nav bar
-  const bar = document.createElement('div');
-  bar.className = 'deck-nav';
-  bar.setAttribute('aria-label', 'Navigate between sections');
-
-  const prevBtn = document.createElement('button');
-  prevBtn.className = 'deck-nav-arrow deck-nav-prev';
-  prevBtn.type = 'button';
-  prevBtn.setAttribute('aria-label', 'Previous section');
-  prevBtn.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>';
-
-  const label = document.createElement('div');
-  label.className = 'deck-nav-label';
-
-  const nextBtn = document.createElement('button');
-  nextBtn.className = 'deck-nav-arrow deck-nav-next';
-  nextBtn.type = 'button';
-  nextBtn.setAttribute('aria-label', 'Next section');
-  nextBtn.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>';
-
-  bar.append(prevBtn, label, nextBtn);
-
-  const render = () => {
-    const i = getIdx();
-    prevBtn.disabled = i === 0;
-    nextBtn.disabled = i === TABS.length - 1;
-    label.innerHTML = `<span class="deck-nav-icon">${ICONS[i]}</span>` +
-      `<span class="deck-nav-dots">${TABS.map((_, j) => `<span class="deck-nav-dot${j === i ? ' active' : ''}"></span>`).join('')}</span>` +
-      `<span class="deck-nav-name">${LABELS[i]}</span>`;
-    prevBtn.title = i > 0 ? LABELS[i - 1] : '';
-    nextBtn.title = i < TABS.length - 1 ? LABELS[i + 1] : '';
-  };
-
-  prevBtn.addEventListener('click', () => { const i = getIdx(); if (i > 0) goTo(TABS[i - 1]); });
-  nextBtn.addEventListener('click', () => { const i = getIdx(); if (i < TABS.length - 1) goTo(TABS[i + 1]); });
-
-  render();
-  new MutationObserver(render).observe(document.body, { attributes: true, attributeFilter: ['data-tab'] });
-
-  // Insert above the bottom nav
-  const bnav = document.getElementById('bottomNav');
-  if (bnav) bnav.before(bar); else document.body.appendChild(bar);
-
-  // Swipe support (horizontal swipe on the layout area, not on a scrolling list)
-  let sx = 0, sy = 0, active = false;
-  const layout = document.querySelector('.layout');
-  const target = layout || document.body;
-  target.addEventListener('touchstart', (e) => {
-    if (e.touches.length !== 1) return;
-    sx = e.touches[0].clientX; sy = e.touches[0].clientY; active = true;
-  }, { passive: true });
-  target.addEventListener('touchend', (e) => {
-    if (!active) return; active = false;
-    const dx = e.changedTouches[0].clientX - sx;
-    const dy = e.changedTouches[0].clientY - sy;
-    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
-    const i = getIdx();
-    if (dx < 0 && i < TABS.length - 1) goTo(TABS[i + 1]);
-    else if (dx > 0 && i > 0) goTo(TABS[i - 1]);
-  }, { passive: true });
+  const host = document.querySelector(".listcol"); if (!host) return;
+  host.append(bar);
+  new MutationObserver(() => sync()).observe(host, { childList: true, subtree: true });
+  sync();
 })();
