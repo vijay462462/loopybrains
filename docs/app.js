@@ -1664,7 +1664,7 @@ function showWelcome(force, startId) {
       el("div", { class: "rowbtns" }, step > 0 ? el("button", { class: "btn", type: "button", onclick: () => go(-1) }, "Back") : fromSplash ? el("button", { class: "btn", type: "button", onclick: backToStart }, "Back") : null, last ? el("button", { class: "btn", type: "button", onclick: finish }, "Close") : el("button", { class: "btn primary", type: "button", onclick: () => go(1), disabled: sid === "about" }, sid === "about" ? "Continue" : sid === "college" ? (pickSlug && pickSlug !== curSlug ? "Continue with " + (pickName.length > 16 ? pickName.slice(0, 15) + "\u2026" : pickName) : "Continue") : "Next"))));
     const f = box.querySelector("input") || box.querySelector(".btn.primary"); if (f && sid !== "about") f.focus();
     // The About step: Continue switches on once the whole text has been scrolled through AND the terms box is ticked.
-    if (sid === "about") {
+    if (sid === "about") { try { localStorage.setItem("dd-about-seen", "1"); } catch (_) {}
       const stepEl = box.querySelector(".ob-step"), nextBtn = box.querySelector(".ob-card > .rowbtns .btn.primary"), skipBtn = box.querySelector(".welcome-skip"), agree = box.querySelector("#ob-terms");
       if (stepEl && nextBtn && agree) {
         const hint = el("p", { class: "ob-scrollhint", role: "status" }, "");
@@ -1744,7 +1744,7 @@ function maybeWelcome() {
   let resume = ""; try { resume = sessionStorage.getItem("dd-ob-resume") || ""; sessionStorage.removeItem("dd-ob-resume"); } catch (_) {}
   const open = (start) => { welcomePending = true; const viaSplash = !!document.getElementById("splash"); const go = () => setTimeout(() => { try { if (viaSplash) sessionStorage.setItem("dd-ob-splash", "1"); } catch (_) {} showWelcome(false, start); if (!document.getElementById("welcome")) welcomePending = false; }, viaSplash ? 800 : 60); if (document.getElementById("splash")) document.addEventListener("splash-closed", go, { once: true }); else go(); };
   if (resume) { try { sessionStorage.setItem("dd-ob-shown", "1"); } catch (_) {} open(resume); return; }   // just picked a college: continue with the name step
-  if (NO_COLLEGE) { try { sessionStorage.setItem("dd-ob-shown", "1"); } catch (_) {} open(); return; }      // brand-new visitors choose their college first
+  if (NO_COLLEGE) { try { sessionStorage.setItem("dd-ob-shown", "1"); } catch (_) {} const seenAbout = (() => { try { return !!localStorage.getItem("dd-about-seen"); } catch(_) { return false; } })(); open(seenAbout ? "college" : undefined); return; }      // brand-new visitors choose their college first
   // welcomeEveryVisit (config.js): show the welcome steps after the opening screen on every visit (handy for testing). Set it to false before launch.
   const every = !!(window.DOUBT_DESK_CONFIG && window.DOUBT_DESK_CONFIG.welcomeEveryVisit);
   if (every) {
