@@ -4170,3 +4170,11 @@ body.dldq-open { overflow: hidden; }
 .dldq-a { padding: 10px 12px 12px; }
 .dldq-a small { color: var(--muted); text-transform: uppercase; letter-spacing: .06em; font-size: 11px; }
 .dldq-a p { margin: 6px 0; font-size: 14px; line-height: 1.55; overflow-wrap: anywhere; }
+
+/* Loopy AI: exam bullets and practice questions on a topic */
+.pk-ebl .pk-ebul li b { color: var(--accent); }
+.pk-pq .dldq-q { background: var(--paper); }
+
+/* Home: choice line above the two ask buttons */
+.hb-choice { position: relative; z-index: 1; margin: 2px 2px 8px; font-size: 13px; line-height: 1.4; font-weight: 700; color: #fff; text-align: center; }
+.hb-action small { font-size: 11px; line-height: 1.2; color: #4b5d52; text-align: center; }
