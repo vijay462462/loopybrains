@@ -2275,30 +2275,44 @@ function renderHome() {
   const box = $("homeBento"); if (!box) return;
   const show = state.tab === "doubts" && state.group === "All" && !state.query.trim() && !NO_COLLEGE && !state.selected;
   if (!show) { box.hidden = true; return; }
-  const live = (arr) => (arr || []).filter(x => !x.deleted);
-  const n = state.myStreak || 0, gateN = live(state.gate).length, clubN = live(state.clubs).length;
-  const jobsN = live(state.jobs).filter(d => { const dl = jobDaysLeft(d); return dl == null || dl >= 0; }).length;
-  const main = [
-    { ic: "flame", val: n + (n === 1 ? " day" : " days"), label: "Quiz streak", go: () => showPanel("quiz") },
-    { tab: "gate", ic: "target", val: EXAM_LABEL, label: gateN ? gateN + " papers and tips" : "Papers and prep", go: () => goTab("gate") },
-    { tab: "clubs", ic: "users", val: "Clubs", label: clubN ? clubN + (clubN === 1 ? " post" : " posts") : "Find your people", go: () => goTab("clubs") },
-    { tab: "jobs", ic: "briefcase", val: "Jobs", label: jobsN ? jobsN + (jobsN === 1 ? " drive open" : " drives open") : "Placement prep", go: () => goTab("jobs") },
-  ].filter(t => !t.tab || (featureOn(t.tab) && !isSimple()));
-  const extra = [
-    { ic: "bulb", val: "Daily Quiz", label: "One question a day", go: () => showPanel("quiz") },
-    { ic: "book", val: "Study Tools", label: "Notes and formulas", go: () => showPanel("resources") },
-    { ic: "chat", val: "Loop Bot", label: "Ask anything", go: () => { const b = $("botBtn"); if (b) b.click(); } },
-    { ic: "users", val: "Top Helpers", label: "Campus leaders", go: () => showPanel("leaders") },
-  ];
-  const tiles = [...main, ...extra.filter(x => !main.some(m => m.val === x.val))].slice(0, 4);
-  const name = (getName() || "").trim();
+  const hr = new Date().getHours();
+  const greet = hr < 5 ? "Good night" : hr < 12 ? "Good morning" : hr < 17 ? "Good afternoon" : "Good evening";
+  const name = (getName() || "").trim().split(/\s+/)[0] || "";
+  const college = COLLEGE || "Your campus";
+  const chip = college.replace(/RGUKT\s*/i, "").trim().slice(0, 6).toUpperCase() || college.slice(0, 5).toUpperCase();
+  const mascot = `<svg class="hb-mascot-svg" viewBox="0 0 120 130" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="hbBodyG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6d28d9"/><stop offset="1" stop-color="#3b0764"/></linearGradient></defs><polygon points="60,98 12,130 108,130" fill="url(#hbBodyG)"/><circle cx="60" cy="60" r="36" fill="#1e293b"/><circle cx="60" cy="60" r="32" fill="#0f172a"/><ellipse cx="46" cy="57" rx="8.5" ry="10" fill="#22d3ee"/><ellipse cx="74" cy="57" rx="8.5" ry="10" fill="#22d3ee"/><ellipse cx="46" cy="55" rx="5" ry="6.5" fill="#67e8f9" opacity=".55"/><ellipse cx="74" cy="55" rx="5" ry="6.5" fill="#67e8f9" opacity=".55"/><path d="M45 73 Q60 84 75 73" stroke="#fbbf24" stroke-width="3.5" fill="none" stroke-linecap="round"/><rect x="12" y="48" width="14" height="22" rx="7" fill="#f472b6"/><rect x="94" y="48" width="14" height="22" rx="7" fill="#f472b6"/><circle cx="19" cy="59" r="5" fill="#fda4af"/><circle cx="101" cy="59" r="5" fill="#fda4af"/><rect x="28" y="28" width="64" height="9" rx="2" fill="#4c1d95"/><polygon points="60,8 26,30 94,30" fill="#5b21b6"/><line x1="84" y1="24" x2="90" y2="38" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"/><circle cx="90" cy="41" r="4.5" fill="#fbbf24"/></svg>`;
   box.hidden = false;
   box.replaceChildren(
-    el("p", { class: "hb-hi" }, name ? "Hi " + name : "Hi there"),
-    el("p", { class: "hb-sub" }, "Pick up where you left off."),
-    el("button", { type: "button", class: "hb-cta", onclick: () => openAsk() },
-      el("span", { class: "hb-cta-t" }, el("b", {}, TABS.doubts.ask), el("small", {}, "Get answers from seniors")), icon("arrow", 26)),
-    el("div", { class: "hb-grid" }, tiles.map(t => el("button", { type: "button", class: "hb-tile", onclick: t.go }, icon(t.ic, 24), el("b", {}, t.val), el("small", {}, t.label)))));
+    el("div", { class: "hb-hero" },
+      el("div", { class: "hb-hero-top" },
+        el("button", { type: "button", class: "hb-close", "aria-label": "Close welcome card", onclick: () => { box.hidden = true; } }, "×"),
+        el("div", { class: "hb-chip" }, chip)
+      ),
+      el("div", { class: "hb-hero-row" },
+        el("div", { class: "hb-mascot", innerHTML: mascot }),
+        el("div", { class: "hb-greet-col" },
+          el("p", { class: "hb-college-name" }, college),
+          el("h2", { class: "hb-greet" }, greet + (name ? ", " + name : "") + " 👋"),
+          el("p", { class: "hb-tagline" }, "Every question is welcome here.")
+        )
+      ),
+      el("div", { class: "hb-prompt" },
+        el("span", { class: "hb-prompt-dot", "aria-hidden": "true" }),
+        el("p", { class: "hb-prompt-msg" }, "Stuck on a topic? I can explain it simply"),
+        el("button", { type: "button", class: "hb-prompt-btn", onclick: () => goTab("loopy") }, "Ask Loopy ›")
+      ),
+      el("div", { class: "hb-actions" },
+        el("button", { type: "button", class: "hb-action", onclick: () => openAsk() },
+          el("span", { class: "hb-action-ic" }, "❓"),
+          el("b", {}, "Ask a doubt")
+        ),
+        el("button", { type: "button", class: "hb-action", onclick: () => goTab("loopy") },
+          el("span", { class: "hb-action-ic" }, "✨"),
+          el("b", {}, "Loopy AI")
+        )
+      )
+    )
+  );
 }
 function renderGuide() {
   const box = $("guideBar"); if (!box) return;
