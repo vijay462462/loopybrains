@@ -1557,7 +1557,8 @@ function showWelcome(force, startId) {
   const backToStart = () => { try { sessionStorage.removeItem("dd-ob-splash"); sessionStorage.removeItem("dd-ob-shown"); sessionStorage.removeItem("dd-splash"); } catch (_) {} document.removeEventListener("keydown", onKey); box.remove(); location.reload(); };   // the first page comes back with a fresh start
   let aboutReady = false;   // the About step may only be passed after the text was really scrolled through (or read) and the terms box is ticked
   let paintedAt = 0;   // a tap that lands right after a step appears (double tap, ghost click) must not skip that step
-  const go = (d) => { if (performance.now() - paintedAt < (STEPS[step] === "about" ? 3000 : 1200)) return; if (d > 0 && STEPS[step] === "about" && !aboutReady) return; if (d > 0 && STEPS[step] === "college" && !pickSlug) { const c = box.querySelector(".ob-chosen"); if (c) { c.classList.remove("shake"); void c.offsetWidth; c.classList.add("shake"); } return; } saveStep(); step = Math.max(0, Math.min(TOTAL - 1, step + d)); paint(); };
+  let _goLock = false;
+  const go = (d) => { if (_goLock) return; if (performance.now() - paintedAt < (STEPS[step] === "about" ? 3000 : 1200)) return; if (d > 0 && STEPS[step] === "about" && !aboutReady) return; if (d > 0 && STEPS[step] === "college" && !pickSlug) { const c = box.querySelector(".ob-chosen"); if (c) { c.classList.remove("shake"); void c.offsetWidth; c.classList.add("shake"); } return; } _goLock = true; setTimeout(() => { _goLock = false; }, 420); saveStep(); step = Math.max(0, Math.min(TOTAL - 1, step + d)); paint(); };
   const start = (fn) => () => { saveStep(); finish(); setTimeout(fn, 120); };
   function paint() {
     paintedAt = performance.now(); aboutReady = false;
