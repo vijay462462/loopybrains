@@ -4148,3 +4148,25 @@ body header.top .tabs button[aria-selected="true"] { color: #0d1030; }
 .dld-tt { display: grid; gap: 2px; min-width: 0; }
 .dld-tt b { font-size: .92rem; }
 .ag-skip { width: 100%; min-height: 44px; }
+
+/* Digital Logic Design: practice questions */
+.dld-practice { display: grid; gap: 2px; text-align: left; padding: 11px 12px; border: 0; border-bottom: 1px solid var(--line); background: var(--accent-soft); color: var(--ink); cursor: pointer; min-height: 52px; }
+.dld-practice b { font-size: 14px; color: var(--accent); }
+.dld-practice small { color: var(--muted); font-size: 12px; }
+body.dldq-open { overflow: hidden; }
+.dldq-ov { position: fixed; inset: 0; z-index: 15000; background: var(--paper); color: var(--ink); overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.dldq-sheet { max-width: 760px; margin: 0 auto; padding: 12px 16px 80px; }
+.dldq-top { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 12px; padding: 10px 0; background: var(--paper); border-bottom: 1px solid var(--line); }
+.dldq-t { display: grid; min-width: 0; }
+.dldq-t small { color: var(--muted); font-size: 12px; }
+.dldq-t b { font-size: 16px; overflow-wrap: anywhere; }
+.dldq-note { color: var(--muted); font-size: 13px; margin: 12px 0; }
+.dldq-grp h4 { margin: 16px 0 8px; font-size: 14px; color: var(--accent); }
+.dldq-q { border: 1px solid var(--line); border-radius: 14px; background: var(--sheet); margin-bottom: 8px; overflow: hidden; }
+.dldq-q summary { display: flex; gap: 10px; align-items: flex-start; padding: 12px; cursor: pointer; font-size: 14px; line-height: 1.4; list-style: none; }
+.dldq-q summary::-webkit-details-marker { display: none; }
+.dldq-n { flex: none; min-width: 34px; text-align: center; font-weight: 700; font-size: 12px; padding: 3px 6px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
+.dldq-q[open] summary { border-bottom: 1px solid var(--line); font-weight: 600; }
+.dldq-a { padding: 10px 12px 12px; }
+.dldq-a small { color: var(--muted); text-transform: uppercase; letter-spacing: .06em; font-size: 11px; }
+.dldq-a p { margin: 6px 0; font-size: 14px; line-height: 1.55; overflow-wrap: anywhere; }
