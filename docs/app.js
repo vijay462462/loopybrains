@@ -2757,18 +2757,16 @@ function pushAskCard(d) {
       el("button", { class: "btn sm", type: "button", onclick: (e) => { writeJSON("dd-push-asked", true); e.currentTarget.closest(".push-ask").remove(); } }, "Not now")), say);
 }
 // ---------- Pilot feedback, doubt of the day ----------
-const FB_PAY = [["no", "No"], ["29", "₹29"], ["49", "₹49"], ["99", "₹99"], ["later", "Ask me later"]];
 const fbDone = () => readJSON("dd-fb-" + weekKey(), false);
 const FB_CATS = [["Suggestion", "\u{1F4A1} Suggestion"], ["Bug", "\u{1F41B} Something is wrong"], ["Feature", "\u2728 New feature idea"], ["Loopy Brain", "\u{1F50E} Loopy Brain"], ["Praise", "\u2764\uFE0F I love this"]];
 function renderFeedback() {
   { const g = connectingGate(); if (g) return g; }
-  const f = { rating: 0, pay: "later", cat: state.fbCat || "Suggestion" }, say = el("p", { class: "hint", role: "status" }, "");
+  const f = { rating: 0, cat: state.fbCat || "Suggestion" }, say = el("p", { class: "hint", role: "status" }, "");
   const liked = el("textarea", { maxlength: "300", rows: "2", placeholder: "What do you like?", "aria-label": "What do you like" }), improve = el("textarea", { maxlength: "300", rows: "3", placeholder: "What should we fix or add?", "aria-label": "What should we improve" });
-  const stars = el("div", { class: "rowbtns", role: "radiogroup", "aria-label": "Rating" }), cats = el("div", { class: "rowbtns", role: "radiogroup", "aria-label": "Type of feedback" }), pays = el("div", { class: "rowbtns", role: "radiogroup", "aria-label": "Would you pay" });
+  const stars = el("div", { class: "rowbtns", role: "radiogroup", "aria-label": "Rating" }), cats = el("div", { class: "rowbtns", role: "radiogroup", "aria-label": "Type of feedback" });
   const draw = () => {
     stars.replaceChildren(...[1, 2, 3, 4, 5].map(n => el("button", { class: "btn" + (f.rating === n ? " primary" : ""), type: "button", role: "radio", "aria-checked": String(f.rating === n), "aria-label": n + " out of 5", onclick: () => { f.rating = n; draw(); } }, n <= f.rating ? "★ " + n : "☆ " + n)));
     cats.replaceChildren(...FB_CATS.map(([v, t]) => el("button", { class: "btn sm" + (f.cat === v ? " primary" : ""), type: "button", role: "radio", "aria-checked": String(f.cat === v), onclick: () => { f.cat = v; draw(); } }, t)));
-    pays.replaceChildren(...FB_PAY.map(([v, t]) => el("button", { class: "btn sm" + (f.pay === v ? " primary" : ""), type: "button", role: "radio", "aria-checked": String(f.pay === v), onclick: () => { f.pay = v; draw(); } }, t)));
   };
   draw();
   if (fbDone()) return [el("h2", {}, "\u{1F4AC} Thank you!"), el("p", { class: "hint" }, "We have your feedback for this week. You can send another one next week."), el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back"))];
@@ -2777,7 +2775,6 @@ function renderFeedback() {
     el("p", { class: "hint" }, "This takes 30 seconds. Your answers are private, are not shown with your name, and are read only by the team."),
     el("div", { class: "label" }, "What is this about?"), cats,
     el("div", { class: "label" }, "How useful is " + BRAND + " for you?"), stars,
-    el("div", { class: "label" }, "Would you pay each month for extra features?"), pays,
     el("div", { class: "label" }, "What do you like?"), liked,
     el("div", { class: "label" }, "Your suggestion or what should we fix?"), improve,
     el("p", { class: "guide-safe" }, el("b", {}, "Stay safe: "), "Do not write phone numbers, passwords or other people's names here."),
@@ -2786,7 +2783,7 @@ function renderFeedback() {
         if (!f.rating) { say.textContent = "Please pick a rating from 1 to 5."; return; }
         if (!store || !store.setTop || !store.authUid()) { say.textContent = "Connect to the internet and try again."; return; }
         e.currentTarget.disabled = true;
-        try { await store.setTop("pilotFeedback", store.authUid() + "_" + weekKey(), { week: weekKey(), uid: store.authUid(), slug: battleSlug(), rating: f.rating, pay: f.pay, liked: liked.value.trim().slice(0, 300), improve: ("[" + f.cat + "] " + improve.value.trim()).slice(0, 300), createdAt: Date.now() }); writeJSON("dd-fb-" + weekKey(), true); render(); }
+        try { await store.setTop("pilotFeedback", store.authUid() + "_" + weekKey(), { week: weekKey(), uid: store.authUid(), slug: battleSlug(), rating: f.rating, liked: liked.value.trim().slice(0, 300), improve: ("[" + f.cat + "] " + improve.value.trim()).slice(0, 300), createdAt: Date.now() }); writeJSON("dd-fb-" + weekKey(), true); render(); }
         catch (_) { say.textContent = "Could not send. Check your connection and try again."; e.currentTarget.disabled = false; }
       } }, "Send feedback"),
       el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")), say,
