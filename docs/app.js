@@ -6376,9 +6376,9 @@ function logoutBlock() {
   };
   const ask = () => {
     const close = () => ov.remove(), text = acc.verified ? "You will be signed out of " + acc.email + " and this device will be cleared. Sign in again with the same email to get your points back." : "This clears your name, college and progress from this device. Without a verified email your points cannot be restored.";
-    const ov = el("div", { class: "welcome", role: "dialog", "aria-modal": "true", "aria-label": "Log out" }, el("div", { class: "welcome-card" },
-      el("div", { class: "welcome-icon", "aria-hidden": "true" }, "\u{1F6AA}"), el("h2", {}, "Log out?"), el("p", { class: "ob-say" }, text),
-      el("div", { class: "rowbtns" }, el("button", { class: "btn danger", type: "button", onclick: go }, "Yes, log out"), el("button", { class: "btn primary", type: "button", onclick: close }, "Stay signed in"))));
+    const ov = el("div", { class: "welcome lo-ov", role: "dialog", "aria-modal": "true", "aria-label": "Log out", onclick: (e) => { if (e.target === ov) close(); } }, el("div", { class: "lo-card" },
+      el("div", { class: "lo-ic", "aria-hidden": "true" }, "\u{1F6AA}"), el("h2", {}, "Log out?"), el("p", { class: "lo-text" }, text),
+      el("div", { class: "lo-btns" }, el("button", { class: "btn primary lo-stay", type: "button", onclick: close }, "Stay signed in"), el("button", { class: "lo-out", type: "button", onclick: go }, "Yes, log out"))));
     document.body.append(ov);
   };
   return el("div", { class: "logout-block" }, el("div", { class: "acct-head" }, el("span", { class: "acct-ic", "aria-hidden": "true" }, "\u{1F464}"), el("div", {}, el("strong", { class: "acct-title" }, "Account"), el("small", { class: "acct-sub" }, acc.verified ? "Signed in as " + acc.email + " \u2714 verified" : "This device only. Verify your email to keep your points safe."))),
