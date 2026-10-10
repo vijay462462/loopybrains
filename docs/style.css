@@ -2541,6 +2541,8 @@ body.simple .tabs button[aria-selected="true"] { display: inline-flex; }
 .sp2-bname { display: grid; text-align: left; line-height: 1.05; font-family: 'Bitstream Charter', Georgia, 'Times New Roman', serif; }
 .sp2-bname b { font-size: 19px; letter-spacing: .12em; color: #fff; }
 .sp2-bname i { font-style: normal; font-size: 12px; letter-spacing: .6em; font-weight: 700; background: linear-gradient(90deg, #fde68a, #f59e0b); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.sp2-bname-img { display: block; height: 43px; width: auto; object-fit: contain; }
+.bname-img { display: block; height: 28px; width: auto; object-fit: contain; mix-blend-mode: lighten; }
 .ob-brand { display: grid; place-items: center; } .ob-brand svg { filter: drop-shadow(0 10px 18px rgba(99, 102, 241, .45)); }
 
 .id-card { display: grid; gap: 6px; }
