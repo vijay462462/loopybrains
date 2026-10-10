@@ -146,6 +146,8 @@ exports.razorpayWebhook = onRequest({ secrets: [WEBHOOK_SECRET], region: "asia-s
 // Limits: 40 questions per student per day, short messages, short answers. NOT DEPLOYED and NOT TESTED yet.
 const AI_MODEL = "claude-haiku-4-5-20251001";
 const AI_DAILY_LIMIT = 40;
+// RGUKT students use the AI helper free. The college name comes from the app (anonymous sign-in cannot prove it), so the free tier is capped per person and for everyone together per day to bound the cost.
+const AI_FREE_LIMIT = 20, AI_FREE_GLOBAL = 2000;
 const AI_SYSTEM = "You are Loopy Brains's study helper for Indian college students. Only help with academics: explaining concepts, solving problems step by step, " +
   "exam and placement preparation, coding doubts, study plans, and interview practice. If asked about anything else, politely say you can only help with studies. " +
   "Be accurate and concise (under 250 words unless a derivation needs more). Show steps for calculations. If you are not sure, say so instead of guessing. " +
@@ -177,7 +179,8 @@ exports.askAI = onRequest({ secrets: [ANTHROPIC_KEY], cors: ALLOWED_ORIGINS, reg
         paid = user.email_verified === true && cp.exists && Number(cp.data().until) > Date.now() && domains.length > 0 && domains.some(d => host === d || host.endsWith("." + d));
       }
     }
-    if (!paid && !(adm.exists && user.email_verified === true)) return res.status(403).json({ error: "The AI helper is part of Loopy Brains Plus." });
+    const isAdmin = adm.exists && user.email_verified === true, freeTier = !paid && !isAdmin && String((req.body || {}).college || "") === "rgukt";
+    if (!paid && !isAdmin && !freeTier) return res.status(403).json({ error: "The AI helper is part of Loopy Brains Plus." });
     const checkMode = (req.body || {}).mode === "check", searchMode = (req.body || {}).mode === "search";
     const topic = searchMode ? String((req.body || {}).query || "").replace(/[\u0000-\u001F<>]/g, " ").replace(/\s+/g, " ").trim().slice(0, 80) : "";
     if (searchMode && topic.length < 2) return res.status(400).json({ error: "Type a topic first." });
@@ -196,13 +199,18 @@ exports.askAI = onRequest({ secrets: [ANTHROPIC_KEY], cors: ALLOWED_ORIGINS, reg
     while (messages.length && messages[0].role !== "user") messages.shift();
     if (!messages.length || messages[messages.length - 1].role !== "user") return res.status(400).json({ error: "Ask a question first." });
     const day = new Date().toISOString().slice(0, 10), useRef = db.collection("aiUsage").doc(user.uid + "_" + day);
+    const limit = freeTier ? AI_FREE_LIMIT : AI_DAILY_LIMIT, globalRef = db.collection("aiUsage").doc("free_" + day);
     const used = await db.runTransaction(async (tx) => {
-      const cur = await tx.get(useRef), n = cur.exists ? Number(cur.data().n) || 0 : 0;
-      if (n >= AI_DAILY_LIMIT) return -1;
+      const [cur, glob] = await Promise.all([tx.get(useRef), freeTier ? tx.get(globalRef) : null]), n = cur.exists ? Number(cur.data().n) || 0 : 0;
+      if (n >= limit) return -1;
+      const g = glob && glob.exists ? Number(glob.data().n) || 0 : 0;
+      if (freeTier && g >= AI_FREE_GLOBAL) return -2;
       tx.set(useRef, { n: n + 1, uid: user.uid, day });
+      if (freeTier) tx.set(globalRef, { n: g + 1, day });
       return n + 1;
     });
-    if (used < 0) return res.status(429).json({ error: "You have used today's " + AI_DAILY_LIMIT + " questions. Come back tomorrow." });
+    if (used === -2) return res.status(429).json({ error: "The free AI helper is very busy today. Please try again tomorrow." });
+    if (used < 0) return res.status(429).json({ error: "You have used today's " + limit + " questions. Come back tomorrow." });
     const r = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "content-type": "application/json", "x-api-key": ANTHROPIC_KEY.value(), "anthropic-version": "2023-06-01" },
@@ -214,16 +222,16 @@ exports.askAI = onRequest({ secrets: [ANTHROPIC_KEY], cors: ALLOWED_ORIGINS, reg
     if (checkMode) {
       let o = {}; try { const j = reply.slice(reply.indexOf("{"), reply.lastIndexOf("}") + 1); o = JSON.parse(j); } catch (_) {}
       const v = ["correct", "partly", "wrong", "unclear"].includes(o.verdict) ? o.verdict : "unclear", t = (x, n) => String(x || "").replace(/[\u0000-\u001F<>]/g, " ").trim().slice(0, n);
-      return res.json({ check: { verdict: v, summary: t(o.summary, 300) || "I could not judge this answer.", issues: strList(o.issues, 4, 160), corrected: t(o.corrected, 900) }, left: AI_DAILY_LIMIT - used });
+      return res.json({ check: { verdict: v, summary: t(o.summary, 300) || "I could not judge this answer.", issues: strList(o.issues, 4, 160), corrected: t(o.corrected, 900) }, left: limit - used });
     }
     if (searchMode) {
       let o = {}; try { const j = reply.slice(reply.indexOf("{"), reply.lastIndexOf("}") + 1); o = JSON.parse(j); } catch (_) {}
       const card = { summary: String(o.summary || "").replace(/[\u0000-\u001F<>]/g, " ").trim().slice(0, 900), keyPoints: strList(o.keyPoints, 6, 160), example: String(o.example || "").replace(/[\u0000-\u001F<>]/g, " ").trim().slice(0, 400),
         videoQueries: strList(o.videoQueries, 5, 80), diagramQueries: strList(o.diagramQueries, 3, 80), pdfQueries: strList(o.pdfQueries, 3, 80), related: strList(o.related, 5, 60), followUp: String(o.followUp || "").replace(/[\u0000-\u001F<>]/g, " ").trim().slice(0, 200) };
       if (!card.summary) return res.status(502).json({ error: "Loopy AI could not answer that. Try rephrasing." });
-      return res.json({ search: card, left: AI_DAILY_LIMIT - used });
+      return res.json({ search: card, left: limit - used });
     }
-    return res.json({ reply: reply || "Sorry, I could not answer that. Try rephrasing.", left: AI_DAILY_LIMIT - used });
+    return res.json({ reply: reply || "Sorry, I could not answer that. Try rephrasing.", left: limit - used });
   } catch (e) {
     console.error("askAI", e);
     return res.status(500).json({ error: "Something went wrong. Please try again." });

@@ -2299,14 +2299,14 @@ function renderHome() {
       el("div", { class: "hb-prompt" },
         el("span", { class: "hb-prompt-dot", "aria-hidden": "true" }),
         el("p", { class: "hb-prompt-msg" }, "Stuck on a topic? I can explain it simply"),
-        el("button", { type: "button", class: "hb-prompt-btn", onclick: () => goTab("loopy") }, "Ask Loopy ›")
+        el("button", { type: "button", class: "hb-prompt-btn", onclick: () => { state.ai = state.ai || { msgs: [], busy: false, note: "" }; showPanel("ai"); } }, "Ask Loopy ›")
       ),
       el("div", { class: "hb-actions" },
         el("button", { type: "button", class: "hb-action", onclick: () => openAsk() },
           el("span", { class: "hb-action-ic" }, "❓"),
           el("b", {}, "Ask a doubt")
         ),
-        el("button", { type: "button", class: "hb-action", onclick: () => goTab("loopy") },
+        el("button", { type: "button", class: "hb-action", onclick: () => { state.ai = state.ai || { msgs: [], busy: false, note: "" }; showPanel("ai"); } },
           el("span", { class: "hb-action-ic" }, "✨"),
           el("b", {}, "Loopy AI")
         )
@@ -4650,11 +4650,11 @@ const lsFetch = async (url) => {
 };
 async function lsRun(q) {
   const ls = state.ls; ls.q = q; ls.err = ""; ls.res = null; ls.ai = null; ls.aiNote = ""; ls.busy = true; render();
-  const aiOn = !!PLUS.functionsUrl && !!store && !!store.idToken && !plusLockedStrict();
+  const aiOn = !!PLUS.functionsUrl && !!store && !!store.idToken && (IS_RGUKT || !plusLockedStrict());
   const aiTask = aiOn ? (async () => {
     try {
       const tok = await store.idToken(); if (!tok) throw new Error("Sign in to use Loopy AI answers.");
-      const r = await fetch(PLUS.functionsUrl.replace(/\/$/, "") + "/askAI", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + tok }, body: JSON.stringify({ mode: "search", query: q, level: ls.level }) });
+      const r = await fetch(PLUS.functionsUrl.replace(/\/$/, "") + "/askAI", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + tok }, body: JSON.stringify({ mode: "search", query: q, level: ls.level, college: IS_RGUKT ? "rgukt" : "" }) });
       const d = await r.json().catch(() => ({}));
       if (!r.ok || !d.search) throw new Error(d.error || "Loopy AI is busy. Try again.");
       ls.ai = d.search; ls.aiLeft = typeof d.left === "number" ? d.left : null;
@@ -5349,7 +5349,7 @@ function bsMount() {
   if (bsEl()) return; const bs = bsState();
   const bar = el("div", { class: "bsf-bar" },
     el("button", { type: "button", class: "bsf-back", "aria-label": "Close Loopy Search", onclick: () => bsClose() }, svgIcon("back")),
-    el("img", { class: "bsf-brand", src: "icon-192.png", alt: "", width: "28", height: "28" }), el("strong", { class: "bsf-title" }, "Loopy Search"),
+    el("img", { class: "bsf-brand", src: "icon-192.png", alt: "", width: "28", height: "28" }), el("strong", { class: "bsf-title" }, "Loopy AI Study Desk"),
     el("button", { type: "button", class: "bsf-night", id: "bsNight", onclick: () => { try { localStorage.setItem("dd-bs-night", bsNightOn() ? "0" : "1"); } catch (_) {} bsApplyNight(); } }, "\u2600"),
     el("button", { type: "button", class: "bsf-save", id: "bsSave", hidden: "", onclick: () => { const b = bsState(); if (!b.res) return; if (bsIsSaved(b.res)) { bsPutSaved(bsSavedList().filter(x => x.id !== "s" + fnv(b.res.topic.toLowerCase() + "|" + b.res.size))); showNotice("Removed from Saved.", "ok"); } else if (bsSaveOne(b.res, b.q)) showNotice("Saved. Find it under Saved on the search page.", "ok"); else showNotice("Could not save: this phone is out of space.", "err"); bsPaint(); } }, "Save"),
     el("button", { type: "button", class: "bsf-pdf", id: "bsPdf", hidden: "", "aria-haspopup": "dialog", "aria-label": "Save as PDF or JPEG", onclick: () => bsExportSheet() }, "PDF/JPG"));
@@ -5871,7 +5871,7 @@ function brainViewInner(ui) {
   if (!bs.res) {
     const C = window.RGUKT_CURRICULUM, rows = C ? ((C.data[curState.year] || {})[curState.branch] || []).map(r => r[0]).slice(0, 8) : [], rec = bsRecent();
     const hr = new Date().getHours(), greet = hr < 5 ? "Good night" : hr < 12 ? "Good morning" : hr < 17 ? "Good afternoon" : "Good evening", nm = String(getName() || "").trim().split(" ")[0];
-    const hero = el("section", { class: "bsc-hero" }, el("div", { class: "bsc-orbit", "aria-hidden": "true" }, el("i", { class: "r1" }), el("i", { class: "r2" }), el("b", { class: "d1" }), el("b", { class: "d2" }), el("b", { class: "d3" }), brandSpin("bsc-brand live")), el("h2", { class: "bsc-hi" }, greet + (nm ? ", " : ""), nm ? el("span", {}, nm) : null), el("small", { class: "bsc-cap" }, "Loopy AI \u00B7 your 24\u00D77 study partner"), el("p", { class: "bsc-sub" }, "Ask your syllabus anything. Easy words, diagrams, exact answers."));
+    const hero = el("section", { class: "bsc-hero" }, el("small", { class: "bsc-cap" }, greet + (nm ? ", " + nm : "")), el("h2", { class: "bsc-hi" }, "What will you learn today?"), el("p", { class: "bsc-sub" }, "Pick a subject below or type a topic. Easy words, diagrams and exact answers."), el("ol", { class: "bsc-steps" }, el("li", {}, "Ask"), el("li", {}, "Learn"), el("li", {}, "Quiz yourself")));
     const TRY = { atlas: [["\u{1F4C8}", "Explain the Bode plot", "Control systems"], ["\u2795", "Half adder circuit", "Digital logic"], ["\u{1F3B2}", "Bayes theorem with an example", "Probability"], ["\u{1F50C}", "BJT biasing and the Q point", "Analog circuits"], ["\u{1F4E1}", "Sampling theorem and aliasing", "Signal processing"], ["\u{1F9EE}", "Compare FIR and IIR filters", "Signal processing"]],
       launchpad: [["\u{1F326}\uFE0F", "IoT weather station", "Project plan"], ["\u{1F4F7}", "Student attendance system", "Project plan"], ["\u{1F331}", "Smart irrigation", "Project plan"], ["\u{1F4DA}", "Library management website", "Project plan"]],
       forge: [["\u{1F50D}", "binary search in Python", "Code"], ["\u{1F9EE}", "Verilog code for a counter", "Hardware"], ["\u{1F4CA}", "bubble sort in C", "Code"], ["\u2615", "factorial in Java", "Code"]],
