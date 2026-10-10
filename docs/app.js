@@ -1530,7 +1530,7 @@ function showWelcome(force, startId) {
       const letters = el("div", { class: "ob-letters", role: "group", "aria-label": "Jump to a letter" }); let cl = "";
       const stSel = stateSheet(() => cst, (v) => { cst = v; cl = ""; browsing = true; fill(); });
       list.addEventListener("touchstart", () => { try { if (document.activeElement === q) q.blur(); } catch (_) {} }, { passive: true });
-      let browsing = !pickSlug;   // false once a college is chosen: the list folds away and a preview card shows instead
+      let browsing = true;   // always show the full list so page 2 renders completely
       const pickBox = el("div", { class: "ob-pick", "aria-live": "polite" });
       const drawPick = () => {
         const c = pickSlug ? (all.find(x => x.slug === pickSlug) || { slug: pickSlug, name: pickName, state: "", sub: "", grp: "general" }) : null, show = !!c && !browsing;
@@ -5266,7 +5266,7 @@ function bsMount() {
   if (bsEl()) return; const bs = bsState();
   const bar = el("div", { class: "bsf-bar" },
     el("button", { type: "button", class: "bsf-back", "aria-label": "Close Loopy Search", onclick: () => bsClose() }, svgIcon("back")),
-    el("img", { class: "bsf-brand", src: "icon-192.png", alt: "", width: "28", height: "28" }), el("strong", { class: "bsf-title" }, "Loopy Search"),
+    el("img", { class: "bsf-brand", src: "icon-192.png", alt: "", width: "28", height: "28" }), el("strong", { class: "bsf-title" }, el("span", { class: "bsf-t-big" }, "LOOPY"), el("small", { class: "bsf-t-sm" }, "Brains")),
     el("button", { type: "button", class: "bsf-night", id: "bsNight", onclick: () => { try { localStorage.setItem("dd-bs-night", bsNightOn() ? "0" : "1"); } catch (_) {} bsApplyNight(); } }, "\u2600"),
     el("button", { type: "button", class: "bsf-save", id: "bsSave", hidden: "", onclick: () => { const b = bsState(); if (!b.res) return; if (bsIsSaved(b.res)) { bsPutSaved(bsSavedList().filter(x => x.id !== "s" + fnv(b.res.topic.toLowerCase() + "|" + b.res.size))); showNotice("Removed from Saved.", "ok"); } else if (bsSaveOne(b.res, b.q)) showNotice("Saved. Find it under Saved on the search page.", "ok"); else showNotice("Could not save: this phone is out of space.", "err"); bsPaint(); } }, "Save"),
     el("button", { type: "button", class: "bsf-pdf", id: "bsPdf", hidden: "", "aria-haspopup": "dialog", "aria-label": "Save as PDF or JPEG", onclick: () => bsExportSheet() }, "PDF/JPG"));
@@ -5788,7 +5788,7 @@ function brainViewInner(ui) {
   if (!bs.res) {
     const C = window.RGUKT_CURRICULUM, rows = C ? ((C.data[curState.year] || {})[curState.branch] || []).map(r => r[0]).slice(0, 8) : [], rec = bsRecent();
     const hr = new Date().getHours(), greet = hr < 5 ? "Good night" : hr < 12 ? "Good morning" : hr < 17 ? "Good afternoon" : "Good evening", nm = String(getName() || "").trim().split(" ")[0];
-    const hero = el("section", { class: "bsc-hero" }, el("div", { class: "bsc-orbit", "aria-hidden": "true" }, el("i", { class: "r1" }), el("i", { class: "r2" }), el("b", { class: "d1" }), el("b", { class: "d2" }), el("b", { class: "d3" }), brandSpin("bsc-brand live")), el("h2", { class: "bsc-hi" }, greet + (nm ? ", " : ""), nm ? el("span", {}, nm) : null), el("p", { class: "bsc-sub" }, "Ask your syllabus anything. Easy words, diagrams, exact answers."));
+    const hero = el("section", { class: "bsc-hero" }, el("div", { class: "bsc-orbit", "aria-hidden": "true" }, el("i", { class: "r1" }), el("i", { class: "r2" }), el("b", { class: "d1" }), el("b", { class: "d2" }), el("b", { class: "d3" }), brandSpin("bsc-brand live")), el("p", { class: "bsc-brand-name", "aria-label": "Loopy Brains" }, el("span", { class: "bsc-bn-big" }, "LOOPY"), el("small", { class: "bsc-bn-sm" }, "Brains")), el("h2", { class: "bsc-hi" }, greet + (nm ? ", " : ""), nm ? el("span", {}, nm) : null), el("p", { class: "bsc-sub" }, "Ask your syllabus anything. Easy words, diagrams, exact answers."));
     const TRY = { atlas: [["\u{1F4C8}", "Explain the Bode plot", "Control systems"], ["\u2795", "Half adder circuit", "Digital logic"], ["\u{1F3B2}", "Bayes theorem with an example", "Probability"], ["\u{1F50C}", "BJT biasing and the Q point", "Analog circuits"], ["\u{1F4E1}", "Sampling theorem and aliasing", "Signal processing"], ["\u{1F9EE}", "Compare FIR and IIR filters", "Signal processing"]],
       launchpad: [["\u{1F326}\uFE0F", "IoT weather station", "Project plan"], ["\u{1F4F7}", "Student attendance system", "Project plan"], ["\u{1F331}", "Smart irrigation", "Project plan"], ["\u{1F4DA}", "Library management website", "Project plan"]],
       forge: [["\u{1F50D}", "binary search in Python", "Code"], ["\u{1F9EE}", "Verilog code for a counter", "Hardware"], ["\u{1F4CA}", "bubble sort in C", "Code"], ["\u2615", "factorial in Java", "Code"]],
