@@ -4112,3 +4112,7 @@ body header.top .tabs button[aria-selected="true"] { color: #0d1030; }
 .ag-card .ag-l { display: block; text-align: left; }
 .ag-card input { margin: 0; }
 .welcome.ag { background: var(--paper); backdrop-filter: none; -webkit-backdrop-filter: none; }
+@keyframes agIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+.welcome.ag { animation: agIn .45s ease both; }
+.welcome.ag.out { opacity: 0; transition: opacity .3s ease; }
+@media (prefers-reduced-motion: reduce) { .welcome.ag { animation: none; } }
