@@ -1501,10 +1501,10 @@ function showWelcome(force, startId) {
   const picked = new Set(readJSON("dd-interests", []));
   let step = Math.max(0, STEPS.indexOf(startId || "about")), nameVal = (getName() || "").trim(), pickSlug = curSlug, pickName = curSlug ? COLLEGE : "", cq = "", ctype = "all", cst = (() => { try { return localStorage.getItem("dd-state") || ""; } catch (_) { return ""; } })() || (curSlug && curSlug !== "rgukt" ? ((DIRECTORY.find(c => c.slug === curSlug) || {}).state || "") : "") || "Andhra Pradesh";
   const TOTAL = STEPS.length, box = el("div", { id: "welcome", class: "welcome", role: "dialog", "aria-modal": "true", "aria-label": "Welcome to " + BRAND });
-  const finish = () => { try { localStorage.setItem("dd-welcome-done", "1"); if (!localStorage.getItem("dd-launch-gone")) { localStorage.setItem("dd-launch", "1"); } } catch (_) {} if (STEPS[step] === "ready") setTimeout(() => confetti(130), 250); document.removeEventListener("keydown", onKey); box.remove(); todayKey = ""; try { renderHeader(); } catch (_) {}
-    try { if (getName() && store && store.handleClaim && !myHandle() && !readJSON("dd-loopid-skip", false) && !readJSON("dd-loopid-shown", false)) { writeJSON("dd-loopid-shown", true); setTimeout(() => showPanel("loopid"), 400); } } catch (_) {} };
+  const finish = () => { try { localStorage.setItem("dd-welcome-done", "1"); if (!localStorage.getItem("dd-launch-gone")) { localStorage.setItem("dd-launch", "1"); } } catch (_) {} const willSwitch = pickSlug && pickSlug !== curSlug; if (STEPS[step] === "ready" && !willSwitch) setTimeout(() => confetti(130), 250); document.removeEventListener("keydown", onKey); box.remove(); todayKey = ""; try { renderHeader(); } catch (_) {}
+    try { if (getName() && store && store.handleClaim && !myHandle() && !readJSON("dd-loopid-skip", false) && !readJSON("dd-loopid-shown", false)) { writeJSON("dd-loopid-shown", true); setTimeout(() => showPanel("loopid"), 400); } } catch (_) {} if (willSwitch) setTimeout(() => switchCollege(pickSlug), 350); };
   const onKey = (e) => { if (e.key === "Escape") finish(); };
-  const saveStep = () => { if (STEPS[step] === "college" && pickSlug && pickSlug !== curSlug) { try { sessionStorage.setItem("dd-ob-resume", "name"); localStorage.setItem("dd-state", cst); } catch (_) {} document.removeEventListener("keydown", onKey); switchCollege(pickSlug); return; } if (STEPS[step] === "name") { const v = nameVal.trim().slice(0, 30); if (v) setName(v); } if (STEPS[step] === "interests") writeJSON("dd-interests", [...picked]); };
+  const saveStep = () => { if (STEPS[step] === "college" && pickSlug && pickSlug !== curSlug) { try { localStorage.setItem("dd-college", pickSlug); localStorage.setItem("dd-state", cst); } catch (_) {} /* keep onboarding going — redirect happens in finish() */ } if (STEPS[step] === "name") { const v = nameVal.trim().slice(0, 30); if (v) setName(v); } if (STEPS[step] === "interests") writeJSON("dd-interests", [...picked]); };
   const go = (d) => { if (d > 0 && STEPS[step] === "college" && !pickSlug) { const c = box.querySelector(".ob-chosen"); if (c) { c.classList.remove("shake"); void c.offsetWidth; c.classList.add("shake"); } return; } saveStep(); step = Math.max(0, Math.min(TOTAL - 1, step + d)); paint(); };
   const start = (fn) => () => { saveStep(); finish(); setTimeout(fn, 120); };
   function paint() {
@@ -1679,9 +1679,7 @@ function showCollegeReveal() {
   if (document.getElementById("splash")) document.addEventListener("splash-closed", () => setTimeout(open, 200), { once: true }); else open();
 }
 function maybeWelcome() {
-  let resume = ""; try { resume = sessionStorage.getItem("dd-ob-resume") || ""; sessionStorage.removeItem("dd-ob-resume"); } catch (_) {}
   const open = (start) => { const go = () => setTimeout(() => showWelcome(false, start), 250); if (document.getElementById("splash")) document.addEventListener("splash-closed", go, { once: true }); else go(); };
-  if (resume) { try { sessionStorage.setItem("dd-ob-shown", "1"); } catch (_) {} open(resume); return; }   // just picked a college: continue with the name step
   if (NO_COLLEGE) { try { sessionStorage.setItem("dd-ob-shown", "1"); } catch (_) {} open(); return; }      // brand-new visitors choose their college first
   // welcomeEveryVisit (config.js): show the welcome steps after the opening screen on every visit (handy for testing). Set it to false before launch.
   const every = !!(window.DOUBT_DESK_CONFIG && window.DOUBT_DESK_CONFIG.welcomeEveryVisit);
