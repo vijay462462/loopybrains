@@ -43,6 +43,9 @@ const SHELL = [
   './icon-maskable-512.png',
   './apple-touch-icon.png',
   './favicon-32.png',
+  './brand/loopy-brains-promo-480.png',
+  './brand/loopy-brains-wordmark-480.png',
+  './brand/loopy-brains-wordmark-56h.png',
 ];
 
 self.addEventListener('install', e => {
@@ -81,7 +84,7 @@ self.addEventListener('fetch', e => {
 // Web push (needs the push server to be switched on). Data-only messages: we build the notification here so nothing private is shown on a locked screen.
 self.addEventListener('push', e => {
   let d = {}; try { d = e.data ? e.data.json() : {}; } catch (_) {}
-  const data = d.data || d, title = String(data.title || 'The Campus Loop').slice(0, 60), body = String(data.body || 'You have a new update.').slice(0, 120);
+  const data = d.data || d, title = String(data.title || 'Loopy Brains').slice(0, 60), body = String(data.body || 'You have a new update.').slice(0, 120);
   e.waitUntil(self.registration.showNotification(title, { body, icon: './icon-192.png', badge: './favicon-32.png', tag: String(data.tag || 'campusloop').slice(0, 60), data: { url: './' + (/^#[a-z]{3,12}(\/[A-Za-z0-9_-]{1,60})?$/.test(String(data.hash || '')) ? data.hash : '') } }));
 });
 self.addEventListener('notificationclick', e => {

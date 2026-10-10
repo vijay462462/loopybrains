@@ -111,7 +111,7 @@ body.focus #funBtn, body.focus #storyBar { display: none !important; }
 /* college switcher and college-specific hiding */
 .college-btn { margin: 4px 0 2px; padding: 3px 12px; border-radius: 999px; border: 1px solid rgb(255 255 255 / .55); background: rgb(255 255 255 / .14); color: #fff; font: 700 12px system-ui; cursor: pointer; }
 .college-list { display: grid; gap: 6px; margin: 8px 0; }
-.college-list .campus-link.sel { outline: 2px solid var(--accent, #7c3aed); }
+.college-list .campus-link.sel { outline: 2px solid var(--accent, #15803d); }
 body.no-bot #botBtn, body.no-bot #sbw, body.no-alumni #alumniBtn, body.no-fun #funBtn,
 body.no-jobs .tabs button[data-tab="jobs"], body.no-market .tabs button[data-tab="market"], body.no-challenges .tabs button[data-tab="challenges"] { display: none !important; }
 
@@ -139,7 +139,7 @@ body.tenant .college-btn { background: linear-gradient(135deg, var(--brand-a), v
 .sk-dots { display: flex; gap: 6px; margin: 8px 0; }
 .sk-dot { flex: 1; height: 34px; border-radius: 10px; background: var(--sheet); border: 1px solid var(--line); display: grid; place-items: center; font-size: 16px; }
 .sk-dot.on { background: linear-gradient(135deg, #f59e0b, #ef4444); border-color: transparent; }
-.sk-dot.today { outline: 2px solid var(--accent, #7c3aed); }
+.sk-dot.today { outline: 2px solid var(--accent, #15803d); }
 .fr-t1 { box-shadow: 0 0 0 3px #cd7f32; } .fr-t2 { box-shadow: 0 0 0 3px #cbd5e1, 0 0 0 6px #94a3b8; }
 .fr-t3 { box-shadow: 0 0 0 3px #facc15, 0 0 12px 4px rgb(250 204 21 / .6); }
 .fr-t4 { box-shadow: 0 0 0 3px #67e8f9, 0 0 14px 5px rgb(103 232 249 / .7); }
