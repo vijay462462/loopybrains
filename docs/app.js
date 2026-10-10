@@ -2306,7 +2306,6 @@ function renderHome() {
         el("button", { type: "button", class: "hb-close", "aria-label": "Close welcome card", onclick: () => { box.hidden = true; } }, "×"),
         el("div", { class: "hb-chip" }, chip)
       ),
-      el("img", { class: "hb-promo", src: "brand/loopy-brains-promo-480.png", alt: "", "aria-hidden": "true", loading: "lazy" }),
       el("div", { class: "hb-hero-row" },
         el("div", { class: "hb-greet-col" },
           el("p", { class: "hb-college-name" }, college),
@@ -10751,16 +10750,10 @@ if (themeBtn) {
 
 
 // Brand lockup from the brand guide: the monogram C, then "LOOPY" in bold serif with wide spacing and a small spaced gold "BRAINS".
-function brandLockup(title) {
-  const words = String(title || "Loopy Brains").trim().split(/\s+/), last = words.length > 1 ? words.pop() : "", rest = words.join(" ") || String(title);
-  const tpl = document.getElementById("brandMarkTpl"), src = (tpl && tpl.content && tpl.content.firstElementChild) || document.querySelector(".sp2-bmark svg"); let mark = null;
-  if (src) {
-    mark = src.cloneNode(true); mark.removeAttribute("width"); mark.removeAttribute("height"); mark.setAttribute("class", "bmark hd-mark"); mark.setAttribute("aria-hidden", "true"); mark.setAttribute("focusable", "false");
-    mark.querySelectorAll("[id]").forEach(n => { n.id = n.id + "H"; });   // gradient ids must stay unique
-    mark.querySelectorAll("*").forEach(n => { for (const a of ["fill", "stroke"]) { const v = n.getAttribute(a); if (v && v.includes("url(#")) n.setAttribute(a, v.replace(/url\(#([^)]+)\)/, "url(#$1H)")); } });
-  }
-  const wm = el("img", { class: "bname-img", src: "brand/loopy-brains-wordmark-56h.png", alt: "Loopy Brains", width: "131", height: "28" });
-  return [mark, wm].filter(Boolean);
+function brandLockup() {
+  const mark = el("img", { class: "bmark-img hd-mark", src: "brand/loopy-brains-icon-64.png", alt: "", width: "32", height: "32", "aria-hidden": "true" });
+  const wm = el("img", { class: "bname-img", src: "brand/loopy-brains-wordmark-tr.png", alt: "Loopy Brains", width: "131", height: "28" });
+  return [mark, wm];
 }
 // Update page title from config
 if (CFG.title) { document.title = CFG.title; }
