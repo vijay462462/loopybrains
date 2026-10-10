@@ -4504,7 +4504,9 @@ function renderPlus() {
 const MOCK_N = 15, MOCK_SECS = 20 * 60;
 const trialLeft = () => { const t = Number(readJSON("dd-trial-start", 0)) || 0, d = Number(PLUS.trialDays) || 0; return t && d ? Math.max(0, Math.ceil((t + d * 864e5 - Date.now()) / 864e5)) : 0; };
 const bonusLeft = () => Math.max(0, Math.ceil(((Number(readJSON("dd-bonus-until", 0)) || 0) - Date.now()) / 864e5));
-const plusLocked = () => PLUS.enabled && !state.plan.plus && trialLeft() === 0 && bonusLeft() === 0;
+const plusLockedStrict = () => PLUS.enabled && !state.plan.plus && trialLeft() === 0 && bonusLeft() === 0;
+// RGUKT students get every Plus tool free. The server-side AI helper (Loop Bot) still needs a paid plan because it uses the paid Anthropic key.
+const plusLocked = () => !IS_RGUKT && plusLockedStrict();
 const offerOn = () => { const o = PLUS.offer; if (!o || !o.yearly || !o.until) return null; const end = new Date(o.until + "T23:59:59+05:30").getTime(); return end > Date.now() ? { label: o.label || "Offer", yearly: o.yearly, days: Math.ceil((end - Date.now()) / 864e5) } : null; };
 // Weekly goals and lifetime badges, kept on this phone.
 const goalStats = () => { const g = readJSON("dd-goals", {}); return g.week === weekKey() ? g : { week: weekKey(), tests: 0, cleared: 0, papers: 0 }; };
@@ -4648,7 +4650,7 @@ const lsFetch = async (url) => {
 };
 async function lsRun(q) {
   const ls = state.ls; ls.q = q; ls.err = ""; ls.res = null; ls.ai = null; ls.aiNote = ""; ls.busy = true; render();
-  const aiOn = !!PLUS.functionsUrl && !!store && !!store.idToken && !plusLocked();
+  const aiOn = !!PLUS.functionsUrl && !!store && !!store.idToken && !plusLockedStrict();
   const aiTask = aiOn ? (async () => {
     try {
       const tok = await store.idToken(); if (!tok) throw new Error("Sign in to use Loopy AI answers.");
