@@ -10333,7 +10333,7 @@ function goSheet() { if (innerWidth > 1000) return; const run = () => { const sh
 function render() { const snap = snapUI(); try { renderCore(); } finally { restoreUI(snap); } }
 function renderCore() {
   try {
-    document.body.dataset.tab = state.tab; applyFocus();
+    document.body.dataset.tab = state.tab; document.body.dataset.mode = state.mode; applyFocus();
     renderHeader(); renderTrendBar(); renderStoryBar(); renderRail(); try { renderGuide(); } catch (_) {} renderList(); renderBottomNav(); try { if (IS_RGUKT && !readJSON("dd-rgukt-year", null) && !document.querySelector(".welcome")) showEligibility(); } catch (_) {} try { document.body.classList.toggle("simple", isSimple()); renderBell(); notifPing(); claimStudentIdOnce(); autoMailIds(); } catch (_) {}
     // Forms keep what the student is typing while live updates arrive.
     const key = ["ask", "edit", "name", "alumniJoin", "alumniJob", "fun", "lab", "college", "plus"].includes(state.mode) ? state.mode + state.tab : "";
