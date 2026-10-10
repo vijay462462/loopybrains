@@ -10705,7 +10705,7 @@ function authMsg(e) {
 }
 function showAuthGate() {
   return new Promise((resolve) => {
-    const st = store, done = () => { const i = st.authInfo(); return !!(i && !i.anonymous && i.emailVerified && i.phone); };
+    const st = store, needPhone = CFG.requirePhone === true, done = () => { const i = st.authInfo(); return !!(i && !i.anonymous && i.emailVerified && (!needPhone || i.phone)); };
     if (!st.authInfo || !st.authReady || done()) { resolve(); return; }
     let tab = "up", otp = false, busy = false, note = "", cool = 0, coolT = 0;
     const ov = el("div", { class: "welcome ag", role: "dialog", "aria-modal": "true", "aria-label": "Create your account" });
@@ -10755,7 +10755,7 @@ function showAuthGate() {
         card.append(l, inp, msg, el("button", { type: "button", class: "btn primary ag-go", onclick: () => run(async () => { const c = inp.value.replace(/\D/g, ""); if (c.length !== 6) { say("Type the 6-digit code."); return; } await st.confirmPhoneCode(c); }) }, "Verify and continue"),
           el("button", { type: "button", class: "linkbtn", onclick: () => { otp = false; note = ""; paint(); } }, "Change number"));
       }
-      card.append(el("p", { class: "hint ag-fine" }, "Your account keeps students safe: one person, one account. We never post for you."));
+      card.append(el("p", { class: "hint ag-fine" }, "One verified e-mail, one account: it keeps students safe. We never post for you."));
       ov.replaceChildren(card);
       const f = card.querySelector("input"); if (f && !busy) { try { f.focus({ preventScroll: true }); } catch (_) {} }
     }
