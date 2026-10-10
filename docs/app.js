@@ -5411,8 +5411,25 @@ function dldHub(allPk, bs, go) {
     ...units.map((u, i) => { const n = u.packs.filter(p => seen.has(p.id)).length;
       return el("details", Object.assign({ class: "dld-unit" }, (i === firstOpen || (firstOpen < 0 && i === 0)) ? { open: "" } : {}),
         el("summary", {}, el("span", { class: "dld-num" }, String(i + 1)), el("span", { class: "dld-ut" }, el("b", {}, u.name), el("small", {}, u.sub)), el("span", { class: "dld-cnt" }, n + "/" + u.packs.length)),
-        el("div", { class: "dld-list" }, ...u.packs.map(p => { const sh = String(p.short || "").split(/(?<=\.)\s/)[0].slice(0, 110);
+        el("div", { class: "dld-list" }, i < 6 ? el("button", { type: "button", class: "dld-practice", onclick: () => dldPractice(i, u.name) }, el("b", {}, "Practice questions"), el("small", {}, "2, 3 and 7 mark questions with full answers")) : null, ...u.packs.map(p => { const sh = String(p.short || "").split(/(?<=\.)\s/)[0].slice(0, 110);
           return el("button", { type: "button", class: "dld-topic" + (seen.has(p.id) ? " done" : ""), onclick: () => openPack(p) }, el("span", { class: "dld-tick", "aria-hidden": "true" }, seen.has(p.id) ? "✓" : ""), el("span", { class: "dld-tt" }, el("b", {}, p.title), el("small", {}, sh))); }))); }));
+}
+// Practice questions for a unit (RGUKT question bank): tap a question to see its model answer.
+let _dldQ = null;
+async function dldPractice(ui, name) {
+  let all; try { _dldQ = _dldQ || await import(new URL("dld-questions.js?v=452", location.href).href); all = _dldQ.DLD_Q; } catch (_) { say("Could not load the questions. Check your internet and try again."); return; }
+  const list = (all && all[ui]) || []; if (!list.length) return;
+  const close = () => { ov.remove(); document.body.classList.remove("dldq-open"); };
+  const groups = [2, 3, 7].map(m => [m, list.filter(r => r[0] === m)]).filter(g => g[1].length);
+  let n = 0;
+  const ov = el("div", { class: "dldq-ov", role: "dialog", "aria-modal": "true", "aria-label": "Practice questions" },
+    el("div", { class: "dldq-sheet" },
+      el("div", { class: "dldq-top" }, el("button", { type: "button", class: "btn ghost sm", onclick: close }, "< Back"), el("div", { class: "dldq-t" }, el("small", {}, "Practice questions"), el("b", {}, name))),
+      el("p", { class: "dldq-note" }, list.length + " questions in the style of the RGUKT exam. Try each one on paper first, then tap it to check the model answer."),
+      ...groups.map(([m, rows]) => el("section", { class: "dldq-grp" },
+        el("h4", {}, m + "-mark questions"),
+        ...rows.map(r => { n++; return el("details", { class: "dldq-q" }, el("summary", {}, el("span", { class: "dldq-n" }, "Q" + n), el("span", {}, r[1])), el("div", { class: "dldq-a" }, el("small", {}, "Model answer"), ...String(r[2]).split("\n").map(t => el("p", {}, t)))); })))));
+  document.body.append(ov); document.body.classList.add("dldq-open"); ov.querySelector("button").focus();
 }
 function bsPaint(top) {
   const sc = $("bsScroll"); if (!sc) return; const keep = sc.scrollTop;
