@@ -2335,7 +2335,11 @@ function renderHome() {
         el("button", { type: "button", class: "hb-action", onclick: () => { state.ai = state.ai || { msgs: [], busy: false, note: "" }; showPanel("ai"); } },
           el("span", { class: "hb-action-ic" }, "✨"),
           el("b", {}, "Ask Loopy AI"), el("small", {}, "answers in seconds")
-        )
+        ),
+        Object.keys(DEPT_MAP).length ? el("button", { type: "button", class: "hb-action hb-action-branch", onclick: () => showBranchPicker(true) },
+          el("span", { class: "hb-action-ic" }, "🏫"),
+          el("b", {}, myBranch() && myBranch() !== "*" ? myBranch() : "All branches"), el("small", {}, "Change branch")
+        ) : null
       )
     )
   );
