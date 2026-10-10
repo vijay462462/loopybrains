@@ -3974,3 +3974,156 @@ body[data-tab="gate"] .list .card {
 #guideBar.guide-highlight .guide-card {
   animation: guidePulse .9s ease both;
 }
+
+/* ===== FULL-PAGE PREMIUM REDESIGN v459 ===== */
+
+/* -- Deeper, richer royal palette dark mode -- */
+:root[data-palette="royal"][data-theme="dark"] {
+  --paper: #05101f !important;
+  --sheet: #0b1a2e !important;
+  --raised: #111f38 !important;
+  --grid: #06111f !important;
+  --ink: #f2ecd8 !important;
+  --muted: #8a9ab8 !important;
+  --line: #1e2e48 !important;
+  --accent: #e8c060 !important;
+  --accent-soft: #1c2a40 !important;
+  --btn: #e8c060 !important;
+  --btn-ink: #0d1b0a !important;
+}
+
+/* -- Body: edge-to-edge on mobile, graph-paper only on desktop -- */
+@media (max-width: 700px) {
+  body {
+    padding: 0 !important;
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 62px) !important;
+    background-size: 100% 100%, 100% 100%, 0px 0px, 0px 0px !important;
+  }
+  .wrap {
+    max-width: 100% !important;
+    gap: 0 !important;
+    margin: 0 !important;
+  }
+  header.top {
+    border-radius: 0 !important;
+    margin: 0 !important;
+    padding: 14px 16px 12px !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 50 !important;
+  }
+  .layout {
+    min-height: calc(100dvh - 62px - env(safe-area-inset-bottom, 0px)) !important;
+    padding: 12px 12px 0 !important;
+    align-items: stretch !important;
+  }
+  .listcol {
+    min-height: calc(100dvh - 150px) !important;
+  }
+}
+
+/* -- Desktop: sticky header with strong glass effect -- */
+@media (min-width: 701px) {
+  header.top {
+    position: sticky !important;
+    top: 12px !important;
+    z-index: 50 !important;
+    backdrop-filter: blur(16px) !important;
+  }
+}
+
+/* -- Premium header gradient (all screen sizes) -- */
+:root[data-palette="royal"] header.top {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--ta, #1b3a68) 85%, #000) 0%,
+    var(--ta, #1b3a68) 35%,
+    var(--tb, #0f2c52) 65%,
+    color-mix(in srgb, var(--tb, #0f2c52) 80%, #000) 100%
+  ) !important;
+  box-shadow: 0 4px 32px -8px color-mix(in srgb, var(--ta, #1b3a68) 70%, transparent) !important;
+}
+:root[data-palette="royal"][data-theme="dark"] header.top {
+  box-shadow: 0 4px 40px -6px color-mix(in srgb, var(--ta, #1b3a68) 90%, transparent), 0 1px 0 0 color-mix(in srgb, var(--accent) 20%, transparent) !important;
+}
+
+/* -- Premium body background (dark royal) -- */
+:root[data-palette="royal"][data-theme="dark"] body {
+  background-image:
+    radial-gradient(80rem 40rem at 80% -5%, color-mix(in srgb, var(--ta, #1b3a68) 22%, transparent), transparent 65%),
+    radial-gradient(60rem 35rem at -15% 20%, color-mix(in srgb, #e8c060 8%, transparent), transparent 65%),
+    radial-gradient(50rem 30rem at 50% 110%, color-mix(in srgb, var(--tb, #0f2c52) 18%, transparent), transparent 65%)
+    !important;
+  background-size: 100% 100%, 100% 100%, 100% 100% !important;
+  background-attachment: fixed !important;
+}
+
+/* -- Per-tab richer dark gradients -- */
+:root[data-palette="royal"][data-theme="dark"] body[data-tab="doubts"]     { --ta:#2e8020; --tb:#1a5c32; }
+:root[data-palette="royal"][data-theme="dark"] body[data-tab="ideas"]      { --ta:#c87820; --tb:#9a4c10; }
+:root[data-palette="royal"][data-theme="dark"] body[data-tab="clubs"]      { --ta:#0eaaa0; --tb:#0a7aaa; }
+:root[data-palette="royal"][data-theme="dark"] body[data-tab="challenges"] { --ta:#e02848; --tb:#b02010; }
+:root[data-palette="royal"][data-theme="dark"] body[data-tab="jobs"]       { --ta:#d0a840; --tb:#a87020; }
+:root[data-palette="royal"][data-theme="dark"] body[data-tab="market"]     { --ta:#12b860; --tb:#0e9882; }
+:root[data-palette="royal"][data-theme="dark"] body[data-tab="gate"]       { --ta:#4a6ae0; --tb:#2040b0; }
+
+/* -- Premium card base -- */
+:root[data-palette="royal"] .card {
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: var(--sheet);
+  box-shadow: 0 1px 4px -1px color-mix(in srgb, var(--ink) 10%, transparent), 0 4px 16px -6px color-mix(in srgb, var(--ta, var(--accent)) 12%, transparent);
+  transition: transform .2s, box-shadow .2s;
+}
+:root[data-palette="royal"] .card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px -2px color-mix(in srgb, var(--ink) 12%, transparent), 0 8px 28px -8px color-mix(in srgb, var(--ta, var(--accent)) 28%, transparent);
+}
+
+/* -- Bottom nav premium -- */
+:root[data-palette="royal"][data-theme="dark"] .bottom-nav {
+  background: color-mix(in srgb, var(--sheet) 92%, transparent) !important;
+  backdrop-filter: blur(20px) saturate(1.4) !important;
+  border-top: 1px solid color-mix(in srgb, var(--accent) 15%, var(--line)) !important;
+  box-shadow: 0 -8px 32px -8px color-mix(in srgb, var(--ink) 20%, transparent) !important;
+}
+:root[data-palette="royal"] .bnav-btn.active {
+  color: var(--ta, var(--accent)) !important;
+}
+:root[data-palette="royal"] .bnav-btn.active .bnav-icon {
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--ta, var(--accent)) 70%, transparent));
+}
+
+/* -- Tab chips / sub-tabs premium -- */
+:root[data-palette="royal"] .tabs button[aria-selected="true"] {
+  background: rgba(255,255,255,.96) !important;
+  box-shadow: 0 4px 14px -4px rgba(0,0,0,.4) !important;
+}
+:root[data-palette="royal"] .tabs {
+  background: rgba(0,0,0,.22) !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+/* -- Howto / welcome card premium -- */
+:root[data-palette="royal"] .howto-card,
+:root[data-palette="royal"] [class*="how-to"],
+:root[data-palette="royal"] .posted-card.today {
+  background: linear-gradient(145deg, color-mix(in srgb, var(--ta, var(--accent)) 14%, var(--sheet)), var(--sheet)) !important;
+  border: 1px solid color-mix(in srgb, var(--ta, var(--accent)) 25%, var(--line)) !important;
+  box-shadow: 0 8px 32px -12px color-mix(in srgb, var(--ta, var(--accent)) 30%, transparent) !important;
+}
+
+/* -- Primary buttons -- */
+:root[data-palette="royal"] .btn.primary,
+:root[data-palette="royal"] .sheet .btn.primary {
+  background: linear-gradient(120deg, var(--ta, var(--accent)), var(--tb, var(--accent))) !important;
+  border-color: transparent !important;
+  box-shadow: 0 6px 20px -8px color-mix(in srgb, var(--ta, var(--accent)) 70%, transparent) !important;
+}
+
+/* -- FAB: colors match active tab -- */
+.help-fab {
+  background: linear-gradient(135deg, var(--ta, var(--accent)), var(--tb, var(--accent))) !important;
+}
+
+/* ===== END FULL-PAGE PREMIUM REDESIGN ===== */
