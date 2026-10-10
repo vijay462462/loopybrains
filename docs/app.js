@@ -5389,12 +5389,12 @@ function bsClose(keepMode) {
 function bsLeave(fn) { bsClose(true); fn(); }
 // Digital Logic Design study page: the textbook topic packs in syllabus order, with progress kept on this phone.
 const DLD_UNITS = [
-  ["Number systems and codes", "Binary, hex, complements, BCD, Gray code and error detection", ["dvsa", "numsys", "complement", "signed", "twoscomp", "radixcomp", "ieee754", "codes", "bcdadd", "parity"]],
-  ["Boolean algebra and gates", "Gates, laws, truth tables, canonical forms and NAND/NOR design", ["swlogic", "polarity", "gates", "boolean", "huntington", "venn", "func16", "canonical", "sop", "nandnor", "twolevel"]],
-  ["Minimization", "K-maps, prime implicants, don’t-cares and the tabular method", ["kmap", "minim", "dcare", "qm"]],
-  ["Combinational circuits", "Adders, multiplexers, decoders, comparators, hazards and design", ["synth", "comb", "adder", "decfull", "ripplecarry", "addsub", "overflow", "cla", "hcla", "subtractor", "comparator", "cmp4", "mux", "muxtree", "muxfunc", "shannon", "decoder", "dectree", "demuxdec", "prienc", "codeconv", "sevenseg", "hazard"]],
-  ["Sequential circuits", "Flip-flops, counters, shift registers, timing and state machines", ["seq", "ff", "excite", "timingf", "counter", "shift", "fsm"]],
-  ["Memory, logic families and HDL", "ROM, PLA, RAM, TTL and CMOS, Verilog and the design flow", ["memory", "rom", "families", "hdl", "verilogadd", "verilogmod", "vcond", "vifelse", "vcase", "vfor", "vops", "vgen", "valu", "lut", "cad", "dflow"]],
+  ["I. Number systems, logic gates and Boolean algebra", "Digital vs analog, number systems, codes, gates, laws and De Morgan", ["dvsa", "numsys", "complement", "signed", "twoscomp", "radixcomp", "codes", "swlogic", "polarity", "gates", "boolean", "huntington", "venn", "func16", "nandnor"]],
+  ["II. Combinational circuit design", "Canonical forms, K-maps, hazards, adders, subtractors, multipliers, converters and comparators", ["synth", "comb", "canonical", "sop", "kmap", "minim", "dcare", "qm", "twolevel", "hazard", "families", "adder", "decfull", "ripplecarry", "addsub", "overflow", "cla", "hcla", "subtractor", "bcdadd", "multiplier", "codeconv", "parity", "comparator", "cmp4", "delaypower", "wordproblem"]],
+  ["III. Latches and flip-flops", "Bistable element, SR/D latches, flip-flops, triggering, characteristic and excitation tables", ["seq", "bistable", "srnor", "srnand", "gatedsr", "dlatch", "trigger", "dff", "asyncpc", "jkff", "masterslave", "tff", "ff", "chareq", "excite", "timingf"]],
+  ["IV. Counters and shift registers", "Ripple and synchronous counters, BCD, ring, Johnson, state diagrams and shift registers", ["cntbasics", "ripcnt", "ripdelay", "modnrip", "synccnt", "bcdcnt", "counter", "fsmcounter", "ringjohn", "statediag", "mealymoore", "sregtypes", "shift"]],
+  ["V. Decoders, multiplexers, encoders and PLDs", "Decoders, seven-segment, multiplexers, demultiplexers, encoders, ROM, PROM, PLA and PAL", ["decoder", "casdec", "dectree", "sevenseg", "mux", "muxtree", "muxfunc", "shannon", "demuxdec", "msiapps", "prienc", "rom", "pld"]],
+  ["Beyond the syllabus: state machines, Verilog and design", "FSM design, serial adder, floating point, memory, Verilog, FPGA look-up tables and CAD", ["ieee754", "fsm", "fsmgen", "fsmsteps", "stateassign", "onehot", "statemin", "incompfsm", "serialadd", "arbiter", "regswap", "memory", "hdl", "verilogadd", "verilogmod", "vcond", "vifelse", "vcase", "vfor", "vops", "vgen", "valu", "vfsm", "vmealy", "lut", "cad", "dflow"]],
 ];
 function dldHub(allPk, bs, go) {
   const byId = new Map(allPk.map(p => [p.id, p])), seenArr = readJSON("dd-dld-seen", []), seen = new Set(Array.isArray(seenArr) ? seenArr.filter(x => typeof x === "string") : []);
