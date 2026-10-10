@@ -14,7 +14,7 @@ for (const p of all) {
   for (const f of ["title", "subject", "short", "exam"]) if (!p[f] || typeof p[f] !== "string") errs.push(p.id + ": missing " + f);
   for (const f of ["keys", "points", "mistakes", "uses", "related"]) if (!Array.isArray(p[f]) || !p[f].length) errs.push(p.id + ": empty " + f);
   if (!p.example || !p.example.text) errs.push(p.id + ": missing example");
-  for (const k of p.keys || []) { const n = k.toLowerCase(); if (keyOwner.has(n) && keyOwner.get(n) !== p.id) errs.push("key '" + k + "' used by " + keyOwner.get(n) + " and " + p.id); keyOwner.set(n, p.id); }
+  for (const k of p.keys || []) { const n = k.toLowerCase().replace(/[-_\/]/g, " ").replace(/[^a-z0-9\s+]/g, " ").replace(/\s+/g, " ").trim(); if (keyOwner.has(n) && keyOwner.get(n) !== p.id) errs.push("key '" + k + "' used by " + keyOwner.get(n) + " and " + p.id); keyOwner.set(n, p.id); }
   for (const d of p.diagrams || []) { used.add(d); if (!dkeys.has(d)) errs.push(p.id + ": unknown diagram " + d); }
   if (!m3.SIMPLE[p.id]) errs.push(p.id + ": no 'In simple words' entry");
 }

@@ -72,8 +72,8 @@ function pickCollege() {
 try { const r = new URLSearchParams(location.search).get("ref"); if (r && /^[A-Za-z0-9_-]{10}$/.test(r) && !localStorage.getItem("dd-ref")) localStorage.setItem("dd-ref", r); } catch (_) {}
 try { const g = new URLSearchParams(location.search).get("gift"); if (g && /^[A-HJ-NP-Z2-9]{12}$/i.test(g)) localStorage.setItem("dd-gift", g.toUpperCase()); } catch (_) {}
 const SEL = pickCollege(), NO_COLLEGE = SEL === "", IS_RGUKT = SEL === "rgukt";
-const BRAND = BASE_CFG.brand || "The Campus Loop";
-// The Campus Loop Plus (optional paid plan). enabled:false = free early access and a waitlist; see PREMIUM.md to go live.
+const BRAND = BASE_CFG.brand || "Loopy Brains";
+// Loopy Brains Plus (optional paid plan). enabled:false = free early access and a waitlist; see PREMIUM.md to go live.
 const MEDIA = { gallery: false, profilePhoto: false, ...(BASE_CFG.media || {}) };   // photos: camera only and no profile photos, to stop misuse (see config.js)
 const PUSH = { vapidKey: "", ...(BASE_CFG.push || {}) };
 const PLUS = { enabled: false, monthly: 49, yearly: 399, functionsUrl: "", ...(BASE_CFG.plus || {}) };
@@ -108,20 +108,20 @@ function hslToHex(h, sat, l) {
 const shiftColor = (hex, dh, dl) => { const [h, sat, l] = hexToHsl(hex); return hslToHex(h + dh, sat, l + dl); };
 // [main colour, partner colour] for each state, picked from its flag, landscape or culture.
 const STATE_COLORS = {
-  "Andhra Pradesh": ["#e11d48", "#f59e0b"], "Telangana": ["#7c3aed", "#ec4899"], "Tamil Nadu": ["#b91c1c", "#f59e0b"], "Karnataka": ["#dc2626", "#eab308"],
-  "Kerala": ["#15803d", "#facc15"], "Maharashtra": ["#ea580c", "#1d4ed8"], "Gujarat": ["#f97316", "#0d9488"], "Rajasthan": ["#db2777", "#f59e0b"],
-  "Punjab": ["#2563eb", "#f97316"], "Haryana": ["#16a34a", "#ca8a04"], "Delhi": ["#4338ca", "#f43f5e"], "Uttar Pradesh": ["#d97706", "#9333ea"],
+  "Andhra Pradesh": ["#e11d48", "#f59e0b"], "Telangana": ["#15803d", "#f97316"], "Tamil Nadu": ["#b91c1c", "#f59e0b"], "Karnataka": ["#dc2626", "#eab308"],
+  "Kerala": ["#15803d", "#facc15"], "Maharashtra": ["#ea580c", "#1d4ed8"], "Gujarat": ["#f97316", "#0d9488"], "Rajasthan": ["#f97316", "#f59e0b"],
+  "Punjab": ["#2563eb", "#f97316"], "Haryana": ["#16a34a", "#ca8a04"], "Delhi": ["#166534", "#f43f5e"], "Uttar Pradesh": ["#d97706", "#16a34a"],
   "Bihar": ["#ca8a04", "#16a34a"], "West Bengal": ["#e11d48", "#2563eb"], "Odisha": ["#0891b2", "#f59e0b"], "Assam": ["#16a34a", "#dc2626"],
   "Madhya Pradesh": ["#0d9488", "#a16207"], "Chhattisgarh": ["#15803d", "#9a3412"], "Jharkhand": ["#047857", "#f59e0b"], "Uttarakhand": ["#1d4ed8", "#16a34a"],
   "Himachal Pradesh": ["#0284c7", "#16a34a"], "Jammu and Kashmir": ["#0891b2", "#e11d48"], "Ladakh": ["#1d4ed8", "#f97316"], "Goa": ["#0ea5e9", "#f59e0b"],
-  "Manipur": ["#7c3aed", "#16a34a"], "Meghalaya": ["#059669", "#0ea5e9"], "Mizoram": ["#be123c", "#0d9488"], "Nagaland": ["#b91c1c", "#15803d"],
-  "Arunachal Pradesh": ["#059669", "#f97316"], "Sikkim": ["#0891b2", "#a855f7"], "Tripura": ["#ea580c", "#2563eb"], "Puducherry": ["#2563eb", "#f43f5e"],
-  "Chandigarh": ["#0f766e", "#f59e0b"], "Andaman and Nicobar Islands": ["#0284c7", "#14b8a6"], "Lakshadweep": ["#06b6d4", "#8b5cf6"],
+  "Manipur": ["#15803d", "#16a34a"], "Meghalaya": ["#059669", "#0ea5e9"], "Mizoram": ["#be123c", "#0d9488"], "Nagaland": ["#b91c1c", "#15803d"],
+  "Arunachal Pradesh": ["#059669", "#f97316"], "Sikkim": ["#0891b2", "#16a34a"], "Tripura": ["#ea580c", "#2563eb"], "Puducherry": ["#2563eb", "#f43f5e"],
+  "Chandigarh": ["#0f766e", "#f59e0b"], "Andaman and Nicobar Islands": ["#0284c7", "#14b8a6"], "Lakshadweep": ["#06b6d4", "#16a34a"],
   "Dadra and Nagar Haveli and Daman and Diu": ["#0891b2", "#f97316"],
 };
 // Every college gets its own shade inside its state's family (a small, repeatable hue and lightness shift from its link name).
 function collegeColors(slug, state) {
-  const [a, b] = STATE_COLORS[state] || ["#6366f1", "#ec4899"];
+  const [a, b] = STATE_COLORS[state] || ["#22c55e", "#f97316"];
   let h = 0; for (const ch of String(slug)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
   const dh = ((h % 9) - 4) * 6, dl = (((h >>> 4) % 5) - 2) * 2;
   return [shiftColor(a, dh, dl), shiftColor(b, dh, -dl)];
@@ -200,7 +200,7 @@ async function loadTenant() {
     const box = document.createElement("div"); box.style.cssText = "max-width:420px;margin:15vh auto;padding:24px;font-family:system-ui,sans-serif;text-align:center";
     const h = document.createElement("h2"); h.textContent = "We could not open this college";
     const pp = document.createElement("p"); pp.textContent = "Check the link, or your internet connection, and try again.";
-    const a = document.createElement("a"); a.href = location.pathname + "?c=rgukt"; a.textContent = "Open the default board"; a.style.cssText = "display:inline-block;padding:10px 18px;border-radius:999px;background:#7c3aed;color:#fff;text-decoration:none;font-weight:700";
+    const a = document.createElement("a"); a.href = location.pathname + "?c=rgukt"; a.textContent = "Open the default board"; a.style.cssText = "display:inline-block;padding:10px 18px;border-radius:999px;background:#15803d;color:#fff;text-decoration:none;font-weight:700";
     box.append(h, pp, a); document.body.append(box);
     await new Promise(() => {});   // stop here: never fall back to another college's board
   }
@@ -232,7 +232,7 @@ if (BRAND_COLORS) {
   const m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute("content", BRAND_COLORS[0]);
 }
 // Plus profile themes: a personal accent colour kept on this phone.
-const THEMES = [["Default", ""], ["Ocean", "#0ea5e9"], ["Forest", "#16a34a"], ["Sunset", "#f97316"], ["Rose", "#e11d48"], ["Violet", "#7c3aed"], ["Gold", "#ca8a04"]];
+const THEMES = [["Default", ""], ["Ocean", "#0ea5e9"], ["Forest", "#16a34a"], ["Sunset", "#f97316"], ["Rose", "#e11d48"], ["Violet", "#15803d"], ["Gold", "#ca8a04"]];
 const applyTheme = () => { try { const c = localStorage.getItem("dd-theme") || ""; if (/^#[0-9a-f]{6}$/i.test(c)) { document.documentElement.style.setProperty("--accent", c); document.documentElement.style.setProperty("--brand-a", c); document.documentElement.style.setProperty("--brand-b", shiftColor(c, 28, 0)); } } catch (_) {} };
 applyTheme();
 // RGUKT: doubt subjects are the real subject names from the RGUKT timetable, grouped by branch (see rgukt-curriculum.js).
@@ -323,7 +323,7 @@ if (EXAM_LABEL !== "GATE") { TABS.gate.ask = "Post " + EXAM_LABEL + " discussion
 
 // ---------- campus ----------
 const CAMPUSES = (CFG.campuses && CFG.campuses.length) ? CFG.campuses : [];
-const CAMPUS_COLORS = { NUZVID: "#7c3aed", ONGOLE: "#0d9488", RKVALLEY: "#2563eb", SRIKAKULAM: "#0891b2", BASAR: "#d97706", IDUPULAPAYA: "#dc2626" };
+const CAMPUS_COLORS = { NUZVID: "#15803d", ONGOLE: "#0d9488", RKVALLEY: "#2563eb", SRIKAKULAM: "#0891b2", BASAR: "#d97706", IDUPULAPAYA: "#dc2626" };
 const CAMPUS_ICON = { NUZVID: "🟣", ONGOLE: "🟢", RKVALLEY: "🔵", SRIKAKULAM: "🩵" };
 const CAMPUS_FULL = !IS_RGUKT ? {} : { NUZVID: "RGUKT Nuzvid", ONGOLE: "RGUKT Ongole", RKVALLEY: "RGUKT RK Valley", SRIKAKULAM: "RGUKT Srikakulam" };
 const campusColor = (c) => CAMPUS_COLORS[c] || PALETTE[Math.max(0, CAMPUSES.indexOf(c)) % PALETTE.length];
@@ -369,12 +369,12 @@ const DEPT_MAP = TENANT ? (TENANT.departments || {}) : RGUKT_DEPTS ? RGUKT_DEPTS
   EEE:   ["Circuits","EM","PS","PE","Control","EMS","PQ"],
 };
 const DEPT_VISUAL = {
-  ECE:   { bg: "linear-gradient(135deg,#0ea5e9 0%,#6366f1 100%)", art: "📡⚡🔌🎛️📻", label: "Electronics & Communication", sub: "Signals · Circuits · Systems · Communication" },
-  CSE:   { bg: "linear-gradient(135deg,#8b5cf6 0%,#06b6d4 100%)", art: "💻🖥️🧠⌨️🔧", label: "Computer Science & Engineering", sub: "Algorithms · OS · DBMS · Networks · AI" },
+  ECE:   { bg: "linear-gradient(135deg,#0ea5e9 0%,#22c55e 100%)", art: "📡⚡🔌🎛️📻", label: "Electronics & Communication", sub: "Signals · Circuits · Systems · Communication" },
+  CSE:   { bg: "linear-gradient(135deg,#16a34a 0%,#06b6d4 100%)", art: "💻🖥️🧠⌨️🔧", label: "Computer Science & Engineering", sub: "Algorithms · OS · DBMS · Networks · AI" },
   Civil: { bg: "linear-gradient(135deg,#f59e0b 0%,#10b981 100%)", art: "🏗️🏛️📐🔩🌉", label: "Civil Engineering", sub: "Structures · Fluid · Geo · Transport · Env" },
   Mech:  { bg: "linear-gradient(135deg,#ef4444 0%,#f97316 100%)", art: "⚙️🔩🔧🛠️💨", label: "Mechanical Engineering", sub: "Thermo · Fluid · Design · Manufacturing · HT" },
   EEE:   { bg: "linear-gradient(135deg,#f59e0b 0%,#ef4444 100%)", art: "⚡💡🔋🔌🌡️", label: "Electrical & Electronics", sub: "Machines · Power Systems · Control · Electronics" },
-  "AI & ML": { bg: "linear-gradient(135deg,#6366f1 0%,#ec4899 100%)", art: "🧠📊🔮💡", label: "Artificial Intelligence & Machine Learning", sub: "Algorithms · Statistics · Databases · Compilers" },
+  "AI & ML": { bg: "linear-gradient(135deg,#22c55e 0%,#f97316 100%)", art: "🧠📊🔮💡", label: "Artificial Intelligence & Machine Learning", sub: "Algorithms · Statistics · Databases · Compilers" },
   Chemical:  { bg: "linear-gradient(135deg,#10b981 0%,#0ea5e9 100%)", art: "🧪⚗️🏭🔥💧", label: "Chemical Engineering", sub: "Process · Heat & Mass Transfer · Reactions" },
   MME:       { bg: "linear-gradient(135deg,#64748b 0%,#f59e0b 100%)", art: "🔩🧲🔬⛏️🪙", label: "Metallurgical & Materials", sub: "Extraction · Materials · Testing · Casting" },
 };
@@ -433,6 +433,34 @@ function el(tag, attrs = {}, ...kids) {
   if (tag === "img") { n.setAttribute("decoding", "async"); if (!n.hasAttribute("loading")) n.setAttribute("loading", "lazy"); }
   if ((tag === "input" && !["checkbox", "radio", "file", "submit", "button"].includes(attrs.type)) || tag === "textarea") if (!n.hasAttribute("autocomplete")) n.setAttribute("autocomplete", "off");
   for (const k of kids.flat()) if (k != null && k !== false) n.append(k instanceof Node ? k : String(k));
+  return n;
+}
+// Line icons (static, trusted markup) that replace emoji so every icon shares one weight, size and colour.
+const ICONS = {
+  lock: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+  shield: '<path d="M12 3 4 6v6c0 5 3.4 8.2 8 9 4.6-.8 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/>',
+  ban: '<circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/>',
+  check: '<path d="m4 12 5 5L20 6"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/>',
+  chat: '<path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.2A8.4 8.4 0 1 1 21 11.5z"/>',
+  school: '<path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 2 9 2 12 0v-5"/>',
+  moon: '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
+  contrast: '<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/>',
+  flame: '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
+  target: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+  briefcase: '<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>',
+  book: '<path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/>',
+  bulb: '<path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1V17h6v-.2c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/>',
+  arrow: '<path d="M7 17 17 7M8 7h9v9"/>',
+  back: '<path d="m15 18-6-6 6-6"/>',
+  bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/>',
+  grid: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+};
+function icon(name, size = 16) {
+  const doc = new DOMParser().parseFromString('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + (ICONS[name] || "") + "</svg>", "image/svg+xml");
+  const n = document.importNode(doc.documentElement, true);
+  n.setAttribute("class", "ic"); n.setAttribute("width", size); n.setAttribute("height", size); n.setAttribute("aria-hidden", "true");
   return n;
 }
 function ago(ts) {
@@ -583,7 +611,7 @@ async function firebaseStore(conf, prefix = "") {
   // On a very slow connection sign-in can finish late. Reload once so the board loads with it.
   if (!signedIn && authP) authP.then(() => { try { if (!sessionStorage.getItem("dd-auth-reload")) { sessionStorage.setItem("dd-auth-reload", "1"); location.reload(); } } catch (_) {} }).catch(() => {});
   // A student tapped the sign-in link from their email: attach the verified email to this same session (keeps the same user).
-  let linkResult = "";
+  let linkResult = "", phoneVerifier = null, phoneConfirm = null;
   try {
     if (auth && au.isSignInWithEmailLink(auth, location.href)) {
       let email = ""; try { email = localStorage.getItem("dd-email-pending") || ""; } catch (_) {}
@@ -609,6 +637,25 @@ async function firebaseStore(conf, prefix = "") {
       await au.sendSignInLinkToEmail(auth, email, { url: location.origin + location.pathname + (SEL ? "?c=" + encodeURIComponent(SEL) : ""), handleCodeInApp: true });
       try { localStorage.setItem("dd-email-pending", email); } catch (_) {}
     },
+    // Account sign-up: e-mail and password (links to the anonymous session so nothing is lost), then a mobile number checked by an SMS code.
+    authInfo: () => { const u = auth && auth.currentUser; return u ? { anonymous: !!u.isAnonymous, email: u.email || "", emailVerified: !!u.emailVerified, phone: u.phoneNumber || "" } : null; },
+    authReady: !!auth,
+    signUpEmail: async (email, pw) => {
+      const cur = auth.currentUser; let cred;
+      if (cur && cur.isAnonymous) cred = await au.linkWithCredential(cur, au.EmailAuthProvider.credential(email, pw));
+      else cred = await au.createUserWithEmailAndPassword(auth, email, pw);
+      await au.sendEmailVerification(cred.user, { url: location.origin + location.pathname + (SEL ? "?c=" + encodeURIComponent(SEL) : "") });
+    },
+    signInEmail: (email, pw) => au.signInWithEmailAndPassword(auth, email, pw),
+    resendVerify: () => au.sendEmailVerification(auth.currentUser, { url: location.origin + location.pathname + (SEL ? "?c=" + encodeURIComponent(SEL) : "") }),
+    refreshUser: async () => { await auth.currentUser.reload(); await auth.currentUser.getIdToken(true); },
+    resetPassword: (email) => au.sendPasswordResetEmail(auth, email, { url: location.origin + location.pathname }),
+    sendPhoneCode: async (phone, holder) => {
+      try { if (phoneVerifier) phoneVerifier.clear(); } catch (_) {}
+      phoneVerifier = new au.RecaptchaVerifier(auth, holder, { size: "invisible" });
+      phoneConfirm = await au.linkWithPhoneNumber(auth.currentUser, phone, phoneVerifier);
+    },
+    confirmPhoneCode: async (code) => { if (!phoneConfirm) throw { code: "auth/code-expired" }; await phoneConfirm.confirm(code); await auth.currentUser.getIdToken(true); },
     signOutAll: async () => { try { if (auth) await au.signOut(auth); } catch (_) {} },
     account: () => { const u = auth && auth.currentUser; return { email: (u && u.email) || "", verified: !!(u && u.email && u.emailVerified) }; },
     subscribe: (coll, cb, onErr, since) => fs.onSnapshot(since ? fs.query(fs.collection(db, prefix + coll), fs.where("createdAt", ">", since)) : fs.collection(db, prefix + coll), snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))), onErr),
@@ -1382,7 +1429,6 @@ const ICON_PATHS = {
   aegis: ["M12 3l8 3v6c0 4.5-3.2 8.2-8 9c-4.8-.8-8-4.5-8-9V6z", "M9 12l2 2l4-4"],
   back: ["M15 5l-7 7l7 7"],
   send: ["M12 19V5", "M5 12l7-7l7 7"],
-  send: ["M12 19V5", "M5 12l7-7l7 7"],
   doubts: ["M12 3a9 9 0 1 0 0 18a9 9 0 0 0 0-18z", "M9.6 9.4a2.5 2.5 0 1 1 3.6 2.2c-.8.4-1.2 1-1.2 1.8", "M12 16.9v.1"],
   ideas: ["M9 18h6", "M10 21h4", "M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"],
   clubs: ["M3 10l9-6l9 6", "M5 10v8", "M9.5 10v8", "M14.5 10v8", "M19 10v8", "M3 20h18"],
@@ -1390,6 +1436,7 @@ const ICON_PATHS = {
   market: ["M3 4h2l2.4 11h10.2l2-8H6.5", "M9 20.2v.01", "M17 20.2v.01"],
   board: ["M8 4h8v5a4 4 0 0 1-8 0V4z", "M8 6H4v1a4 4 0 0 0 4 4", "M16 6h4v1a4 4 0 0 1-4 4", "M12 13v4", "M8 20h8", "M10 17h4"],
   more: ["M5 12v.01", "M12 12v.01", "M19 12v.01"],
+  home: ["M3 9l9-7l9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z", "M9 22V12h6v10"],
   palette: ["M12 3a9 9 0 1 0 0 18c1.1 0 1.8-.8 1.8-1.7 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-.9.8-1.7 1.7-1.7H17a4 4 0 0 0 4-4c0-4.4-4-8.2-9-8.2z", "M7.5 11v.01", "M10 7.5v.01", "M14.5 7.5v.01"],
 };
 function svgIcon(name) {
@@ -1403,6 +1450,12 @@ function renderBottomNav() {
   const icons = { doubts: 'doubts', ideas: 'ideas', clubs: 'clubs', gate: 'gate', challenges: 'gate', market: 'market' };
   const labels = { doubts: 'Doubts', ideas: 'Ideas', clubs: 'Clubs', gate: EXAM_LABEL.length > 8 ? EXAM_LABEL.split(/[ /]/)[0] : EXAM_LABEL, challenges: 'Challenges', market: 'Market' };
   nav.replaceChildren(
+    el('button', { type: 'button', class: 'bnav-btn' + (state.mode === 'intro' && !state.selected ? ' active' : ''), onclick: () => {
+      state.mode = 'intro'; state.selected = null; state.query = ''; $('search') && ($('search').value = '');
+      try { history.replaceState(null, '', '#' + state.tab); } catch (_) {}
+      render(); window.scrollTo({ top: 0, behavior: 'smooth' });
+    } },
+      el('span', { class: 'bnav-icon' }, svgIcon('home')), el('span', { class: 'bnav-label' }, 'Home')),
     ...['doubts', 'ideas', 'clubs', 'market', 'gate'].filter(tab => (!isSimple() || tab === 'doubts' || tab === 'ideas' || state.tab === tab) && (!focusOn() || isAcademicTab(tab)) && featureOn(tab === 'market' ? 'market' : 'doubts')).map(tab => {
       const cnt = state[TABS[tab].coll].length;
       return el('button', { type: 'button', class: 'bnav-btn' + (state.tab === tab ? ' active' : ''), onclick: () => {
@@ -1494,6 +1547,7 @@ const WELCOME = [
   ["🙏", "Respect for everyone", "We honour our students, teachers and staff. Speak kindly, help your juniors, thank those who help you, and treat every person here the way you want your own family to be treated. Together we grow."],
   ["", "Study smarter", "Daily quiz, Study Lab, flashcards, CGPA tools, jobs and papers, all in one place. Everything on the board is free. Plus adds extras like mock tests and an AI helper."],
 ];
+let welcomePending = false;   // the first-run steps are about to open or are open: other pop-ups (college welcome card, year question) wait for them
 function showWelcome(force, startId) {
   if (document.getElementById("welcome")) return;
   const STEPS = ["about", "college", "name", "interests", "ready"], curSlug = TENANT ? TENANT.slug : IS_RGUKT ? "rgukt" : "";
@@ -1501,14 +1555,19 @@ function showWelcome(force, startId) {
   const picked = new Set(readJSON("dd-interests", []));
   let step = Math.max(0, STEPS.indexOf(startId || "about")), nameVal = (getName() || "").trim(), pickSlug = curSlug, pickName = curSlug ? COLLEGE : "", cq = "", ctype = "all", cst = (() => { try { return localStorage.getItem("dd-state") || ""; } catch (_) { return ""; } })() || (curSlug && curSlug !== "rgukt" ? ((DIRECTORY.find(c => c.slug === curSlug) || {}).state || "") : "") || "Andhra Pradesh";
   const TOTAL = STEPS.length, box = el("div", { id: "welcome", class: "welcome", role: "dialog", "aria-modal": "true", "aria-label": "Welcome to " + BRAND });
-  const finish = () => { try { localStorage.setItem("dd-welcome-done", "1"); if (!localStorage.getItem("dd-launch-gone")) { localStorage.setItem("dd-launch", "1"); } } catch (_) {} if (STEPS[step] === "ready") setTimeout(() => confetti(130), 250); document.removeEventListener("keydown", onKey); box.remove(); todayKey = ""; try { renderHeader(); } catch (_) {}
+  const finish = () => { welcomePending = false; setTimeout(() => { try { render(); } catch (_) {} }, 350); try { sessionStorage.removeItem("dd-ob-splash"); localStorage.setItem("dd-welcome-done", "1"); if (!localStorage.getItem("dd-launch-gone")) { localStorage.setItem("dd-launch", "1"); } } catch (_) {} if (STEPS[step] === "ready") setTimeout(() => confetti(130), 250); document.removeEventListener("keydown", onKey); box.remove(); todayKey = ""; try { renderHeader(); } catch (_) {}
     try { if (getName() && store && store.handleClaim && !myHandle() && !readJSON("dd-loopid-skip", false) && !readJSON("dd-loopid-shown", false)) { writeJSON("dd-loopid-shown", true); setTimeout(() => showPanel("loopid"), 400); } } catch (_) {} };
   const onKey = (e) => { if (e.key === "Escape") finish(); };
   const saveStep = () => { if (STEPS[step] === "college" && pickSlug && pickSlug !== curSlug) { try { sessionStorage.setItem("dd-ob-resume", "name"); localStorage.setItem("dd-state", cst); } catch (_) {} document.removeEventListener("keydown", onKey); switchCollege(pickSlug); return; } if (STEPS[step] === "name") { const v = nameVal.trim().slice(0, 30); if (v) setName(v); } if (STEPS[step] === "interests") writeJSON("dd-interests", [...picked]); };
-  let goLastAt = 0;
-  const go = (d) => { const now = Date.now(); if (d > 0 && now - goLastAt < 700) return; if (d > 0) goLastAt = now; if (d > 0 && STEPS[step] === "college" && !pickSlug) { const c = box.querySelector(".ob-chosen"); if (c) { c.classList.remove("shake"); void c.offsetWidth; c.classList.add("shake"); } return; } saveStep(); step = Math.max(0, Math.min(TOTAL - 1, step + d)); paint(); const nb = box.querySelector(".ob-card > .rowbtns .btn.primary"); if (nb) { nb.disabled = true; setTimeout(() => { nb.disabled = false; }, 700); } };
+  const fromSplash = (() => { try { return sessionStorage.getItem("dd-ob-splash") === "1"; } catch (_) { return false; } })();
+  const backToStart = () => { try { sessionStorage.removeItem("dd-ob-splash"); sessionStorage.removeItem("dd-ob-shown"); sessionStorage.removeItem("dd-splash"); } catch (_) {} document.removeEventListener("keydown", onKey); box.remove(); location.reload(); };   // the first page comes back with a fresh start
+  let aboutReady = false;   // the About step may only be passed after the text was really scrolled through (or read) and the terms box is ticked
+  let paintedAt = 0;   // a tap that lands right after a step appears (double tap, ghost click) must not skip that step
+  let _goLock = false;
+  const go = (d) => { if (_goLock) return; if (performance.now() - paintedAt < (STEPS[step] === "about" ? 3000 : 1200)) return; if (d > 0 && STEPS[step] === "about" && !aboutReady) return; if (d > 0 && STEPS[step] === "college" && !pickSlug) { const c = box.querySelector(".ob-chosen"); if (c) { c.classList.remove("shake"); void c.offsetWidth; c.classList.add("shake"); } return; } _goLock = true; setTimeout(() => { _goLock = false; }, 420); saveStep(); step = Math.max(0, Math.min(TOTAL - 1, step + d)); paint(); };
   const start = (fn) => () => { saveStep(); finish(); setTimeout(fn, 120); };
   function paint() {
+    paintedAt = performance.now(); aboutReady = false;
     const last = step === TOTAL - 1, who = nameVal.trim() ? nameVal.trim().split(/\s+/)[0] : "";
     const bar = el("div", { class: "ob-bar", "aria-hidden": "true" }, ...Array.from({ length: TOTAL }, (_, k) => el("span", { class: k <= step ? "on" : "" })));
     let body;
@@ -1519,8 +1578,8 @@ function showWelcome(force, startId) {
         el("div", { class: "ab-list" }, line("🛡️", "Safe and moderated", "Anonymous sign-in, reported posts hidden fast, abusive devices blocked."), line("🔒", "Private by design", "No ads. We never sell your data. Only your chosen name is shown."), line("🙏", "Respect for everyone", "Students, teachers and staff are honoured here."), line("🆓", "Free to learn", "The board, quizzes and Study Lab are free forever. Plus is optional.")),
         el("p", { class: "ab-meta" }, [ab.founder ? "Founded by " + ab.founder : "", ab.college ? ab.college : "", "Made with ❤️ in India"].filter(Boolean).join(" · ")),
         el("p", { class: "ab-meta" }, ab.email ? el("a", { href: "mailto:" + ab.email }, "Write to us: " + ab.email) : null, ab.email ? " · " : "", el("a", { href: "about.html", target: "_blank", rel: "noopener" }, "Our full story"), " · ", el("a", { href: "privacy.html", target: "_blank", rel: "noopener" }, "Privacy"), " · ", el("a", { href: "terms.html", target: "_blank", rel: "noopener" }, "Terms")),
-        el("div", { class: "ab-terms" }, el("b", {}, "Terms in short"), el("ul", {}, el("li", {}, "Be kind. No abuse, cheating, fake posts or spam."), el("li", {}, "Never share anyone's private details, passwords or OTPs."), el("li", {}, "Posts that break the rules are hidden and devices can be blocked."), el("li", {}, BRAND + " is a student community app. It is not run by, or affiliated with, any college.")),
-          el("label", { class: "ab-agree" }, el("input", { type: "checkbox", id: "ob-terms", checked: readJSON("dd-terms", null) ? "" : null }), el("span", {}, "I meet the age rule for my college (RGUKT: B.Tech 2nd year or above; other colleges: 13 or older, with a parent's permission if under 18). I have read and agree to the ", el("a", { href: "terms.html", target: "_blank", rel: "noopener" }, "Terms of Use"), " and the ", el("a", { href: "privacy.html", target: "_blank", rel: "noopener" }, "Privacy Policy"), ".")))];
+        el("div", { class: "ab-terms" }, el("b", {}, "Terms in short"), el("ul", {}, el("li", {}, "Use " + BRAND + " only for learning. No cheating in exams, no sharing of exam papers, no copying our study material."), el("li", {}, "Be kind. No abuse, bullying, fake posts, spam or adult content."), el("li", {}, "Never share anyone's private details, passwords or OTPs. We never ask for them."), el("li", {}, "Posts that break the rules are hidden, and accounts or devices can be blocked."), el("li", {}, "Answers from the AI helper can be wrong. Check with your teacher or book."), el("li", {}, "Plus is optional, paid once for the period you choose, and does not renew by itself. Payments are not refundable, except where the law requires it or you were charged twice."), el("li", {}, BRAND + " is a student community app. It is not run by, or affiliated with, any college.")),
+          el("label", { class: "ab-agree" }, el("input", { type: "checkbox", id: "ob-terms", checked: readJSON("dd-terms", null) ? "" : null }), el("span", {}, "I am old enough to use " + BRAND + " (RGUKT: B.Tech 2nd year or above; other colleges: 13 or older). If I am under 18, my parent or guardian allows me to use it. I have read and agree to the ", el("a", { href: "terms.html", target: "_blank", rel: "noopener" }, "Terms of Use"), ", and the ", el("a", { href: "privacy.html", target: "_blank", rel: "noopener" }, "Privacy Policy"), ".")))];
     } else if (sid === "college") {
       const badge = (slug, name, st) => { const [ca, cb] = slug === "rgukt" ? STATE_COLORS["Andhra Pradesh"] : collegeColors(slug, st || ""); const ini = name.replace(/\(.*?\)/g, "").split(/[\s-]+/).filter(w => /^[A-Za-z]/.test(w) && !/^(of|and|the|for|in)$/i.test(w)).slice(0, 2).map(w => w[0].toUpperCase()).join("") || "C"; const b = el("span", { class: "col-badge", "aria-hidden": "true" }, ini); b.style.setProperty("background", "linear-gradient(135deg," + ca + "," + cb + ")"); return b; };
       const GRP = { all: "All", premier: "\u2B50 Premier", engineering: "Engineering", medical: "Medical", agri: "Agriculture", law: "Law", degree: "Degree", design: "Design", general: "Other" };
@@ -1591,7 +1650,7 @@ function showWelcome(force, startId) {
           el("p", { class: "hl" }, "Maybe you are far from home. Maybe exam week feels heavy. Maybe it seems everyone else already knows the answer."),
           el("p", { class: "hl" }, "They don\u2019t. We didn\u2019t either."),
           el("p", { class: "hl" }, "Here no question is small and nobody studies alone. Seniors who once sat where you sit are ready to help, and one day you will help someone too."),
-          el("p", { class: "hl sign" }, "We are glad you are here. The Campus Loop team")),
+          el("p", { class: "hl sign" }, "We are glad you are here. Loopy Brains team")),
         el("p", { class: "ob-say" }, "So, what should I call you?"), inp];
     } else if (sid === "interests") {
       body = [el("div", { class: "ob-loopy" }, loopyMini()), el("h2", {}, (who ? "Nice to meet you, " + who : "Nice to meet you") + "! \u{1F44B}"), el("p", { class: "ob-say" }, "What brings you here? Pick any. I will tailor your home screen."),
@@ -1602,25 +1661,27 @@ function showWelcome(force, startId) {
         el("div", { class: "ob-start" }, ...starters.map(([t, fn, pri]) => el("button", { class: "btn" + (pri ? " primary" : ""), type: "button", onclick: start(fn) }, t)))];
     }
     box.replaceChildren(el("div", { class: "welcome-card ob-card" }, el("button", { class: "welcome-skip", type: "button", onclick: finish }, "Skip"), bar, el("div", { class: "ob-step ob-s-" + sid }, ...body),
-      el("div", { class: "rowbtns" }, step > 0 ? el("button", { class: "btn", type: "button", onclick: () => go(-1) }, "Back") : null, last ? el("button", { class: "btn", type: "button", onclick: finish }, "Close") : el("button", { class: "btn primary", type: "button", onclick: () => go(1) }, sid === "about" ? "Continue" : sid === "college" ? (pickSlug && pickSlug !== curSlug ? "Continue with " + (pickName.length > 16 ? pickName.slice(0, 15) + "\u2026" : pickName) : "Continue") : "Next"))));
-    const f = box.querySelector("input") || box.querySelector(".btn.primary"); if (f && sid !== "about" && sid !== "college") f.focus();
+      el("div", { class: "rowbtns" }, step > 0 ? el("button", { class: "btn", type: "button", onclick: () => go(-1) }, "Back") : fromSplash ? el("button", { class: "btn", type: "button", onclick: backToStart }, "Back") : null, last ? el("button", { class: "btn", type: "button", onclick: finish }, "Close") : el("button", { class: "btn primary", type: "button", onclick: () => go(1), disabled: sid === "about" }, sid === "about" ? "Continue" : sid === "college" ? (pickSlug && pickSlug !== curSlug ? "Continue with " + (pickName.length > 16 ? pickName.slice(0, 15) + "\u2026" : pickName) : "Continue") : "Next"))));
+    const f = box.querySelector("input") || box.querySelector(".btn.primary"); if (f && sid !== "about") f.focus();
     // The About step: Continue switches on once the whole text has been scrolled through AND the terms box is ticked.
-    if (sid === "about") {
+    if (sid === "about") { try { localStorage.setItem("dd-about-seen", "1"); } catch (_) {}
       const stepEl = box.querySelector(".ob-step"), nextBtn = box.querySelector(".ob-card > .rowbtns .btn.primary"), skipBtn = box.querySelector(".welcome-skip"), agree = box.querySelector("#ob-terms");
       if (stepEl && nextBtn && agree) {
         const hint = el("p", { class: "ob-scrollhint", role: "status" }, "");
-        const atEnd = () => stepEl.scrollTop + stepEl.clientHeight >= stepEl.scrollHeight - 12;
+        let reached = false;
+        const atEnd = () => stepEl.scrollTop + stepEl.clientHeight >= stepEl.scrollHeight - 12, fits = () => stepEl.scrollHeight <= stepEl.clientHeight + 12;
         const update = () => {
-          const end = atEnd(), ok = end && agree.checked;
+          const end = reached, ok = end && agree.checked; aboutReady = ok;
           nextBtn.disabled = !ok; nextBtn.classList.toggle("locked", !ok); if (ok) nextBtn.removeAttribute("aria-disabled"); else nextBtn.setAttribute("aria-disabled", "true");
           if (skipBtn) skipBtn.hidden = !agree.checked;
-          hint.textContent = !end ? "\u2193 Scroll to read everything" : !agree.checked ? "Tick the box to agree to the terms" : "";
+          hint.textContent = !end ? (fits() ? "Please read the text above" : "\u2193 Scroll to read everything") : !agree.checked ? "Tick the box to agree to the terms" : "";
           if (!hint.textContent) hint.remove(); else if (!hint.isConnected) stepEl.parentNode.insertBefore(hint, stepEl.nextSibling);
           if (end) stepEl.style.maskImage = stepEl.style.webkitMaskImage = "none";
         };
         agree.addEventListener("change", () => { if (agree.checked) writeJSON("dd-terms", { v: 1, at: Date.now() }); else { try { localStorage.removeItem("dd-terms"); } catch (_) {} } try { if (navigator.vibrate) navigator.vibrate(8); } catch (_) {} update(); });
-        stepEl.addEventListener("scroll", update, { passive: true });
+        stepEl.addEventListener("scroll", () => { if (atEnd() && stepEl.scrollTop > 0) reached = true; update(); }, { passive: true });
         requestAnimationFrame(() => { update(); setTimeout(update, 600); });
+        setTimeout(() => { if (box.isConnected && fits()) { reached = true; update(); } }, 5000);   // a short text that needs no scrolling unlocks after a few seconds of reading
       }
     }
   }
@@ -1665,7 +1726,7 @@ function showCollegeReveal() {
     mk("path", { d: "M200 38 V22", stroke: "rgb(255 255 255 / .5)", "stroke-width": 2 }), mk("path", { d: "M200 22 l16 5 -16 5z", fill: "#fde68a" }),
     mk("rect", { x: 96, y: 86, width: 48, height: 34, fill: "rgb(255 255 255 / .1)" }), mk("rect", { x: 256, y: 82, width: 52, height: 38, fill: "rgb(255 255 255 / .1)" }),
     mk("circle", { cx: 70, cy: 100, r: 14, fill: "rgb(255 255 255 / .09)" }), mk("circle", { cx: 336, cy: 98, r: 16, fill: "rgb(255 255 255 / .09)" }));
-  const close = () => { try { localStorage.setItem("dd-revealed", SEL); } catch (_) {} ov.classList.add("out"); setTimeout(() => ov.remove(), 260); try { confetti(); } catch (_) {} };
+  const close = () => { try { localStorage.setItem("dd-revealed", SEL); } catch (_) {} ov.classList.add("out"); setTimeout(() => ov.remove(), 260); setTimeout(() => { try { render(); } catch (_) {} }, 400); try { confetti(); } catch (_) {} };
   const ov = el("div", { class: "cr", role: "dialog", "aria-modal": "true", "aria-label": "Welcome to " + COLLEGE },
     el("div", { class: "cr-card" },
       el("div", { class: "cr-art" }, el("i", { class: "cr-orb a" }), el("i", { class: "cr-orb b" }), el("i", { class: "cr-orb c" }), sky,
@@ -1676,14 +1737,14 @@ function showCollegeReveal() {
         el("p", { class: "cr-disc" }, "Independent student community. Not run or endorsed by the college."),
         el("button", { class: "btn primary cr-go", type: "button", onclick: close }, "Enter " + (COLLEGE.length > 22 ? "my college" : COLLEGE) + " \u2192"))));
   ov.style.setProperty("--c1", c1); ov.style.setProperty("--c2", c2);
-  const open = () => document.body.append(ov);
-  if (document.getElementById("splash")) document.addEventListener("splash-closed", () => setTimeout(open, 200), { once: true }); else open();
+  const open = () => { if (welcomePending || document.getElementById("welcome") || document.querySelector(".ag")) { setTimeout(open, 400); return; } document.body.append(ov); };
+  if (document.getElementById("splash")) document.addEventListener("splash-closed", () => setTimeout(open, 60), { once: true }); else open();
 }
 function maybeWelcome() {
   let resume = ""; try { resume = sessionStorage.getItem("dd-ob-resume") || ""; sessionStorage.removeItem("dd-ob-resume"); } catch (_) {}
-  const open = (start) => { const go = () => setTimeout(() => showWelcome(false, start), 250); if (document.getElementById("splash")) document.addEventListener("splash-closed", go, { once: true }); else go(); };
+  const open = (start) => { welcomePending = true; const viaSplash = !!document.getElementById("splash"); const go = () => setTimeout(() => { try { if (viaSplash) sessionStorage.setItem("dd-ob-splash", "1"); } catch (_) {} showWelcome(false, start); if (!document.getElementById("welcome")) welcomePending = false; }, viaSplash ? 800 : 60); if (document.getElementById("splash")) document.addEventListener("splash-closed", go, { once: true }); else go(); };
   if (resume) { try { sessionStorage.setItem("dd-ob-shown", "1"); } catch (_) {} open(resume); return; }   // just picked a college: continue with the name step
-  if (NO_COLLEGE) { try { sessionStorage.setItem("dd-ob-shown", "1"); } catch (_) {} open(); return; }      // brand-new visitors choose their college first
+  if (NO_COLLEGE) { try { sessionStorage.setItem("dd-ob-shown", "1"); } catch (_) {} const seenAbout = (() => { try { return !!localStorage.getItem("dd-about-seen"); } catch(_) { return false; } })(); open(seenAbout ? "college" : undefined); return; }      // brand-new visitors choose their college first
   // welcomeEveryVisit (config.js): show the welcome steps after the opening screen on every visit (handy for testing). Set it to false before launch.
   const every = !!(window.DOUBT_DESK_CONFIG && window.DOUBT_DESK_CONFIG.welcomeEveryVisit);
   if (every) {
@@ -1761,10 +1822,11 @@ document.addEventListener("pointermove", (e) => {
     s.style.setProperty("--ex", (dx / d * 1.6).toFixed(2) + "px"); s.style.setProperty("--ey", (dy / d * 1.2).toFixed(2) + "px");
   });
 }, { passive: true });
-// The Campus Loop brand mark: a C-shaped loop wearing a graduation cap (trusted static markup, parsed as SVG).
+// Loopy Brains brand mark: an LB monogram inside an open coral loop (trusted static markup, parsed as SVG).
 let _bmN = 0;
 function brandMark(size = 64) {
-  const doc = new DOMParser().parseFromString("<svg class=\"bmark\" viewBox=\"220 120 584 580\" width=\""+size+"\" height=\""+size+"\" role=\"img\" aria-label=\"The Campus Loop\"><defs><linearGradient id=\"bmRing"+(++_bmN)+"\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0\" stop-color=\"#22d3ee\"/><stop offset=\".35\" stop-color=\"#6366f1\"/><stop offset=\".7\" stop-color=\"#d946ef\"/><stop offset=\"1\" stop-color=\"#fb923c\"/></linearGradient><linearGradient id=\"bmGold"+(++_bmN)+"\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0\" stop-color=\"#fde68a\"/><stop offset=\".5\" stop-color=\"#f59e0b\"/><stop offset=\"1\" stop-color=\"#fcd34d\"/></linearGradient></defs><circle cx=\"512\" cy=\"410\" r=\"238\" fill=\"none\" stroke=\"url(#bmRing"+(++_bmN)+")\" stroke-width=\"72\" stroke-linecap=\"round\" stroke-dasharray=\"1100 396\" transform=\"rotate(45 512 410)\"/><path d=\"M330 400 L512 322 L694 400 L512 478 Z\" fill=\"#ffffff\"/><path d=\"M404 448 v70 q108 58 216 0 v-70\" fill=\"none\" stroke=\"#e0e7ff\" stroke-width=\"22\" stroke-linejoin=\"round\"/><path d=\"M694 400 v96\" stroke=\"url(#bmGold"+(++_bmN)+")\" stroke-width=\"10\" stroke-linecap=\"round\"/><circle cx=\"694\" cy=\"508\" r=\"17\" fill=\"url(#bmGold"+(++_bmN)+")\"/></svg>", "image/svg+xml");
+  const u = ++_bmN, g = "bmRing" + u;
+  const doc = new DOMParser().parseFromString('<svg class="bmark" viewBox="0 0 512 512" width="' + size + '" height="' + size + '" role="img" aria-label="Loopy Brains">' + '<defs><linearGradient id="' + g + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fdba74"/><stop offset="1" stop-color="#f97316"/></linearGradient></defs><circle cx="256" cy="256" r="196" fill="none" stroke="url(#' + g + ')" stroke-width="30" stroke-linecap="round" stroke-dasharray="960 272" transform="rotate(-75 256 256)"/><circle cx="404" cy="132" r="17" fill="#fff4ec"/><g fill="none" stroke="#fff4ec" stroke-width="34" stroke-linecap="round" stroke-linejoin="round" transform="translate(-41 0)"><path d="M194 168V340H234"/><path d="M302 168V340"/><path d="M302 168H336C366 168 380 188 380 210C380 234 364 252 330 252H302"/><path d="M302 252H338C378 252 394 274 394 298C394 322 376 340 338 340H302"/></g>' + "</svg>", "image/svg+xml");
   const n = document.importNode(doc.documentElement, true); n.setAttribute("aria-hidden", "true"); n.removeAttribute("role"); n.removeAttribute("aria-label"); return n;
 }
 function loopyMini(costume) {
@@ -1772,20 +1834,20 @@ function loopyMini(costume) {
   const id = costume || equippedCostume();
   const svg = mk("svg", { viewBox: "0 0 60 60", width: "46", height: "46", class: "loopy-mini" + ((new Date().getHours() >= 23 || new Date().getHours() < 5) ? " lp-sleepy" : ""), "aria-hidden": "true" });
   const defs = mk("defs", {}), g1 = mk("linearGradient", { id: "lpmPh", x1: 0, y1: 0, x2: 1, y2: 1 }), g2 = mk("linearGradient", { id: "lpmCape", x1: 0, y1: 0, x2: 1, y2: 1 });
-  [["0", "#f9a8d4"], ["0.5", "#ec4899"], ["1", "#a855f7"]].forEach(([o, c]) => g1.append(mk("stop", { offset: o, "stop-color": c }))); [["0", "#ec4899"], ["1", "#7e22ce"]].forEach(([o, c]) => g2.append(mk("stop", { offset: o, "stop-color": c }))); defs.append(g1, g2);
+  [["0", "#f9a8d4"], ["0.5", "#f97316"], ["1", "#16a34a"]].forEach(([o, c]) => g1.append(mk("stop", { offset: o, "stop-color": c }))); [["0", "#f97316"], ["1", "#166534"]].forEach(([o, c]) => g2.append(mk("stop", { offset: o, "stop-color": c }))); defs.append(g1, g2);
   svg.append(defs, mk("path", { d: "M15 44 L3 59 L57 59 L45 44 Z", fill: "url(#lpmCape)" }));
   svg.append(mk("line", { x1: 30, y1: 6, x2: 30, y2: 12, stroke: "#c4b5fd", "stroke-width": 3, "stroke-linecap": "round" }), mk("circle", { cx: 30, cy: 5, r: 3.5, fill: "#fde047" }),
-    mk("rect", { x: 8, y: 12, width: 44, height: 38, rx: 15, fill: "#fff", stroke: "#a78bfa", "stroke-width": 2.5 }), mk("rect", { x: 13, y: 18, width: 34, height: 25, rx: 11, fill: "#1e1757" }),
+    mk("rect", { x: 8, y: 12, width: 44, height: 38, rx: 15, fill: "#fff", stroke: "#4ade80", "stroke-width": 2.5 }), mk("rect", { x: 13, y: 18, width: 34, height: 25, rx: 11, fill: "#1e1757" }),
     mk("ellipse", { cx: 23, cy: 28, rx: 3.4, ry: 4.6, fill: "#67e8f9", class: "lp-eyes" }), mk("ellipse", { cx: 37, cy: 28, rx: 3.4, ry: 4.6, fill: "#67e8f9", class: "lp-eyes" }), mk("path", { d: "M25 36q5 4.5 10 0", fill: "none", stroke: "#fde68a", "stroke-width": 2.4, "stroke-linecap": "round" }));
   svg.append(mk("path", { d: "M10 30 Q8 9 30 9 Q52 9 50 30", fill: "none", stroke: "url(#lpmPh)", "stroke-width": 3, "stroke-linecap": "round" }), mk("rect", { x: 3.5, y: 25, width: 7, height: 15, rx: 3.5, fill: "url(#lpmPh)" }), mk("rect", { x: 49.5, y: 25, width: 7, height: 15, rx: 3.5, fill: "url(#lpmPh)" }));
-  if (id === "none") svg.append(mk("path", { d: "M6 15 L30 3 L54 15 L30 22 Z", fill: "#4c1d95", stroke: "#f9a8d4", "stroke-width": 1.2 }), mk("rect", { x: 19, y: 15.5, width: 22, height: 5, rx: 2.5, fill: "#6d28d9" }), mk("path", { d: "M54 15 L54 29", stroke: "#f9a8d4", "stroke-width": 1.5, "stroke-linecap": "round" }), mk("circle", { cx: 54, cy: 31, r: 2.2, fill: "#f9a8d4" }));
+  if (id === "none") svg.append(mk("path", { d: "M6 15 L30 3 L54 15 L30 22 Z", fill: "#052a2e", stroke: "#f9a8d4", "stroke-width": 1.2 }), mk("rect", { x: 19, y: 15.5, width: 22, height: 5, rx: 2.5, fill: "#fb923c" }), mk("path", { d: "M54 15 L54 29", stroke: "#f9a8d4", "stroke-width": 1.5, "stroke-linecap": "round" }), mk("circle", { cx: 54, cy: 31, r: 2.2, fill: "#f9a8d4" }));
   if (id === "cap") svg.append(mk("path", { d: "M11 13 L30 3 L49 13 L30 21 Z", fill: "#1e1757", stroke: "#fde047", "stroke-width": 1 }), mk("rect", { x: 22, y: 14, width: 16, height: 5, rx: 2, fill: "#312e81" }), mk("path", { d: "M49 13 L49 22", stroke: "#fde047", "stroke-width": 1.6, "stroke-linecap": "round" }), mk("circle", { cx: 49, cy: 23, r: 2, fill: "#fde047" }));
-  if (id === "phones") svg.append(mk("path", { d: "M9 32 A21 21 0 0 1 51 32", fill: "none", stroke: "#f472b6", "stroke-width": 3.6, "stroke-linecap": "round" }), mk("rect", { x: 3, y: 27, width: 8, height: 14, rx: 4, fill: "#f472b6" }), mk("rect", { x: 49, y: 27, width: 8, height: 14, rx: 4, fill: "#f472b6" }));
+  if (id === "phones") svg.append(mk("path", { d: "M9 32 A21 21 0 0 1 51 32", fill: "none", stroke: "#fdba74", "stroke-width": 3.6, "stroke-linecap": "round" }), mk("rect", { x: 3, y: 27, width: 8, height: 14, rx: 4, fill: "#fdba74" }), mk("rect", { x: 49, y: 27, width: 8, height: 14, rx: 4, fill: "#fdba74" }));
   if (id === "shades") svg.append(mk("rect", { x: 14, y: 22.5, width: 14, height: 10, rx: 4.5, fill: "#0b0b1c" }), mk("rect", { x: 32, y: 22.5, width: 14, height: 10, rx: 4.5, fill: "#0b0b1c" }), mk("path", { d: "M28 26 h4", stroke: "#0b0b1c", "stroke-width": 2 }), mk("path", { d: "M16.5 25 l5 0", stroke: "#fff", "stroke-width": 1.2, opacity: ".6", "stroke-linecap": "round" }));
   if (id === "mask") svg.append(mk("path", { d: "M10 24 h40 v9 q-20 6 -40 0 z", fill: "#ef4444" }), mk("ellipse", { cx: 23, cy: 28.5, rx: 4.6, ry: 4.4, fill: "#fff" }), mk("ellipse", { cx: 37, cy: 28.5, rx: 4.6, ry: 4.4, fill: "#fff" }), mk("ellipse", { cx: 23, cy: 28.5, rx: 2.6, ry: 3.4, fill: "#67e8f9", class: "lp-eyes" }), mk("ellipse", { cx: 37, cy: 28.5, rx: 2.6, ry: 3.4, fill: "#67e8f9", class: "lp-eyes" }));
   if (id === "crown") svg.append(mk("path", { d: "M14 14 L17 3 L24 9 L30 1.5 L36 9 L43 3 L46 14 Z", fill: "#fbbf24", stroke: "#b45309", "stroke-width": 1 }), mk("circle", { cx: 17, cy: 3.5, r: 1.8, fill: "#f43f5e" }), mk("circle", { cx: 30, cy: 2, r: 1.8, fill: "#38bdf8" }), mk("circle", { cx: 43, cy: 3.5, r: 1.8, fill: "#f43f5e" }));
   if (id === "legend") svg.append(mk("ellipse", { cx: 30, cy: 4, rx: 15, ry: 3.6, fill: "none", stroke: "#fde047", "stroke-width": 2.4 }), mk("path", { d: "M5 20 l1.6 3.4 3.6 .5 -2.6 2.5 .6 3.6 -3.2 -1.8 -3.2 1.8 .6 -3.6 -2.6 -2.5 3.6 -.5z", fill: "#fde047", transform: "scale(.7) translate(-2 4)" }), mk("path", { d: "M48 30 l1.6 3.4 3.6 .5 -2.6 2.5 .6 3.6 -3.2 -1.8 -3.2 1.8 .6 -3.6 -2.6 -2.5 3.6 -.5z", fill: "#fde047", transform: "scale(.7) translate(20 14)" }));
-  if (id === "goggles") svg.append(mk("path", { d: "M8 28 h6 M46 28 h6", stroke: "#22d3ee", "stroke-width": 3, "stroke-linecap": "round" }), mk("circle", { cx: 23, cy: 28, r: 7.6, fill: "rgba(103,232,249,.25)", stroke: "#22d3ee", "stroke-width": 2.6 }), mk("circle", { cx: 37, cy: 28, r: 7.6, fill: "rgba(103,232,249,.25)", stroke: "#22d3ee", "stroke-width": 2.6 }), mk("path", { d: "M30.6 28 h-1.2", stroke: "#22d3ee", "stroke-width": 2.6 }));
+  if (id === "goggles") svg.append(mk("path", { d: "M8 28 h6 M46 28 h6", stroke: "#86efac", "stroke-width": 3, "stroke-linecap": "round" }), mk("circle", { cx: 23, cy: 28, r: 7.6, fill: "rgba(103,232,249,.25)", stroke: "#86efac", "stroke-width": 2.6 }), mk("circle", { cx: 37, cy: 28, r: 7.6, fill: "rgba(103,232,249,.25)", stroke: "#86efac", "stroke-width": 2.6 }), mk("path", { d: "M30.6 28 h-1.2", stroke: "#86efac", "stroke-width": 2.6 }));
   if (id === "explorer") svg.append(mk("circle", { cx: 37, cy: 28, r: 8.2, fill: "rgba(251,191,36,.14)", stroke: "#f59e0b", "stroke-width": 2.4 }), mk("path", { d: "M43 34 L51 47", stroke: "#f59e0b", "stroke-width": 2.6, "stroke-linecap": "round" }), mk("path", { d: "M33 24 q3 -3 7 -1", fill: "none", stroke: "#fff", "stroke-width": 1.4, "stroke-linecap": "round", opacity: ".8" }));
   if (id === "helper") svg.append(mk("path", { d: "M30 46 l2.5 5 5.5 .8 -4 3.9 .9 5.5 -4.9 -2.6 -4.9 2.6 .9 -5.5 -4 -3.9 5.5 -.8z", fill: "#fbbf24", stroke: "#b45309", "stroke-width": 0.9, "stroke-linejoin": "round" }));
   return svg;
@@ -1900,7 +1962,7 @@ function confetti(n) {
   try {
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const cv = document.createElement("canvas"); cv.className = "confetti"; cv.width = innerWidth; cv.height = innerHeight; document.body.append(cv);
-    const g = cv.getContext("2d"), cols = ["#8b7cff", "#d946ef", "#f97316", "#fde047", "#22c55e", "#38bdf8"], N = n || 90, ps = Array.from({ length: N }, () => ({ x: innerWidth / 2 + (Math.random() - 0.5) * 80, y: innerHeight * 0.45, vx: (Math.random() - 0.5) * 12, vy: -Math.random() * 13 - 4, s: 5 + Math.random() * 6, r: Math.random() * 6, vr: (Math.random() - 0.5) * 0.4, c: cols[Math.floor(Math.random() * cols.length)] }));
+    const g = cv.getContext("2d"), cols = ["#8b7cff", "#fb923c", "#f97316", "#fde047", "#22c55e", "#38bdf8"], N = n || 90, ps = Array.from({ length: N }, () => ({ x: innerWidth / 2 + (Math.random() - 0.5) * 80, y: innerHeight * 0.45, vx: (Math.random() - 0.5) * 12, vy: -Math.random() * 13 - 4, s: 5 + Math.random() * 6, r: Math.random() * 6, vr: (Math.random() - 0.5) * 0.4, c: cols[Math.floor(Math.random() * cols.length)] }));
     const t0 = performance.now();
     (function tick(t) {
       const k = t - t0; g.clearRect(0, 0, cv.width, cv.height);
@@ -1985,7 +2047,7 @@ function renderToday() {
     el("button", { class: "hero-say", type: "button", onclick: loopyTap }, el("span", { class: "hero-say-dot" }), el("span", {}, loopyPrompt().label), el("b", {}, "Ask Loopy \u203A")),
     el("div", { class: "hero-acts" },
       el("button", { class: "hero-ask", type: "button", onclick: () => { const b = $("askBtn"); if (b) b.click(); } }, "❓ Ask a doubt"),
-      el("button", { class: "hero-ask", type: "button", onclick: () => { state.ai = state.ai || { msgs: [], busy: false, note: "" }; showPanel("ai"); } }, "\u2728 Loopy Brain"))),
+      el("button", { class: "hero-ask", type: "button", onclick: () => { state.ai = state.ai || { msgs: [], busy: false, note: "" }; showPanel("ai"); } }, "\u2728 Loopy AI"))),
     (() => { if (newbie) return null; const t = loopyTip(), st = readJSON("dd-tip", {}); if (st.gone && st.day === dayStr()) return null;
       return el("div", { class: "today-tip" }, el("small", {}, "💡 Loopy\u2019s tip for today"), el("p", {}, t.text), el("div", { class: "rowbtns" }, t.cta ? el("button", { class: "btn sm primary", type: "button", onclick: t.cta[1] }, t.cta[0]) : null, el("button", { class: "btn sm", type: "button", onclick: () => { writeJSON("dd-tip", { ...readJSON("dd-tip", {}), day: dayStr(), gone: true }); todayKey = ""; renderToday(); } }, "Got it"))); })(),
     note ? el("div", { class: "today-note" }, el("strong", {}, "💬 " + (note.from ? "A note from " + note.from : "A note from your college")), el("p", {}, note.text), el("button", { class: "of-x", type: "button", "aria-label": "Dismiss note", onclick: () => { writeJSON("dd-note-gone", note.updatedAt); todayKey = ""; renderToday(); } }, "✕")) : null, null, 
@@ -2074,10 +2136,10 @@ function renderEvents() {
 }
 // Explore: every tool in one tidy screen, so the home screen can stay simple.
 const EXPLORE = [
-  ["Study", [["__brain", "\u2728", "Loopy Brain"], ["__mysubj", "\u{1F4DA}", "My subjects"], ["quizBtn", "🧠", "Daily Quiz"], ["labBtn", "🧪", "Study Lab"], ["studyBtn", "📖", "Study Tools"], ["learnBtn", "📚", "Learn from IIT"], ["focusBtn", "🎯", "Focus mode"]]],
+  ["Study", [["__brain", "\u2728", "Loopy AI"], ["__mysubj", "\u{1F4DA}", "My subjects"], ["quizBtn", "🧠", "Daily Quiz"], ["labBtn", "🧪", "Study Lab"], ["studyBtn", "📖", "Study Tools"], ["learnBtn", "📚", "Learn from IIT"], ["focusBtn", "🎯", "Focus mode"]]],
   ["Campus", [["__story", "📸", "Add a story"], ["eventsBtn", "🎉", "Events"], ["drivesBtn", "🏢", "Campus Drives"], ["leadersBtn", "🏆", "Top Helpers"], ["alumniBtn", "🎓", "Alumni", "alumni"]]],
   ["Career", [["careerBtn", "", "Career Guide"], ["__resume", "📄", "Resume builder"]]],
-  ["More", [["__howto", "\u2753", "How to use"], ["__feedback", "\u{1F4AC}", "Feedback and ideas"], ["__stickers", "🎴", "Sticker book"], ["__wardrobe", "👗", "Loopy\u2019s wardrobe"], ["__install", "📲", "Install app"], ["__plus", "⭐", "The Campus Loop Plus"], ["botBtn", "", "Loop Bot", "bot"], ["funBtn", "🎉", "Entertainment", "fun"], ["aboutBtn", "ℹ️", "About Us"]]],
+  ["More", [["__howto", "\u2753", "How to use"], ["__feedback", "\u{1F4AC}", "Feedback and ideas"], ["__stickers", "🎴", "Sticker book"], ["__wardrobe", "👗", "Loopy\u2019s wardrobe"], ["__install", "📲", "Install app"], ["__plus", "⭐", "Loopy Brains Plus"], ["botBtn", "", "Loop Bot", "bot"], ["funBtn", "🎉", "Entertainment", "fun"], ["aboutBtn", "ℹ️", "About Us"]]],
 ];
 function renderExplore() {
   const back = el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back");
@@ -2139,10 +2201,10 @@ function renderTrust() {
   const bar = $("trustBar"); if (!bar) return;
   const students = state.profiles.length, posts = ["doubts", "ideas", "clubs", "gate", "jobs", "challenges"].reduce((n, k) => n + (state[k] || []).length, 0);
   const key = students + "/" + posts + "/" + NO_COLLEGE; if (key === trustKey) return; trustKey = key;
-  const chips = [["🔒", "Anonymous sign-in"], ["🛡️", "Moderated"], ["🚫", "No ads"], ["✔", "Verified students"]];
-  if (!NO_COLLEGE && students >= 10) chips.unshift(["👥", students + " students"]);
-  if (!NO_COLLEGE && posts >= 25) chips.splice(1, 0, ["💬", posts + " posts"]);
-  bar.replaceChildren(...chips.map(([i, t]) => el("span", { class: "trust-chip" }, i + " " + t)), el("a", { class: "trust-link", href: "privacy.html", target: "_blank", rel: "noopener" }, "Privacy"));
+  const chips = [["lock", "Anonymous sign-in"], ["shield", "Moderated"], ["ban", "No ads"], ["check", "Verified students"]];
+  if (!NO_COLLEGE && students >= 10) chips.unshift(["users", students + " students"]);
+  if (!NO_COLLEGE && posts >= 25) chips.splice(1, 0, ["chat", posts + " posts"]);
+  bar.replaceChildren(...chips.map(([i, t]) => el("span", { class: "trust-chip" }, icon(i, 13), t)), el("a", { class: "trust-link", href: "privacy.html", target: "_blank", rel: "noopener" }, "Privacy"));
 }
 function renderHeader() {
   renderTrust(); renderToday();
@@ -2201,7 +2263,7 @@ function renderHeader() {
     const open = document.querySelector("header.top").classList.contains("filters-open");
     const yr = (state.tab === "doubts" || state.tab === "gate") ? (state.yearFilter === "All" ? "All years" : state.yearFilter) : null;
     const camp = state.campusFilter === "all" ? "All campuses" : state.campusFilter;
-    ft.replaceChildren(el("span", {}, "🎚️ Filters · " + camp + (yr ? " · " + yr : "")), el("span", {}, open ? "▲" : "▼"));
+    ft.replaceChildren(el("span", {}, "Filters · " + camp + (yr ? " · " + yr : "")), el("span", {}, open ? "▲" : "▼"));
     ft.classList.toggle("on", state.campusFilter !== "all" || (yr && state.yearFilter !== "All"));
     ft.setAttribute("aria-expanded", String(open));
   }
@@ -2226,7 +2288,7 @@ function renderHeader() {
 
 // Every tab says what it is for, how to use it in three steps, and the next step to take. Students can close it; a small link brings it back.
 const TAB_GUIDE = {
-  doubts: { icon: "\u2753", purpose: "Got a problem? Ask it here and classmates and seniors will answer.", steps: ["Pick your branch and subject on the left (or leave it on All).", "Tap Ask a doubt, write your question and add a photo if it helps.", "Open your doubt later to read answers. Thank the helpful ones with a reaction."], safe: "Do not post phone numbers, passwords or photos of other people.", next: () => { const mine = store ? allMyIds() : new Set(); const asked = state.doubts.some(d => mine.has(d.authorId)); return asked ? ["\u{1F64B} Answer a classmate\u2019s doubt", () => showUnanswered()] : ["\u2753 Ask your first doubt", () => openAsk()]; } },
+  doubts: { icon: "\u2753", purpose: "Got a problem? Ask it here and classmates and seniors will answer.", steps: ["Choose your branch once. You will see the doubts of your branch and the common subjects, then pick a subject on the left.", "Tap Ask a doubt, write your question and add a photo if it helps.", "Open your doubt later to read answers. Thank the helpful ones with a reaction."], safe: "Do not post phone numbers, passwords or photos of other people.", next: () => { const mine = store ? allMyIds() : new Set(); const asked = state.doubts.some(d => mine.has(d.authorId)); return asked ? ["\u{1F64B} Answer a classmate\u2019s doubt", () => showUnanswered()] : ["\u2753 Ask your first doubt", () => openAsk()]; } },
   ideas: { safe: "Share the idea, not private data or secrets you must protect.", icon: "\u{1F4A1}", purpose: "Share project, startup and campus ideas. Find people to build them with.", steps: ["Choose a category, such as Project or Startup.", "Tap Share an idea and say what you want to build and who you need.", "Read the comments, then team up with the people who reply."], next: () => ["\u{1F4A1} Share an idea", () => openAsk()] },
   clubs: { safe: "Meet club members on campus and in groups you can verify.", icon: "\u{1F3DB}", purpose: "Find your club, see what it is doing and post updates for its members.", steps: ["Pick a club on the left.", "Read its latest posts and events.", "Post a meeting, a result or a call for new members."], next: () => ["\u{1F4E3} Post in a club", () => openAsk()] },
   challenges: { safe: "Points come only from playing. Nobody can sell or give you points.", icon: "\u{1F3AE}", purpose: "Quizzes, puzzles and contests. Win points for yourself and your college.", steps: ["Take the daily quiz. It takes one minute.", "Try a puzzle or an innovation challenge.", "Check the Board to see how your college is doing this week."], next: () => ["\u{1F9E0} Take today\u2019s quiz", () => showPanel("quiz")] },
@@ -2234,6 +2296,50 @@ const TAB_GUIDE = {
   market: { safe: "Meet in a public place on campus. Do not pay in advance.", icon: "\u{1F6D2}", purpose: "Buy and sell books, notes, electronics and hostel items with your college mates.", steps: ["Pick a category, or search for what you need.", "Message the seller and meet in a public place on campus.", "Selling? Tap Post an item with a clear photo and price."], next: () => ["\u{1F3F7}\uFE0F Sell something", () => openAsk()] },
   gate: { safe: "Use papers from official or trusted sources.", icon: "\u{1F3AF}", purpose: "Exam preparation: previous papers, tips and discussions for your exam.", steps: ["Pick your branch and subject.", "Open the previous papers and try them with a timer.", "Stuck on a question? Post it in the discussion."], next: () => ["\u{1F4DD} Open previous papers", () => { const b = document.querySelector(".pyq-panel, .subj-chip"); if (b) b.scrollIntoView({ behavior: "smooth" }); }] },
 };
+// Home block on top of the Doubts feed: a greeting, one big call to action and four shortcut tiles.
+function renderHome() {
+  const box = $("homeBento"); if (!box) return;
+  const show = state.tab === "doubts" && state.group === "All" && !state.query.trim() && !NO_COLLEGE && !state.selected;
+  if (!show) { box.hidden = true; return; }
+  const hr = new Date().getHours();
+  const greet = hr < 5 ? "Good night" : hr < 12 ? "Good morning" : hr < 17 ? "Good afternoon" : "Good evening";
+  const name = (getName() || "").trim().split(/\s+/)[0] || "";
+  const college = COLLEGE || "Your campus";
+  const chip = college.replace(/RGUKT\s*/i, "").trim().slice(0, 6).toUpperCase() || college.slice(0, 5).toUpperCase();
+  box.hidden = false;
+  box.replaceChildren(
+    el("div", { class: "hb-hero" },
+      el("div", { class: "hb-hero-top" },
+        el("button", { type: "button", class: "hb-close", "aria-label": "Close welcome card", onclick: () => { box.hidden = true; } }, "×"),
+        el("div", { class: "hb-chip" }, chip)
+      ),
+      el("img", { class: "hb-promo", src: "brand/loopy-brains-promo-480.png", alt: "Loopy Brains", loading: "lazy" }),
+      el("div", { class: "hb-hero-row" },
+        el("div", { class: "hb-greet-col" },
+          el("p", { class: "hb-college-name" }, college),
+          el("h2", { class: "hb-greet" }, greet + (name ? ", " + name : "") + " 👋"),
+          el("p", { class: "hb-tagline" }, "Every question is welcome here.")
+        )
+      ),
+      el("div", { class: "hb-prompt" },
+        el("span", { class: "hb-prompt-dot", "aria-hidden": "true" }),
+        el("p", { class: "hb-prompt-msg" }, "Stuck on a topic? I can explain it simply"),
+        el("button", { type: "button", class: "hb-prompt-btn", onclick: () => { state.ai = state.ai || { msgs: [], busy: false, note: "" }; showPanel("ai"); } }, "Ask Loopy ›")
+      ),
+      el("p", { class: "hb-choice" }, "Ask a doubt to your friend or classmate, or ask Loopy AI. It is your choice."),
+      el("div", { class: "hb-actions" },
+        el("button", { type: "button", class: "hb-action", onclick: () => openAsk() },
+          el("span", { class: "hb-action-ic" }, "❓"),
+          el("b", {}, "Ask a doubt"), el("small", {}, "to a friend or classmate")
+        ),
+        el("button", { type: "button", class: "hb-action", onclick: () => { state.ai = state.ai || { msgs: [], busy: false, note: "" }; showPanel("ai"); } },
+          el("span", { class: "hb-action-ic" }, "✨"),
+          el("b", {}, "Ask Loopy AI"), el("small", {}, "answers in seconds")
+        )
+      )
+    )
+  );
+}
 function renderGuide() {
   const box = $("guideBar"); if (!box) return;
   const g = TAB_GUIDE[state.tab]; if (!g || NO_COLLEGE || state.query.trim()) { box.hidden = true; return; }
@@ -2319,18 +2425,18 @@ function curioPuzzle(C, o, redo, today) {
 }
 function curioMap(C) {
   const pr = curioProf(), list = (C.maps || []).filter(m => !pr.year || !m.y || m.y.includes(pr.year)), m = list.length ? list[Math.floor(dayNum() / 1) % list.length] : null; if (!m) return null;
-  const NS = "http://www.w3.org/2000/svg", W = 320, H = 260, cx = W / 2, cy = H / 2, R = 96, col = { subject: "#7c3aed", job: "#f97316", use: "#16a34a" };
+  const NS = "http://www.w3.org/2000/svg", W = 320, H = 260, cx = W / 2, cy = H / 2, R = 96, col = { subject: "#15803d", job: "#f97316", use: "#16a34a" };
   const mk = (t, a, kids) => { const n = document.createElementNS(NS, t); for (const k in a) n.setAttribute(k, a[k]); (kids || []).forEach(c => n.append(c)); return n; };
   const svg = mk("svg", { viewBox: "0 0 " + W + " " + H, role: "img", "aria-label": "Map of " + m.c + " and what it connects to", class: "curio-svg" });
   m.l.forEach(([label, kind], i) => {
-    const ang = (i / m.l.length) * Math.PI * 2 - Math.PI / 2, x = cx + R * 1.18 * Math.cos(ang), y = cy + R * 0.92 * Math.sin(ang), c = col[kind] || "#7c3aed";
+    const ang = (i / m.l.length) * Math.PI * 2 - Math.PI / 2, x = cx + R * 1.18 * Math.cos(ang), y = cy + R * 0.92 * Math.sin(ang), c = col[kind] || "#15803d";
     svg.append(mk("line", { x1: cx, y1: cy, x2: x, y2: y, stroke: c, "stroke-width": "2", opacity: ".5" }));
     const g = mk("g", { tabindex: "0", role: "button", "aria-label": "Search " + label, class: "curio-node" }), w = Math.max(70, label.length * 6.4 + 16);
     g.append(mk("rect", { x: x - w / 2, y: y - 13, width: w, height: 26, rx: 13, fill: c }), (() => { const t = mk("text", { x, y: y + 4.5, "text-anchor": "middle", fill: "#fff", "font-size": "11", "font-weight": "700" }); t.textContent = label; return t; })());
     const go = () => openLoopySearch(label, "curious"); g.addEventListener("click", go); g.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
     svg.append(g);
   });
-  svg.append(mk("circle", { cx, cy, r: 38, fill: "#1e1b4b" }), (() => { const t = mk("text", { x: cx, y: cy + 4, "text-anchor": "middle", fill: "#fff", "font-size": "11", "font-weight": "800" }); t.textContent = m.c.length > 15 ? m.c.slice(0, 14) + "…" : m.c; return t; })());
+  svg.append(mk("circle", { cx, cy, r: 38, fill: "#0f3d22" }), (() => { const t = mk("text", { x: cx, y: cy + 4, "text-anchor": "middle", fill: "#fff", "font-size": "11", "font-weight": "800" }); t.textContent = m.c.length > 15 ? m.c.slice(0, 14) + "…" : m.c; return t; })());
   return el("div", { class: "learn-card curio-card" }, el("small", { class: "tag" }, "\u{1F5FA}️ TOPIC MAP"), el("strong", {}, m.c + " connects to"), svg, el("small", { class: "hint" }, "Purple: subjects · Orange: careers · Green: real uses. Tap any bubble to search it."));
 }
 function curioBuddy(redo) {
@@ -2398,6 +2504,31 @@ function renderCurious() {
 }
 // RGUKT is open from B.Tech 2nd year (E2) onwards (the six-year integrated course starts with P1, P2 and E1). This is a self-declaration shown once on RGUKT.
 const RG_YEARS = [["P1", "Pre-University 1", false], ["P2", "Pre-University 2", false], ["E1", "B.Tech 1st year", false], ["E2", "B.Tech 2nd year", true], ["E3", "B.Tech 3rd year", true], ["E4", "B.Tech 4th year", true]];
+// ---------- student branch: each student sees the doubts of their own branch and the common subjects ----------
+// The branch is the student's own choice (saved in dd-branch; "*" means "my branch is not listed, show me everything"). Nothing is stored on the post: the branch of a doubt comes from its subject.
+const BRANCH_KEY = "dd-branch";
+const myBranch = () => { try { const b = localStorage.getItem(BRANCH_KEY) || ""; return b === "*" || DEPT_MAP[b] ? b : ""; } catch (_) { return ""; } };
+const branchFilterOn = () => { const b = myBranch(); return !!b && b !== "*" && !(typeof isAdmin === "function" && isAdmin()); };
+const deptsOf = (subject) => Object.keys(DEPT_MAP).filter(d => (DEPT_MAP[d] || []).includes(subject));
+function branchSees(d) {
+  if (!branchFilterOn()) return true;
+  if (store && d.authorId && d.authorId === store.uid) return true;   // your own doubts always stay visible
+  const ds = deptsOf(d.subject); return !ds.length || ds.includes(myBranch());
+}
+function applyBranchFilter() { state.doubts = (state.doubtsAll || state.doubts || []).filter(branchSees); }
+function showBranchPicker(force) {
+  if (document.getElementById("rgBranch")) return;
+  const names = Object.keys(DEPT_MAP); if (!names.length) return;
+  const cur = myBranch(), ov = el("div", { class: "welcome", id: "rgBranch", role: "dialog", "aria-modal": "true", "aria-label": "Which branch are you in?" });
+  const choose = (b) => { try { localStorage.setItem(BRANCH_KEY, b); const o = readJSON("dd-curio-prof", {}) || {}; if (BRANCH_TAGS[b]) o.branch = b; else if (b === "*") delete o.branch; writeJSON("dd-curio-prof", o); } catch (_) {} ov.remove(); applyBranchFilter(); state.dept = b !== "*" && DEPT_MAP[b] ? b : "All"; state.group = "All"; render(); };
+  ov.append(el("div", { class: "welcome-card ob-card" }, el("div", { class: "ob-loopy ob-brand" }, brandMark(72)), el("h2", {}, "Which branch are you in?"),
+    el("p", { class: "ob-say" }, "You will see the doubts of your own branch and the common subjects. Doubts of other branches stay hidden, so your feed has only what matters to you."),
+    el("div", { class: "rg-opts", role: "group", "aria-label": "Your branch" }, ...names.map(n => el("button", { class: "rg-opt ok" + (cur === n ? " on" : ""), type: "button", onclick: () => choose(n) }, el("span", { class: "rg-name" }, (DEPT_VISUAL[n] && DEPT_VISUAL[n].label) || n), el("small", {}, n))),
+      el("button", { class: "rg-opt", type: "button", onclick: () => choose("*") }, el("span", { class: "rg-name" }, "My branch is not listed"), el("small", {}, "Show everything"))),
+    force ? el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => ov.remove() }, "Cancel")) : null,
+    el("p", { class: "hint" }, "This is your own choice. You can change it any time from the Doubts page.")));
+  document.body.append(ov);
+}
 function showEligibility() {
   if (document.getElementById("rgElig")) return;
   const msg = el("p", { class: "ob-say", role: "status" }, "");
@@ -2414,7 +2545,7 @@ function showEligibility() {
     el("p", { class: "hint" }, "This is your own declaration. Please answer honestly. Details are in the ", el("a", { href: "terms.html", target: "_blank", rel: "noopener" }, "Terms"), ".")));
   document.body.append(ov);
 }
-// ---------- Short Campus Loop ID: STATE-COLLEGE-4 digits, for example AP-RGU-4821 ----------
+// ---------- Short Loopy Brains ID: STATE-COLLEGE-4 digits, for example AP-RGU-4821 ----------
 // Made from the sign-in id with a fixed mix, so it is the same on every visit and needs no server. It is for sharing and support, never for signing in.
 const STATE_CODES = { "Andhra Pradesh": "AP", "Telangana": "TS", "Tamil Nadu": "TN", "Karnataka": "KA", "Kerala": "KL", "Maharashtra": "MH", "Delhi": "DL", "Uttar Pradesh": "UP", "West Bengal": "WB", "Gujarat": "GJ", "Rajasthan": "RJ", "Madhya Pradesh": "MP", "Punjab": "PB", "Odisha": "OD", "Bihar": "BR", "Assam": "AS", "Haryana": "HR", "Jammu and Kashmir": "JK", "Uttarakhand": "UK", "Jharkhand": "JH", "Chhattisgarh": "CG", "Himachal Pradesh": "HP", "Puducherry": "PY", "Goa": "GA", "Meghalaya": "ML", "Manipur": "MN", "Chandigarh": "CH", "Tripura": "TR", "Nagaland": "NL", "Arunachal Pradesh": "AR", "Mizoram": "MZ", "Sikkim": "SK", "Ladakh": "LA", "Andaman and Nicobar Islands": "AN", "Lakshadweep": "LD", "Dadra and Nagar Haveli and Daman and Diu": "DD" };
 function clCodes() {
@@ -2451,7 +2582,7 @@ async function claimStudentIdOnce() {
 }
 function idCard() {
   const uid = store && store.uid; if (!uid) return null; const id = campusId(uid), final = id === readJSON("dd-clid", ""), say = el("small", { class: "hint", role: "status" }, "");
-  return el("div", { class: "learn-card id-card" }, el("small", { class: "tag" }, "\u{1F194} YOUR CAMPUS LOOP ID"), el("strong", { class: "id-code" }, id),
+  return el("div", { class: "learn-card id-card" }, el("small", { class: "tag" }, "\u{1F194} YOUR LOOPY BRAINS ID"), el("strong", { class: "id-code" }, id),
     el("small", { class: "hint" }, final ? "Your own number, never reused. Share it with friends or quote it when you write to support. It is not a password." : "Temporary number. Your final number is issued when the server is connected. It is not a password."),
     el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: async () => { try { await navigator.clipboard.writeText(id); say.textContent = "Copied."; } catch (_) { say.textContent = id; } } }, "\u{1F4CB} Copy")), say);
 }
@@ -2760,7 +2891,7 @@ function pushAskCard(d) {
 // ---------- Pilot feedback, doubt of the day ----------
 const FB_PAY = [["no", "No"], ["29", "₹29"], ["49", "₹49"], ["99", "₹99"], ["later", "Ask me later"]];
 const fbDone = () => readJSON("dd-fb-" + weekKey(), false);
-const FB_CATS = [["Suggestion", "\u{1F4A1} Suggestion"], ["Bug", "\u{1F41B} Something is wrong"], ["Feature", "\u2728 New feature idea"], ["Loopy Brain", "\u{1F50E} Loopy Brain"], ["Praise", "\u2764\uFE0F I love this"]];
+const FB_CATS = [["Suggestion", "\u{1F4A1} Suggestion"], ["Bug", "\u{1F41B} Something is wrong"], ["Feature", "\u2728 New feature idea"], ["Loopy AI", "\u{1F50E} Loopy AI"], ["Praise", "\u2764\uFE0F I love this"]];
 function renderFeedback() {
   { const g = connectingGate(); if (g) return g; }
   const f = { rating: 0, pay: "later", cat: state.fbCat || "Suggestion" }, say = el("p", { class: "hint", role: "status" }, "");
@@ -2839,7 +2970,7 @@ function renderBell() {
   let b = $("notifBtn");
   if (!b) { const host = $("themeBtn"); if (!host || !host.parentNode) return; b = el("button", { class: "chip", id: "notifBtn", type: "button", "aria-label": "Notifications", title: "Notifications", onclick: () => showPanel("notifs") }); host.parentNode.insertBefore(b, host); }
   const n = notifItems().filter(i => i.fresh).length;
-  b.replaceChildren(el("span", { "aria-hidden": "true" }, "\u{1F514}"), n ? el("i", { class: "bell-n" }, n > 9 ? "9+" : String(n)) : null);
+  b.replaceChildren(icon("bell", 18), n ? el("i", { class: "bell-n" }, n > 9 ? "9+" : String(n)) : null);
   b.setAttribute("aria-label", n ? n + " new notifications" : "Notifications");
 }
 // While the app is open in the background, new answers can also appear as a phone notification (only after the student allows it).
@@ -2910,6 +3041,14 @@ const MODE_GUIDE = {
   name: { icon: "✏️", purpose: "Choose the name shown with your posts.", steps: ["Type a nickname.", "Avoid your phone number or address.", "Save."], safe: "Use a nickname. Real names are not required.", next: null },
   campus: { icon: "\u{1F4CD}", purpose: "Choose your campus so classmates find you.", steps: ["Pick your campus.", "Browse its posts.", "Send a post to other campuses too."], safe: "You can change it later.", next: null },
   ask: { icon: "✍️", purpose: "Write your post. Pick who should see it before you send.", steps: ["Choose a subject.", "Write clearly and add a photo if it helps.", "Choose who can see it, then post."], safe: "Do not post phone numbers, addresses, passwords or photos of other people.", next: null },
+  about: { icon: "\u2139\uFE0F", purpose: "Who we are and why Loopy Brains exists.", steps: ["Read the short story.", "Check the Terms and Privacy links at the bottom.", "Write to us if you have an idea or a problem."], safe: "We never ask for your password or OTP.", next: null },
+  appearance: { icon: "\u{1F3A8}", purpose: "Change colours and light, dark or black mode.", steps: ["Pick a colour set.", "Choose light, dark or black.", "Go back. Your choice is saved on this phone."], safe: "Only the look of the app changes, nothing else.", next: null },
+  howto: { icon: "\u2753", purpose: "A quick tour of the app in a few steps.", steps: ["Read the steps one by one.", "Tick the ones you have done.", "Come back here any time from More."], safe: "Nothing here changes your account.", next: null },
+  students: { icon: "\u{1F465}", purpose: "See the students of your college and find classmates.", steps: ["Search a name or scroll the list.", "Open a profile to see what they helped with.", "Ask a doubt to a friend or classmate from the Doubts tab."], safe: "Only nicknames and public points are shown.", next: ["❓ Ask a doubt", "ask"] },
+  topic: { icon: "\u{1F4DA}", purpose: "Everything about one topic in one place: explanation, videos and questions.", steps: ["Read the short explanation first.", "Open a video or a note that helps.", "Tap Back, then ask a doubt if something is still unclear."], safe: "Videos and notes come from outside sources. Check them with your syllabus.", next: ["❓ Ask a doubt", "ask"] },
+  edit: { icon: "\u270F\uFE0F", purpose: "Change your own post.", steps: ["Edit the text.", "Add or remove a photo.", "Save. Everyone sees the new version."], safe: "Do not add phone numbers, addresses or passwords.", next: null },
+  alumniJob: { icon: "\u{1F4BC}", purpose: "Jobs and referrals posted by alumni of your college.", steps: ["Open a job to read the details.", "Contact the alumnus politely.", "Never pay money to get a job."], safe: "A real job never asks you to pay. Report it if it does.", next: null },
+  alumniJoin: { icon: "\u{1F393}", purpose: "Join the alumni network of your college.", steps: ["Fill in your batch and company.", "Choose what you can help with.", "Submit. The admin checks it first."], safe: "Share only what you are happy to show to students.", next: null },
   view: { icon: "\u{1F4AC}", purpose: "Read the post and its answers.", steps: ["Read the question.", "Add an answer or a reaction.", "Report anything unsafe with the Report button."], safe: "Be kind. Reported posts are reviewed by the admin.", next: null },
 };
 function modeGuide(mode) {
@@ -2955,10 +3094,11 @@ function renderRail() {
   const extra = Object.keys(counts).filter(s => !t.groups.includes(s));
 
   const deptTabs = (state.tab === "doubts" || state.tab === "gate") && Object.keys(DEPT_MAP).length ? el("div", { class: "dept-tabs" },
-    ...Object.keys(DEPT_MAP).map(d => el("button", {
+    ...Object.keys(DEPT_MAP).filter(d => state.tab !== "doubts" || !branchFilterOn() || d === myBranch()).map(d => el("button", {
       type: "button", class: "dept-tab" + (state.dept === d ? " active" : ""),
       onclick: () => { state.dept = state.dept === d ? "All" : d; state.group = "All"; render(); },
-    }, d))
+    }, d)),
+    state.tab === "doubts" && branchFilterOn() ? el("button", { type: "button", class: "dept-tab dept-change", onclick: () => showBranchPicker(true) }, "Change branch") : null
   ) : null;
 
   const showSubjects = Object.keys(DEPT_MAP).length === 0 || !(state.tab === "doubts" || state.tab === "gate") || state.dept !== "All";
@@ -4140,8 +4280,8 @@ function wrapLines(g, text, maxW) {
 }
 async function shareResult({ kicker, emoji, big, line }) {
   const W = 1080, H = 1350, cv = document.createElement("canvas"); cv.width = W; cv.height = H; const g = cv.getContext("2d");
-  const [a, b] = BRAND_COLORS || (IS_RGUKT ? STATE_COLORS["Andhra Pradesh"] : ["#6d28d9", "#db2777"]);
-  const bg = g.createLinearGradient(0, 0, W, H); bg.addColorStop(0, a); bg.addColorStop(0.55, "#6d28d9"); bg.addColorStop(1, b); g.fillStyle = bg; g.fillRect(0, 0, W, H);
+  const [a, b] = BRAND_COLORS || (IS_RGUKT ? STATE_COLORS["Andhra Pradesh"] : ["#fb923c", "#f97316"]);
+  const bg = g.createLinearGradient(0, 0, W, H); bg.addColorStop(0, a); bg.addColorStop(0.55, "#fb923c"); bg.addColorStop(1, b); g.fillStyle = bg; g.fillRect(0, 0, W, H);
   g.fillStyle = "rgba(255,255,255,.08)"; g.beginPath(); g.arc(W - 60, 180, 320, 0, 7); g.fill(); g.beginPath(); g.arc(120, H - 120, 380, 0, 7); g.fill();
   g.strokeStyle = "#fff"; g.lineWidth = 26; g.lineCap = "round"; g.beginPath(); g.arc(150, 150, 58, 0.75, 5.53); g.stroke();   // the C of the logo
   g.fillStyle = "#fde047"; g.beginPath(); g.moveTo(228, 120); g.lineTo(238, 146); g.lineTo(264, 150); g.lineTo(238, 156); g.lineTo(228, 182); g.lineTo(218, 156); g.lineTo(192, 150); g.lineTo(218, 146); g.closePath(); g.fill();
@@ -4265,9 +4405,9 @@ function inviteCard() {
       try { await navigator.clipboard.writeText(text + " " + url); note.textContent = "Link copied. Paste it in your class group."; } catch (_) { note.textContent = url; }
     } }, "Share invite link")), note);
 }
-// ---------- The Campus Loop Plus ----------
+// ---------- Loopy Brains Plus ----------
 function plusCard() {
-  return el("div", { class: "learn-card" }, el("strong", {}, "⭐ The Campus Loop Plus" + (state.plan.plus ? " (active)" : "")),
+  return el("div", { class: "learn-card" }, el("strong", {}, "⭐ Loopy Brains Plus" + (state.plan.plus ? " (active)" : "")),
     el("p", { class: "hint" }, PLUS.enabled ? "Cloud backup of your study tools, a ⭐ badge and more." : "Early access is free while we build it. Tell us what you would like."),
     el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => { loadPlan().then(() => { if (state.mode === "plus") render(); }); showPanel("plus"); } }, "See Plus")));
 }
@@ -4288,8 +4428,8 @@ async function startCheckout(planKey, gift) {
 }
 const PLUS_FEATURES = ["Plus gift link for a friend", "Group study rooms with a shared timer", "Scan handwritten notes into flashcards", "Live doubt sessions with seniors", "Placement preparation kit", "Offline downloads of papers", "Weekly leaderboard for Plus members", "More resume templates", "No ads, ever"];
 const PLUS_TILES = [
-  ["\u{1F50E}", "Loopy Search", "Search any topic for a quick answer, pictures, videos and PDFs.", "loopysearch"],
-  ["", "Loopy Brain", "Five Loopy models. All five are free for RGUKT students. Other colleges get Spark free, and the rest are Campus Loop Plus.", "ai"],
+  ["\u{1F50E}", "Loopy AI Search", "Search any topic for a quick answer, pictures, videos and PDFs.", "loopysearch"],
+  ["", "Loopy AI", "Five Loopy models. All five are free for RGUKT students. Other colleges get Spark free, and the rest are Loopy Brains Plus.", "ai"],
   ["📝", "Mock tests", "Timed subject and placement tests with a topic-wise report.", "mock"],
   ["📓", "Mistake notebook", "Questions you missed come back until you get them right.", "mistakes"],
   ["🗓️", "Exam planner", "A daily plan with spaced revision before your exam.", "planner"],
@@ -4302,7 +4442,7 @@ const PLUS_TILES = [
   ["🎯", "Goals and badges", "Weekly targets and badges to keep you going.", "goals"],
   ["⭐", "Plus star", "A star next to your nickname on every post.", ""],
 ];
-const PLUS_COMPARE = [["", "Free", "Plus"], ["Loopy Brain models", "Spark (+ Scholar for RGUKT)", "All 5: + Scholar, Vision, Sage, Apex"], ["Board, stories, quizzes, Study Lab", "✔", "✔"], ["Daily streaks and battles", "✔", "✔"], ["AI study helper", "–", "✔"], ["Mock tests and progress chart", "–", "✔"], ["Mistake notebook and exam planner", "–", "✔"], ["Paper vault", "–", "✔"], ["Weekly goals, badges, focus timer", "–", "✔"], ["Resume builder, weekly leaderboard", "–", "✔"], ["Cloud backup, themes, ⭐", "–", "✔"]];
+const PLUS_COMPARE = [["", "Free", "Plus"], ["Loopy AI models", "Spark (+ Scholar for RGUKT)", "All 5: + Scholar, Vision, Sage, Apex"], ["Board, stories, quizzes, Study Lab", "✔", "✔"], ["Daily streaks and battles", "✔", "✔"], ["AI study helper", "–", "✔"], ["Mock tests and progress chart", "–", "✔"], ["Mistake notebook and exam planner", "–", "✔"], ["Paper vault", "–", "✔"], ["Weekly goals, badges, focus timer", "–", "✔"], ["Resume builder, weekly leaderboard", "–", "✔"], ["Cloud backup, themes, ⭐", "–", "✔"]];
 function renderPlus() {
   const acct = myAccount(), verified = acct.verified, has = state.plan.plus;
   const canBackup = !!store && !!store.getTop && verified && (!PLUS.enabled || has);
@@ -4384,9 +4524,9 @@ function renderPlus() {
       PLUS.enabled ? el("p", { class: "hint" }, "Pay safely by UPI, card or net banking (Razorpay). Your plan switches on within a minute of paying." + (verified ? "" : " Verify your email first (Profile › Verify your email) so we can attach the plan to you.")) : el("div", {}, el("p", { class: "hint" }, "Payments open soon. Everything below is free while we build Plus. Tap Notify me and we will tell you the day it opens" + (offerOn() ? ", and you get the " + offerOn().label.toLowerCase() + " price of ₹" + offerOn().yearly + " for the first year." : ".")), wemail));
   };
   return [
-    el("h2", {}, "⭐ The Campus Loop Plus" + (has ? " (active)" : "")),
+    el("h2", {}, "⭐ Loopy Brains Plus" + (has ? " (active)" : "")),
     has ? el("div", { class: "plus-hero" }, "Welcome, Plus member. Your studio is ready.") : null,
-    el("p", { class: "hint" }, has && state.plan.college ? "🎓 " + COLLEGE + " provides Plus for every student until " + new Date(state.plan.until).toLocaleDateString() + ". Enjoy, and thank your college!" : has ? "Thank you for supporting CampusLoop. Your plan is active until " + new Date(state.plan.until).toLocaleDateString() + "." : PLUS.enabled ? "Extras for students who want more. Everything free today stays free." : "Early access: everything below that already works is free while we build Plus. Everything free today stays free."),
+    el("p", { class: "hint" }, has && state.plan.college ? "🎓 " + COLLEGE + " provides Plus for every student until " + new Date(state.plan.until).toLocaleDateString() + ". Enjoy, and thank your college!" : has ? "Thank you for supporting Loopy Brains. Your plan is active until " + new Date(state.plan.until).toLocaleDateString() + "." : PLUS.enabled ? "Extras for students who want more. Everything free today stays free." : "Early access: everything below that already works is free while we build Plus. Everything free today stays free."),
     (!plusLocked() ? coachCard() : null),
     plansBlock(),
     msg,
@@ -4411,7 +4551,7 @@ function renderPlus() {
       el("button", { class: "btn", type: "button", onclick: () => showPanel("resume") }, "📄 Resume builder"),
       el("button", { class: "btn", type: "button", onclick: () => showPanel("wboard") }, "🏅 Weekly leaderboard")),
     el("div", { class: "label" }, "🎨 Theme"),
-    (PLUS.enabled && !has) ? el("p", { class: "hint" }, "Themes are part of the paid plan.") : el("div", { class: "rowbtns" }, ...THEMES.map(([n, c]) => el("button", { class: "btn sm", type: "button", onclick: () => { try { if (c) localStorage.setItem("dd-theme", c); else localStorage.removeItem("dd-theme"); } catch (_) {} if (!c) { const b = BRAND_COLORS || ["#4f46e5", "#7c3aed"]; document.documentElement.style.setProperty("--accent", b[0]); document.documentElement.style.setProperty("--brand-a", b[0]); document.documentElement.style.setProperty("--brand-b", b[1]); } else applyTheme(); } }, n))),
+    (PLUS.enabled && !has) ? el("p", { class: "hint" }, "Themes are part of the paid plan.") : el("div", { class: "rowbtns" }, ...THEMES.map(([n, c]) => el("button", { class: "btn sm", type: "button", onclick: () => { try { if (c) localStorage.setItem("dd-theme", c); else localStorage.removeItem("dd-theme"); } catch (_) {} if (!c) { const b = BRAND_COLORS || ["#15803d", "#15803d"]; document.documentElement.style.setProperty("--accent", b[0]); document.documentElement.style.setProperty("--brand-a", b[0]); document.documentElement.style.setProperty("--brand-b", b[1]); } else applyTheme(); } }, n))),
     el("div", { class: "label" }, "☁️ Backup"),
     !verified ? el("p", { class: "hint" }, "Backup needs a verified email so you can sign in on a new phone. Open Profile and tap “Verify your email”.") : (PLUS.enabled && !has ? el("p", { class: "hint" }, "Backup is part of the paid plan.") : null),
     el("div", { class: "rowbtns" }, backup, restore),
@@ -4420,11 +4560,13 @@ function renderPlus() {
     el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")),
   ].filter(Boolean);
 }
-// The Campus Loop Plus studio: timed mock tests (subjects or placement), progress chart, mistake notebook and exam planner. Data stays on this phone.
+// Loopy Brains Plus studio: timed mock tests (subjects or placement), progress chart, mistake notebook and exam planner. Data stays on this phone.
 const MOCK_N = 15, MOCK_SECS = 20 * 60;
 const trialLeft = () => { const t = Number(readJSON("dd-trial-start", 0)) || 0, d = Number(PLUS.trialDays) || 0; return t && d ? Math.max(0, Math.ceil((t + d * 864e5 - Date.now()) / 864e5)) : 0; };
 const bonusLeft = () => Math.max(0, Math.ceil(((Number(readJSON("dd-bonus-until", 0)) || 0) - Date.now()) / 864e5));
-const plusLocked = () => PLUS.enabled && !state.plan.plus && trialLeft() === 0 && bonusLeft() === 0;
+const plusLockedStrict = () => PLUS.enabled && !state.plan.plus && trialLeft() === 0 && bonusLeft() === 0;
+// RGUKT students get every Plus tool free. The server-side AI helper (Loop Bot) still needs a paid plan because it uses the paid Anthropic key.
+const plusLocked = () => !IS_RGUKT && plusLockedStrict();
 const offerOn = () => { const o = PLUS.offer; if (!o || !o.yearly || !o.until) return null; const end = new Date(o.until + "T23:59:59+05:30").getTime(); return end > Date.now() ? { label: o.label || "Offer", yearly: o.yearly, days: Math.ceil((end - Date.now()) / 864e5) } : null; };
 // Weekly goals and lifetime badges, kept on this phone.
 const goalStats = () => { const g = readJSON("dd-goals", {}); return g.week === weekKey() ? g : { week: weekKey(), tests: 0, cleared: 0, papers: 0 }; };
@@ -4482,7 +4624,7 @@ function scoreBars(bySub) {
 }
 function renderMock() {
   const m = state.mock, back = el("button", { class: "btn", type: "button", onclick: () => { if (state.mock) clearInterval(state.mock.tick); state.mock = null; showPanel("plus"); } }, "Back");
-  if (plusLocked()) return [el("h2", {}, "📝 Mock tests"), el("p", { class: "hint" }, "Mock tests are part of The Campus Loop Plus."), el("div", { class: "rowbtns" }, back)];
+  if (plusLocked()) return [el("h2", {}, "📝 Mock tests"), el("p", { class: "hint" }, "Mock tests are part of Loopy Brains Plus."), el("div", { class: "rowbtns" }, back)];
   if (!m) {
     const hist = mockHistory();
     return [el("h2", {}, "📝 Mock tests"), el("p", { class: "hint" }, MOCK_N + " questions, " + (MOCK_SECS / 60) + " minutes, then a subject-wise report. Questions you miss go to your Mistake notebook."),
@@ -4539,7 +4681,7 @@ function coachCard() {
 // Previous-year paper vault (Plus): papers are added by the admin as links; students filter, open and tick off what they have practised.
 function renderPapers() {
   const back = el("button", { class: "btn", type: "button", onclick: () => showPanel("plus") }, "Back");
-  if (plusLocked()) return [el("h2", {}, "📚 Paper vault"), el("p", { class: "hint" }, "The previous-year paper vault is part of The Campus Loop Plus."), el("div", { class: "rowbtns" }, back)];
+  if (plusLocked()) return [el("h2", {}, "📚 Paper vault"), el("p", { class: "hint" }, "The previous-year paper vault is part of Loopy Brains Plus."), el("div", { class: "rowbtns" }, back)];
   const all = state.papers.slice().sort((a, b) => (b.year - a.year) || String(a.subject).localeCompare(b.subject)), done = new Set(readJSON("dd-papers-done", []));
   if (!all.length) return [el("h2", {}, "📚 Paper vault"), el("p", { class: "hint" }, "No papers have been added for " + COLLEGE + " yet. Your admin adds them from the admin dashboard."), el("div", { class: "rowbtns" }, back)];
   const f = state.paperFilter || (state.paperFilter = { subject: "", year: "", q: "" });
@@ -4557,7 +4699,7 @@ function renderPapers() {
         el("button", { class: "btn sm", type: "button", onclick: () => { if (done.has(p.id)) done.delete(p.id); else { done.add(p.id); bump("papers", 1); } writeJSON("dd-papers-done", [...done].slice(-500)); render(); } }, done.has(p.id) ? "✔ Practised" : "Mark practised")))) : [el("p", { class: "hint" }, "No papers match.")]),
     el("div", { class: "rowbtns" }, back)].filter(Boolean);
 }
-// Loopy Brain chat: answers are built in the app from the syllabus, board answers and Wikipedia. No outside AI service is called.
+// Loopy AI chat: answers are built in the app from the syllabus, board answers and Wikipedia. No outside AI service is called.
 // Loopy AI Search: type any topic and get a quick answer with a picture (from Wikipedia, read-only), then the best places to watch, read and practise it. Free, needs no sign-in, and only reads public pages.
 const LS_LEVELS = { quick: ["⚡ Quick idea", "explained simply"], deep: ["\u{1F52C} Deep lecture", "full lecture"], exam: ["\u{1F3AF} Exam prep", "important questions previous year"] };
 const LS_CHANNELS = [["NPTEL", "NPTEL (IITs)"], ["MIT OpenCourseWare", "MIT OpenCourseWare"], ["Khan Academy", "Khan Academy"], ["Neso Academy", "Neso Academy"], ["Gate Smashers", "Gate Smashers"], ["3Blue1Brown", "3Blue1Brown (visual maths)"]];
@@ -4568,11 +4710,11 @@ const lsFetch = async (url) => {
 };
 async function lsRun(q) {
   const ls = state.ls; ls.q = q; ls.err = ""; ls.res = null; ls.ai = null; ls.aiNote = ""; ls.busy = true; render();
-  const aiOn = !!PLUS.functionsUrl && !!store && !!store.idToken && !plusLocked();
+  const aiOn = !!PLUS.functionsUrl && !!store && !!store.idToken && (IS_RGUKT || !plusLockedStrict());
   const aiTask = aiOn ? (async () => {
     try {
       const tok = await store.idToken(); if (!tok) throw new Error("Sign in to use Loopy AI answers.");
-      const r = await fetch(PLUS.functionsUrl.replace(/\/$/, "") + "/askAI", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + tok }, body: JSON.stringify({ mode: "search", query: q, level: ls.level }) });
+      const r = await fetch(PLUS.functionsUrl.replace(/\/$/, "") + "/askAI", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + tok }, body: JSON.stringify({ mode: "search", query: q, level: ls.level, college: IS_RGUKT ? "rgukt" : "" }) });
       const d = await r.json().catch(() => ({}));
       if (!r.ok || !d.search) throw new Error(d.error || "Loopy AI is busy. Try again.");
       ls.ai = d.search; ls.aiLeft = typeof d.left === "number" ? d.left : null;
@@ -4823,7 +4965,7 @@ function renderLoopySearch() {
     el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => showPanel(state.ls && state.ls.back || "plus") }, "Back")),
   ];
 }
-// ---------- Loopy Brain: Loopy's own answer engine ----------
+// ---------- Loopy AI: Loopy's own answer engine ----------
 // No outside AI. It reads three sources: your college's syllabus, the best answers classmates already posted on the board, and Wikipedia text.
 // It then builds a structured answer. It grows smarter every time students answer doubts.
 const BRAIN_CACHE = new Map();
@@ -5066,7 +5208,7 @@ async function safetyGate(q) {
   safeModal(n === 1 ? "Warning 1 of 2" : "Final warning: 2 of 2", n === 1 ? ["Loopy Search is only for learning. Sexual and romantic content is not allowed, so this search was not run.", "If you try again you will get a final warning."] : ["Sexual and romantic searches are not allowed. This is your final warning.", "One more attempt will block your Loopy Search access permanently."], n === 2);
   return false;
 }
-// ---------- Loopy Search: full-screen search workspace of Loopy Brain ----------
+// ---------- Loopy Search: full-screen search workspace of Loopy AI ----------
 const BS_KEY = "dd-bs-recent", MYS_KEY = "dd-my-subjects";
 const BS_LEVELS = [
   [1, "Spark", "Instant answers and a step-by-step solver", false],
@@ -5080,7 +5222,7 @@ const BS_EFFORTS = [["low", "Low", "Fast: one trusted source", 1], ["medium", "M
 const bsEffort = (bs) => { const want = BS_EFFORTS.findIndex(e => e[0] === bs.effort); let i = want < 0 ? 1 : want; while (i > 0 && !bsOpen(BS_EFFORTS[i][3])) i--; return BS_EFFORTS[i]; };
 const bsName = (n) => "Loopy " + BS_LEVELS[n - 1][1];
 const hasPlusNow = () => !!(state.plan && state.plan.plus) || trialLeft() > 0 || bonusLeft() > 0;
-// Free models: Spark for everyone, and Scholar too for RGUKT students. Vision, Sage and Apex need Campus Loop Plus.
+// Free models: Spark for everyone, and Scholar too for RGUKT students. Vision, Sage and Apex need Loopy Brains Plus.
 const bsFree = (lv) => lv <= 1 || IS_RGUKT;
 const BS_MODES = [["atlas", "Atlas", "Search anything", "Topics, doubts, maths and research, explained in easy words.", "Ask anything: a topic, doubt, problem or research idea"], ["launchpad", "Launchpad", "Project guide", "Turn an idea into a plan: objectives, tools, week-by-week steps, report outline and viva questions.", "Describe your project idea, e.g. IoT weather station"], ["forge", "Forge", "Find code", "Working code for classic problems in many languages, with the idea explained.", "e.g. binary search in Python"], ["aegis", "Aegis", "Learn security", "Understand how attacks work and how to defend, legally and safely.", "e.g. SQL injection, phishing, password safety"]];
 const bsModeInfo = (id) => BS_MODES.find(m => m[0] === id) || BS_MODES[0];
@@ -5111,7 +5253,7 @@ async function bsOpenSaved(id) {
   bsPaint(true);
 }
 function bsExportSaved() {
-  const data = JSON.stringify({ app: "The Campus Loop", kind: "loopy-saved", v: 1, items: bsSavedList() }, null, 1), u = URL.createObjectURL(new Blob([data], { type: "application/json" })), a = document.createElement("a");
+  const data = JSON.stringify({ app: "Loopy Brains", kind: "loopy-saved", v: 1, items: bsSavedList() }, null, 1), u = URL.createObjectURL(new Blob([data], { type: "application/json" })), a = document.createElement("a");
   a.href = u; a.download = "loopy-saved-" + new Date().toISOString().slice(0, 10) + ".json"; a.click(); setTimeout(() => URL.revokeObjectURL(u), 2000);
 }
 // Imported files are untrusted: keep only simple, validated pieces and rebuild everything else from our own templates.
@@ -5157,11 +5299,13 @@ const brainDiagramsMod = async () => { try { return _dgm = _dgm || await import(
 const brainPacksMod = async () => {
   if (_packs) return _packs;
   try {
-    const [m1, m2, m3] = await Promise.all([import(new URL("brain-packs.js?v=452", location.href).href), import(new URL("brain-packs-ece.js?v=452", location.href).href), import(new URL("brain-simple.js?v=452", location.href).href).catch(() => ({ SIMPLE: {} }))]);
+    const [m1, m2, m3, m4, m5] = await Promise.all([import(new URL("brain-packs.js?v=452", location.href).href), import(new URL("brain-packs-ece.js?v=452", location.href).href), import(new URL("brain-simple.js?v=452", location.href).href).catch(() => ({ SIMPLE: {} })), import(new URL("brain-search.js?v=452", location.href).href).catch(() => null), import(new URL("dld-questions.js?v=452", location.href).href).catch(() => null)]);
     const base = [...m1.PACKS, ...m2.PACKS_ECE], hubs = m2.makeHubs(base), fix = m2.makeFixer(base), nq = (t) => String(t || "").toLowerCase().replace(/[-_/]/g, " ").replace(/[^a-z0-9\s+]/g, " ").replace(/\s+/g, " ").trim();
     const hubKey = (q) => { const t = nq(q).replace(/^(what is|what are|explain|tell me about|about|notes on|notes|syllabus of|syllabus|all topics of|topics in|learn|study)\s+/, "").replace(/\s+(notes|syllabus|subject|topics|course|basics|introduction|overview)$/, "").trim(); return hubs.find(h => h.keys.some(k => nq(k) === t)) || null; };
-    const one = (q) => { const a = m1.packScore(q), b = m2.packScore(q); return (b.len > a.len ? b.p : a.p) || null; };
-    _packs = { checked: m2.CHECKED || [], all: [...hubs, ...base], refs: m2.REFS || {}, simple: m3.SIMPLE || {}, find: (q) => { const h = hubKey(q); if (h) return h; const p = one(q); if (p) return p; const f = fix(q); return f ? (hubKey(f) || one(f)) : null; } };
+    const srch = m4 && m4.makeSearch ? m4.makeSearch(base) : null, qlist = m5 && m5.DLD_Q ? m5.DLD_Q.flatMap(u => u.map(r => ({ title: r[1], keys: [], short: r[2].slice(0, 400), points: [], marks: r[0], ans: r[2] }))) : [], qsrch = srch && qlist.length ? m4.makeSearch(qlist) : null,
+      relQs = (pk) => { try { if (!qsrch) return []; const r = qsrch.rank(pk.title.replace(/\s*\(.*?\)\s*/g, " ") + " " + (pk.keys || []).slice(0, 2).join(" "), 3); return r.length && r[0].score >= 20 ? r.filter(x => x.score >= 20 && x.score >= r[0].score * 0.45 && x.tk >= 0.5).map(x => x.p) : []; } catch (_) { return []; } },
+      one = (q) => { const a = m1.packScore(q), b = m2.packScore(q); return (b.len > a.len ? b.p : a.p) || null; };
+    _packs = { checked: m2.CHECKED || [], all: [...hubs, ...base], refs: m2.REFS || {}, simple: m3.SIMPLE || {}, relQs, rank: (q, n) => { try { return srch ? srch.rank(q, n).map(r => r.p) : []; } catch (_) { return []; } }, find: (q) => { const h = hubKey(q); if (h) return h; try { const b = srch && srch.best(q); if (b && b.sure) return b.p; } catch (_) {} const p = one(q); if (p) return p; const f = fix(q); return f ? (hubKey(f) || one(f)) : null; } };
   } catch (_) { _packs = null; }
   return _packs;
 };
@@ -5176,7 +5320,7 @@ async function bsPapers(q) {
     }).filter(p => p.title);
   } catch (_) { return []; }
 }
-// ---------- Loopy Brain credits: daily and weekly limits ----------
+// ---------- Loopy AI credits: daily and weekly limits ----------
 // A search costs 1 credit (Low), 2 (Medium) or 3 (High). Maths, conversions and formulas are free. Usage is also saved in the student's own record so clearing the browser does not reset it.
 const BS_CAPS = { free: { day: 10, week: 40 }, rgukt: { day: 400, week: 2500 }, plus: { day: 600, week: 3000 } };
 const bsBase = () => hasPlusNow() ? BS_CAPS.plus : IS_RGUKT ? BS_CAPS.rgukt : BS_CAPS.free;
@@ -5201,7 +5345,7 @@ function bsLimitModal(kind, L) {
     el("div", { class: "safe-card" }, el("div", { class: "safe-ic", "aria-hidden": "true" }, "⏳"), el("h3", {}, day ? "Today’s Loopy credits are used up" : "This week’s Loopy credits are used up"),
       el("p", {}, day ? "You have used all " + L.caps.day + " credits for today. They come back at midnight, India time." : "You have used all " + L.caps.week + " credits for this week. They come back on Monday."),
       el("p", {}, "Maths, conversions and formulas are still free, and Low effort costs the least."),
-      !hasPlusNow() && !IS_RGUKT ? el("button", { class: "btn primary", type: "button", onclick: () => { close(); if (bsEl()) bsClose(true); showPanel("plus"); } }, "See Campus Loop Plus") : null,
+      !hasPlusNow() && !IS_RGUKT ? el("button", { class: "btn primary", type: "button", onclick: () => { close(); if (bsEl()) bsClose(true); showPanel("plus"); } }, "See Loopy Brains Plus") : null,
       el("button", { class: "btn", type: "button", onclick: close }, "OK")));
   document.body.append(ov);
 }
@@ -5286,6 +5430,50 @@ function bsClose(keepMode) {
   if (!keepMode && state.mode === "ai") { state.mode = "intro"; render(); }
 }
 function bsLeave(fn) { bsClose(true); fn(); }
+// Digital Logic Design study page: the textbook topic packs in syllabus order, with progress kept on this phone.
+const DLD_UNITS = [
+  ["I. Number systems, logic gates and Boolean algebra", "Digital vs analog, number systems, codes, gates, laws and De Morgan", ["dvsa", "numsys", "complement", "signed", "twoscomp", "radixcomp", "codes", "swlogic", "polarity", "gates", "boolean", "huntington", "venn", "func16", "nandnor"]],
+  ["II. Combinational circuit design", "Canonical forms, K-maps, hazards, adders, subtractors, multipliers, converters and comparators", ["synth", "comb", "canonical", "sop", "kmap", "minim", "dcare", "qm", "twolevel", "hazard", "families", "adder", "decfull", "ripplecarry", "addsub", "overflow", "cla", "hcla", "subtractor", "bcdadd", "multiplier", "codeconv", "parity", "comparator", "cmp4", "delaypower", "wordproblem"]],
+  ["III. Latches and flip-flops", "Bistable element, SR/D latches, flip-flops, triggering, characteristic and excitation tables", ["seq", "bistable", "srnor", "srnand", "gatedsr", "dlatch", "trigger", "dff", "asyncpc", "jkff", "masterslave", "tff", "ff", "chareq", "excite", "timingf"]],
+  ["IV. Counters and shift registers", "Ripple and synchronous counters, BCD, ring, Johnson, state diagrams and shift registers", ["cntbasics", "ripcnt", "ripdelay", "modnrip", "synccnt", "bcdcnt", "counter", "fsmcounter", "ringjohn", "statediag", "mealymoore", "sregtypes", "shift"]],
+  ["V. Decoders, multiplexers, encoders and PLDs", "Decoders, seven-segment, multiplexers, demultiplexers, encoders, ROM, PROM, PLA and PAL", ["decoder", "casdec", "dectree", "sevenseg", "mux", "muxtree", "muxfunc", "shannon", "demuxdec", "msiapps", "prienc", "rom", "pld"]],
+  ["VI. Memory, programmable devices and digital system design", "SRAM, DRAM, memory expansion, CPLD, FPGA, and clock, calendar, traffic-light and sequence-generator designs", ["memory", "sram", "dram", "memexp", "cpld", "fpga", "lut", "dflow", "cad", "sysdesign", "dclock", "calendar", "trafficlight", "seqgen"]],
+  ["Beyond the syllabus: state machines and Verilog", "FSM design, serial adder, floating point and Verilog", ["ieee754", "fsm", "fsmgen", "fsmsteps", "stateassign", "onehot", "statemin", "incompfsm", "serialadd", "arbiter", "regswap", "hdl", "verilogadd", "verilogmod", "vcond", "vifelse", "vcase", "vfor", "vops", "vgen", "valu", "vfsm", "vmealy"]],
+];
+function dldHub(allPk, bs, go) {
+  const byId = new Map(allPk.map(p => [p.id, p])), seenArr = readJSON("dd-dld-seen", []), seen = new Set(Array.isArray(seenArr) ? seenArr.filter(x => typeof x === "string") : []);
+  const units = DLD_UNITS.map(([name, sub, ids]) => ({ name, sub, packs: ids.map(i => byId.get(i)).filter(Boolean) })).filter(u => u.packs.length);
+  const total = units.reduce((a, u) => a + u.packs.length, 0), done = units.reduce((a, u) => a + u.packs.filter(p => seen.has(p.id)).length, 0);
+  const next = units.flatMap(u => u.packs).find(p => !seen.has(p.id));
+  const openPack = (p) => { seen.add(p.id); writeJSON("dd-dld-seen", [...seen].slice(0, 120)); bs.forcePack = p.id; bs.autoSize = bsOpen(2) ? "standard" : "brief"; go(p.title.replace(/\s*\(.*?\)\s*/g, " ").trim()); };
+  const firstOpen = units.findIndex(u => u.packs.some(p => !seen.has(p.id)));
+  return el("section", { class: "dld-hub" },
+    el("div", { class: "dld-head" }, el("small", {}, "Subject"), el("h3", {}, "Digital Logic Design"), el("p", {}, "Six units, in the order most syllabuses teach them. Tap a topic to learn it in easy words with a diagram, exam questions and common mistakes."),
+      el("div", { class: "dld-prog", role: "group", "aria-label": "Progress" }, el("progress", { max: String(total), value: String(done) }), el("span", {}, done + " of " + total + " topics studied")),
+      next ? el("button", { type: "button", class: "btn primary dld-go", onclick: () => openPack(next) }, (done ? "Continue: " : "Start: ") + next.title) : el("p", { class: "dld-fin" }, "You have opened every topic. Revise any topic below.")),
+    ...units.map((u, i) => { const n = u.packs.filter(p => seen.has(p.id)).length;
+      return el("details", Object.assign({ class: "dld-unit" }, (i === firstOpen || (firstOpen < 0 && i === 0)) ? { open: "" } : {}),
+        el("summary", {}, el("span", { class: "dld-num" }, String(i + 1)), el("span", { class: "dld-ut" }, el("b", {}, u.name), el("small", {}, u.sub)), el("span", { class: "dld-cnt" }, n + "/" + u.packs.length)),
+        el("div", { class: "dld-list" }, i < 6 ? el("button", { type: "button", class: "dld-practice", onclick: () => dldPractice(i, u.name) }, el("b", {}, "Practice questions"), el("small", {}, "2, 3 and 7 mark questions with full answers")) : null, ...u.packs.map(p => { const sh = String(p.short || "").split(/(?<=\.)\s/)[0].slice(0, 110);
+          return el("button", { type: "button", class: "dld-topic" + (seen.has(p.id) ? " done" : ""), onclick: () => openPack(p) }, el("span", { class: "dld-tick", "aria-hidden": "true" }, seen.has(p.id) ? "✓" : ""), el("span", { class: "dld-tt" }, el("b", {}, p.title), el("small", {}, sh))); }))); }));
+}
+// Practice questions for a unit (RGUKT question bank): tap a question to see its model answer.
+let _dldQ = null;
+async function dldPractice(ui, name) {
+  let all; try { _dldQ = _dldQ || await import(new URL("dld-questions.js?v=452", location.href).href); all = _dldQ.DLD_Q; } catch (_) { say("Could not load the questions. Check your internet and try again."); return; }
+  const list = (all && all[ui]) || []; if (!list.length) return;
+  const close = () => { ov.remove(); document.body.classList.remove("dldq-open"); };
+  const groups = [2, 3, 7].map(m => [m, list.filter(r => r[0] === m)]).filter(g => g[1].length);
+  let n = 0;
+  const ov = el("div", { class: "dldq-ov", role: "dialog", "aria-modal": "true", "aria-label": "Practice questions" },
+    el("div", { class: "dldq-sheet" },
+      el("div", { class: "dldq-top" }, el("button", { type: "button", class: "btn ghost sm", onclick: close }, "< Back"), el("div", { class: "dldq-t" }, el("small", {}, "Practice questions"), el("b", {}, name))),
+      el("p", { class: "dldq-note" }, list.length + " questions in the style of the RGUKT exam. Try each one on paper first, then tap it to check the model answer."),
+      ...groups.map(([m, rows]) => el("section", { class: "dldq-grp" },
+        el("h4", {}, m + "-mark questions"),
+        ...rows.map(r => { n++; return el("details", { class: "dldq-q" }, el("summary", {}, el("span", { class: "dldq-n" }, "Q" + n), el("span", {}, r[1])), el("div", { class: "dldq-a" }, el("small", {}, "Model answer"), ...String(r[2]).split("\n").map(t => el("p", {}, t)))); })))));
+  document.body.append(ov); document.body.classList.add("dldq-open"); ov.querySelector("button").focus();
+}
 function bsPaint(top) {
   const sc = $("bsScroll"); if (!sc) return; const keep = sc.scrollTop;
   let nodes; try { nodes = brainView(); } catch (e) { const bs0 = bsState(); bs0.res = null; bs0.busy = false; bs0.pending = ""; nodes = [el("section", { class: "bsr-card" }, el("h3", {}, "Something went wrong showing this"), el("p", {}, "Sorry, this result could not be displayed. Your credits are not lost, and nothing was saved incorrectly."), el("button", { class: "btn primary", type: "button", onclick: () => bsPaint(true) }, "Start a new search"))]; try { console.error("Loopy Search view error", e); } catch (_) {} }
@@ -5328,7 +5516,7 @@ function bsChat(q) {
   if (/^(thanks?|thank you|thx|ty|thanku|thank u)( so much| a lot| loopy)?$/.test(t)) return pick(["You are welcome" + hi + "! Happy to help. Ask me anything else anytime.", "Anytime" + hi + "! Keep learning, you are doing great."]);
   if (/^(bye|goodbye|good night|gn|see you|see ya|tata|cya)( loopy)?$/.test(t)) return "Bye" + hi + "! Come back whenever you have a doubt. Good luck with your studies.";
   if (/(how are you|how r u|how are u|hows it going|how is it going|whats up|what s up|wassup|sup)\b/.test(t) && !/\b(compare|difference|what is|define)\b/.test(t)) return "I am fine, thank you" + hi + "! How are you?" + ask;
-  if (/^(who are you|what are you|what is your name|your name|who is loopy|are you ai|are you a robot)$/.test(t)) return "I am Loopy, the study helper inside The Campus Loop. I find explanations, pictures, code, project plans and security guides for students. I make mistakes sometimes, so check important facts with your books and teachers.";
+  if (/^(who are you|what are you|what is your name|your name|who is loopy|are you ai|are you a robot)$/.test(t)) return "I am Loopy, the study helper inside Loopy Brains. I find explanations, pictures, code, project plans and security guides for students. I make mistakes sometimes, so check important facts with your books and teachers.";
   if (/^(what can you do|help|help me|how to use|what do you do|how do you work)$/.test(t)) return "I can explain topics in easy words, solve maths and conversions, find code in Forge, plan projects in Launchpad and teach security in Aegis. Type a topic and press Search." ;
   if (/^((hey|hi|hii+|hello+|hlo|helo|hola|yo|namaste|hey there|hi there|hello there|good morning|good afternoon|good evening|gm)( |$))+(loopy|bro|there|buddy|friend|all)?$/.test(t) || /^(hey+|hi+|hello+|hlo|hola|yo|namaste)$/.test(t)) return pick(["Hi" + hi + "! I am Loopy.", "Hello" + hi + "! Nice to see you.", "Hey" + hi + "! Good to see you."]) + ask;
   return "";
@@ -5355,7 +5543,7 @@ function bsFun(q) {
   if (/\b(roll a dice|roll a die|roll dice|throw a dice|dice roll)\b/.test(t)) return "I rolled the dice... you got a " + (1 + Math.floor(Math.random() * 6)) + "! \u{1F3B2}";
   { const m = t.match(/\b(?:random number|pick a number|number)\s+(?:between|from)\s+(\d{1,6})\s+(?:and|to)\s+(\d{1,6})\b/); if (m) { const a = Math.min(+m[1], +m[2]), b = Math.max(+m[1], +m[2]); return "My pick between " + a + " and " + b + " is " + (a + Math.floor(Math.random() * (b - a + 1))) + ". \u{1F3AF}"; } }
   if (/\b(what is|whats|what s|tell me)\b.*\b(time|date|day|today)\b/.test(t) && !/\b(complexity|travel|dilation|series|domain|value)\b/.test(t)) { const d = new Date(); return "It is " + d.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long", year: "numeric" }) + ", " + d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }) + " on your phone. ⏰ Make today count!"; }
-  if (/\b(who made you|who built you|who created you|who is your creator|who developed you|who owns you)\b/.test(t)) return "I was built for students, by a student, inside The Campus Loop. I am not a person and I am not a big company AI. I search trusted open sources and my own built-in guides to help you learn. \u{1F916}";
+  if (/\b(who made you|who built you|who created you|who is your creator|who developed you|who owns you)\b/.test(t)) return "I was built for students, by a student, inside Loopy Brains. I am not a person and I am not a big company AI. I search trusted open sources and my own built-in guides to help you learn. \u{1F916}";
   if (/\b(do you love me|i love you|marry me|be my (friend|girlfriend|boyfriend)|are you single)\b/.test(t)) return "Aww, thank you! \u{1F60A} I am a study helper, so I will stay your learning buddy. Let us put that energy into your next exam! What shall we learn?";
   if (/\b(favou?rite (colou?r|food|subject|movie|song))\b/.test(t)) return "I love purple and gold, because that is what this app wears. \u{1F49C} My favourite subject is whatever you are curious about right now. What is yours?";
   if (/\b(are you smart|are you intelligent|are you better than|you are (stupid|dumb|useless))\b/.test(t)) return "I am a helper that gets better with your feedback. \u{1F604} Tell me what went wrong using Feedback and ideas, and I will learn from it. Meanwhile, try me with a topic!";
@@ -5386,8 +5574,8 @@ async function bsMakeJpegs() {
   const hd = (u) => u.replace(/\/(\d{2,4})px-/, "/1200px-");
   for (const im of [...clone.querySelectorAll("img")]) { const u = im.getAttribute("src") || ""; let d = ""; if (/^https:\/\/upload\.wikimedia\.org\//.test(u)) { d = await bsImgData(hd(u)); if (!d) d = await bsImgData(u); } if (d) { im.setAttribute("src", d); im.removeAttribute("srcset"); im.removeAttribute("loading"); } else im.remove(); }
   const bg = (() => { let n = $("bsFull"); while (n) { const c = getComputedStyle(n).backgroundColor; if (c && c !== "rgba(0, 0, 0, 0)" && c !== "transparent") return c; n = n.parentElement; } return "#ffffff"; })();
-  const ink = getComputedStyle(sc).color || "#111", topic = ((bsState().res || {}).topic || "Loopy Brain result").slice(0, 80), when = new Date().toLocaleDateString();
-  const head = document.createElement("div"); head.style.cssText = "box-sizing:border-box;height:" + HEAD + "px;padding:14px 16px 0;font:700 15px system-ui,sans-serif;color:" + ink + ";"; head.textContent = "The Campus Loop · Loopy Brain";
+  const ink = getComputedStyle(sc).color || "#111", topic = ((bsState().res || {}).topic || "Loopy AI result").slice(0, 80), when = new Date().toLocaleDateString();
+  const head = document.createElement("div"); head.style.cssText = "box-sizing:border-box;height:" + HEAD + "px;padding:14px 16px 0;font:700 15px system-ui,sans-serif;color:" + ink + ";"; head.textContent = "Loopy Brains · Loopy AI";
   const foot = document.createElement("div"); foot.style.cssText = "padding:10px 16px 14px;font:500 12px system-ui,sans-serif;opacity:.7;color:" + ink + ";"; foot.textContent = topic + " · " + when + " · loopybrains.com. Always check important facts in your textbook.";
   const wrap = document.createElement("div"); wrap.setAttribute("xmlns", "http://www.w3.org/1999/xhtml"); wrap.style.cssText = "width:" + W + "px;background:" + bg + ";"; wrap.append(head, clone, foot);
   // measure the real height: lay the finished sheet out off-screen once, so no blank space is left at the end
@@ -5415,8 +5603,30 @@ function bsExportSheet() {
   const body = el("div", { class: "bsx-sheet" }), back = el("div", { class: "bsx-back", id: "bsExport", role: "dialog", "aria-modal": "true", "aria-label": "Save this result", onclick: (e) => { if (e.target === back) close(); } }, body);
   const menu = () => body.replaceChildren(el("h3", {}, "Save this result"), el("p", { class: "hint" }, "Choose how you want to keep it."),
     el("button", { type: "button", class: "bsx-opt", onclick: () => { close(); setTimeout(() => { try { window.print(); } catch (_) {} }, 150); } }, el("b", {}, "\u{1F4C4} PDF"), el("small", {}, "Opens the print screen. Choose “Save as PDF”.")),
+    (bsState().res && bsState().res.pack) ? el("button", { type: "button", class: "bsx-opt", onclick: () => pptx() }, el("b", {}, "\u{1F4CA} Slides (PowerPoint)"), el("small", {}, "A ready slide deck of this topic: key points, exam bullets, formulas and the exam answer.")) : null,
     el("button", { type: "button", class: "bsx-opt", onclick: () => jpeg() }, el("b", {}, "\u{1F5BC}️ Picture (JPEG)"), el("small", {}, "HD pictures (3 times the screen size). Save to your gallery or send on WhatsApp.")),
     el("button", { type: "button", class: "btn", onclick: close }, "Cancel"));
+  const pptx = async () => {
+    const p = bsState().res && bsState().res.pack; if (!p) return;
+    try {
+      const m = await import(new URL("pptx-lite.js?v=452", location.href).href), sh1 = (x) => { const s = String(x || "").trim(), mm = s.match(/^.{20,170}?[.!?](?=\s|$)/); return mm ? mm[0] : s.slice(0, 170); };
+      const chunk = (title, items, size) => { const out = []; let cur = [], len = 0; for (const it of items) { if (cur.length && len + it.length > 460) { out.push({ title, bullets: cur, size }); cur = []; len = 0; } cur.push(it); len += it.length; } if (cur.length) out.push({ title, bullets: cur, size }); return out.map((s, i, a) => a.length > 1 ? { ...s, title: s.title + " (" + (i + 1) + "/" + a.length + ")" } : s); };
+      const sm = _packs && _packs.simple && _packs.simple[p.id], ex = p.example ? [p.example.title, ...String(p.example.text).split("\n")] : [];
+      const slides = [{ title: p.title.replace(/\s*\(.*?\)\s*/g, " ").trim(), bullets: [p.subject + " \u00B7 Loopy Brains", "Study notes made by Loopy AI. Check with your syllabus and teacher."] },
+        { title: "What it is", bullets: [p.short, ...(sm && sm.length ? ["In simple words: " + sm[0]] : [])], size: 2800 },
+        ...chunk("Key points", (p.points || []).map(String), 2600),
+        ...(p.steps && p.steps.length ? chunk("Step by step", p.steps.map((x, i) => (i + 1) + ". " + x), 2600) : []),
+        ...(p.formulas && p.formulas.length ? [{ title: "Formulas and rules", bullets: p.formulas.map(([n, x]) => n + ": " + x), size: 2800 }] : []),
+        ...(ex.length ? chunk("Worked example", ex, 2400) : []),
+        { title: "Exam in bullets", bullets: [sh1(p.short), ...(p.points || []).slice(0, 3).map(sh1), ...(p.mistakes && p.mistakes[0] ? ["Avoid: " + sh1(p.mistakes[0])] : [])], size: 2800 },
+        ...chunk("Write this in the exam", [String(p.exam || "")], 2600),
+        ...(p.mistakes && p.mistakes.length ? chunk("Common mistakes", p.mistakes.map(String), 2600) : []),
+        ...(p.related && p.related.length ? [{ title: "Learn next", bullets: p.related.map(String), size: 2800 }] : [])].filter(s => s.bullets && s.bullets.length);
+      const blob = m.makePptx(slides, p.title), name = "loopy-" + (p.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "topic") + ".pptx", url = URL.createObjectURL(blob);
+      const a2 = document.createElement("a"); a2.href = url; a2.download = name; document.body.append(a2); a2.click(); a2.remove(); setTimeout(() => { try { URL.revokeObjectURL(url); } catch (_) {} }, 20000);
+      body.replaceChildren(el("h3", {}, "Your slides are ready"), el("p", { class: "hint" }, slides.length + " slides saved as " + name + ". Open it in PowerPoint, Google Slides or your phone\u2019s Office app."), el("div", { class: "rowbtns" }, el("button", { type: "button", class: "btn primary", onclick: close }, "Done")));
+    } catch (_) { body.replaceChildren(el("h3", {}, "Could not make the slides"), el("p", { class: "hint" }, "Please use the PDF option instead."), el("div", { class: "rowbtns" }, el("button", { type: "button", class: "btn", onclick: close }, "Close"))); }
+  };
   const jpeg = async () => {
     body.replaceChildren(el("h3", {}, "Making your HD pictures…"), el("p", { class: "hint", role: "status" }, "Long results are cut into pages. This takes a few seconds."));
     try {
@@ -5427,7 +5637,7 @@ function bsExportSheet() {
       const downloadAll = () => items.forEach((x, i) => setTimeout(() => { const a2 = document.createElement("a"); a2.href = x.url; a2.download = x.name; document.body.append(a2); a2.click(); a2.remove(); }, i * 350));
       body.replaceChildren(el("h3", {}, "Your HD picture" + (n > 1 ? "s are" : " is") + " ready"), el("p", { class: "hint" }, n + (n === 1 ? " page" : " pages") + " · sharp, 3 times the screen size. Tap Download, or press and hold a picture to save it."),
         el("div", { class: "bsx-pages" }, ...items.map((x, i) => el("figure", { class: "bsx-pg" }, el("img", { src: x.url, alt: "Page " + (i + 1) + " of " + n }), el("figcaption", {}, el("span", {}, "Page " + (i + 1) + " of " + n + " · " + Math.round(x.b.size / 1024) + " KB"), el("a", { href: x.url, download: x.name }, "Download"))))),
-        el("div", { class: "rowbtns" }, el("button", { type: "button", class: "btn primary", onclick: downloadAll }, "⬇️ Download all" + (n > 1 ? " (" + n + ")" : "")), canShare ? el("button", { type: "button", class: "btn", onclick: async () => { try { await navigator.share({ files, title: "Loopy Brain" }); } catch (_) {} } }, "Share") : null, el("button", { type: "button", class: "btn", onclick: () => { freeAll(); close(); } }, "Close")));
+        el("div", { class: "rowbtns" }, el("button", { type: "button", class: "btn primary", onclick: downloadAll }, "⬇️ Download all" + (n > 1 ? " (" + n + ")" : "")), canShare ? el("button", { type: "button", class: "btn", onclick: async () => { try { await navigator.share({ files, title: "Loopy AI" }); } catch (_) {} } }, "Share") : null, el("button", { type: "button", class: "btn", onclick: () => { freeAll(); close(); } }, "Close")));
     } catch (_) {
       body.replaceChildren(el("h3", {}, "Could not make a picture"), el("p", { class: "hint" }, "Your browser blocked it. Please use the PDF option instead."), el("div", { class: "rowbtns" }, el("button", { type: "button", class: "btn primary", onclick: () => { close(); setTimeout(() => { try { window.print(); } catch (_) {} }, 150); } }, "Use PDF"), el("button", { type: "button", class: "btn", onclick: close }, "Close")));
     }
@@ -5438,11 +5648,12 @@ async function bsSubmit(q) {
   q = lsClean(q); if (q.length < 2) return; const bs = bsState();
   if (/[^\u0000-\u024F\u2000-\u206F\u00A0-\u00FF]/.test(q) && ahWords(q).length === 0) { showNotice("Loopy Search works with English words for now. Please type your topic in English.", "err"); return; }
   if (!(await safetyGate(q))) return;
-  { const mm = await brainModesMod(); if (mm && mm.offensive(q)) { safeModal("I can\u2019t help with attacking people or systems", ["Loopy Brain teaches security so you can defend, not so you can break into accounts, devices or websites. That could hurt real people and is against the law.", "Try Aegis to learn how attacks work and how to stop them, or practise legally on free labs such as PortSwigger Academy, picoCTF or TryHackMe."], false); return; } }
+  { const mm = await brainModesMod(); if (mm && mm.offensive(q)) { safeModal("I can\u2019t help with attacking people or systems", ["Loopy AI teaches security so you can defend, not so you can break into accounts, devices or websites. That could hurt real people and is against the law.", "Try Aegis to learn how attacks work and how to stop them, or practise legally on free labs such as PortSwigger Academy, picoCTF or TryHackMe."], false); return; } }
   { const talk = bsChat(q) || bsFun(q); if (talk) { bs.pending = ""; bsRun(q, talk); return; } }
   const solved = bs.forcePack ? null : await brainSolve(q); if (solved) { bs.pending = ""; bsRun(q, solved); return; }
-  { const mm = await brainModesMod(), sg = mm && mm.suggestMode ? mm.suggestMode(q) : ""; if (sg && sg !== (bs.mode || "atlas")) { const nm = (BS_MODES.find(x => x[0] === sg) || [])[1] || sg; bs.mode = sg; showNotice("This looks like a " + (sg === "forge" ? "code" : sg === "aegis" ? "security" : "project") + " question, so I switched to " + nm + " for a better answer.", "ok"); } }
+  { const mm = await brainModesMod(), sg = bs.forcePack ? "" : (mm && mm.suggestMode ? mm.suggestMode(q) : ""); if (sg && sg !== (bs.mode || "atlas")) { const nm = (BS_MODES.find(x => x[0] === sg) || [])[1] || sg; bs.mode = sg; showNotice("This looks like a " + (sg === "forge" ? "code" : sg === "aegis" ? "security" : "project") + " question, so I switched to " + nm + " for a better answer.", "ok"); } }
   if (bs.mode && bs.mode !== "atlas") { bs.pending = ""; bsRun(q); return; }
+  if (bs.autoSize) { const a = bs.autoSize; bs.autoSize = ""; bs.pending = q; bs.q = q; await bsPickSize(a); return; }
   bs.pending = q; bs.res = null; bs.q = q; bsPaint(true);
 }
 async function bsPickSize(id) {
@@ -5575,7 +5786,7 @@ function bsCross(pack, wiki) {
     return { found, total: terms.length, pct: Math.round(found / terms.length * 100), title: String(wiki.title || "").slice(0, 60) };
   } catch (_) { return null; }
 }
-const PK_ICON = { "pk-points": "\u{1F4A1}", "pk-steps": "\u{1FA9C}", "pk-forms": "\u{1F9EE}", "pk-ex": "\u{1F9EA}", "pk-exam": "\u{1F4DD}", "pk-mist": "\u26A0\uFE0F", "pk-learn": "\u{1F517}", "pk-acc": "\u{1F50D}", "pk-refs": "\u{1F4DA}", "pk-simple": "\u{1F9D2}" };
+const PK_ICON = { "pk-points": "\u{1F4A1}", "pk-steps": "\u{1FA9C}", "pk-forms": "\u{1F9EE}", "pk-ex": "\u{1F9EA}", "pk-exam": "\u{1F4DD}", "pk-ebl": "\u2B50", "pk-pq": "\u270F\uFE0F", "pk-mist": "\u26A0\uFE0F", "pk-learn": "\u{1F517}", "pk-acc": "\u{1F50D}", "pk-refs": "\u{1F4DA}", "pk-simple": "\u{1F9D2}" };
 function packView(p, go, res) {
   const out = [], card = (cls, h, ...k) => el("section", { class: "bsr-card pk-c bsr-reveal in " + cls }, h ? el("h3", {}, el("span", { class: "pk-ic", "aria-hidden": "true" }, PK_ICON[cls] || "\u2022"), h) : null, ...k.filter(Boolean));
   out.push(el("section", { class: "bsr-hero pk-hero bsr-reveal in" }, el("small", {}, "\u2713 Loopy Knowledge Pack \u00B7 " + p.subject), el("h2", {}, p.title), el("p", {}, p.short), el("div", { class: "bsr-meta" }, el("span", {}, "Written for B.Tech students"), el("span", {}, "Checked first, before the web"))));
@@ -5589,7 +5800,10 @@ function packView(p, go, res) {
   if (p.steps && p.steps.length) out.push(card("pk-steps", "Step by step", el("ol", { class: "pk-stepl" }, ...p.steps.map((x, i) => el("li", {}, el("b", {}, String(i + 1)), el("span", {}, x))))));
   if (p.formulas && p.formulas.length) out.push(card("pk-forms", "Formulas and rules", el("div", { class: "pk-forms" }, ...p.formulas.map(([n, t]) => el("div", { class: "pk-form" }, el("small", {}, n), el("code", {}, t))))));
   if (p.example) out.push(card("pk-ex", "Worked example", el("p", { class: "pk-extitle" }, p.example.title), el("pre", { class: "bsr-code pk-pre" }, el("code", {}, p.example.text))));
+  { const sh1 = (x) => { const s = String(x || "").trim(), m = s.match(/^.{20,160}?[.!?](?=\s|$)/); return m ? m[0] : s.slice(0, 160); }, B = [["Definition", sh1(p.short)], ...(p.points || []).slice(0, 3).map(x => ["Point", sh1(x)]), ...(p.formulas || []).slice(0, 3).map(([n, x]) => ["Formula", n + ": " + x]), ...(p.mistakes && p.mistakes[0] ? [["Avoid", sh1(p.mistakes[0])]] : [])].filter(b => b[1]), txt = B.map(b => "\u2022 " + b[0] + ": " + b[1]).join("\n");
+    if (B.length > 2) out.push(card("pk-ebl", "Exam in bullets", el("p", { class: "hint" }, "The important points to remember. Quick revision before the exam."), el("ul", { class: "pk-bul pk-ebul" }, ...B.map(b => el("li", {}, el("b", {}, b[0] + ": "), b[1]))), el("div", { class: "rowbtns bsf-noprint" }, copyBtn(txt, "Copy bullets")))); }
   out.push(card("pk-exam", "Write this in the exam", el("p", { class: "pk-answer" }, el("span", { class: "bsr-tag" }, "Answer"), p.exam), el("div", { class: "rowbtns bsf-noprint" }, copyBtn(p.exam, "Copy answer"))));
+  { const rq = _packs && _packs.relQs ? _packs.relQs(p) : []; if (rq.length) out.push(card("pk-pq", "Practice questions on this topic", el("p", { class: "hint" }, "Try each one on paper first, then tap to check the model answer."), ...rq.map(q => el("details", { class: "dldq-q" }, el("summary", {}, el("span", { class: "dldq-n" }, q.marks + "m"), el("span", {}, q.title)), el("div", { class: "dldq-a" }, el("small", {}, "Model answer"), ...String(q.ans).split("\n").map(x => el("p", {}, x))))))); }
   if (p.mistakes && p.mistakes.length) out.push(card("pk-mist", "Common mistakes", ...p.mistakes.map(x => el("p", { class: "pk-warn" }, el("span", { class: "bsr-tag" }, "Watch out"), x))));
   if (p.uses && p.uses.length) out.push(usesNode(p.uses.map(([t, x]) => ({ domain: "Real life", title: t, text: x })), p.title));
   if (p.related && p.related.length) out.push(card("pk-learn", "Learn next", el("div", { class: "bs-chips" }, ...p.related.map(t => el("button", { type: "button", class: "tp-sub", onclick: () => go(t) }, t)))));
@@ -5602,7 +5816,7 @@ function packView(p, go, res) {
       el("small", { class: "hint" }, "This check compares key words. It is a signal, not a proof. Found a mistake? Tap Feedback and ideas.")));
   }
   { const refs = (_packs && _packs.refs && _packs.refs[p.subject]) || []; if (refs.length) out.push(card("pk-refs", "Standard textbooks to read", el("ul", { class: "bsr-bul" }, ...refs.map(x => el("li", {}, x))), el("small", { class: "hint" }, "Check the chapter on this topic in your prescribed textbook and follow your syllabus. We only list the books, we do not copy from them."))); }
-  out.push(el("p", { class: "hint pk-note" }, "Written for The Campus Loop from standard textbook rules. Found a mistake? Tap Feedback and ideas and tell us, and we will fix it. Always check with your syllabus and teacher."));
+  out.push(el("p", { class: "hint pk-note" }, "Written for Loopy Brains from standard textbook rules. Found a mistake? Tap Feedback and ideas and tell us, and we will fix it. Always check with your syllabus and teacher."));
   return out;
 }
 function reportView(r, res, go) {
@@ -5646,7 +5860,7 @@ function compareView(res) {
   out.push(el("section", { class: "bsr-card src bsr-reveal" }, el("h3", {}, "Where this comes from"), el("div", { class: "tp-chans" }, c.a.page ? outLink(c.a.page, c.a.title + " (Wikipedia)", "tp-chan") : null, c.b.page ? outLink(c.b.page, c.b.title + " (Wikipedia)", "tp-chan") : null), el("p", { class: "hint" }, "The table is built automatically from the first sentences that match each row, so check important points in your textbook.")));
   return out;
 }
-const DOM_COLOR = { Healthcare: "#e11d48", Transport: "#0ea5e9", Communication: "#6366f1", Energy: "#f59e0b", Finance: "#16a34a", Education: "#8b5cf6", Security: "#0f766e", Entertainment: "#ec4899", Manufacturing: "#ea580c", Agriculture: "#65a30d", Space: "#1d4ed8", Computing: "#2563eb", Science: "#0d9488", "Everyday life": "#64748b" };
+const DOM_COLOR = { Healthcare: "#e11d48", Transport: "#0ea5e9", Communication: "#22c55e", Energy: "#f59e0b", Finance: "#16a34a", Education: "#16a34a", Security: "#0f766e", Entertainment: "#f97316", Manufacturing: "#ea580c", Agriculture: "#65a30d", Space: "#1d4ed8", Computing: "#2563eb", Science: "#0d9488", "Everyday life": "#64748b" };
 function usesNode(list, topic) {
   const q = encodeURIComponent(topic), tiles = (list || []).map(u => el("div", { class: "bsr-use", style: "--dc:" + (DOM_COLOR[u.domain] || "#64748b") }, el("span", { class: "bsr-dom" }, u.domain), el("b", {}, u.title), el("p", {}, u.text)));
   return el("section", { class: "bsr-card uses bsr-reveal in" }, el("h3", {}, "Real-life uses"), tiles.length ? el("div", { class: "bsr-usegrid" }, ...tiles) : el("p", { class: "hint" }, "No uses were listed in the source. See real examples below."),
@@ -5714,23 +5928,23 @@ function securityView(r) {
   return out;
 }
 function brandSpin(cls) {
-  const A = (n, a, ...k) => sv(n, a, ...k), stops = (arr) => arr.map(([o, c, op]) => A("stop", { offset: o, "stop-color": c, "stop-opacity": op == null ? 1 : op }));
-  const defs = A("defs", {}, A("linearGradient", { id: "bsBg", x1: 0, y1: 0, x2: 1, y2: 1 }, ...stops([[0, "#1b1466"], [.55, "#0f0a3d"], [1, "#070522"]])), A("radialGradient", { id: "bsGa", cx: .2, cy: .05, r: .9 }, ...stops([[0, "#a855f7", .5], [1, "#a855f7", 0]])), A("radialGradient", { id: "bsGb", cx: .92, cy: .98, r: .75 }, ...stops([[0, "#f59e0b", .38], [1, "#f59e0b", 0]])), A("linearGradient", { id: "bsRing", x1: 0, y1: 0, x2: 1, y2: 1 }, ...stops([[0, "#22d3ee"], [.35, "#6366f1"], [.7, "#d946ef"], [1, "#fb923c"]])), A("linearGradient", { id: "bsGold", x1: 0, y1: 0, x2: 1, y2: 1 }, ...stops([[0, "#fde68a"], [.5, "#f59e0b"], [1, "#fcd34d"]])));
-  const ring = A("g", { class: "bs-spinc" }, A("circle", { cx: 512, cy: 410, r: 238, fill: "none", stroke: "url(#bsRing)", "stroke-width": 72, "stroke-linecap": "round", "stroke-dasharray": "1100 396", transform: "rotate(45 512 410)" }));
-  const root = A("svg", { viewBox: "0 0 1024 1024", class: cls, role: "img", "aria-label": "The Campus Loop" }, defs, A("rect", { width: 1024, height: 1024, rx: 230, fill: "url(#bsBg)" }), A("rect", { width: 1024, height: 1024, rx: 230, fill: "url(#bsGa)" }), A("rect", { width: 1024, height: 1024, rx: 230, fill: "url(#bsGb)" }), ring,
-    A("path", { d: "M330 400 L512 322 L694 400 L512 478 Z", fill: "#fff" }), A("path", { d: "M404 448 v70 q108 58 216 0 v-70", fill: "none", stroke: "#e0e7ff", "stroke-width": 22, "stroke-linejoin": "round" }), A("path", { d: "M694 400 v96", stroke: "url(#bsGold)", "stroke-width": 10, "stroke-linecap": "round" }), A("circle", { cx: 694, cy: 508, r: 17, fill: "url(#bsGold)" }),
-    A("text", { x: 512, y: 842, "text-anchor": "middle", "font-size": 112, "font-weight": 700, "letter-spacing": 4, fill: "#fff", "font-family": "Georgia, 'Times New Roman', serif" }, "THE CAMPUS"), A("rect", { x: 262, y: 880, width: 215, height: 3, rx: 1.5, fill: "url(#bsGold)" }), A("rect", { x: 547, y: 880, width: 215, height: 3, rx: 1.5, fill: "url(#bsGold)" }), A("path", { d: "M512 868 l13 14 -13 14 -13 -14z", fill: "url(#bsGold)" }),
-    A("text", { x: 512, y: 956, "text-anchor": "middle", "font-size": 64, "font-weight": 700, "letter-spacing": 30, fill: "#fcd34d", "font-family": "Georgia, 'Times New Roman', serif" }, "LOOP"));
-  return root;
+  // Loopy AI logo: the LB monogram stays still while the coral loop around it turns (it turns faster while Loopy is thinking).
+  const A = (n, a, ...k) => sv(n, a, ...k), stop = (o, c) => A("stop", { offset: o, "stop-color": c });
+  const defs = A("defs", {}, A("linearGradient", { id: "bsBg", x1: 0, y1: 0, x2: 1, y2: 1 }, stop(0, "#22c55e"), stop(.55, "#166534"), stop(1, "#0f3d22")), A("linearGradient", { id: "bsRing", x1: 0, y1: 0, x2: 1, y2: 1 }, stop(0, "#fdba74"), stop(1, "#f97316")));
+  const ring = A("g", { class: "bs-spinc" }, A("circle", { cx: 256, cy: 256, r: 196, fill: "none", stroke: "url(#bsRing)", "stroke-width": 30, "stroke-linecap": "round", "stroke-dasharray": "960 272", transform: "rotate(-75 256 256)" }), A("circle", { cx: 404, cy: 132, r: 17, fill: "#fff4ec" }));
+  const lb = A("g", { fill: "none", stroke: "#fff4ec", "stroke-width": 34, "stroke-linecap": "round", "stroke-linejoin": "round", transform: "translate(-41 0)" }, A("path", { d: "M194 168V340H234" }), A("path", { d: "M302 168V340" }), A("path", { d: "M302 168H336C366 168 380 188 380 210C380 234 364 252 330 252H302" }), A("path", { d: "M302 252H338C378 252 394 274 394 298C394 322 376 340 338 340H302" }));
+  return A("svg", { viewBox: "0 0 1024 1024", class: cls, role: "img", "aria-label": "Loopy AI" }, defs, A("rect", { width: 1024, height: 1024, rx: 230, fill: "url(#bsBg)" }), A("g", { transform: "translate(206 70) scale(1.2)" }, ring, lb),
+    A("text", { x: 512, y: 826, "text-anchor": "middle", "font-size": 110, "font-weight": 700, "letter-spacing": 6, fill: "#fff4ec", "font-family": "Georgia, 'Times New Roman', serif" }, "LOOPY"),
+    A("text", { x: 512, y: 944, "text-anchor": "middle", "font-size": 84, "font-weight": 700, "letter-spacing": 40, fill: "#fb923c", "font-family": "Georgia, 'Times New Roman', serif" }, "AI"));
 }
 function loopyMark(cls) {
-  const r = sv("svg", { viewBox: "0 0 64 64", class: cls, "aria-hidden": "true" }), cols = ["#f59e0b", "#f97316", "#ef4444", "#d946ef", "#6366f1", "#22d3ee", "#10b981", "#eab308"];
+  const r = sv("svg", { viewBox: "0 0 64 64", class: cls, "aria-hidden": "true" }), cols = ["#f59e0b", "#f97316", "#ef4444", "#fb923c", "#22c55e", "#86efac", "#10b981", "#eab308"];
   for (let i = 0; i < 8; i++) r.append(sv("line", { x1: 32, y1: 32 - (i % 2 ? 14 : 8), x2: 32, y2: 32 - (i % 2 ? 29 : 25), stroke: cols[i], "stroke-width": 4.6, "stroke-linecap": "round", transform: "rotate(" + i * 45 + " 32 32)" }));
   return r;
 }
 function brainView() {
   const ui = {}, out = brainViewInner(ui), skip = new Set([ui.bar, ui.head]);
-  return [...out.filter(n => !skip.has(n)), ui.dock].filter(Boolean);
+  return [...(ui.thinking || []), ...out.filter(n => !skip.has(n)), bsState().busy ? null : ui.dock].filter(Boolean);
 }
 function brainViewInner(ui) {
   const bs = bsState(), mi = bsModeInfo(bs.mode), back = el("button", { class: "btn", type: "button", onclick: () => bsClose() }, "Close");
@@ -5763,10 +5977,10 @@ function brainViewInner(ui) {
   const setLevel = (lv) => { if (!bsOpen(lv)) { bs.lock = lv; bsPaint(); return; } bs.level = lv; bs.lock = 0; bsRemember(); if (bs.q && bs.res) bsRun(bs.q); else bsPaint(); };
   const lvBar = el("div", { class: "bs-lvs bsf-noprint", role: "group", "aria-label": "Loopy model" }, ...BS_LEVELS.map(([n, t, , plus]) => { const open = bsOpen(n); return el("button", { type: "button", class: "bs-lv" + (bs.level === n && !bs.lock ? " on" : "") + (open ? "" : " locked"), "aria-pressed": String(bs.level === n), onclick: () => setLevel(n) }, el("b", {}, String(n)), el("span", {}, t), el("i", { class: "bs-tier" + (bsFree(n) ? "" : " plus") }, bsFree(n) ? "FREE" : open ? (IS_RGUKT ? "BONUS" : "PLUS") : IS_RGUKT ? "\u{1F512} LOCKED" : "\u{1F512} PLUS")); }));
   const cur = BS_LEVELS[(bs.lock || bs.level) - 1], modelLine = el("p", { class: "bs-model bsf-noprint" }, el("b", {}, bsName(cur[0])), " · " + cur[2] + " ", el("span", { class: "bs-dots", "aria-label": "Depth " + cur[0] + " of 5" }, "●".repeat(cur[0]) + "○".repeat(5 - cur[0])));
-  const rgNote = el("p", { class: "bs-model bsf-noprint" }, IS_RGUKT ? "All five Loopy Brain models are free for RGUKT students." : "Loopy Spark is free. Scholar, Vision, Sage and Apex are part of Campus Loop Plus.");
-  const lockCard = bs.lock ? el("div", { class: "bs-lock", role: "status" }, el("strong", {}, bsName(bs.lock) + (IS_RGUKT ? " is not part of the free RGUKT plan" : " is a Plus model")), el("p", {}, BS_LEVELS[bs.lock - 1][2] + ". " + (IS_RGUKT ? "All Loopy models are free for RGUKT students." : "Loopy Spark is free for everyone. Campus Loop Plus unlocks Loopy Scholar, Vision, Sage and Apex.")), el("div", { class: "rowbtns" }, IS_RGUKT ? null : el("button", { class: "btn sm primary", type: "button", onclick: () => bsLeave(() => showPanel("plus")) }, "See Campus Loop Plus"), el("button", { class: "btn sm", type: "button", onclick: () => { bs.lock = 0; bsPaint(); } }, "Stay on free models"))) : null;
+  const rgNote = el("p", { class: "bs-model bsf-noprint" }, IS_RGUKT ? "All five Loopy models are free for RGUKT students." : "Loopy Spark is free. Scholar, Vision, Sage and Apex are part of Loopy Brains Plus.");
+  const lockCard = bs.lock ? el("div", { class: "bs-lock", role: "status" }, el("strong", {}, bsName(bs.lock) + (IS_RGUKT ? " is not part of the free RGUKT plan" : " is a Plus model")), el("p", {}, BS_LEVELS[bs.lock - 1][2] + ". " + (IS_RGUKT ? "All Loopy models are free for RGUKT students." : "Loopy Spark is free for everyone. Loopy Brains Plus unlocks Loopy Scholar, Vision, Sage and Apex.")), el("div", { class: "rowbtns" }, IS_RGUKT ? null : el("button", { class: "btn sm primary", type: "button", onclick: () => bsLeave(() => showPanel("plus")) }, "See Loopy Brains Plus"), el("button", { class: "btn sm", type: "button", onclick: () => { bs.lock = 0; bsPaint(); } }, "Stay on free models"))) : null;
   const setMode = (id) => { if (bs.mode === id) return; bs.mode = id; bsRemember(); bs.lock = 0; if (bs.q && bs.res && !bs.res.disambig) bsSubmit(bs.q); else bsPaint(); };
-  const modeBar = el("div", { class: "bs-modes bsf-noprint" + (bs.res ? " compact" : " pills"), role: "tablist", "aria-label": "Loopy Brain engine" }, ...BS_MODES.map(m => el("button", { type: "button", role: "tab", class: "bs-mode" + (bs.mode === m[0] ? " on" : ""), "aria-selected": String(bs.mode === m[0]), onclick: () => setMode(m[0]) }, svgIcon(m[0]), el("span", {}, el("b", {}, m[1]), el("small", {}, m[2])))));
+  const modeBar = el("div", { class: "bs-modes bsf-noprint" + (bs.res ? " compact" : " pills"), role: "tablist", "aria-label": "Loopy AI engine" }, ...BS_MODES.map(m => el("button", { type: "button", role: "tab", class: "bs-mode" + (bs.mode === m[0] ? " on" : ""), "aria-selected": String(bs.mode === m[0]), onclick: () => setMode(m[0]) }, svgIcon(m[0]), el("span", {}, el("b", {}, m[1]), el("small", {}, m[2])))));
   const modeLine = el("p", { class: "bs-modeline bsf-noprint" }, el("b", {}, mi[1] + ": "), mi[3]);
   const easyBtn = el("button", { type: "button", class: "bs-easy" + (bs.easy !== false ? " on" : ""), "aria-pressed": String(bs.easy !== false), onclick: () => { bs.easy = bs.easy === false; bsRemember(); bsPaint(); } }, "Easy words: " + (bs.easy !== false ? "On" : "Off"));
   const offer = bsOffer(), offerBar = offer ? el("div", { class: "bs-offer bsf-noprint" }, el("b", {}, offer.title), offer.text ? el("span", {}, " " + offer.text) : null) : null, L = bsLeft(), pct = Math.round(Math.min(L.day / L.caps.day, L.week / L.caps.week) * 100);
@@ -5780,8 +5994,9 @@ function brainViewInner(ui) {
   const foot = el("p", { class: "bs-foot bsf-noprint" }, "Today: " + L.day + " of " + L.caps.day + " credits \u00B7 Check important facts");
   ui.bar = bar; ui.head = head; ui.dock = el("div", { class: "bs-dock bsf-noprint" }, sheet, sug, form, foot);
   const chips = (list, onTap) => el("div", { class: "bs-chips" }, ...list.map(t => el("button", { type: "button", class: "tp-sub", onclick: () => onTap(t) }, t)));
-  if (bs.busy) return [bar, head, el("div", { class: "bsr-load calm", role: "status", "aria-live": "polite" }, el("div", { class: "bsc-orbit sm", "aria-hidden": "true" }, el("i", { class: "r1" }), el("i", { class: "r2" }), el("b", { class: "d1" }), el("b", { class: "d2" }), el("b", { class: "d3" }), brandSpin("bsc-brand live")), el("p", { class: "bsr-think" }, "Loopy is thinking\u2026"),
-    el("div", { class: "bsr-lines", "aria-hidden": "true" }, el("i", {}), el("i", {}), el("i", {})))];
+  const thinkingEls = bs.busy ? [el("p", { class: "bsr-yq" }, el("small", {}, "Your question"), el("b", {}, bs.q || bs.pending || "")), el("div", { class: "bsr-load calm", role: "status", "aria-live": "polite" }, el("div", { class: "bsc-orbit sm", "aria-hidden": "true" }, el("i", { class: "r1" }), el("i", { class: "r2" }), el("b", { class: "d1" }), el("b", { class: "d2" }), el("b", { class: "d3" }), brandSpin("bsc-brand live")), el("p", { class: "bsr-think" }, "Loopy is thinking\u2026"),
+    el("div", { class: "bsr-lines", "aria-hidden": "true" }, el("i", {}), el("i", {}), el("i", {})))] : [];
+  ui.thinking = bs.busy && bs.res ? thinkingEls : [];
   if (bs.pending) {
     return [bar, head, el("section", { class: "bsr-ask bsr-reveal in" }, el("small", {}, "Your question"), el("h2", {}, bs.pending), el("p", { class: "hint" }, "How much do you need?"),
       el("div", { class: "bsr-sizes" }, ...BS_SIZES.map(([id, name, hint, need], i) => { const open = bsOpen(need); return el("button", { type: "button", class: "bsr-size z" + i + (bs.size === id ? " pre" : ""), onclick: () => bsPickSize(id) }, el("b", {}, name), el("span", {}, hint), open ? null : el("i", {}, IS_RGUKT ? "\u{1F512} Locked" : "\u{1F512} Plus")); })))];
@@ -5796,21 +6011,21 @@ function brainViewInner(ui) {
       aegis: [["\u{1F489}", "SQL injection", "Security"], ["\u{1F3A3}", "Phishing", "Security"], ["\u{1F511}", "Password security", "Security"], ["\u{1F512}", "Two factor authentication", "Security"]] };
     const tryBlock = el("div", { class: "bs-blk" }, el("small", { class: "bs-secthead" }, "Try asking"), el("div", { class: "bs-try" }, ...(TRY[bs.mode] || TRY.atlas).map(([ic, t, s]) => el("button", { type: "button", class: "bs-tc", onclick: () => go(t) }, el("i", { "aria-hidden": "true" }, ic), el("b", {}, t), el("small", {}, s)))));
     if (!_packs && !bs._pkTried) { bs._pkTried = true; brainPacksMod().then(() => { if (bsEl() && !bsState().res) bsPaint(); }); }
-    const SUBJ = [["Digital electronics", "\u{1F522} Digital logic", "#6d28d9"], ["Analog electronic circuits", "\u{1F50C} Analog circuits", "#ea580c"], ["Digital signal processing", "\u{1F4C8} Signal processing", "#0891b2"], ["Control systems", "\u{1F39B}\uFE0F Control systems", "#16a34a"], ["Probability and random variables", "\u{1F3B2} Probability", "#db2777"]];
+    const SUBJ = [["Digital electronics", "\u{1F522} Digital logic", "#fb923c"], ["Analog electronic circuits", "\u{1F50C} Analog circuits", "#ea580c"], ["Digital signal processing", "\u{1F4C8} Signal processing", "#0891b2"], ["Control systems", "\u{1F39B}\uFE0F Control systems", "#16a34a"], ["Probability and random variables", "\u{1F3B2} Probability", "#f97316"]];
     const allPk = _packs ? _packs.all : [], open = bs.packSubj;
     const tiles = (bs.mode === "atlas" || !bs.mode) ? el("div", { class: "bs-blk" }, el("small", { class: "bs-secthead" }, "Browse textbook topics"), el("div", { class: "bs-tiles" }, ...SUBJ.map(([sub, label, col]) => { const n = allPk.filter(p => p.subject === sub).length; return el("button", { type: "button", class: "bs-tile" + (open === sub ? " on" : ""), "aria-expanded": String(open === sub), onclick: () => { bs.packSubj = open === sub ? "" : sub; bsPaint(); } }, el("b", {}, label), el("small", {}, n ? n + " topics" : "Tap to open")); }).map((n, i) => { n.style.setProperty("--tc", SUBJ[i][2]); return n; })),
-      open ? el("div", { class: "bs-chips bs-packlist" }, ...(allPk.filter(p => p.subject === open).length ? allPk.filter(p => p.subject === open).map(p => el("button", { type: "button", class: "tp-sub", onclick: () => { bs.forcePack = p.id; go(p.title.replace(/\\s*\\(.*?\\)\\s*/g, " ").trim()); } }, p.title)) : [el("small", { class: "hint" }, "Loading the topic list\u2026")])) : null) : null;
-    return [hero, bar, head, tryBlock, tiles,
+      open === "Digital electronics" && allPk.length ? dldHub(allPk, bs, go) : open ? el("div", { class: "bs-chips bs-packlist" }, ...(allPk.filter(p => p.subject === open).length ? allPk.filter(p => p.subject === open).map(p => el("button", { type: "button", class: "tp-sub", onclick: () => { bs.forcePack = p.id; go(p.title.replace(/\\s*\\(.*?\\)\\s*/g, " ").trim()); } }, p.title)) : [el("small", { class: "hint" }, "Loading the topic list\u2026")])) : null) : null;
+    return [hero, ...thinkingEls, bar, head, tryBlock, tiles,
       rec.length ? el("div", { class: "bs-blk" }, el("small", { class: "bs-secthead" }, "Recent"), chips(rec, go)) : null,
       rows.length ? el("div", { class: "bs-blk" }, el("small", { class: "bs-secthead" }, "Your syllabus"), chips(rows, go)) : null,
       mySubjectsBlock(bs, go), savedBlock(bs, go),
-      el("div", { class: "bs-blk bs-fbk" }, el("small", { class: "hint" }, "Help us make Loopy Brain better"), el("div", { class: "rowbtns" }, el("button", { type: "button", class: "btn sm", onclick: () => { state.fbCat = "Loopy Brain"; bsClose(); showPanel("feedback"); } }, "\u{1F4AC} Send feedback or an idea"))),
+      el("div", { class: "bs-blk bs-fbk" }, el("small", { class: "hint" }, "Help us make Loopy AI better"), el("div", { class: "rowbtns" }, el("button", { type: "button", class: "btn sm", onclick: () => { state.fbCat = "Loopy AI"; bsClose(); showPanel("feedback"); } }, "\u{1F4AC} Send feedback or an idea"))),
       el("div", { class: "rowbtns" }, back)].filter(Boolean);
   }
   const r = bs.res, q = r.topic, lv = r.lv;
   const noteCard = r.savedId ? (() => { const ta = el("textarea", { rows: "3", maxlength: "500", class: "bs-note", placeholder: "Write your own notes here", "aria-label": "My notes" }); ta.value = r.note || ""; return el("section", { class: "bsr-card note bsf-noprint" }, el("h3", {}, "My notes"), ta, el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => { const l = bsSavedList(); const it = l.find(x => x.id === r.savedId); if (it) { it.note = ta.value.slice(0, 500); bsPutSaved(l); r.note = it.note; showNotice("Note saved.", "ok"); } } }, "Save note"), el("small", { class: "hint" }, "Saved on this phone. Reading this is free and works offline."))); })() : null;
   if (r.disambig) return [bar, head, el("section", { class: "bsr-card bsr-reveal in" }, el("h3", {}, "I am not sure what you mean"), el("p", {}, "I could not find a clear article for \u201C" + bs.q + "\u201D, and I would rather ask than show you the wrong answer."), r.disambig.length ? el("p", { class: "hint" }, "Did you mean one of these?") : el("p", { class: "hint" }, "Try the full name of the topic, or add the subject, for example \u201Csequential logic\u201D."), el("div", { class: "bs-chips" }, ...r.disambig.map(t => el("button", { type: "button", class: "tp-sub", onclick: () => { bs.charged = ""; bsSubmit(t); } }, t)))), el("div", { class: "rowbtns bsf-noprint" }, el("button", { class: "btn", type: "button", onclick: () => { bs.res = null; bs.q = ""; bs.pending = ""; bsPaint(true); } }, "New search"), back)];
-  if (r.mode && r.mode !== "atlas") return [bar, head, noteCard, ...(r.mode === "forge" ? codeView(r) : r.mode === "launchpad" ? projectView(r) : securityView(r)), el("p", { class: "hint ai-fine" }, "Loopy Brain gives guidance for learning. Check important facts and follow your college rules."), el("div", { class: "rowbtns bsf-noprint" }, el("button", { class: "btn", type: "button", onclick: () => { bs.res = null; bs.q = ""; bs.pending = ""; bsPaint(true); } }, "New search"), back)];
+  if (r.mode && r.mode !== "atlas") return [bar, head, noteCard, ...(r.mode === "forge" ? codeView(r) : r.mode === "launchpad" ? projectView(r) : securityView(r)), el("p", { class: "hint ai-fine" }, "Loopy AI gives guidance for learning. Check important facts and follow your college rules."), el("div", { class: "rowbtns bsf-noprint" }, el("button", { class: "btn", type: "button", onclick: () => { bs.res = null; bs.q = ""; bs.pending = ""; bsPaint(true); } }, "New search"), back)];
   if (r.compare) return [bar, head, noteCard, ...compareView(r), el("div", { class: "rowbtns bsf-noprint" }, el("button", { class: "btn", type: "button", onclick: () => { bs.res = null; bs.q = ""; bs.pending = ""; bsPaint(true); } }, "New search"), back)];
   const yt = (x) => "https://www.youtube.com/results?search_query=" + encodeURIComponent(q + " " + x), gg = (x) => "https://www.google.com/search?q=" + encodeURIComponent(q + " " + x);
   const tabList = [["all", "All"]]; if (lv >= 2) tabList.push(["classmates", "Classmates" + (r.board.length ? " " + r.board.length : "")], ["syllabus", "Syllabus" + (r.syl.length ? " " + r.syl.length : "")]); if (lv >= 3) tabList.push(["images", "Pictures"], ["models", "3D"]); if (lv >= 4) tabList.push(["videos", "Videos"], ["notes", "Notes"]); if (lv >= 5) tabList.push(["exam", "Exam"]);
@@ -5841,8 +6056,8 @@ function brainViewInner(ui) {
   else if (bs.tab === "exam") body = [examBox()];
   else body = [r.pack ? null : r.report ? null : answer, ...(r.pack ? packView(r.pack, go, r) : []), r.pack && r.report ? el("h3", { class: "pk-more" }, "More from the web") : null, ...(r.report ? reportView(r.report, r, go) : []), lv >= 3 && !r.solved && r.size !== "brief" ? imgBox() : null, lv >= 3 && !r.solved && r.size !== "brief" ? modBox() : null, lv >= 4 && !r.solved && !r.report ? deepBox() : null, lv >= 4 && !r.solved && r.size !== "brief" ? sect("Watch and learn", watch) : null, lv >= 4 && !r.solved && r.size !== "brief" ? sect("Notes and practice", notes) : null, lv >= 5 && !r.solved ? examBox() : null,
     lv >= 2 && r.board.length ? sect("Classmates’ answers", ...r.board.slice(0, 2).map(doubtRow)) : null, lv >= 2 && r.syl.length ? sect("In your syllabus", ...r.syl.map(sylRow)) : null];
-  const stamp = el("div", { class: "bsr-print" }, "The Campus Loop · Loopy Search · " + new Date().toLocaleDateString());
-  return [bar, head, tabBar, stamp, ...body.filter(Boolean), r.report ? null : null, sizeRow, acts, el("p", { class: "hint ai-fine" }, "Loopy Brain builds answers from your syllabus, your classmates’ best answers, Wikipedia and open research. Check important facts in your textbook."), el("div", { class: "rowbtns bsf-noprint" }, el("button", { class: "btn", type: "button", onclick: () => { bs.res = null; bs.q = ""; bs.pending = ""; bsPaint(true); } }, "New search"), back)].filter(Boolean);
+  const stamp = el("div", { class: "bsr-print" }, "Loopy Brains · Loopy Search · " + new Date().toLocaleDateString());
+  return [bar, head, tabBar, stamp, ...body.filter(Boolean), r.report ? null : null, sizeRow, acts, el("p", { class: "hint ai-fine" }, "Loopy AI builds answers from your syllabus, your classmates’ best answers, Wikipedia and open research. Check important facts in your textbook."), el("div", { class: "rowbtns bsf-noprint" }, el("button", { class: "btn", type: "button", onclick: () => { bs.res = null; bs.q = ""; bs.pending = ""; bsPaint(true); } }, "New search"), back)].filter(Boolean);
 }
 function renderAI() {
   if (state.ai && state.ai.prefill) { bsState().start = String(state.ai.prefill); state.ai.prefill = ""; }
@@ -5889,7 +6104,7 @@ function ftFinish() {
 }
 function renderFocusPlus() {
   const back = el("button", { class: "btn", type: "button", onclick: () => { if (state.ft && state.ft.tick) clearInterval(state.ft.tick); state.ft = null; showPanel("plus"); } }, "Back");
-  if (plusLocked()) return [el("h2", {}, "⏱️ Focus timer"), el("p", { class: "hint" }, "The focus timer is part of The Campus Loop Plus."), el("div", { class: "rowbtns" }, back)];
+  if (plusLocked()) return [el("h2", {}, "⏱️ Focus timer"), el("p", { class: "hint" }, "The focus timer is part of Loopy Brains Plus."), el("div", { class: "rowbtns" }, back)];
   const f = state.ft || (state.ft = { idle: true, msg: "" }), log = studyLog(), days = Array.from({ length: 7 }, (_, i) => { const d = new Date(Date.now() - (6 - i) * 864e5); return [d.toLocaleDateString(undefined, { weekday: "short" }), log[dayStr(d)] || 0]; });
   const max = Math.max(60, ...days.map(x => x[1])), total = days.reduce((a, x) => a + x[1], 0), mm = (ms) => Math.floor(ms / 6e4) + ":" + String(Math.floor(ms % 6e4 / 1e3)).padStart(2, "0");
   const start = (kind) => { const mins = kind === "focus" ? FOCUS_MIN : BREAK_MIN; const n = { kind, end: Date.now() + mins * 6e4, done: false }; n.tick = setInterval(() => { const l = n.end - Date.now(); if (state.mode !== "focusplus" || state.ft !== n) { clearInterval(n.tick); return; } if (l <= 0) { ftFinish(); return; } const t = document.querySelector("[data-ft]"); if (t) t.textContent = mm(l); }, 1000); state.ft = n; render(); };
@@ -5930,7 +6145,7 @@ async function redeemPendingGift() {
 function giftCard() {
   const has = state.plan.plus, say = el("p", { class: "hint", role: "status" }, "");
   const link = (c) => location.origin + location.pathname + "?c=" + encodeURIComponent(SEL) + "&gift=" + c;
-  const share = async (c) => { const text = "I gifted you The Campus Loop Plus! Open this link to claim it: " + link(c); try { if (navigator.share) { await navigator.share({ title: BRAND, text, url: link(c) }); return; } } catch (_) { return; } try { await navigator.clipboard.writeText(text); say.textContent = "✅ Gift link copied. Paste it in WhatsApp."; } catch (_) { say.textContent = link(c); } };
+  const share = async (c) => { const text = "I gifted you Loopy Brains Plus! Open this link to claim it: " + link(c); try { if (navigator.share) { await navigator.share({ title: BRAND, text, url: link(c) }); return; } } catch (_) { return; } try { await navigator.clipboard.writeText(text); say.textContent = "✅ Gift link copied. Paste it in WhatsApp."; } catch (_) { say.textContent = link(c); } };
   if (!PLUS.enabled) return el("div", { class: "learn-card plus-list" }, el("strong", {}, "🎁 Gift Plus to a friend"), el("p", { class: "hint" }, "Gifts open when payments open. You will pay once, get a link, and your friend gets the days."));
   if (giftsState.list === null) loadGifts();
   const buyGift = (key, label) => el("button", { class: "btn sm", type: "button", onclick: async (e) => { e.currentTarget.disabled = true; try { await startCheckout(key, true); say.textContent = "The payment page opened. After you pay, come back here (tap Refresh) to get the gift link."; } catch (err) { say.textContent = err.message || "Could not start the payment."; } e.currentTarget.disabled = false; } }, label);
@@ -5958,7 +6173,7 @@ function resumeDoc(d) {
 }
 function renderResume() {
   const back = el("button", { class: "btn", type: "button", onclick: () => showPanel("plus") }, "Back");
-  if (plusLocked()) return [el("h2", {}, "📄 Resume builder"), el("p", { class: "hint" }, "The resume builder is part of The Campus Loop Plus."), el("div", { class: "rowbtns" }, back)];
+  if (plusLocked()) return [el("h2", {}, "📄 Resume builder"), el("p", { class: "hint" }, "The resume builder is part of Loopy Brains Plus."), el("div", { class: "rowbtns" }, back)];
   const d = resumeData(), prev = el("div", { class: "resume-wrap" }), save = () => { writeJSON("dd-resume", d); prev.replaceChildren(resumeDoc(d)); };
   const inp = (label, get, set, max, ph, area) => { const f = el(area ? "textarea" : "input", { maxlength: String(max), placeholder: ph || label, "aria-label": label }); f.value = get(); f.addEventListener("input", () => { set(f.value.slice(0, max)); save(); }); return f; };
   const row = (...kids) => el("div", { class: "two" }, ...kids);
@@ -5987,7 +6202,7 @@ function renderResume() {
 // Weekly Plus leaderboard: points from focus minutes, mock tests, mistakes cleared and papers practised. Resets every Monday.
 function renderWeeklyBoard() {
   const back = el("button", { class: "btn", type: "button", onclick: () => showPanel("plus") }, "Back");
-  if (plusLocked()) return [el("h2", {}, "🏅 Weekly leaderboard"), el("p", { class: "hint" }, "The weekly leaderboard is for The Campus Loop Plus members."), el("div", { class: "rowbtns" }, back)];
+  if (plusLocked()) return [el("h2", {}, "🏅 Weekly leaderboard"), el("p", { class: "hint" }, "The weekly leaderboard is for Loopy Brains Plus members."), el("div", { class: "rowbtns" }, back)];
   syncWeekly();
   const uid = store && store.authUid ? store.authUid() : "", rows = state.weekly.slice().sort((a, b) => b.points - a.points || a.updatedAt - b.updatedAt), mine = rows.findIndex(r => r.uid === uid), medal = ["🥇", "🥈", "🥉"];
   const left = (() => { const ms = weekStartMs() + 7 * 864e5 - Date.now(), d = Math.floor(ms / 864e5), h = Math.floor(ms % 864e5 / 36e5); return d + "d " + h + "h"; })();
@@ -6003,7 +6218,7 @@ const GOAL_DEFS = [["tests", "📝 Take 3 mock tests", 3], ["cleared", "📓 Cle
 const PLUS_BADGES = [["🥉", "First mock", l => l.tests >= 1], ["🥈", "5 mocks done", l => l.tests >= 5], ["🏆", "Ace: 90%+ in a test", l => l.best >= 90], ["🧹", "Mistake slayer (20)", l => l.cleared >= 20], ["📚", "Paper warrior (10)", l => l.papers >= 10], ["🗓️", "Planner set", () => !!readJSON("dd-exam-plan", null)], ["⏱️", "Focused: 10 hours", l => (l.mins || 0) >= 600], ["🌳", "Family: 7 days", () => (readJSON("dd-visits", { n: 0 }).n || 0) >= 7], ["🏆", "Family: 30 days", () => (readJSON("dd-visits", { n: 0 }).n || 0) >= 30]];
 function renderGoals() {
   const back = el("button", { class: "btn", type: "button", onclick: () => showPanel("plus") }, "Back");
-  if (plusLocked()) return [el("h2", {}, "🎯 Goals and badges"), el("p", { class: "hint" }, "Goals and badges are part of The Campus Loop Plus."), el("div", { class: "rowbtns" }, back)];
+  if (plusLocked()) return [el("h2", {}, "🎯 Goals and badges"), el("p", { class: "hint" }, "Goals and badges are part of Loopy Brains Plus."), el("div", { class: "rowbtns" }, back)];
   const g = goalStats(), l = lifeStats(), allDone = GOAL_DEFS.every(([k, , n]) => (g[k] || 0) >= n), got = PLUS_BADGES.filter(b => b[2](l)).length;
   return [el("h2", {}, "🎯 Goals and badges"), allDone ? el("div", { class: "wow", role: "status" }, el("span", { class: "wow-conf", "aria-hidden": "true" }, "🎉 🎊"), el("strong", {}, "Wow, all weekly goals done!")) : el("p", { class: "hint" }, "Weekly goals reset every Monday."),
     el("div", { class: "learn-card plus-list" }, el("strong", {}, "This week"), ...GOAL_DEFS.map(([k, label, n]) => { const v = Math.min(n, g[k] || 0), bar = el("div", { class: "mock-bar" }, el("span", {})); bar.firstChild.style.setProperty("width", Math.round(v * 100 / n) + "%"); return el("div", {}, el("div", { class: "rowbtns" }, el("span", {}, label), el("b", {}, v + "/" + n)), bar); })),
@@ -6015,7 +6230,7 @@ function renderGoals() {
 // Mistake notebook: questions you missed come back until you answer them right.
 function renderMistakes() {
   const back = el("button", { class: "btn", type: "button", onclick: () => { state.mist = null; showPanel("plus"); } }, "Back"), list = mistakeList();
-  if (plusLocked()) return [el("h2", {}, "📓 Mistake notebook"), el("p", { class: "hint" }, "The mistake notebook is part of The Campus Loop Plus."), el("div", { class: "rowbtns" }, back)];
+  if (plusLocked()) return [el("h2", {}, "📓 Mistake notebook"), el("p", { class: "hint" }, "The mistake notebook is part of Loopy Brains Plus."), el("div", { class: "rowbtns" }, back)];
   if (!list.length) return [el("h2", {}, "📓 Mistake notebook"), el("p", { class: "hint" }, "Nothing here yet. Questions you get wrong in a mock test are saved here so you can practise them again."), el("div", { class: "rowbtns" }, back)];
   const st = state.mist || (state.mist = { i: Math.floor(Math.random() * list.length), pick: -1 });
   const q = list[st.i % list.length], answered = st.pick >= 0;
@@ -6042,7 +6257,7 @@ function buildPlan(subjects, examDate) {
 }
 function renderPlanner() {
   const back = el("button", { class: "btn", type: "button", onclick: () => showPanel("plus") }, "Back");
-  if (plusLocked()) return [el("h2", {}, "🗓️ Exam planner"), el("p", { class: "hint" }, "The exam planner is part of The Campus Loop Plus."), el("div", { class: "rowbtns" }, back)];
+  if (plusLocked()) return [el("h2", {}, "🗓️ Exam planner"), el("p", { class: "hint" }, "The exam planner is part of Loopy Brains Plus."), el("div", { class: "rowbtns" }, back)];
   const saved = readJSON("dd-exam-plan", null) || {}, name = el("input", { maxlength: "40", placeholder: "Exam name, e.g. Semester 3", value: saved.name || "", "aria-label": "Exam name" }),
     date = el("input", { type: "date", value: saved.date || "", "aria-label": "Exam date" }), subs = el("textarea", { maxlength: "300", placeholder: "Subjects, separated by commas", "aria-label": "Subjects" }, saved.subjects || ""),
     msg = el("p", { class: "hint", role: "status" }, "");
@@ -6167,9 +6382,9 @@ function logoutBlock() {
   };
   const ask = () => {
     const close = () => ov.remove(), text = acc.verified ? "You will be signed out of " + acc.email + " and this device will be cleared. Sign in again with the same email to get your points back." : "This clears your name, college and progress from this device. Without a verified email your points cannot be restored.";
-    const ov = el("div", { class: "welcome", role: "dialog", "aria-modal": "true", "aria-label": "Log out" }, el("div", { class: "welcome-card" },
-      el("div", { class: "welcome-icon", "aria-hidden": "true" }, "\u{1F6AA}"), el("h2", {}, "Log out?"), el("p", { class: "ob-say" }, text),
-      el("div", { class: "rowbtns" }, el("button", { class: "btn danger", type: "button", onclick: go }, "Yes, log out"), el("button", { class: "btn primary", type: "button", onclick: close }, "Stay signed in"))));
+    const ov = el("div", { class: "welcome lo-ov", role: "dialog", "aria-modal": "true", "aria-label": "Log out", onclick: (e) => { if (e.target === ov) close(); } }, el("div", { class: "lo-card" },
+      el("div", { class: "lo-ic", "aria-hidden": "true" }, "\u{1F6AA}"), el("h2", {}, "Log out?"), el("p", { class: "lo-text" }, text),
+      el("div", { class: "lo-btns" }, el("button", { class: "btn primary lo-stay", type: "button", onclick: close }, "Stay signed in"), el("button", { class: "lo-out", type: "button", onclick: go }, "Yes, log out"))));
     document.body.append(ov);
   };
   return el("div", { class: "logout-block" }, el("div", { class: "acct-head" }, el("span", { class: "acct-ic", "aria-hidden": "true" }, "\u{1F464}"), el("div", {}, el("strong", { class: "acct-title" }, "Account"), el("small", { class: "acct-sub" }, acc.verified ? "Signed in as " + acc.email + " \u2714 verified" : "This device only. Verify your email to keep your points safe."))),
@@ -6601,7 +6816,7 @@ const funShuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--
 const funBest = (k, v) => { try { const o = JSON.parse(localStorage.getItem("dd-fun-best") || "{}"); if (v === undefined) return o[k]; o[k] = v; localStorage.setItem("dd-fun-best", JSON.stringify(o)); } catch (_) {} return undefined; };
 
 const yt = (q) => "https://www.youtube.com/results?search_query=" + encodeURIComponent(q);
-// Official YouTube jukeboxes. These are copyrighted songs streamed by the rights holders on YouTube; The Campus Loop only links out.
+// Official YouTube jukeboxes. These are copyrighted songs streamed by the rights holders on YouTube; Loopy Brains only links out.
 const FUN_JUKE = [
   ["🎤 Telugu directors",[["M. M. Keeravani","M M Keeravani hits jukebox"], ["Devi Sri Prasad","Devi Sri Prasad hits jukebox"], ["S. Thaman","S Thaman hits jukebox"], ["Mani Sharma","Mani Sharma hits jukebox"], ["Ilaiyaraaja (Telugu)","Ilaiyaraaja (Telugu) hits jukebox"], ["A. R. Rahman (Telugu)","A R Rahman (Telugu) hits jukebox"], ["Koti","Koti hits jukebox"], ["Raj-Koti","Raj Koti hits jukebox"], ["Chakri","Chakri hits jukebox"], ["Anup Rubens","Anup Rubens hits jukebox"], ["Mickey J Meyer","Mickey J Meyer hits jukebox"], ["Kalyani Malik","Kalyani Malik hits jukebox"], ["R. P. Patnaik","R P Patnaik hits jukebox"], ["Gopi Sundar","Gopi Sundar hits jukebox"], ["Ghibran","Ghibran hits jukebox"], ["Bheems Ceciroleo","Bheems Ceciroleo hits jukebox"], ["Radhan","Radhan hits jukebox"], ["Vishal Chandrashekhar","Vishal Chandrashekhar hits jukebox"], ["Sai Kartheek","Sai Kartheek hits jukebox"], ["Harris Jayaraj (Telugu)","Harris Jayaraj (Telugu) hits jukebox"], ["Vidyasagar (Telugu)","Vidyasagar (Telugu) hits jukebox"], ["Ramesh Naidu","Ramesh Naidu hits jukebox"], ["K. Chakravarthy","K Chakravarthy hits jukebox"], ["Satyam","Satyam hits jukebox"], ["K. V. Mahadevan","K V Mahadevan hits jukebox"], ["Ghantasala","Ghantasala hits jukebox"], ["Ramana Gogula","Ramana Gogula hits jukebox"], ["M. M. Srilekha","M M Srilekha hits jukebox"], ["Vandemataram Srinivas","Vandemataram Srinivas hits jukebox"], ["Sri Kommineni","Sri Kommineni hits jukebox"], ["S. V. Krishna Reddy","S V Krishna Reddy hits jukebox"], ["Joshua Sridhar","Joshua Sridhar hits jukebox"], ["Shravan Bharadwaj","Shravan Bharadwaj hits jukebox"], ["Prashanth R Vihari","Prashanth R Vihari hits jukebox"], ["Sekhar Chandra","Sekhar Chandra hits jukebox"], ["Leon James (Telugu)","Leon James (Telugu) hits jukebox"], ["Sunil Kashyap","Sunil Kashyap hits jukebox"], ["Phani Kalyan","Phani Kalyan hits jukebox"], ["Mahati Swara Sagar","Mahati Swara Sagar hits jukebox"], ["Praveen Lakkaraju","Praveen Lakkaraju hits jukebox"], ["Gowra Hari","Gowra Hari hits jukebox"], ["Sricharan Pakala","Sricharan Pakala hits jukebox"], ["Achu Rajamani","Achu Rajamani hits jukebox"], ["Jakes Bejoy (Telugu)","Jakes Bejoy (Telugu) hits jukebox"], ["Hesham Abdul Wahab","Hesham Abdul Wahab hits jukebox"], ["Justin Prabhakaran (Telugu)","Justin Prabhakaran (Telugu) hits jukebox"], ["Anirudh (Telugu)","Anirudh (Telugu) hits jukebox"], ["Vijaya Bhaskar","Vijaya Bhaskar hits jukebox"], ["Pendyala Nageswara Rao","Pendyala Nageswara Rao hits jukebox"], ["Saluri Rajeswara Rao","Saluri Rajeswara Rao hits jukebox"], ["T. V. Raju","T V Raju hits jukebox"], ["Adi Narayana Rao","Adi Narayana Rao hits jukebox"], ["J. V. Raghavulu","J V Raghavulu hits jukebox"], ["S. Rajeswara Rao","S Rajeswara Rao hits jukebox"], ["Harshavardhan Rameshwar","Harshavardhan Rameshwar hits jukebox"], ["Ajay Arasada","Ajay Arasada hits jukebox"], ["Vijay Bulganin","Vijay Bulganin hits jukebox"], ["Chaitan Bharadwaj","Chaitan Bharadwaj hits jukebox"], ["Sagar Mahati","Sagar Mahati hits jukebox"], ["Shakthikanth Karthick","Shakthikanth Karthick hits jukebox"], ["Karthik Rodriguez","Karthik Rodriguez hits jukebox"], ["Raghu Kunche","Raghu Kunche hits jukebox"], ["Madhavapeddi Suresh","Madhavapeddi Suresh hits jukebox"], ["Chellapilla Satyam","Chellapilla Satyam hits jukebox"], ["Ram Miriyala","Ram Miriyala hits jukebox"], ["Kaala Bhairava","Kaala Bhairava hits jukebox"], ["S. A. Rajkumar (Telugu)","S A Rajkumar (Telugu) hits jukebox"], ["Deva (Telugu)","Deva (Telugu) hits jukebox"], ["Rajan-Nagendra (Telugu)","Rajan Nagendra (Telugu) hits jukebox"], ["Vijay Antony (Telugu)","Vijay Antony (Telugu) hits jukebox"], ["Santhosh Narayanan (Telugu)","Santhosh Narayanan (Telugu) hits jukebox"], ["Yuvan Shankar Raja (Telugu)","Yuvan Shankar Raja (Telugu) hits jukebox"], ["Rajesh Murugesan (Telugu)","Rajesh Murugesan (Telugu) hits jukebox"], ["Gopi Sundar (Telugu)","Gopi Sundar (Telugu) hits jukebox"]]],
   ["🎙️ Telugu playlists",[["Telugu melodies","Telugu melody songs video jukebox"], ["Telugu love songs","Telugu love songs jukebox"], ["Telugu mass beats","Telugu mass songs jukebox"], ["Telugu 90s hits","90s Telugu hit songs jukebox"], ["Telugu 2000s hits","2000s Telugu hit songs jukebox"], ["Telugu folk (Janapada)","Telugu folk songs jukebox"], ["Telugu devotional","Telugu devotional songs jukebox"], ["Telugu friendship songs","Telugu friendship songs jukebox"], ["Telugu old golden hits","Telugu old golden hits jukebox"], ["Telugu duets","Telugu duet songs jukebox"], ["Telugu sad songs","Telugu emotional sad songs jukebox"], ["Telugu college songs","Telugu college life songs jukebox"]]],
@@ -6781,7 +6996,7 @@ function moviesView() {
       outLink("https://www.google.com/search?q=" + encodeURIComponent("new " + label + " movies releasing this week OTT and theatres"), "🗓️ This week", "linkbtn"),
       outLink("https://www.google.com/search?q=" + encodeURIComponent(label + " movie reviews and ratings " + yr), "⭐ Reviews", "linkbtn")))),
     watch,
-    el("p", { class: "hint" }, "Watch movies only in theatres or on official OTT apps. Piracy sites are illegal and often carry viruses and scams. The Campus Loop does not host any movie."));
+    el("p", { class: "hint" }, "Watch movies only in theatres or on official OTT apps. Piracy sites are illegal and often carry viruses and scams. Loopy Brains does not host any movie."));
 }
 
 function memoryGame() {
@@ -6854,7 +7069,7 @@ function renderFun() {
       body.replaceChildren(
         chillPlayer(),
         el("div", { class: "label" }, "🎬 Music director and singer jukeboxes"),
-        el("p", { class: "hint" }, "Tap a name to open official jukeboxes on YouTube. These are copyrighted songs streamed by the rights holders, so The Campus Loop only links to them. Listen on YouTube with low volume and earphones."),
+        el("p", { class: "hint" }, "Tap a name to open official jukeboxes on YouTube. These are copyrighted songs streamed by the rights holders, so Loopy Brains only links to them. Listen on YouTube with low volume and earphones."),
         el("details", { class: "fun-det", open: true },
           el("summary", {}, "🆕 Latest released songs (" + FUN_NEW.length + ")"),
           el("p", { class: "hint" }, "Newest uploads first, from official channels. Pick this week or this month."),
@@ -6907,7 +7122,7 @@ function renderFun() {
 function renderLab() {
   return [
     el("h2", {}, "🧪 Study Lab"),
-    el("p", { class: "hint" }, "Power tools for students. Everything is saved only on this phone, and the focus timer keeps running while you use other parts of CampusLoop."),
+    el("p", { class: "hint" }, "Power tools for students. Everything is saved only on this phone, and the focus timer keeps running while you use other parts of Loopy Brains."),
     window.SparkLab ? window.SparkLab.mount() : (needLazy(), el("p", { class: "hint" }, "Loading the Study Lab\u2026")),
     el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")),
   ];
@@ -6997,17 +7212,17 @@ function renderAbout() {
   const feature = (icon, title, text) => el("div", { class: "learn-card" }, el("strong", {}, icon + " " + title), el("p", { class: "hint" }, text));
   return [
     el("h2", {}, "ℹ️ About " + BRAND),
-    el("img", { class: "brand-banner", src: "brand/the-campus-loop-banner-1200x630.png", alt: BRAND + ". Where every doubt finds answers.", width: "1200", height: "630", loading: "lazy" }),
+    el("img", { class: "brand-banner", src: "brand/loopy-brains-banner-1200x630.png", alt: BRAND + ". Where every doubt finds answers.", width: "1200", height: "630", loading: "lazy" }),
     el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => { try { window.open("about.html", "_blank", "noopener"); } catch (_) {} } }, "📄 Read our full story")),
     el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: () => showWelcome(true) }, "👋 Show the welcome tour"), el("button", { class: "btn sm", type: "button", onclick: () => showPanel("howto") }, "How to use this app")),
-    el("p", { class: "hint" }, el("a", { href: "terms.html", target: "_blank", rel: "noopener" }, "Terms"), " · ", el("a", { href: "privacy.html", target: "_blank", rel: "noopener" }, "Privacy"), " · ", el("a", { href: "refund.html", target: "_blank", rel: "noopener" }, "Refunds")),
+    el("p", { class: "hint" }, el("a", { href: "terms.html", target: "_blank", rel: "noopener" }, "Terms"), " · ", el("a", { href: "privacy.html", target: "_blank", rel: "noopener" }, "Privacy")),
     el("p", { class: "hint" }, "One free place to ask doubts, share ideas, prepare for GATE, plan your career and help your juniors."),
     el("div", { class: "learn-card" },
       el("strong", {}, "🔥 Built by students"),
       el("p", {}, "Built by students, for students."),
       el("p", {}, "Dedicated to our students: advanced, disciplined and obedient learners who work hard, respect their teachers and lift each other up. You are the reason Spark exists.")),
     el("div", { class: "label" }, "🎯 Our mission"),
-    el("p", {}, "Every student should have a senior to ask, a clear path after graduation, and quality study material, without paying for any of it. The Campus Loop brings these together so no doubt stays unanswered and no student feels lost after B.Tech 4th year."),
+    el("p", {}, "Every student should have a senior to ask, a clear path after graduation, and quality study material, without paying for any of it. Loopy Brains brings these together so no doubt stays unanswered and no student feels lost after B.Tech 4th year."),
     el("div", { class: "label" }, "What you get"),
     feature("❓", "Doubts", "Ask by subject, year (B.Tech 1st to 4th year) and campus. Peers answer, you mark the best answer, and helpers earn points."),
     feature("💡", "Ideas, Clubs and Challenges", "Share project ideas, join clubs and take part in challenges and hackathons."),
@@ -7020,9 +7235,9 @@ function renderAbout() {
     el("div", { class: "label" }, "🔒 Privacy and safety"),
     el("p", {}, "No login and no password. Your device gets a random ID so your posts stay yours. You can post anonymously, report anything inappropriate and edit your own posts. We do not sell or share your data."),
     el("div", { class: "label" }, "💚 Free to use"),
-    el("p", {}, "The board, quizzes, study tools and every resource we link to are free, with no ads. An optional paid plan, The Campus Loop Plus, is being prepared for extras. Nothing that is free today will be taken away."),
+    el("p", {}, "The board, quizzes, study tools and every resource we link to are free, with no ads. An optional paid plan, Loopy Brains Plus, is being prepared for extras. Nothing that is free today will be taken away."),
     el("div", { class: "label" }, "⚠️ Please note"),
-    el("p", { class: "hint" }, "The Campus Loop is a student community platform. Always confirm official dates, fees, results and rules on your college's official websites before acting on them. Career and scholarship details can change, so check the official links."),
+    el("p", { class: "hint" }, "Loopy Brains is a student community platform. Always confirm official dates, fees, results and rules on your college's official websites before acting on them. Career and scholarship details can change, so check the official links."),
     IS_RGUKT && el("div", { class: "label" }, "🔗 Official RGUKT campuses"),
     IS_RGUKT && el("div", { class: "rowbtns" },
       outLink("https://www.rguktn.ac.in", "Nuzvid", "linkbtn"),
@@ -7032,8 +7247,8 @@ function renderAbout() {
     el("div", { class: "label" }, "🤝 Get involved"),
     el("p", { class: "hint" }, "Found a bug or have an idea? Post it in the Ideas tab or ask Loop Bot. You can also see the code and report issues on GitHub."),
     el("div", { class: "rowbtns" },
-      outLink("https://github.com/vijay462462/rgukt-spark", "GitHub", "linkbtn"),
-      outLink("https://github.com/vijay462462/rgukt-spark/issues", "Report an issue", "linkbtn")),
+      outLink("https://github.com/vijay462462/loopybrains", "GitHub", "linkbtn"),
+      outLink("https://github.com/vijay462462/loopybrains/issues", "Report an issue", "linkbtn")),
     el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => { state.mode = state.selected ? "view" : "intro"; render(); } }, "Back")),
   ];
 }
@@ -9195,7 +9410,7 @@ function renderAsk(existing) {
     el("div", { class: "two" },
       el("label", {}, ({ doubts: "Your question", ideas: "Your idea", clubs: "Post title", gate: "Discussion title", challenges: "Challenge title", market: "Item title", jobs: "Opening or experience" })[state.tab] || "Title", el("input", { id: "f-title", name: "title", maxlength: "200", required: true, placeholder: t.placeholder })),
       simBox,
-      el("label", {}, state.tab === "doubts" ? "Subject" : "Category", el("select", { id: "f-group", name: "group" }, ...(RGUKT_DEPTS && (state.tab === "doubts" || state.tab === "gate") ? (() => { const seen = new Set(); const og = Object.entries(RGUKT_DEPTS).map(([d, list]) => el("optgroup", { label: d }, ...list.filter(s => !seen.has(s) && seen.add(s)).map(s => el("option", { selected: s === current }, s)))); const rest = groups.filter(s => !seen.has(s)); return [...og, ...(rest.length ? [el("optgroup", { label: "Other" }, ...rest.map(s => el("option", { selected: s === current }, s)))] : [])]; })() : groups.map(s => el("option", { selected: s === current }, s)))))),
+      el("label", {}, state.tab === "doubts" ? "Subject" : "Category", el("select", { id: "f-group", name: "group" }, ...(RGUKT_DEPTS && (state.tab === "doubts" || state.tab === "gate") ? (() => { const seen = new Set(); const og = Object.entries(RGUKT_DEPTS).filter(([d]) => state.tab !== "doubts" || !branchFilterOn() || d === myBranch()).map(([d, list]) => el("optgroup", { label: d }, ...list.filter(s => !seen.has(s) && seen.add(s)).map(s => el("option", { selected: s === current }, s)))); const rest = groups.filter(s => !seen.has(s) && (state.tab !== "doubts" || !branchFilterOn() || !deptsOf(s).length)); return [...og, ...(rest.length ? [el("optgroup", { label: "Other" }, ...rest.map(s => el("option", { selected: s === current }, s)))] : [])]; })() : groups.map(s => el("option", { selected: s === current }, s)))))),
     state.tab === "jobs" && el("div", { class: "two" },
       el("label", {}, "Company / organisation", el("input", { name: "company", maxlength: "60", placeholder: "e.g. TCS", value: existing && existing.company || "" })),
       el("label", {}, "Pay / stipend (optional)", el("input", { name: "pay", maxlength: "40", placeholder: "e.g. ₹15,000 per month", value: existing && existing.pay || "" }))),
@@ -9385,7 +9600,7 @@ function renderView() {
         url: "https://www.wolframalpha.com/input?i=" + q },
       { name: "YouTube", icon: "▶", desc: "Video explanations", color: "#cc0000",
         url: "https://www.youtube.com/results?search_query=" + encodeURIComponent((d.subject || "") + " " + (d.title || "")) },
-      { name: "NPTEL", icon: "🎓", desc: "IIT lecture notes", color: "#7c3aed",
+      { name: "NPTEL", icon: "🎓", desc: "IIT lecture notes", color: "#15803d",
         url: "https://nptel.ac.in/courses/search?q=" + subj },
       { name: "GeeksforGeeks", icon: "📄", desc: "Notes & code", color: "#2f8d46",
         url: "https://www.geeksforgeeks.org/search/?q=" + encodeURIComponent(d.title || "") },
@@ -9531,7 +9746,7 @@ function renderView() {
     out.push(el("div", { class: "posted-card" }, el("b", {}, "\u2705 Your answer is posted"), el("p", { class: "hint" }, "It is on the board now. Thank you for helping a classmate! \u{1F389} When the asker marks it helpful you earn 2 points, and 7 for the best answer."),
       el("div", { class: "rowbtns" },
         el("button", { class: "btn sm primary", type: "button", onclick: () => { const a = document.getElementById("ans-" + jp.id); if (a) { a.scrollIntoView({ behavior: "smooth", block: "center" }); a.classList.add("flash"); setTimeout(() => a.classList.remove("flash"), 2200); } } }, "\u{1F440} See my answer"),
-        el("a", { class: "btn sm wa", href: "https://wa.me/?text=" + encodeURIComponent("I just answered a doubt on The Campus Loop: " + d.title + " " + itemLink(d.id)), target: "_blank", rel: "noopener noreferrer" }, "\u{1F4E4} Share on WhatsApp"),
+        el("a", { class: "btn sm wa", href: "https://wa.me/?text=" + encodeURIComponent("I just answered a doubt on Loopy Brains: " + d.title + " " + itemLink(d.id)), target: "_blank", rel: "noopener noreferrer" }, "\u{1F4E4} Share on WhatsApp"),
         el("button", { class: "btn sm", type: "button", onclick: () => { const n = nextDoubt(); if (!n) { showNotice("Great job! There are no unanswered doubts right now."); return; } state.justPosted = null; openItem(n.id); try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch (_) {} } }, "\u{1F64B} Help another classmate")),
       el("div", { class: "rowbtns" },
         el("button", { class: "btn sm", type: "button", onclick: async (e) => {
@@ -9908,7 +10123,7 @@ function renderCampusPicker() {
 
 // ---------- profile photo (DP) and 24-hour stories ----------
 const STORY_ROW_MIN = 3, STORY_MS = 86400000, STORY_SHOW = 5500, STORY_DAILY_MAX = 10;
-const STORY_BG = [["#7c3aed", "#2563eb"], ["#db2777", "#f97316"], ["#059669", "#0ea5e9"], ["#f59e0b", "#ef4444"], ["#1e293b", "#6366f1"], ["#0d9488", "#84cc16"], ["#9333ea", "#ec4899"], ["#0f172a", "#334155"]];
+const STORY_BG = [["#15803d", "#2563eb"], ["#f97316", "#f97316"], ["#059669", "#0ea5e9"], ["#f59e0b", "#ef4444"], ["#eaf7ee", "#22c55e"], ["#0d9488", "#84cc16"], ["#16a34a", "#f97316"], ["#0f3d22", "#334155"]];
 const DP_OK = /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]{20,40000}$/;
 const IMG_OK = /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]{20,700000}$/;
 const getDp = () => { if (!MEDIA.profilePhoto) return ""; try { const v = localStorage.getItem("dd-dp"); return DP_OK.test(v || "") ? v : ""; } catch (_) { return ""; } };
@@ -10299,7 +10514,7 @@ window.addEventListener("pageshow", () => { if (document.visibilityState === "vi
 const focusOn = () => { try { return localStorage.getItem("dd-focus") === "1"; } catch (_) { return false; } };
 function applyFocus() {
   const on = focusOn(); document.body.classList.toggle("focus", on);
-  const b = $("focusBtn"); if (b) { b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); b.querySelector(".cl").textContent = on ? "Focus mode is ON · tap to turn off" : "Focus mode · academics only"; }
+  const b = $("focusBtn"); if (b) { b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); b.querySelector(".cl").textContent = on ? "Focus mode is ON" : "Focus mode"; }
 }
 function toggleFocus() {
   try { localStorage.setItem("dd-focus", focusOn() ? "0" : "1"); } catch (_) {}
@@ -10338,7 +10553,7 @@ function render() { const snap = snapUI(); try { renderCore(); } finally { resto
 function renderCore() {
   try {
     document.body.dataset.tab = state.tab; applyFocus();
-    renderHeader(); renderTrendBar(); renderStoryBar(); renderRail(); try { renderGuide(); } catch (_) {} renderList(); renderBottomNav(); try { if (IS_RGUKT && !readJSON("dd-rgukt-year", null) && !document.querySelector(".welcome")) showEligibility(); } catch (_) {} try { document.body.classList.toggle("simple", isSimple()); renderBell(); notifPing(); claimStudentIdOnce(); autoMailIds(); } catch (_) {}
+    renderHeader(); renderTrendBar(); renderStoryBar(); renderRail(); try { renderGuide(); } catch (_) {} try { renderHome(); } catch (_) {} renderList(); renderBottomNav(); try { if (IS_RGUKT && !readJSON("dd-rgukt-year", null) && !welcomePending && !document.querySelector(".welcome, .cr, #splash")) showEligibility(); } catch (_) {} try { if (Object.keys(DEPT_MAP).length && !myBranch() && !welcomePending && (!IS_RGUKT || readJSON("dd-rgukt-year", null)) && localStorage.getItem("dd-welcome-done") && !document.querySelector(".welcome, .cr, #splash")) showBranchPicker(); } catch (_) {} try { document.body.classList.toggle("simple", isSimple()); renderBell(); notifPing(); claimStudentIdOnce(); autoMailIds(); } catch (_) {}
     // Forms keep what the student is typing while live updates arrive.
     const key = ["ask", "edit", "name", "alumniJoin", "alumniJob", "fun", "lab", "college", "plus"].includes(state.mode) ? state.mode + state.tab : "";
     if (key && key === sheetKey) return;
@@ -10399,6 +10614,7 @@ function renderCore() {
       state.mode === "edit" && cur ? renderAsk(cur) :
       state.mode === "view" || state.mode === "edit" ? renderView() : renderIntro()));
     try { const gd = modeGuide(state.mode === "edit" ? "ask" : state.mode); if (gd) sheet.prepend(gd); } catch (_) {}
+    try { if (state.mode !== "intro" && !sheet.querySelector(".sheet-topback")) sheet.prepend(el("button", { type: "button", class: "sheet-topback", onclick: () => { if (state.mode === "view") { state.selected = null; state.mode = "intro"; } else { state.mode = state.selected ? "view" : "intro"; } render(); } }, icon("back", 16), "Back")); } catch (_) {}
     if (draft && $("f-reply")) $("f-reply").value = draft;
   } catch(err) {
     console.error("render error:", err);
@@ -10442,7 +10658,7 @@ $("focusBtn") && $("focusBtn").addEventListener("click", toggleFocus);
   const acts = document.querySelector(".hdr-actions"); if (!acts) return;
   let open = false; try { open = localStorage.getItem("dd-tools-open") === "1"; } catch (_) {}
   const b = el("button", { type: "button", class: "chip tools-toggle", "aria-expanded": String(open) }, "");
-  const paint = () => { acts.classList.toggle("tools-closed", !open); b.setAttribute("aria-expanded", String(open)); b.textContent = open ? "🧰 Fewer tools ▴" : "🧰 More tools ▾"; };
+  const paint = () => { acts.classList.toggle("tools-closed", !open); b.setAttribute("aria-expanded", String(open)); b.replaceChildren(icon("grid", 16), open ? "Fewer tools ▴" : "More tools ▾"); };
   b.addEventListener("click", () => { open = !open; try { localStorage.setItem("dd-tools-open", open ? "1" : "0"); } catch (_) {} paint(); });
   acts.prepend(b); paint();
 })();
@@ -10471,7 +10687,7 @@ document.addEventListener("click", (e) => { const b = e.target.closest && e.targ
   addEventListener("touchmove", (e) => { if (!on) return; dy = e.touches[0].clientY - y0; const dx = Math.abs(e.touches[0].clientX - Number(ind.dataset.x || 0)); if (dy < 8 || dx > dy) { if (dy < 0) on = false; return; } show(dy > 70 ? "Release to refresh" : "Pull to refresh", dy > 70 ? "↑" : "↓", dy * 0.6); }, { passive: true });
   addEventListener("touchend", () => { if (!on) return; on = false; if (dy > 70) refresh(); else hide(); }, { passive: true });
 })();
-try { const gt = document.querySelector('.tabs [data-tab="gate"]'); if (gt) gt.textContent = "🎯 " + EXAM_LABEL; } catch (_) {}
+try { const gt = document.querySelector('.tabs [data-tab="gate"]'); if (gt) { const ic = gt.querySelector("svg"); gt.replaceChildren(...(ic ? [ic, " "] : []), EXAM_LABEL); } } catch (_) {}
 maybeWelcome();
 try { showCollegeReveal(); } catch (_) {}
 maybeMilestone();
@@ -10491,14 +10707,14 @@ $("search").addEventListener("input", (e) => { state.query = e.target.value; ren
 $("filter").addEventListener("change", (e) => { state.filter = e.target.value; renderList(); });
 
 // Theme toggle: Light, Dark (charcoal) and Black (true black for OLED screens). Black is a dark theme with data-tone="black".
-const THEME_CYCLE = ["light", "dark", "black"], THEME_ICON = { light: "\u{1F319}", dark: "\u{1F311}", black: "\u2600\uFE0F" }, THEME_NAME = { light: "Light", dark: "Dark", black: "Black" };
+const THEME_CYCLE = ["light", "dark", "black"], THEME_ICON = { light: "moon", dark: "contrast", black: "sun" }, THEME_NAME = { light: "Light", dark: "Dark", black: "Black" };
 const systemTheme = () => matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 function applyThemeName(n) { const r = document.documentElement; r.setAttribute("data-theme", n === "black" ? "dark" : n); if (n === "black") r.setAttribute("data-tone", "black"); else r.removeAttribute("data-tone"); }
 let currentTheme = (() => { try { const v = localStorage.getItem("dd-theme"); return THEME_CYCLE.includes(v) ? v : systemTheme(); } catch (_) { return systemTheme(); } })();
 applyThemeName(currentTheme);
 // Colour palettes: the student chooses one (Forest is the default). Each has a light, dark and black version.
-const PALETTES = { royal: ["Royal", ["#0f2c52", "#e2bd64", "#f4f1ea"], "p"], emerald: ["Emerald", ["#0d4a38", "#e3cf94", "#f3f2ec"], "p"], burgundy: ["Burgundy", ["#5b1a2b", "#e9b49f", "#f6efeb"], "p"], obsidian: ["Obsidian", ["#181818", "#d4af37", "#f2f1ee"], "p"], forest: ["Forest", ["#2d452f", "#6b9d4a", "#cfe2ce"], "c"], indigo: ["Indigo", ["#312c51", "#48426d", "#f0c38e"], "c"], terracotta: ["Terracotta", ["#c9532f", "#c78a9a", "#5e8c74"], "c"], ocean: ["Ocean", ["#1a73e8", "#8ab4f8", "#fdd663"], "c"], slate: ["Slate", ["#2f3a46", "#9db4c8", "#e5e7eb"], "c"] };
-let currentPalette = (() => { try { const v = localStorage.getItem("dd-palette"); return PALETTES[v] ? v : "royal"; } catch (_) { return "royal"; } })();
+const PALETTES = { tealcoral: ["Fresh green", ["#166534", "#f97316", "#f6fbf7"], "p"], midnight: ["Midnight", ["#171a45", "#c9a45c", "#f6f4ee"], "p"], royal: ["Royal", ["#0f2c52", "#e2bd64", "#f4f1ea"], "p"], emerald: ["Emerald", ["#0d4a38", "#e3cf94", "#f3f2ec"], "p"], burgundy: ["Burgundy", ["#5b1a2b", "#e9b49f", "#f6efeb"], "p"], obsidian: ["Obsidian", ["#181818", "#d4af37", "#f2f1ee"], "p"], forest: ["Forest", ["#2d452f", "#6b9d4a", "#cfe2ce"], "c"], indigo: ["Indigo", ["#312c51", "#48426d", "#f0c38e"], "c"], terracotta: ["Terracotta", ["#c9532f", "#c78a9a", "#5e8c74"], "c"], ocean: ["Ocean", ["#1a73e8", "#8ab4f8", "#fdd663"], "c"], slate: ["Slate", ["#2f3a46", "#9db4c8", "#e5e7eb"], "c"] };
+let currentPalette = (() => { try { const v = localStorage.getItem("dd-palette"); return PALETTES[v] ? v : "tealcoral"; } catch (_) { return "tealcoral"; } })();
 document.documentElement.setAttribute("data-palette", currentPalette);
 let updateThemeLabel = () => {};
 function setPalette(k) { if (!PALETTES[k]) return; currentPalette = k; document.documentElement.setAttribute("data-palette", k); try { localStorage.setItem("dd-palette", k); } catch (_) {} render(); }
@@ -10532,7 +10748,7 @@ function renderAppearance() {
 const themeBtn = document.getElementById("themeBtn");
 if (themeBtn && themeBtn.parentNode) { const pb = el("button", { class: "chip", id: "paletteBtn", type: "button" }, svgIcon("palette")); bindPaletteButton(pb); themeBtn.parentNode.insertBefore(pb, themeBtn); }
 if (themeBtn) {
-  const label = () => { const nx = THEME_CYCLE[(THEME_CYCLE.indexOf(currentTheme) + 1) % 3]; themeBtn.textContent = THEME_ICON[nx]; themeBtn.title = themeBtn.ariaLabel = "Theme: " + THEME_NAME[currentTheme] + ". Tap for " + THEME_NAME[nx]; };
+  const label = () => { const nx = THEME_CYCLE[(THEME_CYCLE.indexOf(currentTheme) + 1) % 3]; themeBtn.replaceChildren(icon(THEME_ICON[nx], 18)); themeBtn.title = themeBtn.ariaLabel = "Theme: " + THEME_NAME[currentTheme] + ". Tap for " + THEME_NAME[nx]; };
   themeBtn.addEventListener("click", () => {
     currentTheme = THEME_CYCLE[(THEME_CYCLE.indexOf(currentTheme) + 1) % 3]; applyThemeName(currentTheme); label();
     try { localStorage.setItem("dd-theme", currentTheme); } catch (_) {}
@@ -10541,16 +10757,17 @@ if (themeBtn) {
 }
 
 
-// Brand lockup from the brand guide: the monogram C, then "THE CAMPUS" in bold serif with wide spacing and a small spaced gold "LOOP".
+// Brand lockup from the brand guide: the monogram C, then "LOOPY" in bold serif with wide spacing and a small spaced gold "BRAINS".
 function brandLockup(title) {
-  const words = String(title || "The Campus Loop").trim().split(/\s+/), last = words.length > 1 ? words.pop() : "", rest = words.join(" ") || String(title);
+  const words = String(title || "Loopy Brains").trim().split(/\s+/), last = words.length > 1 ? words.pop() : "", rest = words.join(" ") || String(title);
   const tpl = document.getElementById("brandMarkTpl"), src = (tpl && tpl.content && tpl.content.firstElementChild) || document.querySelector(".sp2-bmark svg"); let mark = null;
   if (src) {
     mark = src.cloneNode(true); mark.removeAttribute("width"); mark.removeAttribute("height"); mark.setAttribute("class", "bmark hd-mark"); mark.setAttribute("aria-hidden", "true"); mark.setAttribute("focusable", "false");
     mark.querySelectorAll("[id]").forEach(n => { n.id = n.id + "H"; });   // gradient ids must stay unique
     mark.querySelectorAll("*").forEach(n => { for (const a of ["fill", "stroke"]) { const v = n.getAttribute(a); if (v && v.includes("url(#")) n.setAttribute(a, v.replace(/url\(#([^)]+)\)/, "url(#$1H)")); } });
   }
-  return [mark, el("span", { class: "bname" }, el("b", {}, rest.toUpperCase()), last ? el("i", {}, last.toUpperCase()) : null)].filter(Boolean);
+  const wm = el("img", { class: "bname-img", src: "brand/loopy-brains-wordmark-56h.png", alt: "Loopy Brains", width: "131", height: "28" });
+  return [mark, wm].filter(Boolean);
 }
 // Update page title from config
 if (CFG.title) { document.title = CFG.title; }
@@ -10558,7 +10775,7 @@ if (CFG.title) { document.title = CFG.title; }
   const h1 = $("siteTitle");
   if (h1) { try { h1.replaceChildren(...brandLockup(CFG.title)); } catch (_) { h1.textContent = CFG.title; } }
   const sc = $("streakChip"); if (sc) sc.addEventListener("click", () => showPanel("me"));
-  const cb = $("collegeBtn"); if (cb) { cb.replaceChildren(...(TENANT && TENANT.crest ? [crestEl(22), " "] : ["🏫 "]), (TENANT ? TENANT.name : IS_RGUKT ? "RGUKT AP" : "Choose your college") + " ▾");
+  const cb = $("collegeBtn"); if (cb) { cb.replaceChildren(...(TENANT && TENANT.crest ? [crestEl(22), " "] : [icon("school", 15), " "]), (TENANT ? TENANT.name : IS_RGUKT ? "RGUKT AP" : "Choose your college") + " ▾");
   try { if (TENANT && TENANT.crest) localStorage.setItem("dd-crest", TENANT.crest); else localStorage.removeItem("dd-crest"); localStorage.setItem("dd-college-name", COLLEGE || ""); } catch (_) {} cb.addEventListener("click", () => showPanel("college")); }
 }
 
@@ -10573,6 +10790,104 @@ if (NO_COLLEGE) state.mode = "college";
 // First-time campus pick
 if (CAMPUSES.length > 0 && !getCampus() && !deep) state.mode = "campus";
 render();
+// ---------- Sign-up gate: verified e-mail + password + mobile number (SMS code) before anyone enters ----------
+function pwProblem(pw, email) {
+  const local = String(email || "").split("@")[0].toLowerCase();
+  if (pw.length < 10) return "Use at least 10 characters.";
+  if (!/[A-Za-z]/.test(pw) || !/\d/.test(pw)) return "Mix letters and numbers.";
+  if (local.length >= 3 && pw.toLowerCase().includes(local)) return "Do not use your e-mail name inside the password.";
+  if (/^(.)\1+$/.test(pw) || /(password|12345678|qwerty|iloveyou|123456789)/i.test(pw)) return "That password is too easy to guess.";
+  return "";
+}
+function authMsg(e) {
+  const c = (e && e.code) || "", M = {
+    "auth/email-already-in-use": "This e-mail already has an account. Tap Sign in instead.",
+    "auth/credential-already-in-use": "This number or e-mail is already used by another account.",
+    "auth/weak-password": "That password is too weak. Use 10 or more characters with letters and numbers.",
+    "auth/invalid-email": "That e-mail address does not look right.",
+    "auth/invalid-credential": "Wrong e-mail or password.", "auth/wrong-password": "Wrong e-mail or password.", "auth/user-not-found": "Wrong e-mail or password.",
+    "auth/too-many-requests": "Too many tries. Please wait a few minutes and try again.",
+    "auth/invalid-phone-number": "That mobile number does not look right.",
+    "auth/invalid-verification-code": "That code is wrong. Check the SMS and try again.", "auth/code-expired": "That code has expired. Ask for a new one.",
+    "auth/captcha-check-failed": "Security check failed. Reload the page and try again.",
+    "auth/quota-exceeded": "Too many codes were sent today. Try again tomorrow.",
+    "auth/network-request-failed": "No internet. Check your connection and try again.",
+    "auth/operation-not-allowed": "Sign-up is not switched on yet. Admin: in Firebase > Authentication > Sign-in method, enable Email/Password and Phone.",
+    "auth/provider-already-linked": "A mobile number is already linked to this account.",
+  };
+  return M[c] || "Something went wrong (" + (c || "error") + "). Please try again.";
+}
+// New visitors see the opening screen and the welcome steps (About, college, name) first; the sign-up card comes after them.
+async function waitForFirstRun() {
+  for (let i = 0; i < 4000; i++) { if (!welcomePending && !document.getElementById("welcome") && !document.getElementById("splash")) return; await new Promise(r => setTimeout(r, 300)); }
+}
+function authComplete() {
+  const i = store && store.authInfo ? store.authInfo() : null;
+  return !!(i && !i.anonymous && i.emailVerified && (CFG.requirePhone !== true || i.phone));
+}
+let _gateP = null;
+function showAuthGate(opts = {}) {
+  if (_gateP) return _gateP;
+  _gateP = new Promise((resolve, reject) => {
+    const st = store, done = authComplete;
+    if (!st.authInfo || !st.authReady || done()) { resolve(); return; }
+    let tab = "up", otp = false, busy = false, note = "", cool = 0, coolT = 0;
+    const ov = el("div", { class: "welcome ag", role: "dialog", "aria-modal": "true", "aria-label": "Create your account" });
+    document.body.append(ov);
+    const say = (m) => { note = m; const n = ov.querySelector(".ag-note"); if (n) n.textContent = m; };
+    const key = () => { const i = st.authInfo(); return [i ? (i.anonymous ? "a" : i.emailVerified ? "v" : "u") : "n", tab, otp].join("|"); };
+    const run = async (fn) => {
+      if (busy) return; busy = true; say(""); const before = key(), btns = [...ov.querySelectorAll(".ag-go")]; btns.forEach(b => { b.disabled = true; });
+      try { await fn(); } catch (e) { say(authMsg(e)); }
+      busy = false;
+      if (done()) { ov.classList.add("out"); clearInterval(coolT); setTimeout(() => { ov.remove(); setTimeout(resolve, opts.cancelable ? 0 : 700); }, 300); return; }
+      if (key() !== before) paint(); else btns.forEach(b => { b.disabled = false; });
+    };
+    const field = (label, attrs) => { const id = "ag" + Math.random().toString(36).slice(2, 7), inp = el("input", { id, ...attrs }); return [el("label", { class: "ag-l", for: id }, label), inp, inp]; };
+    const cooldown = () => { cool = 45; clearInterval(coolT); coolT = setInterval(() => { cool--; if (cool <= 0) clearInterval(coolT); const b = ov.querySelector(".ag-resend"); if (b) { b.disabled = cool > 0; b.textContent = cool > 0 ? "Send again in " + cool + "s" : "Send again"; } }, 1000); };
+    function paint() {
+      const info = st.authInfo(), card = el("div", { class: "welcome-card ag-card" });
+      card.append(el("h2", {}, !info || info.anonymous ? (tab === "up" ? (opts.cancelable ? "Create a free account to post" : "Create your account") : "Welcome back") : !info.emailVerified ? "Verify your e-mail" : otp ? "Enter the code" : "Verify your mobile number"));
+      const msg = el("p", { class: "hint ag-note", role: "status" }, note);
+      if (!info || info.anonymous) {
+        const tabs = el("div", { class: "ag-tabs", role: "tablist" }, ...[["up", "Create account"], ["in", "Sign in"]].map(([k, t]) => el("button", { type: "button", role: "tab", class: "ag-tab" + (tab === k ? " on" : ""), "aria-selected": String(tab === k), onclick: () => { tab = k; note = ""; paint(); } }, t)));
+        const [l1, i1, e1] = field("E-mail", { type: "email", autocomplete: "email", inputmode: "email", maxlength: "120", placeholder: "you@example.com" });
+        const [l2, i2] = field("Password", { type: "password", autocomplete: tab === "up" ? "new-password" : "current-password", maxlength: "100", placeholder: tab === "up" ? "10+ characters, letters and numbers" : "Your password" });
+        const parts = [tabs, l1, i1, l2, i2];
+        let i3 = null, terms = null;
+        if (tab === "up") { const f3 = field("Confirm password", { type: "password", autocomplete: "new-password", maxlength: "100" }); i3 = f3[1]; terms = el("input", { type: "checkbox", id: "agTerms" }); parts.push(f3[0], i3, el("label", { class: "ag-terms", for: "agTerms" }, terms, " I am 18 or older and agree to the ", el("a", { href: "terms.html", target: "_blank", rel: "noopener" }, "Terms"), ".")); }
+        const go = el("button", { type: "button", class: "btn primary ag-go", onclick: () => run(async () => {
+          const email = i1.value.trim().toLowerCase(), pw = i2.value;
+          if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw { code: "auth/invalid-email" };
+          if (tab === "up") { const pr = pwProblem(pw, email); if (pr) { say(pr); return; } if (pw !== i3.value) { say("The two passwords do not match."); return; } if (!terms.checked) { say("Please tick the box to continue."); return; } await st.signUpEmail(email, pw); }
+          else { if (!pw) { say("Type your password."); return; } await st.signInEmail(email, pw); }
+        }) }, tab === "up" ? "Create account" : "Sign in");
+        parts.push(msg, go);
+        if (tab === "in") parts.push(el("button", { type: "button", class: "linkbtn", onclick: () => run(async () => { const email = i1.value.trim().toLowerCase(); if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { say("Type your e-mail above first."); return; } await st.resetPassword(email); say("If this e-mail has an account, a reset link is on its way."); }) }, "Forgot password?"));
+        card.append(...parts);
+      } else if (!info.emailVerified) {
+        card.append(el("p", { class: "ob-say" }, "We sent a link to " + info.email + ". Open it, then come back here and tap the button below. Check Spam if you do not see it."), msg,
+          el("button", { type: "button", class: "btn primary ag-go", onclick: () => run(async () => { await st.refreshUser(); if (!st.authInfo().emailVerified) say("Not verified yet. Open the link in your e-mail first."); }) }, "I have verified"),
+          el("button", { type: "button", class: "btn ag-resend", disabled: cool > 0 ? "" : null, onclick: () => run(async () => { await st.resendVerify(); cooldown(); say("Sent again."); }) }, cool > 0 ? "Send again in " + cool + "s" : "Send again"),
+          el("button", { type: "button", class: "linkbtn", onclick: async () => { await st.signOutAll(); tab = "in"; note = ""; paint(); } }, "Use a different e-mail"));
+      } else if (!otp) {
+        const [l, inp] = field("Mobile number", { type: "tel", inputmode: "numeric", autocomplete: "tel-national", maxlength: "10", placeholder: "10-digit number" });
+        card.append(el("p", { class: "ob-say" }, "We will send a 6-digit code by SMS. Indian numbers only. Your number is kept private and never shown to other students."), l, el("div", { class: "ag-phone" }, el("span", {}, "+91"), inp), msg, el("div", { id: "agRecaptcha" }),
+          el("button", { type: "button", class: "btn primary ag-go", onclick: () => run(async () => { const n = inp.value.replace(/\D/g, ""); if (!/^[6-9]\d{9}$/.test(n)) throw { code: "auth/invalid-phone-number" }; await st.sendPhoneCode("+91" + n, "agRecaptcha"); otp = true; note = ""; cooldown(); }) }, "Send code"));
+      } else {
+        const [l, inp] = field("6-digit code", { type: "text", inputmode: "numeric", autocomplete: "one-time-code", maxlength: "6", placeholder: "123456" });
+        card.append(l, inp, msg, el("button", { type: "button", class: "btn primary ag-go", onclick: () => run(async () => { const c = inp.value.replace(/\D/g, ""); if (c.length !== 6) { say("Type the 6-digit code."); return; } await st.confirmPhoneCode(c); }) }, "Verify and continue"),
+          el("button", { type: "button", class: "linkbtn", onclick: () => { otp = false; note = ""; paint(); } }, "Change number"));
+      }
+      if (opts.cancelable) card.append(el("button", { type: "button", class: "btn ag-skip", onclick: () => { ov.remove(); clearInterval(coolT); reject({ code: "auth/cancelled" }); } }, "Not now. Keep browsing"));
+      card.append(el("p", { class: "hint ag-fine" }, opts.cancelable ? "You can look around and use Loopy AI without an account. An account is only needed to post. One verified e-mail, one account keeps students safe." : "One verified e-mail, one account: it keeps students safe. We never post for you."));
+      ov.replaceChildren(card);
+      const f = card.querySelector("input"); if (f && !busy) { try { f.focus({ preventScroll: true }); } catch (_) {} }
+    }
+    paint();
+  }).finally(() => { _gateP = null; });
+  return _gateP;
+}
 (async () => {
   const conf = CFG.firebase || {};
   const configured = conf.apiKey && !String(conf.apiKey).startsWith("PASTE") && conf.projectId;
@@ -10584,6 +10899,15 @@ render();
     console.error(e);
     showNotice("Could not connect to the class board. Check your internet and reload. (" + ((e && e.code) || "error") + ")");
     return;
+  }
+  if (store && !store.demo && store.authInfo && CFG.requireSignup === "boot") { try { await waitForFirstRun(); await new Promise(r => setTimeout(r, 900)); await showAuthGate(); } catch (_) {} }
+  else if (store && !store.demo && store.authInfo && CFG.requireSignup !== false) {
+    // Browsing, Loopy AI and Loop Bot stay open to everyone. The sign-up card appears only when someone tries to post, answer or share.
+    const POST = new Set(["doubts", "ideas", "clubs", "gate", "jobs", "challenges", "market", "replies", "stories"]);
+    const guard = (name, collAt) => { const orig = store[name]; if (typeof orig !== "function") return; store[name] = async (...a) => {
+      if (POST.has(a[collAt]) && !authComplete()) { try { await showAuthGate({ cancelable: true }); } catch (_) { showNotice("Create a free account to post. It takes about a minute."); throw Object.assign(new Error("sign-up needed"), { code: "auth/cancelled" }); } }
+      return orig.apply(store, a); }; };
+    guard("set", 0); guard("setIn", 1); guard("update", 0);
   }
   if (NO_COLLEGE) { render(); return; }   // nothing to load until a college is chosen
   loadPlan().then(() => { render(); claimRef(); redeemPendingGift(); });
@@ -10608,7 +10932,7 @@ render();
     if (!opened && deep && deep[2] && state[TABS[state.tab].coll].some(x => x.id === deep[2])) { opened = true; openItem(deep[2]); return; }
     render();
   };
-  store.subscribe("doubts", rows => { state.dataReady = true; const live_ = live(rows); trackNew("doubts", live_); state.doubts = live_; update(); }, onErr);
+  store.subscribe("doubts", rows => { state.dataReady = true; const live_ = live(rows); trackNew("doubts", live_); state.doubtsAll = live_; state.doubts = live_.filter(branchSees); update(); }, onErr);
   store.subscribe("ideas", rows => { state.dataReady = true; const live_ = live(rows); trackNew("ideas", live_); state.ideas = live_; update(); }, onErr);
   store.subscribe("replies", rows => { state.replies = live(rows); update(); }, onErr);
   store.subscribe("likes", rows => { state.likes = rows; update(); }, onErr);
@@ -10862,4 +11186,27 @@ document.addEventListener("pointerdown", (e) => {
 (function scrollSpeed() {
   const root = document.documentElement; let t = 0, on = false;
   addEventListener("scroll", () => { if (!on) { on = true; root.classList.add("is-scrolling"); } clearTimeout(t); t = setTimeout(() => { on = false; root.classList.remove("is-scrolling"); }, 160); }, { passive: true, capture: true });
+})();
+
+
+// ---------- Back / Next between class-board sections ----------
+(function sectionNav() {
+  const ORDER = ["doubts", "ideas", "clubs", "challenges", "jobs", "market", "gate"];
+  const bar = document.createElement("div"); bar.className = "sec-nav"; bar.hidden = true;
+  const mkBtn = (cls, label) => { const b = document.createElement("button"); b.type = "button"; b.className = "sec-btn " + cls; b.textContent = label; return b; };
+  const prev = mkBtn("sec-prev", "Back"), next = mkBtn("sec-next", "Next"), mid = document.createElement("span"); mid.className = "sec-mid";
+  bar.append(prev, mid, next);
+  const list = () => ORDER.filter(t => TABS[t] && (t === "doubts" || featureOn(t)));
+  const sync = () => {
+    const l = list(), i = l.indexOf(state.tab);
+    if (i < 0 || state.selected || state.query.trim()) { bar.hidden = true; return; }
+    if (bar.hidden) bar.hidden = false; prev.disabled = i === 0; next.disabled = i === l.length - 1;
+    const t = (i + 1) + " / " + l.length; if (mid.textContent !== t) mid.textContent = t;
+    prev.onclick = () => { if (i > 0) { goTab(l[i - 1]); window.scrollTo({ top: 0, behavior: "smooth" }); } };
+    next.onclick = () => { if (i < l.length - 1) { goTab(l[i + 1]); window.scrollTo({ top: 0, behavior: "smooth" }); } };
+  };
+  const host = document.querySelector(".listcol"); if (!host) return;
+  host.append(bar);
+  new MutationObserver(() => sync()).observe(host, { childList: true, subtree: true });
+  sync();
 })();
