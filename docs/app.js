@@ -5429,7 +5429,7 @@ const AEC_UNITS = [
   ["III. Small-signal amplifiers and frequency response", "CE amplifier, h-parameters, hybrid-π model and frequency response", ["ceamp", "freqresp"]],
   ["IV. Field-effect transistors and feedback amplifiers", "MOSFET, JFET, I/V characteristics, small-signal model, current mirrors, cascode amplifier and negative feedback topologies", ["fet", "mosfetiv", "mosfetsm", "mosfet2nd", "currentmirror", "cascode", "feedbackamp"]],
   ["V. Operational amplifiers", "Differential amplifier, CMRR, ideal op-amp, op-amp circuits and frequency compensation", ["diffamp", "opampapp", "millercomp"]],
-  ["VI. Power amplifiers, oscillators, 555 timer and regulators", "Class A/B/AB/C power amps, Barkhausen criterion, 555 timer, multivibrators and voltage regulators", ["poweramp", "oscillator", "t555", "regulator"]],
+  ["VI. Power amplifiers, oscillators, 555 timer and regulators", "Class A/B/AB/C power amps, Barkhausen criterion, phase-locked loops, 555 timer, multivibrators and voltage regulators", ["poweramp", "oscillator", "pll", "t555", "regulator"]],
 ];
 function aecHub(allPk, bs, go) {
   const byId = new Map(allPk.map(p => [p.id, p])), seenArr = readJSON("dd-aec-seen", []), seen = new Set(Array.isArray(seenArr) ? seenArr.filter(x => typeof x === "string") : []);
