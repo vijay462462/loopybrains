@@ -49,22 +49,27 @@ Features: class board (doubts, ideas, clubs, challenges, jobs, market, GATE), Lo
 - Visual checks: serve `docs/` with `python3 -m http.server 8765` and drive headless Chromium (`/opt/pw-browsers/chromium`, Playwright from `/opt/node22/lib/node_modules/playwright`), blocking non-localhost requests. Pre-set `localStorage`: `dd-college=rgukt`, `dd-welcome-done=1`, `dd-name`, `dd-simple=false`, `dd-tools-open=1`; pick the year in the `#rgElig` dialog. **Firebase is blocked offline, so posts, counts and sign-in cannot be tested this way.**
 - Do not run `pkill -f <name>` with a pattern that appears in your own command line (it kills the shell).
 
-## Current status (2026-10-10, cache v478)
-- **Done and merged (PRs #4 to #15)**: web sign-in fixed and confirmed by the owner; site live with HTTPS; all three Firebase apps registered in App Check (monitoring); functions packages upgraded and audited (0 vulnerabilities); brand renamed to Loopy Brains with a new logo; Home tiles, cards, floating bottom nav; welcome and About pages redesigned for phones; strict About flow and Back buttons everywhere; Android launcher icon, APK name and URL updated.
-- **In the open PR (#16, this branch)**: Teal and coral default palette; logo, icons, favicon, share banner and Android icon files recoloured to emerald; laptop layout now follows the phone model (sidebar removed); **terms rewritten** in the common Indian educational-app format (`docs/terms.html` plus the About page "Terms in short" and checkbox), with the founder's business rules unchanged (no refunds, no auto-renew, gifts, promo codes) and **not reviewed by a lawyer** (the owner should have it checked before relying on it); About page opens faster; version shown on the first page.
-- **Android**: builds #11 and #12 succeeded (artifact `Loopy-Brains-apk`, 30 days) but were made before the emerald icons; a new build is needed to see them. **Not yet installed or tested by the owner**: Android sign-in (Play Integrity), icon and name. **The Android app blocks screenshots on purpose** (`FLAG_SECURE` in `android-app/patch_android.py`), so the owner takes screenshots in Chrome at loopybrains.com; ask before turning it off. The app loads the website, so web changes need no new APK.
-- **Waiting on the owner**: merge PR #16; rebuild and install the APK; deploy the functions (`firebase deploy --only functions` on a computer with Node 22 and `SITE_URL=https://loopybrains.com/`) and test one payment link and one AI answer; confirm `loopybrains.com` and `www.loopybrains.com` are in Firebase Authentication > Settings > Authorized domains; send a Chrome screenshot of the Doubts page with real posts.
-- **Reported, cause not found**: the owner says that after tapping "Join my campus" the About page flashes by and the next page appears. Cannot be reproduced offline (also tried with a slowed CPU and real touch). Done: strict About (PR #14), the About page opens about 0.1 s after the tap (it used to take about 0.45 s, which may make people tap twice), and the version in the first page's small print identifies which copy a phone runs (also `https://loopybrains.com/sw.js` shows `spark-vNNN`). If it still happens, ask for that version and a screenshot of the page that appears.
+## Current status (2026-10-10, cache v501)
+- **Done and merged (PRs #4 to #36)**:
+  - PRs #4–#15: web sign-in, HTTPS, App Check (monitoring), functions upgrade, brand rename to Loopy Brains, new logo, Home tiles and bottom nav, welcome and About redesign, strict About flow, Back buttons, Android launcher icon and APK name.
+  - PR #16: teal-and-coral default palette; laptop layout follows phone model (sidebar removed); Terms of Use rewritten (Indian educational-app format, not lawyer-reviewed); About page opens faster; app version shown on first page.
+  - PRs #17–#32: (various incremental improvements — sign-up gate, DLD study page, pack additions, UI polish).
+  - PR #33 (v496): DLD Unit VI packs — memory (SRAM, DRAM, expansion), CPLD, FPGA, digital system design examples (clock, calendar, traffic light, sequence generator).
+  - PR #34 (v497): 122 RGUKT-style DLD practice questions with model answers (`docs/dld-questions.js`, `DLD_Q`), covering all 6 units, 2/3/7-mark, answers use ′ for complement.
+  - PR #35 (v498–v499): Loopy AI search engine (`docs/brain-search.js`, ranked TF-IDF-like with spell repair, abbreviation expansion, join/split words); "Exam in bullets" and "Practice questions on this topic" cards in pack view; PowerPoint export (`docs/pptx-lite.js`); Refund Policy page removed; Home "Ask a doubt to your friend or classmate, or ask Loopy AI" text added.
+  - PR #36 (v500–v501): branch-based doubts filter (students pick CSE/ECE/etc., see only relevant subjects via `DEPT_MAP`, view-only not security); log-out confirmation redesigned as a small centred card with stacked buttons (Stay signed in first, then red-outline Yes log out).
+- **Android**: app loads the website so web-only changes need no new APK. The Android app blocks screenshots on purpose (`FLAG_SECURE` in `android-app/patch_android.py`); owner takes screenshots in Chrome at loopybrains.com. **Not yet tested by the owner on the latest build**: Android sign-in (Play Integrity), icon and name.
+- **Reported, cause not found**: the owner says that after tapping "Join my campus" the About page flashes by and the next page appears. Cannot be reproduced offline. The About page now opens in ~0.1 s and Continue is blocked for 3 s; the version in the splash small print identifies which copy a phone runs. If it still happens, ask for that version and a screenshot.
 - **Not checked with real data**: Home tile numbers and post-card styling.
 - **Not done on purpose**: chat-style screen and campus rank card from the owner's mockups; old concept files in `docs/brand/` show the old name.
 
 ## Next steps
-1. Owner merges PR #16, then closes the app fully and reopens it (check the version in the first page's small print).
-2. Build the Android app again, uninstall the old app, install `Loopy-Brains.apk`, test sign-in and the new icon and name. If a build fails, check the `GOOGLE_SERVICES_JSON` secret (must use `android_client_info`).
-3. Have the new Terms of Use reviewed by a lawyer.
-4. Deploy functions and test payments and the AI answer; this also publishes the Loopy Brains wording in emails and payment text.
-5. After 3 to 5 days, if Firebase > App Check > APIs shows Verified near 100% for Firestore and Authentication, switch them from Monitoring to Enforced.
+1. Rebuild the Android APK (GitHub Actions > build-android.yml > Run workflow), uninstall the old app, install `Loopy-Brains.apk`, test sign-in and the new icon and name. If the build fails, check the `GOOGLE_SERVICES_JSON` secret (must use `android_client_info`).
+2. Have the Terms of Use reviewed by a lawyer (Razorpay may also require a refund/cancellation policy section before business approval — the standalone page was removed at the owner's request).
+3. Deploy Cloud Functions: `firebase deploy --only functions` on a computer with Node 22 and `SITE_URL=https://loopybrains.com/`; test one payment link and one Loopy AI answer.
+4. Confirm `loopybrains.com` and `www.loopybrains.com` are in Firebase Authentication > Settings > Authorized domains.
+5. After 3 to 5 days of clean traffic, if Firebase > App Check > APIs shows Verified near 100% for Firestore and Authentication, switch them from Monitoring to Enforced.
 6. Review the Home screen, post cards and panels with real data and polish; then consider the rank card and chat-style screen.
 7. Decide with the owner whether to allow screenshots in the Android app.
-8. Update the the old brand concept files to the new logo and colours.
+8. Update the old brand concept files to the new logo and colours.
 9. Later: Firebase security hardening, add Mano Chapter 4 (Combinational Logic) to the knowledge packs.
