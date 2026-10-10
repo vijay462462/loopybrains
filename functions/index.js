@@ -145,6 +145,11 @@ exports.razorpayWebhook = onRequest({ secrets: [WEBHOOK_SECRET], region: "asia-s
 // instruction, call the Claude API with OUR secret key (the key never reaches the phone), and return the answer.
 // Limits: 40 questions per student per day, short messages, short answers. NOT DEPLOYED and NOT TESTED yet.
 const AI_MODEL = "claude-haiku-4-5-20251001";
+// High-security switch: when an admin sets settings/posting.strongAuth = true, the AI helper needs a verified e-mail AND a verified mobile number.
+async function strongAuthMissing(user) {
+  try { const d = await db.collection("settings").doc("posting").get(); if (!(d.exists && d.data().strongAuth === true)) return false; } catch (_) { return false; }
+  return !(user.email_verified === true && user.phone_number);
+}
 const AI_DAILY_LIMIT = 40;
 // RGUKT students use the AI helper free. The college name comes from the app (anonymous sign-in cannot prove it), so the free tier is capped per person and for everyone together per day to bound the cost.
 const AI_FREE_LIMIT = 20, AI_FREE_GLOBAL = 2000;
@@ -169,6 +174,7 @@ exports.askAI = onRequest({ secrets: [ANTHROPIC_KEY], cors: ALLOWED_ORIGINS, reg
     const m = /^Bearer (.+)$/.exec(req.get("Authorization") || "");
     if (!m) return res.status(401).json({ error: "Please sign in first." });
     const user = await getAuth().verifyIdToken(m[1]);
+    if (await strongAuthMissing(user)) return res.status(403).json({ error: "Please verify your e-mail and mobile number to use Loopy AI." });
     const [ent, adm] = await Promise.all([db.collection("entitlements").doc(user.uid).get(), db.collection("admins").doc(user.uid).get()]);
     let paid = ent.exists && Number(ent.data().until) > Date.now();
     if (!paid) {                                                                  // college bundle: the college's Plus is on AND the e-mail belongs to that college

@@ -109,8 +109,8 @@ const shiftColor = (hex, dh, dl) => { const [h, sat, l] = hexToHsl(hex); return 
 // [main colour, partner colour] for each state, picked from its flag, landscape or culture.
 const STATE_COLORS = {
   "Andhra Pradesh": ["#e11d48", "#f59e0b"], "Telangana": ["#15803d", "#f97316"], "Tamil Nadu": ["#b91c1c", "#f59e0b"], "Karnataka": ["#dc2626", "#eab308"],
-  "Kerala": ["#15803d", "#facc15"], "Maharashtra": ["#ea580c", "#1d4ed8"], "Gujarat": ["#f97316", "#0d9488"], "Rajasthan": ["#db2777", "#f59e0b"],
-  "Punjab": ["#2563eb", "#f97316"], "Haryana": ["#16a34a", "#ca8a04"], "Delhi": ["#166534", "#f43f5e"], "Uttar Pradesh": ["#d97706", "#9333ea"],
+  "Kerala": ["#15803d", "#facc15"], "Maharashtra": ["#ea580c", "#1d4ed8"], "Gujarat": ["#f97316", "#0d9488"], "Rajasthan": ["#f97316", "#f59e0b"],
+  "Punjab": ["#2563eb", "#f97316"], "Haryana": ["#16a34a", "#ca8a04"], "Delhi": ["#166534", "#f43f5e"], "Uttar Pradesh": ["#d97706", "#16a34a"],
   "Bihar": ["#ca8a04", "#16a34a"], "West Bengal": ["#e11d48", "#2563eb"], "Odisha": ["#0891b2", "#f59e0b"], "Assam": ["#16a34a", "#dc2626"],
   "Madhya Pradesh": ["#0d9488", "#a16207"], "Chhattisgarh": ["#15803d", "#9a3412"], "Jharkhand": ["#047857", "#f59e0b"], "Uttarakhand": ["#1d4ed8", "#16a34a"],
   "Himachal Pradesh": ["#0284c7", "#16a34a"], "Jammu and Kashmir": ["#0891b2", "#e11d48"], "Ladakh": ["#1d4ed8", "#f97316"], "Goa": ["#0ea5e9", "#f59e0b"],
@@ -611,7 +611,7 @@ async function firebaseStore(conf, prefix = "") {
   // On a very slow connection sign-in can finish late. Reload once so the board loads with it.
   if (!signedIn && authP) authP.then(() => { try { if (!sessionStorage.getItem("dd-auth-reload")) { sessionStorage.setItem("dd-auth-reload", "1"); location.reload(); } } catch (_) {} }).catch(() => {});
   // A student tapped the sign-in link from their email: attach the verified email to this same session (keeps the same user).
-  let linkResult = "";
+  let linkResult = "", phoneVerifier = null, phoneConfirm = null;
   try {
     if (auth && au.isSignInWithEmailLink(auth, location.href)) {
       let email = ""; try { email = localStorage.getItem("dd-email-pending") || ""; } catch (_) {}
@@ -637,6 +637,25 @@ async function firebaseStore(conf, prefix = "") {
       await au.sendSignInLinkToEmail(auth, email, { url: location.origin + location.pathname + (SEL ? "?c=" + encodeURIComponent(SEL) : ""), handleCodeInApp: true });
       try { localStorage.setItem("dd-email-pending", email); } catch (_) {}
     },
+    // Account sign-up: e-mail and password (links to the anonymous session so nothing is lost), then a mobile number checked by an SMS code.
+    authInfo: () => { const u = auth && auth.currentUser; return u ? { anonymous: !!u.isAnonymous, email: u.email || "", emailVerified: !!u.emailVerified, phone: u.phoneNumber || "" } : null; },
+    authReady: !!auth,
+    signUpEmail: async (email, pw) => {
+      const cur = auth.currentUser; let cred;
+      if (cur && cur.isAnonymous) cred = await au.linkWithCredential(cur, au.EmailAuthProvider.credential(email, pw));
+      else cred = await au.createUserWithEmailAndPassword(auth, email, pw);
+      await au.sendEmailVerification(cred.user, { url: location.origin + location.pathname + (SEL ? "?c=" + encodeURIComponent(SEL) : "") });
+    },
+    signInEmail: (email, pw) => au.signInWithEmailAndPassword(auth, email, pw),
+    resendVerify: () => au.sendEmailVerification(auth.currentUser, { url: location.origin + location.pathname + (SEL ? "?c=" + encodeURIComponent(SEL) : "") }),
+    refreshUser: async () => { await auth.currentUser.reload(); await auth.currentUser.getIdToken(true); },
+    resetPassword: (email) => au.sendPasswordResetEmail(auth, email, { url: location.origin + location.pathname }),
+    sendPhoneCode: async (phone, holder) => {
+      try { if (phoneVerifier) phoneVerifier.clear(); } catch (_) {}
+      phoneVerifier = new au.RecaptchaVerifier(auth, holder, { size: "invisible" });
+      phoneConfirm = await au.linkWithPhoneNumber(auth.currentUser, phone, phoneVerifier);
+    },
+    confirmPhoneCode: async (code) => { if (!phoneConfirm) throw { code: "auth/code-expired" }; await phoneConfirm.confirm(code); await auth.currentUser.getIdToken(true); },
     signOutAll: async () => { try { if (auth) await au.signOut(auth); } catch (_) {} },
     account: () => { const u = auth && auth.currentUser; return { email: (u && u.email) || "", verified: !!(u && u.email && u.emailVerified) }; },
     subscribe: (coll, cb, onErr, since) => fs.onSnapshot(since ? fs.query(fs.collection(db, prefix + coll), fs.where("createdAt", ">", since)) : fs.collection(db, prefix + coll), snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))), onErr),
@@ -1808,7 +1827,7 @@ function loopyMini(costume) {
   const id = costume || equippedCostume();
   const svg = mk("svg", { viewBox: "0 0 60 60", width: "46", height: "46", class: "loopy-mini" + ((new Date().getHours() >= 23 || new Date().getHours() < 5) ? " lp-sleepy" : ""), "aria-hidden": "true" });
   const defs = mk("defs", {}), g1 = mk("linearGradient", { id: "lpmPh", x1: 0, y1: 0, x2: 1, y2: 1 }), g2 = mk("linearGradient", { id: "lpmCape", x1: 0, y1: 0, x2: 1, y2: 1 });
-  [["0", "#f9a8d4"], ["0.5", "#f97316"], ["1", "#16a34a"]].forEach(([o, c]) => g1.append(mk("stop", { offset: o, "stop-color": c }))); [["0", "#f97316"], ["1", "#7e22ce"]].forEach(([o, c]) => g2.append(mk("stop", { offset: o, "stop-color": c }))); defs.append(g1, g2);
+  [["0", "#f9a8d4"], ["0.5", "#f97316"], ["1", "#16a34a"]].forEach(([o, c]) => g1.append(mk("stop", { offset: o, "stop-color": c }))); [["0", "#f97316"], ["1", "#166534"]].forEach(([o, c]) => g2.append(mk("stop", { offset: o, "stop-color": c }))); defs.append(g1, g2);
   svg.append(defs, mk("path", { d: "M15 44 L3 59 L57 59 L45 44 Z", fill: "url(#lpmCape)" }));
   svg.append(mk("line", { x1: 30, y1: 6, x2: 30, y2: 12, stroke: "#c4b5fd", "stroke-width": 3, "stroke-linecap": "round" }), mk("circle", { cx: 30, cy: 5, r: 3.5, fill: "#fde047" }),
     mk("rect", { x: 8, y: 12, width: 44, height: 38, rx: 15, fill: "#fff", stroke: "#4ade80", "stroke-width": 2.5 }), mk("rect", { x: 13, y: 18, width: 34, height: 25, rx: 11, fill: "#1e1757" }),
@@ -4220,7 +4239,7 @@ function wrapLines(g, text, maxW) {
 }
 async function shareResult({ kicker, emoji, big, line }) {
   const W = 1080, H = 1350, cv = document.createElement("canvas"); cv.width = W; cv.height = H; const g = cv.getContext("2d");
-  const [a, b] = BRAND_COLORS || (IS_RGUKT ? STATE_COLORS["Andhra Pradesh"] : ["#fb923c", "#db2777"]);
+  const [a, b] = BRAND_COLORS || (IS_RGUKT ? STATE_COLORS["Andhra Pradesh"] : ["#fb923c", "#f97316"]);
   const bg = g.createLinearGradient(0, 0, W, H); bg.addColorStop(0, a); bg.addColorStop(0.55, "#fb923c"); bg.addColorStop(1, b); g.fillStyle = bg; g.fillRect(0, 0, W, H);
   g.fillStyle = "rgba(255,255,255,.08)"; g.beginPath(); g.arc(W - 60, 180, 320, 0, 7); g.fill(); g.beginPath(); g.arc(120, H - 120, 380, 0, 7); g.fill();
   g.strokeStyle = "#fff"; g.lineWidth = 26; g.lineCap = "round"; g.beginPath(); g.arc(150, 150, 58, 0.75, 5.53); g.stroke();   // the C of the logo
@@ -5812,7 +5831,7 @@ function loopyMark(cls) {
 }
 function brainView() {
   const ui = {}, out = brainViewInner(ui), skip = new Set([ui.bar, ui.head]);
-  return [...out.filter(n => !skip.has(n)), ui.dock].filter(Boolean);
+  return [...(ui.thinking || []), ...out.filter(n => !skip.has(n)), bsState().busy ? null : ui.dock].filter(Boolean);
 }
 function brainViewInner(ui) {
   const bs = bsState(), mi = bsModeInfo(bs.mode), back = el("button", { class: "btn", type: "button", onclick: () => bsClose() }, "Close");
@@ -5864,7 +5883,7 @@ function brainViewInner(ui) {
   const chips = (list, onTap) => el("div", { class: "bs-chips" }, ...list.map(t => el("button", { type: "button", class: "tp-sub", onclick: () => onTap(t) }, t)));
   const thinkingEls = bs.busy ? [el("p", { class: "bsr-yq" }, el("small", {}, "Your question"), el("b", {}, bs.q || bs.pending || "")), el("div", { class: "bsr-load calm", role: "status", "aria-live": "polite" }, el("div", { class: "bsc-orbit sm", "aria-hidden": "true" }, el("i", { class: "r1" }), el("i", { class: "r2" }), el("b", { class: "d1" }), el("b", { class: "d2" }), el("b", { class: "d3" }), brandSpin("bsc-brand live")), el("p", { class: "bsr-think" }, "Loopy is thinking\u2026"),
     el("div", { class: "bsr-lines", "aria-hidden": "true" }, el("i", {}), el("i", {}), el("i", {})))] : [];
-  if (bs.busy && bs.res) return [bar, head, ...thinkingEls];
+  ui.thinking = bs.busy && bs.res ? thinkingEls : [];
   if (bs.pending) {
     return [bar, head, el("section", { class: "bsr-ask bsr-reveal in" }, el("small", {}, "Your question"), el("h2", {}, bs.pending), el("p", { class: "hint" }, "How much do you need?"),
       el("div", { class: "bsr-sizes" }, ...BS_SIZES.map(([id, name, hint, need], i) => { const open = bsOpen(need); return el("button", { type: "button", class: "bsr-size z" + i + (bs.size === id ? " pre" : ""), onclick: () => bsPickSize(id) }, el("b", {}, name), el("span", {}, hint), open ? null : el("i", {}, IS_RGUKT ? "\u{1F512} Locked" : "\u{1F512} Plus")); })))];
@@ -5879,7 +5898,7 @@ function brainViewInner(ui) {
       aegis: [["\u{1F489}", "SQL injection", "Security"], ["\u{1F3A3}", "Phishing", "Security"], ["\u{1F511}", "Password security", "Security"], ["\u{1F512}", "Two factor authentication", "Security"]] };
     const tryBlock = el("div", { class: "bs-blk" }, el("small", { class: "bs-secthead" }, "Try asking"), el("div", { class: "bs-try" }, ...(TRY[bs.mode] || TRY.atlas).map(([ic, t, s]) => el("button", { type: "button", class: "bs-tc", onclick: () => go(t) }, el("i", { "aria-hidden": "true" }, ic), el("b", {}, t), el("small", {}, s)))));
     if (!_packs && !bs._pkTried) { bs._pkTried = true; brainPacksMod().then(() => { if (bsEl() && !bsState().res) bsPaint(); }); }
-    const SUBJ = [["Digital electronics", "\u{1F522} Digital logic", "#fb923c"], ["Analog electronic circuits", "\u{1F50C} Analog circuits", "#ea580c"], ["Digital signal processing", "\u{1F4C8} Signal processing", "#0891b2"], ["Control systems", "\u{1F39B}\uFE0F Control systems", "#16a34a"], ["Probability and random variables", "\u{1F3B2} Probability", "#db2777"]];
+    const SUBJ = [["Digital electronics", "\u{1F522} Digital logic", "#fb923c"], ["Analog electronic circuits", "\u{1F50C} Analog circuits", "#ea580c"], ["Digital signal processing", "\u{1F4C8} Signal processing", "#0891b2"], ["Control systems", "\u{1F39B}\uFE0F Control systems", "#16a34a"], ["Probability and random variables", "\u{1F3B2} Probability", "#f97316"]];
     const allPk = _packs ? _packs.all : [], open = bs.packSubj;
     const tiles = (bs.mode === "atlas" || !bs.mode) ? el("div", { class: "bs-blk" }, el("small", { class: "bs-secthead" }, "Browse textbook topics"), el("div", { class: "bs-tiles" }, ...SUBJ.map(([sub, label, col]) => { const n = allPk.filter(p => p.subject === sub).length; return el("button", { type: "button", class: "bs-tile" + (open === sub ? " on" : ""), "aria-expanded": String(open === sub), onclick: () => { bs.packSubj = open === sub ? "" : sub; bsPaint(); } }, el("b", {}, label), el("small", {}, n ? n + " topics" : "Tap to open")); }).map((n, i) => { n.style.setProperty("--tc", SUBJ[i][2]); return n; })),
       open ? el("div", { class: "bs-chips bs-packlist" }, ...(allPk.filter(p => p.subject === open).length ? allPk.filter(p => p.subject === open).map(p => el("button", { type: "button", class: "tp-sub", onclick: () => { bs.forcePack = p.id; go(p.title.replace(/\\s*\\(.*?\\)\\s*/g, " ").trim()); } }, p.title)) : [el("small", { class: "hint" }, "Loading the topic list\u2026")])) : null) : null;
@@ -9991,7 +10010,7 @@ function renderCampusPicker() {
 
 // ---------- profile photo (DP) and 24-hour stories ----------
 const STORY_ROW_MIN = 3, STORY_MS = 86400000, STORY_SHOW = 5500, STORY_DAILY_MAX = 10;
-const STORY_BG = [["#15803d", "#2563eb"], ["#db2777", "#f97316"], ["#059669", "#0ea5e9"], ["#f59e0b", "#ef4444"], ["#eaf7ee", "#22c55e"], ["#0d9488", "#84cc16"], ["#9333ea", "#f97316"], ["#0f3d22", "#334155"]];
+const STORY_BG = [["#15803d", "#2563eb"], ["#f97316", "#f97316"], ["#059669", "#0ea5e9"], ["#f59e0b", "#ef4444"], ["#eaf7ee", "#22c55e"], ["#0d9488", "#84cc16"], ["#16a34a", "#f97316"], ["#0f3d22", "#334155"]];
 const DP_OK = /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]{20,40000}$/;
 const IMG_OK = /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]{20,700000}$/;
 const getDp = () => { if (!MEDIA.profilePhoto) return ""; try { const v = localStorage.getItem("dd-dp"); return DP_OK.test(v || "") ? v : ""; } catch (_) { return ""; } };
@@ -10657,6 +10676,92 @@ if (NO_COLLEGE) state.mode = "college";
 // First-time campus pick
 if (CAMPUSES.length > 0 && !getCampus() && !deep) state.mode = "campus";
 render();
+// ---------- Sign-up gate: verified e-mail + password + mobile number (SMS code) before anyone enters ----------
+function pwProblem(pw, email) {
+  const local = String(email || "").split("@")[0].toLowerCase();
+  if (pw.length < 10) return "Use at least 10 characters.";
+  if (!/[A-Za-z]/.test(pw) || !/\d/.test(pw)) return "Mix letters and numbers.";
+  if (local.length >= 3 && pw.toLowerCase().includes(local)) return "Do not use your e-mail name inside the password.";
+  if (/^(.)\1+$/.test(pw) || /(password|12345678|qwerty|iloveyou|123456789)/i.test(pw)) return "That password is too easy to guess.";
+  return "";
+}
+function authMsg(e) {
+  const c = (e && e.code) || "", M = {
+    "auth/email-already-in-use": "This e-mail already has an account. Tap Sign in instead.",
+    "auth/credential-already-in-use": "This number or e-mail is already used by another account.",
+    "auth/weak-password": "That password is too weak. Use 10 or more characters with letters and numbers.",
+    "auth/invalid-email": "That e-mail address does not look right.",
+    "auth/invalid-credential": "Wrong e-mail or password.", "auth/wrong-password": "Wrong e-mail or password.", "auth/user-not-found": "Wrong e-mail or password.",
+    "auth/too-many-requests": "Too many tries. Please wait a few minutes and try again.",
+    "auth/invalid-phone-number": "That mobile number does not look right.",
+    "auth/invalid-verification-code": "That code is wrong. Check the SMS and try again.", "auth/code-expired": "That code has expired. Ask for a new one.",
+    "auth/captcha-check-failed": "Security check failed. Reload the page and try again.",
+    "auth/quota-exceeded": "Too many codes were sent today. Try again tomorrow.",
+    "auth/network-request-failed": "No internet. Check your connection and try again.",
+    "auth/operation-not-allowed": "Sign-up is not switched on yet. Admin: in Firebase > Authentication > Sign-in method, enable Email/Password and Phone.",
+    "auth/provider-already-linked": "A mobile number is already linked to this account.",
+  };
+  return M[c] || "Something went wrong (" + (c || "error") + "). Please try again.";
+}
+function showAuthGate() {
+  return new Promise((resolve) => {
+    const st = store, done = () => { const i = st.authInfo(); return !!(i && !i.anonymous && i.emailVerified && i.phone); };
+    if (!st.authInfo || !st.authReady || done()) { resolve(); return; }
+    let tab = "up", otp = false, busy = false, note = "", cool = 0, coolT = 0;
+    const ov = el("div", { class: "welcome ag", role: "dialog", "aria-modal": "true", "aria-label": "Create your account" });
+    document.body.append(ov);
+    const say = (m) => { note = m; const n = ov.querySelector(".ag-note"); if (n) n.textContent = m; };
+    const key = () => { const i = st.authInfo(); return [i ? (i.anonymous ? "a" : i.emailVerified ? "v" : "u") : "n", tab, otp].join("|"); };
+    const run = async (fn) => {
+      if (busy) return; busy = true; say(""); const before = key(), btns = [...ov.querySelectorAll(".ag-go")]; btns.forEach(b => { b.disabled = true; });
+      try { await fn(); } catch (e) { say(authMsg(e)); }
+      busy = false;
+      if (done()) { ov.remove(); clearInterval(coolT); resolve(); return; }
+      if (key() !== before) paint(); else btns.forEach(b => { b.disabled = false; });
+    };
+    const field = (label, attrs) => { const id = "ag" + Math.random().toString(36).slice(2, 7), inp = el("input", { id, ...attrs }); return [el("label", { class: "ag-l", for: id }, label), inp, inp]; };
+    const cooldown = () => { cool = 45; clearInterval(coolT); coolT = setInterval(() => { cool--; if (cool <= 0) clearInterval(coolT); const b = ov.querySelector(".ag-resend"); if (b) { b.disabled = cool > 0; b.textContent = cool > 0 ? "Send again in " + cool + "s" : "Send again"; } }, 1000); };
+    function paint() {
+      const info = st.authInfo(), card = el("div", { class: "welcome-card ag-card" });
+      card.append(el("h2", {}, !info || info.anonymous ? (tab === "up" ? "Create your account" : "Welcome back") : !info.emailVerified ? "Verify your e-mail" : otp ? "Enter the code" : "Verify your mobile number"));
+      const msg = el("p", { class: "hint ag-note", role: "status" }, note);
+      if (!info || info.anonymous) {
+        const tabs = el("div", { class: "ag-tabs", role: "tablist" }, ...[["up", "Create account"], ["in", "Sign in"]].map(([k, t]) => el("button", { type: "button", role: "tab", class: "ag-tab" + (tab === k ? " on" : ""), "aria-selected": String(tab === k), onclick: () => { tab = k; note = ""; paint(); } }, t)));
+        const [l1, i1, e1] = field("E-mail", { type: "email", autocomplete: "email", inputmode: "email", maxlength: "120", placeholder: "you@example.com" });
+        const [l2, i2] = field("Password", { type: "password", autocomplete: tab === "up" ? "new-password" : "current-password", maxlength: "100", placeholder: tab === "up" ? "10+ characters, letters and numbers" : "Your password" });
+        const parts = [tabs, l1, i1, l2, i2];
+        let i3 = null, terms = null;
+        if (tab === "up") { const f3 = field("Confirm password", { type: "password", autocomplete: "new-password", maxlength: "100" }); i3 = f3[1]; terms = el("input", { type: "checkbox", id: "agTerms" }); parts.push(f3[0], i3, el("label", { class: "ag-terms", for: "agTerms" }, terms, " I am 18 or older and agree to the ", el("a", { href: "terms.html", target: "_blank", rel: "noopener" }, "Terms"), ".")); }
+        const go = el("button", { type: "button", class: "btn primary ag-go", onclick: () => run(async () => {
+          const email = i1.value.trim().toLowerCase(), pw = i2.value;
+          if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw { code: "auth/invalid-email" };
+          if (tab === "up") { const pr = pwProblem(pw, email); if (pr) { say(pr); return; } if (pw !== i3.value) { say("The two passwords do not match."); return; } if (!terms.checked) { say("Please tick the box to continue."); return; } await st.signUpEmail(email, pw); }
+          else { if (!pw) { say("Type your password."); return; } await st.signInEmail(email, pw); }
+        }) }, tab === "up" ? "Create account" : "Sign in");
+        parts.push(msg, go);
+        if (tab === "in") parts.push(el("button", { type: "button", class: "linkbtn", onclick: () => run(async () => { const email = i1.value.trim().toLowerCase(); if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { say("Type your e-mail above first."); return; } await st.resetPassword(email); say("If this e-mail has an account, a reset link is on its way."); }) }, "Forgot password?"));
+        card.append(...parts);
+      } else if (!info.emailVerified) {
+        card.append(el("p", { class: "ob-say" }, "We sent a link to " + info.email + ". Open it, then come back here and tap the button below. Check Spam if you do not see it."), msg,
+          el("button", { type: "button", class: "btn primary ag-go", onclick: () => run(async () => { await st.refreshUser(); if (!st.authInfo().emailVerified) say("Not verified yet. Open the link in your e-mail first."); }) }, "I have verified"),
+          el("button", { type: "button", class: "btn ag-resend", disabled: cool > 0 ? "" : null, onclick: () => run(async () => { await st.resendVerify(); cooldown(); say("Sent again."); }) }, cool > 0 ? "Send again in " + cool + "s" : "Send again"),
+          el("button", { type: "button", class: "linkbtn", onclick: async () => { await st.signOutAll(); tab = "in"; note = ""; paint(); } }, "Use a different e-mail"));
+      } else if (!otp) {
+        const [l, inp] = field("Mobile number", { type: "tel", inputmode: "numeric", autocomplete: "tel-national", maxlength: "10", placeholder: "10-digit number" });
+        card.append(el("p", { class: "ob-say" }, "We will send a 6-digit code by SMS. Indian numbers only. Your number is kept private and never shown to other students."), l, el("div", { class: "ag-phone" }, el("span", {}, "+91"), inp), msg, el("div", { id: "agRecaptcha" }),
+          el("button", { type: "button", class: "btn primary ag-go", onclick: () => run(async () => { const n = inp.value.replace(/\D/g, ""); if (!/^[6-9]\d{9}$/.test(n)) throw { code: "auth/invalid-phone-number" }; await st.sendPhoneCode("+91" + n, "agRecaptcha"); otp = true; note = ""; cooldown(); }) }, "Send code"));
+      } else {
+        const [l, inp] = field("6-digit code", { type: "text", inputmode: "numeric", autocomplete: "one-time-code", maxlength: "6", placeholder: "123456" });
+        card.append(l, inp, msg, el("button", { type: "button", class: "btn primary ag-go", onclick: () => run(async () => { const c = inp.value.replace(/\D/g, ""); if (c.length !== 6) { say("Type the 6-digit code."); return; } await st.confirmPhoneCode(c); }) }, "Verify and continue"),
+          el("button", { type: "button", class: "linkbtn", onclick: () => { otp = false; note = ""; paint(); } }, "Change number"));
+      }
+      card.append(el("p", { class: "hint ag-fine" }, "Your account keeps students safe: one person, one account. We never post for you."));
+      ov.replaceChildren(card);
+      const f = card.querySelector("input"); if (f && !busy) { try { f.focus({ preventScroll: true }); } catch (_) {} }
+    }
+    paint();
+  });
+}
 (async () => {
   const conf = CFG.firebase || {};
   const configured = conf.apiKey && !String(conf.apiKey).startsWith("PASTE") && conf.projectId;
@@ -10669,6 +10774,7 @@ render();
     showNotice("Could not connect to the class board. Check your internet and reload. (" + ((e && e.code) || "error") + ")");
     return;
   }
+  if (store && !store.demo && store.authInfo && CFG.requireSignup !== false) { try { await showAuthGate(); } catch (_) {} }
   if (NO_COLLEGE) { render(); return; }   // nothing to load until a college is chosen
   loadPlan().then(() => { render(); claimRef(); redeemPendingGift(); });
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && PLUS.enabled) loadPlan().then(() => { if (state.mode === "plus") render(); }); });
