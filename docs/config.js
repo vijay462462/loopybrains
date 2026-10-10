@@ -9,6 +9,7 @@ window.DOUBT_DESK_CONFIG = {
   // Set gallery: true to allow choosing existing pictures, and profilePhoto: true to allow profile photos again.
   media: { gallery: false, profilePhoto: false },
   // App Check: paste the reCAPTCHA v3 SITE key (public) from Firebase console > App Check. Leave empty until you have registered the app (steps in APPCHECK.md).
+  requireSignup: true,   // everyone must verify e-mail, password and mobile number (SMS) before entering. Set false to switch the sign-up screen off.
   appCheck: { siteKey: "6LcDueEtAAAAACnpgxodE6KX1rQ6PZg1gGSrhxC6", provider: "enterprise" },   // provider: "v3" (reCAPTCHA v3) or "enterprise" (Google Cloud Fraud Defense / reCAPTCHA Enterprise)
   // Surprise offers for Loopy AI credits. Add one line per offer. from and to are dates (India time). The offer adds extra credits to every student while it runs.
   // Example: { id: "festival", title: "Festival offer", text: "Extra credits all weekend", bonusDay: 10, bonusWeek: 20, from: "2026-10-20", to: "2026-10-25" }

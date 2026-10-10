@@ -31,11 +31,12 @@ service cloud.firestore {
     function notBlocked(room, id) {
       return (!(id is string) || !exists(/databases/$(database)/documents/rooms/$(room)/blocked/$(id))) && globalVerified() && verifiedOk(room);
     }
-    // Global switch (settings/posting.verifiedPosting, set by an admin): when on, nobody posts without a verified email, on any board.
+    // Global switches (settings/posting, set by an admin): verifiedPosting = nobody posts without a verified email; strongAuth = nobody posts without a verified email AND a verified mobile number.
     function globalVerified() {
       return !exists(/databases/$(database)/documents/settings/posting)
-        || get(/databases/$(database)/documents/settings/posting).data.get('verifiedPosting', false) != true
-        || request.auth.token.email_verified == true;
+        || ((get(/databases/$(database)/documents/settings/posting).data.get('verifiedPosting', false) != true || request.auth.token.email_verified == true)
+            && (get(/databases/$(database)/documents/settings/posting).data.get('strongAuth', false) != true
+                || (request.auth.token.email_verified == true && request.auth.token.get('phone_number', '') != '')));
     }
     // Boards of directory colleges live in the room 'college-<slug>'. If colleges/<slug> says requireVerified, only signed-in
     // users with a verified email (from one of its `domains`, when listed) may write. Everyone can still read.
@@ -249,8 +250,8 @@ service cloud.firestore {
     // App-wide settings. Everyone signed in can read (the app needs to know if posting needs a verified email); only admins write.
     match /settings/{id} {
       allow read: if signedIn();
-      allow create, update: if isAdmin() && id == 'posting' && request.resource.data.keys().hasOnly(['verifiedPosting', 'updatedAt'])
-        && request.resource.data.verifiedPosting is bool && request.resource.data.updatedAt is int;
+      allow create, update: if isAdmin() && id == 'posting' && request.resource.data.keys().hasOnly(['verifiedPosting', 'strongAuth', 'updatedAt'])
+        && request.resource.data.verifiedPosting is bool && request.resource.data.get('strongAuth', false) is bool && request.resource.data.updatedAt is int;
       allow delete: if false;
     }
     // Flash sale banner: one document, sales/current. Everyone signed in reads it; only admins change it.

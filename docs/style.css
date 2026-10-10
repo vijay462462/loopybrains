@@ -4091,3 +4091,23 @@ body header.top .tabs button[aria-selected="true"] { color: #0d1030; }
 .bsr-yq { display: grid; gap: 2px; margin: 0 0 10px; padding: 10px 12px; border-radius: 12px; border: 1.5px solid var(--line); border-left: 5px solid var(--accent); background: var(--sheet); }
 .bsr-yq small { color: var(--muted); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; font-size: .68rem; }
 .bsr-yq b { font-size: 1rem; overflow-wrap: anywhere; }
+
+/* ===== Sign-up gate ===== */
+.welcome.ag { z-index: 14000; }
+.ag-card { display: grid; gap: 10px; max-width: 420px; width: calc(100% - 24px); text-align: left; }
+.ag-card h2 { margin: 0 0 2px; text-align: center; }
+.ag-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 14px; background: var(--accent-soft); }
+.ag-tab { min-height: 44px; border: 0; border-radius: 10px; background: transparent; color: var(--accent); font-weight: 800; cursor: pointer; }
+.ag-tab.on { background: var(--btn); color: var(--btn-ink); }
+.ag-l { font-weight: 700; font-size: .85rem; color: var(--ink); margin-top: 2px; }
+.ag-card input[type="email"], .ag-card input[type="password"], .ag-card input[type="tel"], .ag-card input[type="text"] { width: 100%; box-sizing: border-box; min-height: 46px; padding: 0 12px; font-size: 16px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--sheet); color: var(--ink); }
+.ag-card input:focus { outline: 0; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
+.ag-phone { display: grid; grid-template-columns: auto 1fr; gap: 8px; align-items: center; }
+.ag-phone span { min-height: 46px; display: grid; place-items: center; padding: 0 12px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--accent-soft); font-weight: 800; }
+.ag-terms { display: flex; gap: 8px; align-items: flex-start; font-size: .85rem; color: var(--muted); }
+.ag-terms input { margin-top: 3px; }
+.ag-note { min-height: 1.2em; margin: 0; color: #b42318; font-weight: 600; }
+.ag-go { width: 100%; min-height: 48px; }
+.ag-fine { text-align: center; margin: 4px 0 0; font-size: .78rem; }
+.ag-card .ag-l { display: block; text-align: left; }
+.ag-card input { margin: 0; }

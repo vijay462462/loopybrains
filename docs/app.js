@@ -611,7 +611,7 @@ async function firebaseStore(conf, prefix = "") {
   // On a very slow connection sign-in can finish late. Reload once so the board loads with it.
   if (!signedIn && authP) authP.then(() => { try { if (!sessionStorage.getItem("dd-auth-reload")) { sessionStorage.setItem("dd-auth-reload", "1"); location.reload(); } } catch (_) {} }).catch(() => {});
   // A student tapped the sign-in link from their email: attach the verified email to this same session (keeps the same user).
-  let linkResult = "";
+  let linkResult = "", phoneVerifier = null, phoneConfirm = null;
   try {
     if (auth && au.isSignInWithEmailLink(auth, location.href)) {
       let email = ""; try { email = localStorage.getItem("dd-email-pending") || ""; } catch (_) {}
@@ -637,6 +637,25 @@ async function firebaseStore(conf, prefix = "") {
       await au.sendSignInLinkToEmail(auth, email, { url: location.origin + location.pathname + (SEL ? "?c=" + encodeURIComponent(SEL) : ""), handleCodeInApp: true });
       try { localStorage.setItem("dd-email-pending", email); } catch (_) {}
     },
+    // Account sign-up: e-mail and password (links to the anonymous session so nothing is lost), then a mobile number checked by an SMS code.
+    authInfo: () => { const u = auth && auth.currentUser; return u ? { anonymous: !!u.isAnonymous, email: u.email || "", emailVerified: !!u.emailVerified, phone: u.phoneNumber || "" } : null; },
+    authReady: !!auth,
+    signUpEmail: async (email, pw) => {
+      const cur = auth.currentUser; let cred;
+      if (cur && cur.isAnonymous) cred = await au.linkWithCredential(cur, au.EmailAuthProvider.credential(email, pw));
+      else cred = await au.createUserWithEmailAndPassword(auth, email, pw);
+      await au.sendEmailVerification(cred.user, { url: location.origin + location.pathname + (SEL ? "?c=" + encodeURIComponent(SEL) : "") });
+    },
+    signInEmail: (email, pw) => au.signInWithEmailAndPassword(auth, email, pw),
+    resendVerify: () => au.sendEmailVerification(auth.currentUser, { url: location.origin + location.pathname + (SEL ? "?c=" + encodeURIComponent(SEL) : "") }),
+    refreshUser: async () => { await auth.currentUser.reload(); await auth.currentUser.getIdToken(true); },
+    resetPassword: (email) => au.sendPasswordResetEmail(auth, email, { url: location.origin + location.pathname }),
+    sendPhoneCode: async (phone, holder) => {
+      try { if (phoneVerifier) phoneVerifier.clear(); } catch (_) {}
+      phoneVerifier = new au.RecaptchaVerifier(auth, holder, { size: "invisible" });
+      phoneConfirm = await au.linkWithPhoneNumber(auth.currentUser, phone, phoneVerifier);
+    },
+    confirmPhoneCode: async (code) => { if (!phoneConfirm) throw { code: "auth/code-expired" }; await phoneConfirm.confirm(code); await auth.currentUser.getIdToken(true); },
     signOutAll: async () => { try { if (auth) await au.signOut(auth); } catch (_) {} },
     account: () => { const u = auth && auth.currentUser; return { email: (u && u.email) || "", verified: !!(u && u.email && u.emailVerified) }; },
     subscribe: (coll, cb, onErr, since) => fs.onSnapshot(since ? fs.query(fs.collection(db, prefix + coll), fs.where("createdAt", ">", since)) : fs.collection(db, prefix + coll), snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))), onErr),
@@ -5812,7 +5831,7 @@ function loopyMark(cls) {
 }
 function brainView() {
   const ui = {}, out = brainViewInner(ui), skip = new Set([ui.bar, ui.head]);
-  return [...(ui.thinking || []), ...out.filter(n => !skip.has(n)), ui.dock].filter(Boolean);
+  return [...(ui.thinking || []), ...out.filter(n => !skip.has(n)), bsState().busy ? null : ui.dock].filter(Boolean);
 }
 function brainViewInner(ui) {
   const bs = bsState(), mi = bsModeInfo(bs.mode), back = el("button", { class: "btn", type: "button", onclick: () => bsClose() }, "Close");
@@ -10657,6 +10676,92 @@ if (NO_COLLEGE) state.mode = "college";
 // First-time campus pick
 if (CAMPUSES.length > 0 && !getCampus() && !deep) state.mode = "campus";
 render();
+// ---------- Sign-up gate: verified e-mail + password + mobile number (SMS code) before anyone enters ----------
+function pwProblem(pw, email) {
+  const local = String(email || "").split("@")[0].toLowerCase();
+  if (pw.length < 10) return "Use at least 10 characters.";
+  if (!/[A-Za-z]/.test(pw) || !/\d/.test(pw)) return "Mix letters and numbers.";
+  if (local.length >= 3 && pw.toLowerCase().includes(local)) return "Do not use your e-mail name inside the password.";
+  if (/^(.)\1+$/.test(pw) || /(password|12345678|qwerty|iloveyou|123456789)/i.test(pw)) return "That password is too easy to guess.";
+  return "";
+}
+function authMsg(e) {
+  const c = (e && e.code) || "", M = {
+    "auth/email-already-in-use": "This e-mail already has an account. Tap Sign in instead.",
+    "auth/credential-already-in-use": "This number or e-mail is already used by another account.",
+    "auth/weak-password": "That password is too weak. Use 10 or more characters with letters and numbers.",
+    "auth/invalid-email": "That e-mail address does not look right.",
+    "auth/invalid-credential": "Wrong e-mail or password.", "auth/wrong-password": "Wrong e-mail or password.", "auth/user-not-found": "Wrong e-mail or password.",
+    "auth/too-many-requests": "Too many tries. Please wait a few minutes and try again.",
+    "auth/invalid-phone-number": "That mobile number does not look right.",
+    "auth/invalid-verification-code": "That code is wrong. Check the SMS and try again.", "auth/code-expired": "That code has expired. Ask for a new one.",
+    "auth/captcha-check-failed": "Security check failed. Reload the page and try again.",
+    "auth/quota-exceeded": "Too many codes were sent today. Try again tomorrow.",
+    "auth/network-request-failed": "No internet. Check your connection and try again.",
+    "auth/operation-not-allowed": "Sign-up is not switched on yet. Admin: in Firebase > Authentication > Sign-in method, enable Email/Password and Phone.",
+    "auth/provider-already-linked": "A mobile number is already linked to this account.",
+  };
+  return M[c] || "Something went wrong (" + (c || "error") + "). Please try again.";
+}
+function showAuthGate() {
+  return new Promise((resolve) => {
+    const st = store, done = () => { const i = st.authInfo(); return !!(i && !i.anonymous && i.emailVerified && i.phone); };
+    if (!st.authInfo || !st.authReady || done()) { resolve(); return; }
+    let tab = "up", otp = false, busy = false, note = "", cool = 0, coolT = 0;
+    const ov = el("div", { class: "welcome ag", role: "dialog", "aria-modal": "true", "aria-label": "Create your account" });
+    document.body.append(ov);
+    const say = (m) => { note = m; const n = ov.querySelector(".ag-note"); if (n) n.textContent = m; };
+    const key = () => { const i = st.authInfo(); return [i ? (i.anonymous ? "a" : i.emailVerified ? "v" : "u") : "n", tab, otp].join("|"); };
+    const run = async (fn) => {
+      if (busy) return; busy = true; say(""); const before = key(), btns = [...ov.querySelectorAll(".ag-go")]; btns.forEach(b => { b.disabled = true; });
+      try { await fn(); } catch (e) { say(authMsg(e)); }
+      busy = false;
+      if (done()) { ov.remove(); clearInterval(coolT); resolve(); return; }
+      if (key() !== before) paint(); else btns.forEach(b => { b.disabled = false; });
+    };
+    const field = (label, attrs) => { const id = "ag" + Math.random().toString(36).slice(2, 7), inp = el("input", { id, ...attrs }); return [el("label", { class: "ag-l", for: id }, label), inp, inp]; };
+    const cooldown = () => { cool = 45; clearInterval(coolT); coolT = setInterval(() => { cool--; if (cool <= 0) clearInterval(coolT); const b = ov.querySelector(".ag-resend"); if (b) { b.disabled = cool > 0; b.textContent = cool > 0 ? "Send again in " + cool + "s" : "Send again"; } }, 1000); };
+    function paint() {
+      const info = st.authInfo(), card = el("div", { class: "welcome-card ag-card" });
+      card.append(el("h2", {}, !info || info.anonymous ? (tab === "up" ? "Create your account" : "Welcome back") : !info.emailVerified ? "Verify your e-mail" : otp ? "Enter the code" : "Verify your mobile number"));
+      const msg = el("p", { class: "hint ag-note", role: "status" }, note);
+      if (!info || info.anonymous) {
+        const tabs = el("div", { class: "ag-tabs", role: "tablist" }, ...[["up", "Create account"], ["in", "Sign in"]].map(([k, t]) => el("button", { type: "button", role: "tab", class: "ag-tab" + (tab === k ? " on" : ""), "aria-selected": String(tab === k), onclick: () => { tab = k; note = ""; paint(); } }, t)));
+        const [l1, i1, e1] = field("E-mail", { type: "email", autocomplete: "email", inputmode: "email", maxlength: "120", placeholder: "you@example.com" });
+        const [l2, i2] = field("Password", { type: "password", autocomplete: tab === "up" ? "new-password" : "current-password", maxlength: "100", placeholder: tab === "up" ? "10+ characters, letters and numbers" : "Your password" });
+        const parts = [tabs, l1, i1, l2, i2];
+        let i3 = null, terms = null;
+        if (tab === "up") { const f3 = field("Confirm password", { type: "password", autocomplete: "new-password", maxlength: "100" }); i3 = f3[1]; terms = el("input", { type: "checkbox", id: "agTerms" }); parts.push(f3[0], i3, el("label", { class: "ag-terms", for: "agTerms" }, terms, " I am 18 or older and agree to the ", el("a", { href: "terms.html", target: "_blank", rel: "noopener" }, "Terms"), ".")); }
+        const go = el("button", { type: "button", class: "btn primary ag-go", onclick: () => run(async () => {
+          const email = i1.value.trim().toLowerCase(), pw = i2.value;
+          if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw { code: "auth/invalid-email" };
+          if (tab === "up") { const pr = pwProblem(pw, email); if (pr) { say(pr); return; } if (pw !== i3.value) { say("The two passwords do not match."); return; } if (!terms.checked) { say("Please tick the box to continue."); return; } await st.signUpEmail(email, pw); }
+          else { if (!pw) { say("Type your password."); return; } await st.signInEmail(email, pw); }
+        }) }, tab === "up" ? "Create account" : "Sign in");
+        parts.push(msg, go);
+        if (tab === "in") parts.push(el("button", { type: "button", class: "linkbtn", onclick: () => run(async () => { const email = i1.value.trim().toLowerCase(); if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { say("Type your e-mail above first."); return; } await st.resetPassword(email); say("If this e-mail has an account, a reset link is on its way."); }) }, "Forgot password?"));
+        card.append(...parts);
+      } else if (!info.emailVerified) {
+        card.append(el("p", { class: "ob-say" }, "We sent a link to " + info.email + ". Open it, then come back here and tap the button below. Check Spam if you do not see it."), msg,
+          el("button", { type: "button", class: "btn primary ag-go", onclick: () => run(async () => { await st.refreshUser(); if (!st.authInfo().emailVerified) say("Not verified yet. Open the link in your e-mail first."); }) }, "I have verified"),
+          el("button", { type: "button", class: "btn ag-resend", disabled: cool > 0 ? "" : null, onclick: () => run(async () => { await st.resendVerify(); cooldown(); say("Sent again."); }) }, cool > 0 ? "Send again in " + cool + "s" : "Send again"),
+          el("button", { type: "button", class: "linkbtn", onclick: async () => { await st.signOutAll(); tab = "in"; note = ""; paint(); } }, "Use a different e-mail"));
+      } else if (!otp) {
+        const [l, inp] = field("Mobile number", { type: "tel", inputmode: "numeric", autocomplete: "tel-national", maxlength: "10", placeholder: "10-digit number" });
+        card.append(el("p", { class: "ob-say" }, "We will send a 6-digit code by SMS. Indian numbers only. Your number is kept private and never shown to other students."), l, el("div", { class: "ag-phone" }, el("span", {}, "+91"), inp), msg, el("div", { id: "agRecaptcha" }),
+          el("button", { type: "button", class: "btn primary ag-go", onclick: () => run(async () => { const n = inp.value.replace(/\D/g, ""); if (!/^[6-9]\d{9}$/.test(n)) throw { code: "auth/invalid-phone-number" }; await st.sendPhoneCode("+91" + n, "agRecaptcha"); otp = true; note = ""; cooldown(); }) }, "Send code"));
+      } else {
+        const [l, inp] = field("6-digit code", { type: "text", inputmode: "numeric", autocomplete: "one-time-code", maxlength: "6", placeholder: "123456" });
+        card.append(l, inp, msg, el("button", { type: "button", class: "btn primary ag-go", onclick: () => run(async () => { const c = inp.value.replace(/\D/g, ""); if (c.length !== 6) { say("Type the 6-digit code."); return; } await st.confirmPhoneCode(c); }) }, "Verify and continue"),
+          el("button", { type: "button", class: "linkbtn", onclick: () => { otp = false; note = ""; paint(); } }, "Change number"));
+      }
+      card.append(el("p", { class: "hint ag-fine" }, "Your account keeps students safe: one person, one account. We never post for you."));
+      ov.replaceChildren(card);
+      const f = card.querySelector("input"); if (f && !busy) { try { f.focus({ preventScroll: true }); } catch (_) {} }
+    }
+    paint();
+  });
+}
 (async () => {
   const conf = CFG.firebase || {};
   const configured = conf.apiKey && !String(conf.apiKey).startsWith("PASTE") && conf.projectId;
@@ -10669,6 +10774,7 @@ render();
     showNotice("Could not connect to the class board. Check your internet and reload. (" + ((e && e.code) || "error") + ")");
     return;
   }
+  if (store && !store.demo && store.authInfo && CFG.requireSignup !== false) { try { await showAuthGate(); } catch (_) {} }
   if (NO_COLLEGE) { render(); return; }   // nothing to load until a college is chosen
   loadPlan().then(() => { render(); claimRef(); redeemPendingGift(); });
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && PLUS.enabled) loadPlan().then(() => { if (state.mode === "plus") render(); }); });

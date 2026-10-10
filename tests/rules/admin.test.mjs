@@ -189,6 +189,15 @@ await t("switch on: reading stays open for anonymous", () => assertSucceeds(getD
 await t("only the 'posting' document with the right fields", async () => { await assertFails(setDoc(doc(admin, "settings/other"), { verifiedPosting: true, updatedAt: now() })); await assertFails(setDoc(doc(admin, "settings/posting"), { verifiedPosting: "yes", updatedAt: now() })); });
 await t("admin turns it off again", () => assertSucceeds(setDoc(doc(admin, "settings/posting"), { verifiedPosting: false, updatedAt: now() })));
 await t("switch off again: anonymous can post", () => assertSucceeds(setDoc(doc(anon, R + "/doubts/g5"), dpost("e"))));
+console.log("strong sign-up (email and mobile) switch");
+const emailOnly = env.authenticatedContext("u2", { email: "e@x.com", email_verified: true }).firestore();
+const strong = env.authenticatedContext("u3", { email: "s3@x.com", email_verified: true, phone_number: "+919876543210" }).firestore();
+await t("admin turns strong sign-up on", () => assertSucceeds(setDoc(doc(admin, "settings/posting"), { verifiedPosting: false, strongAuth: true, updatedAt: now() })));
+await t("strong on: anonymous cannot post", () => assertFails(setDoc(doc(anon, R + "/doubts/s1"), dpost("s1"))));
+await t("strong on: verified email without mobile cannot post", () => assertFails(setDoc(doc(emailOnly, R + "/doubts/s2"), dpost("s2"))));
+await t("strong on: verified email and mobile can post", () => assertSucceeds(setDoc(doc(strong, R + "/doubts/s3"), dpost("s3"))));
+await t("strongAuth must be true or false", () => assertFails(setDoc(doc(admin, "settings/posting"), { verifiedPosting: false, strongAuth: "yes", updatedAt: now() })));
+await t("admin turns strong sign-up off", () => assertSucceeds(setDoc(doc(admin, "settings/posting"), { verifiedPosting: false, strongAuth: false, updatedAt: now() })));
 console.log("profile reports");
 const prep = (o = {}) => ({ target: "dev-target-1234", what: "dp", reason: "b", reporter: "stud", name: "T", createdAt: now(), ...o });
 await t("student reports a photo", () => assertSucceeds(setDoc(doc(student, R + "/profileReports/stud_dev-target-1234_dp"), prep())));
