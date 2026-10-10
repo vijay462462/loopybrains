@@ -1,1 +1,56 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="Loopy Brains"><defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#18909a"/><stop offset=".55" stop-color="#0a4f56"/><stop offset="1" stop-color="#052e33"/></linearGradient><radialGradient id="glow" cx=".8" cy=".1" r=".7"><stop offset="0" stop-color="#7fe3e0" stop-opacity=".28"/><stop offset="1" stop-color="#7fe3e0" stop-opacity="0"/></radialGradient></defs><rect width="1024" height="1024" rx="230" fill="url(#bg)"/><rect width="1024" height="1024" rx="230" fill="url(#glow)"/><rect x="14" y="14" width="996" height="996" rx="218" fill="none" stroke="#ff9a85" stroke-opacity=".3" stroke-width="4"/><g transform="translate(150 150) scale(1.45)"><defs><linearGradient id="lbRing" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffb4a3"/><stop offset="1" stop-color="#ff6f59"/></linearGradient></defs><circle cx="256" cy="256" r="196" fill="none" stroke="url(#lbRing)" stroke-width="30" stroke-linecap="round" stroke-dasharray="960 272" transform="rotate(-75 256 256)"/><circle cx="404" cy="132" r="17" fill="#fff4ec"/><g fill="none" stroke="#fff4ec" stroke-width="34" stroke-linecap="round" stroke-linejoin="round" transform="translate(-41 0)"><path d="M194 168V340H234"/><path d="M302 168V340"/><path d="M302 168H336C366 168 380 188 380 210C380 234 364 252 330 252H302"/><path d="M302 252H338C378 252 394 274 394 298C394 322 376 340 338 340H302"/></g></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="Loopy Brains">
+  <defs>
+    <!-- Squircle background: deep navy to purple -->
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0d1b3e"/>
+      <stop offset=".5" stop-color="#16063a"/>
+      <stop offset="1" stop-color="#0b1e45"/>
+    </linearGradient>
+    <!-- Gold loop ring gradient -->
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffd700"/>
+      <stop offset=".6" stop-color="#f59e0b"/>
+      <stop offset="1" stop-color="#fcd34d"/>
+    </linearGradient>
+    <!-- Soft radial glow behind LB letters -->
+    <radialGradient id="glow" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#ffd700" stop-opacity=".12"/>
+      <stop offset="1" stop-color="#ffd700" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Gold loop glow filter -->
+    <filter id="ringGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="10" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Squircle background -->
+  <rect width="1024" height="1024" rx="230" fill="url(#bg)"/>
+  <!-- Glow overlay -->
+  <rect width="1024" height="1024" rx="230" fill="url(#glow)"/>
+
+  <!-- Open loop ring: LB brand arc, gold, centered at 512,512, r=392 -->
+  <circle cx="512" cy="512" r="392"
+    fill="none"
+    stroke="url(#ring)"
+    stroke-width="56"
+    stroke-linecap="round"
+    stroke-dasharray="1920 544"
+    transform="rotate(-75 512 512)"
+    filter="url(#ringGlow)"/>
+
+  <!-- Gold dot at loop opening -->
+  <circle cx="808" cy="264" r="32" fill="#ffd700"/>
+
+  <!-- LB monogram: scaled ×2 from brand mark, translated for 1024 canvas -->
+  <g fill="none" stroke="#ffffff" stroke-width="68" stroke-linecap="round" stroke-linejoin="round" transform="translate(-82 0) scale(2)">
+    <!-- L -->
+    <path d="M194 168V340H234"/>
+    <!-- B vertical -->
+    <path d="M302 168V340"/>
+    <!-- B top bowl -->
+    <path d="M302 168H336C366 168 380 188 380 210C380 234 364 252 330 252H302"/>
+    <!-- B bottom bowl -->
+    <path d="M302 252H338C378 252 394 274 394 298C394 322 376 340 338 340H302"/>
+  </g>
+</svg>

@@ -4146,15 +4146,24 @@ body[data-tab="gate"] .list .card {
   --mark-ink: #1a1000 !important;
 }
 
-/* Brand name "LOOPY" white, "BRAINS" gold on splash and header */
-.sp2-bname i { color: #ffd700 !important; font-style: normal !important; }
-.sp2-bname b { color: #ffffff !important; }
-
-/* Header brand mark drop shadow: indigo-gold glow */
-.sp2-bmark svg { filter: drop-shadow(0 6px 18px rgba(124, 58, 237, .45)) drop-shadow(0 2px 8px rgba(255, 215, 0, .35)) !important; }
-
-/* Loopy Brain brand logo mark in header: indigo-gold glow */
-.hd-brand .bmark, .header-logo .bmark { filter: drop-shadow(0 0 8px rgba(124, 58, 237, .5)) drop-shadow(0 0 4px rgba(255, 215, 0, .4)); }
+/* ===== LOOPY BRAINS LB LOGO — premium gold ring ===== */
+/* Splash: "LOOPY" bold white, "BRAINS" gold letter-spaced */
+.sp2-bname b { color: #ffffff !important; font-size: 22px !important; letter-spacing: .16em !important; }
+.sp2-bname i {
+  font-style: normal !important;
+  font-size: 14px !important;
+  letter-spacing: .6em !important;
+  font-weight: 800 !important;
+  background: linear-gradient(90deg, #ffd700, #f59e0b) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+}
+/* Gold glow on the LB ring in splash */
+.sp2-bmark svg { filter: drop-shadow(0 0 14px rgba(255, 215, 0, .55)) drop-shadow(0 4px 20px rgba(255, 180, 0, .35)) !important; }
+/* Gold glow on the LB ring in the header */
+.hd-brand .bmark, .header-logo .bmark { filter: drop-shadow(0 0 8px rgba(255, 215, 0, .6)) drop-shadow(0 0 3px rgba(255, 215, 0, .3)); }
 
 /* Tab accent glow: yellow in light mode, vivid per-tab in dark */
 :root[data-palette="royal"] .bnav-btn.active { color: #ffd700 !important; }
@@ -4279,3 +4288,153 @@ header.top { transition: padding .25s ease, box-shadow .25s ease; }
 }
 
 /* ===== END YELLOW BRAND + SCROLL REACTIONS + PAGE NAV ===== */
+
+/* ===== HOME HERO CARD v461 ===== */
+#homeBento { padding: 0 0 12px; }
+
+.hb-hero {
+  background: linear-gradient(155deg, #0d1b3e 0%, #1a0d3b 55%, #0d2547 100%);
+  border-radius: 20px;
+  padding: 16px 16px 18px;
+  margin: 0 0 16px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8px 32px -6px rgba(99,57,237,.4), 0 2px 8px rgba(0,0,0,.3);
+}
+.hb-hero::before {
+  content: "";
+  position: absolute;
+  top: -60px; right: -60px;
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, rgba(109,40,217,.4) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.hb-hero-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+.hb-close {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.12);
+  border: none;
+  color: #fff;
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: background .15s;
+}
+.hb-close:hover { background: rgba(255,255,255,.22); }
+
+.hb-chip {
+  background: linear-gradient(135deg, #7c3aed, #db2777);
+  color: #fff;
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+  padding: 6px 14px;
+  border-radius: 14px;
+  box-shadow: 0 4px 14px rgba(124,58,237,.45);
+}
+
+.hb-hero-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.hb-mascot { flex-shrink: 0; width: 80px; }
+.hb-mascot-svg { width: 80px; height: 87px; display: block; filter: drop-shadow(0 4px 12px rgba(99,57,237,.45)); }
+
+.hb-greet-col { flex: 1; min-width: 0; }
+.hb-college-name {
+  font-size: .8rem;
+  font-weight: 700;
+  color: #818cf8;
+  letter-spacing: .03em;
+  margin: 0 0 4px;
+}
+.hb-greet {
+  font-size: clamp(1.15rem, 5vw, 1.5rem);
+  font-weight: 800;
+  color: #fff;
+  margin: 0 0 5px;
+  line-height: 1.2;
+}
+.hb-tagline {
+  font-size: .85rem;
+  color: rgba(255,255,255,.6);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.hb-prompt {
+  background: rgba(255,255,255,.08);
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  border: 1px solid rgba(255,255,255,.1);
+}
+.hb-prompt-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: #22c55e;
+  flex-shrink: 0;
+  box-shadow: 0 0 6px #22c55e;
+}
+.hb-prompt-msg {
+  flex: 1;
+  font-size: .84rem;
+  color: #e2e8f0;
+  font-weight: 600;
+  margin: 0;
+  line-height: 1.3;
+}
+.hb-prompt-btn {
+  border: none;
+  background: none;
+  color: #fbbf24;
+  font-weight: 800;
+  font-size: .84rem;
+  cursor: pointer;
+  white-space: nowrap;
+  padding: 4px 2px;
+  transition: opacity .15s;
+}
+.hb-prompt-btn:hover { opacity: .75; }
+
+.hb-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.hb-action {
+  background: #fff;
+  border: none;
+  border-radius: 16px;
+  padding: 14px 10px 12px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  transition: transform .12s, box-shadow .12s;
+  box-shadow: 0 2px 8px rgba(0,0,0,.15);
+}
+.hb-action:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.2); }
+.hb-action:active { transform: scale(.96); }
+.hb-action-ic { font-size: 1.6rem; line-height: 1; }
+.hb-action b { font-size: .82rem; color: #0f172a; font-weight: 700; text-align: center; }
+
+@media (min-width: 701px) {
+  .hb-hero { max-width: 480px; }
+}
+/* ===== END HOME HERO CARD ===== */
