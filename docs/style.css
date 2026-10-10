@@ -65,8 +65,8 @@ header.top {
 header.top::before, header.top::after { content: ""; position: absolute; z-index: -1; border-radius: 50%; filter: blur(30px); }
 header.top::before { width: 260px; height: 260px; right: -60px; top: -120px; background: rgb(255 255 255 / .28); }
 header.top::after { width: 220px; height: 220px; left: 30%; bottom: -150px; background: color-mix(in oklab, var(--g4) 70%, #fde047); opacity: .55; }
-.brand h1 { font-size: clamp(2.2rem, 6vw, 3.4rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1; }
-.brand h1 span { background: linear-gradient(90deg, #fef08a, #fdba74); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.brand h1 { font-size: clamp(2.2rem, 6vw, 3.4rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1; text-shadow: 1px 1px 0 rgba(0,0,0,.22), 2px 2px 0 rgba(0,0,0,.17), 3px 3px 0 rgba(0,0,0,.12), 4px 4px 8px rgba(0,0,0,.3); }
+.brand h1 span { background: linear-gradient(90deg, #fef08a, #fdba74); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(1px 2px 3px rgba(0,0,0,.35)); }
 .brand p { margin: 10px 0 0; color: rgb(255 255 255 / .88); max-width: 52ch; }
 header.top .btn.primary { background: #fff; color: var(--g2); border-color: #fff; box-shadow: 0 6px 18px -6px rgb(0 0 0 / .35); }
 .btn {
@@ -1907,7 +1907,7 @@ header.top {
 }
 header.top::before { background: rgb(255 255 255 / .10); }
 header.top::after { opacity: .30; }
-.brand h1 { text-shadow: 0 2px 18px rgb(0 0 0 / .25); }
+.brand h1 { text-shadow: 1px 1px 0 rgba(0,0,0,.22), 2px 2px 0 rgba(0,0,0,.17), 3px 3px 0 rgba(0,0,0,.12), 4px 4px 10px rgba(0,0,0,.35); }
 .tabs button { border: 1px solid rgb(255 255 255 / .16); backdrop-filter: blur(6px); transition: transform .12s ease, background-color .15s ease; }
 .tabs button[aria-selected="true"] { background: #fff; color: #101c33; box-shadow: 0 6px 16px -6px rgb(0 0 0 / .45); }
 .college-btn, #themeBtn, .chip { backdrop-filter: blur(6px); }

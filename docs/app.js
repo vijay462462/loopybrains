@@ -2500,7 +2500,7 @@ const RG_YEARS = [["P1", "Pre-University 1", false], ["P2", "Pre-University 2", 
 // The branch is the student's own choice (saved in dd-branch; "*" means "my branch is not listed, show me everything"). Nothing is stored on the post: the branch of a doubt comes from its subject.
 const BRANCH_KEY = "dd-branch";
 const myBranch = () => { try { const b = localStorage.getItem(BRANCH_KEY) || ""; return b === "*" || DEPT_MAP[b] ? b : ""; } catch (_) { return ""; } };
-const branchFilterOn = () => { const b = myBranch(); return !!b && b !== "*" && !(typeof isAdmin === "function" && isAdmin()); };
+const branchFilterOn = () => false;
 const deptsOf = (subject) => Object.keys(DEPT_MAP).filter(d => (DEPT_MAP[d] || []).includes(subject));
 function branchSees(d) {
   if (!branchFilterOn()) return true;
@@ -10571,7 +10571,7 @@ function render() { const snap = snapUI(); try { renderCore(); } finally { resto
 function renderCore() {
   try {
     document.body.dataset.tab = state.tab; applyFocus();
-    renderHeader(); renderTrendBar(); renderStoryBar(); renderRail(); try { renderGuide(); } catch (_) {} try { renderHome(); } catch (_) {} renderList(); renderBottomNav(); try { if (IS_RGUKT && !readJSON("dd-rgukt-year", null) && !welcomePending && !document.querySelector(".welcome, .cr, #splash")) showEligibility(); } catch (_) {} try { if (Object.keys(DEPT_MAP).length && !myBranch() && !welcomePending && (!IS_RGUKT || readJSON("dd-rgukt-year", null)) && localStorage.getItem("dd-welcome-done") && !document.querySelector(".welcome, .cr, #splash")) showBranchPicker(); } catch (_) {} try { document.body.classList.toggle("simple", isSimple()); renderBell(); notifPing(); claimStudentIdOnce(); autoMailIds(); } catch (_) {}
+    renderHeader(); renderTrendBar(); renderStoryBar(); renderRail(); try { renderGuide(); } catch (_) {} try { renderHome(); } catch (_) {} renderList(); renderBottomNav(); try { if (IS_RGUKT && !readJSON("dd-rgukt-year", null) && !welcomePending && !document.querySelector(".welcome, .cr, #splash")) showEligibility(); } catch (_) {}  try { document.body.classList.toggle("simple", isSimple()); renderBell(); notifPing(); claimStudentIdOnce(); autoMailIds(); } catch (_) {}
     // Forms keep what the student is typing while live updates arrive.
     const key = ["ask", "edit", "name", "alumniJoin", "alumniJob", "fun", "lab", "college", "plus"].includes(state.mode) ? state.mode + state.tab : "";
     if (key && key === sheetKey) return;
