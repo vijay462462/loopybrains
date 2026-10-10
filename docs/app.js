@@ -1557,7 +1557,7 @@ function showWelcome(force, startId) {
   const backToStart = () => { try { sessionStorage.removeItem("dd-ob-splash"); sessionStorage.removeItem("dd-ob-shown"); sessionStorage.removeItem("dd-splash"); } catch (_) {} document.removeEventListener("keydown", onKey); box.remove(); location.reload(); };   // the first page comes back with a fresh start
   let aboutReady = false;   // the About step may only be passed after the text was really scrolled through (or read) and the terms box is ticked
   let paintedAt = 0;   // a tap that lands right after a step appears (double tap, ghost click) must not skip that step
-  const go = (d) => { if (performance.now() - paintedAt < 1200) return; if (d > 0 && STEPS[step] === "about" && !aboutReady) return; if (d > 0 && STEPS[step] === "college" && !pickSlug) { const c = box.querySelector(".ob-chosen"); if (c) { c.classList.remove("shake"); void c.offsetWidth; c.classList.add("shake"); } return; } saveStep(); step = Math.max(0, Math.min(TOTAL - 1, step + d)); paint(); };
+  const go = (d) => { if (performance.now() - paintedAt < (STEPS[step] === "about" ? 3000 : 1200)) return; if (d > 0 && STEPS[step] === "about" && !aboutReady) return; if (d > 0 && STEPS[step] === "college" && !pickSlug) { const c = box.querySelector(".ob-chosen"); if (c) { c.classList.remove("shake"); void c.offsetWidth; c.classList.add("shake"); } return; } saveStep(); step = Math.max(0, Math.min(TOTAL - 1, step + d)); paint(); };
   const start = (fn) => () => { saveStep(); finish(); setTimeout(fn, 120); };
   function paint() {
     paintedAt = performance.now(); aboutReady = false;
@@ -1571,8 +1571,8 @@ function showWelcome(force, startId) {
         el("div", { class: "ab-list" }, line("🛡️", "Safe and moderated", "Anonymous sign-in, reported posts hidden fast, abusive devices blocked."), line("🔒", "Private by design", "No ads. We never sell your data. Only your chosen name is shown."), line("🙏", "Respect for everyone", "Students, teachers and staff are honoured here."), line("🆓", "Free to learn", "The board, quizzes and Study Lab are free forever. Plus is optional.")),
         el("p", { class: "ab-meta" }, [ab.founder ? "Founded by " + ab.founder : "", ab.college ? ab.college : "", "Made with ❤️ in India"].filter(Boolean).join(" · ")),
         el("p", { class: "ab-meta" }, ab.email ? el("a", { href: "mailto:" + ab.email }, "Write to us: " + ab.email) : null, ab.email ? " · " : "", el("a", { href: "about.html", target: "_blank", rel: "noopener" }, "Our full story"), " · ", el("a", { href: "privacy.html", target: "_blank", rel: "noopener" }, "Privacy"), " · ", el("a", { href: "terms.html", target: "_blank", rel: "noopener" }, "Terms")),
-        el("div", { class: "ab-terms" }, el("b", {}, "Terms in short"), el("ul", {}, el("li", {}, "Use " + BRAND + " only for learning. No cheating in exams, no sharing of exam papers, no copying our study material."), el("li", {}, "Be kind. No abuse, bullying, fake posts, spam or adult content."), el("li", {}, "Never share anyone's private details, passwords or OTPs. We never ask for them."), el("li", {}, "Posts that break the rules are hidden, and accounts or devices can be blocked."), el("li", {}, "Answers from the AI helper can be wrong. Check with your teacher or book."), el("li", {}, "Plus is optional, paid once for the period you choose, and does not renew by itself. Payments are not refundable except as the Refund Policy says."), el("li", {}, BRAND + " is a student community app. It is not run by, or affiliated with, any college.")),
-          el("label", { class: "ab-agree" }, el("input", { type: "checkbox", id: "ob-terms", checked: readJSON("dd-terms", null) ? "" : null }), el("span", {}, "I am old enough to use " + BRAND + " (RGUKT: B.Tech 2nd year or above; other colleges: 13 or older). If I am under 18, my parent or guardian allows me to use it. I have read and agree to the ", el("a", { href: "terms.html", target: "_blank", rel: "noopener" }, "Terms of Use"), ", the ", el("a", { href: "privacy.html", target: "_blank", rel: "noopener" }, "Privacy Policy"), " and the ", el("a", { href: "refund.html", target: "_blank", rel: "noopener" }, "Refund Policy"), ".")))];
+        el("div", { class: "ab-terms" }, el("b", {}, "Terms in short"), el("ul", {}, el("li", {}, "Use " + BRAND + " only for learning. No cheating in exams, no sharing of exam papers, no copying our study material."), el("li", {}, "Be kind. No abuse, bullying, fake posts, spam or adult content."), el("li", {}, "Never share anyone's private details, passwords or OTPs. We never ask for them."), el("li", {}, "Posts that break the rules are hidden, and accounts or devices can be blocked."), el("li", {}, "Answers from the AI helper can be wrong. Check with your teacher or book."), el("li", {}, "Plus is optional, paid once for the period you choose, and does not renew by itself. Payments are not refundable, except where the law requires it or you were charged twice."), el("li", {}, BRAND + " is a student community app. It is not run by, or affiliated with, any college.")),
+          el("label", { class: "ab-agree" }, el("input", { type: "checkbox", id: "ob-terms", checked: readJSON("dd-terms", null) ? "" : null }), el("span", {}, "I am old enough to use " + BRAND + " (RGUKT: B.Tech 2nd year or above; other colleges: 13 or older). If I am under 18, my parent or guardian allows me to use it. I have read and agree to the ", el("a", { href: "terms.html", target: "_blank", rel: "noopener" }, "Terms of Use"), ", and the ", el("a", { href: "privacy.html", target: "_blank", rel: "noopener" }, "Privacy Policy"), ".")))];
     } else if (sid === "college") {
       const badge = (slug, name, st) => { const [ca, cb] = slug === "rgukt" ? STATE_COLORS["Andhra Pradesh"] : collegeColors(slug, st || ""); const ini = name.replace(/\(.*?\)/g, "").split(/[\s-]+/).filter(w => /^[A-Za-z]/.test(w) && !/^(of|and|the|for|in)$/i.test(w)).slice(0, 2).map(w => w[0].toUpperCase()).join("") || "C"; const b = el("span", { class: "col-badge", "aria-hidden": "true" }, ini); b.style.setProperty("background", "linear-gradient(135deg," + ca + "," + cb + ")"); return b; };
       const GRP = { all: "All", premier: "\u2B50 Premier", engineering: "Engineering", medical: "Medical", agri: "Agriculture", law: "Law", degree: "Degree", design: "Design", general: "Other" };
@@ -2320,14 +2320,15 @@ function renderHome() {
         el("p", { class: "hb-prompt-msg" }, "Stuck on a topic? I can explain it simply"),
         el("button", { type: "button", class: "hb-prompt-btn", onclick: () => { state.ai = state.ai || { msgs: [], busy: false, note: "" }; showPanel("ai"); } }, "Ask Loopy ›")
       ),
+      el("p", { class: "hb-choice" }, "Ask a doubt to your friend or classmate, or ask Loopy AI. It is your choice."),
       el("div", { class: "hb-actions" },
         el("button", { type: "button", class: "hb-action", onclick: () => openAsk() },
           el("span", { class: "hb-action-ic" }, "❓"),
-          el("b", {}, "Ask a doubt")
+          el("b", {}, "Ask a doubt"), el("small", {}, "to a friend or classmate")
         ),
         el("button", { type: "button", class: "hb-action", onclick: () => { state.ai = state.ai || { msgs: [], busy: false, note: "" }; showPanel("ai"); } },
           el("span", { class: "hb-action-ic" }, "✨"),
-          el("b", {}, "Loopy AI")
+          el("b", {}, "Ask Loopy AI"), el("small", {}, "answers in seconds")
         )
       )
     )
@@ -3009,6 +3010,14 @@ const MODE_GUIDE = {
   name: { icon: "✏️", purpose: "Choose the name shown with your posts.", steps: ["Type a nickname.", "Avoid your phone number or address.", "Save."], safe: "Use a nickname. Real names are not required.", next: null },
   campus: { icon: "\u{1F4CD}", purpose: "Choose your campus so classmates find you.", steps: ["Pick your campus.", "Browse its posts.", "Send a post to other campuses too."], safe: "You can change it later.", next: null },
   ask: { icon: "✍️", purpose: "Write your post. Pick who should see it before you send.", steps: ["Choose a subject.", "Write clearly and add a photo if it helps.", "Choose who can see it, then post."], safe: "Do not post phone numbers, addresses, passwords or photos of other people.", next: null },
+  about: { icon: "\u2139\uFE0F", purpose: "Who we are and why Loopy Brains exists.", steps: ["Read the short story.", "Check the Terms and Privacy links at the bottom.", "Write to us if you have an idea or a problem."], safe: "We never ask for your password or OTP.", next: null },
+  appearance: { icon: "\u{1F3A8}", purpose: "Change colours and light, dark or black mode.", steps: ["Pick a colour set.", "Choose light, dark or black.", "Go back. Your choice is saved on this phone."], safe: "Only the look of the app changes, nothing else.", next: null },
+  howto: { icon: "\u2753", purpose: "A quick tour of the app in a few steps.", steps: ["Read the steps one by one.", "Tick the ones you have done.", "Come back here any time from More."], safe: "Nothing here changes your account.", next: null },
+  students: { icon: "\u{1F465}", purpose: "See the students of your college and find classmates.", steps: ["Search a name or scroll the list.", "Open a profile to see what they helped with.", "Ask a doubt to a friend or classmate from the Doubts tab."], safe: "Only nicknames and public points are shown.", next: ["❓ Ask a doubt", "ask"] },
+  topic: { icon: "\u{1F4DA}", purpose: "Everything about one topic in one place: explanation, videos and questions.", steps: ["Read the short explanation first.", "Open a video or a note that helps.", "Tap Back, then ask a doubt if something is still unclear."], safe: "Videos and notes come from outside sources. Check them with your syllabus.", next: ["❓ Ask a doubt", "ask"] },
+  edit: { icon: "\u270F\uFE0F", purpose: "Change your own post.", steps: ["Edit the text.", "Add or remove a photo.", "Save. Everyone sees the new version."], safe: "Do not add phone numbers, addresses or passwords.", next: null },
+  alumniJob: { icon: "\u{1F4BC}", purpose: "Jobs and referrals posted by alumni of your college.", steps: ["Open a job to read the details.", "Contact the alumnus politely.", "Never pay money to get a job."], safe: "A real job never asks you to pay. Report it if it does.", next: null },
+  alumniJoin: { icon: "\u{1F393}", purpose: "Join the alumni network of your college.", steps: ["Fill in your batch and company.", "Choose what you can help with.", "Submit. The admin checks it first."], safe: "Share only what you are happy to show to students.", next: null },
   view: { icon: "\u{1F4AC}", purpose: "Read the post and its answers.", steps: ["Read the question.", "Add an answer or a reaction.", "Report anything unsafe with the Report button."], safe: "Be kind. Reported posts are reviewed by the admin.", next: null },
 };
 function modeGuide(mode) {
@@ -7174,7 +7183,7 @@ function renderAbout() {
     el("img", { class: "brand-banner", src: "brand/loopy-brains-banner-1200x630.png", alt: BRAND + ". Where every doubt finds answers.", width: "1200", height: "630", loading: "lazy" }),
     el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => { try { window.open("about.html", "_blank", "noopener"); } catch (_) {} } }, "📄 Read our full story")),
     el("div", { class: "rowbtns" }, el("button", { class: "btn sm", type: "button", onclick: () => showWelcome(true) }, "👋 Show the welcome tour"), el("button", { class: "btn sm", type: "button", onclick: () => showPanel("howto") }, "How to use this app")),
-    el("p", { class: "hint" }, el("a", { href: "terms.html", target: "_blank", rel: "noopener" }, "Terms"), " · ", el("a", { href: "privacy.html", target: "_blank", rel: "noopener" }, "Privacy"), " · ", el("a", { href: "refund.html", target: "_blank", rel: "noopener" }, "Refunds")),
+    el("p", { class: "hint" }, el("a", { href: "terms.html", target: "_blank", rel: "noopener" }, "Terms"), " · ", el("a", { href: "privacy.html", target: "_blank", rel: "noopener" }, "Privacy")),
     el("p", { class: "hint" }, "One free place to ask doubts, share ideas, prepare for GATE, plan your career and help your juniors."),
     el("div", { class: "learn-card" },
       el("strong", {}, "🔥 Built by students"),
