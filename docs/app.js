@@ -4650,11 +4650,11 @@ const lsFetch = async (url) => {
 };
 async function lsRun(q) {
   const ls = state.ls; ls.q = q; ls.err = ""; ls.res = null; ls.ai = null; ls.aiNote = ""; ls.busy = true; render();
-  const aiOn = !!PLUS.functionsUrl && !!store && !!store.idToken && !plusLockedStrict();
+  const aiOn = !!PLUS.functionsUrl && !!store && !!store.idToken && (IS_RGUKT || !plusLockedStrict());
   const aiTask = aiOn ? (async () => {
     try {
       const tok = await store.idToken(); if (!tok) throw new Error("Sign in to use Loopy AI answers.");
-      const r = await fetch(PLUS.functionsUrl.replace(/\/$/, "") + "/askAI", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + tok }, body: JSON.stringify({ mode: "search", query: q, level: ls.level }) });
+      const r = await fetch(PLUS.functionsUrl.replace(/\/$/, "") + "/askAI", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + tok }, body: JSON.stringify({ mode: "search", query: q, level: ls.level, college: IS_RGUKT ? "rgukt" : "" }) });
       const d = await r.json().catch(() => ({}));
       if (!r.ok || !d.search) throw new Error(d.error || "Loopy AI is busy. Try again.");
       ls.ai = d.search; ls.aiLeft = typeof d.left === "number" ? d.left : null;
