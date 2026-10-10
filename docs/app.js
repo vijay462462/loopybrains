@@ -5258,11 +5258,13 @@ const brainDiagramsMod = async () => { try { return _dgm = _dgm || await import(
 const brainPacksMod = async () => {
   if (_packs) return _packs;
   try {
-    const [m1, m2, m3] = await Promise.all([import(new URL("brain-packs.js?v=452", location.href).href), import(new URL("brain-packs-ece.js?v=452", location.href).href), import(new URL("brain-simple.js?v=452", location.href).href).catch(() => ({ SIMPLE: {} }))]);
+    const [m1, m2, m3, m4, m5] = await Promise.all([import(new URL("brain-packs.js?v=452", location.href).href), import(new URL("brain-packs-ece.js?v=452", location.href).href), import(new URL("brain-simple.js?v=452", location.href).href).catch(() => ({ SIMPLE: {} })), import(new URL("brain-search.js?v=452", location.href).href).catch(() => null), import(new URL("dld-questions.js?v=452", location.href).href).catch(() => null)]);
     const base = [...m1.PACKS, ...m2.PACKS_ECE], hubs = m2.makeHubs(base), fix = m2.makeFixer(base), nq = (t) => String(t || "").toLowerCase().replace(/[-_/]/g, " ").replace(/[^a-z0-9\s+]/g, " ").replace(/\s+/g, " ").trim();
     const hubKey = (q) => { const t = nq(q).replace(/^(what is|what are|explain|tell me about|about|notes on|notes|syllabus of|syllabus|all topics of|topics in|learn|study)\s+/, "").replace(/\s+(notes|syllabus|subject|topics|course|basics|introduction|overview)$/, "").trim(); return hubs.find(h => h.keys.some(k => nq(k) === t)) || null; };
-    const one = (q) => { const a = m1.packScore(q), b = m2.packScore(q); return (b.len > a.len ? b.p : a.p) || null; };
-    _packs = { checked: m2.CHECKED || [], all: [...hubs, ...base], refs: m2.REFS || {}, simple: m3.SIMPLE || {}, find: (q) => { const h = hubKey(q); if (h) return h; const p = one(q); if (p) return p; const f = fix(q); return f ? (hubKey(f) || one(f)) : null; } };
+    const srch = m4 && m4.makeSearch ? m4.makeSearch(base) : null, qlist = m5 && m5.DLD_Q ? m5.DLD_Q.flatMap(u => u.map(r => ({ title: r[1], keys: [], short: r[2].slice(0, 400), points: [], marks: r[0], ans: r[2] }))) : [], qsrch = srch && qlist.length ? m4.makeSearch(qlist) : null,
+      relQs = (pk) => { try { if (!qsrch) return []; const r = qsrch.rank(pk.title.replace(/\s*\(.*?\)\s*/g, " ") + " " + (pk.keys || []).slice(0, 2).join(" "), 3); return r.length && r[0].score >= 20 ? r.filter(x => x.score >= 20 && x.score >= r[0].score * 0.45 && x.tk >= 0.5).map(x => x.p) : []; } catch (_) { return []; } },
+      one = (q) => { const a = m1.packScore(q), b = m2.packScore(q); return (b.len > a.len ? b.p : a.p) || null; };
+    _packs = { checked: m2.CHECKED || [], all: [...hubs, ...base], refs: m2.REFS || {}, simple: m3.SIMPLE || {}, relQs, rank: (q, n) => { try { return srch ? srch.rank(q, n).map(r => r.p) : []; } catch (_) { return []; } }, find: (q) => { const h = hubKey(q); if (h) return h; try { const b = srch && srch.best(q); if (b && b.sure) return b.p; } catch (_) {} const p = one(q); if (p) return p; const f = fix(q); return f ? (hubKey(f) || one(f)) : null; } };
   } catch (_) { _packs = null; }
   return _packs;
 };
@@ -5560,8 +5562,30 @@ function bsExportSheet() {
   const body = el("div", { class: "bsx-sheet" }), back = el("div", { class: "bsx-back", id: "bsExport", role: "dialog", "aria-modal": "true", "aria-label": "Save this result", onclick: (e) => { if (e.target === back) close(); } }, body);
   const menu = () => body.replaceChildren(el("h3", {}, "Save this result"), el("p", { class: "hint" }, "Choose how you want to keep it."),
     el("button", { type: "button", class: "bsx-opt", onclick: () => { close(); setTimeout(() => { try { window.print(); } catch (_) {} }, 150); } }, el("b", {}, "\u{1F4C4} PDF"), el("small", {}, "Opens the print screen. Choose “Save as PDF”.")),
+    (bsState().res && bsState().res.pack) ? el("button", { type: "button", class: "bsx-opt", onclick: () => pptx() }, el("b", {}, "\u{1F4CA} Slides (PowerPoint)"), el("small", {}, "A ready slide deck of this topic: key points, exam bullets, formulas and the exam answer.")) : null,
     el("button", { type: "button", class: "bsx-opt", onclick: () => jpeg() }, el("b", {}, "\u{1F5BC}️ Picture (JPEG)"), el("small", {}, "HD pictures (3 times the screen size). Save to your gallery or send on WhatsApp.")),
     el("button", { type: "button", class: "btn", onclick: close }, "Cancel"));
+  const pptx = async () => {
+    const p = bsState().res && bsState().res.pack; if (!p) return;
+    try {
+      const m = await import(new URL("pptx-lite.js?v=452", location.href).href), sh1 = (x) => { const s = String(x || "").trim(), mm = s.match(/^.{20,170}?[.!?](?=\s|$)/); return mm ? mm[0] : s.slice(0, 170); };
+      const chunk = (title, items, size) => { const out = []; let cur = [], len = 0; for (const it of items) { if (cur.length && len + it.length > 460) { out.push({ title, bullets: cur, size }); cur = []; len = 0; } cur.push(it); len += it.length; } if (cur.length) out.push({ title, bullets: cur, size }); return out.map((s, i, a) => a.length > 1 ? { ...s, title: s.title + " (" + (i + 1) + "/" + a.length + ")" } : s); };
+      const sm = _packs && _packs.simple && _packs.simple[p.id], ex = p.example ? [p.example.title, ...String(p.example.text).split("\n")] : [];
+      const slides = [{ title: p.title.replace(/\s*\(.*?\)\s*/g, " ").trim(), bullets: [p.subject + " \u00B7 Loopy Brains", "Study notes made by Loopy AI. Check with your syllabus and teacher."] },
+        { title: "What it is", bullets: [p.short, ...(sm && sm.length ? ["In simple words: " + sm[0]] : [])], size: 2800 },
+        ...chunk("Key points", (p.points || []).map(String), 2600),
+        ...(p.steps && p.steps.length ? chunk("Step by step", p.steps.map((x, i) => (i + 1) + ". " + x), 2600) : []),
+        ...(p.formulas && p.formulas.length ? [{ title: "Formulas and rules", bullets: p.formulas.map(([n, x]) => n + ": " + x), size: 2800 }] : []),
+        ...(ex.length ? chunk("Worked example", ex, 2400) : []),
+        { title: "Exam in bullets", bullets: [sh1(p.short), ...(p.points || []).slice(0, 3).map(sh1), ...(p.mistakes && p.mistakes[0] ? ["Avoid: " + sh1(p.mistakes[0])] : [])], size: 2800 },
+        ...chunk("Write this in the exam", [String(p.exam || "")], 2600),
+        ...(p.mistakes && p.mistakes.length ? chunk("Common mistakes", p.mistakes.map(String), 2600) : []),
+        ...(p.related && p.related.length ? [{ title: "Learn next", bullets: p.related.map(String), size: 2800 }] : [])].filter(s => s.bullets && s.bullets.length);
+      const blob = m.makePptx(slides, p.title), name = "loopy-" + (p.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "topic") + ".pptx", url = URL.createObjectURL(blob);
+      const a2 = document.createElement("a"); a2.href = url; a2.download = name; document.body.append(a2); a2.click(); a2.remove(); setTimeout(() => { try { URL.revokeObjectURL(url); } catch (_) {} }, 20000);
+      body.replaceChildren(el("h3", {}, "Your slides are ready"), el("p", { class: "hint" }, slides.length + " slides saved as " + name + ". Open it in PowerPoint, Google Slides or your phone\u2019s Office app."), el("div", { class: "rowbtns" }, el("button", { type: "button", class: "btn primary", onclick: close }, "Done")));
+    } catch (_) { body.replaceChildren(el("h3", {}, "Could not make the slides"), el("p", { class: "hint" }, "Please use the PDF option instead."), el("div", { class: "rowbtns" }, el("button", { type: "button", class: "btn", onclick: close }, "Close"))); }
+  };
   const jpeg = async () => {
     body.replaceChildren(el("h3", {}, "Making your HD pictures…"), el("p", { class: "hint", role: "status" }, "Long results are cut into pages. This takes a few seconds."));
     try {
@@ -5721,7 +5745,7 @@ function bsCross(pack, wiki) {
     return { found, total: terms.length, pct: Math.round(found / terms.length * 100), title: String(wiki.title || "").slice(0, 60) };
   } catch (_) { return null; }
 }
-const PK_ICON = { "pk-points": "\u{1F4A1}", "pk-steps": "\u{1FA9C}", "pk-forms": "\u{1F9EE}", "pk-ex": "\u{1F9EA}", "pk-exam": "\u{1F4DD}", "pk-mist": "\u26A0\uFE0F", "pk-learn": "\u{1F517}", "pk-acc": "\u{1F50D}", "pk-refs": "\u{1F4DA}", "pk-simple": "\u{1F9D2}" };
+const PK_ICON = { "pk-points": "\u{1F4A1}", "pk-steps": "\u{1FA9C}", "pk-forms": "\u{1F9EE}", "pk-ex": "\u{1F9EA}", "pk-exam": "\u{1F4DD}", "pk-ebl": "\u2B50", "pk-pq": "\u270F\uFE0F", "pk-mist": "\u26A0\uFE0F", "pk-learn": "\u{1F517}", "pk-acc": "\u{1F50D}", "pk-refs": "\u{1F4DA}", "pk-simple": "\u{1F9D2}" };
 function packView(p, go, res) {
   const out = [], card = (cls, h, ...k) => el("section", { class: "bsr-card pk-c bsr-reveal in " + cls }, h ? el("h3", {}, el("span", { class: "pk-ic", "aria-hidden": "true" }, PK_ICON[cls] || "\u2022"), h) : null, ...k.filter(Boolean));
   out.push(el("section", { class: "bsr-hero pk-hero bsr-reveal in" }, el("small", {}, "\u2713 Loopy Knowledge Pack \u00B7 " + p.subject), el("h2", {}, p.title), el("p", {}, p.short), el("div", { class: "bsr-meta" }, el("span", {}, "Written for B.Tech students"), el("span", {}, "Checked first, before the web"))));
@@ -5735,7 +5759,10 @@ function packView(p, go, res) {
   if (p.steps && p.steps.length) out.push(card("pk-steps", "Step by step", el("ol", { class: "pk-stepl" }, ...p.steps.map((x, i) => el("li", {}, el("b", {}, String(i + 1)), el("span", {}, x))))));
   if (p.formulas && p.formulas.length) out.push(card("pk-forms", "Formulas and rules", el("div", { class: "pk-forms" }, ...p.formulas.map(([n, t]) => el("div", { class: "pk-form" }, el("small", {}, n), el("code", {}, t))))));
   if (p.example) out.push(card("pk-ex", "Worked example", el("p", { class: "pk-extitle" }, p.example.title), el("pre", { class: "bsr-code pk-pre" }, el("code", {}, p.example.text))));
+  { const sh1 = (x) => { const s = String(x || "").trim(), m = s.match(/^.{20,160}?[.!?](?=\s|$)/); return m ? m[0] : s.slice(0, 160); }, B = [["Definition", sh1(p.short)], ...(p.points || []).slice(0, 3).map(x => ["Point", sh1(x)]), ...(p.formulas || []).slice(0, 3).map(([n, x]) => ["Formula", n + ": " + x]), ...(p.mistakes && p.mistakes[0] ? [["Avoid", sh1(p.mistakes[0])]] : [])].filter(b => b[1]), txt = B.map(b => "\u2022 " + b[0] + ": " + b[1]).join("\n");
+    if (B.length > 2) out.push(card("pk-ebl", "Exam in bullets", el("p", { class: "hint" }, "The important points to remember. Quick revision before the exam."), el("ul", { class: "pk-bul pk-ebul" }, ...B.map(b => el("li", {}, el("b", {}, b[0] + ": "), b[1]))), el("div", { class: "rowbtns bsf-noprint" }, copyBtn(txt, "Copy bullets")))); }
   out.push(card("pk-exam", "Write this in the exam", el("p", { class: "pk-answer" }, el("span", { class: "bsr-tag" }, "Answer"), p.exam), el("div", { class: "rowbtns bsf-noprint" }, copyBtn(p.exam, "Copy answer"))));
+  { const rq = _packs && _packs.relQs ? _packs.relQs(p) : []; if (rq.length) out.push(card("pk-pq", "Practice questions on this topic", el("p", { class: "hint" }, "Try each one on paper first, then tap to check the model answer."), ...rq.map(q => el("details", { class: "dldq-q" }, el("summary", {}, el("span", { class: "dldq-n" }, q.marks + "m"), el("span", {}, q.title)), el("div", { class: "dldq-a" }, el("small", {}, "Model answer"), ...String(q.ans).split("\n").map(x => el("p", {}, x))))))); }
   if (p.mistakes && p.mistakes.length) out.push(card("pk-mist", "Common mistakes", ...p.mistakes.map(x => el("p", { class: "pk-warn" }, el("span", { class: "bsr-tag" }, "Watch out"), x))));
   if (p.uses && p.uses.length) out.push(usesNode(p.uses.map(([t, x]) => ({ domain: "Real life", title: t, text: x })), p.title));
   if (p.related && p.related.length) out.push(card("pk-learn", "Learn next", el("div", { class: "bs-chips" }, ...p.related.map(t => el("button", { type: "button", class: "tp-sub", onclick: () => go(t) }, t)))));
