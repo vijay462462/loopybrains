@@ -1390,6 +1390,7 @@ const ICON_PATHS = {
   market: ["M3 4h2l2.4 11h10.2l2-8H6.5", "M9 20.2v.01", "M17 20.2v.01"],
   board: ["M8 4h8v5a4 4 0 0 1-8 0V4z", "M8 6H4v1a4 4 0 0 0 4 4", "M16 6h4v1a4 4 0 0 1-4 4", "M12 13v4", "M8 20h8", "M10 17h4"],
   more: ["M5 12v.01", "M12 12v.01", "M19 12v.01"],
+  home: ["M3 9l9-7l9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z", "M9 22V12h6v10"],
   palette: ["M12 3a9 9 0 1 0 0 18c1.1 0 1.8-.8 1.8-1.7 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-.9.8-1.7 1.7-1.7H17a4 4 0 0 0 4-4c0-4.4-4-8.2-9-8.2z", "M7.5 11v.01", "M10 7.5v.01", "M14.5 7.5v.01"],
 };
 function svgIcon(name) {
@@ -1403,6 +1404,12 @@ function renderBottomNav() {
   const icons = { doubts: 'doubts', ideas: 'ideas', clubs: 'clubs', gate: 'gate', challenges: 'gate', market: 'market' };
   const labels = { doubts: 'Doubts', ideas: 'Ideas', clubs: 'Clubs', gate: EXAM_LABEL.length > 8 ? EXAM_LABEL.split(/[ /]/)[0] : EXAM_LABEL, challenges: 'Challenges', market: 'Market' };
   nav.replaceChildren(
+    el('button', { type: 'button', class: 'bnav-btn' + (state.mode === 'intro' && !state.selected ? ' active' : ''), onclick: () => {
+      state.mode = 'intro'; state.selected = null; state.query = ''; $('search') && ($('search').value = '');
+      try { history.replaceState(null, '', '#' + state.tab); } catch (_) {}
+      render(); window.scrollTo({ top: 0, behavior: 'smooth' });
+    } },
+      el('span', { class: 'bnav-icon' }, svgIcon('home')), el('span', { class: 'bnav-label' }, 'Home')),
     ...['doubts', 'ideas', 'clubs', 'market', 'gate'].filter(tab => (!isSimple() || tab === 'doubts' || tab === 'ideas' || state.tab === tab) && (!focusOn() || isAcademicTab(tab)) && featureOn(tab === 'market' ? 'market' : 'doubts')).map(tab => {
       const cnt = state[TABS[tab].coll].length;
       return el('button', { type: 'button', class: 'bnav-btn' + (state.tab === tab ? ' active' : ''), onclick: () => {
