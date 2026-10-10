@@ -3008,19 +3008,18 @@ header.top #paletteBtn, #paletteBtn { border-radius: 999px; background: var(--ac
 .brand h1.brand-link { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; font-family: 'Bitstream Charter', Georgia, 'Times New Roman', serif; letter-spacing: normal; text-shadow: none; }
 .brand h1 .hd-mark { width: 38px; height: 38px; flex: 0 0 auto; display: block; filter: none; }
 .bname { display: grid; line-height: 1.05; text-align: left; font-family: 'Bitstream Charter', Georgia, 'Times New Roman', serif; }
-.bname b { font-size: 1rem; letter-spacing: .12em; font-weight: 700; color: var(--ink); }
-.bname i { font-style: normal; font-size: .62rem; letter-spacing: .6em; font-weight: 700; margin-top: 3px; background: linear-gradient(90deg, #b9770a, #f59e0b); -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; }
-:root[data-theme="dark"] .bname i { background: linear-gradient(90deg, #fde68a, #f59e0b); -webkit-background-clip: text; background-clip: text; }
+.bname b { font-size: 1rem; letter-spacing: .08em; font-weight: 900; color: transparent; -webkit-text-stroke: 1.5px #e2501a; text-stroke: 1.5px #e2501a; -webkit-text-fill-color: transparent; background: none; }
+.bname i { font-style: normal; font-size: .62rem; letter-spacing: .45em; font-weight: 700; margin-top: 3px; color: #0891b2; -webkit-text-fill-color: #0891b2; background: none; }
+:root[data-theme="dark"] .bname i { color: #22d3ee; -webkit-text-fill-color: #22d3ee; background: none; }
 @media (min-width: 701px) {
   .brand h1 .hd-mark { width: 58px; height: 58px; }
-  .bname b { font-size: 1.55rem; color: #fff; } .bname i { font-size: .8rem; background: linear-gradient(90deg, #fde68a, #f59e0b); -webkit-background-clip: text; background-clip: text; }
+  .bname b { font-size: 1.55rem; -webkit-text-stroke: 2px #e2501a; } .bname i { font-size: .8rem; color: #22d3ee; -webkit-text-fill-color: #22d3ee; background: none; }
 }
 @media (max-width: 700px) { header.top .brand h1 { font-size: 1rem; } header.top .brand h1.brand-link { gap: 9px; } }
 .brand-banner { display: block; width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--line); margin: 6px 0 12px; }
 
-/* The mark's white cap needs a dark ground on light themes (the app icon uses the same navy) */
-:root[data-theme="light"] .brand h1 .hd-mark { background: #1b1466; border-radius: 10px; padding: 4px; box-sizing: border-box; }
-@media (min-width: 701px) { :root[data-theme="light"] .brand h1 .hd-mark { background: transparent; padding: 0; } }
+/* Brand mark has its own rounded-square background; no extra wrapper needed */
+:root[data-theme="light"] .brand h1 .hd-mark { background: transparent; border-radius: 0; padding: 0; }
 .bname b { white-space: nowrap; }
 @media (max-width: 380px) {
   .brand h1 .hd-mark { width: 32px; height: 32px; }
@@ -3034,8 +3033,8 @@ header.top #paletteBtn, #paletteBtn { border-radius: 999px; background: var(--ac
 .sp2-bg { display: none; }
 .sp2-brand { margin-bottom: 20px; }
 .sp2-bmark svg { filter: none; }
-.sp2-bname b { color: #f6f1e6; letter-spacing: .14em; }
-.sp2-bname i { background: none; color: var(--hdr-brand); -webkit-text-fill-color: var(--hdr-brand); }
+.sp2-bname b { color: transparent; -webkit-text-stroke: 2px #e2501a; -webkit-text-fill-color: transparent; letter-spacing: .08em; }
+.sp2-bname i { background: none; color: #0891b2; -webkit-text-fill-color: #0891b2; }
 .sp2-h { font-family: 'Bitstream Charter', Georgia, 'Times New Roman', serif; font-weight: 700; letter-spacing: -.01em; line-height: 1.12; font-size: clamp(2rem, 8.4vw, 2.85rem); color: #f6f1e6; }
 .sp2-h span { background: none; -webkit-background-clip: border-box; background-clip: border-box; color: var(--hdr-brand); -webkit-text-fill-color: var(--hdr-brand); font-style: italic; font-weight: 600; }
 .sp2-sub { font-family: 'Bitstream Charter', Georgia, 'Times New Roman', serif; font-style: italic; font-size: 1.02rem; color: rgb(244 239 228 / .72); opacity: 1; min-height: 0; margin-top: 4px; }
