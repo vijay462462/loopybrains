@@ -566,6 +566,34 @@ PACKS_ECE.push(
     mistakes: ["Confusing open-loop and closed-loop transfer functions.", "Applying Routh-Hurwitz to a polynomial that is not the characteristic equation.", "Forgetting to include all paths and loops when applying Mason's formula."],
     uses: [["Temperature control", "Industrial furnaces use PID controllers from Unit III."], ["Robotics", "State space models and controllability (Unit VI) are used in robot arm control."], ["Aircraft autopilot", "Root locus and Bode plots are used to design stable flight controllers."]],
     related: ["Block diagram reduction", "Routh-Hurwitz stability", "Root locus", "Bode plot", "PID controller"], diagrams: [] },
+
+  { id: "syl_cs2", subject: "Communication systems",
+    keys: ["23ec3101 syllabus", "communication systems 2 syllabus", "cs2 syllabus ece", "e3 ece syllabus", "3rd year ece syllabus", "digital communication syllabus", "rgukt e3 ece", "rgukt 3rd year syllabus", "communication systems second syllabus", "modulation techniques syllabus", "channel coding syllabus", "source coding syllabus", "awgn channel", "psk ask fsk syllabus", "channel capacity syllabus", "convolutional codes syllabus"],
+    title: "Communication Systems-2 — E3 Syllabus (23EC3101)",
+    short: "Digital communication: modulation, coding, channel capacity — all 6 RGUKT units with contact hours.",
+    points: [
+      "Course: 23EC3101 · Communication Systems-2 · PCC · 3L:1T:0P · 4 credits · E3 ECE Sem-I",
+      "Unit-I (12 hrs): Basic tools of digital communication; Transmission Pulse Shaping; Power Spectral Density (PSD); Additive White Gaussian Noise (AWGN) Channel; Optimal Receiver Design; Signal-to-Noise Power Ratio (SNR); Matched Filtering (MF).",
+      "Unit-II (8 hrs): Maximum Likelihood (ML) Receiver; Probability of Error; Binary Phase Shift Keying (BPSK) and its Prob. of Error; Amplitude Shift Keying (ASK) and Other Schemes.",
+      "Unit-III (10 hrs): Signal Space Theory; Frequency Shift Keying (FSK); Quadrature Amplitude Modulation (QAM); M-ary Phase Shift Keying (MPSK) and Prob. of Error; Pulse Shaping Filter Design; Nyquist Pulse Shaping Criterion; Raised-Cosine Filter; Passband-Baseband Equivalence.",
+      "Unit-IV (12 hrs): Introduction to Wireless Communication; Performance of Digital Modulation in Fading Channels; Introduction to Information Theory; Channel Capacity (Shannon's theorem).",
+      "Unit-V (8 hrs): Source Coding; Entropy Codes; Huffman Coding; Linear Block Codes; Hamming Weight and Distance Properties; Syndrome Decoding.",
+      "Unit-VI (10 hrs): Convolutional Codes; Trellis Structure; Decoding of Convolutional Codes.",
+      "Objectives: Understand digital communication block diagram; need for source and channel coding; source/channel coding techniques; mathematical model for BER analysis."
+    ],
+    formulas: [
+      "SNR = Signal Power / Noise Power",
+      "Channel Capacity: C = B log₂(1 + SNR) (Shannon-Hartley)",
+      "BPSK BER: Pb = Q(√(2Eb/N₀))",
+      "Huffman Coding: Average code length L̄ = Σ pᵢ lᵢ",
+      "Hamming distance: d(x,y) = number of positions where x and y differ",
+      "Matched Filter output SNR: SNR_MF = 2E/N₀"
+    ],
+    example: { q: "What are the 6 units of Communication Systems-2?", a: "Unit-I: Digital communication basics and AWGN (12 hrs); Unit-II: ML receiver and modulation BER (8 hrs); Unit-III: Signal space, QAM, MPSK, pulse shaping (10 hrs); Unit-IV: Wireless intro and information theory (12 hrs); Unit-V: Source coding, Huffman, linear block codes (8 hrs); Unit-VI: Convolutional codes and Viterbi decoding (10 hrs).", text: "23EC3101 · PCC · 4 credits · Textbooks: Haykin 'Communication Systems', Proakis 'Digital Communications'" },
+    exam: "Communication Systems-2 (23EC3101) is a 4-credit PCC course. It covers 6 units: (I) Digital comm basics, AWGN, matched filtering, (II) ML receiver, BPSK/ASK BER, (III) FSK, QAM, MPSK, raised-cosine filter, (IV) Wireless comms, information theory, channel capacity, (V) Source coding, Huffman, linear block codes, syndrome decoding, (VI) Convolutional codes, trellis, decoding.",
+    mistakes: ["Confusing BER formulas for BPSK and BFSK.", "Forgetting the factor of 2 in the matched filter SNR formula (2E/N₀).", "Mixing up Hamming weight (wt of one word) and Hamming distance (between two words).", "Applying Shannon capacity as a guaranteed rate rather than the theoretical limit."],
+    uses: [["4G/5G modems", "QAM and MPSK (Unit III) are the modulation schemes used in LTE/NR."], ["Wi-Fi", "OFDM with BPSK/QAM uses matched filtering and channel coding from all units."], ["Deep space comms", "Convolutional codes (Unit VI) were used in Voyager; now turbo codes extend the same idea."]],
+    related: ["Digital modulation", "Shannon capacity", "Huffman coding", "Matched filter", "Convolutional codes"], diagrams: [] },
 );
 
 const nrm = (t) => String(t || "").toLowerCase().replace(/[-_/]/g, " ").replace(/[^a-z0-9\s+]/g, " ").replace(/\s+/g, " ").trim();
