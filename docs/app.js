@@ -2299,7 +2299,6 @@ function renderHome() {
   const name = (getName() || "").trim().split(/\s+/)[0] || "";
   const college = COLLEGE || "Your campus";
   const chip = college.replace(/RGUKT\s*/i, "").trim().slice(0, 6).toUpperCase() || college.slice(0, 5).toUpperCase();
-  const mascot = `<svg class="hb-mascot-svg" viewBox="0 0 120 130" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="hbHead" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22c55e"/><stop offset="1" stop-color="#166534"/></linearGradient><linearGradient id="hbLoop" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fdba74"/><stop offset="1" stop-color="#f97316"/></linearGradient></defs><path d="M30 104 Q60 126 90 104 L98 126 H22 Z" fill="#166534"/><circle cx="60" cy="60" r="50" fill="none" stroke="url(#hbLoop)" stroke-width="7" stroke-linecap="round" stroke-dasharray="250 64" transform="rotate(-70 60 60)"/><circle cx="101" cy="26" r="6" fill="#fff4ec"/><rect x="24" y="30" width="72" height="62" rx="26" fill="url(#hbHead)"/><rect x="33" y="40" width="54" height="42" rx="18" fill="#fff4ec"/><circle cx="48" cy="58" r="6.5" fill="#166534"/><circle cx="72" cy="58" r="6.5" fill="#166534"/><circle cx="50" cy="56" r="2" fill="#fff"/><circle cx="74" cy="56" r="2" fill="#fff"/><path d="M50 69 Q60 77 70 69" stroke="#f97316" stroke-width="3.5" fill="none" stroke-linecap="round"/><rect x="16" y="52" width="9" height="20" rx="4.5" fill="#fb923c"/><rect x="95" y="52" width="9" height="20" rx="4.5" fill="#fb923c"/></svg>`;
   box.hidden = false;
   box.replaceChildren(
     el("div", { class: "hb-hero" },
@@ -2307,8 +2306,8 @@ function renderHome() {
         el("button", { type: "button", class: "hb-close", "aria-label": "Close welcome card", onclick: () => { box.hidden = true; } }, "×"),
         el("div", { class: "hb-chip" }, chip)
       ),
+      el("img", { class: "hb-promo", src: "brand/loopy-brains-promo-480.png", alt: "", "aria-hidden": "true", loading: "lazy" }),
       el("div", { class: "hb-hero-row" },
-        (() => { const m = el("div", { class: "hb-mascot" }); m.append(new DOMParser().parseFromString(mascot, "image/svg+xml").documentElement); return m; })(),
         el("div", { class: "hb-greet-col" },
           el("p", { class: "hb-college-name" }, college),
           el("h2", { class: "hb-greet" }, greet + (name ? ", " + name : "") + " 👋"),
