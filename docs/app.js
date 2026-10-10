@@ -5427,8 +5427,8 @@ const AEC_UNITS = [
   ["I. Semiconductor diodes and applications", "PN junction, rectifiers, Zener regulator, clippers and clampers", ["diode", "rectifier", "zenerreg", "clipclamp"]],
   ["II. Transistor characteristics and biasing", "BJT regions, configurations, biasing circuits and Q point", ["bjt", "bjtbias"]],
   ["III. Small-signal amplifiers and frequency response", "CE amplifier, h-parameters, hybrid-π model and frequency response", ["ceamp", "freqresp"]],
-  ["IV. Field-effect transistors and feedback amplifiers", "MOSFET, JFET, I/V characteristics, small-signal model, cascode amplifier and negative feedback topologies", ["fet", "mosfetiv", "mosfetsm", "mosfet2nd", "cascode", "feedbackamp"]],
-  ["V. Operational amplifiers", "Differential amplifier, CMRR, ideal op-amp and op-amp circuits", ["diffamp", "opampapp"]],
+  ["IV. Field-effect transistors and feedback amplifiers", "MOSFET, JFET, I/V characteristics, small-signal model, current mirrors, cascode amplifier and negative feedback topologies", ["fet", "mosfetiv", "mosfetsm", "mosfet2nd", "currentmirror", "cascode", "feedbackamp"]],
+  ["V. Operational amplifiers", "Differential amplifier, CMRR, ideal op-amp, op-amp circuits and frequency compensation", ["diffamp", "opampapp", "millercomp"]],
   ["VI. Power amplifiers, oscillators, 555 timer and regulators", "Class A/B/AB/C power amps, Barkhausen criterion, 555 timer, multivibrators and voltage regulators", ["poweramp", "oscillator", "t555", "regulator"]],
 ];
 function aecHub(allPk, bs, go) {
