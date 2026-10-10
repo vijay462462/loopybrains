@@ -1496,7 +1496,8 @@ const WELCOME = [
 ];
 function showWelcome(force, startId) {
   if (document.getElementById("welcome")) return;
-  const STEPS = ["about", "college", "name", "interests", "ready"], curSlug = TENANT ? TENANT.slug : IS_RGUKT ? "rgukt" : "";
+  const curSlug = TENANT ? TENANT.slug : IS_RGUKT ? "rgukt" : "";
+  const STEPS = curSlug ? ["about", "name", "interests", "ready"] : ["about", "college", "name", "interests", "ready"];
   const INTERESTS = [["❓", "Clear my doubts", "doubts"], ["📝", "Prepare for exams", "exams"], ["💼", "Placements and jobs", "placements"], ["🎉", "Clubs and friends", "friends"], ["🔎", "Just exploring", "explore"]];
   const picked = new Set(readJSON("dd-interests", []));
   let step = Math.max(0, STEPS.indexOf(startId || "about")), nameVal = (getName() || "").trim(), pickSlug = curSlug, pickName = curSlug ? COLLEGE : "", cq = "", ctype = "all", cst = (() => { try { return localStorage.getItem("dd-state") || ""; } catch (_) { return ""; } })() || (curSlug && curSlug !== "rgukt" ? ((DIRECTORY.find(c => c.slug === curSlug) || {}).state || "") : "") || "Andhra Pradesh";
