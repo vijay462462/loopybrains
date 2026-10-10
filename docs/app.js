@@ -1429,7 +1429,6 @@ const ICON_PATHS = {
   aegis: ["M12 3l8 3v6c0 4.5-3.2 8.2-8 9c-4.8-.8-8-4.5-8-9V6z", "M9 12l2 2l4-4"],
   back: ["M15 5l-7 7l7 7"],
   send: ["M12 19V5", "M5 12l7-7l7 7"],
-  send: ["M12 19V5", "M5 12l7-7l7 7"],
   doubts: ["M12 3a9 9 0 1 0 0 18a9 9 0 0 0 0-18z", "M9.6 9.4a2.5 2.5 0 1 1 3.6 2.2c-.8.4-1.2 1-1.2 1.8", "M12 16.9v.1"],
   ideas: ["M9 18h6", "M10 21h4", "M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"],
   clubs: ["M3 10l9-6l9 6", "M5 10v8", "M9.5 10v8", "M14.5 10v8", "M19 10v8", "M3 20h18"],
@@ -1437,6 +1436,7 @@ const ICON_PATHS = {
   market: ["M3 4h2l2.4 11h10.2l2-8H6.5", "M9 20.2v.01", "M17 20.2v.01"],
   board: ["M8 4h8v5a4 4 0 0 1-8 0V4z", "M8 6H4v1a4 4 0 0 0 4 4", "M16 6h4v1a4 4 0 0 1-4 4", "M12 13v4", "M8 20h8", "M10 17h4"],
   more: ["M5 12v.01", "M12 12v.01", "M19 12v.01"],
+  home: ["M3 9l9-7l9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z", "M9 22V12h6v10"],
   palette: ["M12 3a9 9 0 1 0 0 18c1.1 0 1.8-.8 1.8-1.7 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-.9.8-1.7 1.7-1.7H17a4 4 0 0 0 4-4c0-4.4-4-8.2-9-8.2z", "M7.5 11v.01", "M10 7.5v.01", "M14.5 7.5v.01"],
 };
 function svgIcon(name) {
@@ -1450,6 +1450,12 @@ function renderBottomNav() {
   const icons = { doubts: 'doubts', ideas: 'ideas', clubs: 'clubs', gate: 'gate', challenges: 'gate', market: 'market' };
   const labels = { doubts: 'Doubts', ideas: 'Ideas', clubs: 'Clubs', gate: EXAM_LABEL.length > 8 ? EXAM_LABEL.split(/[ /]/)[0] : EXAM_LABEL, challenges: 'Challenges', market: 'Market' };
   nav.replaceChildren(
+    el('button', { type: 'button', class: 'bnav-btn' + (state.mode === 'intro' && !state.selected ? ' active' : ''), onclick: () => {
+      state.mode = 'intro'; state.selected = null; state.query = ''; $('search') && ($('search').value = '');
+      try { history.replaceState(null, '', '#' + state.tab); } catch (_) {}
+      render(); window.scrollTo({ top: 0, behavior: 'smooth' });
+    } },
+      el('span', { class: 'bnav-icon' }, svgIcon('home')), el('span', { class: 'bnav-label' }, 'Home')),
     ...['doubts', 'ideas', 'clubs', 'market', 'gate'].filter(tab => (!isSimple() || tab === 'doubts' || tab === 'ideas' || state.tab === tab) && (!focusOn() || isAcademicTab(tab)) && featureOn(tab === 'market' ? 'market' : 'doubts')).map(tab => {
       const cnt = state[TABS[tab].coll].length;
       return el('button', { type: 'button', class: 'bnav-btn' + (state.tab === tab ? ' active' : ''), onclick: () => {
@@ -1584,7 +1590,7 @@ function showWelcome(force, startId) {
       const letters = el("div", { class: "ob-letters", role: "group", "aria-label": "Jump to a letter" }); let cl = "";
       const stSel = stateSheet(() => cst, (v) => { cst = v; cl = ""; browsing = true; fill(); });
       list.addEventListener("touchstart", () => { try { if (document.activeElement === q) q.blur(); } catch (_) {} }, { passive: true });
-      let browsing = !pickSlug;   // false once a college is chosen: the list folds away and a preview card shows instead
+      let browsing = true;   // always show the full list so page 2 renders completely
       const pickBox = el("div", { class: "ob-pick", "aria-live": "polite" });
       const drawPick = () => {
         const c = pickSlug ? (all.find(x => x.slug === pickSlug) || { slug: pickSlug, name: pickName, state: "", sub: "", grp: "general" }) : null, show = !!c && !browsing;
@@ -5405,7 +5411,7 @@ function bsMount() {
   if (bsEl()) return; const bs = bsState();
   const bar = el("div", { class: "bsf-bar" },
     el("button", { type: "button", class: "bsf-back", "aria-label": "Close Loopy Search", onclick: () => bsClose() }, svgIcon("back")),
-    el("img", { class: "bsf-brand", src: "icon-192.png", alt: "", width: "28", height: "28" }), el("strong", { class: "bsf-title" }, "Loopy AI Study Desk"),
+    el("img", { class: "bsf-brand", src: "icon-192.png", alt: "", width: "28", height: "28" }), el("strong", { class: "bsf-title" }, el("span", { class: "bsf-t-big" }, "LOOPY"), el("small", { class: "bsf-t-sm" }, "Brains")),
     el("button", { type: "button", class: "bsf-night", id: "bsNight", onclick: () => { try { localStorage.setItem("dd-bs-night", bsNightOn() ? "0" : "1"); } catch (_) {} bsApplyNight(); } }, "\u2600"),
     el("button", { type: "button", class: "bsf-save", id: "bsSave", hidden: "", onclick: () => { const b = bsState(); if (!b.res) return; if (bsIsSaved(b.res)) { bsPutSaved(bsSavedList().filter(x => x.id !== "s" + fnv(b.res.topic.toLowerCase() + "|" + b.res.size))); showNotice("Removed from Saved.", "ok"); } else if (bsSaveOne(b.res, b.q)) showNotice("Saved. Find it under Saved on the search page.", "ok"); else showNotice("Could not save: this phone is out of space.", "err"); bsPaint(); } }, "Save"),
     el("button", { type: "button", class: "bsf-pdf", id: "bsPdf", hidden: "", "aria-haspopup": "dialog", "aria-label": "Save as PDF or JPEG", onclick: () => bsExportSheet() }, "PDF/JPG"));
@@ -5998,7 +6004,7 @@ function brainViewInner(ui) {
   if (!bs.res) {
     const C = window.RGUKT_CURRICULUM, rows = C ? ((C.data[curState.year] || {})[curState.branch] || []).map(r => r[0]).slice(0, 8) : [], rec = bsRecent();
     const hr = new Date().getHours(), greet = hr < 5 ? "Good night" : hr < 12 ? "Good morning" : hr < 17 ? "Good afternoon" : "Good evening", nm = String(getName() || "").trim().split(" ")[0];
-    const hero = el("section", { class: "bsc-hero" }, el("small", { class: "bsc-cap" }, greet + (nm ? ", " + nm : "")), el("h2", { class: "bsc-hi" }, "What will you learn today?"), el("p", { class: "bsc-sub" }, "Pick a subject below or type a topic. Easy words, diagrams and exact answers."), el("ol", { class: "bsc-steps" }, el("li", {}, "Ask"), el("li", {}, "Learn"), el("li", {}, "Quiz yourself")));
+    const hero = el("section", { class: "bsc-hero" }, el("div", { class: "bsc-orbit", "aria-hidden": "true" }, el("i", { class: "r1" }), el("i", { class: "r2" }), el("b", { class: "d1" }), el("b", { class: "d2" }), el("b", { class: "d3" }), brandSpin("bsc-brand live")), el("p", { class: "bsc-brand-name", "aria-label": "Loopy Brains" }, el("span", { class: "bsc-bn-big" }, "LOOPY"), el("small", { class: "bsc-bn-sm" }, "Brains")), el("h2", { class: "bsc-hi" }, greet + (nm ? ", " : ""), nm ? el("span", {}, nm) : null), el("p", { class: "bsc-sub" }, "Ask your syllabus anything. Easy words, diagrams, exact answers."));
     const TRY = { atlas: [["\u{1F4C8}", "Explain the Bode plot", "Control systems"], ["\u2795", "Half adder circuit", "Digital logic"], ["\u{1F3B2}", "Bayes theorem with an example", "Probability"], ["\u{1F50C}", "BJT biasing and the Q point", "Analog circuits"], ["\u{1F4E1}", "Sampling theorem and aliasing", "Signal processing"], ["\u{1F9EE}", "Compare FIR and IIR filters", "Signal processing"]],
       launchpad: [["\u{1F326}\uFE0F", "IoT weather station", "Project plan"], ["\u{1F4F7}", "Student attendance system", "Project plan"], ["\u{1F331}", "Smart irrigation", "Project plan"], ["\u{1F4DA}", "Library management website", "Project plan"]],
       forge: [["\u{1F50D}", "binary search in Python", "Code"], ["\u{1F9EE}", "Verilog code for a counter", "Hardware"], ["\u{1F4CA}", "bubble sort in C", "Code"], ["\u2615", "factorial in Java", "Code"]],
