@@ -10759,7 +10759,8 @@ function brandLockup(title) {
     mark.querySelectorAll("[id]").forEach(n => { n.id = n.id + "H"; });   // gradient ids must stay unique
     mark.querySelectorAll("*").forEach(n => { for (const a of ["fill", "stroke"]) { const v = n.getAttribute(a); if (v && v.includes("url(#")) n.setAttribute(a, v.replace(/url\(#([^)]+)\)/, "url(#$1H)")); } });
   }
-  return [mark, el("span", { class: "bname" }, el("b", {}, rest.toUpperCase()), last ? el("i", {}, last.toUpperCase()) : null)].filter(Boolean);
+  const wm = el("img", { class: "bname-img", src: "brand/loopy-brains-wordmark-56h.png", alt: "Loopy Brains", width: "131", height: "28" });
+  return [mark, wm].filter(Boolean);
 }
 // Update page title from config
 if (CFG.title) { document.title = CFG.title; }
