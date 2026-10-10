@@ -25,6 +25,34 @@
     if (cname && cname.toLowerCase() !== "your college") { var box = document.createElement("div"); box.className = "splash-crest"; if (/^data:image\/(png|jpeg|webp);base64,/.test(crest)) { var im = document.createElement("img"); im.src = crest; im.alt = ""; box.appendChild(im); } var nm = document.createElement("span"); nm.textContent = cname; box.appendChild(nm); var slot = document.getElementById("splashCrestSlot"); if (slot) slot.appendChild(box); else title.parentNode.insertBefore(box, title.nextSibling); }
   } catch (e) {}
   try { var tr = el.querySelector(".sp2-trust"); if (tr && ver) tr.textContent = tr.textContent + "  \u00B7  v" + ver; } catch (e) {}
+  try {
+    var bm = el.querySelector(".sp2-bmark");
+    if (bm) {
+      bm.innerHTML = '<svg viewBox="0 0 1024 1024" class="bsc-brand sp2-bspin" role="img" aria-label="Loopy Brains">' +
+        '<defs>' +
+          '<linearGradient id="spBg1" x1="0" y1="0" x2="1" y2="1">' +
+            '<stop offset="0" stop-color="#22c55e"/><stop offset=".55" stop-color="#166534"/><stop offset="1" stop-color="#0f3d22"/>' +
+          '</linearGradient>' +
+          '<linearGradient id="spRing1" x1="0" y1="0" x2="1" y2="1">' +
+            '<stop offset="0" stop-color="#fdba74"/><stop offset="1" stop-color="#f97316"/>' +
+          '</linearGradient>' +
+        '</defs>' +
+        '<rect width="1024" height="1024" rx="230" fill="url(#spBg1)"/>' +
+        '<g transform="translate(206 70) scale(1.2)">' +
+          '<g class="bs-spinc">' +
+            '<circle cx="256" cy="256" r="196" fill="none" stroke="url(#spRing1)" stroke-width="30" stroke-linecap="round" stroke-dasharray="960 272" transform="rotate(-75 256 256)"/>' +
+            '<circle cx="404" cy="132" r="17" fill="#fff4ec"/>' +
+          '</g>' +
+          '<g fill="none" stroke="#fff4ec" stroke-width="34" stroke-linecap="round" stroke-linejoin="round" transform="translate(-41 0)">' +
+            '<path d="M194 168V340H234"/>' +
+            '<path d="M302 168V340"/>' +
+            '<path d="M302 168H336C366 168 380 188 380 210C380 234 364 252 330 252H302"/>' +
+            '<path d="M302 252H338C378 252 394 274 394 298C394 322 376 340 338 340H302"/>' +
+          '</g>' +
+        '</g>' +
+      '</svg>';
+    }
+  } catch (e) {}
   el.setAttribute("data-live", "1");                    // JS is running: switch off the CSS safety timer
   var done = false;
   function close() { if (done) return; done = true; clearInterval(typer); try { document.dispatchEvent(new Event("splash-closed")); } catch (e) {} el.classList.add("splash-out"); setTimeout(function () { if (el.parentNode) el.remove(); }, 200); }

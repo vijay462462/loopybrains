@@ -49,7 +49,7 @@ Features: class board (doubts, ideas, clubs, challenges, jobs, market, GATE), Lo
 - Visual checks: serve `docs/` with `python3 -m http.server 8765` and drive headless Chromium (`/opt/pw-browsers/chromium`, Playwright from `/opt/node22/lib/node_modules/playwright`), blocking non-localhost requests. Pre-set `localStorage`: `dd-college=rgukt`, `dd-welcome-done=1`, `dd-name`, `dd-simple=false`, `dd-tools-open=1`; pick the year in the `#rgElig` dialog. **Firebase is blocked offline, so posts, counts and sign-in cannot be tested this way.**
 - Do not run `pkill -f <name>` with a pattern that appears in your own command line (it kills the shell).
 
-## Current status (2026-10-10, cache v504)
+## Current status (2026-10-10, cache v508)
 - **Done and merged (PRs #4 to #36)**:
   - PRs #4–#15: web sign-in, HTTPS, App Check (monitoring), functions upgrade, brand rename to Loopy Brains, new logo, Home tiles and bottom nav, welcome and About redesign, strict About flow, Back buttons, Android launcher icon and APK name.
   - PR #16: teal-and-coral default palette; laptop layout follows phone model (sidebar removed); Terms of Use rewritten (Indian educational-app format, not lawyer-reviewed); About page opens faster; app version shown on first page.

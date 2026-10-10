@@ -3787,6 +3787,7 @@ html.is-scrolling .bsh-orb { animation-play-state: paused !important; }
 .bs-spinc { transform-box: fill-box; transform-origin: center; }
 .bsr-load .bs-spinc { animation: bscSpin 2.4s linear infinite; }
 .bsc-hero .bs-spinc { animation: bscSpin 14s linear infinite; }
+.sp2-bspin .bs-spinc { animation: bscSpin 12s linear infinite; }
 @media (prefers-reduced-motion: reduce) { .bs-spinc { animation: none !important; } }
 /* Premium polish: one icon language (thin line icons), even heights, calmer glass chips, clear hover and focus states */
 .ic { display: inline-block; flex: none; vertical-align: middle; }
