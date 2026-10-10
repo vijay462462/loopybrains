@@ -2335,7 +2335,11 @@ function renderHome() {
         el("button", { type: "button", class: "hb-action", onclick: () => { state.ai = state.ai || { msgs: [], busy: false, note: "" }; showPanel("ai"); } },
           el("span", { class: "hb-action-ic" }, "✨"),
           el("b", {}, "Ask Loopy AI"), el("small", {}, "answers in seconds")
-        )
+        ),
+        Object.keys(DEPT_MAP).length ? el("button", { type: "button", class: "hb-action hb-action-branch", onclick: () => showBranchPicker(true) },
+          el("span", { class: "hb-action-ic" }, "🏫"),
+          el("b", {}, myBranch() && myBranch() !== "*" ? myBranch() : "All branches"), el("small", {}, "Change branch")
+        ) : null
       )
     )
   );
@@ -5220,7 +5224,7 @@ const BS_LEVELS = [
 const BS_SIZES = [["brief", "Brief", "A few lines", 1], ["standard", "Standard", "About one page, with key numbers", 2], ["detailed", "Detailed", "Several pages with timeline and key terms", 3], ["full", "Full report", "Research level: papers and revision notes", 4]];
 const BS_EFFORTS = [["low", "Low", "Fast: one trusted source", 1], ["medium", "Medium", "Adds easy words and hard-word meanings", 2], ["high", "High", "Adds cross-checks, related topics and research papers", 3]];
 const bsEffort = (bs) => { const want = BS_EFFORTS.findIndex(e => e[0] === bs.effort); let i = want < 0 ? 1 : want; while (i > 0 && !bsOpen(BS_EFFORTS[i][3])) i--; return BS_EFFORTS[i]; };
-const bsName = (n) => "Loopy " + BS_LEVELS[n - 1][1];
+const bsName = (n) => "Chitti " + BS_LEVELS[n - 1][1];
 const hasPlusNow = () => !!(state.plan && state.plan.plus) || trialLeft() > 0 || bonusLeft() > 0;
 // Free models: Spark for everyone, and Scholar too for RGUKT students. Vision, Sage and Apex need Loopy Brains Plus.
 const bsFree = (lv) => lv <= 1 || IS_RGUKT;
@@ -5949,10 +5953,10 @@ function brainView() {
 function brainViewInner(ui) {
   const bs = bsState(), mi = bsModeInfo(bs.mode), back = el("button", { class: "btn", type: "button", onclick: () => bsClose() }, "Close");
   if (safeBlocked()) return [el("section", { class: "bsr-blocked" }, el("div", { class: "safe-ic", "aria-hidden": "true" }, "!"), el("h2", {}, "Loopy Search is blocked"), ...SAFE_BLOCKED_LINES.map(t => el("p", {}, t)), el("div", { class: "rowbtns" }, back))];
-  const input = el("input", { type: "search", class: "bs-in", maxlength: "120", placeholder: "Ask Loopy anything\u2026", "aria-label": "Search", autocomplete: "off", enterkeyhint: "search", value: bs.q });
+  const input = el("input", { type: "search", class: "bs-in", maxlength: "120", placeholder: "Ask Chitti anything\u2026", "aria-label": "Search", autocomplete: "off", enterkeyhint: "search", value: bs.q });
   const sug = el("div", { class: "bs-sug", role: "listbox" });
   { const EX = bs.mode === "forge" ? ["binary search in Python", "Verilog code for a counter", "bubble sort in C", "factorial in Java"] : bs.mode === "launchpad" ? ["IoT weather station", "attendance system with face recognition", "smart irrigation", "library website"] : bs.mode === "aegis" ? ["how SQL injection works", "spot a phishing email", "strong password habits", "what is two-factor login"] : ["explain the Bode plot", "half adder circuit", "Bayes theorem with an example", "difference between FIR and IIR"]; let i = 0; clearInterval(bs._phT);
-    if (!bs.res && !bs.pending) { input.placeholder = "Ask Loopy: " + EX[0]; bs._phT = setInterval(() => { if (!document.body.contains(input)) { clearInterval(bs._phT); return; } if (input.value || document.activeElement === input) return; i = (i + 1) % EX.length; input.placeholder = "Ask Loopy: " + EX[i]; }, 3200); } }
+    if (!bs.res && !bs.pending) { input.placeholder = "Ask Chitti: " + EX[0]; bs._phT = setInterval(() => { if (!document.body.contains(input)) { clearInterval(bs._phT); return; } if (input.value || document.activeElement === input) return; i = (i + 1) % EX.length; input.placeholder = "Ask Chitti: " + EX[i]; }, 3200); } }
   const go = (t) => { sug.replaceChildren(); input.value = t; bsSubmit(t); };
   input.addEventListener("input", () => sug.replaceChildren(...bsSuggest(input.value).map(t => el("button", { type: "button", class: "bs-s", role: "option", onclick: () => go(t) }, el("span", { "aria-hidden": "true" }, "\u{1F50E}"), t))));
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -10553,7 +10557,7 @@ function render() { const snap = snapUI(); try { renderCore(); } finally { resto
 function renderCore() {
   try {
     document.body.dataset.tab = state.tab; applyFocus();
-    renderHeader(); renderTrendBar(); renderStoryBar(); renderRail(); try { renderGuide(); } catch (_) {} try { renderHome(); } catch (_) {} renderList(); renderBottomNav(); try { if (IS_RGUKT && !readJSON("dd-rgukt-year", null) && !welcomePending && !document.querySelector(".welcome, .cr, #splash")) showEligibility(); } catch (_) {} try { if (Object.keys(DEPT_MAP).length && !myBranch() && !welcomePending && (!IS_RGUKT || readJSON("dd-rgukt-year", null)) && localStorage.getItem("dd-welcome-done") && !document.querySelector(".welcome, .cr, #splash")) showBranchPicker(); } catch (_) {} try { document.body.classList.toggle("simple", isSimple()); renderBell(); notifPing(); claimStudentIdOnce(); autoMailIds(); } catch (_) {}
+    renderHeader(); renderTrendBar(); renderStoryBar(); renderRail(); try { renderGuide(); } catch (_) {} try { renderHome(); } catch (_) {} renderList(); renderBottomNav(); try { if (IS_RGUKT && !readJSON("dd-rgukt-year", null) && !welcomePending && !document.querySelector(".welcome, .cr, #splash")) showEligibility(); } catch (_) {} try { if (Object.keys(DEPT_MAP).length && !myBranch() && !welcomePending && (!IS_RGUKT || readJSON("dd-rgukt-year", null)) && localStorage.getItem("dd-welcome-done") && !document.querySelector(".welcome, .cr, #splash") && !sessionStorage.getItem("dd-branch-asked")) { sessionStorage.setItem("dd-branch-asked", "1"); showBranchPicker(); } } catch (_) {} try { document.body.classList.toggle("simple", isSimple()); renderBell(); notifPing(); claimStudentIdOnce(); autoMailIds(); } catch (_) {}
     // Forms keep what the student is typing while live updates arrive.
     const key = ["ask", "edit", "name", "alumniJoin", "alumniJob", "fun", "lab", "college", "plus"].includes(state.mode) ? state.mode + state.tab : "";
     if (key && key === sheetKey) return;

@@ -29,7 +29,7 @@ window.DOUBT_DESK_CONFIG = {
   about: { founder: "Vijay M", college: "", email: "v.bhaskar462@gmail.com" },
 
   // Site title shown in the header
-  title: "Loopy Brains",
+  title: "Loopy Brain",
 
   // Paste your Firebase web app config here (Firebase console > Project settings > Your apps).
   firebase: {
