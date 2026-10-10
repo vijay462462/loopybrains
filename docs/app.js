@@ -2281,7 +2281,7 @@ function renderHeader() {
 
 // Every tab says what it is for, how to use it in three steps, and the next step to take. Students can close it; a small link brings it back.
 const TAB_GUIDE = {
-  doubts: { icon: "\u2753", purpose: "Got a problem? Ask it here and classmates and seniors will answer.", steps: ["Pick your branch and subject on the left (or leave it on All).", "Tap Ask a doubt, write your question and add a photo if it helps.", "Open your doubt later to read answers. Thank the helpful ones with a reaction."], safe: "Do not post phone numbers, passwords or photos of other people.", next: () => { const mine = store ? allMyIds() : new Set(); const asked = state.doubts.some(d => mine.has(d.authorId)); return asked ? ["\u{1F64B} Answer a classmate\u2019s doubt", () => showUnanswered()] : ["\u2753 Ask your first doubt", () => openAsk()]; } },
+  doubts: { icon: "\u2753", purpose: "Got a problem? Ask it here and classmates and seniors will answer.", steps: ["Choose your branch once. You will see the doubts of your branch and the common subjects, then pick a subject on the left.", "Tap Ask a doubt, write your question and add a photo if it helps.", "Open your doubt later to read answers. Thank the helpful ones with a reaction."], safe: "Do not post phone numbers, passwords or photos of other people.", next: () => { const mine = store ? allMyIds() : new Set(); const asked = state.doubts.some(d => mine.has(d.authorId)); return asked ? ["\u{1F64B} Answer a classmate\u2019s doubt", () => showUnanswered()] : ["\u2753 Ask your first doubt", () => openAsk()]; } },
   ideas: { safe: "Share the idea, not private data or secrets you must protect.", icon: "\u{1F4A1}", purpose: "Share project, startup and campus ideas. Find people to build them with.", steps: ["Choose a category, such as Project or Startup.", "Tap Share an idea and say what you want to build and who you need.", "Read the comments, then team up with the people who reply."], next: () => ["\u{1F4A1} Share an idea", () => openAsk()] },
   clubs: { safe: "Meet club members on campus and in groups you can verify.", icon: "\u{1F3DB}", purpose: "Find your club, see what it is doing and post updates for its members.", steps: ["Pick a club on the left.", "Read its latest posts and events.", "Post a meeting, a result or a call for new members."], next: () => ["\u{1F4E3} Post in a club", () => openAsk()] },
   challenges: { safe: "Points come only from playing. Nobody can sell or give you points.", icon: "\u{1F3AE}", purpose: "Quizzes, puzzles and contests. Win points for yourself and your college.", steps: ["Take the daily quiz. It takes one minute.", "Try a puzzle or an innovation challenge.", "Check the Board to see how your college is doing this week."], next: () => ["\u{1F9E0} Take today\u2019s quiz", () => showPanel("quiz")] },
@@ -2498,6 +2498,31 @@ function renderCurious() {
 }
 // RGUKT is open from B.Tech 2nd year (E2) onwards (the six-year integrated course starts with P1, P2 and E1). This is a self-declaration shown once on RGUKT.
 const RG_YEARS = [["P1", "Pre-University 1", false], ["P2", "Pre-University 2", false], ["E1", "B.Tech 1st year", false], ["E2", "B.Tech 2nd year", true], ["E3", "B.Tech 3rd year", true], ["E4", "B.Tech 4th year", true]];
+// ---------- student branch: each student sees the doubts of their own branch and the common subjects ----------
+// The branch is the student's own choice (saved in dd-branch; "*" means "my branch is not listed, show me everything"). Nothing is stored on the post: the branch of a doubt comes from its subject.
+const BRANCH_KEY = "dd-branch";
+const myBranch = () => { try { const b = localStorage.getItem(BRANCH_KEY) || ""; return b === "*" || DEPT_MAP[b] ? b : ""; } catch (_) { return ""; } };
+const branchFilterOn = () => { const b = myBranch(); return !!b && b !== "*" && !(typeof isAdmin === "function" && isAdmin()); };
+const deptsOf = (subject) => Object.keys(DEPT_MAP).filter(d => (DEPT_MAP[d] || []).includes(subject));
+function branchSees(d) {
+  if (!branchFilterOn()) return true;
+  if (store && d.authorId && d.authorId === store.uid) return true;   // your own doubts always stay visible
+  const ds = deptsOf(d.subject); return !ds.length || ds.includes(myBranch());
+}
+function applyBranchFilter() { state.doubts = (state.doubtsAll || state.doubts || []).filter(branchSees); }
+function showBranchPicker(force) {
+  if (document.getElementById("rgBranch")) return;
+  const names = Object.keys(DEPT_MAP); if (!names.length) return;
+  const cur = myBranch(), ov = el("div", { class: "welcome", id: "rgBranch", role: "dialog", "aria-modal": "true", "aria-label": "Which branch are you in?" });
+  const choose = (b) => { try { localStorage.setItem(BRANCH_KEY, b); const o = readJSON("dd-curio-prof", {}) || {}; if (BRANCH_TAGS[b]) o.branch = b; else if (b === "*") delete o.branch; writeJSON("dd-curio-prof", o); } catch (_) {} ov.remove(); applyBranchFilter(); state.dept = b !== "*" && DEPT_MAP[b] ? b : "All"; state.group = "All"; render(); };
+  ov.append(el("div", { class: "welcome-card ob-card" }, el("div", { class: "ob-loopy ob-brand" }, brandMark(72)), el("h2", {}, "Which branch are you in?"),
+    el("p", { class: "ob-say" }, "You will see the doubts of your own branch and the common subjects. Doubts of other branches stay hidden, so your feed has only what matters to you."),
+    el("div", { class: "rg-opts", role: "group", "aria-label": "Your branch" }, ...names.map(n => el("button", { class: "rg-opt ok" + (cur === n ? " on" : ""), type: "button", onclick: () => choose(n) }, el("span", { class: "rg-name" }, (DEPT_VISUAL[n] && DEPT_VISUAL[n].label) || n), el("small", {}, n))),
+      el("button", { class: "rg-opt", type: "button", onclick: () => choose("*") }, el("span", { class: "rg-name" }, "My branch is not listed"), el("small", {}, "Show everything"))),
+    force ? el("div", { class: "rowbtns" }, el("button", { class: "btn", type: "button", onclick: () => ov.remove() }, "Cancel")) : null,
+    el("p", { class: "hint" }, "This is your own choice. You can change it any time from the Doubts page.")));
+  document.body.append(ov);
+}
 function showEligibility() {
   if (document.getElementById("rgElig")) return;
   const msg = el("p", { class: "ob-say", role: "status" }, "");
@@ -3063,10 +3088,11 @@ function renderRail() {
   const extra = Object.keys(counts).filter(s => !t.groups.includes(s));
 
   const deptTabs = (state.tab === "doubts" || state.tab === "gate") && Object.keys(DEPT_MAP).length ? el("div", { class: "dept-tabs" },
-    ...Object.keys(DEPT_MAP).map(d => el("button", {
+    ...Object.keys(DEPT_MAP).filter(d => state.tab !== "doubts" || !branchFilterOn() || d === myBranch()).map(d => el("button", {
       type: "button", class: "dept-tab" + (state.dept === d ? " active" : ""),
       onclick: () => { state.dept = state.dept === d ? "All" : d; state.group = "All"; render(); },
-    }, d))
+    }, d)),
+    state.tab === "doubts" && branchFilterOn() ? el("button", { type: "button", class: "dept-tab dept-change", onclick: () => showBranchPicker(true) }, "Change branch") : null
   ) : null;
 
   const showSubjects = Object.keys(DEPT_MAP).length === 0 || !(state.tab === "doubts" || state.tab === "gate") || state.dept !== "All";
@@ -9378,7 +9404,7 @@ function renderAsk(existing) {
     el("div", { class: "two" },
       el("label", {}, ({ doubts: "Your question", ideas: "Your idea", clubs: "Post title", gate: "Discussion title", challenges: "Challenge title", market: "Item title", jobs: "Opening or experience" })[state.tab] || "Title", el("input", { id: "f-title", name: "title", maxlength: "200", required: true, placeholder: t.placeholder })),
       simBox,
-      el("label", {}, state.tab === "doubts" ? "Subject" : "Category", el("select", { id: "f-group", name: "group" }, ...(RGUKT_DEPTS && (state.tab === "doubts" || state.tab === "gate") ? (() => { const seen = new Set(); const og = Object.entries(RGUKT_DEPTS).map(([d, list]) => el("optgroup", { label: d }, ...list.filter(s => !seen.has(s) && seen.add(s)).map(s => el("option", { selected: s === current }, s)))); const rest = groups.filter(s => !seen.has(s)); return [...og, ...(rest.length ? [el("optgroup", { label: "Other" }, ...rest.map(s => el("option", { selected: s === current }, s)))] : [])]; })() : groups.map(s => el("option", { selected: s === current }, s)))))),
+      el("label", {}, state.tab === "doubts" ? "Subject" : "Category", el("select", { id: "f-group", name: "group" }, ...(RGUKT_DEPTS && (state.tab === "doubts" || state.tab === "gate") ? (() => { const seen = new Set(); const og = Object.entries(RGUKT_DEPTS).filter(([d]) => state.tab !== "doubts" || !branchFilterOn() || d === myBranch()).map(([d, list]) => el("optgroup", { label: d }, ...list.filter(s => !seen.has(s) && seen.add(s)).map(s => el("option", { selected: s === current }, s)))); const rest = groups.filter(s => !seen.has(s) && (state.tab !== "doubts" || !branchFilterOn() || !deptsOf(s).length)); return [...og, ...(rest.length ? [el("optgroup", { label: "Other" }, ...rest.map(s => el("option", { selected: s === current }, s)))] : [])]; })() : groups.map(s => el("option", { selected: s === current }, s)))))),
     state.tab === "jobs" && el("div", { class: "two" },
       el("label", {}, "Company / organisation", el("input", { name: "company", maxlength: "60", placeholder: "e.g. TCS", value: existing && existing.company || "" })),
       el("label", {}, "Pay / stipend (optional)", el("input", { name: "pay", maxlength: "40", placeholder: "e.g. ₹15,000 per month", value: existing && existing.pay || "" }))),
@@ -10521,7 +10547,7 @@ function render() { const snap = snapUI(); try { renderCore(); } finally { resto
 function renderCore() {
   try {
     document.body.dataset.tab = state.tab; applyFocus();
-    renderHeader(); renderTrendBar(); renderStoryBar(); renderRail(); try { renderGuide(); } catch (_) {} try { renderHome(); } catch (_) {} renderList(); renderBottomNav(); try { if (IS_RGUKT && !readJSON("dd-rgukt-year", null) && !welcomePending && !document.querySelector(".welcome, .cr, #splash")) showEligibility(); } catch (_) {} try { document.body.classList.toggle("simple", isSimple()); renderBell(); notifPing(); claimStudentIdOnce(); autoMailIds(); } catch (_) {}
+    renderHeader(); renderTrendBar(); renderStoryBar(); renderRail(); try { renderGuide(); } catch (_) {} try { renderHome(); } catch (_) {} renderList(); renderBottomNav(); try { if (IS_RGUKT && !readJSON("dd-rgukt-year", null) && !welcomePending && !document.querySelector(".welcome, .cr, #splash")) showEligibility(); } catch (_) {} try { if (Object.keys(DEPT_MAP).length && !myBranch() && !welcomePending && (!IS_RGUKT || readJSON("dd-rgukt-year", null)) && localStorage.getItem("dd-welcome-done") && !document.querySelector(".welcome, .cr, #splash")) showBranchPicker(); } catch (_) {} try { document.body.classList.toggle("simple", isSimple()); renderBell(); notifPing(); claimStudentIdOnce(); autoMailIds(); } catch (_) {}
     // Forms keep what the student is typing while live updates arrive.
     const key = ["ask", "edit", "name", "alumniJoin", "alumniJob", "fun", "lab", "college", "plus"].includes(state.mode) ? state.mode + state.tab : "";
     if (key && key === sheetKey) return;
@@ -10899,7 +10925,7 @@ function showAuthGate(opts = {}) {
     if (!opened && deep && deep[2] && state[TABS[state.tab].coll].some(x => x.id === deep[2])) { opened = true; openItem(deep[2]); return; }
     render();
   };
-  store.subscribe("doubts", rows => { state.dataReady = true; const live_ = live(rows); trackNew("doubts", live_); state.doubts = live_; update(); }, onErr);
+  store.subscribe("doubts", rows => { state.dataReady = true; const live_ = live(rows); trackNew("doubts", live_); state.doubtsAll = live_; state.doubts = live_.filter(branchSees); update(); }, onErr);
   store.subscribe("ideas", rows => { state.dataReady = true; const live_ = live(rows); trackNew("ideas", live_); state.ideas = live_; update(); }, onErr);
   store.subscribe("replies", rows => { state.replies = live(rows); update(); }, onErr);
   store.subscribe("likes", rows => { state.likes = rows; update(); }, onErr);
