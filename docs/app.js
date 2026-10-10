@@ -5393,8 +5393,8 @@ const DLD_UNITS = [
   ["Boolean algebra and gates", "Gates, laws, truth tables, canonical forms and NAND/NOR design", ["swlogic", "polarity", "gates", "boolean", "huntington", "venn", "func16", "canonical", "sop", "nandnor", "twolevel"]],
   ["Minimization", "K-maps, prime implicants, don’t-cares and the tabular method", ["kmap", "minim", "dcare", "qm"]],
   ["Combinational circuits", "Adders, multiplexers, decoders, comparators, hazards and design", ["synth", "comb", "adder", "decfull", "ripplecarry", "addsub", "overflow", "cla", "hcla", "subtractor", "comparator", "cmp4", "mux", "muxtree", "muxfunc", "shannon", "decoder", "dectree", "demuxdec", "prienc", "codeconv", "sevenseg", "hazard"]],
-  ["Sequential circuits", "Flip-flops, counters, shift registers, timing and state machines", ["seq", "ff", "excite", "timingf", "counter", "shift", "fsm"]],
-  ["Memory, logic families and HDL", "ROM, PLA, RAM, TTL and CMOS, Verilog and the design flow", ["memory", "rom", "families", "hdl", "verilogadd", "verilogmod", "vcond", "vifelse", "vcase", "vfor", "vops", "vgen", "valu", "lut", "cad", "dflow"]],
+  ["Sequential circuits", "Flip-flops, counters, shift registers, timing and state machines", ["seq", "ff", "excite", "fsmgen", "fsmsteps", "statediag", "stateassign", "onehot", "fsm", "mealymoore", "statemin", "incompfsm", "counter", "fsmcounter", "shift", "serialadd", "arbiter", "regswap", "timingf"]],
+  ["Memory, logic families and HDL", "ROM, PLA, RAM, TTL and CMOS, Verilog and the design flow", ["memory", "rom", "families", "hdl", "verilogadd", "verilogmod", "vcond", "vifelse", "vcase", "vfor", "vops", "vgen", "valu", "vfsm", "vmealy", "lut", "cad", "dflow"]],
 ];
 function dldHub(allPk, bs, go) {
   const byId = new Map(allPk.map(p => [p.id, p])), seenArr = readJSON("dd-dld-seen", []), seen = new Set(Array.isArray(seenArr) ? seenArr.filter(x => typeof x === "string") : []);
