@@ -10964,3 +10964,115 @@ document.addEventListener("pointerdown", (e) => {
     if (typeof renderGuide === 'function') renderGuide(true);
   });
 })();
+
+
+// ---------- Header scroll-shrink ----------
+(function headerShrink() {
+  const THRESHOLD = 40;
+  const root = document.documentElement;
+  let ticking = false;
+  const update = () => {
+    root.classList.toggle('is-scrolled', window.scrollY > THRESHOLD);
+    ticking = false;
+  };
+  addEventListener('scroll', () => {
+    if (!ticking) { ticking = true; requestAnimationFrame(update); }
+  }, { passive: true });
+  update();
+})();
+
+
+// ---------- Scroll-reveal for cards ----------
+(function scrollReveal() {
+  if (!window.IntersectionObserver) return;
+  const SEL = '.pcard, .guide-card, .listcard, .quiz-card, .ai-card, .market-card, .job-row, .club-card';
+  let obs;
+  const init = () => {
+    document.querySelectorAll(SEL).forEach(el => {
+      if (!el.dataset.sr) { el.dataset.sr = '1'; el.classList.add('sr-hidden'); obs.observe(el); }
+    });
+  };
+  obs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.remove('sr-hidden'); e.target.classList.add('sr-visible'); obs.unobserve(e.target); }
+    });
+  }, { threshold: 0.08 });
+  init();
+  new MutationObserver(init).observe(document.body, { childList: true, subtree: true });
+})();
+
+
+// ---------- Page nav (prev / next tab arrows on mobile) ----------
+// ---------- Deck-nav: full-page section prev/next + swipe ----------
+(function deckNav() {
+  const TABS   = ['class','loopy','quiz','tools','college','plus'];
+  const LABELS = ['Class','Loopy AI','Quiz','Tools','College','Plus'];
+  const ICONS  = ['🏛️','🤖','📝','🔧','🎓','⭐'];
+
+  const getIdx  = () => Math.max(0, TABS.indexOf(document.body.dataset.tab || TABS[0]));
+  const goTo    = (id) => {
+    const btn = document.querySelector(`.bnav-btn[data-tab="${id}"]`);
+    if (btn) btn.click();
+  };
+
+  // Build nav bar
+  const bar = document.createElement('div');
+  bar.className = 'deck-nav';
+  bar.setAttribute('aria-label', 'Navigate between sections');
+
+  const prevBtn = document.createElement('button');
+  prevBtn.className = 'deck-nav-arrow deck-nav-prev';
+  prevBtn.type = 'button';
+  prevBtn.setAttribute('aria-label', 'Previous section');
+  prevBtn.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>';
+
+  const label = document.createElement('div');
+  label.className = 'deck-nav-label';
+
+  const nextBtn = document.createElement('button');
+  nextBtn.className = 'deck-nav-arrow deck-nav-next';
+  nextBtn.type = 'button';
+  nextBtn.setAttribute('aria-label', 'Next section');
+  nextBtn.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>';
+
+  bar.append(prevBtn, label, nextBtn);
+
+  const render = () => {
+    const i = getIdx();
+    prevBtn.disabled = i === 0;
+    nextBtn.disabled = i === TABS.length - 1;
+    label.innerHTML = `<span class="deck-nav-icon">${ICONS[i]}</span>` +
+      `<span class="deck-nav-dots">${TABS.map((_, j) => `<span class="deck-nav-dot${j === i ? ' active' : ''}"></span>`).join('')}</span>` +
+      `<span class="deck-nav-name">${LABELS[i]}</span>`;
+    prevBtn.title = i > 0 ? LABELS[i - 1] : '';
+    nextBtn.title = i < TABS.length - 1 ? LABELS[i + 1] : '';
+  };
+
+  prevBtn.addEventListener('click', () => { const i = getIdx(); if (i > 0) goTo(TABS[i - 1]); });
+  nextBtn.addEventListener('click', () => { const i = getIdx(); if (i < TABS.length - 1) goTo(TABS[i + 1]); });
+
+  render();
+  new MutationObserver(render).observe(document.body, { attributes: true, attributeFilter: ['data-tab'] });
+
+  // Insert above the bottom nav
+  const bnav = document.getElementById('bottomNav');
+  if (bnav) bnav.before(bar); else document.body.appendChild(bar);
+
+  // Swipe support (horizontal swipe on the layout area, not on a scrolling list)
+  let sx = 0, sy = 0, active = false;
+  const layout = document.querySelector('.layout');
+  const target = layout || document.body;
+  target.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1) return;
+    sx = e.touches[0].clientX; sy = e.touches[0].clientY; active = true;
+  }, { passive: true });
+  target.addEventListener('touchend', (e) => {
+    if (!active) return; active = false;
+    const dx = e.changedTouches[0].clientX - sx;
+    const dy = e.changedTouches[0].clientY - sy;
+    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    const i = getIdx();
+    if (dx < 0 && i < TABS.length - 1) goTo(TABS[i + 1]);
+    else if (dx > 0 && i > 0) goTo(TABS[i - 1]);
+  }, { passive: true });
+})();

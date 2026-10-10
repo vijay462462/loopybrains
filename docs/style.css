@@ -4013,12 +4013,14 @@ body[data-tab="gate"] .list .card {
     z-index: 50 !important;
   }
   .layout {
-    min-height: calc(100dvh - 62px - env(safe-area-inset-bottom, 0px)) !important;
+    flex: 1 !important;
+    min-height: 0 !important;
     padding: 12px 12px 0 !important;
     align-items: stretch !important;
   }
   .listcol {
-    min-height: calc(100dvh - 150px) !important;
+    flex: 1 !important;
+    min-height: 0 !important;
   }
 }
 
@@ -4127,3 +4129,153 @@ body[data-tab="gate"] .list .card {
 }
 
 /* ===== END FULL-PAGE PREMIUM REDESIGN ===== */
+
+/* ===== YELLOW BRAND + SCROLL REACTIONS + PAGE NAV v460 ===== */
+
+/* -- Yellow/gold as the dominant brand accent (overrides royal palette) -- */
+:root[data-palette="royal"] {
+  --hdr-brand: #ffd700 !important;
+  --mark: #ffd700 !important;
+  --mark-ink: #1a1000 !important;
+}
+:root[data-palette="royal"][data-theme="dark"] {
+  --accent: #ffd700 !important;
+  --btn: #f5c000 !important;
+  --btn-ink: #1a1000 !important;
+  --mark: #ffd700 !important;
+  --mark-ink: #1a1000 !important;
+}
+
+/* Brand name "LOOPY" white, "BRAINS" gold on splash and header */
+.sp2-bname i { color: #ffd700 !important; font-style: normal !important; }
+.sp2-bname b { color: #ffffff !important; }
+
+/* Header brand mark drop shadow: indigo-gold glow */
+.sp2-bmark svg { filter: drop-shadow(0 6px 18px rgba(124, 58, 237, .45)) drop-shadow(0 2px 8px rgba(255, 215, 0, .35)) !important; }
+
+/* Loopy Brain brand logo mark in header: indigo-gold glow */
+.hd-brand .bmark, .header-logo .bmark { filter: drop-shadow(0 0 8px rgba(124, 58, 237, .5)) drop-shadow(0 0 4px rgba(255, 215, 0, .4)); }
+
+/* Tab accent glow: yellow in light mode, vivid per-tab in dark */
+:root[data-palette="royal"] .bnav-btn.active { color: #ffd700 !important; }
+:root[data-palette="royal"][data-theme="dark"] .bnav-btn.active { color: #ffd700 !important; }
+
+/* -- Header scroll-shrink (added via JS is-scrolled class on html) -- */
+html.is-scrolled header.top {
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+  box-shadow: 0 4px 24px -4px rgba(0,0,0,.35) !important;
+  transition: padding .25s ease, box-shadow .25s ease;
+}
+html.is-scrolled .brand h1 { font-size: clamp(1.1rem, 3.5vw, 1.6rem) !important; transition: font-size .25s ease; }
+html.is-scrolled .hdr-sub { max-height: 0 !important; overflow: hidden !important; opacity: 0 !important; transition: max-height .25s, opacity .2s; }
+header.top { transition: padding .25s ease, box-shadow .25s ease; }
+.brand h1 { transition: font-size .25s ease; }
+
+/* -- Scroll-reveal for cards -- */
+@keyframes revealUp {
+  from { opacity: 0; transform: translateY(22px) scale(.98); }
+  to   { opacity: 1; transform: translateY(0)  scale(1); }
+}
+.sr-hidden {
+  opacity: 0;
+  transform: translateY(22px) scale(.98);
+}
+.sr-visible {
+  animation: revealUp .38s cubic-bezier(.22,.68,0,1.2) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sr-hidden, .sr-visible { animation: none !important; opacity: 1 !important; transform: none !important; }
+}
+
+/* -- Deck-nav: full-width prev / dots / next bar above bottom nav -- */
+.deck-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0;
+  padding: 6px 10px;
+  background: var(--sheet);
+  border-top: 1px solid var(--line);
+  position: relative;
+  z-index: 10;
+}
+.deck-nav-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1.5px solid color-mix(in srgb, var(--accent) 35%, var(--line));
+  background: color-mix(in srgb, var(--accent) 8%, var(--sheet));
+  color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background .15s, transform .12s, box-shadow .15s;
+}
+.deck-nav-arrow:hover:not([disabled]) {
+  background: color-mix(in srgb, var(--accent) 18%, var(--sheet));
+  box-shadow: 0 4px 14px -4px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.deck-nav-arrow:active:not([disabled]) { transform: scale(.90); }
+.deck-nav-arrow[disabled] { opacity: .28; pointer-events: none; }
+.deck-nav-label {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+}
+.deck-nav-icon { font-size: 1.3rem; line-height: 1; }
+.deck-nav-name {
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  color: var(--accent);
+  text-transform: uppercase;
+}
+.deck-nav-dots {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+.deck-nav-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 28%, var(--line));
+  transition: background .2s, transform .2s, width .2s;
+}
+.deck-nav-dot.active {
+  background: var(--accent);
+  width: 18px;
+  border-radius: 999px;
+  box-shadow: 0 0 6px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+@media (min-width: 1100px) {
+  .deck-nav { display: none; }
+}
+
+/* Fix zoom-stuck: use flex growth instead of fixed dvh heights */
+.layout { min-height: unset; flex: 1; }
+.listcol { min-height: unset; }
+
+/* -- Background glow pulse on body when tab changes -- */
+@keyframes bgPop {
+  0%   { opacity: 0; }
+  30%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+.tab-glow-pop::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(60% 50% at 50% 40%, color-mix(in srgb, var(--ta, var(--accent)) 18%, transparent), transparent 70%);
+  animation: bgPop .6s ease both;
+}
+
+/* ===== END YELLOW BRAND + SCROLL REACTIONS + PAGE NAV ===== */
