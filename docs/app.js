@@ -1557,7 +1557,8 @@ function showWelcome(force, startId) {
   const backToStart = () => { try { sessionStorage.removeItem("dd-ob-splash"); sessionStorage.removeItem("dd-ob-shown"); sessionStorage.removeItem("dd-splash"); } catch (_) {} document.removeEventListener("keydown", onKey); box.remove(); location.reload(); };   // the first page comes back with a fresh start
   let aboutReady = false;   // the About step may only be passed after the text was really scrolled through (or read) and the terms box is ticked
   let paintedAt = 0;   // a tap that lands right after a step appears (double tap, ghost click) must not skip that step
-  const go = (d) => { if (performance.now() - paintedAt < (STEPS[step] === "about" ? 3000 : 1200)) return; if (d > 0 && STEPS[step] === "about" && !aboutReady) return; if (d > 0 && STEPS[step] === "college" && !pickSlug) { const c = box.querySelector(".ob-chosen"); if (c) { c.classList.remove("shake"); void c.offsetWidth; c.classList.add("shake"); } return; } saveStep(); step = Math.max(0, Math.min(TOTAL - 1, step + d)); paint(); };
+  let goDir = 1;
+  const go = (d) => { if (performance.now() - paintedAt < (STEPS[step] === "about" ? 3000 : 1200)) return; if (d > 0 && STEPS[step] === "about" && !aboutReady) return; if (d > 0 && STEPS[step] === "college" && !pickSlug) { const c = box.querySelector(".ob-chosen"); if (c) { c.classList.remove("shake"); void c.offsetWidth; c.classList.add("shake"); } return; } saveStep(); step = Math.max(0, Math.min(TOTAL - 1, step + d)); goDir = d; const cur = box.querySelector(".ob-step"); if (cur) { cur.classList.add(d > 0 ? "ob-out-l" : "ob-out-r"); setTimeout(paint, 230); } else paint(); };
   const start = (fn) => () => { saveStep(); finish(); setTimeout(fn, 120); };
   function paint() {
     paintedAt = performance.now(); aboutReady = false;
@@ -1653,7 +1654,7 @@ function showWelcome(force, startId) {
       body = [el("div", { class: "ob-loopy" }, loopyMini()), el("h2", {}, "You\u2019re all set" + (who ? ", " + who : "") + "! \u{1F389}"), el("p", { class: "ob-say" }, "Welcome to the family. Finish your first 3 steps on the home screen to unlock a free gift. \u{1F381}"),
         el("div", { class: "ob-start" }, ...starters.map(([t, fn, pri]) => el("button", { class: "btn" + (pri ? " primary" : ""), type: "button", onclick: start(fn) }, t)))];
     }
-    box.replaceChildren(el("div", { class: "welcome-card ob-card" }, el("button", { class: "welcome-skip", type: "button", onclick: finish }, "Skip"), bar, el("div", { class: "ob-step ob-s-" + sid }, ...body),
+    box.replaceChildren(el("div", { class: "welcome-card ob-card" }, el("button", { class: "welcome-skip", type: "button", onclick: finish }, "Skip"), bar, el("div", { class: "ob-step ob-s-" + sid + (goDir < 0 ? " ob-back" : "") }, ...body),
       el("div", { class: "rowbtns" }, step > 0 ? el("button", { class: "btn", type: "button", onclick: () => go(-1) }, "Back") : fromSplash ? el("button", { class: "btn", type: "button", onclick: backToStart }, "Back") : null, last ? el("button", { class: "btn", type: "button", onclick: finish }, "Close") : el("button", { class: "btn primary", type: "button", onclick: () => go(1), disabled: sid === "about" }, sid === "about" ? "Continue" : sid === "college" ? (pickSlug && pickSlug !== curSlug ? "Continue with " + (pickName.length > 16 ? pickName.slice(0, 15) + "\u2026" : pickName) : "Continue") : "Next"))));
     const f = box.querySelector("input") || box.querySelector(".btn.primary"); if (f && sid !== "about") f.focus();
     // The About step: Continue switches on once the whole text has been scrolled through AND the terms box is ticked.

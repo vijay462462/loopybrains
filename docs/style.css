@@ -2031,7 +2031,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 /* ---- step-by-step welcome ---- */
 .ob-card { gap: 14px; }
 .ob-bar { display: flex; gap: 6px; width: 100%; margin-top: 8px; } .ob-bar span { flex: 1; height: 5px; border-radius: 99px; background: var(--line); transition: background .3s ease; } .ob-bar span.on { background: var(--grad); }
-.ob-step { display: grid; gap: 10px; justify-items: center; width: 100%; animation: obIn .35s ease both; }
+.ob-step { display: grid; gap: 10px; justify-items: center; width: 100%; animation: obIn .45s ease both; }
 .ob-loopy { display: grid; place-items: center; } .ob-loopy .loopy-mini { width: 92px; height: 92px; }
 .ob-say { font-size: 15px; } .ob-step input { width: 100%; padding: 13px 16px; border-radius: 16px; text-align: center; font-size: 17px; font-weight: 700; }
 .ob-chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
@@ -2039,7 +2039,13 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 .ob-chip.on { background: var(--grad); color: #fff; border-color: transparent; transform: scale(1.03); }
 .ob-list { text-align: left; display: grid; gap: 8px; padding: 0; list-style: none; margin: 0; } .ob-list li { padding: 10px 12px; border-radius: 14px; background: color-mix(in srgb, var(--accent) 8%, var(--sheet)); }
 .ob-start { display: grid; gap: 8px; width: 100%; } .ob-start .btn { width: 100%; padding: 13px; }
-@keyframes obIn { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: none; } }
+@keyframes obIn    { from { opacity: 0; transform: translateX(22px); } to { opacity: 1; transform: none; } }
+@keyframes obInBack { from { opacity: 0; transform: translateX(-22px); } to { opacity: 1; transform: none; } }
+@keyframes obOutL  { to { opacity: 0; transform: translateX(-18px); } }
+@keyframes obOutR  { to { opacity: 0; transform: translateX(18px); } }
+.ob-out-l { animation: obOutL .22s ease forwards !important; pointer-events: none; }
+.ob-out-r { animation: obOutR .22s ease forwards !important; pointer-events: none; }
+.ob-step.ob-back { animation-name: obInBack; }
 @media (prefers-reduced-motion: reduce) { .ob-step { animation: none; } }
 .ob-bar { margin-top: 22px; }
 .splash-go { margin-top: 18px; padding: 13px 34px; border-radius: 999px; font-size: 16px; animation: riseIn .6s ease 1.2s both; }
