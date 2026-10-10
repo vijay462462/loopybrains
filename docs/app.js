@@ -1825,9 +1825,12 @@ document.addEventListener("pointermove", (e) => {
 // Loopy Brains brand mark: an LB monogram inside an open coral loop (trusted static markup, parsed as SVG).
 let _bmN = 0;
 function brandMark(size = 64) {
-  const u = ++_bmN, g = "bmRing" + u;
-  const doc = new DOMParser().parseFromString('<svg class="bmark" viewBox="0 0 512 512" width="' + size + '" height="' + size + '" role="img" aria-label="Loopy Brains">' + '<defs><linearGradient id="' + g + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fdba74"/><stop offset="1" stop-color="#f97316"/></linearGradient></defs><circle cx="256" cy="256" r="196" fill="none" stroke="url(#' + g + ')" stroke-width="30" stroke-linecap="round" stroke-dasharray="960 272" transform="rotate(-75 256 256)"/><circle cx="404" cy="132" r="17" fill="#fff4ec"/><g fill="none" stroke="#fff4ec" stroke-width="34" stroke-linecap="round" stroke-linejoin="round" transform="translate(-41 0)"><path d="M194 168V340H234"/><path d="M302 168V340"/><path d="M302 168H336C366 168 380 188 380 210C380 234 364 252 330 252H302"/><path d="M302 252H338C378 252 394 274 394 298C394 322 376 340 338 340H302"/></g>' + "</svg>", "image/svg+xml");
-  const n = document.importNode(doc.documentElement, true); n.setAttribute("aria-hidden", "true"); n.removeAttribute("role"); n.removeAttribute("aria-label"); return n;
+  const img = document.createElement("img");
+  img.src = "brand/loopy-brains-brain-icon.png";
+  img.width = size; img.height = size; img.alt = "";
+  img.setAttribute("aria-hidden", "true");
+  img.style.cssText = "border-radius:" + Math.round(size * 0.22) + "px;display:block;";
+  return img;
 }
 function loopyMini(costume) {
   const NS = "http://www.w3.org/2000/svg", mk = (t, at) => { const n = document.createElementNS(NS, t); for (const k in at) n.setAttribute(k, at[k]); return n; };
