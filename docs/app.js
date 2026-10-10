@@ -2313,7 +2313,10 @@ function renderHome() {
         el("button", { type: "button", class: "hb-close", "aria-label": "Close welcome card", onclick: () => { box.hidden = true; } }, "×"),
         el("div", { class: "hb-chip" }, chip)
       ),
-      el("img", { class: "hb-promo", src: "brand/loopy-brains-promo-480.png", alt: "", "aria-hidden": "true", loading: "lazy" }),
+      el("p", { class: "bsc-brand-name hb-wordmark", "aria-label": "Loopy Brains" },
+        el("span", { class: "bsc-bn-big" }, "LOOPY"),
+        el("small", { class: "bsc-bn-sm" }, "Brains")
+      ),
       el("div", { class: "hb-hero-row" },
         el("div", { class: "hb-greet-col" },
           el("p", { class: "hb-college-name" }, college),
