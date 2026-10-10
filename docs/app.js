@@ -1730,7 +1730,7 @@ function showCollegeReveal() {
         el("p", { class: "cr-disc" }, "Independent student community. Not run or endorsed by the college."),
         el("button", { class: "btn primary cr-go", type: "button", onclick: close }, "Enter " + (COLLEGE.length > 22 ? "my college" : COLLEGE) + " \u2192"))));
   ov.style.setProperty("--c1", c1); ov.style.setProperty("--c2", c2);
-  const open = () => { if (welcomePending || document.getElementById("welcome")) { setTimeout(open, 400); return; } document.body.append(ov); };
+  const open = () => { if (welcomePending || document.getElementById("welcome") || document.querySelector(".ag")) { setTimeout(open, 400); return; } document.body.append(ov); };
   if (document.getElementById("splash")) document.addEventListener("splash-closed", () => setTimeout(open, 60), { once: true }); else open();
 }
 function maybeWelcome() {
@@ -10703,6 +10703,10 @@ function authMsg(e) {
   };
   return M[c] || "Something went wrong (" + (c || "error") + "). Please try again.";
 }
+// New visitors see the opening screen and the welcome steps (About, college, name) first; the sign-up card comes after them.
+async function waitForFirstRun() {
+  for (let i = 0; i < 4000; i++) { if (!welcomePending && !document.getElementById("welcome") && !document.getElementById("splash")) return; await new Promise(r => setTimeout(r, 300)); }
+}
 function showAuthGate() {
   return new Promise((resolve) => {
     const st = store, needPhone = CFG.requirePhone === true, done = () => { const i = st.authInfo(); return !!(i && !i.anonymous && i.emailVerified && (!needPhone || i.phone)); };
@@ -10774,7 +10778,7 @@ function showAuthGate() {
     showNotice("Could not connect to the class board. Check your internet and reload. (" + ((e && e.code) || "error") + ")");
     return;
   }
-  if (store && !store.demo && store.authInfo && CFG.requireSignup !== false) { try { await showAuthGate(); } catch (_) {} }
+  if (store && !store.demo && store.authInfo && CFG.requireSignup !== false) { try { await waitForFirstRun(); await showAuthGate(); } catch (_) {} }
   if (NO_COLLEGE) { render(); return; }   // nothing to load until a college is chosen
   loadPlan().then(() => { render(); claimRef(); redeemPendingGift(); });
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && PLUS.enabled) loadPlan().then(() => { if (state.mode === "plus") render(); }); });

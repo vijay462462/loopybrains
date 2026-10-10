@@ -4111,3 +4111,4 @@ body header.top .tabs button[aria-selected="true"] { color: #0d1030; }
 .ag-fine { text-align: center; margin: 4px 0 0; font-size: .78rem; }
 .ag-card .ag-l { display: block; text-align: left; }
 .ag-card input { margin: 0; }
+.welcome.ag { background: var(--paper); backdrop-filter: none; -webkit-backdrop-filter: none; }
