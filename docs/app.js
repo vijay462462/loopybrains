@@ -5389,12 +5389,12 @@ function bsClose(keepMode) {
 function bsLeave(fn) { bsClose(true); fn(); }
 // Digital Logic Design study page: the textbook topic packs in syllabus order, with progress kept on this phone.
 const DLD_UNITS = [
-  ["Number systems and codes", "Binary, hex, complements, BCD, Gray code and error detection", ["dvsa", "numsys", "complement", "codes", "parity"]],
+  ["Number systems and codes", "Binary, hex, complements, BCD, Gray code and error detection", ["dvsa", "numsys", "complement", "signed", "twoscomp", "radixcomp", "codes", "parity"]],
   ["Boolean algebra and gates", "Gates, laws, truth tables, canonical forms and NAND/NOR design", ["swlogic", "polarity", "gates", "boolean", "huntington", "venn", "func16", "canonical", "sop", "nandnor", "twolevel"]],
-  ["Minimization", "K-maps, prime implicants, don’t-cares and the tabular method", ["kmap", "minim", "qm"]],
-  ["Combinational circuits", "Adders, multiplexers, decoders, comparators, hazards and design", ["synth", "comb", "adder", "subtractor", "comparator", "mux", "decoder", "sevenseg", "hazard"]],
+  ["Minimization", "K-maps, prime implicants, don’t-cares and the tabular method", ["kmap", "minim", "dcare", "qm"]],
+  ["Combinational circuits", "Adders, multiplexers, decoders, comparators, hazards and design", ["synth", "comb", "adder", "decfull", "ripplecarry", "addsub", "overflow", "cla", "hcla", "subtractor", "comparator", "mux", "decoder", "sevenseg", "hazard"]],
   ["Sequential circuits", "Flip-flops, counters, shift registers, timing and state machines", ["seq", "ff", "excite", "timingf", "counter", "shift", "fsm"]],
-  ["Memory, logic families and HDL", "ROM, PLA, RAM, TTL and CMOS, Verilog and the design flow", ["memory", "rom", "families", "hdl", "cad", "dflow"]],
+  ["Memory, logic families and HDL", "ROM, PLA, RAM, TTL and CMOS, Verilog and the design flow", ["memory", "rom", "families", "hdl", "verilogadd", "verilogmod", "lut", "cad", "dflow"]],
 ];
 function dldHub(allPk, bs, go) {
   const byId = new Map(allPk.map(p => [p.id, p])), seenArr = readJSON("dd-dld-seen", []), seen = new Set(Array.isArray(seenArr) ? seenArr.filter(x => typeof x === "string") : []);
@@ -5568,7 +5568,7 @@ async function bsSubmit(q) {
   { const mm = await brainModesMod(); if (mm && mm.offensive(q)) { safeModal("I can\u2019t help with attacking people or systems", ["Loopy AI teaches security so you can defend, not so you can break into accounts, devices or websites. That could hurt real people and is against the law.", "Try Aegis to learn how attacks work and how to stop them, or practise legally on free labs such as PortSwigger Academy, picoCTF or TryHackMe."], false); return; } }
   { const talk = bsChat(q) || bsFun(q); if (talk) { bs.pending = ""; bsRun(q, talk); return; } }
   const solved = bs.forcePack ? null : await brainSolve(q); if (solved) { bs.pending = ""; bsRun(q, solved); return; }
-  { const mm = await brainModesMod(), sg = mm && mm.suggestMode ? mm.suggestMode(q) : ""; if (sg && sg !== (bs.mode || "atlas")) { const nm = (BS_MODES.find(x => x[0] === sg) || [])[1] || sg; bs.mode = sg; showNotice("This looks like a " + (sg === "forge" ? "code" : sg === "aegis" ? "security" : "project") + " question, so I switched to " + nm + " for a better answer.", "ok"); } }
+  { const mm = await brainModesMod(), sg = bs.forcePack ? "" : (mm && mm.suggestMode ? mm.suggestMode(q) : ""); if (sg && sg !== (bs.mode || "atlas")) { const nm = (BS_MODES.find(x => x[0] === sg) || [])[1] || sg; bs.mode = sg; showNotice("This looks like a " + (sg === "forge" ? "code" : sg === "aegis" ? "security" : "project") + " question, so I switched to " + nm + " for a better answer.", "ok"); } }
   if (bs.mode && bs.mode !== "atlas") { bs.pending = ""; bsRun(q); return; }
   if (bs.autoSize) { const a = bs.autoSize; bs.autoSize = ""; bs.pending = q; bs.q = q; await bsPickSize(a); return; }
   bs.pending = q; bs.res = null; bs.q = q; bsPaint(true);
