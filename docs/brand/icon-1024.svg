@@ -35,10 +35,10 @@
     filter="url(#ringGlow)"/>
 
   <!-- Gold dot -->
-  <circle cx="808" cy="264" r="32" fill="#ffd700"/>
+  <circle cx="347" cy="157" r="30" fill="#ffd700"/>
 
   <!-- LB monogram in white -->
-  <g fill="none" stroke="#ffffff" stroke-width="68" stroke-linecap="round" stroke-linejoin="round" transform="translate(-82 0) scale(2)">
+  <g fill="none" stroke="#ffffff" stroke-width="36" stroke-linecap="round" stroke-linejoin="round" transform="translate(-82 0) scale(2)">
     <path d="M194 168V340H234"/>
     <path d="M302 168V340"/>
     <path d="M302 168H336C366 168 380 188 380 210C380 234 364 252 330 252H302"/>

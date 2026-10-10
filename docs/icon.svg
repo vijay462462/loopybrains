@@ -40,10 +40,10 @@
     filter="url(#ringGlow)"/>
 
   <!-- Gold dot at loop opening -->
-  <circle cx="808" cy="264" r="32" fill="#ffd700"/>
+  <circle cx="347" cy="157" r="30" fill="#ffd700"/>
 
   <!-- LB monogram: scaled ×2 from brand mark, translated for 1024 canvas -->
-  <g fill="none" stroke="#ffffff" stroke-width="68" stroke-linecap="round" stroke-linejoin="round" transform="translate(-82 0) scale(2)">
+  <g fill="none" stroke="#ffffff" stroke-width="36" stroke-linecap="round" stroke-linejoin="round" transform="translate(-82 0) scale(2)">
     <!-- L -->
     <path d="M194 168V340H234"/>
     <!-- B vertical -->
