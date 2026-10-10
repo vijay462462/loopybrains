@@ -1730,12 +1730,12 @@ function showCollegeReveal() {
         el("p", { class: "cr-disc" }, "Independent student community. Not run or endorsed by the college."),
         el("button", { class: "btn primary cr-go", type: "button", onclick: close }, "Enter " + (COLLEGE.length > 22 ? "my college" : COLLEGE) + " \u2192"))));
   ov.style.setProperty("--c1", c1); ov.style.setProperty("--c2", c2);
-  const open = () => { if (welcomePending || document.getElementById("welcome")) { setTimeout(open, 400); return; } document.body.append(ov); };
+  const open = () => { if (welcomePending || document.getElementById("welcome") || document.querySelector(".ag")) { setTimeout(open, 400); return; } document.body.append(ov); };
   if (document.getElementById("splash")) document.addEventListener("splash-closed", () => setTimeout(open, 60), { once: true }); else open();
 }
 function maybeWelcome() {
   let resume = ""; try { resume = sessionStorage.getItem("dd-ob-resume") || ""; sessionStorage.removeItem("dd-ob-resume"); } catch (_) {}
-  const open = (start) => { welcomePending = true; const viaSplash = !!document.getElementById("splash"); const go = () => setTimeout(() => { try { if (viaSplash) sessionStorage.setItem("dd-ob-splash", "1"); } catch (_) {} showWelcome(false, start); if (!document.getElementById("welcome")) welcomePending = false; }, 60); if (document.getElementById("splash")) document.addEventListener("splash-closed", go, { once: true }); else go(); };
+  const open = (start) => { welcomePending = true; const viaSplash = !!document.getElementById("splash"); const go = () => setTimeout(() => { try { if (viaSplash) sessionStorage.setItem("dd-ob-splash", "1"); } catch (_) {} showWelcome(false, start); if (!document.getElementById("welcome")) welcomePending = false; }, viaSplash ? 800 : 60); if (document.getElementById("splash")) document.addEventListener("splash-closed", go, { once: true }); else go(); };
   if (resume) { try { sessionStorage.setItem("dd-ob-shown", "1"); } catch (_) {} open(resume); return; }   // just picked a college: continue with the name step
   if (NO_COLLEGE) { try { sessionStorage.setItem("dd-ob-shown", "1"); } catch (_) {} open(); return; }      // brand-new visitors choose their college first
   // welcomeEveryVisit (config.js): show the welcome steps after the opening screen on every visit (handy for testing). Set it to false before launch.
@@ -10703,6 +10703,10 @@ function authMsg(e) {
   };
   return M[c] || "Something went wrong (" + (c || "error") + "). Please try again.";
 }
+// New visitors see the opening screen and the welcome steps (About, college, name) first; the sign-up card comes after them.
+async function waitForFirstRun() {
+  for (let i = 0; i < 4000; i++) { if (!welcomePending && !document.getElementById("welcome") && !document.getElementById("splash")) return; await new Promise(r => setTimeout(r, 300)); }
+}
 function showAuthGate() {
   return new Promise((resolve) => {
     const st = store, needPhone = CFG.requirePhone === true, done = () => { const i = st.authInfo(); return !!(i && !i.anonymous && i.emailVerified && (!needPhone || i.phone)); };
@@ -10716,7 +10720,7 @@ function showAuthGate() {
       if (busy) return; busy = true; say(""); const before = key(), btns = [...ov.querySelectorAll(".ag-go")]; btns.forEach(b => { b.disabled = true; });
       try { await fn(); } catch (e) { say(authMsg(e)); }
       busy = false;
-      if (done()) { ov.remove(); clearInterval(coolT); resolve(); return; }
+      if (done()) { ov.classList.add("out"); clearInterval(coolT); setTimeout(() => { ov.remove(); setTimeout(resolve, 700); }, 300); return; }
       if (key() !== before) paint(); else btns.forEach(b => { b.disabled = false; });
     };
     const field = (label, attrs) => { const id = "ag" + Math.random().toString(36).slice(2, 7), inp = el("input", { id, ...attrs }); return [el("label", { class: "ag-l", for: id }, label), inp, inp]; };
@@ -10774,7 +10778,7 @@ function showAuthGate() {
     showNotice("Could not connect to the class board. Check your internet and reload. (" + ((e && e.code) || "error") + ")");
     return;
   }
-  if (store && !store.demo && store.authInfo && CFG.requireSignup !== false) { try { await showAuthGate(); } catch (_) {} }
+  if (store && !store.demo && store.authInfo && CFG.requireSignup !== false) { try { await waitForFirstRun(); await new Promise(r => setTimeout(r, 900)); await showAuthGate(); } catch (_) {} }
   if (NO_COLLEGE) { render(); return; }   // nothing to load until a college is chosen
   loadPlan().then(() => { render(); claimRef(); redeemPendingGift(); });
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && PLUS.enabled) loadPlan().then(() => { if (state.mode === "plus") render(); }); });
