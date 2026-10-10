@@ -1,4 +1,4 @@
-// Directory of colleges that can be picked in CampusLoop. Edit this list to add or fix a college.
+// Directory of colleges that can be picked in Loopy Brains. Edit this list to add or fix a college.
 // slug = the link name (?c=slug): lowercase letters, digits and dashes. Each college gets its own board under the room
 // "college-<slug>" with the common subjects and clubs below. To customise one (its own subjects, campuses, colours),
 // add a document with the same slug to the Firestore `colleges` collection (see SETUP.md); its content replaces the defaults.

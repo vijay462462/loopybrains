@@ -291,7 +291,7 @@
     const t = curTrack(); if (!t) return;
     try {
       const art = coverOf(t);
-      navigator.mediaSession.metadata = new MediaMetadata({ title: t.title, artist: t.artist || "Loop Player", album: t.album || "The Campus Loop", artwork: art ? [{ src: art, sizes: "512x512", type: (t.cover && t.cover.type) || "image/jpeg" }] : [] });
+      navigator.mediaSession.metadata = new MediaMetadata({ title: t.title, artist: t.artist || "Loop Player", album: t.album || "Loopy Brains", artwork: art ? [{ src: art, sizes: "512x512", type: (t.cover && t.cover.type) || "image/jpeg" }] : [] });
       const set = (a, f) => { try { navigator.mediaSession.setActionHandler(a, f); } catch (_) {} };
       set("play", () => togglePlay()); set("pause", () => audio.pause());
       set("previoustrack", () => step(-1)); set("nexttrack", () => step(1, false));
