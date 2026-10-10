@@ -418,6 +418,63 @@ PACKS_ECE.push(
     uses: [["Receiver noise analysis", "SNR calculations use the noise PSD and filter bandwidth."], ["Speech and audio processing", "Signal statistics are described by autocorrelation."], ["Radar and communication", "Detection of a signal buried in noise."]], related: ["Gaussian (normal) distribution", "Joint distributions, covariance and correlation", "Law of large numbers and the central limit theorem"], diagrams: ["acf"] },
 );
 
+// E3 ECE syllabus reference packs (RGUKT AP, 3rd Year Semester-I, 2023 regulation)
+PACKS_ECE.push(
+  { id: "syl_rfme", subject: "RF and microwave engineering", keys: ["23ec3104 syllabus", "rf microwave engineering syllabus", "rfme syllabus", "e3 ece syllabus", "3rd year ece syllabus", "rf and microwave syllabus units", "rgukt e3 ece"],
+    title: "RF & Microwave Engineering — E3 Syllabus (23EC3104)",
+    short: "Full unit-wise syllabus for 23EC3104 RF & Microwave Engineering (PCC, 2 credits), RGUKT AP ECE 3rd Year Semester-I.",
+    points: [
+      "Unit I (2 h) — Introduction: IEEE frequency band designations · RF behavior of passive components at high frequencies.",
+      "Unit II (3 h) — Scattering Parameters: S-matrix · Properties of S-matrix · Multiport networks.",
+      "Unit III (4 h) — Microwave Networks: Power dividers and combiners · Directional couplers · Duplexer/diplexer.",
+      "Unit IV (3 h) — Matching Networks: Matching networks with lumped elements · Smith chart.",
+      "Unit V (4 h) — Antenna Parameters: Radiation concepts · Near field and far field regions · Antenna parameters: radiation intensity, gain, directivity, effective area, radiation pattern, polarization of antenna · Friis Equation.",
+      "Unit VI (2 h) — High-Frequency Computational Tools: Basic antenna design (wire antenna, patch antenna) using CAD tools · RF circuit simulation tool: AWR, HFSS.",
+    ],
+    formulas: [["Friis transmission equation", "Pr/Pt = Gt·Gr·(λ/4πR)²"], ["S-parameters (2-port)", "b = S·a  ;  S11 = b1/a1|a2=0 (reflection), S21 = b2/a1|a2=0 (transmission)"], ["Directivity", "D = 4π·Umax / Prad"], ["Gain", "G = η·D  (η = radiation efficiency)"], ["Effective area", "Ae = λ²·G / (4π)"]],
+    example: { title: "Quick subject snapshot", text: "Code: 23EC3104 | Category: PCC | Credits: 2\nL:T:P = 2:0:0\nDept: ECE, RGUKT AP\nKey tools: Smith chart (impedance matching), AWR/HFSS (simulation)" },
+    exam: "23EC3104 RF & Microwave Engineering is a 2-credit PCC course for ECE 3rd year. It covers 6 units: (I) IEEE frequency bands and RF passive components, (II) S-matrix and scattering parameters, (III) Microwave network components, (IV) Impedance matching and Smith chart, (V) Antenna parameters and Friis equation, (VI) CAD tools for antenna and RF circuit simulation.",
+    mistakes: ["Confusing S11 (reflection) with S21 (transmission/insertion loss).", "Using the wrong reference impedance (usually 50 Ω) when reading a Smith chart.", "Forgetting that 'gain' accounts for losses while 'directivity' does not."],
+    uses: [["Mobile phone antennas", "Patch antennas (Unit V/VI) are inside every smartphone."], ["Satellite links", "Friis equation (Unit V) calculates link budget for satellite communication."], ["Radar systems", "Directional couplers and duplexers (Unit III) isolate transmit and receive paths."]],
+    related: ["Antenna parameters", "S-parameters and scattering matrix", "Smith chart impedance matching", "Transmission lines"], diagrams: [] },
+
+  { id: "syl_cn", subject: "Computer networks", keys: ["23ec3102 syllabus", "computer networks syllabus", "cn syllabus ece", "e3 computer networks", "3rd year ece syllabus computer networks", "networking syllabus units", "rgukt e3 cn"],
+    title: "Computer Networks — E3 Syllabus (23EC3102)",
+    short: "Full unit-wise syllabus for 23EC3102 Computer Networks (ESC, 3 credits), RGUKT AP ECE 3rd Year Semester-I.",
+    points: [
+      "Unit I (8 h) — Introduction: Data communication components · Representation of data and its flow · Networks · Various connection topologies · Protocols and standards · OSI model · Transmission media.",
+      "Unit II (8 h) — LAN and WAN: Wired LAN · Wireless LANs · Connecting LAN and Virtual LAN · Bandwidth utilization techniques: Frequency division, Time division and Wave division multiplexing · Concepts of spread spectrum.",
+      "Unit III (8 h) — Data Link Layer and MAC Sub-Layer: Error detection and correction — fundamentals, block coding, Hamming distance, CRC · Flow control and error control protocols: Stop-and-Wait, Go-Back-N ARQ, Selective Repeat ARQ, Sliding Window, Piggybacking · Multiple access protocols: Pure ALOHA, Slotted ALOHA, CSMA/CD, CDMA/CA · Random access.",
+      "Unit IV (8 h) — Network Layer: Switching · Logical addressing IPv4 and IPv6 · Address mapping: ARP, RARP, BOOTP, DHCP · Delivery, Forwarding and Unicast Routing protocols.",
+      "Unit V (7 h) — Transport Layer: Process-to-process communication · UDP · TCP · SCTP · Congestion control · Quality of Service · QoS improving techniques: Leaky Bucket and Token Bucket algorithm.",
+      "Unit VI (6 h) — Application Layer: DNS, DDNS · TELNET · EMAIL · FTP · WWW · HTTP · SNMP · Bluetooth · Firewalls · Basic concepts of cryptography.",
+    ],
+    formulas: [["Hamming distance (error detection)", "To detect d errors: min Hamming distance = d + 1"], ["CRC check condition", "Remainder of Dividend ÷ Divisor = 0 → no error"], ["Sliding window efficiency (Go-Back-N)", "η = W/(1 + 2a) if W < 1 + 2a, else η = 1  (a = propagation delay/Tx time)"], ["Token bucket rate", "Output rate ≤ token rate r + burst size B / time"], ["IPv4 address classes", "A: 0…, B: 10…, C: 110…, D: 1110… (multicast)"]],
+    example: { title: "Quick subject snapshot", text: "Code: 23EC3102 | Category: ESC | Credits: 3\nL:T:P = 3:0:0\nDept: ECE (NUZ, RKV, ONG), RGUKT AP\nReference: Forouzan, Data Communications and Networking, TMH 4th Ed." },
+    exam: "23EC3102 Computer Networks is a 3-credit ESC course. It covers 6 units: (I) Introduction, OSI model, transmission media, (II) LAN/WAN, multiplexing, spread spectrum, (III) Data link layer — error control, flow control, ALOHA, CSMA protocols, (IV) Network layer — IP addressing, ARP, routing, (V) Transport layer — TCP/UDP, congestion control, QoS, (VI) Application layer — DNS, HTTP, FTP, Bluetooth, firewalls, cryptography basics.",
+    mistakes: ["Confusing CSMA/CD (wired, Ethernet) with CSMA/CA (wireless, Wi-Fi).", "Mixing up Go-Back-N (retransmit from error) and Selective Repeat (retransmit only the lost frame).", "Forgetting that IPv6 uses 128-bit addresses while IPv4 uses 32-bit."],
+    uses: [["Internet browsing", "HTTP (Unit VI) over TCP (Unit V) over IP (Unit IV) is what every web page uses."], ["Wi-Fi networks", "CSMA/CA (Unit III) and WLANs (Unit II) are the basis of Wi-Fi."], ["Cloud services", "DNS (Unit VI), DHCP (Unit IV) and routing protocols (Unit IV) keep cloud servers reachable."]],
+    related: ["OSI model layers", "TCP vs UDP", "IP addressing and subnetting", "Error detection — CRC and Hamming code", "Routing protocols"], diagrams: [] },
+
+  { id: "syl_cod", subject: "Computer organization and design", keys: ["23ec3103 syllabus", "computer organization design syllabus", "cod syllabus", "risc v syllabus", "e3 cod syllabus", "computer organization syllabus units", "rgukt cod", "8086 syllabus", "mips syllabus"],
+    title: "Computer Organization & Design (RISC-V) — E3 Syllabus (23EC3103)",
+    short: "Full unit-wise syllabus for 23EC3103 Computer Organization and Design based on RISC V (ESC, 3 credits), RGUKT AP ECE 3rd Year Semester-I.",
+    points: [
+      "Unit I (10 h) — 8086 Microprocessor Architecture: Architecture of 8086 · Special functions of general purpose registers · 8086 flag register and function of flags · Pin diagram of 8086 · Minimum and maximum mode configuration and timing diagrams · Addressing modes of 8086 · Instruction sets of 8086.",
+      "Unit II (12 h) — MIPS and Performance: Introduction to MIPS architecture · MIPS Instruction Set Architecture · Procedures · Recursive programs · Architecture examples · Assessing and understanding performance · CPU performance and its factors · Evaluating performance · Benchmarks · Performance of recent Intel processors.",
+      "Unit III (12 h) — Processor Design: Data path and control · Logic design conventions · Building a data path · Simple implementation scheme · Multi-cycle implementation · Exceptions · Microprogramming: Simplifying control design · Introduction to digital design using a Hardware Design Language (HDL).",
+      "Unit IV (10 h) — Pipelining: Introduction to pipelining · A pipelined data path · Pipelined control · Data hazards and forwarding · Data hazards and stalls · Branch hazards · Exceptions · Advanced pipelining.",
+      "Unit V (8 h) — Memory Hierarchy: Introduction to memory hierarchy · The basics of caches · Measuring and improving cache performance · Virtual memory · Common framework for memory hierarchies.",
+      "Unit VI (10 h) — I/O and Storage: Introduction to storage · Networks and other peripherals · Disk storage and dependability · Networks, buses and connections between processors, memory and I/O devices · Interfacing I/O devices · Memory and operating system · I/O performance measures · Designing an I/O system.",
+    ],
+    formulas: [["CPU performance equation", "CPU time = IC × CPI × Clock cycle time"], ["CPI with cache stalls", "CPI_actual = CPI_ideal + Memory stall cycles per instruction"], ["Speedup (Amdahl's law)", "Speedup = 1 / ((1−p) + p/s)  (p = parallelisable fraction, s = speedup of that part)"], ["MIPS rate", "MIPS = IC / (Execution time × 10⁶)"], ["Pipeline speedup (ideal)", "Speedup ≈ number of pipeline stages"]],
+    example: { title: "Quick subject snapshot", text: "Code: 23EC3103 | Category: ESC | Credits: 3\nL:T:P = 3:0:0\nDept: ECE, RGUKT AP\nPrescribed text: Patterson & Hennessy, Computer Organization and Design RISC-V Edition, Morgan Kaufmann" },
+    exam: "23EC3103 Computer Organization and Design based on RISC-V is a 3-credit ESC course. It covers 6 units: (I) 8086 microprocessor architecture, addressing modes and instruction set, (II) MIPS ISA, procedures, performance evaluation, (III) Processor data path, control, multi-cycle implementation and microprogramming, (IV) Pipelining, hazards and forwarding, (V) Memory hierarchy, caches and virtual memory, (VI) I/O systems, storage and bus interconnects.",
+    mistakes: ["Confusing structural, data, and control hazards in pipelining.", "Applying Amdahl's law incorrectly — the non-parallelisable fraction always limits speedup.", "Mixing up 8086 (real mode, 16-bit) with protected mode processors."],
+    uses: [["All modern CPUs", "Pipelining (Unit IV) and caches (Unit V) are inside every processor.", ""], ["Embedded systems", "8086 instruction set (Unit I) is the ancestor of x86 found in all PCs."], ["Operating systems", "Virtual memory (Unit V) and I/O interfaces (Unit VI) are what an OS manages."]],
+    related: ["8086 addressing modes", "MIPS instruction set", "Pipeline hazards", "Cache memory", "Virtual memory"], diagrams: [] },
+);
+
 // E2 ECE syllabus reference packs (RGUKT AP, 2nd Year Semester-I, 2023 regulation)
 PACKS_ECE.push(
   { id: "syl_prv", subject: PRB, keys: ["23ma2101 syllabus", "probability random variables syllabus", "prv syllabus", "e2 ece syllabus", "2nd year syllabus ece", "semester 1 syllabus ece", "rgukt e2 syllabus", "probability syllabus units"],
