@@ -5387,6 +5387,32 @@ function bsClose(keepMode) {
   if (!keepMode && state.mode === "ai") { state.mode = "intro"; render(); }
 }
 function bsLeave(fn) { bsClose(true); fn(); }
+// Digital Logic Design study page: the textbook topic packs in syllabus order, with progress kept on this phone.
+const DLD_UNITS = [
+  ["Number systems and codes", "Binary, hex, complements, BCD, Gray code and error detection", ["dvsa", "numsys", "complement", "codes", "parity"]],
+  ["Boolean algebra and gates", "Gates, laws, truth tables, canonical forms and NAND/NOR design", ["swlogic", "polarity", "gates", "boolean", "huntington", "venn", "func16", "canonical", "sop", "nandnor", "twolevel"]],
+  ["Minimization", "K-maps, prime implicants, don’t-cares and the tabular method", ["kmap", "minim", "qm"]],
+  ["Combinational circuits", "Adders, multiplexers, decoders, comparators, hazards and design", ["synth", "comb", "adder", "subtractor", "comparator", "mux", "decoder", "sevenseg", "hazard"]],
+  ["Sequential circuits", "Flip-flops, counters, shift registers, timing and state machines", ["seq", "ff", "excite", "timingf", "counter", "shift", "fsm"]],
+  ["Memory, logic families and HDL", "ROM, PLA, RAM, TTL and CMOS, Verilog and the design flow", ["memory", "rom", "families", "hdl", "cad", "dflow"]],
+];
+function dldHub(allPk, bs, go) {
+  const byId = new Map(allPk.map(p => [p.id, p])), seenArr = readJSON("dd-dld-seen", []), seen = new Set(Array.isArray(seenArr) ? seenArr.filter(x => typeof x === "string") : []);
+  const units = DLD_UNITS.map(([name, sub, ids]) => ({ name, sub, packs: ids.map(i => byId.get(i)).filter(Boolean) })).filter(u => u.packs.length);
+  const total = units.reduce((a, u) => a + u.packs.length, 0), done = units.reduce((a, u) => a + u.packs.filter(p => seen.has(p.id)).length, 0);
+  const next = units.flatMap(u => u.packs).find(p => !seen.has(p.id));
+  const openPack = (p) => { seen.add(p.id); writeJSON("dd-dld-seen", [...seen].slice(0, 120)); bs.forcePack = p.id; bs.autoSize = bsOpen(2) ? "standard" : "brief"; go(p.title.replace(/\s*\(.*?\)\s*/g, " ").trim()); };
+  const firstOpen = units.findIndex(u => u.packs.some(p => !seen.has(p.id)));
+  return el("section", { class: "dld-hub" },
+    el("div", { class: "dld-head" }, el("small", {}, "Subject"), el("h3", {}, "Digital Logic Design"), el("p", {}, "Six units, in the order most syllabuses teach them. Tap a topic to learn it in easy words with a diagram, exam questions and common mistakes."),
+      el("div", { class: "dld-prog", role: "group", "aria-label": "Progress" }, el("progress", { max: String(total), value: String(done) }), el("span", {}, done + " of " + total + " topics studied")),
+      next ? el("button", { type: "button", class: "btn primary dld-go", onclick: () => openPack(next) }, (done ? "Continue: " : "Start: ") + next.title) : el("p", { class: "dld-fin" }, "You have opened every topic. Revise any topic below.")),
+    ...units.map((u, i) => { const n = u.packs.filter(p => seen.has(p.id)).length;
+      return el("details", Object.assign({ class: "dld-unit" }, (i === firstOpen || (firstOpen < 0 && i === 0)) ? { open: "" } : {}),
+        el("summary", {}, el("span", { class: "dld-num" }, String(i + 1)), el("span", { class: "dld-ut" }, el("b", {}, u.name), el("small", {}, u.sub)), el("span", { class: "dld-cnt" }, n + "/" + u.packs.length)),
+        el("div", { class: "dld-list" }, ...u.packs.map(p => { const sh = String(p.short || "").split(/(?<=\.)\s/)[0].slice(0, 110);
+          return el("button", { type: "button", class: "dld-topic" + (seen.has(p.id) ? " done" : ""), onclick: () => openPack(p) }, el("span", { class: "dld-tick", "aria-hidden": "true" }, seen.has(p.id) ? "✓" : ""), el("span", { class: "dld-tt" }, el("b", {}, p.title), el("small", {}, sh))); }))); }));
+}
 function bsPaint(top) {
   const sc = $("bsScroll"); if (!sc) return; const keep = sc.scrollTop;
   let nodes; try { nodes = brainView(); } catch (e) { const bs0 = bsState(); bs0.res = null; bs0.busy = false; bs0.pending = ""; nodes = [el("section", { class: "bsr-card" }, el("h3", {}, "Something went wrong showing this"), el("p", {}, "Sorry, this result could not be displayed. Your credits are not lost, and nothing was saved incorrectly."), el("button", { class: "btn primary", type: "button", onclick: () => bsPaint(true) }, "Start a new search"))]; try { console.error("Loopy Search view error", e); } catch (_) {} }
@@ -5544,6 +5570,7 @@ async function bsSubmit(q) {
   const solved = bs.forcePack ? null : await brainSolve(q); if (solved) { bs.pending = ""; bsRun(q, solved); return; }
   { const mm = await brainModesMod(), sg = mm && mm.suggestMode ? mm.suggestMode(q) : ""; if (sg && sg !== (bs.mode || "atlas")) { const nm = (BS_MODES.find(x => x[0] === sg) || [])[1] || sg; bs.mode = sg; showNotice("This looks like a " + (sg === "forge" ? "code" : sg === "aegis" ? "security" : "project") + " question, so I switched to " + nm + " for a better answer.", "ok"); } }
   if (bs.mode && bs.mode !== "atlas") { bs.pending = ""; bsRun(q); return; }
+  if (bs.autoSize) { const a = bs.autoSize; bs.autoSize = ""; bs.pending = q; bs.q = q; await bsPickSize(a); return; }
   bs.pending = q; bs.res = null; bs.q = q; bsPaint(true);
 }
 async function bsPickSize(id) {
@@ -5901,7 +5928,7 @@ function brainViewInner(ui) {
     const SUBJ = [["Digital electronics", "\u{1F522} Digital logic", "#fb923c"], ["Analog electronic circuits", "\u{1F50C} Analog circuits", "#ea580c"], ["Digital signal processing", "\u{1F4C8} Signal processing", "#0891b2"], ["Control systems", "\u{1F39B}\uFE0F Control systems", "#16a34a"], ["Probability and random variables", "\u{1F3B2} Probability", "#f97316"]];
     const allPk = _packs ? _packs.all : [], open = bs.packSubj;
     const tiles = (bs.mode === "atlas" || !bs.mode) ? el("div", { class: "bs-blk" }, el("small", { class: "bs-secthead" }, "Browse textbook topics"), el("div", { class: "bs-tiles" }, ...SUBJ.map(([sub, label, col]) => { const n = allPk.filter(p => p.subject === sub).length; return el("button", { type: "button", class: "bs-tile" + (open === sub ? " on" : ""), "aria-expanded": String(open === sub), onclick: () => { bs.packSubj = open === sub ? "" : sub; bsPaint(); } }, el("b", {}, label), el("small", {}, n ? n + " topics" : "Tap to open")); }).map((n, i) => { n.style.setProperty("--tc", SUBJ[i][2]); return n; })),
-      open ? el("div", { class: "bs-chips bs-packlist" }, ...(allPk.filter(p => p.subject === open).length ? allPk.filter(p => p.subject === open).map(p => el("button", { type: "button", class: "tp-sub", onclick: () => { bs.forcePack = p.id; go(p.title.replace(/\\s*\\(.*?\\)\\s*/g, " ").trim()); } }, p.title)) : [el("small", { class: "hint" }, "Loading the topic list\u2026")])) : null) : null;
+      open === "Digital electronics" && allPk.length ? dldHub(allPk, bs, go) : open ? el("div", { class: "bs-chips bs-packlist" }, ...(allPk.filter(p => p.subject === open).length ? allPk.filter(p => p.subject === open).map(p => el("button", { type: "button", class: "tp-sub", onclick: () => { bs.forcePack = p.id; go(p.title.replace(/\\s*\\(.*?\\)\\s*/g, " ").trim()); } }, p.title)) : [el("small", { class: "hint" }, "Loading the topic list\u2026")])) : null) : null;
     return [hero, ...thinkingEls, bar, head, tryBlock, tiles,
       rec.length ? el("div", { class: "bs-blk" }, el("small", { class: "bs-secthead" }, "Recent"), chips(rec, go)) : null,
       rows.length ? el("div", { class: "bs-blk" }, el("small", { class: "bs-secthead" }, "Your syllabus"), chips(rows, go)) : null,
@@ -10707,9 +10734,15 @@ function authMsg(e) {
 async function waitForFirstRun() {
   for (let i = 0; i < 4000; i++) { if (!welcomePending && !document.getElementById("welcome") && !document.getElementById("splash")) return; await new Promise(r => setTimeout(r, 300)); }
 }
-function showAuthGate() {
-  return new Promise((resolve) => {
-    const st = store, needPhone = CFG.requirePhone === true, done = () => { const i = st.authInfo(); return !!(i && !i.anonymous && i.emailVerified && (!needPhone || i.phone)); };
+function authComplete() {
+  const i = store && store.authInfo ? store.authInfo() : null;
+  return !!(i && !i.anonymous && i.emailVerified && (CFG.requirePhone !== true || i.phone));
+}
+let _gateP = null;
+function showAuthGate(opts = {}) {
+  if (_gateP) return _gateP;
+  _gateP = new Promise((resolve, reject) => {
+    const st = store, done = authComplete;
     if (!st.authInfo || !st.authReady || done()) { resolve(); return; }
     let tab = "up", otp = false, busy = false, note = "", cool = 0, coolT = 0;
     const ov = el("div", { class: "welcome ag", role: "dialog", "aria-modal": "true", "aria-label": "Create your account" });
@@ -10720,14 +10753,14 @@ function showAuthGate() {
       if (busy) return; busy = true; say(""); const before = key(), btns = [...ov.querySelectorAll(".ag-go")]; btns.forEach(b => { b.disabled = true; });
       try { await fn(); } catch (e) { say(authMsg(e)); }
       busy = false;
-      if (done()) { ov.classList.add("out"); clearInterval(coolT); setTimeout(() => { ov.remove(); setTimeout(resolve, 700); }, 300); return; }
+      if (done()) { ov.classList.add("out"); clearInterval(coolT); setTimeout(() => { ov.remove(); setTimeout(resolve, opts.cancelable ? 0 : 700); }, 300); return; }
       if (key() !== before) paint(); else btns.forEach(b => { b.disabled = false; });
     };
     const field = (label, attrs) => { const id = "ag" + Math.random().toString(36).slice(2, 7), inp = el("input", { id, ...attrs }); return [el("label", { class: "ag-l", for: id }, label), inp, inp]; };
     const cooldown = () => { cool = 45; clearInterval(coolT); coolT = setInterval(() => { cool--; if (cool <= 0) clearInterval(coolT); const b = ov.querySelector(".ag-resend"); if (b) { b.disabled = cool > 0; b.textContent = cool > 0 ? "Send again in " + cool + "s" : "Send again"; } }, 1000); };
     function paint() {
       const info = st.authInfo(), card = el("div", { class: "welcome-card ag-card" });
-      card.append(el("h2", {}, !info || info.anonymous ? (tab === "up" ? "Create your account" : "Welcome back") : !info.emailVerified ? "Verify your e-mail" : otp ? "Enter the code" : "Verify your mobile number"));
+      card.append(el("h2", {}, !info || info.anonymous ? (tab === "up" ? (opts.cancelable ? "Create a free account to post" : "Create your account") : "Welcome back") : !info.emailVerified ? "Verify your e-mail" : otp ? "Enter the code" : "Verify your mobile number"));
       const msg = el("p", { class: "hint ag-note", role: "status" }, note);
       if (!info || info.anonymous) {
         const tabs = el("div", { class: "ag-tabs", role: "tablist" }, ...[["up", "Create account"], ["in", "Sign in"]].map(([k, t]) => el("button", { type: "button", role: "tab", class: "ag-tab" + (tab === k ? " on" : ""), "aria-selected": String(tab === k), onclick: () => { tab = k; note = ""; paint(); } }, t)));
@@ -10759,12 +10792,14 @@ function showAuthGate() {
         card.append(l, inp, msg, el("button", { type: "button", class: "btn primary ag-go", onclick: () => run(async () => { const c = inp.value.replace(/\D/g, ""); if (c.length !== 6) { say("Type the 6-digit code."); return; } await st.confirmPhoneCode(c); }) }, "Verify and continue"),
           el("button", { type: "button", class: "linkbtn", onclick: () => { otp = false; note = ""; paint(); } }, "Change number"));
       }
-      card.append(el("p", { class: "hint ag-fine" }, "One verified e-mail, one account: it keeps students safe. We never post for you."));
+      if (opts.cancelable) card.append(el("button", { type: "button", class: "btn ag-skip", onclick: () => { ov.remove(); clearInterval(coolT); reject({ code: "auth/cancelled" }); } }, "Not now. Keep browsing"));
+      card.append(el("p", { class: "hint ag-fine" }, opts.cancelable ? "You can look around and use Loopy AI without an account. An account is only needed to post. One verified e-mail, one account keeps students safe." : "One verified e-mail, one account: it keeps students safe. We never post for you."));
       ov.replaceChildren(card);
       const f = card.querySelector("input"); if (f && !busy) { try { f.focus({ preventScroll: true }); } catch (_) {} }
     }
     paint();
-  });
+  }).finally(() => { _gateP = null; });
+  return _gateP;
 }
 (async () => {
   const conf = CFG.firebase || {};
@@ -10778,7 +10813,15 @@ function showAuthGate() {
     showNotice("Could not connect to the class board. Check your internet and reload. (" + ((e && e.code) || "error") + ")");
     return;
   }
-  if (store && !store.demo && store.authInfo && CFG.requireSignup !== false) { try { await waitForFirstRun(); await new Promise(r => setTimeout(r, 900)); await showAuthGate(); } catch (_) {} }
+  if (store && !store.demo && store.authInfo && CFG.requireSignup === "boot") { try { await waitForFirstRun(); await new Promise(r => setTimeout(r, 900)); await showAuthGate(); } catch (_) {} }
+  else if (store && !store.demo && store.authInfo && CFG.requireSignup !== false) {
+    // Browsing, Loopy AI and Loop Bot stay open to everyone. The sign-up card appears only when someone tries to post, answer or share.
+    const POST = new Set(["doubts", "ideas", "clubs", "gate", "jobs", "challenges", "market", "replies", "stories"]);
+    const guard = (name, collAt) => { const orig = store[name]; if (typeof orig !== "function") return; store[name] = async (...a) => {
+      if (POST.has(a[collAt]) && !authComplete()) { try { await showAuthGate({ cancelable: true }); } catch (_) { showNotice("Create a free account to post. It takes about a minute."); throw Object.assign(new Error("sign-up needed"), { code: "auth/cancelled" }); } }
+      return orig.apply(store, a); }; };
+    guard("set", 0); guard("setIn", 1); guard("update", 0);
+  }
   if (NO_COLLEGE) { render(); return; }   // nothing to load until a college is chosen
   loadPlan().then(() => { render(); claimRef(); redeemPendingGift(); });
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && PLUS.enabled) loadPlan().then(() => { if (state.mode === "plus") render(); }); });
