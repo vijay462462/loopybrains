@@ -3780,7 +3780,7 @@ html.is-scrolling .bsh-orb { animation-play-state: paused !important; }
 .bs-comp .bs-in { font-size: 16.5px; padding: 6px 4px 10px; }
 .bs-sheet { border-radius: 20px; }
 /* cards */
-.bs-try .bs-tc, .bs-tile { background: linear-gradient(160deg, color-mix(in srgb, var(--sheet) 92%, #16a34a), var(--sheet)); border-color: color-mix(in srgb, var(--line) 80%, #16a34a); }
+.bs-try .bs-tc, .bs-tile { background: linear-gradient(160deg, color-mix(in srgb, var(--sheet) 92%, #16a34a), var(--sheet)); border-color: color-mix(in srgb, var(--line) 80%, #16a34a); color: var(--ink); }
 .bs-secthead { letter-spacing: .1em; }
 /* loading */
 .bsr-load.calm { padding: 9vh 6px 4vh; }
