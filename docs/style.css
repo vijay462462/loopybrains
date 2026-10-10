@@ -4056,3 +4056,31 @@ body header.top .tabs button[aria-selected="true"] { color: #0d1030; }
   header.top .tabs::-webkit-scrollbar { display: none; }
   header.top .brand, header.top .hdr-actions { min-width: 0; flex-wrap: wrap; }
 }
+
+/* ===== Loopy AI study desk: ruled notebook, sticker search box, topic rows, numbered lesson cards ===== */
+.bsfull .bsf-scroll { counter-reset: lesson; background-image: repeating-linear-gradient(to bottom, transparent 0 31px, color-mix(in srgb, var(--accent) 9%, transparent) 31px 32px); background-attachment: local; }
+.bsfull .bsc-orbit:not(.sm), .bsfull .bsc-hero .bsc-brand { display: none; }
+.bsfull.calm .bsf-scroll:has(.bsc-hero) { display: block; }
+.bsc-hero { flex: none !important; min-height: 0 !important; align-items: flex-start !important; justify-content: flex-start !important; text-align: left !important; gap: 8px !important; margin: 4px 0 14px; padding: 18px 16px !important; border-radius: 18px; color: #fff; background: linear-gradient(140deg, #1d1160 0%, #2a1a78 55%, #4a32b8 100%); box-shadow: 4px 4px 0 var(--gold); position: relative; overflow: hidden; }
+.bsc-hero .bsc-cap { color: #f8dc8e; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; font-size: .72rem; }
+.bsc-hero .bsc-hi { font: 800 clamp(1.45rem, 6.4vw, 2rem)/1.15 inherit !important; font-family: inherit !important; color: #fff; letter-spacing: -.01em; }
+.bsc-hero .bsc-hi span { -webkit-text-fill-color: #f8dc8e; background: none; }
+.bsc-hero .bsc-sub { color: rgb(255 255 255 / .8) !important; font-size: .95rem !important; }
+.bsc-steps { display: flex; gap: 8px; margin: 6px 0 0; padding: 0; list-style: none; counter-reset: st; flex-wrap: wrap; }
+.bsc-steps li { counter-increment: st; display: inline-flex; align-items: center; gap: 6px; background: rgb(255 255 255 / .12); border: 1px solid rgb(255 255 255 / .22); border-radius: 999px; padding: 5px 12px 5px 6px; font-size: .8rem; font-weight: 700; }
+.bsc-steps li::before { content: counter(st); width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; background: #f0c24b; color: #241600; font-size: .72rem; font-weight: 800; }
+.bsfull .bs-dock { background: linear-gradient(to bottom, transparent, var(--paper) 16px); }
+.bsfull .bs-comp, .bsfull .bs-comp:focus-within { border: 2px solid var(--accent); background: var(--sheet); border-radius: 14px; box-shadow: 4px 4px 0 var(--gold); }
+.bsfull .bs-comp:focus-within { box-shadow: 4px 4px 0 var(--gold), 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
+.bsfull .bs-comp .bs-go { background: var(--btn); color: var(--btn-ink); border-radius: 12px; box-shadow: none; }
+.bsfull .bs-comp .bs-mic, .bsfull .bs-plus, .bsfull .bs-chip { border-radius: 12px; }
+.bsfull .bs-modes.pills .bs-mode { border-radius: 10px; border: 1.5px solid var(--line); background: var(--sheet); }
+.bsfull .bs-modes.pills .bs-mode.on { background: var(--btn) !important; color: var(--btn-ink) !important; border-color: var(--btn) !important; box-shadow: 0 3px 0 var(--gold) !important; }
+.bsfull .bs-secthead { display: inline-block; margin: 6px 0 8px; padding-bottom: 3px; border-bottom: 3px solid var(--gold); color: var(--ink); font-weight: 800; letter-spacing: .06em; text-transform: uppercase; font-size: .72rem; }
+.bsfull .bs-try { grid-template-columns: 1fr; gap: 8px; }
+.bsfull .bs-try .bs-tc { display: grid; grid-template-columns: 40px 1fr; column-gap: 12px; align-items: center; border-radius: 12px; border: 1.5px solid var(--line); border-left: 5px solid var(--accent); background: var(--sheet); padding: 10px 12px; }
+.bsfull .bs-try .bs-tc i { grid-row: span 2; width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; background: var(--accent-soft); }
+.bsfull .bs-tiles .bs-tile { border-radius: 12px; border-left: 6px solid rgb(0 0 0 / .25); }
+.bsfull .bsr-card, .bsfull .bsr-ask { border-radius: 14px; border: 1.5px solid var(--line); border-left: 5px solid var(--accent); background: var(--sheet); }
+.bsfull .bsr-card > h3 { display: flex; align-items: center; gap: 10px; }
+.bsfull .bsr-card > h3::before { counter-increment: lesson; content: counter(lesson); flex: none; width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; background: var(--btn); color: var(--btn-ink); font-size: .8rem; font-weight: 800; }
