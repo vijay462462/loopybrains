@@ -108,20 +108,20 @@ function hslToHex(h, sat, l) {
 const shiftColor = (hex, dh, dl) => { const [h, sat, l] = hexToHsl(hex); return hslToHex(h + dh, sat, l + dl); };
 // [main colour, partner colour] for each state, picked from its flag, landscape or culture.
 const STATE_COLORS = {
-  "Andhra Pradesh": ["#e11d48", "#f59e0b"], "Telangana": ["#7c3aed", "#ec4899"], "Tamil Nadu": ["#b91c1c", "#f59e0b"], "Karnataka": ["#dc2626", "#eab308"],
+  "Andhra Pradesh": ["#e11d48", "#f59e0b"], "Telangana": ["#15803d", "#f97316"], "Tamil Nadu": ["#b91c1c", "#f59e0b"], "Karnataka": ["#dc2626", "#eab308"],
   "Kerala": ["#15803d", "#facc15"], "Maharashtra": ["#ea580c", "#1d4ed8"], "Gujarat": ["#f97316", "#0d9488"], "Rajasthan": ["#db2777", "#f59e0b"],
-  "Punjab": ["#2563eb", "#f97316"], "Haryana": ["#16a34a", "#ca8a04"], "Delhi": ["#4338ca", "#f43f5e"], "Uttar Pradesh": ["#d97706", "#9333ea"],
+  "Punjab": ["#2563eb", "#f97316"], "Haryana": ["#16a34a", "#ca8a04"], "Delhi": ["#166534", "#f43f5e"], "Uttar Pradesh": ["#d97706", "#9333ea"],
   "Bihar": ["#ca8a04", "#16a34a"], "West Bengal": ["#e11d48", "#2563eb"], "Odisha": ["#0891b2", "#f59e0b"], "Assam": ["#16a34a", "#dc2626"],
   "Madhya Pradesh": ["#0d9488", "#a16207"], "Chhattisgarh": ["#15803d", "#9a3412"], "Jharkhand": ["#047857", "#f59e0b"], "Uttarakhand": ["#1d4ed8", "#16a34a"],
   "Himachal Pradesh": ["#0284c7", "#16a34a"], "Jammu and Kashmir": ["#0891b2", "#e11d48"], "Ladakh": ["#1d4ed8", "#f97316"], "Goa": ["#0ea5e9", "#f59e0b"],
-  "Manipur": ["#7c3aed", "#16a34a"], "Meghalaya": ["#059669", "#0ea5e9"], "Mizoram": ["#be123c", "#0d9488"], "Nagaland": ["#b91c1c", "#15803d"],
-  "Arunachal Pradesh": ["#059669", "#f97316"], "Sikkim": ["#0891b2", "#a855f7"], "Tripura": ["#ea580c", "#2563eb"], "Puducherry": ["#2563eb", "#f43f5e"],
-  "Chandigarh": ["#0f766e", "#f59e0b"], "Andaman and Nicobar Islands": ["#0284c7", "#14b8a6"], "Lakshadweep": ["#06b6d4", "#8b5cf6"],
+  "Manipur": ["#15803d", "#16a34a"], "Meghalaya": ["#059669", "#0ea5e9"], "Mizoram": ["#be123c", "#0d9488"], "Nagaland": ["#b91c1c", "#15803d"],
+  "Arunachal Pradesh": ["#059669", "#f97316"], "Sikkim": ["#0891b2", "#16a34a"], "Tripura": ["#ea580c", "#2563eb"], "Puducherry": ["#2563eb", "#f43f5e"],
+  "Chandigarh": ["#0f766e", "#f59e0b"], "Andaman and Nicobar Islands": ["#0284c7", "#14b8a6"], "Lakshadweep": ["#06b6d4", "#16a34a"],
   "Dadra and Nagar Haveli and Daman and Diu": ["#0891b2", "#f97316"],
 };
 // Every college gets its own shade inside its state's family (a small, repeatable hue and lightness shift from its link name).
 function collegeColors(slug, state) {
-  const [a, b] = STATE_COLORS[state] || ["#6366f1", "#ec4899"];
+  const [a, b] = STATE_COLORS[state] || ["#22c55e", "#f97316"];
   let h = 0; for (const ch of String(slug)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
   const dh = ((h % 9) - 4) * 6, dl = (((h >>> 4) % 5) - 2) * 2;
   return [shiftColor(a, dh, dl), shiftColor(b, dh, -dl)];
@@ -200,7 +200,7 @@ async function loadTenant() {
     const box = document.createElement("div"); box.style.cssText = "max-width:420px;margin:15vh auto;padding:24px;font-family:system-ui,sans-serif;text-align:center";
     const h = document.createElement("h2"); h.textContent = "We could not open this college";
     const pp = document.createElement("p"); pp.textContent = "Check the link, or your internet connection, and try again.";
-    const a = document.createElement("a"); a.href = location.pathname + "?c=rgukt"; a.textContent = "Open the default board"; a.style.cssText = "display:inline-block;padding:10px 18px;border-radius:999px;background:#7c3aed;color:#fff;text-decoration:none;font-weight:700";
+    const a = document.createElement("a"); a.href = location.pathname + "?c=rgukt"; a.textContent = "Open the default board"; a.style.cssText = "display:inline-block;padding:10px 18px;border-radius:999px;background:#15803d;color:#fff;text-decoration:none;font-weight:700";
     box.append(h, pp, a); document.body.append(box);
     await new Promise(() => {});   // stop here: never fall back to another college's board
   }
@@ -232,7 +232,7 @@ if (BRAND_COLORS) {
   const m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute("content", BRAND_COLORS[0]);
 }
 // Plus profile themes: a personal accent colour kept on this phone.
-const THEMES = [["Default", ""], ["Ocean", "#0ea5e9"], ["Forest", "#16a34a"], ["Sunset", "#f97316"], ["Rose", "#e11d48"], ["Violet", "#7c3aed"], ["Gold", "#ca8a04"]];
+const THEMES = [["Default", ""], ["Ocean", "#0ea5e9"], ["Forest", "#16a34a"], ["Sunset", "#f97316"], ["Rose", "#e11d48"], ["Violet", "#15803d"], ["Gold", "#ca8a04"]];
 const applyTheme = () => { try { const c = localStorage.getItem("dd-theme") || ""; if (/^#[0-9a-f]{6}$/i.test(c)) { document.documentElement.style.setProperty("--accent", c); document.documentElement.style.setProperty("--brand-a", c); document.documentElement.style.setProperty("--brand-b", shiftColor(c, 28, 0)); } } catch (_) {} };
 applyTheme();
 // RGUKT: doubt subjects are the real subject names from the RGUKT timetable, grouped by branch (see rgukt-curriculum.js).
@@ -323,7 +323,7 @@ if (EXAM_LABEL !== "GATE") { TABS.gate.ask = "Post " + EXAM_LABEL + " discussion
 
 // ---------- campus ----------
 const CAMPUSES = (CFG.campuses && CFG.campuses.length) ? CFG.campuses : [];
-const CAMPUS_COLORS = { NUZVID: "#7c3aed", ONGOLE: "#0d9488", RKVALLEY: "#2563eb", SRIKAKULAM: "#0891b2", BASAR: "#d97706", IDUPULAPAYA: "#dc2626" };
+const CAMPUS_COLORS = { NUZVID: "#15803d", ONGOLE: "#0d9488", RKVALLEY: "#2563eb", SRIKAKULAM: "#0891b2", BASAR: "#d97706", IDUPULAPAYA: "#dc2626" };
 const CAMPUS_ICON = { NUZVID: "🟣", ONGOLE: "🟢", RKVALLEY: "🔵", SRIKAKULAM: "🩵" };
 const CAMPUS_FULL = !IS_RGUKT ? {} : { NUZVID: "RGUKT Nuzvid", ONGOLE: "RGUKT Ongole", RKVALLEY: "RGUKT RK Valley", SRIKAKULAM: "RGUKT Srikakulam" };
 const campusColor = (c) => CAMPUS_COLORS[c] || PALETTE[Math.max(0, CAMPUSES.indexOf(c)) % PALETTE.length];
@@ -369,12 +369,12 @@ const DEPT_MAP = TENANT ? (TENANT.departments || {}) : RGUKT_DEPTS ? RGUKT_DEPTS
   EEE:   ["Circuits","EM","PS","PE","Control","EMS","PQ"],
 };
 const DEPT_VISUAL = {
-  ECE:   { bg: "linear-gradient(135deg,#0ea5e9 0%,#6366f1 100%)", art: "📡⚡🔌🎛️📻", label: "Electronics & Communication", sub: "Signals · Circuits · Systems · Communication" },
-  CSE:   { bg: "linear-gradient(135deg,#8b5cf6 0%,#06b6d4 100%)", art: "💻🖥️🧠⌨️🔧", label: "Computer Science & Engineering", sub: "Algorithms · OS · DBMS · Networks · AI" },
+  ECE:   { bg: "linear-gradient(135deg,#0ea5e9 0%,#22c55e 100%)", art: "📡⚡🔌🎛️📻", label: "Electronics & Communication", sub: "Signals · Circuits · Systems · Communication" },
+  CSE:   { bg: "linear-gradient(135deg,#16a34a 0%,#06b6d4 100%)", art: "💻🖥️🧠⌨️🔧", label: "Computer Science & Engineering", sub: "Algorithms · OS · DBMS · Networks · AI" },
   Civil: { bg: "linear-gradient(135deg,#f59e0b 0%,#10b981 100%)", art: "🏗️🏛️📐🔩🌉", label: "Civil Engineering", sub: "Structures · Fluid · Geo · Transport · Env" },
   Mech:  { bg: "linear-gradient(135deg,#ef4444 0%,#f97316 100%)", art: "⚙️🔩🔧🛠️💨", label: "Mechanical Engineering", sub: "Thermo · Fluid · Design · Manufacturing · HT" },
   EEE:   { bg: "linear-gradient(135deg,#f59e0b 0%,#ef4444 100%)", art: "⚡💡🔋🔌🌡️", label: "Electrical & Electronics", sub: "Machines · Power Systems · Control · Electronics" },
-  "AI & ML": { bg: "linear-gradient(135deg,#6366f1 0%,#ec4899 100%)", art: "🧠📊🔮💡", label: "Artificial Intelligence & Machine Learning", sub: "Algorithms · Statistics · Databases · Compilers" },
+  "AI & ML": { bg: "linear-gradient(135deg,#22c55e 0%,#f97316 100%)", art: "🧠📊🔮💡", label: "Artificial Intelligence & Machine Learning", sub: "Algorithms · Statistics · Databases · Compilers" },
   Chemical:  { bg: "linear-gradient(135deg,#10b981 0%,#0ea5e9 100%)", art: "🧪⚗️🏭🔥💧", label: "Chemical Engineering", sub: "Process · Heat & Mass Transfer · Reactions" },
   MME:       { bg: "linear-gradient(135deg,#64748b 0%,#f59e0b 100%)", art: "🔩🧲🔬⛏️🪙", label: "Metallurgical & Materials", sub: "Extraction · Materials · Testing · Casting" },
 };
@@ -1800,7 +1800,7 @@ document.addEventListener("pointermove", (e) => {
 let _bmN = 0;
 function brandMark(size = 64) {
   const u = ++_bmN, g = "bmRing" + u;
-  const doc = new DOMParser().parseFromString('<svg class="bmark" viewBox="0 0 512 512" width="' + size + '" height="' + size + '" role="img" aria-label="Loopy Brains">' + '<defs><linearGradient id="' + g + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f8dc8e"/><stop offset="1" stop-color="#e0a82e"/></linearGradient></defs><circle cx="256" cy="256" r="196" fill="none" stroke="url(#' + g + ')" stroke-width="30" stroke-linecap="round" stroke-dasharray="960 272" transform="rotate(-75 256 256)"/><circle cx="404" cy="132" r="17" fill="#fff4ec"/><g fill="none" stroke="#fff4ec" stroke-width="34" stroke-linecap="round" stroke-linejoin="round" transform="translate(-41 0)"><path d="M194 168V340H234"/><path d="M302 168V340"/><path d="M302 168H336C366 168 380 188 380 210C380 234 364 252 330 252H302"/><path d="M302 252H338C378 252 394 274 394 298C394 322 376 340 338 340H302"/></g>' + "</svg>", "image/svg+xml");
+  const doc = new DOMParser().parseFromString('<svg class="bmark" viewBox="0 0 512 512" width="' + size + '" height="' + size + '" role="img" aria-label="Loopy Brains">' + '<defs><linearGradient id="' + g + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fdba74"/><stop offset="1" stop-color="#f97316"/></linearGradient></defs><circle cx="256" cy="256" r="196" fill="none" stroke="url(#' + g + ')" stroke-width="30" stroke-linecap="round" stroke-dasharray="960 272" transform="rotate(-75 256 256)"/><circle cx="404" cy="132" r="17" fill="#fff4ec"/><g fill="none" stroke="#fff4ec" stroke-width="34" stroke-linecap="round" stroke-linejoin="round" transform="translate(-41 0)"><path d="M194 168V340H234"/><path d="M302 168V340"/><path d="M302 168H336C366 168 380 188 380 210C380 234 364 252 330 252H302"/><path d="M302 252H338C378 252 394 274 394 298C394 322 376 340 338 340H302"/></g>' + "</svg>", "image/svg+xml");
   const n = document.importNode(doc.documentElement, true); n.setAttribute("aria-hidden", "true"); n.removeAttribute("role"); n.removeAttribute("aria-label"); return n;
 }
 function loopyMini(costume) {
@@ -1808,20 +1808,20 @@ function loopyMini(costume) {
   const id = costume || equippedCostume();
   const svg = mk("svg", { viewBox: "0 0 60 60", width: "46", height: "46", class: "loopy-mini" + ((new Date().getHours() >= 23 || new Date().getHours() < 5) ? " lp-sleepy" : ""), "aria-hidden": "true" });
   const defs = mk("defs", {}), g1 = mk("linearGradient", { id: "lpmPh", x1: 0, y1: 0, x2: 1, y2: 1 }), g2 = mk("linearGradient", { id: "lpmCape", x1: 0, y1: 0, x2: 1, y2: 1 });
-  [["0", "#f9a8d4"], ["0.5", "#ec4899"], ["1", "#a855f7"]].forEach(([o, c]) => g1.append(mk("stop", { offset: o, "stop-color": c }))); [["0", "#ec4899"], ["1", "#7e22ce"]].forEach(([o, c]) => g2.append(mk("stop", { offset: o, "stop-color": c }))); defs.append(g1, g2);
+  [["0", "#f9a8d4"], ["0.5", "#f97316"], ["1", "#16a34a"]].forEach(([o, c]) => g1.append(mk("stop", { offset: o, "stop-color": c }))); [["0", "#f97316"], ["1", "#7e22ce"]].forEach(([o, c]) => g2.append(mk("stop", { offset: o, "stop-color": c }))); defs.append(g1, g2);
   svg.append(defs, mk("path", { d: "M15 44 L3 59 L57 59 L45 44 Z", fill: "url(#lpmCape)" }));
   svg.append(mk("line", { x1: 30, y1: 6, x2: 30, y2: 12, stroke: "#c4b5fd", "stroke-width": 3, "stroke-linecap": "round" }), mk("circle", { cx: 30, cy: 5, r: 3.5, fill: "#fde047" }),
-    mk("rect", { x: 8, y: 12, width: 44, height: 38, rx: 15, fill: "#fff", stroke: "#a78bfa", "stroke-width": 2.5 }), mk("rect", { x: 13, y: 18, width: 34, height: 25, rx: 11, fill: "#1e1757" }),
+    mk("rect", { x: 8, y: 12, width: 44, height: 38, rx: 15, fill: "#fff", stroke: "#4ade80", "stroke-width": 2.5 }), mk("rect", { x: 13, y: 18, width: 34, height: 25, rx: 11, fill: "#1e1757" }),
     mk("ellipse", { cx: 23, cy: 28, rx: 3.4, ry: 4.6, fill: "#67e8f9", class: "lp-eyes" }), mk("ellipse", { cx: 37, cy: 28, rx: 3.4, ry: 4.6, fill: "#67e8f9", class: "lp-eyes" }), mk("path", { d: "M25 36q5 4.5 10 0", fill: "none", stroke: "#fde68a", "stroke-width": 2.4, "stroke-linecap": "round" }));
   svg.append(mk("path", { d: "M10 30 Q8 9 30 9 Q52 9 50 30", fill: "none", stroke: "url(#lpmPh)", "stroke-width": 3, "stroke-linecap": "round" }), mk("rect", { x: 3.5, y: 25, width: 7, height: 15, rx: 3.5, fill: "url(#lpmPh)" }), mk("rect", { x: 49.5, y: 25, width: 7, height: 15, rx: 3.5, fill: "url(#lpmPh)" }));
-  if (id === "none") svg.append(mk("path", { d: "M6 15 L30 3 L54 15 L30 22 Z", fill: "#052a2e", stroke: "#f9a8d4", "stroke-width": 1.2 }), mk("rect", { x: 19, y: 15.5, width: 22, height: 5, rx: 2.5, fill: "#f0c24b" }), mk("path", { d: "M54 15 L54 29", stroke: "#f9a8d4", "stroke-width": 1.5, "stroke-linecap": "round" }), mk("circle", { cx: 54, cy: 31, r: 2.2, fill: "#f9a8d4" }));
+  if (id === "none") svg.append(mk("path", { d: "M6 15 L30 3 L54 15 L30 22 Z", fill: "#052a2e", stroke: "#f9a8d4", "stroke-width": 1.2 }), mk("rect", { x: 19, y: 15.5, width: 22, height: 5, rx: 2.5, fill: "#fb923c" }), mk("path", { d: "M54 15 L54 29", stroke: "#f9a8d4", "stroke-width": 1.5, "stroke-linecap": "round" }), mk("circle", { cx: 54, cy: 31, r: 2.2, fill: "#f9a8d4" }));
   if (id === "cap") svg.append(mk("path", { d: "M11 13 L30 3 L49 13 L30 21 Z", fill: "#1e1757", stroke: "#fde047", "stroke-width": 1 }), mk("rect", { x: 22, y: 14, width: 16, height: 5, rx: 2, fill: "#312e81" }), mk("path", { d: "M49 13 L49 22", stroke: "#fde047", "stroke-width": 1.6, "stroke-linecap": "round" }), mk("circle", { cx: 49, cy: 23, r: 2, fill: "#fde047" }));
-  if (id === "phones") svg.append(mk("path", { d: "M9 32 A21 21 0 0 1 51 32", fill: "none", stroke: "#f8dc8e", "stroke-width": 3.6, "stroke-linecap": "round" }), mk("rect", { x: 3, y: 27, width: 8, height: 14, rx: 4, fill: "#f8dc8e" }), mk("rect", { x: 49, y: 27, width: 8, height: 14, rx: 4, fill: "#f8dc8e" }));
+  if (id === "phones") svg.append(mk("path", { d: "M9 32 A21 21 0 0 1 51 32", fill: "none", stroke: "#fdba74", "stroke-width": 3.6, "stroke-linecap": "round" }), mk("rect", { x: 3, y: 27, width: 8, height: 14, rx: 4, fill: "#fdba74" }), mk("rect", { x: 49, y: 27, width: 8, height: 14, rx: 4, fill: "#fdba74" }));
   if (id === "shades") svg.append(mk("rect", { x: 14, y: 22.5, width: 14, height: 10, rx: 4.5, fill: "#0b0b1c" }), mk("rect", { x: 32, y: 22.5, width: 14, height: 10, rx: 4.5, fill: "#0b0b1c" }), mk("path", { d: "M28 26 h4", stroke: "#0b0b1c", "stroke-width": 2 }), mk("path", { d: "M16.5 25 l5 0", stroke: "#fff", "stroke-width": 1.2, opacity: ".6", "stroke-linecap": "round" }));
   if (id === "mask") svg.append(mk("path", { d: "M10 24 h40 v9 q-20 6 -40 0 z", fill: "#ef4444" }), mk("ellipse", { cx: 23, cy: 28.5, rx: 4.6, ry: 4.4, fill: "#fff" }), mk("ellipse", { cx: 37, cy: 28.5, rx: 4.6, ry: 4.4, fill: "#fff" }), mk("ellipse", { cx: 23, cy: 28.5, rx: 2.6, ry: 3.4, fill: "#67e8f9", class: "lp-eyes" }), mk("ellipse", { cx: 37, cy: 28.5, rx: 2.6, ry: 3.4, fill: "#67e8f9", class: "lp-eyes" }));
   if (id === "crown") svg.append(mk("path", { d: "M14 14 L17 3 L24 9 L30 1.5 L36 9 L43 3 L46 14 Z", fill: "#fbbf24", stroke: "#b45309", "stroke-width": 1 }), mk("circle", { cx: 17, cy: 3.5, r: 1.8, fill: "#f43f5e" }), mk("circle", { cx: 30, cy: 2, r: 1.8, fill: "#38bdf8" }), mk("circle", { cx: 43, cy: 3.5, r: 1.8, fill: "#f43f5e" }));
   if (id === "legend") svg.append(mk("ellipse", { cx: 30, cy: 4, rx: 15, ry: 3.6, fill: "none", stroke: "#fde047", "stroke-width": 2.4 }), mk("path", { d: "M5 20 l1.6 3.4 3.6 .5 -2.6 2.5 .6 3.6 -3.2 -1.8 -3.2 1.8 .6 -3.6 -2.6 -2.5 3.6 -.5z", fill: "#fde047", transform: "scale(.7) translate(-2 4)" }), mk("path", { d: "M48 30 l1.6 3.4 3.6 .5 -2.6 2.5 .6 3.6 -3.2 -1.8 -3.2 1.8 .6 -3.6 -2.6 -2.5 3.6 -.5z", fill: "#fde047", transform: "scale(.7) translate(20 14)" }));
-  if (id === "goggles") svg.append(mk("path", { d: "M8 28 h6 M46 28 h6", stroke: "#22d3ee", "stroke-width": 3, "stroke-linecap": "round" }), mk("circle", { cx: 23, cy: 28, r: 7.6, fill: "rgba(103,232,249,.25)", stroke: "#22d3ee", "stroke-width": 2.6 }), mk("circle", { cx: 37, cy: 28, r: 7.6, fill: "rgba(103,232,249,.25)", stroke: "#22d3ee", "stroke-width": 2.6 }), mk("path", { d: "M30.6 28 h-1.2", stroke: "#22d3ee", "stroke-width": 2.6 }));
+  if (id === "goggles") svg.append(mk("path", { d: "M8 28 h6 M46 28 h6", stroke: "#86efac", "stroke-width": 3, "stroke-linecap": "round" }), mk("circle", { cx: 23, cy: 28, r: 7.6, fill: "rgba(103,232,249,.25)", stroke: "#86efac", "stroke-width": 2.6 }), mk("circle", { cx: 37, cy: 28, r: 7.6, fill: "rgba(103,232,249,.25)", stroke: "#86efac", "stroke-width": 2.6 }), mk("path", { d: "M30.6 28 h-1.2", stroke: "#86efac", "stroke-width": 2.6 }));
   if (id === "explorer") svg.append(mk("circle", { cx: 37, cy: 28, r: 8.2, fill: "rgba(251,191,36,.14)", stroke: "#f59e0b", "stroke-width": 2.4 }), mk("path", { d: "M43 34 L51 47", stroke: "#f59e0b", "stroke-width": 2.6, "stroke-linecap": "round" }), mk("path", { d: "M33 24 q3 -3 7 -1", fill: "none", stroke: "#fff", "stroke-width": 1.4, "stroke-linecap": "round", opacity: ".8" }));
   if (id === "helper") svg.append(mk("path", { d: "M30 46 l2.5 5 5.5 .8 -4 3.9 .9 5.5 -4.9 -2.6 -4.9 2.6 .9 -5.5 -4 -3.9 5.5 -.8z", fill: "#fbbf24", stroke: "#b45309", "stroke-width": 0.9, "stroke-linejoin": "round" }));
   return svg;
@@ -1936,7 +1936,7 @@ function confetti(n) {
   try {
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const cv = document.createElement("canvas"); cv.className = "confetti"; cv.width = innerWidth; cv.height = innerHeight; document.body.append(cv);
-    const g = cv.getContext("2d"), cols = ["#8b7cff", "#d946ef", "#f97316", "#fde047", "#22c55e", "#38bdf8"], N = n || 90, ps = Array.from({ length: N }, () => ({ x: innerWidth / 2 + (Math.random() - 0.5) * 80, y: innerHeight * 0.45, vx: (Math.random() - 0.5) * 12, vy: -Math.random() * 13 - 4, s: 5 + Math.random() * 6, r: Math.random() * 6, vr: (Math.random() - 0.5) * 0.4, c: cols[Math.floor(Math.random() * cols.length)] }));
+    const g = cv.getContext("2d"), cols = ["#8b7cff", "#fb923c", "#f97316", "#fde047", "#22c55e", "#38bdf8"], N = n || 90, ps = Array.from({ length: N }, () => ({ x: innerWidth / 2 + (Math.random() - 0.5) * 80, y: innerHeight * 0.45, vx: (Math.random() - 0.5) * 12, vy: -Math.random() * 13 - 4, s: 5 + Math.random() * 6, r: Math.random() * 6, vr: (Math.random() - 0.5) * 0.4, c: cols[Math.floor(Math.random() * cols.length)] }));
     const t0 = performance.now();
     (function tick(t) {
       const k = t - t0; g.clearRect(0, 0, cv.width, cv.height);
@@ -2280,7 +2280,7 @@ function renderHome() {
   const name = (getName() || "").trim().split(/\s+/)[0] || "";
   const college = COLLEGE || "Your campus";
   const chip = college.replace(/RGUKT\s*/i, "").trim().slice(0, 6).toUpperCase() || college.slice(0, 5).toUpperCase();
-  const mascot = `<svg class="hb-mascot-svg" viewBox="0 0 120 130" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="hbHead" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a3fd0"/><stop offset="1" stop-color="#2a1a78"/></linearGradient><linearGradient id="hbLoop" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f8dc8e"/><stop offset="1" stop-color="#e0a82e"/></linearGradient></defs><path d="M30 104 Q60 126 90 104 L98 126 H22 Z" fill="#2a1a78"/><circle cx="60" cy="60" r="50" fill="none" stroke="url(#hbLoop)" stroke-width="7" stroke-linecap="round" stroke-dasharray="250 64" transform="rotate(-70 60 60)"/><circle cx="101" cy="26" r="6" fill="#fff4ec"/><rect x="24" y="30" width="72" height="62" rx="26" fill="url(#hbHead)"/><rect x="33" y="40" width="54" height="42" rx="18" fill="#fff4ec"/><circle cx="48" cy="58" r="6.5" fill="#2a1a78"/><circle cx="72" cy="58" r="6.5" fill="#2a1a78"/><circle cx="50" cy="56" r="2" fill="#fff"/><circle cx="74" cy="56" r="2" fill="#fff"/><path d="M50 69 Q60 77 70 69" stroke="#e0a82e" stroke-width="3.5" fill="none" stroke-linecap="round"/><rect x="16" y="52" width="9" height="20" rx="4.5" fill="#f0c24b"/><rect x="95" y="52" width="9" height="20" rx="4.5" fill="#f0c24b"/></svg>`;
+  const mascot = `<svg class="hb-mascot-svg" viewBox="0 0 120 130" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="hbHead" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22c55e"/><stop offset="1" stop-color="#166534"/></linearGradient><linearGradient id="hbLoop" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fdba74"/><stop offset="1" stop-color="#f97316"/></linearGradient></defs><path d="M30 104 Q60 126 90 104 L98 126 H22 Z" fill="#166534"/><circle cx="60" cy="60" r="50" fill="none" stroke="url(#hbLoop)" stroke-width="7" stroke-linecap="round" stroke-dasharray="250 64" transform="rotate(-70 60 60)"/><circle cx="101" cy="26" r="6" fill="#fff4ec"/><rect x="24" y="30" width="72" height="62" rx="26" fill="url(#hbHead)"/><rect x="33" y="40" width="54" height="42" rx="18" fill="#fff4ec"/><circle cx="48" cy="58" r="6.5" fill="#166534"/><circle cx="72" cy="58" r="6.5" fill="#166534"/><circle cx="50" cy="56" r="2" fill="#fff"/><circle cx="74" cy="56" r="2" fill="#fff"/><path d="M50 69 Q60 77 70 69" stroke="#f97316" stroke-width="3.5" fill="none" stroke-linecap="round"/><rect x="16" y="52" width="9" height="20" rx="4.5" fill="#fb923c"/><rect x="95" y="52" width="9" height="20" rx="4.5" fill="#fb923c"/></svg>`;
   box.hidden = false;
   box.replaceChildren(
     el("div", { class: "hb-hero" },
@@ -2399,18 +2399,18 @@ function curioPuzzle(C, o, redo, today) {
 }
 function curioMap(C) {
   const pr = curioProf(), list = (C.maps || []).filter(m => !pr.year || !m.y || m.y.includes(pr.year)), m = list.length ? list[Math.floor(dayNum() / 1) % list.length] : null; if (!m) return null;
-  const NS = "http://www.w3.org/2000/svg", W = 320, H = 260, cx = W / 2, cy = H / 2, R = 96, col = { subject: "#7c3aed", job: "#f97316", use: "#16a34a" };
+  const NS = "http://www.w3.org/2000/svg", W = 320, H = 260, cx = W / 2, cy = H / 2, R = 96, col = { subject: "#15803d", job: "#f97316", use: "#16a34a" };
   const mk = (t, a, kids) => { const n = document.createElementNS(NS, t); for (const k in a) n.setAttribute(k, a[k]); (kids || []).forEach(c => n.append(c)); return n; };
   const svg = mk("svg", { viewBox: "0 0 " + W + " " + H, role: "img", "aria-label": "Map of " + m.c + " and what it connects to", class: "curio-svg" });
   m.l.forEach(([label, kind], i) => {
-    const ang = (i / m.l.length) * Math.PI * 2 - Math.PI / 2, x = cx + R * 1.18 * Math.cos(ang), y = cy + R * 0.92 * Math.sin(ang), c = col[kind] || "#7c3aed";
+    const ang = (i / m.l.length) * Math.PI * 2 - Math.PI / 2, x = cx + R * 1.18 * Math.cos(ang), y = cy + R * 0.92 * Math.sin(ang), c = col[kind] || "#15803d";
     svg.append(mk("line", { x1: cx, y1: cy, x2: x, y2: y, stroke: c, "stroke-width": "2", opacity: ".5" }));
     const g = mk("g", { tabindex: "0", role: "button", "aria-label": "Search " + label, class: "curio-node" }), w = Math.max(70, label.length * 6.4 + 16);
     g.append(mk("rect", { x: x - w / 2, y: y - 13, width: w, height: 26, rx: 13, fill: c }), (() => { const t = mk("text", { x, y: y + 4.5, "text-anchor": "middle", fill: "#fff", "font-size": "11", "font-weight": "700" }); t.textContent = label; return t; })());
     const go = () => openLoopySearch(label, "curious"); g.addEventListener("click", go); g.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
     svg.append(g);
   });
-  svg.append(mk("circle", { cx, cy, r: 38, fill: "#1e1b4b" }), (() => { const t = mk("text", { x: cx, y: cy + 4, "text-anchor": "middle", fill: "#fff", "font-size": "11", "font-weight": "800" }); t.textContent = m.c.length > 15 ? m.c.slice(0, 14) + "…" : m.c; return t; })());
+  svg.append(mk("circle", { cx, cy, r: 38, fill: "#0f3d22" }), (() => { const t = mk("text", { x: cx, y: cy + 4, "text-anchor": "middle", fill: "#fff", "font-size": "11", "font-weight": "800" }); t.textContent = m.c.length > 15 ? m.c.slice(0, 14) + "…" : m.c; return t; })());
   return el("div", { class: "learn-card curio-card" }, el("small", { class: "tag" }, "\u{1F5FA}️ TOPIC MAP"), el("strong", {}, m.c + " connects to"), svg, el("small", { class: "hint" }, "Purple: subjects · Orange: careers · Green: real uses. Tap any bubble to search it."));
 }
 function curioBuddy(redo) {
@@ -4220,8 +4220,8 @@ function wrapLines(g, text, maxW) {
 }
 async function shareResult({ kicker, emoji, big, line }) {
   const W = 1080, H = 1350, cv = document.createElement("canvas"); cv.width = W; cv.height = H; const g = cv.getContext("2d");
-  const [a, b] = BRAND_COLORS || (IS_RGUKT ? STATE_COLORS["Andhra Pradesh"] : ["#f0c24b", "#db2777"]);
-  const bg = g.createLinearGradient(0, 0, W, H); bg.addColorStop(0, a); bg.addColorStop(0.55, "#f0c24b"); bg.addColorStop(1, b); g.fillStyle = bg; g.fillRect(0, 0, W, H);
+  const [a, b] = BRAND_COLORS || (IS_RGUKT ? STATE_COLORS["Andhra Pradesh"] : ["#fb923c", "#db2777"]);
+  const bg = g.createLinearGradient(0, 0, W, H); bg.addColorStop(0, a); bg.addColorStop(0.55, "#fb923c"); bg.addColorStop(1, b); g.fillStyle = bg; g.fillRect(0, 0, W, H);
   g.fillStyle = "rgba(255,255,255,.08)"; g.beginPath(); g.arc(W - 60, 180, 320, 0, 7); g.fill(); g.beginPath(); g.arc(120, H - 120, 380, 0, 7); g.fill();
   g.strokeStyle = "#fff"; g.lineWidth = 26; g.lineCap = "round"; g.beginPath(); g.arc(150, 150, 58, 0.75, 5.53); g.stroke();   // the C of the logo
   g.fillStyle = "#fde047"; g.beginPath(); g.moveTo(228, 120); g.lineTo(238, 146); g.lineTo(264, 150); g.lineTo(238, 156); g.lineTo(228, 182); g.lineTo(218, 156); g.lineTo(192, 150); g.lineTo(218, 146); g.closePath(); g.fill();
@@ -4491,7 +4491,7 @@ function renderPlus() {
       el("button", { class: "btn", type: "button", onclick: () => showPanel("resume") }, "📄 Resume builder"),
       el("button", { class: "btn", type: "button", onclick: () => showPanel("wboard") }, "🏅 Weekly leaderboard")),
     el("div", { class: "label" }, "🎨 Theme"),
-    (PLUS.enabled && !has) ? el("p", { class: "hint" }, "Themes are part of the paid plan.") : el("div", { class: "rowbtns" }, ...THEMES.map(([n, c]) => el("button", { class: "btn sm", type: "button", onclick: () => { try { if (c) localStorage.setItem("dd-theme", c); else localStorage.removeItem("dd-theme"); } catch (_) {} if (!c) { const b = BRAND_COLORS || ["#4f46e5", "#7c3aed"]; document.documentElement.style.setProperty("--accent", b[0]); document.documentElement.style.setProperty("--brand-a", b[0]); document.documentElement.style.setProperty("--brand-b", b[1]); } else applyTheme(); } }, n))),
+    (PLUS.enabled && !has) ? el("p", { class: "hint" }, "Themes are part of the paid plan.") : el("div", { class: "rowbtns" }, ...THEMES.map(([n, c]) => el("button", { class: "btn sm", type: "button", onclick: () => { try { if (c) localStorage.setItem("dd-theme", c); else localStorage.removeItem("dd-theme"); } catch (_) {} if (!c) { const b = BRAND_COLORS || ["#15803d", "#15803d"]; document.documentElement.style.setProperty("--accent", b[0]); document.documentElement.style.setProperty("--brand-a", b[0]); document.documentElement.style.setProperty("--brand-b", b[1]); } else applyTheme(); } }, n))),
     el("div", { class: "label" }, "☁️ Backup"),
     !verified ? el("p", { class: "hint" }, "Backup needs a verified email so you can sign in on a new phone. Open Profile and tap “Verify your email”.") : (PLUS.enabled && !has ? el("p", { class: "hint" }, "Backup is part of the paid plan.") : null),
     el("div", { class: "rowbtns" }, backup, restore),
@@ -5728,7 +5728,7 @@ function compareView(res) {
   out.push(el("section", { class: "bsr-card src bsr-reveal" }, el("h3", {}, "Where this comes from"), el("div", { class: "tp-chans" }, c.a.page ? outLink(c.a.page, c.a.title + " (Wikipedia)", "tp-chan") : null, c.b.page ? outLink(c.b.page, c.b.title + " (Wikipedia)", "tp-chan") : null), el("p", { class: "hint" }, "The table is built automatically from the first sentences that match each row, so check important points in your textbook.")));
   return out;
 }
-const DOM_COLOR = { Healthcare: "#e11d48", Transport: "#0ea5e9", Communication: "#6366f1", Energy: "#f59e0b", Finance: "#16a34a", Education: "#8b5cf6", Security: "#0f766e", Entertainment: "#ec4899", Manufacturing: "#ea580c", Agriculture: "#65a30d", Space: "#1d4ed8", Computing: "#2563eb", Science: "#0d9488", "Everyday life": "#64748b" };
+const DOM_COLOR = { Healthcare: "#e11d48", Transport: "#0ea5e9", Communication: "#22c55e", Energy: "#f59e0b", Finance: "#16a34a", Education: "#16a34a", Security: "#0f766e", Entertainment: "#f97316", Manufacturing: "#ea580c", Agriculture: "#65a30d", Space: "#1d4ed8", Computing: "#2563eb", Science: "#0d9488", "Everyday life": "#64748b" };
 function usesNode(list, topic) {
   const q = encodeURIComponent(topic), tiles = (list || []).map(u => el("div", { class: "bsr-use", style: "--dc:" + (DOM_COLOR[u.domain] || "#64748b") }, el("span", { class: "bsr-dom" }, u.domain), el("b", {}, u.title), el("p", {}, u.text)));
   return el("section", { class: "bsr-card uses bsr-reveal in" }, el("h3", {}, "Real-life uses"), tiles.length ? el("div", { class: "bsr-usegrid" }, ...tiles) : el("p", { class: "hint" }, "No uses were listed in the source. See real examples below."),
@@ -5798,15 +5798,15 @@ function securityView(r) {
 function brandSpin(cls) {
   // Loopy AI logo: the LB monogram stays still while the coral loop around it turns (it turns faster while Loopy is thinking).
   const A = (n, a, ...k) => sv(n, a, ...k), stop = (o, c) => A("stop", { offset: o, "stop-color": c });
-  const defs = A("defs", {}, A("linearGradient", { id: "bsBg", x1: 0, y1: 0, x2: 1, y2: 1 }, stop(0, "#5a3fd0"), stop(.55, "#2a1a78"), stop(1, "#150c4a")), A("linearGradient", { id: "bsRing", x1: 0, y1: 0, x2: 1, y2: 1 }, stop(0, "#f8dc8e"), stop(1, "#e0a82e")));
+  const defs = A("defs", {}, A("linearGradient", { id: "bsBg", x1: 0, y1: 0, x2: 1, y2: 1 }, stop(0, "#22c55e"), stop(.55, "#166534"), stop(1, "#0f3d22")), A("linearGradient", { id: "bsRing", x1: 0, y1: 0, x2: 1, y2: 1 }, stop(0, "#fdba74"), stop(1, "#f97316")));
   const ring = A("g", { class: "bs-spinc" }, A("circle", { cx: 256, cy: 256, r: 196, fill: "none", stroke: "url(#bsRing)", "stroke-width": 30, "stroke-linecap": "round", "stroke-dasharray": "960 272", transform: "rotate(-75 256 256)" }), A("circle", { cx: 404, cy: 132, r: 17, fill: "#fff4ec" }));
   const lb = A("g", { fill: "none", stroke: "#fff4ec", "stroke-width": 34, "stroke-linecap": "round", "stroke-linejoin": "round", transform: "translate(-41 0)" }, A("path", { d: "M194 168V340H234" }), A("path", { d: "M302 168V340" }), A("path", { d: "M302 168H336C366 168 380 188 380 210C380 234 364 252 330 252H302" }), A("path", { d: "M302 252H338C378 252 394 274 394 298C394 322 376 340 338 340H302" }));
   return A("svg", { viewBox: "0 0 1024 1024", class: cls, role: "img", "aria-label": "Loopy AI" }, defs, A("rect", { width: 1024, height: 1024, rx: 230, fill: "url(#bsBg)" }), A("g", { transform: "translate(206 70) scale(1.2)" }, ring, lb),
     A("text", { x: 512, y: 826, "text-anchor": "middle", "font-size": 110, "font-weight": 700, "letter-spacing": 6, fill: "#fff4ec", "font-family": "Georgia, 'Times New Roman', serif" }, "LOOPY"),
-    A("text", { x: 512, y: 944, "text-anchor": "middle", "font-size": 84, "font-weight": 700, "letter-spacing": 40, fill: "#f0c24b", "font-family": "Georgia, 'Times New Roman', serif" }, "AI"));
+    A("text", { x: 512, y: 944, "text-anchor": "middle", "font-size": 84, "font-weight": 700, "letter-spacing": 40, fill: "#fb923c", "font-family": "Georgia, 'Times New Roman', serif" }, "AI"));
 }
 function loopyMark(cls) {
-  const r = sv("svg", { viewBox: "0 0 64 64", class: cls, "aria-hidden": "true" }), cols = ["#f59e0b", "#f97316", "#ef4444", "#d946ef", "#6366f1", "#22d3ee", "#10b981", "#eab308"];
+  const r = sv("svg", { viewBox: "0 0 64 64", class: cls, "aria-hidden": "true" }), cols = ["#f59e0b", "#f97316", "#ef4444", "#fb923c", "#22c55e", "#86efac", "#10b981", "#eab308"];
   for (let i = 0; i < 8; i++) r.append(sv("line", { x1: 32, y1: 32 - (i % 2 ? 14 : 8), x2: 32, y2: 32 - (i % 2 ? 29 : 25), stroke: cols[i], "stroke-width": 4.6, "stroke-linecap": "round", transform: "rotate(" + i * 45 + " 32 32)" }));
   return r;
 }
@@ -5862,8 +5862,9 @@ function brainViewInner(ui) {
   const foot = el("p", { class: "bs-foot bsf-noprint" }, "Today: " + L.day + " of " + L.caps.day + " credits \u00B7 Check important facts");
   ui.bar = bar; ui.head = head; ui.dock = el("div", { class: "bs-dock bsf-noprint" }, sheet, sug, form, foot);
   const chips = (list, onTap) => el("div", { class: "bs-chips" }, ...list.map(t => el("button", { type: "button", class: "tp-sub", onclick: () => onTap(t) }, t)));
-  if (bs.busy) return [bar, head, el("div", { class: "bsr-load calm", role: "status", "aria-live": "polite" }, el("div", { class: "bsc-orbit sm", "aria-hidden": "true" }, el("i", { class: "r1" }), el("i", { class: "r2" }), el("b", { class: "d1" }), el("b", { class: "d2" }), el("b", { class: "d3" }), brandSpin("bsc-brand live")), el("p", { class: "bsr-think" }, "Loopy is thinking\u2026"),
-    el("div", { class: "bsr-lines", "aria-hidden": "true" }, el("i", {}), el("i", {}), el("i", {})))];
+  const thinkingEls = bs.busy ? [el("p", { class: "bsr-yq" }, el("small", {}, "Your question"), el("b", {}, bs.q || bs.pending || "")), el("div", { class: "bsr-load calm", role: "status", "aria-live": "polite" }, el("div", { class: "bsc-orbit sm", "aria-hidden": "true" }, el("i", { class: "r1" }), el("i", { class: "r2" }), el("b", { class: "d1" }), el("b", { class: "d2" }), el("b", { class: "d3" }), brandSpin("bsc-brand live")), el("p", { class: "bsr-think" }, "Loopy is thinking\u2026"),
+    el("div", { class: "bsr-lines", "aria-hidden": "true" }, el("i", {}), el("i", {}), el("i", {})))] : [];
+  if (bs.busy && bs.res) return [bar, head, ...thinkingEls];
   if (bs.pending) {
     return [bar, head, el("section", { class: "bsr-ask bsr-reveal in" }, el("small", {}, "Your question"), el("h2", {}, bs.pending), el("p", { class: "hint" }, "How much do you need?"),
       el("div", { class: "bsr-sizes" }, ...BS_SIZES.map(([id, name, hint, need], i) => { const open = bsOpen(need); return el("button", { type: "button", class: "bsr-size z" + i + (bs.size === id ? " pre" : ""), onclick: () => bsPickSize(id) }, el("b", {}, name), el("span", {}, hint), open ? null : el("i", {}, IS_RGUKT ? "\u{1F512} Locked" : "\u{1F512} Plus")); })))];
@@ -5878,11 +5879,11 @@ function brainViewInner(ui) {
       aegis: [["\u{1F489}", "SQL injection", "Security"], ["\u{1F3A3}", "Phishing", "Security"], ["\u{1F511}", "Password security", "Security"], ["\u{1F512}", "Two factor authentication", "Security"]] };
     const tryBlock = el("div", { class: "bs-blk" }, el("small", { class: "bs-secthead" }, "Try asking"), el("div", { class: "bs-try" }, ...(TRY[bs.mode] || TRY.atlas).map(([ic, t, s]) => el("button", { type: "button", class: "bs-tc", onclick: () => go(t) }, el("i", { "aria-hidden": "true" }, ic), el("b", {}, t), el("small", {}, s)))));
     if (!_packs && !bs._pkTried) { bs._pkTried = true; brainPacksMod().then(() => { if (bsEl() && !bsState().res) bsPaint(); }); }
-    const SUBJ = [["Digital electronics", "\u{1F522} Digital logic", "#f0c24b"], ["Analog electronic circuits", "\u{1F50C} Analog circuits", "#ea580c"], ["Digital signal processing", "\u{1F4C8} Signal processing", "#0891b2"], ["Control systems", "\u{1F39B}\uFE0F Control systems", "#16a34a"], ["Probability and random variables", "\u{1F3B2} Probability", "#db2777"]];
+    const SUBJ = [["Digital electronics", "\u{1F522} Digital logic", "#fb923c"], ["Analog electronic circuits", "\u{1F50C} Analog circuits", "#ea580c"], ["Digital signal processing", "\u{1F4C8} Signal processing", "#0891b2"], ["Control systems", "\u{1F39B}\uFE0F Control systems", "#16a34a"], ["Probability and random variables", "\u{1F3B2} Probability", "#db2777"]];
     const allPk = _packs ? _packs.all : [], open = bs.packSubj;
     const tiles = (bs.mode === "atlas" || !bs.mode) ? el("div", { class: "bs-blk" }, el("small", { class: "bs-secthead" }, "Browse textbook topics"), el("div", { class: "bs-tiles" }, ...SUBJ.map(([sub, label, col]) => { const n = allPk.filter(p => p.subject === sub).length; return el("button", { type: "button", class: "bs-tile" + (open === sub ? " on" : ""), "aria-expanded": String(open === sub), onclick: () => { bs.packSubj = open === sub ? "" : sub; bsPaint(); } }, el("b", {}, label), el("small", {}, n ? n + " topics" : "Tap to open")); }).map((n, i) => { n.style.setProperty("--tc", SUBJ[i][2]); return n; })),
       open ? el("div", { class: "bs-chips bs-packlist" }, ...(allPk.filter(p => p.subject === open).length ? allPk.filter(p => p.subject === open).map(p => el("button", { type: "button", class: "tp-sub", onclick: () => { bs.forcePack = p.id; go(p.title.replace(/\\s*\\(.*?\\)\\s*/g, " ").trim()); } }, p.title)) : [el("small", { class: "hint" }, "Loading the topic list\u2026")])) : null) : null;
-    return [hero, bar, head, tryBlock, tiles,
+    return [hero, ...thinkingEls, bar, head, tryBlock, tiles,
       rec.length ? el("div", { class: "bs-blk" }, el("small", { class: "bs-secthead" }, "Recent"), chips(rec, go)) : null,
       rows.length ? el("div", { class: "bs-blk" }, el("small", { class: "bs-secthead" }, "Your syllabus"), chips(rows, go)) : null,
       mySubjectsBlock(bs, go), savedBlock(bs, go),
@@ -9467,7 +9468,7 @@ function renderView() {
         url: "https://www.wolframalpha.com/input?i=" + q },
       { name: "YouTube", icon: "▶", desc: "Video explanations", color: "#cc0000",
         url: "https://www.youtube.com/results?search_query=" + encodeURIComponent((d.subject || "") + " " + (d.title || "")) },
-      { name: "NPTEL", icon: "🎓", desc: "IIT lecture notes", color: "#7c3aed",
+      { name: "NPTEL", icon: "🎓", desc: "IIT lecture notes", color: "#15803d",
         url: "https://nptel.ac.in/courses/search?q=" + subj },
       { name: "GeeksforGeeks", icon: "📄", desc: "Notes & code", color: "#2f8d46",
         url: "https://www.geeksforgeeks.org/search/?q=" + encodeURIComponent(d.title || "") },
@@ -9990,7 +9991,7 @@ function renderCampusPicker() {
 
 // ---------- profile photo (DP) and 24-hour stories ----------
 const STORY_ROW_MIN = 3, STORY_MS = 86400000, STORY_SHOW = 5500, STORY_DAILY_MAX = 10;
-const STORY_BG = [["#7c3aed", "#2563eb"], ["#db2777", "#f97316"], ["#059669", "#0ea5e9"], ["#f59e0b", "#ef4444"], ["#f1eefc", "#6366f1"], ["#0d9488", "#84cc16"], ["#9333ea", "#ec4899"], ["#150c4a", "#334155"]];
+const STORY_BG = [["#15803d", "#2563eb"], ["#db2777", "#f97316"], ["#059669", "#0ea5e9"], ["#f59e0b", "#ef4444"], ["#eaf7ee", "#22c55e"], ["#0d9488", "#84cc16"], ["#9333ea", "#f97316"], ["#0f3d22", "#334155"]];
 const DP_OK = /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]{20,40000}$/;
 const IMG_OK = /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]{20,700000}$/;
 const getDp = () => { if (!MEDIA.profilePhoto) return ""; try { const v = localStorage.getItem("dd-dp"); return DP_OK.test(v || "") ? v : ""; } catch (_) { return ""; } };
@@ -10580,7 +10581,7 @@ function applyThemeName(n) { const r = document.documentElement; r.setAttribute(
 let currentTheme = (() => { try { const v = localStorage.getItem("dd-theme"); return THEME_CYCLE.includes(v) ? v : systemTheme(); } catch (_) { return systemTheme(); } })();
 applyThemeName(currentTheme);
 // Colour palettes: the student chooses one (Forest is the default). Each has a light, dark and black version.
-const PALETTES = { tealcoral: ["Royal and gold", ["#2a1a78", "#e0a82e", "#f6f3ec"], "p"], midnight: ["Midnight", ["#171a45", "#c9a45c", "#f6f4ee"], "p"], royal: ["Royal", ["#0f2c52", "#e2bd64", "#f4f1ea"], "p"], emerald: ["Emerald", ["#0d4a38", "#e3cf94", "#f3f2ec"], "p"], burgundy: ["Burgundy", ["#5b1a2b", "#e9b49f", "#f6efeb"], "p"], obsidian: ["Obsidian", ["#181818", "#d4af37", "#f2f1ee"], "p"], forest: ["Forest", ["#2d452f", "#6b9d4a", "#cfe2ce"], "c"], indigo: ["Indigo", ["#312c51", "#48426d", "#f0c38e"], "c"], terracotta: ["Terracotta", ["#c9532f", "#c78a9a", "#5e8c74"], "c"], ocean: ["Ocean", ["#1a73e8", "#8ab4f8", "#fdd663"], "c"], slate: ["Slate", ["#2f3a46", "#9db4c8", "#e5e7eb"], "c"] };
+const PALETTES = { tealcoral: ["Fresh green", ["#166534", "#f97316", "#f6fbf7"], "p"], midnight: ["Midnight", ["#171a45", "#c9a45c", "#f6f4ee"], "p"], royal: ["Royal", ["#0f2c52", "#e2bd64", "#f4f1ea"], "p"], emerald: ["Emerald", ["#0d4a38", "#e3cf94", "#f3f2ec"], "p"], burgundy: ["Burgundy", ["#5b1a2b", "#e9b49f", "#f6efeb"], "p"], obsidian: ["Obsidian", ["#181818", "#d4af37", "#f2f1ee"], "p"], forest: ["Forest", ["#2d452f", "#6b9d4a", "#cfe2ce"], "c"], indigo: ["Indigo", ["#312c51", "#48426d", "#f0c38e"], "c"], terracotta: ["Terracotta", ["#c9532f", "#c78a9a", "#5e8c74"], "c"], ocean: ["Ocean", ["#1a73e8", "#8ab4f8", "#fdd663"], "c"], slate: ["Slate", ["#2f3a46", "#9db4c8", "#e5e7eb"], "c"] };
 let currentPalette = (() => { try { const v = localStorage.getItem("dd-palette"); return PALETTES[v] ? v : "tealcoral"; } catch (_) { return "tealcoral"; } })();
 document.documentElement.setAttribute("data-palette", currentPalette);
 let updateThemeLabel = () => {};
