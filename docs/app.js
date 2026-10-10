@@ -5078,7 +5078,7 @@ const BS_LEVELS = [
 const BS_SIZES = [["brief", "Brief", "A few lines", 1], ["standard", "Standard", "About one page, with key numbers", 2], ["detailed", "Detailed", "Several pages with timeline and key terms", 3], ["full", "Full report", "Research level: papers and revision notes", 4]];
 const BS_EFFORTS = [["low", "Low", "Fast: one trusted source", 1], ["medium", "Medium", "Adds easy words and hard-word meanings", 2], ["high", "High", "Adds cross-checks, related topics and research papers", 3]];
 const bsEffort = (bs) => { const want = BS_EFFORTS.findIndex(e => e[0] === bs.effort); let i = want < 0 ? 1 : want; while (i > 0 && !bsOpen(BS_EFFORTS[i][3])) i--; return BS_EFFORTS[i]; };
-const bsName = (n) => "Loopy " + BS_LEVELS[n - 1][1];
+const bsName = (n) => "Chitti " + BS_LEVELS[n - 1][1];
 const hasPlusNow = () => !!(state.plan && state.plan.plus) || trialLeft() > 0 || bonusLeft() > 0;
 // Free models: Spark for everyone, and Scholar too for RGUKT students. Vision, Sage and Apex need Campus Loop Plus.
 const bsFree = (lv) => lv <= 1 || IS_RGUKT;
@@ -5735,10 +5735,10 @@ function brainView() {
 function brainViewInner(ui) {
   const bs = bsState(), mi = bsModeInfo(bs.mode), back = el("button", { class: "btn", type: "button", onclick: () => bsClose() }, "Close");
   if (safeBlocked()) return [el("section", { class: "bsr-blocked" }, el("div", { class: "safe-ic", "aria-hidden": "true" }, "!"), el("h2", {}, "Loopy Search is blocked"), ...SAFE_BLOCKED_LINES.map(t => el("p", {}, t)), el("div", { class: "rowbtns" }, back))];
-  const input = el("input", { type: "search", class: "bs-in", maxlength: "120", placeholder: "Ask Loopy anything\u2026", "aria-label": "Search", autocomplete: "off", enterkeyhint: "search", value: bs.q });
+  const input = el("input", { type: "search", class: "bs-in", maxlength: "120", placeholder: "Ask Chitti anything\u2026", "aria-label": "Search", autocomplete: "off", enterkeyhint: "search", value: bs.q });
   const sug = el("div", { class: "bs-sug", role: "listbox" });
   { const EX = bs.mode === "forge" ? ["binary search in Python", "Verilog code for a counter", "bubble sort in C", "factorial in Java"] : bs.mode === "launchpad" ? ["IoT weather station", "attendance system with face recognition", "smart irrigation", "library website"] : bs.mode === "aegis" ? ["how SQL injection works", "spot a phishing email", "strong password habits", "what is two-factor login"] : ["explain the Bode plot", "half adder circuit", "Bayes theorem with an example", "difference between FIR and IIR"]; let i = 0; clearInterval(bs._phT);
-    if (!bs.res && !bs.pending) { input.placeholder = "Ask Loopy: " + EX[0]; bs._phT = setInterval(() => { if (!document.body.contains(input)) { clearInterval(bs._phT); return; } if (input.value || document.activeElement === input) return; i = (i + 1) % EX.length; input.placeholder = "Ask Loopy: " + EX[i]; }, 3200); } }
+    if (!bs.res && !bs.pending) { input.placeholder = "Ask Chitti: " + EX[0]; bs._phT = setInterval(() => { if (!document.body.contains(input)) { clearInterval(bs._phT); return; } if (input.value || document.activeElement === input) return; i = (i + 1) % EX.length; input.placeholder = "Ask Chitti: " + EX[i]; }, 3200); } }
   const go = (t) => { sug.replaceChildren(); input.value = t; bsSubmit(t); };
   input.addEventListener("input", () => sug.replaceChildren(...bsSuggest(input.value).map(t => el("button", { type: "button", class: "bs-s", role: "option", onclick: () => go(t) }, el("span", { "aria-hidden": "true" }, "\u{1F50E}"), t))));
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
