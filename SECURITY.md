@@ -17,12 +17,12 @@ No critical problems were found. Rules deny everything that is not listed, secre
 
 ## Fixed in this review
 1. **Brute-forcing codes.** Promo, gift and invite codes could be guessed by trying many. Each student is now limited (promo 15 an hour, payment links 12 an hour, gifts 10 an hour, invites 10 a day) by a server-side limiter.
-2. **Any website could call our functions from a browser.** CORS is now limited to `https://vijay462462.github.io` (and localhost for testing). `https://thecampusloop.co.in` and `https://www.thecampusloop.co.in` are also allowed.
+2. **Any website could call our functions from a browser.** CORS is now limited to `https://loopybrains.com` and `https://www.loopybrains.com` (and localhost for testing). The old `thecampusloop.co.in` domains and `vijay462462.github.io` also stay allowed.
 3. Bot/admin checks re-confirmed: no `innerHTML` with untrusted text anywhere in the app or dashboard.
 4. Added this document and a launch checklist.
 
 ## Do these before launch (settings, not code)
-1. **Restrict the Firebase API key.** Google Cloud console › APIs & Services › Credentials › your browser key › *HTTP referrers*: add `https://vijay462462.github.io/*` , `https://thecampusloop.co.in/*` and `https://www.thecampusloop.co.in/*`. Limit it to the APIs you use (Identity Toolkit, Firestore, Token Service).
+1. **Restrict the Firebase API key.** Google Cloud console › APIs & Services › Credentials › your browser key › *HTTP referrers*: add `https://loopybrains.com/*` and `https://www.loopybrains.com/*` (keep the old `thecampusloop.co.in` and `vijay462462.github.io` entries too). Edit the restrictions; never delete the key. Limit it to the APIs you use (Identity Toolkit, Firestore, Token Service).
 2. **Turn on Firebase App Check** (reCAPTCHA v3/Enterprise) and enforce it for Firestore. This stops bots and scripts that use your key from creating thousands of anonymous accounts and spamming. This is the single most valuable protection left.
 3. **Protect admin accounts.** Use a Google/e-mail account with 2-step verification for the admin e-mail; never share the admin sign-in link. Give college staff only the staff role.
 4. **Publish `firestore.rules`** from the repo, then run the sign-in and posting checks once. Keep `firestore.rules.open` as an emergency rollback only.
