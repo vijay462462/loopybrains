@@ -2536,6 +2536,7 @@ body.simple .tabs button[aria-selected="true"] { display: inline-flex; }
 .acct-head, .acct-head > div { text-align: left; }
 
 .sp2-brand { display: inline-flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+.sp2-promo { display: block; width: 100%; max-width: 380px; border-radius: 16px; margin: 10px 0 14px; object-fit: cover; }
 .sp2-bmark svg { display: block; filter: drop-shadow(0 8px 14px rgba(99, 102, 241, .45)); }
 .sp2-bname { display: grid; text-align: left; line-height: 1.05; font-family: 'Bitstream Charter', Georgia, 'Times New Roman', serif; }
 .sp2-bname b { font-size: 19px; letter-spacing: .12em; color: #fff; }
@@ -4027,9 +4028,10 @@ body header.top .tabs button[aria-selected="true"] { color: #0d1030; }
 .hb-hero { background: linear-gradient(150deg, #0f3d22 0%, #166534 55%, #16a34a 100%); color: #fff; border-radius: 22px; padding: 16px; margin: 0 0 14px; box-shadow: var(--shadow); position: relative; overflow: hidden; }
 .hb-hero::after { content: ""; position: absolute; right: -50px; top: -50px; width: 180px; height: 180px; border-radius: 50%; background: radial-gradient(circle, rgb(255 154 133 / .28), transparent 70%); pointer-events: none; }
 .hb-hero-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; position: relative; z-index: 1; }
+.hb-promo { display: block; width: calc(100% + 32px); margin: -4px -16px 12px; object-fit: cover; height: 140px; }
 .hb-close { width: 34px; height: 34px; border-radius: 50%; border: 1px solid rgb(255 255 255 / .25); background: rgb(255 255 255 / .1); color: #fff; font-size: 20px; line-height: 1; cursor: pointer; }
 .hb-chip { background: #fb923c; color: #2b1000; font-weight: 800; font-size: 12px; letter-spacing: .06em; padding: 6px 12px; border-radius: 12px; }
-.hb-hero-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; position: relative; z-index: 1; }
+.hb-hero-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; position: relative; z-index: 1; width: 100%; }
 .hb-mascot { flex: 0 0 76px; }
 .hb-mascot-svg { width: 76px; height: auto; display: block; }
 .hb-greet-col { min-width: 0; flex: 1; }
