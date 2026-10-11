@@ -5202,7 +5202,7 @@ function safeModal(title, lines, danger) {
 }
 const SAFE_BLOCKED_LINES = ["Loopy Search is turned off for this account because of repeated sexual or romantic searches after two warnings.", "If you think this is a mistake, ask your college admin to review it."];
 async function safetyGate(q) {
-  await safeSync();
+  safeSync();
   if (safeBlocked()) { safeModal("Loopy Search is blocked", SAFE_BLOCKED_LINES, true); return false; }
   const m = await safeMod(); if (!m) return true;
   const r = m.checkQuery(q); if (r.ok) return true;
@@ -5703,8 +5703,9 @@ async function bsSubmit(q) {
   { const cq = bsClean(q), talk = bsChat(cq) || bsFun(cq) || bsPlay(cq); if (talk) { bs.pending = ""; bsRun(q, talk, true); return; } }
   { const ctx = bsContextFor(q); if (ctx) q = lsClean(ctx + q); }
   if (/[^\u0000-\u024F\u2000-\u206F\u00A0-\u00FF]/.test(q) && ahWords(q).length === 0) { showNotice("Loopy Search works with English words for now. Please type your topic in English.", "err"); return; }
-  if (!(await safetyGate(q))) return;
-  { const mm = await brainModesMod(); if (mm && mm.offensive(q)) { safeModal("I can\u2019t help with attacking people or systems", ["Loopy AI teaches security so you can defend, not so you can break into accounts, devices or websites. That could hurt real people and is against the law.", "Try Aegis to learn how attacks work and how to stop them, or practise legally on free labs such as PortSwigger Academy, picoCTF or TryHackMe."], false); return; } }
+  bs.q = q; bs.pending = ""; bs.busy = true; bsPaint(true);
+  if (!(await safetyGate(q))) { bs.busy = false; bsPaint(true); return; }
+  { const mm = await brainModesMod(); if (mm && mm.offensive(q)) { bs.busy = false; bsPaint(true); safeModal("I can\u2019t help with attacking people or systems", ["Loopy AI teaches security so you can defend, not so you can break into accounts, devices or websites. That could hurt real people and is against the law.", "Try Aegis to learn how attacks work and how to stop them, or practise legally on free labs such as PortSwigger Academy, picoCTF or TryHackMe."], false); return; } }
   const solved = bs.forcePack ? null : await brainSolve(q); if (solved) { bs.pending = ""; bsRun(q, solved); return; }
   { const mm = await brainModesMod(), sg = bs.forcePack ? "" : (mm && mm.suggestMode ? mm.suggestMode(q) : ""); if (sg && sg !== (bs.mode || "atlas")) { const nm = (BS_MODES.find(x => x[0] === sg) || [])[1] || sg; bs.mode = sg; showNotice("This looks like a " + (sg === "forge" ? "code" : sg === "aegis" ? "security" : "project") + " question, so I switched to " + nm + " for a better answer.", "ok"); } }
   if (bs.mode && bs.mode !== "atlas") { bs.pending = ""; bsRun(q); return; }
