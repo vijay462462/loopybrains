@@ -1803,7 +1803,7 @@ const equippedCostume = () => { const id = readJSON("dd-costume", "none"); retur
 function loopyPrompt() {
   const h = new Date().getHours(), plan = readJSON("dd-exam-plan", null), left = plan && plan.date ? Math.ceil((new Date(plan.date + "T00:00:00").getTime() - new Date().setHours(0, 0, 0, 0)) / 864e5) : null;
   const pool = h >= 22 || h < 5 ? [["Too late to study? Ask me for a 10 minute revision plan", "Make me a 10 minute revision plan"]]
-    : [["Stuck on a topic? I can explain it simply", "Explain a tough topic to me simply"],
+    : [["Stuck on a topic? Chitti can explain it simply", "Explain a tough topic to me simply"],
        ["Want a quick quiz on your subject?", "Quiz me with 3 questions"],
        ["Ask me for a study plan for this week", "Make me a study plan for this week"],
        ["Need career or placement help? Ask me", "Guide me on career and placements"]];
@@ -2324,8 +2324,8 @@ function renderHome() {
       ),
       el("div", { class: "hb-prompt" },
         el("span", { class: "hb-prompt-dot", "aria-hidden": "true" }),
-        el("p", { class: "hb-prompt-msg" }, "Stuck on a topic? I can explain it simply"),
-        el("button", { type: "button", class: "hb-prompt-btn", onclick: () => { state.ai = state.ai || { msgs: [], busy: false, note: "" }; showPanel("ai"); } }, "Ask Loopy ›")
+        el("p", { class: "hb-prompt-msg" }, "Stuck on a topic? Chitti can explain it simply"),
+        el("button", { type: "button", class: "hb-prompt-btn", onclick: () => { state.ai = state.ai || { msgs: [], busy: false, note: "" }; showPanel("ai"); } }, "Ask Chitti ›")
       ),
       el("p", { class: "hb-choice" }, "Ask a doubt to your friend or classmate, or ask Chitti the Loopy AI"),
       el("div", { class: "hb-actions" },
@@ -2335,7 +2335,7 @@ function renderHome() {
         ),
         el("button", { type: "button", class: "hb-action", onclick: () => { state.ai = state.ai || { msgs: [], busy: false, note: "" }; showPanel("ai"); } },
           el("span", { class: "hb-action-ic" }, "✨"),
-          el("b", {}, "Ask Loopy AI"), el("small", {}, "answers in seconds")
+          el("b", {}, "Ask Chitti"), el("small", {}, "answers in seconds")
         )
       )
     )
