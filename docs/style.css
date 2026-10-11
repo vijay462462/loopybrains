@@ -4340,3 +4340,8 @@ p a:not(.btn):not(.linkbtn):visited, .welcome-card a:not(.btn):visited, #rgElig 
 :root body header.top .brand h1 .bname-text i { background: none !important; -webkit-text-fill-color: var(--muted) !important; color: var(--muted) !important; font-family: inherit !important; font-style: normal !important; font-size: 11px !important; filter: none !important; }
 :root body header.top .brand h1 .bname-text, :root body header.top .brand h1 .bname-text * { text-shadow: none !important; }
 :root body header.top .brand h1 { text-shadow: none !important; filter: none !important; }
+/* While reading answers (scrolling down): only the answer, a slim top bar and a one-line search box remain. Scroll up to bring everything back. */
+.bsfull.dock-min .bs-tabs, .bsfull.dock-min .bsf-bar .bsf-save, .bsfull.dock-min .bsf-bar .bsf-pdf, .bsfull.dock-min .bsf-bar .bsf-night { display: none !important; }
+.bsfull.dock-min .bsf-bar { padding-top: 4px; padding-bottom: 4px; min-height: 0; }
+.bsfull.dock-min .bsf-back { width: 32px; height: 32px; }
+.bsfull .bsf-bar, .bsfull .bs-tabs, .bsfull .bs-dock .bs-comp { transition: padding .18s ease; }
