@@ -4640,7 +4640,7 @@ p a:not(.btn):not(.linkbtn):visited, .welcome-card a:not(.btn):visited, #rgElig 
 @media (max-width: 699px) {
   #splash.sp2 { padding: max(10px, env(safe-area-inset-top)) 16px 0 !important; gap: 8px !important; overflow-y: auto; }
   #splash.sp2 .sp2-main { gap: 6px !important; }
-  #splash.sp2 .sp2-banner-img { height: clamp(96px, 17vh, 150px) !important; width: 100% !important; object-fit: cover !important; border-radius: 18px !important; }
+  #splash.sp2 .sp2-banner-img { height: auto !important; width: 100% !important; aspect-ratio: 1200 / 630; object-fit: contain !important; border-radius: 18px !important; }
   #splash.sp2 .sp2-h { font-size: clamp(1.2rem, 5.4vw, 1.6rem) !important; line-height: 1.12 !important; margin: 2px 0 0 !important; }
   #splash.sp2 .sp2-sub { font-size: .88rem !important; margin: 0 !important; }
   #splash.sp2 .sp2-rows { gap: 8px !important; margin-top: 2px !important; }
@@ -4653,6 +4653,6 @@ p a:not(.btn):not(.linkbtn):visited, .welcome-card a:not(.btn):visited, #rgElig 
   #splash.sp2 .sp2-trust { font-size: .7rem !important; padding: 2px 0 calc(8px + env(safe-area-inset-bottom, 0px)) !important; }
 }
 @media (max-width: 699px) and (max-height: 700px) {
-  #splash.sp2 .sp2-banner-img { height: 13vh !important; }
+  #splash.sp2 .sp2-banner-img { height: 21vh !important; width: auto !important; max-width: 100% !important; margin: 0 auto !important; display: block; }
   #splash.sp2 .sp2-row span { -webkit-line-clamp: 1 !important; }
 }
