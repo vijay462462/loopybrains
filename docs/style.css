@@ -4240,3 +4240,11 @@ p a:not(.btn):not(.linkbtn):visited, .welcome-card a:not(.btn):visited, #rgElig 
 .bsc-hero.busy .bsc-brand-name { margin: 6px 0 0; }
 .bsr-yq { text-align: center; }
 .bsr-load.calm { margin-top: 8px; }
+/* Chitti screen colours: deep ocean teal with a soft coral glow (night) and cool off-white (light) */
+.bsfull.calm { --paper: #f2f9f9; --sheet: #ffffff; --line: #d3e6e6; --ink: #0c2a2e; --muted: #4a6b70; --glow1: rgb(20 184 166 / .16); --glow2: rgb(251 113 82 / .10); }
+:root[data-theme="dark"] .bsfull.calm, .bsfull.calm.night { --paper: #062a33; --sheet: #0b3a45; --line: #17566a; --ink: #e8f7f7; --muted: #94bec4; --accent: #2dd4bf; --accent-soft: #0f4b57; --glow1: rgb(45 212 191 / .26); --glow2: rgb(251 113 82 / .18); }
+/* Thinking icon: the brain shape with a coral loop turning around it */
+.bs-brain-spin { position: relative; display: inline-block; width: 84px; height: 84px; }
+.bs-brain-spin img { position: absolute; inset: 20px; width: 44px; height: 44px; border-radius: 12px; object-fit: cover; box-shadow: 0 10px 28px -8px rgb(45 212 191 / .6); }
+.bs-brain-ring { position: absolute; inset: 0; width: 100%; height: 100%; animation: bscSpin 1.6s linear infinite; transform-origin: 50% 50%; }
+@media (prefers-reduced-motion: reduce) { .bs-brain-ring { animation-duration: 6s; } }

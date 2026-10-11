@@ -5953,6 +5953,10 @@ function brandSpin(cls) {
     A("text", { x: 512, y: 826, "text-anchor": "middle", "font-size": 110, "font-weight": 700, "letter-spacing": 6, fill: "#fff4ec", "font-family": "Georgia, 'Times New Roman', serif" }, "LOOPY"),
     A("text", { x: 512, y: 944, "text-anchor": "middle", "font-size": 84, "font-weight": 700, "letter-spacing": 40, fill: "#fb923c", "font-family": "Georgia, 'Times New Roman', serif" }, "AI"));
 }
+function brainSpin() {
+  const ring = sv("svg", { viewBox: "0 0 100 100", class: "bs-brain-ring", "aria-hidden": "true" }); ring.append(sv("circle", { cx: 50, cy: 50, r: 44, fill: "none", stroke: "#fb923c", "stroke-width": 6, "stroke-linecap": "round", "stroke-dasharray": "190 87", transform: "rotate(-75 50 50)" }), sv("circle", { cx: 88, cy: 30, r: 4.5, fill: "#fff4ec" }));
+  return el("span", { class: "bs-brain-spin", role: "img", "aria-label": "Chitti is thinking" }, el("img", { src: "icon-192.png", alt: "", width: "44", height: "44" }), ring);
+}
 function loopyMark(cls) {
   const r = sv("svg", { viewBox: "0 0 64 64", class: cls, "aria-hidden": "true" }), cols = ["#f59e0b", "#f97316", "#ef4444", "#fb923c", "#22c55e", "#86efac", "#10b981", "#eab308"];
   for (let i = 0; i < 8; i++) r.append(sv("line", { x1: 32, y1: 32 - (i % 2 ? 14 : 8), x2: 32, y2: 32 - (i % 2 ? 29 : 25), stroke: cols[i], "stroke-width": 4.6, "stroke-linecap": "round", transform: "rotate(" + i * 45 + " 32 32)" }));
@@ -6010,7 +6014,7 @@ function brainViewInner(ui) {
   const foot = el("p", { class: "bs-foot bsf-noprint" }, "Today: " + L.day + " of " + L.caps.day + " credits \u00B7 Check important facts");
   ui.bar = bar; ui.head = head; ui.dock = el("div", { class: "bs-dock bsf-noprint" }, sheet, sug, form, foot);
   const chips = (list, onTap) => el("div", { class: "bs-chips" }, ...list.map(t => el("button", { type: "button", class: "tp-sub", onclick: () => onTap(t) }, t)));
-  const thinkingEls = bs.busy ? [el("p", { class: "bsr-yq" }, el("small", {}, "Your question"), el("b", {}, bs.q || bs.pending || "")), el("div", { class: "bsr-load calm", role: "status", "aria-live": "polite" }, el("div", { class: "bsc-orbit sm", "aria-hidden": "true" }, el("i", { class: "r1" }), el("i", { class: "r2" }), el("b", { class: "d1" }), el("b", { class: "d2" }), el("b", { class: "d3" }), brandSpin("bsc-brand live")), el("p", { class: "bsr-think" }, "Chitti is thinking\u2026"),
+  const thinkingEls = bs.busy ? [el("p", { class: "bsr-yq" }, el("small", {}, "Your question"), el("b", {}, bs.q || bs.pending || "")), el("div", { class: "bsr-load calm", role: "status", "aria-live": "polite" }, el("div", { class: "bsc-orbit sm", "aria-hidden": "true" }, el("i", { class: "r1" }), el("i", { class: "r2" }), el("b", { class: "d1" }), el("b", { class: "d2" }), el("b", { class: "d3" }), brainSpin()), el("p", { class: "bsr-think" }, "Chitti is thinking\u2026"),
     el("div", { class: "bsr-lines", "aria-hidden": "true" }, el("i", {}), el("i", {}), el("i", {})))] : [];
   ui.thinking = bs.busy && bs.res ? thinkingEls : [];
   if (bs.pending) {
