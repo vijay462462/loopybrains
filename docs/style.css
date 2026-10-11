@@ -4345,3 +4345,15 @@ p a:not(.btn):not(.linkbtn):visited, .welcome-card a:not(.btn):visited, #rgElig 
 .bsfull.dock-min .bsf-bar { padding-top: 4px; padding-bottom: 4px; min-height: 0; }
 .bsfull.dock-min .bsf-back { width: 32px; height: 32px; }
 .bsfull .bsf-bar, .bsfull .bs-tabs, .bsfull .bs-dock .bs-comp { transition: padding .18s ease; }
+/* Welcome pages (splash + first-run steps + college card): pure white in every theme */
+#splash, #splash.sp2, .welcome, .welcome .welcome-card, .sp2 { --paper: #ffffff; --sheet: #ffffff; --ink: #111827; --muted: #4b5563; --line: #e5e7eb; --accent-soft: #f3f4f6; --glow1: transparent; --glow2: transparent; color: #111827; }
+#splash, #splash.sp2, .welcome, .sp2 { background: #ffffff !important; background-image: none !important; }
+.welcome .welcome-card { background: #ffffff !important; box-shadow: none !important; }
+.welcome .btn:not(.primary), .welcome .wl-card, .welcome .ob-card > div { border-color: #e5e7eb; }
+.welcome .btn:not(.primary) { background: #ffffff; color: #111827; }
+.sp2 h1, .sp2 h2, .sp2 p, .sp2 small, .welcome h1, .welcome h2, .welcome p, .welcome li, .welcome small { color: #111827; }
+.sp2 p, .welcome p, .welcome small { color: #4b5563; }
+.sp2 [class*="card"], .sp2 [class*="tile"], .sp2 [class*="feat"], .welcome [class*="card"]:not(.welcome-card), .welcome .ob-row, .welcome li { box-shadow: 0 1px 3px rgb(17 24 39 / .08) !important; }
+.sp2 h1 em, .sp2 h1 span, .sp2 h1 b, .sp2 h1 i, .sp2 h2 em, .sp2 h2 span, .sp2 h2 b, .sp2 h2 i { color: #ea580c !important; -webkit-text-fill-color: #ea580c !important; background: none !important; }
+.sp2-row, .ab-pillar, .welcome .ab-pillar { box-shadow: 0 1px 3px rgb(17 24 39 / .08) !important; border: 1px solid #e5e7eb !important; background: #ffffff !important; }
+.sp2-row svg { box-shadow: none !important; }
