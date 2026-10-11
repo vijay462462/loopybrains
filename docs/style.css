@@ -4357,3 +4357,24 @@ p a:not(.btn):not(.linkbtn):visited, .welcome-card a:not(.btn):visited, #rgElig 
 .sp2 h1 em, .sp2 h1 span, .sp2 h1 b, .sp2 h1 i, .sp2 h2 em, .sp2 h2 span, .sp2 h2 b, .sp2 h2 i { color: #ea580c !important; -webkit-text-fill-color: #ea580c !important; background: none !important; }
 .sp2-row, .ab-pillar, .welcome .ab-pillar { box-shadow: 0 1px 3px rgb(17 24 39 / .08) !important; border: 1px solid #e5e7eb !important; background: #ffffff !important; }
 .sp2-row svg { box-shadow: none !important; }
+/* Welcome pages: coloured buttons on the white background */
+.welcome .btn.primary, .welcome button.primary, .welcome .welcome-card .btn.primary, #splash .sp2-cta, #splash button.primary { background: linear-gradient(135deg, #fb923c, #ea580c) !important; color: #fff !important; border: 0 !important; box-shadow: 0 8px 18px -8px rgb(234 88 12 / .6) !important; }
+.welcome .btn:not(.primary):not(:disabled) { background: #fff7ed !important; color: #c2410c !important; border: 1.5px solid #fdba74 !important; }
+.welcome .btn:disabled, .welcome .btn[aria-disabled="true"] { background: #f3f4f6 !important; color: #9ca3af !important; border: 1.5px dashed #d1d5db !important; box-shadow: none !important; }
+.welcome .rg-opt.ok, .welcome .wl-opt, .welcome .ob-col { background: #fff7ed !important; border: 1.5px solid #fdba74 !important; color: #111827 !important; }
+.welcome .rg-opt.ok.on, .welcome .ob-col.on, .welcome .wl-opt.on { background: #ffedd5 !important; border-color: #ea580c !important; }
+.welcome .ob-chip.on, .welcome .chip.on { background: #ea580c !important; color: #fff !important; }
+.welcome [class*="terms"], .welcome [class*="agree"], .welcome [class*="note"] { background: #fff7ed !important; border-color: #fdba74 !important; }
+.welcome a, .welcome a:visited { color: #c2410c !important; }
+.welcome input[type="checkbox"] { accent-color: #ea580c; }
+/* Splash name in plain text, new logo tile */
+.sp2-bname b, .sp2-bname i { background: none !important; -webkit-text-fill-color: #111827 !important; color: #111827 !important; text-shadow: none !important; filter: none !important; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif !important; font-style: normal; }
+.sp2-bname i { -webkit-text-fill-color: #4b5563 !important; color: #4b5563 !important; }
+.sp2-promo { display: none !important; }
+/* Welcome pages carry no logo or brand name */
+.sp2-brand, .sp2-bmark, .sp2-bname { display: none !important; }
+
+/* Welcome pages: only the brain icon, no LB logo, no names */
+.sp2-brain { display: block; width: 84px; height: 84px; border-radius: 22px; margin: 0 0 14px; }
+.welcome .ob-brand, .welcome .ob-loopy { display: block !important; width: 72px; height: 72px; margin: 0 auto 10px; border-radius: 18px; background: url(icon-192.png) center / cover no-repeat; }
+.welcome .ob-brand > *, .welcome .ob-loopy > * { display: none !important; }
