@@ -9055,9 +9055,9 @@ function renderIntro() {
     : null;
 
   return [
-    el("h2", {}, "How it works"),
+    el("h2", { class: "hiw-h" }, "How it works"),
     statsRow,
-    el("p", { class: "body" }, steps),
+    el("p", { class: "body hiw-steps" }, steps),
     el("div", { class: "rowbtns" },
       el("button", { class: "btn primary", type: "button", onclick: openAsk }, t.ask),
       el("button", { class: "btn", type: "button", onclick: () => showPanel("network") }, "🌐 College network")),
