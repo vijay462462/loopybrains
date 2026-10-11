@@ -4224,3 +4224,39 @@ body.dldq-open { overflow: hidden; }
 
 /* Welcome splash hero image */
 .sp2-hero { display: block; width: 100%; height: auto; aspect-ratio: 1024 / 572; object-fit: cover; border-radius: 20px; box-shadow: 0 18px 40px -18px rgb(0 0 0 / .7); }
+
+/* v474: header lockup, Loopy AI screen */
+:root body header.top .brand h1 img.hd-mark { width: 40px; height: 40px; padding: 0 !important; background: transparent !important; border-radius: 11px; object-fit: cover; }
+.hd-word { display: inline-flex; align-items: baseline; font-weight: 900; font-size: 1.45rem; letter-spacing: -.02em; line-height: 1; text-transform: lowercase; }
+.hd-word b, .hd-word i { font: inherit; font-style: normal; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.hd-word b { background-image: linear-gradient(90deg, #f59e0b, #fb7185); }
+.hd-word i { background-image: linear-gradient(90deg, #22d3ee, #4ade80); }
+@media (max-width: 700px) { .hd-word { font-size: 1.2rem; } }
+
+.bsc-hero .bsc-hi { font-size: clamp(.95rem, 4vw, 1.15rem) !important; font-weight: 600 !important; opacity: .92; }
+.bsc-hero .bsc-sub { font-size: .88rem !important; }
+.bsc-brand-name { align-items: flex-start !important; }
+.chi-row { display: flex; align-items: center; gap: 10px; }
+.bsc-hero .bsc-bn-big { font-size: clamp(2rem, 9vw, 2.6rem); background-image: linear-gradient(100deg, #f59e0b 0%, #f97316 30%, #fff 50%, #f97316 70%, #ef4444 100%); background-size: 250% 100%; animation: chiShine 3.2s linear infinite; }
+.chi-orb { flex: none; width: 14px; height: 14px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #fff, #22d3ee 55%, #0891b2); animation: chiPulse 1.8s ease-out infinite; }
+.chi-wave { display: flex; align-items: center; gap: 3px; height: 24px; }
+.chi-wave i { width: 3px; height: 100%; border-radius: 2px; background: #fdba74; animation: chiBar 1s ease-in-out infinite; }
+.chi-wave i:nth-child(2) { animation-delay: -.2s; } .chi-wave i:nth-child(3) { animation-delay: -.4s; } .chi-wave i:nth-child(4) { animation-delay: -.6s; } .chi-wave i:nth-child(5) { animation-delay: -.8s; }
+@keyframes chiShine { to { background-position: -250% 0; } }
+@keyframes chiPulse { 0% { box-shadow: 0 0 0 0 rgb(34 211 238 / .7); } 100% { box-shadow: 0 0 0 12px rgb(34 211 238 / 0); } }
+@keyframes chiBar { 0%, 100% { transform: scaleY(.25); } 50% { transform: scaleY(1); } }
+@media (prefers-reduced-motion: reduce) { .chi-orb, .chi-wave i, .bsc-hero .bsc-bn-big { animation: none !important; } .chi-wave i { transform: scaleY(.6); } }
+
+.bs-lvs { flex-wrap: nowrap !important; overflow-x: auto !important; scroll-snap-type: x proximity; padding: 4px 2px !important; }
+.bs-lv { scroll-snap-align: start; }
+.bs-sheet { max-height: 46vh; }
+
+/* v474: premium Loopy AI search box */
+.bs-comp { position: relative; border: 1.5px solid transparent !important; border-radius: 26px !important; background: linear-gradient(var(--sheet), var(--sheet)) padding-box, linear-gradient(120deg, #22d3ee, #4ade80 35%, #f59e0b 70%, #f97316) border-box !important; box-shadow: 0 18px 44px -18px rgb(249 115 22 / .55), 0 0 0 4px rgb(34 211 238 / .08) !important; backdrop-filter: blur(14px); transition: box-shadow .25s ease; }
+.bs-comp:focus-within { box-shadow: 0 20px 50px -16px rgb(34 211 238 / .6), 0 0 0 5px rgb(74 222 128 / .16) !important; }
+.bs-comp .bs-in { font-size: 1.05rem; font-weight: 500; letter-spacing: .005em; }
+.bs-comp .bs-in::placeholder { color: var(--muted); opacity: .8; font-weight: 400; }
+.bsfull .bs-comp .bs-go { border-radius: 16px; color: #fff; background: linear-gradient(135deg, #fb923c, #f97316 55%, #ea580c); box-shadow: 0 10px 22px -10px rgb(234 88 12 / .9), inset 0 1px 0 rgb(255 255 255 / .35); transition: transform .15s ease; }
+.bsfull .bs-comp .bs-go:active { transform: scale(.94); }
+.bs-comp .bs-mic, .bs-comp .bs-tuneic { border-radius: 16px; }
+.bs-comp .bs-eng { border-radius: 16px; font-weight: 700; }
