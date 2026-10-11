@@ -4303,3 +4303,11 @@ p a:not(.btn):not(.linkbtn):visited, .welcome-card a:not(.btn):visited, #rgElig 
 /* Chitti dark look: deep midnight blue instead of grey; colour still only on buttons */
 :root[data-theme="dark"] .bsfull.calm, .bsfull.calm.night { --paper: #0a1128; --sheet: #121c3d; --line: #25346a; --ink: #eef2ff; --muted: #9eabd6; --accent-soft: #1a2750; }
 .bsfull.calm.night, :root[data-theme="dark"] .bsfull.calm { background: var(--paper); }
+/* Chitti buttons: dark black with white text and a thin light edge */
+.bsfull .bs-mode.on, .bsfull .bs-mode[aria-selected="true"], .bsfull .bs-engb.on, .bsfull .bs-comp .bs-go, .bsfull .bsf-pdf, .bsfull .bsf-save.on, .bsfull .btn.primary { background: #05060a !important; color: #fff !important; border: 1.5px solid rgb(255 255 255 / .28) !important; box-shadow: none !important; }
+.bsfull .bs-comp .bs-go svg, .bsfull .bs-comp .bs-go * { color: #fff; stroke: currentColor; }
+/* Plain solid background on the Chitti screen: no ruled lines, no glow, no gradient */
+.bsfull, .bsfull.calm, .bsfull .bsf-scroll { background: var(--paper) !important; background-image: none !important; }
+.bsfull .bs-dock { background: var(--paper) !important; }
+.bsfull .bsf-bar, .bsfull header.bsf-bar { background: var(--paper) !important; }
+.bsfull .bs-comp, .bsfull .bs-comp:focus-within { box-shadow: none !important; }
