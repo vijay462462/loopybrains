@@ -2327,7 +2327,7 @@ function renderHome() {
         el("p", { class: "hb-prompt-msg" }, "Stuck on a topic? I can explain it simply"),
         el("button", { type: "button", class: "hb-prompt-btn", onclick: () => { state.ai = state.ai || { msgs: [], busy: false, note: "" }; showPanel("ai"); } }, "Ask Loopy ›")
       ),
-      el("p", { class: "hb-choice" }, "Ask a doubt to your friend or classmate, or ask Loopy AI. It is your choice."),
+      el("p", { class: "hb-choice" }, "Ask a doubt to your friend or classmate, or ask Chitti the Loopy AI"),
       el("div", { class: "hb-actions" },
         el("button", { type: "button", class: "hb-action", onclick: () => openAsk() },
           el("span", { class: "hb-action-ic" }, "❓"),

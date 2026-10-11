@@ -4232,6 +4232,6 @@ p a:not(.btn):not(.linkbtn):visited, .welcome-card a:not(.btn):visited, #rgElig 
 .guide-card .guide-head { cursor: pointer; }
 .guide-card:not(.open) { padding-bottom: 12px; }
 /* Smaller welcome banner and How-it-works text */
-@media (max-width: 700px) { .hb-promo { display: none; } .hb-choice { display: none; } }
+@media (max-width: 700px) { .hb-promo { display: none; } }
 .hiw-h { font-size: 18px; margin-bottom: 4px; }
 .hiw-steps { font-size: 14px; line-height: 1.5; white-space: pre-line; }
