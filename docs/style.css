@@ -4627,3 +4627,7 @@ p a:not(.btn):not(.linkbtn):visited, .welcome-card a:not(.btn):visited, #rgElig 
 #splash .sp2-sub { color: #1f2d3a !important; font-weight: 600; }
 .sp2-more { margin: 2px auto 0; text-align: center; font-size: .78rem; color: #44525f; }
 .sp2-more a { color: #c2410c; font-weight: 700; }
+/* First-screen tiles: flat, no shadow or shading */
+#splash .sp2-row { box-shadow: none !important; background-image: none !important; }
+#splash .sp2-row::after { display: none !important; }
+#splash .sp2-row .sp2-ic { box-shadow: none !important; }
