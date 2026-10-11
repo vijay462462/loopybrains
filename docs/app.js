@@ -1450,10 +1450,10 @@ function renderBottomNav() {
   const icons = { doubts: 'doubts', ideas: 'ideas', clubs: 'clubs', gate: 'gate', challenges: 'gate', market: 'market' };
   const labels = { doubts: 'Doubts', ideas: 'Ideas', clubs: 'Clubs', gate: EXAM_LABEL.length > 8 ? EXAM_LABEL.split(/[ /]/)[0] : EXAM_LABEL, challenges: 'Challenges', market: 'Market' };
   nav.replaceChildren(
-    el('button', { type: 'button', class: 'bnav-btn' + (state.mode === 'intro' && !state.selected ? ' active' : ''), onclick: () => {
-      state.mode = 'intro'; state.selected = null; state.query = ''; $('search') && ($('search').value = '');
-      try { history.replaceState(null, '', '#' + state.tab); } catch (_) {}
-      render(); window.scrollTo({ top: 0, behavior: 'smooth' });
+    el('button', { type: 'button', class: 'bnav-btn' + (state.mode === 'intro' && !state.selected && state.tab === 'doubts' ? ' active' : ''), onclick: () => {
+      state.tab = 'doubts'; state.mode = 'intro'; state.selected = null; state.query = ''; state.group = 'All'; $('search') && ($('search').value = '');
+      try { history.replaceState(null, '', '#doubts'); } catch (_) {}
+      render(); requestAnimationFrame(() => { const lc = document.querySelector('.listcol'); if (lc) lc.scrollIntoView({ behavior: 'smooth', block: 'start' }); else window.scrollTo({ top: 0, behavior: 'smooth' }); });
     } },
       el('span', { class: 'bnav-icon' }, svgIcon('home')), el('span', { class: 'bnav-label' }, 'Home')),
     ...['doubts', 'ideas', 'clubs', 'market', 'gate'].filter(tab => (!isSimple() || tab === 'doubts' || tab === 'ideas' || state.tab === tab) && (!focusOn() || isAcademicTab(tab)) && featureOn(tab === 'market' ? 'market' : 'doubts')).map(tab => {
@@ -10760,7 +10760,7 @@ if (themeBtn) {
 // Brand lockup from the brand guide: the monogram C, then "LOOPY" in bold serif with wide spacing and a small spaced gold "BRAINS".
 function brandLockup(title) {
   const words = String(title || "Loopy Brains").trim().split(/\s+/), last = words.length > 1 ? words.pop() : "", rest = words.join(" ") || String(title);
-  const tpl = document.getElementById("brandMarkTpl"), src = (tpl && tpl.content && tpl.content.firstElementChild) || document.querySelector(".sp2-bmark svg"); let mark = null;
+  const tpl = document.getElementById("brandMarkTpl"), src = (tpl && tpl.content && tpl.content.firstElementChild) || document.querySelector(".sp2-bmark img, .sp2-bmark svg"); let mark = null;
   if (src) {
     mark = src.cloneNode(true); mark.removeAttribute("width"); mark.removeAttribute("height"); mark.setAttribute("class", "bmark hd-mark"); mark.setAttribute("aria-hidden", "true"); mark.setAttribute("focusable", "false");
     mark.querySelectorAll("[id]").forEach(n => { n.id = n.id + "H"; });   // gradient ids must stay unique
