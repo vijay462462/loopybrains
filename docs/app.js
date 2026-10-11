@@ -4771,7 +4771,7 @@ function helpersFor(q) {
 function lsAiCard(ls) {
   const a = ls.ai, yt = (t) => "https://www.youtube.com/results?search_query=" + encodeURIComponent(t), gg = (t, img) => "https://www.google.com/search?" + (img ? "tbm=isch&" : "") + "q=" + encodeURIComponent(t);
   return el("div", { class: "learn-card ls-card ls-ai" },
-    el("small", { class: "tag" }, "\u2728 Loopy Brain"),
+    el("small", { class: "tag" }, "\u2728 Loopy Brains"),
     el("p", {}, a.summary),
     a.keyPoints.length ? el("ul", { class: "ls-points" }, ...a.keyPoints.map(k => el("li", {}, k))) : null,
     a.example ? el("p", { class: "hint" }, el("b", {}, "Example: "), a.example) : null,
@@ -4858,14 +4858,14 @@ function tpSec(n, id, title, kicker, ...kids) {
 function renderTopic() {
   const ts = tpState(), q = ts.q, d = ts.data, subj = ts.subject;
   const back = el("button", { class: "btn", type: "button", onclick: () => { state.mode = ts.back && ts.back !== "topic" ? ts.back : "intro"; render(); } }, "Back");
-  if (!q) return [el("h2", {}, "Loopy Brain topic guide"), el("p", { class: "hint" }, "Pick a topic and Loopy builds a guide for you."), el("div", { class: "rowbtns" }, back)];
+  if (!q) return [el("h2", {}, "Loopy Brains topic guide"), el("p", { class: "hint" }, "Pick a topic and Loopy builds a guide for you."), el("div", { class: "rowbtns" }, back)];
   const yt = (extra) => "https://www.youtube.com/results?search_query=" + encodeURIComponent(q + " " + extra);
   const gg = (extra) => "https://www.google.com/search?q=" + encodeURIComponent(q + " " + extra);
   const sfx = LS_LEVELS[ts.level][1], lv = ts.level;
   const levelBtns = Object.entries(LS_LEVELS).map(([k, v]) => el("button", { type: "button", class: "tp-lv" + (lv === k ? " on" : ""), "aria-pressed": String(lv === k), onclick: () => { ts.level = k; render(); } }, v[0].replace(/^[^\w]+/u, "")));
   const jump = (id, t) => el("button", { type: "button", class: "tp-jump", onclick: () => { const e = document.getElementById("tp-" + id); if (e) e.scrollIntoView({ behavior: "smooth", block: "start" }); } }, t);
   const hero = el("div", { class: "tp-hero" },
-    el("small", { class: "tp-kick" }, "Loopy Brain · Topic guide"),
+    el("small", { class: "tp-kick" }, "Loopy Brains · Topic guide"),
     el("div", { class: "tp-hero-row" }, el("div", { class: "tp-hero-txt" }, el("h2", {}, d ? d.title : q), subj ? el("span", { class: "tp-chip" }, subj) : null), d && d.img ? el("img", { class: "tp-hero-img", src: d.img, alt: d.title, loading: "lazy", referrerpolicy: "no-referrer" }) : null),
     ts.busy ? el("p", { class: "tp-load", role: "status" }, "Loopy is preparing your guide...") : (d && d.intro ? el("p", { class: "tp-lead" }, (d.intro.split(/\.\s/)[0] || d.intro).slice(0, 220)) : null),
     el("div", { class: "tp-lvs", role: "group", "aria-label": "How deep" }, ...levelBtns),
@@ -4875,7 +4875,7 @@ function renderTopic() {
   // 1 Summary (AI first when available)
   const ai = ts.ai;
   out.push(tpSec(1, "overview", "Summary", "What it is, in plain words",
-    ai ? el("div", { class: "tp-ai" }, el("small", { class: "tag" }, "Loopy Brain"), el("p", {}, ai.summary), ai.example ? el("p", { class: "hint" }, el("b", {}, "Example: "), ai.example) : null) : null,
+    ai ? el("div", { class: "tp-ai" }, el("small", { class: "tag" }, "Loopy Brains"), el("p", {}, ai.summary), ai.example ? el("p", { class: "hint" }, el("b", {}, "Example: "), ai.example) : null) : null,
     d && d.intro ? el("p", { class: "tp-text" }, lv === "quick" ? d.intro.slice(0, 520) : d.intro) : el("p", { class: "hint" }, "No short summary was found for this exact name. Try the videos and notes below, or ask classmates."),
     d && d.page ? outLink(d.page, "Read the full article", "linkbtn") : null));
   // 2 Key ideas
@@ -4943,8 +4943,8 @@ function renderLoopySearch() {
     el("div", { class: "rowbtns", role: "group", "aria-label": "How deep" }, ...Object.entries(LS_LEVELS).map(([k, v]) => el("button", { class: "btn sm" + (ls.level === k ? " primary" : ""), type: "button", "aria-pressed": String(ls.level === k), onclick: () => { ls.level = k; render(); } }, v[0]))),
     !q ? el("p", { class: "hint" }, "Tip: search a unit topic from your syllabus, for example Moment generating function.") : null,
     q && ls.ai ? lsAiCard(ls) : null,
-    q && !ls.ai && PLUS.functionsUrl ? el("p", { class: "hint", role: "status" }, ls.aiNote || "Loopy Brain answers appear here for Plus members.") : null,
-    q && !PLUS.functionsUrl ? el("p", { class: "hint" }, "Loopy Brain answers switch on soon. The quick answer and links below work now.") : null,
+    q && !ls.ai && PLUS.functionsUrl ? el("p", { class: "hint", role: "status" }, ls.aiNote || "Loopy Brains answers appear here for Plus members.") : null,
+    q && !PLUS.functionsUrl ? el("p", { class: "hint" }, "Loopy Brains answers switch on soon. The quick answer and links below work now.") : null,
     q && r ? el("div", { class: "learn-card ls-card" },
       r.img ? el("img", { class: "ls-img", src: r.img, alt: r.title, loading: "lazy", referrerpolicy: "no-referrer" }) : null,
       el("strong", {}, r.title),
@@ -4962,7 +4962,7 @@ function renderLoopySearch() {
     ...(q ? helpersFor(q).map(({ p, n }) => lsPerson(p, el("small", {}, "Answered " + plural(n, "doubt") + " on this topic"))) : []),
     q ? el("div", { class: "label" }, "\u{1F4AC} Ask for help") : null,
     q ? el("div", { class: "rowbtns" },
-      PLUS.functionsUrl ? el("button", { class: "btn sm primary", type: "button", onclick: () => { state.ai = state.ai || { msgs: [], busy: false, note: "" }; state.ai.prefill = "Explain " + q + " for a B.Tech student, with a simple example."; showPanel("ai"); } }, "✨ Explain with Loopy Brain") : null,
+      PLUS.functionsUrl ? el("button", { class: "btn sm primary", type: "button", onclick: () => { state.ai = state.ai || { msgs: [], busy: false, note: "" }; state.ai.prefill = "Explain " + q + " for a B.Tech student, with a simple example."; showPanel("ai"); } }, "✨ Explain with Loopy Brainss") : null,
       el("button", { class: "btn sm", type: "button", onclick: () => { state.tab = "doubts"; state.group = "All"; state.filter = "all"; state.query = q; state.selected = null; state.mode = "intro"; render(); } }, "\u{1F50E} Doubts on this"),
       el("button", { class: "btn sm", type: "button", onclick: () => { state.mode = "ask"; render(); } }, "❓ Ask classmates")) : null,
     q ? el("p", { class: "guide-safe" }, el("b", {}, "Stay safe: "), "Video and PDF buttons open other websites in a new tab. Download only from sites you trust and never enter your password or OTP there.") : null,
@@ -6479,7 +6479,7 @@ function renderSubject(C, r) {
       unitInfo(n) ? el("div", { class: "tp-subs" }, ...String(unitInfo(n).x || "").split(/[;,.]/).map(t => t.trim()).filter(t => t.length > 2 && t.length < 50).slice(0, 8).map(t => el("button", { type: "button", class: "tp-sub", onclick: () => openTopic(t + " " + name, name, "curriculum") }, t))) : null,
       el("div", { class: "rowbtns" }, el("button", { class: "btn sm" + (done.includes(n) ? " primary" : ""), type: "button", "aria-pressed": String(done.includes(n)), onclick: () => toggle(n) }, (done.includes(n) ? "✓ " : "") + "Unit " + n), outLink(unitUrl(n, "v"), "▶ Videos", "linkbtn"), outLink(unitUrl(n, "p"), "\u{1F4C4} Notes PDF", "linkbtn")))))),
     el("div", { class: "rowbtns" },
-      el("button", { class: "btn sm primary", type: "button", onclick: () => openTopic(name, name, "curriculum") }, "\u2728 Explain with Loopy Brain"),
+      el("button", { class: "btn sm primary", type: "button", onclick: () => openTopic(name, name, "curriculum") }, "\u2728 Explain with Loopy Brains"),
       outLink(nptelUrl(name), "\u{1F393} Full IIT course", "btn sm"),
       el("button", { class: "btn sm", type: "button", onclick: () => { state.tab = "doubts"; state.group = "All"; state.filter = "all"; state.query = name; state.selected = null; state.mode = "intro"; render(); } }, "\u{1F50E} Doubts on this"),
       el("button", { class: "btn", type: "button", onclick: () => { curState.open = null; render(); } }, "Back to subjects")),
@@ -9586,8 +9586,8 @@ function renderView() {
   }
   if (d.body) { out.push(el("p", { class: "body" }, d.body)); const yc = renderYtCards(d.body); if (yc) out.push(yc); }
   if (state.tab === "doubts" && !d.resolvedReplyId) out.push(el("div", { class: "tp-self" },
-    el("div", {}, el("strong", {}, "Don't want to wait for replies?"), el("small", {}, "Loopy Brain explains this topic now: summary, diagrams, 3D models, videos and practice.")),
-    el("button", { class: "btn sm primary", type: "button", onclick: () => openTopic(d.title || g, g, "view") }, "\u2728 Explain with Loopy Brain")));
+    el("div", {}, el("strong", {}, "Don't want to wait for replies?"), el("small", {}, "Loopy Brains explains this topic now: summary, diagrams, 3D models, videos and practice.")),
+    el("button", { class: "btn sm primary", type: "button", onclick: () => openTopic(d.title || g, g, "view") }, "\u2728 Explain with Loopy Brains")));
   // AI Help panel
   if (state.tab === "doubts" || state.tab === "gate") {
     const aiOpen = state.aiPanel === d.id;
