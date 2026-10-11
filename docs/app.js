@@ -5932,14 +5932,8 @@ function securityView(r) {
   return out;
 }
 function brandSpin(cls) {
-  // Loopy AI logo: the LB monogram stays still while the coral loop around it turns (it turns faster while Loopy is thinking).
-  const A = (n, a, ...k) => sv(n, a, ...k), stop = (o, c) => A("stop", { offset: o, "stop-color": c });
-  const defs = A("defs", {}, A("linearGradient", { id: "bsBg", x1: 0, y1: 0, x2: 1, y2: 1 }, stop(0, "#22c55e"), stop(.55, "#166534"), stop(1, "#0f3d22")), A("linearGradient", { id: "bsRing", x1: 0, y1: 0, x2: 1, y2: 1 }, stop(0, "#fdba74"), stop(1, "#f97316")));
-  const ring = A("g", { class: "bs-spinc" }, A("circle", { cx: 256, cy: 256, r: 196, fill: "none", stroke: "url(#bsRing)", "stroke-width": 30, "stroke-linecap": "round", "stroke-dasharray": "960 272", transform: "rotate(-75 256 256)" }), A("circle", { cx: 404, cy: 132, r: 17, fill: "#fff4ec" }));
-  const lb = A("g", { fill: "none", stroke: "#fff4ec", "stroke-width": 34, "stroke-linecap": "round", "stroke-linejoin": "round", transform: "translate(-41 0)" }, A("path", { d: "M194 168V340H234" }), A("path", { d: "M302 168V340" }), A("path", { d: "M302 168H336C366 168 380 188 380 210C380 234 364 252 330 252H302" }), A("path", { d: "M302 252H338C378 252 394 274 394 298C394 322 376 340 338 340H302" }));
-  return A("svg", { viewBox: "0 0 1024 1024", class: cls, role: "img", "aria-label": "Loopy AI" }, defs, A("rect", { width: 1024, height: 1024, rx: 230, fill: "url(#bsBg)" }), A("g", { transform: "translate(206 70) scale(1.2)" }, ring, lb),
-    A("text", { x: 512, y: 826, "text-anchor": "middle", "font-size": 110, "font-weight": 700, "letter-spacing": 6, fill: "#fff4ec", "font-family": "Georgia, 'Times New Roman', serif" }, "LOOPY"),
-    A("text", { x: 512, y: 944, "text-anchor": "middle", "font-size": 84, "font-weight": 700, "letter-spacing": 40, fill: "#fb923c", "font-family": "Georgia, 'Times New Roman', serif" }, "AI"));
+  // Loopy AI brain icon: it flips around while Chitti is thinking, inside a turning ring.
+  return el("span", { class: "bs-brain " + (cls || ""), role: "img", "aria-label": "Loopy AI" }, el("i", { class: "bs-brain-ring", "aria-hidden": "true" }), el("img", { class: "bs-brain-img", src: "icon-192.png", alt: "", width: "56", height: "56" }));
 }
 function loopyMark(cls) {
   const r = sv("svg", { viewBox: "0 0 64 64", class: cls, "aria-hidden": "true" }), cols = ["#f59e0b", "#f97316", "#ef4444", "#fb923c", "#22c55e", "#86efac", "#10b981", "#eab308"];
@@ -5999,7 +5993,7 @@ function brainViewInner(ui) {
   const foot = el("p", { class: "bs-foot bsf-noprint" }, "Today: " + L.day + " of " + L.caps.day + " credits \u00B7 Check important facts");
   ui.bar = bar; ui.head = head; ui.dock = el("div", { class: "bs-dock bsf-noprint" }, sheet, sug, form, foot);
   const chips = (list, onTap) => el("div", { class: "bs-chips" }, ...list.map(t => el("button", { type: "button", class: "tp-sub", onclick: () => onTap(t) }, t)));
-  const thinkingEls = bs.busy ? [el("p", { class: "bsr-yq" }, el("small", {}, "Your question"), el("b", {}, bs.q || bs.pending || "")), el("div", { class: "bsr-load calm", role: "status", "aria-live": "polite" }, el("div", { class: "bsc-orbit sm", "aria-hidden": "true" }, el("i", { class: "r1" }), el("i", { class: "r2" }), el("b", { class: "d1" }), el("b", { class: "d2" }), el("b", { class: "d3" }), brandSpin("bsc-brand live")), el("p", { class: "bsr-think" }, "Loopy is thinking\u2026"),
+  const thinkingEls = bs.busy ? [el("p", { class: "bsr-yq" }, el("small", {}, "Your question"), el("b", {}, bs.q || bs.pending || "")), el("div", { class: "bsr-load calm", role: "status", "aria-live": "polite" }, el("div", { class: "bsc-orbit sm", "aria-hidden": "true" }, el("i", { class: "r1" }), el("i", { class: "r2" }), el("b", { class: "d1" }), el("b", { class: "d2" }), el("b", { class: "d3" }), brandSpin("bsc-brand live")), el("p", { class: "bsr-think" }, "Chitti is thinking\u2026"),
     el("div", { class: "bsr-lines", "aria-hidden": "true" }, el("i", {}), el("i", {}), el("i", {})))] : [];
   ui.thinking = bs.busy && bs.res ? thinkingEls : [];
   if (bs.pending) {
