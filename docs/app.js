@@ -1809,7 +1809,7 @@ const equippedCostume = () => { const id = readJSON("dd-costume", "none"); retur
 function loopyPrompt() {
   const h = new Date().getHours(), plan = readJSON("dd-exam-plan", null), left = plan && plan.date ? Math.ceil((new Date(plan.date + "T00:00:00").getTime() - new Date().setHours(0, 0, 0, 0)) / 864e5) : null;
   const pool = h >= 22 || h < 5 ? [["Too late to study? Ask me for a 10 minute revision plan", "Make me a 10 minute revision plan"]]
-    : [["Stuck on a topic? I can explain it simply", "Explain a tough topic to me simply"],
+    : [["Stuck on a topic? Chitti can explain it simply", "Explain a tough topic to me simply"],
        ["Want a quick quiz on your subject?", "Quiz me with 3 questions"],
        ["Ask me for a study plan for this week", "Make me a study plan for this week"],
        ["Need career or placement help? Ask me", "Guide me on career and placements"]];
@@ -2209,6 +2209,7 @@ function renderHeader() {
   renderTrust(); renderToday();
   const t = TABS[state.tab];
   document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === state.tab)));
+  { const act = document.querySelector(".tabs button[aria-selected=\"true\"]"), bar = act && act.parentElement; if (bar && bar.scrollWidth > bar.clientWidth) { const ar = act.getBoundingClientRect(), br = bar.getBoundingClientRect(); bar.scrollLeft += (ar.left - br.left) - (bar.clientWidth - ar.width) / 2; } }
 
   $("askBtn").textContent = t.ask;
   const me = store && state.loaded ? allStats().get(store.uid) : null;
@@ -2313,7 +2314,6 @@ function renderHome() {
         el("button", { type: "button", class: "hb-close", "aria-label": "Close welcome card", onclick: () => { box.hidden = true; } }, "×"),
         el("div", { class: "hb-chip" }, chip)
       ),
-      el("img", { class: "hb-promo", src: "brand/loopy-brains-promo-480.png", alt: "Loopy Brains", loading: "lazy" }),
       el("div", { class: "hb-hero-row" },
         el("div", { class: "hb-greet-col" },
           el("p", { class: "hb-college-name" }, college),
@@ -2354,7 +2354,7 @@ function renderGuide() {
   const nx = g.next();
   box.replaceChildren(
     el("button", { class: "guide-x", type: "button", "aria-label": "Close this guide", onclick: () => { writeJSON(key, true); renderGuide(); } }, "\u2715"),
-    el("div", { class: "guide-head" }, el("span", { class: "guide-ic", "aria-hidden": "true" }, g.icon), el("div", {}, el("small", {}, "What this is for"), el("strong", {}, g.purpose))),
+    el("div", { class: "guide-head", role: "button", tabindex: "0", "aria-expanded": "false", title: "Show or hide the steps", onclick: (e) => { const o = box.classList.toggle("open"); e.currentTarget.setAttribute("aria-expanded", String(o)); }, onkeydown: (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } } }, el("span", { class: "guide-ic", "aria-hidden": "true" }, g.icon), el("div", {}, el("small", {}, "What this is for \u00B7 tap for steps"), el("strong", {}, g.purpose))),
     el("ol", { class: "guide-steps" }, ...g.steps.map(s => el("li", {}, s))),
     g.safe ? el("p", { class: "guide-safe" }, el("b", {}, "Stay safe: "), g.safe) : null,
     el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", onclick: nx[1] }, nx[0]), el("button", { class: "btn sm", type: "button", onclick: () => showHowTo() }, "\u{1F4D6} Full guide")));
@@ -3031,7 +3031,7 @@ const MODE_GUIDE = {
   feedback: { icon: "\u{1F4AC}", purpose: "Tell the team what works and what to fix. It shapes the next version.", steps: ["Give a rating from 1 to 5.", "Say whether you would pay and how much.", "Write one thing you like and one thing to improve."], safe: "Do not write phone numbers or passwords. Feedback is private and not shown with your name.", next: null },
   notifs: { icon: "\u{1F514}", purpose: "Everything that needs you: answers to your doubts, doubts waiting for a first answer, and streak reminders.", steps: ["Tap a line to open it.", "Answer a waiting doubt to be the first helper.", "Turn on phone alerts if you want a ping while the app is in the background."], safe: "Alerts show only the title of a post. Nothing private is sent anywhere.", next: ["\u{1F64B} See open doubts", "intro"] },
   loopysearch: { icon: "\u{1F50E}", purpose: "Search any topic and see it: a quick answer, a picture, then videos, diagrams and PDFs.", steps: ["Type a topic or a unit name.", "Pick Quick idea, Deep lecture or Exam prep.", "Open a video, diagram or PDF, or ask Loopy to explain."], safe: "Results open other websites. Download only from trusted sites.", next: ["\u2753 Ask classmates", "ask"] },
-  ai: { icon: "\u{1F916}", purpose: "Ask Loopy for study help.", steps: ["Type a clear question.", "Read the answer.", "Check important facts in your textbook."], safe: "Loopy can make mistakes. Do not type personal details into it.", next: ["❓ Ask classmates", "ask"] },
+  ai: { icon: "\u{1F916}", purpose: "Ask Chitti for study help.", steps: ["Type a clear question.", "Read the answer.", "Check important facts in your textbook."], safe: "Chitti can make mistakes. Do not type personal details into it.", next: ["❓ Ask classmates", "ask"] },
   resume: { icon: "\u{1F4C4}", purpose: "Build a one-page resume from what you have done.", steps: ["Fill in your details.", "Review the preview.", "Save or print it."], safe: "Your resume stays on your device. Share it only with companies you have verified.", next: ["\u{1F3E2} See drives", "drives"] },
   wboard: { icon: "\u{1F4CA}", purpose: "This week’s progress for you and your college.", steps: ["See your points.", "Compare with last week.", "Pick one thing to improve."], safe: "Only nicknames are shown.", next: ["\u{1F3AF} Set a goal", "goals"] },
   focusplus: { icon: "\u{1F9D8}", purpose: "A focus timer for study sessions.", steps: ["Set the minutes.", "Start and stay off your phone.", "Take a short break when it ends."], safe: SAFE_COMMON, next: ["\u{1F5D3} Plan the week", "planner"] },
@@ -4771,7 +4771,7 @@ function helpersFor(q) {
 function lsAiCard(ls) {
   const a = ls.ai, yt = (t) => "https://www.youtube.com/results?search_query=" + encodeURIComponent(t), gg = (t, img) => "https://www.google.com/search?" + (img ? "tbm=isch&" : "") + "q=" + encodeURIComponent(t);
   return el("div", { class: "learn-card ls-card ls-ai" },
-    el("small", { class: "tag" }, "\u2728 Loopy Brains"),
+    el("small", { class: "tag" }, "\u2728 Loopy AI"),
     el("p", {}, a.summary),
     a.keyPoints.length ? el("ul", { class: "ls-points" }, ...a.keyPoints.map(k => el("li", {}, k))) : null,
     a.example ? el("p", { class: "hint" }, el("b", {}, "Example: "), a.example) : null,
@@ -4858,16 +4858,16 @@ function tpSec(n, id, title, kicker, ...kids) {
 function renderTopic() {
   const ts = tpState(), q = ts.q, d = ts.data, subj = ts.subject;
   const back = el("button", { class: "btn", type: "button", onclick: () => { state.mode = ts.back && ts.back !== "topic" ? ts.back : "intro"; render(); } }, "Back");
-  if (!q) return [el("h2", {}, "Loopy Brains topic guide"), el("p", { class: "hint" }, "Pick a topic and Loopy builds a guide for you."), el("div", { class: "rowbtns" }, back)];
+  if (!q) return [el("h2", {}, "Loopy AI topic guide"), el("p", { class: "hint" }, "Pick a topic and Chitti builds a guide for you."), el("div", { class: "rowbtns" }, back)];
   const yt = (extra) => "https://www.youtube.com/results?search_query=" + encodeURIComponent(q + " " + extra);
   const gg = (extra) => "https://www.google.com/search?q=" + encodeURIComponent(q + " " + extra);
   const sfx = LS_LEVELS[ts.level][1], lv = ts.level;
   const levelBtns = Object.entries(LS_LEVELS).map(([k, v]) => el("button", { type: "button", class: "tp-lv" + (lv === k ? " on" : ""), "aria-pressed": String(lv === k), onclick: () => { ts.level = k; render(); } }, v[0].replace(/^[^\w]+/u, "")));
   const jump = (id, t) => el("button", { type: "button", class: "tp-jump", onclick: () => { const e = document.getElementById("tp-" + id); if (e) e.scrollIntoView({ behavior: "smooth", block: "start" }); } }, t);
   const hero = el("div", { class: "tp-hero" },
-    el("small", { class: "tp-kick" }, "Loopy Brains · Topic guide"),
+    el("small", { class: "tp-kick" }, "Loopy AI · Topic guide"),
     el("div", { class: "tp-hero-row" }, el("div", { class: "tp-hero-txt" }, el("h2", {}, d ? d.title : q), subj ? el("span", { class: "tp-chip" }, subj) : null), d && d.img ? el("img", { class: "tp-hero-img", src: d.img, alt: d.title, loading: "lazy", referrerpolicy: "no-referrer" }) : null),
-    ts.busy ? el("p", { class: "tp-load", role: "status" }, "Loopy is preparing your guide...") : (d && d.intro ? el("p", { class: "tp-lead" }, (d.intro.split(/\.\s/)[0] || d.intro).slice(0, 220)) : null),
+    ts.busy ? el("p", { class: "tp-load", role: "status" }, "Chitti is preparing your guide...") : (d && d.intro ? el("p", { class: "tp-lead" }, (d.intro.split(/\.\s/)[0] || d.intro).slice(0, 220)) : null),
     el("div", { class: "tp-lvs", role: "group", "aria-label": "How deep" }, ...levelBtns),
     el("div", { class: "tp-jumps" }, jump("overview", "Summary"), jump("ideas", "Key ideas"), jump("visuals", "Diagrams"), jump("models", "3D"), jump("watch", "Watch"), jump("practice", "Practice")));
   const out = [hero];
@@ -4875,7 +4875,7 @@ function renderTopic() {
   // 1 Summary (AI first when available)
   const ai = ts.ai;
   out.push(tpSec(1, "overview", "Summary", "What it is, in plain words",
-    ai ? el("div", { class: "tp-ai" }, el("small", { class: "tag" }, "Loopy Brains"), el("p", {}, ai.summary), ai.example ? el("p", { class: "hint" }, el("b", {}, "Example: "), ai.example) : null) : null,
+    ai ? el("div", { class: "tp-ai" }, el("small", { class: "tag" }, "Loopy AI"), el("p", {}, ai.summary), ai.example ? el("p", { class: "hint" }, el("b", {}, "Example: "), ai.example) : null) : null,
     d && d.intro ? el("p", { class: "tp-text" }, lv === "quick" ? d.intro.slice(0, 520) : d.intro) : el("p", { class: "hint" }, "No short summary was found for this exact name. Try the videos and notes below, or ask classmates."),
     d && d.page ? outLink(d.page, "Read the full article", "linkbtn") : null));
   // 2 Key ideas
@@ -4943,8 +4943,8 @@ function renderLoopySearch() {
     el("div", { class: "rowbtns", role: "group", "aria-label": "How deep" }, ...Object.entries(LS_LEVELS).map(([k, v]) => el("button", { class: "btn sm" + (ls.level === k ? " primary" : ""), type: "button", "aria-pressed": String(ls.level === k), onclick: () => { ls.level = k; render(); } }, v[0]))),
     !q ? el("p", { class: "hint" }, "Tip: search a unit topic from your syllabus, for example Moment generating function.") : null,
     q && ls.ai ? lsAiCard(ls) : null,
-    q && !ls.ai && PLUS.functionsUrl ? el("p", { class: "hint", role: "status" }, ls.aiNote || "Loopy Brains answers appear here for Plus members.") : null,
-    q && !PLUS.functionsUrl ? el("p", { class: "hint" }, "Loopy Brains answers switch on soon. The quick answer and links below work now.") : null,
+    q && !ls.ai && PLUS.functionsUrl ? el("p", { class: "hint", role: "status" }, ls.aiNote || "Loopy AI answers appear here for Plus members.") : null,
+    q && !PLUS.functionsUrl ? el("p", { class: "hint" }, "Loopy AI answers switch on soon. The quick answer and links below work now.") : null,
     q && r ? el("div", { class: "learn-card ls-card" },
       r.img ? el("img", { class: "ls-img", src: r.img, alt: r.title, loading: "lazy", referrerpolicy: "no-referrer" }) : null,
       el("strong", {}, r.title),
@@ -4962,7 +4962,7 @@ function renderLoopySearch() {
     ...(q ? helpersFor(q).map(({ p, n }) => lsPerson(p, el("small", {}, "Answered " + plural(n, "doubt") + " on this topic"))) : []),
     q ? el("div", { class: "label" }, "\u{1F4AC} Ask for help") : null,
     q ? el("div", { class: "rowbtns" },
-      PLUS.functionsUrl ? el("button", { class: "btn sm primary", type: "button", onclick: () => { state.ai = state.ai || { msgs: [], busy: false, note: "" }; state.ai.prefill = "Explain " + q + " for a B.Tech student, with a simple example."; showPanel("ai"); } }, "✨ Explain with Loopy Brainss") : null,
+      PLUS.functionsUrl ? el("button", { class: "btn sm primary", type: "button", onclick: () => { state.ai = state.ai || { msgs: [], busy: false, note: "" }; state.ai.prefill = "Explain " + q + " for a B.Tech student, with a simple example."; showPanel("ai"); } }, "✨ Explain with Loopy AI") : null,
       el("button", { class: "btn sm", type: "button", onclick: () => { state.tab = "doubts"; state.group = "All"; state.filter = "all"; state.query = q; state.selected = null; state.mode = "intro"; render(); } }, "\u{1F50E} Doubts on this"),
       el("button", { class: "btn sm", type: "button", onclick: () => { state.mode = "ask"; render(); } }, "❓ Ask classmates")) : null,
     q ? el("p", { class: "guide-safe" }, el("b", {}, "Stay safe: "), "Video and PDF buttons open other websites in a new tab. Download only from sites you trust and never enter your password or OTP there.") : null,
@@ -5235,7 +5235,16 @@ const brainModesMod = async () => { try { return _modes = _modes || await import
 const PREF_KEY = "dd-bs-prefs", SAVED_KEY = "dd-bs-saved";
 const bsPrefs = () => { const p = readJSON(PREF_KEY, {}); return p && typeof p === "object" ? p : {}; };
 const bsState = () => state.bs || (state.bs = (() => { const p = bsPrefs(), ok = p.remember !== false;
-  return { q: "", level: ok && Number.isInteger(p.level) && p.level >= 1 && p.level <= 5 ? p.level : IS_RGUKT ? 2 : 1, size: ok && ["brief", "standard", "detailed", "full"].includes(p.size) ? p.size : IS_RGUKT ? "standard" : "brief", effort: ok && ["low", "medium", "high"].includes(p.effort) ? p.effort : undefined, easy: ok && p.easy === false ? false : true, mode: ok && BS_MODES.some(m => m[0] === p.mode) ? p.mode : "atlas", tab: "all", busy: false, res: null, ans: "", id: 0, lock: 0, pending: "" }; })());
+  return { q: "", level: ok && Number.isInteger(p.level) && p.level >= 1 && p.level <= 5 ? p.level : IS_RGUKT ? 2 : 1, size: ok && ["brief", "standard", "detailed", "full"].includes(p.size) ? p.size : IS_RGUKT ? "standard" : "brief", effort: ok && ["low", "medium", "high"].includes(p.effort) ? p.effort : undefined, easy: ok && p.easy === false ? false : true, mode: ok && BS_MODES.some(m => m[0] === p.mode) ? p.mode : "atlas", tab: "all", busy: false, res: null, ans: "", id: 0, lock: 0, pending: "", history: [] }; })());
+// Session memory: store up to 5 recent Q&A pairs so Chitti can give context-aware follow-up answers.
+function bsAddHistory(q, a) { const bs = bsState(), h = bs.history; h.push({ q: String(q).slice(0, 120), a: String(a).slice(0, 300), t: Date.now() }); if (h.length > 5) h.shift(); }
+function bsContextFor(q) {
+  const bs = bsState(), h = bs.history; if (!h.length) return "";
+  const tq = q.toLowerCase();
+  const isFollowUp = /\b(it|that|this|they|the above|more about|explain more|tell me more|what about|and also|also|same topic|go on|continue|next|details|detail|elaborate|example|examples|why|how so|means|meaning)\b/.test(tq) || tq.split(" ").length <= 4;
+  if (!isFollowUp) return "";
+  const last = h[h.length - 1]; return last ? "Previous topic: " + last.q + ". " : "";
+}
 function bsRemember() { const bs = bsState(), p = bsPrefs(); if (p.remember === false) return; writeJSON(PREF_KEY, { remember: true, level: bs.level, size: bs.size, effort: bs.effort || "", easy: bs.easy !== false, mode: bs.mode || "atlas" }); }
 // ----- saved library: reports kept on this phone, readable offline, free of credits -----
 const bsSavedList = () => { const r = readJSON(SAVED_KEY, []); return Array.isArray(r) ? r.filter(x => x && typeof x.id === "string" && x.title) : []; };
@@ -5415,7 +5424,7 @@ function bsMount() {
   if (bsEl()) return; const bs = bsState();
   const bar = el("div", { class: "bsf-bar" },
     el("button", { type: "button", class: "bsf-back", "aria-label": "Close Loopy Search", onclick: () => bsClose() }, svgIcon("back")),
-    el("img", { class: "bsf-brand", src: "icon-192.png", alt: "", width: "28", height: "28" }), el("strong", { class: "bsf-title" }, el("span", { class: "bsf-t-big" }, "Loopy"), el("small", { class: "bsf-t-sm" }, "Brains")),
+    el("strong", { class: "bsf-title" }, el("span", { class: "bsf-t-big" }, "Chitti")),
     el("button", { type: "button", class: "bsf-night", id: "bsNight", onclick: () => { try { localStorage.setItem("dd-bs-night", bsNightOn() ? "0" : "1"); } catch (_) {} bsApplyNight(); } }, "\u2600"),
     el("button", { type: "button", class: "bsf-save", id: "bsSave", hidden: "", onclick: () => { const b = bsState(); if (!b.res) return; if (bsIsSaved(b.res)) { bsPutSaved(bsSavedList().filter(x => x.id !== "s" + fnv(b.res.topic.toLowerCase() + "|" + b.res.size))); showNotice("Removed from Saved.", "ok"); } else if (bsSaveOne(b.res, b.q)) showNotice("Saved. Find it under Saved on the search page.", "ok"); else showNotice("Could not save: this phone is out of space.", "err"); bsPaint(); } }, "Save"),
     el("button", { type: "button", class: "bsf-pdf", id: "bsPdf", hidden: "", "aria-haspopup": "dialog", "aria-label": "Save as PDF or JPEG", onclick: () => bsExportSheet() }, "PDF/JPG"));
@@ -5424,6 +5433,7 @@ function bsMount() {
   const ov = el("div", { class: "bsfull calm", id: "bsFull", role: "dialog", "aria-modal": "true", "aria-label": "Loopy Search" }, bar, prog, scroll);
   document.body.append(ov); document.documentElement.classList.add("bs-open"); bsApplyNight();
   let tick = false; scroll.addEventListener("scroll", () => { if (tick) return; tick = true; requestAnimationFrame(() => { tick = false; const p = $("bsProg"); if (p) p.style.width = Math.min(100, Math.round(scroll.scrollTop / Math.max(1, scroll.scrollHeight - scroll.clientHeight) * 100)) + "%"; }); }, { passive: true });
+  { let last = 0; scroll.addEventListener("scroll", () => { const t = scroll.scrollTop, d = t - last; if (Math.abs(d) < 8) return; last = t; if (d > 0 && t > 160 && bs.res) ov.classList.add("dock-min"); else if (d < 0 || t < 120) ov.classList.remove("dock-min"); }, { passive: true }); }
   document.addEventListener("keydown", bsEsc); bsPaint(true); bsUseSync().then(() => { if (bsEl()) { bsPaint(); setTimeout(() => { if (bsEl()) bsSurpriseModal(bsRollSurprise()); }, 600); } });
   if (bs.start) { const q = bs.start; bs.start = ""; bsSubmit(q); }
 }
@@ -5510,19 +5520,24 @@ const OWN_DIAGRAMS = [
 function ownDiagram(text) {
   const t = String(text || "").toLowerCase(), hit = OWN_DIAGRAMS.find(d => d[0].test(t)); if (!hit) return null;
   let svg; try { svg = hit[2](); } catch (_) { return null; }
-  return el("section", { class: "bsr-card bsr-reveal in od" }, el("h3", {}, "Diagram"), svg, el("p", { class: "od-cap" }, hit[1]), el("small", { class: "hint" }, "Drawn by Loopy. A simple picture of the idea, not an exam-ready circuit."));
+  return el("section", { class: "bsr-card bsr-reveal in od" }, el("h3", {}, "Diagram"), svg, el("p", { class: "od-cap" }, hit[1]), el("small", { class: "hint" }, "Drawn by Chitti. A simple picture of the idea, not an exam-ready circuit."));
 }
 // Friendly small talk, so "hey hi" gets a real reply instead of a random article. Free: no credits and no network.
 function bsChat(q) {
   const t = String(q || "").toLowerCase().replace(/[^a-z\s']/g, " ").replace(/\s+/g, " ").trim(); if (!t || t.split(" ").length > 8) return "";
   const name = ((readJSON("dd-name", "") || "") + "").split(" ")[0], hi = name ? ", " + name : "", pick = (a) => a[dayNum() % a.length];
   const ask = " What would you like to learn today? You can ask a doubt, a topic, a maths problem, or tap Forge for code.";
-  if (/^(thanks?|thank you|thx|ty|thanku|thank u)( so much| a lot| loopy)?$/.test(t)) return pick(["You are welcome" + hi + "! Happy to help. Ask me anything else anytime.", "Anytime" + hi + "! Keep learning, you are doing great."]);
-  if (/^(bye|goodbye|good night|gn|see you|see ya|tata|cya)( loopy)?$/.test(t)) return "Bye" + hi + "! Come back whenever you have a doubt. Good luck with your studies.";
-  if (/(how are you|how r u|how are u|hows it going|how is it going|whats up|what s up|wassup|sup)\b/.test(t) && !/\b(compare|difference|what is|define)\b/.test(t)) return "I am fine, thank you" + hi + "! How are you?" + ask;
-  if (/^(who are you|what are you|what is your name|your name|who is loopy|are you ai|are you a robot)$/.test(t)) return "I am Loopy, the study helper inside Loopy Brains. I find explanations, pictures, code, project plans and security guides for students. I make mistakes sometimes, so check important facts with your books and teachers.";
-  if (/^(what can you do|help|help me|how to use|what do you do|how do you work)$/.test(t)) return "I can explain topics in easy words, solve maths and conversions, find code in Forge, plan projects in Launchpad and teach security in Aegis. Type a topic and press Search." ;
-  if (/^((hey|hi|hii+|hello+|hlo|helo|hola|yo|namaste|hey there|hi there|hello there|good morning|good afternoon|good evening|gm)( |$))+(loopy|bro|there|buddy|friend|all)?$/.test(t) || /^(hey+|hi+|hello+|hlo|hola|yo|namaste)$/.test(t)) return pick(["Hi" + hi + "! I am Loopy.", "Hello" + hi + "! Nice to see you.", "Hey" + hi + "! Good to see you."]) + ask;
+  if (/^(thanks?|thank you|thx|ty|thanku|thank u)( so much| a lot| loopy)?$/.test(t)) return pick(["You are welcome" + hi + "! 😊 Happy to help anytime.", "Anytime" + hi + "! 🌟 Keep learning, you are doing great!", "So glad I could help" + hi + "! Come back whenever you need me. 💪"]);
+  if (/^(bye|goodbye|good night|gn|see you|see ya|tata|cya)( loopy)?$/.test(t)) return pick(["Bye" + hi + "! 👋 Come back whenever you have a doubt. You are doing amazing!", "Good night" + hi + "! 🌙 Rest well and come back fresh tomorrow.", "See you soon" + hi + "! Every session makes you smarter. 🚀"]);
+  if (/(how are you|how r u|how are u|hows it going|how is it going|whats up|what s up|wassup|sup)\b/.test(t) && !/\b(compare|difference|what is|define)\b/.test(t)) return pick(["I am excited" + hi + "! 🤩 Helping you learn is the best part of my day. How are you?", "Feeling great" + hi + "! 😄 Ready to dive into any topic you throw at me. What shall we explore?", "I am doing wonderfully" + hi + "! 🌟 Every question you ask makes me happy. What do you want to learn?"]) + ask;
+  if (/^(who are you|what are you|what is your name|your name|who is loopy|are you ai|are you a robot|who is chitti)$/.test(t)) return "I am Chitti, your Loopy AI study buddy! 🤖✨ I live inside Loopy Brains and I am here 24×7 to help you learn anything — topics, maths, code, projects and security. I make mistakes sometimes, so check important facts with your books and teachers. But I will always try my best for you" + hi + "!";
+  if (/^(what can you do|help|help me|how to use|what do you do|how do you work)$/.test(t)) return "I can explain topics in easy words 📖, solve maths and conversions 🔢, find code in Forge 💻, plan projects in Launchpad 🚀, and teach security in Aegis 🛡️. I also remember what we talked about in this session so you can ask follow-up questions! Type a topic and press Search.";
+  if (/^((hey|hi|hii+|hello+|hlo|helo|hola|yo|namaste|hey there|hi there|hello there|good morning|good afternoon|good evening|gm)( |$))+(loopy|bro|there|buddy|friend|all|chitti)?$/.test(t) || /^(hey+|hi+|hello+|hlo|hola|yo|namaste)$/.test(t)) return pick(["Hi" + hi + "! 😊 I am Chitti, your Loopy AI! I am so happy you are here.", "Hello" + hi + "! ✨ Great to see you! Let us learn something amazing today.", "Hey" + hi + "! 🤩 I was just waiting for you! What shall we explore?"]) + ask;
+  if (/\b(i got it|i understand|i understood|now i get it|got it|makes sense|clear now|acha|oh i see)\b/.test(t)) return pick(["That is wonderful" + hi + "! 🎉 You are getting it! Now try a practice question on this topic.", "Yes! 💡 That click moment is the best feeling. Keep going, you are on a roll!", "Brilliant" + hi + "! 🌟 Understanding is step one. Practice will make it permanent."]);
+  if (/\b(i (am|m) (happy|excited|great|good|awesome|feeling good|in a good mood))\b/.test(t)) return pick(["Love the energy" + hi + "! 🔥 Let us channel that into some serious learning! What topic is on your mind?", "That makes me happy too! 😄 When you are in a good mood, studying is so much easier. Let us go!", "Amazing" + hi + "! ✨ Good vibes and good learning go together. What shall we tackle today?"]);
+  if (/\b(proud|i did it|i passed|i scored|i got marks|result came|result is good)\b/.test(t)) return pick(["I am SO proud of you" + hi + "! 🏆🎉 You worked hard and it showed. Celebrate this moment!", "YES!! 🎊 This is what all those study sessions were for! You did it" + hi + "!", "That is incredible" + hi + "! 🌟 Your dedication paid off. Keep this energy going!"]);
+  if (/\b(i (am|m) (confused|stuck|lost|not getting|not understanding|dont understand|don t understand))\b/.test(t)) return pick(["No worries" + hi + "! 🤗 That is exactly why I am here. Tell me the topic or question and we will break it down together, step by step.", "Getting confused means you are thinking deeply" + hi + "! 😊 That is actually a good sign. Share the topic and let us untangle it.", "I totally get it" + hi + "! 💙 Some things need a few tries. Type your question and I will explain it in the easiest way I know."]);
+  if (/\b(failed|fail|i failed|i fail|bad marks|got low marks|disappointed|so sad about exam)\b/.test(t)) return pick(["I hear you" + hi + "! 💙 One result does not define you. Every topper has a story of failing and coming back stronger. Let us study smarter together.", "It hurts, I know" + hi + "! 🤗 But you are still here, still trying. That is more courage than most people show. What topic shall we work on?", "Failure is not the end, it is feedback" + hi + "! 💪 The fact that you are here means you have not given up. Let us turn this around."]);
   return "";
 }
 // Fun answers for everyday questions: jokes, riddles, fun facts, mood, coin and dice. Free, instant, no network.
@@ -5650,6 +5665,7 @@ function bsExportSheet() {
 }
 async function bsSubmit(q) {
   q = lsClean(q); if (q.length < 2) return; const bs = bsState();
+  { const ctx = bsContextFor(q); if (ctx) q = lsClean(ctx + q); }
   if (/[^\u0000-\u024F\u2000-\u206F\u00A0-\u00FF]/.test(q) && ahWords(q).length === 0) { showNotice("Loopy Search works with English words for now. Please type your topic in English.", "err"); return; }
   if (!(await safetyGate(q))) return;
   { const mm = await brainModesMod(); if (mm && mm.offensive(q)) { safeModal("I can\u2019t help with attacking people or systems", ["Loopy AI teaches security so you can defend, not so you can break into accounts, devices or websites. That could hurt real people and is against the law.", "Try Aegis to learn how attacks work and how to stop them, or practise legally on free labs such as PortSwigger Academy, picoCTF or TryHackMe."], false); return; } }
@@ -5682,7 +5698,7 @@ async function bsRun(q, solved) {
   bs.q = q; bs.busy = true; bs.tab = "all"; bs.lock = 0; bsSave(q); bsPaint(true);
   const topic = brainIntent(q, "").topic || q, short = ahWords(topic).slice(0, 3).join(" ") || topic;
   if (!solved && bs.mode && bs.mode !== "atlas") { await bsRunMode(bs.mode, q, id, lv, size); return; }
-  if (solved) { if (id !== bs.id) return; bs.res = { topic: q, solved: true, lv, size, board: lv >= 2 ? brainBoard(q, 3) : [], syl: [], imgs: [], models: [], page: "", report: null, papers: [] }; bs.ans = solved; bs.busy = false; bsPaint(true); return; }
+  if (solved) { if (id !== bs.id) return; bs.res = { topic: q, solved: true, lv, size, board: lv >= 2 ? brainBoard(q, 3) : [], syl: [], imgs: [], models: [], page: "", report: null, papers: [] }; bs.ans = solved; bs.busy = false; bsAddHistory(q, solved); bsPaint(true); return; }
   const cmpIntent = brainCompareIntent(q);
   if (cmpIntent) {
     const cmp = await brainCompare(cmpIntent.a, cmpIntent.b); if (id !== bs.id) return;
@@ -5706,7 +5722,7 @@ async function bsRun(q, solved) {
   const res = { pack, cross: pack && wiki ? bsCross(pack, wiki) : null, own: wiki && !pack ? ownDiagram(wiki.title + " " + T) : null, uses: mod && wiki && size !== "brief" ? mod.uses(wiki, size === "full" ? 8 : size === "detailed" ? 6 : 4) : [], effort: eff, related, keyImgs, topic: T, easyCard: simpleOk, easyFn: mod ? mod.easy : null, readable, defs, wikiInfo: wiki ? { touched: wiki.touched, page: wiki.page } : null, caution: wiki ? mod2cautions(wiki) : [], simpleInfo: simpleOk ? { page: simpleOk.page } : null, lv, size, board: lv >= 2 ? brainBoard(T, 5) : [], syl: lv >= 2 ? brainSyllabus(T) : [], imgs: imgs.slice(0, 8), models, page: wiki ? wiki.page : "", papers: papersH, report: mod && wiki ? mod.buildReport(wiki, size) : null, hl: mod ? mod.highlight : null, deep: "", exam: "", quiz: "" };
   if (lv >= 4 && wiki && !res.report) res.deep = wiki.sections.slice(0, 8).map(x => "- **" + x.h + ":** " + (brainSentences(x.t).slice(0, 2).join(" ") || x.t.slice(0, 240))).join("\n");
   if (lv >= 5) { [res.exam, res.quiz] = await Promise.all([brainReply("Exam answer for " + T, { topic: T }).catch(() => ""), brainReply("Quiz me on " + T, { topic: T }).catch(() => "")]); }
-  bs.res = res; bs.ans = ans || notFoundMsg(topic); bs.busy = false; bsPaint(true);
+  bs.res = res; bs.ans = ans || notFoundMsg(topic); bs.busy = false; bsAddHistory(q, bs.ans); bsPaint(true);
 }
 async function rosettaFind(task) {
   try {
@@ -5798,7 +5814,7 @@ function packView(p, go, res) {
   if (p.formulas && p.formulas.length) out.push(el("section", { class: "pk-remember bsr-reveal in" }, el("small", {}, "\u2B50 Remember this"), el("div", { class: "pk-rgrid" }, ...p.formulas.slice(0, 2).map(([n, t]) => el("div", { class: "pk-rf" }, el("span", {}, n), el("code", {}, t))))));
   const keys = p.diagrams || [], drawn = _dgm ? keys.map(k => _dgm.drawDiagram2(k)).filter(Boolean) : [];
   if (drawn.length) {
-    drawn.forEach((d, i) => out.push(el("section", { class: "bsr-card bsr-reveal in dg-card" }, el("h3", {}, d.title), d.svg, el("p", { class: "od-cap" }, d.cap), i === 0 && d.svg.querySelector(".dg-w.in, .dg-w.mid, .dg-w.out, .dg-w.clk, .dg-w.fb") ? el("div", { class: "dg-key" }, el("span", {}, el("i", { class: "k-in" }), "input"), el("span", {}, el("i", { class: "k-mid" }), "inside the circuit"), el("span", {}, el("i", { class: "k-out" }), "output"), el("span", {}, el("i", { class: "k-clk" }), "clock or control"), el("span", {}, el("i", { class: "k-fb" }), "feedback")) : null, el("small", { class: "hint" }, "Drawn by Loopy to explain the idea."))));
+    drawn.forEach((d, i) => out.push(el("section", { class: "bsr-card bsr-reveal in dg-card" }, el("h3", {}, d.title), d.svg, el("p", { class: "od-cap" }, d.cap), i === 0 && d.svg.querySelector(".dg-w.in, .dg-w.mid, .dg-w.out, .dg-w.clk, .dg-w.fb") ? el("div", { class: "dg-key" }, el("span", {}, el("i", { class: "k-in" }), "input"), el("span", {}, el("i", { class: "k-mid" }), "inside the circuit"), el("span", {}, el("i", { class: "k-out" }), "output"), el("span", {}, el("i", { class: "k-clk" }), "clock or control"), el("span", {}, el("i", { class: "k-fb" }), "feedback")) : null, el("small", { class: "hint" }, "Drawn by Chitti to explain the idea."))));
   } else { const dg = ownDiagram(p.title + " " + (p.diag || "")); if (dg) out.push(dg); }
   out.push(card("pk-points", "Key points", el("ul", { class: "pk-bul" }, ...p.points.map(x => el("li", {}, x)))));
   if (p.steps && p.steps.length) out.push(card("pk-steps", "Step by step", el("ol", { class: "pk-stepl" }, ...p.steps.map((x, i) => el("li", {}, el("b", {}, String(i + 1)), el("span", {}, x))))));
@@ -5935,6 +5951,10 @@ function brandSpin(cls) {
   // Loopy AI brain icon: it flips around while Chitti is thinking, inside a turning ring.
   return el("span", { class: "bs-brain " + (cls || ""), role: "img", "aria-label": "Loopy AI" }, el("i", { class: "bs-brain-ring", "aria-hidden": "true" }), el("img", { class: "bs-brain-img", src: "icon-192.png", alt: "", width: "56", height: "56" }));
 }
+function brainSpin() {
+  const ring = sv("svg", { viewBox: "0 0 100 100", class: "bs-brain-ring", "aria-hidden": "true" }); ring.append(sv("circle", { cx: 50, cy: 50, r: 44, fill: "none", stroke: "#fb923c", "stroke-width": 6, "stroke-linecap": "round", "stroke-dasharray": "190 87", transform: "rotate(-75 50 50)" }), sv("circle", { cx: 88, cy: 30, r: 4.5, fill: "#fff4ec" }));
+  return el("span", { class: "bs-brain-spin", role: "img", "aria-label": "Chitti is thinking" }, el("img", { src: "icon-192.png", alt: "", width: "44", height: "44" }), ring);
+}
 function loopyMark(cls) {
   const r = sv("svg", { viewBox: "0 0 64 64", class: cls, "aria-hidden": "true" }), cols = ["#f59e0b", "#f97316", "#ef4444", "#fb923c", "#22c55e", "#86efac", "#10b981", "#eab308"];
   for (let i = 0; i < 8; i++) r.append(sv("line", { x1: 32, y1: 32 - (i % 2 ? 14 : 8), x2: 32, y2: 32 - (i % 2 ? 29 : 25), stroke: cols[i], "stroke-width": 4.6, "stroke-linecap": "round", transform: "rotate(" + i * 45 + " 32 32)" }));
@@ -5993,7 +6013,7 @@ function brainViewInner(ui) {
   const foot = el("p", { class: "bs-foot bsf-noprint" }, "Today: " + L.day + " of " + L.caps.day + " credits \u00B7 Check important facts");
   ui.bar = bar; ui.head = head; ui.dock = el("div", { class: "bs-dock bsf-noprint" }, sheet, sug, form, foot);
   const chips = (list, onTap) => el("div", { class: "bs-chips" }, ...list.map(t => el("button", { type: "button", class: "tp-sub", onclick: () => onTap(t) }, t)));
-  const thinkingEls = bs.busy ? [el("p", { class: "bsr-yq" }, el("small", {}, "Your question"), el("b", {}, bs.q || bs.pending || "")), el("div", { class: "bsr-load calm", role: "status", "aria-live": "polite" }, el("div", { class: "bsc-orbit sm", "aria-hidden": "true" }, el("i", { class: "r1" }), el("i", { class: "r2" }), el("b", { class: "d1" }), el("b", { class: "d2" }), el("b", { class: "d3" }), brandSpin("bsc-brand live")), el("p", { class: "bsr-think" }, "Chitti is thinking\u2026"),
+  const thinkingEls = bs.busy ? [el("p", { class: "bsr-yq" }, el("small", {}, "Your question"), el("b", {}, bs.q || bs.pending || "")), el("div", { class: "bsr-load calm", role: "status", "aria-live": "polite" }, el("div", { class: "bsc-orbit sm", "aria-hidden": "true" }, el("i", { class: "r1" }), el("i", { class: "r2" }), el("b", { class: "d1" }), el("b", { class: "d2" }), el("b", { class: "d3" }), brainSpin()), el("p", { class: "bsr-think" }, "Chitti is thinking\u2026"),
     el("div", { class: "bsr-lines", "aria-hidden": "true" }, el("i", {}), el("i", {}), el("i", {})))] : [];
   ui.thinking = bs.busy && bs.res ? thinkingEls : [];
   if (bs.pending) {
@@ -6004,7 +6024,7 @@ function brainViewInner(ui) {
   if (!bs.res) {
     const C = window.RGUKT_CURRICULUM, rows = C ? ((C.data[curState.year] || {})[curState.branch] || []).map(r => r[0]).slice(0, 8) : [], rec = bsRecent();
     const hr = new Date().getHours(), greet = hr < 5 ? "Good night" : hr < 12 ? "Good morning" : hr < 17 ? "Good afternoon" : "Good evening", nm = String(getName() || "").trim().split(" ")[0];
-    const hero = el("section", { class: "bsc-hero" }, el("div", { class: "bsc-orbit", "aria-hidden": "true" }, el("i", { class: "r1" }), el("i", { class: "r2" }), el("b", { class: "d1" }), el("b", { class: "d2" }), el("b", { class: "d3" }), brandSpin("bsc-brand live")), el("p", { class: "bsc-brand-name", "aria-label": "Chitti The Loopy AI" }, el("span", { class: "chi-row", "aria-hidden": "true" }, el("span", { class: "chi-orb" }), el("span", { class: "bsc-bn-big" }, "Chitti"), el("span", { class: "chi-wave" }, el("i"), el("i"), el("i"), el("i"), el("i"))), el("small", { class: "bsc-bn-sm" }, "The Loopy AI")), el("h2", { class: "bsc-hi" }, greet + (nm ? ", " : ""), nm ? el("span", {}, nm) : null), el("p", { class: "bsc-sub" }, "Ask your syllabus anything. Easy words, diagrams, exact answers."));
+    const hero = el("section", { class: "bsc-hero" + (bs.busy ? " busy" : "") }, bs.busy ? null : el("div", { class: "bsc-orbit", "aria-hidden": "true" }, el("i", { class: "r1" }), el("i", { class: "r2" }), el("b", { class: "d1" }), el("b", { class: "d2" }), el("b", { class: "d3" }), brandSpin("bsc-brand live")), el("p", { class: "bsc-brand-name", "aria-label": "Chitti The Loopy AI" }, el("span", { class: "chi-row", "aria-hidden": "true" }, el("span", { class: "chi-orb" }), el("span", { class: "bsc-bn-big" }, "Chitti"), el("span", { class: "chi-wave" }, el("i"), el("i"), el("i"), el("i"), el("i"))), el("small", { class: "bsc-bn-sm" }, "The Loopy AI")), bs.busy ? null : el("h2", { class: "bsc-hi" }, greet + (nm ? ", " : ""), nm ? el("span", {}, nm) : null), bs.busy ? null : el("p", { class: "bsc-sub" }, "Ask your syllabus anything. Easy words, diagrams, exact answers."));
     const TRY = { atlas: [["\u{1F4C8}", "Explain the Bode plot", "Control systems"], ["\u2795", "Half adder circuit", "Digital logic"], ["\u{1F3B2}", "Bayes theorem with an example", "Probability"], ["\u{1F50C}", "BJT biasing and the Q point", "Analog circuits"], ["\u{1F4E1}", "Sampling theorem and aliasing", "Signal processing"], ["\u{1F9EE}", "Compare FIR and IIR filters", "Signal processing"]],
       launchpad: [["\u{1F326}\uFE0F", "IoT weather station", "Project plan"], ["\u{1F4F7}", "Student attendance system", "Project plan"], ["\u{1F331}", "Smart irrigation", "Project plan"], ["\u{1F4DA}", "Library management website", "Project plan"]],
       forge: [["\u{1F50D}", "binary search in Python", "Code"], ["\u{1F9EE}", "Verilog code for a counter", "Hardware"], ["\u{1F4CA}", "bubble sort in C", "Code"], ["\u2615", "factorial in Java", "Code"]],
@@ -6015,6 +6035,7 @@ function brainViewInner(ui) {
     const allPk = _packs ? _packs.all : [], open = bs.packSubj;
     const tiles = (bs.mode === "atlas" || !bs.mode) ? el("div", { class: "bs-blk" }, el("small", { class: "bs-secthead" }, "Browse textbook topics"), el("div", { class: "bs-tiles" }, ...SUBJ.map(([sub, label, col]) => { const n = allPk.filter(p => p.subject === sub).length; return el("button", { type: "button", class: "bs-tile" + (open === sub ? " on" : ""), "aria-expanded": String(open === sub), onclick: () => { bs.packSubj = open === sub ? "" : sub; bsPaint(); } }, el("b", {}, label), el("small", {}, n ? n + " topics" : "Tap to open")); }).map((n, i) => { n.style.setProperty("--tc", SUBJ[i][2]); return n; })),
       open === "Digital electronics" && allPk.length ? dldHub(allPk, bs, go) : open ? el("div", { class: "bs-chips bs-packlist" }, ...(allPk.filter(p => p.subject === open).length ? allPk.filter(p => p.subject === open).map(p => el("button", { type: "button", class: "tp-sub", onclick: () => { bs.forcePack = p.id; go(p.title.replace(/\\s*\\(.*?\\)\\s*/g, " ").trim()); } }, p.title)) : [el("small", { class: "hint" }, "Loading the topic list\u2026")])) : null) : null;
+    if (bs.busy) return [hero, ...thinkingEls, bar, head];
     return [hero, ...thinkingEls, bar, head, tryBlock, tiles,
       rec.length ? el("div", { class: "bs-blk" }, el("small", { class: "bs-secthead" }, "Recent"), chips(rec, go)) : null,
       rows.length ? el("div", { class: "bs-blk" }, el("small", { class: "bs-secthead" }, "Your syllabus"), chips(rows, go)) : null,
@@ -6475,7 +6496,7 @@ function renderSubject(C, r) {
       unitInfo(n) ? el("div", { class: "tp-subs" }, ...String(unitInfo(n).x || "").split(/[;,.]/).map(t => t.trim()).filter(t => t.length > 2 && t.length < 50).slice(0, 8).map(t => el("button", { type: "button", class: "tp-sub", onclick: () => openTopic(t + " " + name, name, "curriculum") }, t))) : null,
       el("div", { class: "rowbtns" }, el("button", { class: "btn sm" + (done.includes(n) ? " primary" : ""), type: "button", "aria-pressed": String(done.includes(n)), onclick: () => toggle(n) }, (done.includes(n) ? "✓ " : "") + "Unit " + n), outLink(unitUrl(n, "v"), "▶ Videos", "linkbtn"), outLink(unitUrl(n, "p"), "\u{1F4C4} Notes PDF", "linkbtn")))))),
     el("div", { class: "rowbtns" },
-      el("button", { class: "btn sm primary", type: "button", onclick: () => openTopic(name, name, "curriculum") }, "\u2728 Explain with Loopy Brains"),
+      el("button", { class: "btn sm primary", type: "button", onclick: () => openTopic(name, name, "curriculum") }, "\u2728 Explain with Loopy AI"),
       outLink(nptelUrl(name), "\u{1F393} Full IIT course", "btn sm"),
       el("button", { class: "btn sm", type: "button", onclick: () => { state.tab = "doubts"; state.group = "All"; state.filter = "all"; state.query = name; state.selected = null; state.mode = "intro"; render(); } }, "\u{1F50E} Doubts on this"),
       el("button", { class: "btn", type: "button", onclick: () => { curState.open = null; render(); } }, "Back to subjects")),
@@ -9040,9 +9061,9 @@ function renderIntro() {
     : null;
 
   return [
-    el("h2", {}, "How it works"),
+    el("h2", { class: "hiw-h" }, "How it works"),
     statsRow,
-    el("p", { class: "body" }, steps),
+    el("p", { class: "body hiw-steps" }, steps),
     el("div", { class: "rowbtns" },
       el("button", { class: "btn", type: "button", onclick: () => history.back() }, "← Back"),
       el("button", { class: "btn primary", type: "button", onclick: openAsk }, t.ask),
@@ -9584,8 +9605,8 @@ function renderView() {
   }
   if (d.body) { out.push(el("p", { class: "body" }, d.body)); const yc = renderYtCards(d.body); if (yc) out.push(yc); }
   if (state.tab === "doubts" && !d.resolvedReplyId) out.push(el("div", { class: "tp-self" },
-    el("div", {}, el("strong", {}, "Don't want to wait for replies?"), el("small", {}, "Loopy Brains explains this topic now: summary, diagrams, 3D models, videos and practice.")),
-    el("button", { class: "btn sm primary", type: "button", onclick: () => openTopic(d.title || g, g, "view") }, "\u2728 Explain with Loopy Brains")));
+    el("div", {}, el("strong", {}, "Don't want to wait for replies?"), el("small", {}, "Loopy AI explains this topic now: summary, diagrams, 3D models, videos and practice.")),
+    el("button", { class: "btn sm primary", type: "button", onclick: () => openTopic(d.title || g, g, "view") }, "\u2728 Explain with Loopy AI")));
   // AI Help panel
   if (state.tab === "doubts" || state.tab === "gate") {
     const aiOpen = state.aiPanel === d.id;
