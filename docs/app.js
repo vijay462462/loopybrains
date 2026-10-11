@@ -2044,7 +2044,7 @@ function renderToday() {
   const lb = launchBanner(name);
   bar.replaceChildren(lb, lb ? null : el("div", { class: "today-hero" }, el("button", { class: "today-close", type: "button", "aria-label": "Close this card", title: "Close for today", onclick: () => { writeJSON("dd-today-closed", dayStr()); todayKey = ""; renderToday(); } }, "\u2715"), NO_COLLEGE ? null : el("div", { class: "hero-crest" }, crestEl(54)), el("button", { class: "hero-loopy", type: "button", "aria-label": "Chat with Loopy", onclick: loopyTap }, loopyMini()),
     el("div", { class: "hero-text" }, el("small", { class: "hero-kicker" }, " " + COLLEGE), el("strong", { class: "today-hello" }, hello + (name ? ", " + name : "") + " 👋"), el("small", { class: "today-words" }, WORDS[dayNum() % WORDS.length])),
-    el("button", { class: "hero-say", type: "button", onclick: loopyTap }, el("span", { class: "hero-say-dot" }), el("span", {}, loopyPrompt().label), el("b", {}, "Ask Loopy \u203A")),
+    el("button", { class: "hero-say", type: "button", onclick: loopyTap }, el("span", { class: "hero-say-dot" }), el("span", {}, loopyPrompt().label), el("b", {}, "Ask Chitti \u203A")),
     el("div", { class: "hero-acts" },
       el("button", { class: "hero-ask", type: "button", onclick: () => { const b = $("askBtn"); if (b) b.click(); } }, "❓ Ask a doubt"),
       el("button", { class: "hero-ask", type: "button", onclick: () => { state.ai = state.ai || { msgs: [], busy: false, note: "" }; showPanel("ai"); } }, "\u2728 Loopy AI"))),
@@ -3028,7 +3028,7 @@ const MODE_GUIDE = {
   feedback: { icon: "\u{1F4AC}", purpose: "Tell the team what works and what to fix. It shapes the next version.", steps: ["Give a rating from 1 to 5.", "Say whether you would pay and how much.", "Write one thing you like and one thing to improve."], safe: "Do not write phone numbers or passwords. Feedback is private and not shown with your name.", next: null },
   notifs: { icon: "\u{1F514}", purpose: "Everything that needs you: answers to your doubts, doubts waiting for a first answer, and streak reminders.", steps: ["Tap a line to open it.", "Answer a waiting doubt to be the first helper.", "Turn on phone alerts if you want a ping while the app is in the background."], safe: "Alerts show only the title of a post. Nothing private is sent anywhere.", next: ["\u{1F64B} See open doubts", "intro"] },
   loopysearch: { icon: "\u{1F50E}", purpose: "Search any topic and see it: a quick answer, a picture, then videos, diagrams and PDFs.", steps: ["Type a topic or a unit name.", "Pick Quick idea, Deep lecture or Exam prep.", "Open a video, diagram or PDF, or ask Loopy to explain."], safe: "Results open other websites. Download only from trusted sites.", next: ["\u2753 Ask classmates", "ask"] },
-  ai: { icon: "\u{1F916}", purpose: "Ask Chitti for study help.", steps: ["Type a clear question.", "Read the answer.", "Check important facts in your textbook."], safe: "Loopy can make mistakes. Do not type personal details into it.", next: ["❓ Ask classmates", "ask"] },
+  ai: { icon: "\u{1F916}", purpose: "Ask Chitti for study help.", steps: ["Type a clear question.", "Read the answer.", "Check important facts in your textbook."], safe: "Chitti can make mistakes. Do not type personal details into it.", next: ["❓ Ask classmates", "ask"] },
   resume: { icon: "\u{1F4C4}", purpose: "Build a one-page resume from what you have done.", steps: ["Fill in your details.", "Review the preview.", "Save or print it."], safe: "Your resume stays on your device. Share it only with companies you have verified.", next: ["\u{1F3E2} See drives", "drives"] },
   wboard: { icon: "\u{1F4CA}", purpose: "This week’s progress for you and your college.", steps: ["See your points.", "Compare with last week.", "Pick one thing to improve."], safe: "Only nicknames are shown.", next: ["\u{1F3AF} Set a goal", "goals"] },
   focusplus: { icon: "\u{1F9D8}", purpose: "A focus timer for study sessions.", steps: ["Set the minutes.", "Start and stay off your phone.", "Take a short break when it ends."], safe: SAFE_COMMON, next: ["\u{1F5D3} Plan the week", "planner"] },
@@ -4855,7 +4855,7 @@ function tpSec(n, id, title, kicker, ...kids) {
 function renderTopic() {
   const ts = tpState(), q = ts.q, d = ts.data, subj = ts.subject;
   const back = el("button", { class: "btn", type: "button", onclick: () => { state.mode = ts.back && ts.back !== "topic" ? ts.back : "intro"; render(); } }, "Back");
-  if (!q) return [el("h2", {}, "Loopy AI topic guide"), el("p", { class: "hint" }, "Pick a topic and Loopy builds a guide for you."), el("div", { class: "rowbtns" }, back)];
+  if (!q) return [el("h2", {}, "Loopy AI topic guide"), el("p", { class: "hint" }, "Pick a topic and Chitti builds a guide for you."), el("div", { class: "rowbtns" }, back)];
   const yt = (extra) => "https://www.youtube.com/results?search_query=" + encodeURIComponent(q + " " + extra);
   const gg = (extra) => "https://www.google.com/search?q=" + encodeURIComponent(q + " " + extra);
   const sfx = LS_LEVELS[ts.level][1], lv = ts.level;
@@ -4864,7 +4864,7 @@ function renderTopic() {
   const hero = el("div", { class: "tp-hero" },
     el("small", { class: "tp-kick" }, "Loopy AI · Topic guide"),
     el("div", { class: "tp-hero-row" }, el("div", { class: "tp-hero-txt" }, el("h2", {}, d ? d.title : q), subj ? el("span", { class: "tp-chip" }, subj) : null), d && d.img ? el("img", { class: "tp-hero-img", src: d.img, alt: d.title, loading: "lazy", referrerpolicy: "no-referrer" }) : null),
-    ts.busy ? el("p", { class: "tp-load", role: "status" }, "Loopy is preparing your guide...") : (d && d.intro ? el("p", { class: "tp-lead" }, (d.intro.split(/\.\s/)[0] || d.intro).slice(0, 220)) : null),
+    ts.busy ? el("p", { class: "tp-load", role: "status" }, "Chitti is preparing your guide...") : (d && d.intro ? el("p", { class: "tp-lead" }, (d.intro.split(/\.\s/)[0] || d.intro).slice(0, 220)) : null),
     el("div", { class: "tp-lvs", role: "group", "aria-label": "How deep" }, ...levelBtns),
     el("div", { class: "tp-jumps" }, jump("overview", "Summary"), jump("ideas", "Key ideas"), jump("visuals", "Diagrams"), jump("models", "3D"), jump("watch", "Watch"), jump("practice", "Practice")));
   const out = [hero];
@@ -5516,7 +5516,7 @@ const OWN_DIAGRAMS = [
 function ownDiagram(text) {
   const t = String(text || "").toLowerCase(), hit = OWN_DIAGRAMS.find(d => d[0].test(t)); if (!hit) return null;
   let svg; try { svg = hit[2](); } catch (_) { return null; }
-  return el("section", { class: "bsr-card bsr-reveal in od" }, el("h3", {}, "Diagram"), svg, el("p", { class: "od-cap" }, hit[1]), el("small", { class: "hint" }, "Drawn by Loopy. A simple picture of the idea, not an exam-ready circuit."));
+  return el("section", { class: "bsr-card bsr-reveal in od" }, el("h3", {}, "Diagram"), svg, el("p", { class: "od-cap" }, hit[1]), el("small", { class: "hint" }, "Drawn by Chitti. A simple picture of the idea, not an exam-ready circuit."));
 }
 // Friendly small talk, so "hey hi" gets a real reply instead of a random article. Free: no credits and no network.
 function bsChat(q) {
@@ -5810,7 +5810,7 @@ function packView(p, go, res) {
   if (p.formulas && p.formulas.length) out.push(el("section", { class: "pk-remember bsr-reveal in" }, el("small", {}, "\u2B50 Remember this"), el("div", { class: "pk-rgrid" }, ...p.formulas.slice(0, 2).map(([n, t]) => el("div", { class: "pk-rf" }, el("span", {}, n), el("code", {}, t))))));
   const keys = p.diagrams || [], drawn = _dgm ? keys.map(k => _dgm.drawDiagram2(k)).filter(Boolean) : [];
   if (drawn.length) {
-    drawn.forEach((d, i) => out.push(el("section", { class: "bsr-card bsr-reveal in dg-card" }, el("h3", {}, d.title), d.svg, el("p", { class: "od-cap" }, d.cap), i === 0 && d.svg.querySelector(".dg-w.in, .dg-w.mid, .dg-w.out, .dg-w.clk, .dg-w.fb") ? el("div", { class: "dg-key" }, el("span", {}, el("i", { class: "k-in" }), "input"), el("span", {}, el("i", { class: "k-mid" }), "inside the circuit"), el("span", {}, el("i", { class: "k-out" }), "output"), el("span", {}, el("i", { class: "k-clk" }), "clock or control"), el("span", {}, el("i", { class: "k-fb" }), "feedback")) : null, el("small", { class: "hint" }, "Drawn by Loopy to explain the idea."))));
+    drawn.forEach((d, i) => out.push(el("section", { class: "bsr-card bsr-reveal in dg-card" }, el("h3", {}, d.title), d.svg, el("p", { class: "od-cap" }, d.cap), i === 0 && d.svg.querySelector(".dg-w.in, .dg-w.mid, .dg-w.out, .dg-w.clk, .dg-w.fb") ? el("div", { class: "dg-key" }, el("span", {}, el("i", { class: "k-in" }), "input"), el("span", {}, el("i", { class: "k-mid" }), "inside the circuit"), el("span", {}, el("i", { class: "k-out" }), "output"), el("span", {}, el("i", { class: "k-clk" }), "clock or control"), el("span", {}, el("i", { class: "k-fb" }), "feedback")) : null, el("small", { class: "hint" }, "Drawn by Chitti to explain the idea."))));
   } else { const dg = ownDiagram(p.title + " " + (p.diag || "")); if (dg) out.push(dg); }
   out.push(card("pk-points", "Key points", el("ul", { class: "pk-bul" }, ...p.points.map(x => el("li", {}, x)))));
   if (p.steps && p.steps.length) out.push(card("pk-steps", "Step by step", el("ol", { class: "pk-stepl" }, ...p.steps.map((x, i) => el("li", {}, el("b", {}, String(i + 1)), el("span", {}, x))))));
@@ -6010,7 +6010,7 @@ function brainViewInner(ui) {
   const foot = el("p", { class: "bs-foot bsf-noprint" }, "Today: " + L.day + " of " + L.caps.day + " credits \u00B7 Check important facts");
   ui.bar = bar; ui.head = head; ui.dock = el("div", { class: "bs-dock bsf-noprint" }, sheet, sug, form, foot);
   const chips = (list, onTap) => el("div", { class: "bs-chips" }, ...list.map(t => el("button", { type: "button", class: "tp-sub", onclick: () => onTap(t) }, t)));
-  const thinkingEls = bs.busy ? [el("p", { class: "bsr-yq" }, el("small", {}, "Your question"), el("b", {}, bs.q || bs.pending || "")), el("div", { class: "bsr-load calm", role: "status", "aria-live": "polite" }, el("div", { class: "bsc-orbit sm", "aria-hidden": "true" }, el("i", { class: "r1" }), el("i", { class: "r2" }), el("b", { class: "d1" }), el("b", { class: "d2" }), el("b", { class: "d3" }), brandSpin("bsc-brand live")), el("p", { class: "bsr-think" }, "Loopy is thinking\u2026"),
+  const thinkingEls = bs.busy ? [el("p", { class: "bsr-yq" }, el("small", {}, "Your question"), el("b", {}, bs.q || bs.pending || "")), el("div", { class: "bsr-load calm", role: "status", "aria-live": "polite" }, el("div", { class: "bsc-orbit sm", "aria-hidden": "true" }, el("i", { class: "r1" }), el("i", { class: "r2" }), el("b", { class: "d1" }), el("b", { class: "d2" }), el("b", { class: "d3" }), brandSpin("bsc-brand live")), el("p", { class: "bsr-think" }, "Chitti is thinking\u2026"),
     el("div", { class: "bsr-lines", "aria-hidden": "true" }, el("i", {}), el("i", {}), el("i", {})))] : [];
   ui.thinking = bs.busy && bs.res ? thinkingEls : [];
   if (bs.pending) {
