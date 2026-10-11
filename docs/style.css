@@ -4631,3 +4631,7 @@ p a:not(.btn):not(.linkbtn):visited, .welcome-card a:not(.btn):visited, #rgElig 
 #splash .sp2-row { box-shadow: none !important; background-image: none !important; }
 #splash .sp2-row::after { display: none !important; }
 #splash .sp2-row .sp2-ic { box-shadow: none !important; }
+/* First screen: Chitti, the Loopy AI, as a full-width seventh tile */
+#splash .sp2-row:nth-child(7) { --wc: #e1e7fb; grid-column: 1 / -1; }
+#splash .sp2-row:nth-child(7) .sp2-ic { stroke: #3730a3 !important; color: #3730a3 !important; }
+#splash .sp2-row:nth-child(7) span { -webkit-line-clamp: 3; }
