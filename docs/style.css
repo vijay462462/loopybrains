@@ -4591,3 +4591,10 @@ p a:not(.btn):not(.linkbtn):visited, .welcome-card a:not(.btn):visited, #rgElig 
 :root[data-theme="dark"] #homeBento .hb-action small { color: #cbd5e1 !important; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) #homeBento .hb-college-name { color: #fca5a5 !important; } }
 :root[data-theme="dark"] #homeBento .hb-college-name { color: #fca5a5 !important; }
+
+/* Welcome tiles: six colours (beats the white-card rule above) */
+#splash .sp2-row { border: 1px solid rgb(255 255 255 / .2) !important; background-color: var(--wc, #0e7490) !important; background-image: linear-gradient(155deg, rgb(255 255 255 / .22), rgb(255 255 255 / 0) 55%) !important; box-shadow: 0 8px 22px -14px rgb(0 0 0 / .45) !important; }
+#splash .sp2-row:nth-child(1) { --wc: #e05c35; } #splash .sp2-row:nth-child(2) { --wc: #0e7490; } #splash .sp2-row:nth-child(3) { --wc: #b45309; }
+#splash .sp2-row:nth-child(4) { --wc: #6d28d9; } #splash .sp2-row:nth-child(5) { --wc: #047857; } #splash .sp2-row:nth-child(6) { --wc: #be185d; }
+#splash .sp2-row b { color: #fff !important; } #splash .sp2-row span { color: rgb(255 255 255 / .92) !important; }
+#splash .sp2-row .sp2-ic { background: rgb(255 255 255 / .22) !important; stroke: #fff !important; color: #fff !important; }
