@@ -3263,8 +3263,8 @@ header.top #paletteBtn, #paletteBtn { border-radius: 999px; background: var(--ac
 .bs-tabs{display:flex;gap:6px;overflow-x:auto;padding:6px 0 10px;scrollbar-width:none}.bs-tabs::-webkit-scrollbar{display:none}
 .bs-tab{flex:none;border:1px solid var(--line);background:var(--sheet);color:var(--ink);border-radius:999px;padding:8px 14px;font:inherit;font-size:.9rem;cursor:pointer;min-height:38px}
 .bs-tab.on{background:var(--btn);color:var(--btn-ink);border-color:transparent}
-.bs-card{background:var(--sheet);border:1px solid var(--line);border-left:5px solid var(--accent);border-radius:16px;padding:14px;margin:0 0 12px}
-.bs-card.ans{background:var(--w1,var(--accent-soft))}
+.bs-card{background:var(--sheet);border:1px solid color-mix(in srgb,var(--line) 60%,transparent);border-radius:18px;padding:18px 20px;margin:0 0 10px;box-shadow:0 1px 4px rgb(0 0 0/.06)}
+.bs-card.ans{background:color-mix(in srgb,var(--accent-soft) 35%,var(--paper));border-color:color-mix(in srgb,var(--accent-soft) 60%,transparent);border-radius:22px;padding:20px 22px;box-shadow:0 2px 12px -4px rgb(0 0 0/.10)}
 .bs-card h3{margin:0 0 8px}
 .bs-acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
 .tp-sub.strong{background:var(--btn);color:var(--btn-ink);border-color:transparent}
@@ -3351,7 +3351,7 @@ html.bs-open, html.bs-open body { overflow: hidden; }
 .bsr-card { background: var(--sheet); border: 1px solid var(--line); border-radius: 18px; padding: 16px; margin: 0 0 14px; }
 .bsr-card h3 { margin: 0 0 10px; display: flex; align-items: center; gap: 10px; }
 .bsr-n { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-size: .85rem; flex: none; background: var(--c, var(--accent)); }
-.bsr-card.sec { border-left: 6px solid var(--c, var(--accent)); } .bsr-card.s0 { --c: #3b82f6; } .bsr-card.s1 { --c: #d97706; } .bsr-card.s2 { --c: #ea580c; } .bsr-card.s3 { --c: #8b5cf6; } .bsr-card.s4 { --c: #0d9488; } .bsr-card.s5 { --c: #db2777; }
+.bsr-card.sec { background: color-mix(in srgb, var(--c, var(--accent)) 7%, var(--sheet)); border-color: color-mix(in srgb, var(--c, var(--accent)) 28%, transparent); } .bsr-card.s0 { --c: #3b82f6; } .bsr-card.s1 { --c: #d97706; } .bsr-card.s2 { --c: #ea580c; } .bsr-card.s3 { --c: #8b5cf6; } .bsr-card.s4 { --c: #0d9488; } .bsr-card.s5 { --c: #db2777; }
 .bsr-s { margin: 0 0 10px; padding: 10px 12px; border-radius: 12px; line-height: 1.65; border-left: 4px solid transparent; }
 .bsr-tag { display: inline-block; margin-right: 8px; padding: 1px 8px; border-radius: 99px; font-size: .68rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: #fff; background: var(--tc, var(--accent)); vertical-align: 1px; }
 .bsr-definition { --tc: #3b82f6; background: color-mix(in srgb, #3b82f6 13%, var(--sheet)); border-left-color: #3b82f6; }
