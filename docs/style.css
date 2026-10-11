@@ -4268,3 +4268,22 @@ p a:not(.btn):not(.linkbtn):visited, .welcome-card a:not(.btn):visited, #rgElig 
 .bsfull .bs-mode:not(.on), .bsfull .bs-engb:not(.on) { background: rgb(255 255 255 / .05); border-color: var(--line); }
 .bs-brain-spin img { box-shadow: 0 10px 28px -8px rgb(251 191 36 / .55); }
 .bsc-orbit .r1, .bsc-orbit .r2 { background: conic-gradient(from 0deg, #6366f1, #fbbf24, #fb923c, #f472b6, #6366f1) border-box !important; }
+/* ===== Chitti: neutral layout, colour only on buttons ===== */
+.bsfull.calm { --paper: #f6f6f7; --sheet: #ffffff; --line: #e2e2e6; --ink: #17171a; --muted: #6a6a74; --accent: #f97316; --accent-soft: #f1f1f3; --glow1: transparent; --glow2: transparent; background: var(--paper); }
+:root[data-theme="dark"] .bsfull.calm, .bsfull.calm.night { --paper: #0f0f11; --sheet: #19191c; --line: #2b2b30; --ink: #f2f2f4; --muted: #a0a0aa; --accent: #f97316; --accent-soft: #232327; --glow1: transparent; --glow2: transparent; }
+.bsfull.calm { background: var(--paper); }
+.bsc-hero { background: var(--sheet) !important; color: var(--ink); border: 1px solid var(--line); box-shadow: none !important; }
+.bsc-hero .bsc-bn-big { background: none !important; -webkit-text-fill-color: var(--ink) !important; color: var(--ink) !important; }
+.bsc-hero .bsc-hi span { color: var(--ink); }
+.bsfull .bs-try .bs-tc, .bsr-yq { background: var(--sheet); border: 1px solid var(--line); border-left: 1px solid var(--line); box-shadow: none; backdrop-filter: none; }
+.bsfull .bs-tc i { background: var(--accent-soft); }
+.bsr-think { background: none !important; -webkit-text-fill-color: var(--muted) !important; color: var(--muted); }
+.bsr-lines i { background: var(--accent-soft) !important; }
+.bsf-prog i { background: var(--accent) !important; }
+.bsc-orbit b, .bsc-orbit .d1, .bsc-orbit .d2, .bsc-orbit .d3 { background: var(--muted) !important; box-shadow: none !important; }
+.bsc-orbit .r1, .bsc-orbit .r2 { background: conic-gradient(from 0deg, var(--line), var(--muted), var(--line)) border-box !important; }
+.bsfull .bs-dock form, .bsfull .bs-dock .bs-form { border-color: var(--line) !important; }
+.bs-brain-spin img { box-shadow: none; }
+.bs-brain-ring circle:first-child { stroke: var(--muted); }
+/* buttons keep the colour */
+.bsfull .bs-mode.on, .bsfull .bs-mode[aria-selected="true"], .bsfull .bs-engb.on { background: linear-gradient(135deg, #fb923c, #f97316) !important; color: #2a1200 !important; }
