@@ -4607,3 +4607,9 @@ p a:not(.btn):not(.linkbtn):visited, .welcome-card a:not(.btn):visited, #rgElig 
 @keyframes bsrEmoPop { from { transform: scale(.2) rotate(-20deg); opacity: 0; } to { transform: scale(1) rotate(0); opacity: 1; } }
 @keyframes bsrEmoFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 @media (prefers-reduced-motion: reduce) { .bsr-chat, .bsr-chat-emo { animation: none; } }
+.ob-pick, :root[data-theme] .ob-pick { background: #fff; color: #111827; border: 1.5px solid #e5e7eb; box-shadow: none; }
+.ob-pick .pk-name small, .ob-pick .pk-name strong, .ob-pick .pk-name span, .ob-pick .pk-line, .ob-pick .pk-src { color: #111827; opacity: 1; }
+.ob-pick .pk-name small { color: #6b7280; }
+.ob-pick .pk-src.ok b, .ob-pick .pk-src b { color: #c2410c; }
+.ob-pick .pk-chips i, .ob-pick .pk-chips span { background: #f3f4f6; color: #111827; border-color: #e5e7eb; }
+.ob-pick .pk-change { background: #fff; color: #111827; border: 1.5px solid #d1d5db; }
