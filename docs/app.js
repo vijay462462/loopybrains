@@ -9009,6 +9009,7 @@ function renderGateIntro() {
       ),
 
       el("div", { class: "rowbtns" },
+        el("button", { class: "btn", type: "button", onclick: () => history.back() }, "← Back"),
         el("button", { class: "btn primary", type: "button", onclick: openAsk }, "Post GATE Discussion"),
         el("button", { class: "btn", type: "button", onclick: () => { state.filter = "all"; $("filter").value = "all"; state.gateYearPick = null; render(); } }, "📋 All Discussions"),
       ),
@@ -9047,6 +9048,7 @@ function renderIntro() {
     statsRow,
     el("p", { class: "body" }, steps),
     el("div", { class: "rowbtns" },
+      el("button", { class: "btn", type: "button", onclick: () => history.back() }, "← Back"),
       el("button", { class: "btn primary", type: "button", onclick: openAsk }, t.ask),
       el("button", { class: "btn", type: "button", onclick: () => showPanel("network") }, "🌐 College network")),
     kbHint,
