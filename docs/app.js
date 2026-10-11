@@ -5655,7 +5655,7 @@ async function bsSubmit(q) {
   { const mm = await brainModesMod(), sg = bs.forcePack ? "" : (mm && mm.suggestMode ? mm.suggestMode(q) : ""); if (sg && sg !== (bs.mode || "atlas")) { const nm = (BS_MODES.find(x => x[0] === sg) || [])[1] || sg; bs.mode = sg; showNotice("This looks like a " + (sg === "forge" ? "code" : sg === "aegis" ? "security" : "project") + " question, so I switched to " + nm + " for a better answer.", "ok"); } }
   if (bs.mode && bs.mode !== "atlas") { bs.pending = ""; bsRun(q); return; }
   if (bs.autoSize) { const a = bs.autoSize; bs.autoSize = ""; bs.pending = q; bs.q = q; await bsPickSize(a); return; }
-  bs.pending = q; bs.res = null; bs.q = q; bsPaint(true);
+  bs.pending = ""; bs.q = q; bsRun(q);
 }
 async function bsPickSize(id) {
   const bs = bsState(), sz = BS_SIZES.find(x => x[0] === id); if (!sz) return;
