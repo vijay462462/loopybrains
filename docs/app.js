@@ -5994,7 +5994,8 @@ function brainViewInner(ui) {
   const optRow = el("div", { class: "bs-optrow" }, easyBtn), compact = true;
   const opts = compact ? el("details", { class: "bs-opts", open: bs.lock || bs.optsOpen ? "" : null, ontoggle: (e) => { bs.optsOpen = e.target.open; } }, el("summary", {}, mi[1] + " \u00B7 " + bsName(cur[0]) + " \u00B7 " + effNow[1] + " effort \u00B7 Easy words " + (bs.easy !== false ? "on" : "off") + "  \u2014 change"), lvBar, modelLine, rgNote, effRow, optRow) : null;
   const head = el("div", { class: "bs-head bsf-noprint" }, modeBar, bs.res ? null : modeLine, ...(compact ? [opts] : [lvBar, modelLine, rgNote, effRow, optRow]), offerBar, meter, lockCard);
-  const sheet = el("div", { class: "bs-sheet bsf-noprint", id: "bsSheet", hidden: bs.sheet || bs.lock ? null : "" }, el("small", { class: "bs-sheet-h" }, "Model and effort"), lvBar, modelLine, rgNote, effRow, optRow, offerBar, meter, lockCard);
+  const sheetHead = el("small", { class: "bs-sheet-h" }, "Model and effort", IS_RGUKT ? el("span", { class: "bs-rg-tag" }, "✓ RGUKT Free") : null);
+  const sheet = el("div", { class: "bs-sheet bsf-noprint", id: "bsSheet", hidden: bs.sheet || bs.lock ? null : "" }, sheetHead, lvBar, modelLine, rgNote, effRow, optRow, offerBar, meter, lockCard);
   const foot = el("p", { class: "bs-foot bsf-noprint" }, "Today: " + L.day + " of " + L.caps.day + " credits \u00B7 Check important facts");
   ui.bar = bar; ui.head = head; ui.dock = el("div", { class: "bs-dock bsf-noprint" }, sheet, sug, form, foot);
   const chips = (list, onTap) => el("div", { class: "bs-chips" }, ...list.map(t => el("button", { type: "button", class: "tp-sub", onclick: () => onTap(t) }, t)));
@@ -6002,8 +6003,9 @@ function brainViewInner(ui) {
     el("div", { class: "bsr-lines", "aria-hidden": "true" }, el("i", {}), el("i", {}), el("i", {})))] : [];
   ui.thinking = bs.busy && bs.res ? thinkingEls : [];
   if (bs.pending) {
-    return [bar, head, el("section", { class: "bsr-ask bsr-reveal in" }, el("small", {}, "Your question"), el("h2", {}, bs.pending), el("p", { class: "hint" }, "How much do you need?"),
-      el("div", { class: "bsr-sizes" }, ...BS_SIZES.map(([id, name, hint, need], i) => { const open = bsOpen(need); return el("button", { type: "button", class: "bsr-size z" + i + (bs.size === id ? " pre" : ""), onclick: () => bsPickSize(id) }, el("b", {}, name), el("span", {}, hint), open ? null : el("i", {}, IS_RGUKT ? "\u{1F512} Locked" : "\u{1F512} Plus")); })))];
+    const freeNote = IS_RGUKT ? el("p", { class: "bsr-free-banner" }, "🎓 RGUKT — all sizes free for you") : null;
+    return [bar, head, el("section", { class: "bsr-ask bsr-reveal in" }, el("small", {}, "Your question"), el("h2", {}, bs.pending), freeNote,
+      el("div", { class: "bsr-sizes" }, ...BS_SIZES.map(([id, name, hint, need], i) => { const open = bsOpen(need); return el("button", { type: "button", class: "bsr-size z" + i + (bs.size === id ? " pre" : ""), onclick: () => bsPickSize(id) }, el("div", { class: "bsr-size-info" }, el("b", {}, name), el("span", {}, hint)), el("i", { class: "bsr-size-badge" + (open ? "" : " locked") }, open ? "FREE" : (IS_RGUKT ? "\u{1F512}" : "Plus"))); })))];
   }
   if (!bs.res) {
     const C = window.RGUKT_CURRICULUM, rows = C ? ((C.data[curState.year] || {})[curState.branch] || []).map(r => r[0]).slice(0, 8) : [], rec = bsRecent();
