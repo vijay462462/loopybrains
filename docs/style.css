@@ -2540,6 +2540,7 @@ body.simple .tabs button[aria-selected="true"] { display: inline-flex; }
 
 .sp2-brand { display: inline-flex; align-items: center; gap: 12px; margin-bottom: 6px; }
 .sp2-promo { display: block; width: 100%; max-width: 380px; border-radius: 16px; margin: 10px 0 14px; object-fit: cover; }
+.sp2-banner-img { display: block; width: 100%; max-width: 34rem; border-radius: 18px; margin: 8px 0 4px; object-fit: cover; aspect-ratio: 1200/630; }
 .sp2-bmark svg { display: block; filter: drop-shadow(0 8px 14px rgba(99, 102, 241, .45)); }
 .sp2-bname { display: block; line-height: 1; }
 .sp2-bname b { font-size: 19px; letter-spacing: .12em; color: #fff; }
@@ -4025,7 +4026,12 @@ body header.top .tabs button[aria-selected="true"] { color: #0d1030; }
 :root[data-palette="tealcoral"][data-theme="dark"] { --paper:#07140c;--sheet:#0e2016;--raised:#14301f;--grid:#0a1a10;--line:#1f3d2a;--ink:#eaf7ee;--muted:#9bbfa8;--accent:#4ade80;--accent-soft:#143222;--btn:#fb923c;--btn-ink:#2b1000;--mark:#fb923c;--mark-ink:#2b1000;--hdr:#0e2016;--grad:#fb923c;--gold:#fb923c;--gold-2:#fdba74;--gold-dark:#fb923c;--shadow:0 1px 2px rgb(0 0 0 / .5),0 18px 40px -20px rgb(0 0 0 / .8); }
 :root[data-palette="tealcoral"][data-theme="dark"][data-tone="black"] { --paper:#030b06;--sheet:#08170e;--raised:#0d2216;--grid:#040e08;--line:#17301f; }
 @media (prefers-color-scheme: dark) { :root[data-palette="tealcoral"]:not([data-theme="light"]):not([data-theme="dark"]) { --paper:#07140c;--sheet:#0e2016;--raised:#14301f;--grid:#0a1a10;--line:#1f3d2a;--ink:#eaf7ee;--muted:#9bbfa8;--accent:#4ade80;--accent-soft:#143222;--btn:#fb923c;--btn-ink:#2b1000;--gold:#fb923c;--gold-2:#fdba74;--gold-dark:#fb923c;--shadow:0 1px 2px rgb(0 0 0 / .5),0 18px 40px -20px rgb(0 0 0 / .8); } }
-:root[data-palette="tealcoral"] .splash.sp2 { --w1:#166534;--w2:#15803d;--w3:#2f7a4d;--w4:#b45309;--w5:#7a5a2a;--w6:#2f6a45; }
+:root[data-palette="tealcoral"] .splash.sp2 { --w1:#e05c35;--w2:#0e7490;--w3:#b45309;--w4:#6d28d9;--w5:#047857;--w6:#be185d; }
+:root[data-palette="tealcoral"] .splash.sp2 .sp2-row { background: var(--wc, #0e7490); background-image: linear-gradient(155deg, rgb(255 255 255 / .2), rgb(255 255 255 / 0) 55%); border: 1px solid rgb(255 255 255 / .18); box-shadow: 0 8px 22px -14px rgb(0 0 0 / .45), inset 0 1px 0 rgb(255 255 255 / .22); color: #fff; }
+:root[data-palette="tealcoral"] .splash.sp2 .sp2-row::after { display: block; }
+:root[data-palette="tealcoral"] .splash.sp2 .sp2-row b { color: #fff; font-weight: 700; }
+:root[data-palette="tealcoral"] .splash.sp2 .sp2-row span { color: rgb(255 255 255 / .9); }
+:root[data-palette="tealcoral"] .splash.sp2 .sp2-row .sp2-ic { background: rgb(255 255 255 / .22); stroke: #fff; border: 0; box-shadow: none; }
 :root[data-palette="tealcoral"] .sp2-bname i, :root[data-palette="tealcoral"] .brand h1 i { background: linear-gradient(90deg, #fdba74, #f97316); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
 :root[data-palette="tealcoral"]:not([data-theme="dark"]) .brand h1 i { background: linear-gradient(90deg, #ea580c, #c2410c); -webkit-background-clip: text; background-clip: text; }
 @media (prefers-color-scheme: dark) { :root[data-palette="tealcoral"]:not([data-theme="light"]) .brand h1 i { background: linear-gradient(90deg, #fdba74, #fb923c); -webkit-background-clip: text; background-clip: text; } }
