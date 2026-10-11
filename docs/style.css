@@ -3692,6 +3692,10 @@ html.is-scrolling .bsh-orb { animation-play-state: paused !important; }
 .bsc-bn-sm { font-size: clamp(.85rem,3.5vw,1.1rem); font-weight: 700; letter-spacing: .18em; text-transform: uppercase; opacity: .75; }
 .bsc-hi { margin: 0; font: 400 clamp(2rem, 9vw, 2.7rem)/1.12 Georgia, "Iowan Old Style", "Times New Roman", serif; letter-spacing: -.01em; }
 .bsc-sub { margin: 0; color: var(--muted); font-size: 1.02rem; }
+.bsc-chitip { margin: 6px 0 0; font-size: .88rem; color: var(--muted); background: color-mix(in srgb, var(--accent-soft) 40%, transparent); border: 1px solid color-mix(in srgb, var(--accent-soft) 60%, transparent); border-radius: 10px; padding: 7px 12px; max-width: 28em; line-height: 1.4; }
+.bsr-chitti-hd { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.bsr-chitti-badge { font-size: .75rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; background: var(--gold); color: var(--paper); padding: 3px 10px; border-radius: 20px; }
+.bsr-lv-dots { font-size: .72rem; color: var(--gold); letter-spacing: 2px; }
 @keyframes bscSpin { to { transform: rotate(360deg); } }
 .bs-dock { position: sticky; bottom: 0; z-index: 9; margin: auto -16px 0; padding: 14px 12px calc(env(safe-area-inset-bottom, 0px) + 8px); background: linear-gradient(to bottom, transparent, var(--paper) 22px); }
 .bs-comp { background: var(--sheet); border: 1px solid var(--line); border-radius: 28px; padding: 12px 12px 10px; box-shadow: 0 10px 34px -16px rgb(0 0 0 / .55); transition: border-color .2s; }
@@ -4088,6 +4092,7 @@ body header.top .tabs button[aria-selected="true"] { color: #0d1030; }
 .bsc-hero .bsc-hi { font: 800 clamp(1.45rem, 6.4vw, 2rem)/1.15 inherit !important; font-family: inherit !important; color: #fff; letter-spacing: -.01em; }
 .bsc-hero .bsc-hi span { -webkit-text-fill-color: #fdba74; background: none; }
 .bsc-hero .bsc-sub { color: rgb(255 255 255 / .8) !important; font-size: .95rem !important; }
+.bsc-hero .bsc-chitip { background: rgb(255 255 255 / .1); border-color: rgb(255 255 255 / .22); color: rgb(255 255 255 / .85); font-size: .82rem; }
 .bsc-steps { display: flex; gap: 8px; margin: 6px 0 0; padding: 0; list-style: none; counter-reset: st; flex-wrap: wrap; }
 .bsc-steps li { counter-increment: st; display: inline-flex; align-items: center; gap: 6px; background: rgb(255 255 255 / .12); border: 1px solid rgb(255 255 255 / .22); border-radius: 999px; padding: 5px 12px 5px 6px; font-size: .8rem; font-weight: 700; }
 .bsc-steps li::before { content: counter(st); width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; background: #fb923c; color: #2b1000; font-size: .72rem; font-weight: 800; }
