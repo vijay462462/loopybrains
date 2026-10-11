@@ -24,17 +24,21 @@ const fsDoc = (d) => Object.fromEntries(Object.entries((d && d.fields) || {}).ma
 // Update checker: when a newer version of the site has been published, show a "Refresh" bar so students are never stuck on an old copy.
 (function () {
   const cur = ((document.querySelector('script[src*="app.js"]') || {}).src || "").match(/[?&]v=(\d+)/);
-  if (!cur) return; const mine = Number(cur[1]); let shown = false;
+  if (!cur) return; const mine = Number(cur[1]); let shown = false, first = true;
   const check = async () => {
     if (shown || !navigator.onLine) return;
+    const isFirst = first; first = false;
     try {
       const r = await fetch(location.pathname.replace(/[^/]*$/, "") + "index.html?cb=" + Date.now(), { cache: "no-store" }); if (!r.ok) return;
       const m = (await r.text()).match(/app\.js\?v=(\d+)/); if (!m || Number(m[1]) <= mine) return;
       shown = true;
+      const fresh = async () => { try { if (navigator.serviceWorker) { const rs = await navigator.serviceWorker.getRegistrations(); await Promise.all(rs.map(x => x.update().catch(() => {}))); } if (window.caches) { const ks = await caches.keys(); await Promise.all(ks.map(k => caches.delete(k))); } } catch (_) {} location.replace(location.pathname + location.search.replace(/[?&]r=\d+/, "") + (location.search ? "&" : "?") + "r=" + m[1]); };
+      let tried = ""; try { tried = sessionStorage.getItem("dd-autoupd") || ""; } catch (_) {}
+      if (isFirst && tried !== m[1]) { try { sessionStorage.setItem("dd-autoupd", m[1]); } catch (_) {} return fresh(); }   // a stale copy refreshes itself once, so nobody keeps an old screen
       const bar = document.createElement("div"); bar.className = "update-bar"; bar.setAttribute("role", "status");
       const t = document.createElement("span"); t.textContent = "A new version is ready.";
       const b = document.createElement("button"); b.type = "button"; b.textContent = "Refresh now";
-      b.onclick = async () => { try { if (navigator.serviceWorker) { const rs = await navigator.serviceWorker.getRegistrations(); await Promise.all(rs.map(x => x.update().catch(() => {}))); } if (window.caches) { const ks = await caches.keys(); await Promise.all(ks.map(k => caches.delete(k))); } } catch (_) {} location.replace(location.pathname + location.search.replace(/[?&]r=\d+/, "") + (location.search ? "&" : "?") + "r=" + m[1]); };
+      b.onclick = fresh;
       const x = document.createElement("button"); x.type = "button"; x.className = "x"; x.setAttribute("aria-label", "Later"); x.textContent = "\u2715"; x.onclick = () => bar.remove();
       bar.append(t, b, x); document.body.append(bar);
     } catch (_) {}
