@@ -4235,3 +4235,8 @@ p a:not(.btn):not(.linkbtn):visited, .welcome-card a:not(.btn):visited, #rgElig 
 @media (max-width: 700px) { .hb-promo { display: none; } }
 .hiw-h { font-size: 18px; margin-bottom: 4px; }
 .hiw-steps { font-size: 14px; line-height: 1.5; white-space: pre-line; }
+/* While Chitti thinks: only one animated brain (below the question); the title row stays small */
+.bsc-hero.busy { padding-top: 6px; padding-bottom: 0; min-height: 0; }
+.bsc-hero.busy .bsc-brand-name { margin: 6px 0 0; }
+.bsr-yq { text-align: center; }
+.bsr-load.calm { margin-top: 8px; }
