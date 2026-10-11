@@ -4221,3 +4221,6 @@ body.dldq-open { overflow: hidden; }
 .lo-btns .btn, .lo-out { min-height: 46px; height: auto; border-radius: 14px; font-size: 15px; font-weight: 700; }
 .lo-out { border: 1.5px solid #d93a3a; background: transparent; color: #c0292b; cursor: pointer; }
 .lo-out:active { background: #fdecec; }
+
+/* Welcome splash hero image */
+.sp2-hero { display: block; width: 100%; height: auto; aspect-ratio: 1024 / 572; object-fit: cover; border-radius: 20px; box-shadow: 0 18px 40px -18px rgb(0 0 0 / .7); }
