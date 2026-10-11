@@ -1454,16 +1454,17 @@ function renderBottomNav() {
   const icons = { doubts: 'doubts', ideas: 'ideas', clubs: 'clubs', gate: 'gate', challenges: 'gate', market: 'market' };
   const labels = { doubts: 'Doubts', ideas: 'Ideas', clubs: 'Clubs', gate: EXAM_LABEL.length > 8 ? EXAM_LABEL.split(/[ /]/)[0] : EXAM_LABEL, challenges: 'Challenges', market: 'Market' };
   nav.replaceChildren(
-    el('button', { type: 'button', class: 'bnav-btn' + (state.mode === 'intro' && !state.selected ? ' active' : ''), onclick: () => {
-      state.mode = 'intro'; state.selected = null; state.query = ''; $('search') && ($('search').value = '');
-      try { history.replaceState(null, '', '#' + state.tab); } catch (_) {}
+    el('button', { type: 'button', class: 'bnav-btn' + (isHomeView() ? ' active' : ''), onclick: () => {
+      state.tab = 'doubts'; state.group = 'All'; state.filter = 'all'; state.homeView = true; state.mode = 'intro'; state.selected = null; state.query = ''; $('search') && ($('search').value = '');
+      try { history.replaceState(null, '', '#doubts'); } catch (_) {}
       render(); window.scrollTo({ top: 0, behavior: 'smooth' });
     } },
       el('span', { class: 'bnav-icon' }, svgIcon('home')), el('span', { class: 'bnav-label' }, 'Home')),
     ...['doubts', 'ideas', 'clubs', 'market', 'gate'].filter(tab => (!isSimple() || tab === 'doubts' || tab === 'ideas' || state.tab === tab) && (!focusOn() || isAcademicTab(tab)) && featureOn(tab === 'market' ? 'market' : 'doubts')).map(tab => {
       const cnt = state[TABS[tab].coll].length;
-      return el('button', { type: 'button', class: 'bnav-btn' + (state.tab === tab ? ' active' : ''), onclick: () => {
-        if (state.tab === tab) { openAsk(); return; }
+      return el('button', { type: 'button', class: 'bnav-btn' + (state.tab === tab && !isHomeView() ? ' active' : ''), onclick: () => {
+        if (tab === 'doubts') state.homeView = false;
+        if (state.tab === tab) { if (tab === 'doubts') render(); openAsk(); return; }
         state.tab = tab; state.group = 'All'; state.filter = 'all'; state.query = '';
         state.selected = null; state.mode = 'intro'; state.gateYearPick = null; state.gateResView = null; $('search').value = '';
         try { history.replaceState(null, '', '#' + tab); } catch (_) {} render(); openAsk();
@@ -2295,9 +2296,10 @@ const TAB_GUIDE = {
   gate: { safe: "Use papers from official or trusted sources.", icon: "\u{1F3AF}", purpose: "Exam preparation: previous papers, tips and discussions for your exam.", steps: ["Pick your branch and subject.", "Open the previous papers and try them with a timer.", "Stuck on a question? Post it in the discussion."], next: () => ["\u{1F4DD} Open previous papers", () => { const b = document.querySelector(".pyq-panel, .subj-chip"); if (b) b.scrollIntoView({ behavior: "smooth" }); }] },
 };
 // Home block on top of the Doubts feed: a greeting, one big call to action and four shortcut tiles.
+function isHomeView() { return state.tab === "doubts" && state.group === "All" && !state.query.trim() && !state.selected && !NO_COLLEGE && state.homeView !== false; }
 function renderHome() {
   const box = $("homeBento"); if (!box) return;
-  const show = state.tab === "doubts" && state.group === "All" && !state.query.trim() && !NO_COLLEGE && !state.selected;
+  const show = state.tab === "doubts" && state.group === "All" && !state.query.trim() && !NO_COLLEGE && !state.selected && state.homeView !== false;
   if (!show) { box.hidden = true; return; }
   const hr = new Date().getHours();
   const greet = hr < 5 ? "Good night" : hr < 12 ? "Good morning" : hr < 17 ? "Good afternoon" : "Good evening";
