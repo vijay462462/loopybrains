@@ -2324,9 +2324,9 @@ function renderHome() {
       el("div", { class: "hb-prompt" },
         el("span", { class: "hb-prompt-dot", "aria-hidden": "true" }),
         el("p", { class: "hb-prompt-msg" }, "Stuck on a topic? I can explain it simply"),
-        el("button", { type: "button", class: "hb-prompt-btn", onclick: () => { state.ai = state.ai || { msgs: [], busy: false, note: "" }; showPanel("ai"); } }, "Ask Loopy ›")
+        el("button", { type: "button", class: "hb-prompt-btn", onclick: () => { state.ai = state.ai || { msgs: [], busy: false, note: "" }; showPanel("ai"); } }, "Ask Chitti ›")
       ),
-      el("p", { class: "hb-choice" }, "Ask a doubt to your friend or classmate, or ask Loopy AI. It is your choice."),
+      el("p", { class: "hb-choice" }, "Ask a doubt to your friend or classmate, or ask Chitti, the Loopy AI. It is your choice."),
       el("div", { class: "hb-actions" },
         el("button", { type: "button", class: "hb-action", onclick: () => openAsk() },
           el("span", { class: "hb-action-ic" }, "❓"),
@@ -2334,7 +2334,7 @@ function renderHome() {
         ),
         el("button", { type: "button", class: "hb-action", onclick: () => { state.ai = state.ai || { msgs: [], busy: false, note: "" }; showPanel("ai"); } },
           el("span", { class: "hb-action-ic" }, "✨"),
-          el("b", {}, "Ask Loopy AI"), el("small", {}, "answers in seconds")
+          el("b", {}, "Ask Chitti"), el("small", {}, "the Loopy AI")
         ),
         Object.keys(DEPT_MAP).length ? el("button", { type: "button", class: "hb-action hb-action-branch", onclick: () => showBranchPicker(true) },
           el("span", { class: "hb-action-ic" }, "🏫"),
