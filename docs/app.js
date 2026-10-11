@@ -10446,14 +10446,10 @@ function openStories(authorId) {
       ? [el("button", { type: "button", class: "st-x", "aria-label": "Who saw this", onclick: () => { vlist.hidden = !vlist.hidden; } }, "👁 " + viewers.length),
          el("button", { type: "button", class: "st-x", "aria-label": "Delete story", onclick: async () => { if (!confirm("Delete this story?")) return; try { await softDelete("stories", s.id); state.stories = state.stories.filter(x => x.id !== s.id); close(); } catch (e) { showNotice(errText(e)); } } }, "🗑")]
       : [el("button", { type: "button", class: "st-x", "aria-label": "Report story", onclick: async () => { if (!confirm("Report this story as inappropriate?")) return; try { const reports = [...new Set([...(s.reports || []), store.uid])].slice(0, 100); s.reports = reports; await store.update("stories", s.id, { reports }); showNotice("Reported. Thank you."); setTimeout(() => showNotice(""), 2500); } catch (e) { showNotice(errText(e)); } next(); } }, "🚩"), el("button", { type: "button", class: "st-x", "aria-label": "Report this person\u2019s photo or status", title: "Report photo or status", onclick: () => openProfileReport(g.authorId, g.name) }, "\u{1F464}")];
-    // Deterrent only (a website cannot block screenshots): the viewer's own name is tiled faintly over others' stories.
-    const wmName = (getName() || BRAND).slice(0, 20);
-    const wm = ownS ? null : el("div", { class: "st-wm", "aria-hidden": "true" }, Array.from({ length: 24 }, () => el("span", {}, wmName)));
-    ov.oncontextmenu = (ev) => { ev.preventDefault(); };
     ov.replaceChildren(
       el("div", { class: "st-bars" }, segs),
       el("div", { class: "st-top" }, avatarEl(dpOfId(g.authorId, g.name), "av st-av sm" + frameOf(g.authorId)), el("div", { class: "st-who" }, el("strong", {}, (ownS ? "Your story" : g.name) + markOf(g.authorId)), el("small", {}, ago(s.createdAt) + (statusOfId(g.authorId) ? " · " + statusOfId(g.authorId) : ""))), ...actions, el("button", { type: "button", class: "st-x", "aria-label": "Close", onclick: close }, "✕")),
-      body, wm, ownS ? null : el("p", { class: "st-note" }, "📸 Screenshots can be traced to your name. Please don't share others' stories."), vlist,
+      body, vlist,
       el("button", { type: "button", class: "st-tap l", "aria-label": "Previous", onclick: prev }), el("button", { type: "button", class: "st-tap r", "aria-label": "Next", onclick: next }));
     const run = (ms) => { if (my !== gen) return; fill.style.setProperty("animation-duration", ms + "ms"); fill.classList.add("run"); timer = setTimeout(next, ms); };
     if (s.kind === "quiz") {
@@ -10515,9 +10511,6 @@ function openStories(authorId) {
 }
 
 // Privacy: blur the app while it is in the background so the recent-apps preview does not show posts or stories.
-document.addEventListener("visibilitychange", () => { document.body.classList.toggle("priv-blur", document.visibilityState === "hidden"); });
-window.addEventListener("pagehide", () => { document.body.classList.add("priv-blur"); });
-window.addEventListener("pageshow", () => { if (document.visibilityState === "visible") document.body.classList.remove("priv-blur"); });
 // Focus mode: hides everything that is not academic (Ideas, Clubs, Challenges, Market, Jobs, stories, Entertainment).
 const focusOn = () => { try { return localStorage.getItem("dd-focus") === "1"; } catch (_) { return false; } };
 function applyFocus() {
