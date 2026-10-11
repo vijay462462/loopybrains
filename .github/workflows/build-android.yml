@@ -40,7 +40,7 @@ jobs:
       - name: App icon (optional, a failure here does not stop the build)
         continue-on-error: true
         run: npx --yes @capacitor/assets generate --android --iconBackgroundColor '#0d3c46' --iconBackgroundColorDark '#0d3c46'
-      - name: Block screenshots (FLAG_SECURE)
+      - name: Patch Android project
         run: python3 patch_android.py
       - name: Sync web assets
         run: npx cap sync android
