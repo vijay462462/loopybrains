@@ -2351,7 +2351,7 @@ function renderGuide() {
   const nx = g.next();
   box.replaceChildren(
     el("button", { class: "guide-x", type: "button", "aria-label": "Close this guide", onclick: () => { writeJSON(key, true); renderGuide(); } }, "\u2715"),
-    el("div", { class: "guide-head" }, el("span", { class: "guide-ic", "aria-hidden": "true" }, g.icon), el("div", {}, el("small", {}, "What this is for"), el("strong", {}, g.purpose))),
+    el("div", { class: "guide-head", role: "button", tabindex: "0", "aria-expanded": "false", title: "Show or hide the steps", onclick: (e) => { const o = box.classList.toggle("open"); e.currentTarget.setAttribute("aria-expanded", String(o)); }, onkeydown: (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } } }, el("span", { class: "guide-ic", "aria-hidden": "true" }, g.icon), el("div", {}, el("small", {}, "What this is for \u00B7 tap for steps"), el("strong", {}, g.purpose))),
     el("ol", { class: "guide-steps" }, ...g.steps.map(s => el("li", {}, s))),
     g.safe ? el("p", { class: "guide-safe" }, el("b", {}, "Stay safe: "), g.safe) : null,
     el("div", { class: "rowbtns" }, el("button", { class: "btn primary", type: "button", onclick: nx[1] }, nx[0]), el("button", { class: "btn sm", type: "button", onclick: () => showHowTo() }, "\u{1F4D6} Full guide")));

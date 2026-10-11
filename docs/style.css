@@ -4227,3 +4227,7 @@ p a:not(.btn):not(.linkbtn):visited, .welcome-card a:not(.btn):visited, #rgElig 
 /* Phones: fade the right edge of the tab row so it is clear it scrolls; hide keyboard hint on touch screens */
 @media (max-width: 700px) { :root[data-palette] body header.top .brand > .tabs { -webkit-mask-image: linear-gradient(90deg, #000 88%, transparent); mask-image: linear-gradient(90deg, #000 88%, transparent); } }
 @media (hover: none) { .kb-hint { display: none; } }
+/* Guide cards start small: purpose + main button; tap the title to see steps */
+.guide-card:not(.open) .guide-steps, .guide-card:not(.open) .guide-safe, .guide-card:not(.open) .rowbtns .btn.sm { display: none; }
+.guide-card .guide-head { cursor: pointer; }
+.guide-card:not(.open) { padding-bottom: 12px; }
