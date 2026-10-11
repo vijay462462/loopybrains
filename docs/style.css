@@ -4224,3 +4224,6 @@ p a:not(.btn):not(.linkbtn):visited, .welcome-card a:not(.btn):visited, #rgElig 
 /* Header action icons (colour, bell, theme) always readable on the pale chip */
 :root[data-palette] body header.top .hdr-actions > #paletteBtn, :root[data-palette] body header.top .hdr-actions > #notifBtn, :root[data-palette] body header.top .hdr-actions > #themeBtn { color: var(--ink); }
 :root[data-palette] body header.top .hdr-actions > #notifBtn svg, :root[data-palette] body header.top .hdr-actions > #paletteBtn svg, :root[data-palette] body header.top .hdr-actions > #themeBtn svg { color: inherit; stroke: currentColor; }
+/* Phones: fade the right edge of the tab row so it is clear it scrolls; hide keyboard hint on touch screens */
+@media (max-width: 700px) { :root[data-palette] body header.top .brand > .tabs { -webkit-mask-image: linear-gradient(90deg, #000 88%, transparent); mask-image: linear-gradient(90deg, #000 88%, transparent); } }
+@media (hover: none) { .kb-hint { display: none; } }
