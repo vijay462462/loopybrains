@@ -4211,3 +4211,16 @@ body.dldq-open { overflow: hidden; }
 .lo-btns .btn, .lo-out { min-height: 46px; height: auto; border-radius: 14px; font-size: 15px; font-weight: 700; }
 .lo-out { border: 1.5px solid #d93a3a; background: transparent; color: #c0292b; cursor: pointer; }
 .lo-out:active { background: #fdecec; }
+/* Links inside text, dialogs and legal copy follow the palette instead of browser blue/purple */
+p a:not(.btn):not(.linkbtn), .welcome-card a:not(.btn), .hint a, dialog a:not(.btn), #rgElig a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; font-weight: 600; }
+p a:not(.btn):not(.linkbtn):visited, .welcome-card a:not(.btn):visited, #rgElig a:visited { color: var(--accent); }
+/* Header wordmark is rainbow on black: on light themes show it as a dark rounded badge instead of blending it away */
+:root:not([data-theme="dark"]) .bname-img, :root:not([data-theme="dark"]) .sp2-bname-img { mix-blend-mode: normal; background: #06201d; border-radius: 10px; padding: 3px 8px; box-sizing: content-box; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .bname-img, :root:not([data-theme="light"]) .sp2-bname-img { mix-blend-mode: lighten; background: none; border-radius: 0; padding: 0; } }
+:root[data-theme="dark"] .bname-img, :root[data-theme="dark"] .sp2-bname-img { mix-blend-mode: lighten; background: none; border-radius: 0; padding: 0; }
+.bname-img { height: 22px; max-width: 100%; }
+:root:not([data-theme="dark"]) .bname-img { padding: 3px 6px; }
+@media (min-width: 701px) { .bname-img { height: 28px; } }
+/* Header action icons (colour, bell, theme) always readable on the pale chip */
+:root[data-palette] body header.top .hdr-actions > #paletteBtn, :root[data-palette] body header.top .hdr-actions > #notifBtn, :root[data-palette] body header.top .hdr-actions > #themeBtn { color: var(--ink); }
+:root[data-palette] body header.top .hdr-actions > #notifBtn svg, :root[data-palette] body header.top .hdr-actions > #paletteBtn svg, :root[data-palette] body header.top .hdr-actions > #themeBtn svg { color: inherit; stroke: currentColor; }
