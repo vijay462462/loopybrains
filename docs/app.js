@@ -5430,6 +5430,7 @@ function bsMount() {
   const ov = el("div", { class: "bsfull calm", id: "bsFull", role: "dialog", "aria-modal": "true", "aria-label": "Loopy Search" }, bar, prog, scroll);
   document.body.append(ov); document.documentElement.classList.add("bs-open"); bsApplyNight();
   let tick = false; scroll.addEventListener("scroll", () => { if (tick) return; tick = true; requestAnimationFrame(() => { tick = false; const p = $("bsProg"); if (p) p.style.width = Math.min(100, Math.round(scroll.scrollTop / Math.max(1, scroll.scrollHeight - scroll.clientHeight) * 100)) + "%"; }); }, { passive: true });
+  { let last = 0; scroll.addEventListener("scroll", () => { const t = scroll.scrollTop, d = t - last; if (Math.abs(d) < 8) return; last = t; if (d > 0 && t > 160 && bs.res) ov.classList.add("dock-min"); else if (d < 0 || t < 120) ov.classList.remove("dock-min"); }, { passive: true }); }
   document.addEventListener("keydown", bsEsc); bsPaint(true); bsUseSync().then(() => { if (bsEl()) { bsPaint(); setTimeout(() => { if (bsEl()) bsSurpriseModal(bsRollSurprise()); }, 600); } });
   if (bs.start) { const q = bs.start; bs.start = ""; bsSubmit(q); }
 }

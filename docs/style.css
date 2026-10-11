@@ -4287,3 +4287,16 @@ p a:not(.btn):not(.linkbtn):visited, .welcome-card a:not(.btn):visited, #rgElig 
 .bs-brain-ring circle:first-child { stroke: var(--muted); }
 /* buttons keep the colour */
 .bsfull .bs-mode.on, .bsfull .bs-mode[aria-selected="true"], .bsfull .bs-engb.on { background: linear-gradient(135deg, #fb923c, #f97316) !important; color: #2a1200 !important; }
+/* Result title card: neutral like the rest of the layout */
+.bsfull .bsr-hero, .bsfull .bsr-hero[class*="mode-"] { background: var(--sheet) !important; color: var(--ink); border: 1px solid var(--line); box-shadow: none !important; animation: none !important; }
+.bsfull .bsr-hero * { color: inherit; }
+.bsfull .bsr-hero .bsr-chip, .bsfull .bsr-hero span, .bsfull .bsr-hero .bsr-tag { background: var(--accent-soft); }
+/* Bottom search box shrinks to one slim line while reading answers; tap it or scroll up to open it fully */
+.bsfull .bs-dock .bs-comp, .bsfull .bs-dock .bs-foot { transition: all .18s ease; }
+.bsfull.dock-min .bs-dock .bs-eng, .bsfull.dock-min .bs-dock .bs-comp-row, .bsfull.dock-min .bs-dock .bs-foot, .bsfull.dock-min .bs-dock .bs-sug { display: none; }
+.bsfull.dock-min .bs-dock .bs-comp { padding-top: 2px; padding-bottom: 2px; box-shadow: none; }
+.bsfull.dock-min .bs-dock .bs-comp input { min-height: 40px; font-size: 15px; }
+.bsfull.dock-min .bs-dock:focus-within .bs-eng, .bsfull.dock-min .bs-dock:focus-within .bs-comp-row, .bsfull.dock-min .bs-dock:focus-within .bs-foot { display: flex; }
+.bsfull .pk-remember { background: var(--sheet) !important; color: var(--ink); border: 1px solid var(--line); box-shadow: none !important; }
+.bsfull .pk-remember small { color: var(--muted); }
+.bsfull .pk-remember .pk-rgrid > * { background: var(--accent-soft) !important; border-color: var(--line) !important; color: var(--ink); }
