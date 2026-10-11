@@ -2506,8 +2506,8 @@ function renderCurious() {
     el("div", { class: "rowbtns" }, back),
   ].filter(Boolean);
 }
-// RGUKT is open from B.Tech 2nd year (E2) onwards (the six-year integrated course starts with P1, P2 and E1). This is a self-declaration shown once on RGUKT.
-const RG_YEARS = [["P1", "Pre-University 1", false], ["P2", "Pre-University 2", false], ["E1", "B.Tech 1st year", false], ["E2", "B.Tech 2nd year", true], ["E3", "B.Tech 3rd year", true], ["E4", "B.Tech 4th year", true]];
+// RGUKT is open from B.Tech 1st year (E1) onwards (the six-year integrated course starts with P1, P2 and E1). This is a self-declaration shown once on RGUKT.
+const RG_YEARS = [["P1", "Pre-University 1", false], ["P2", "Pre-University 2", false], ["E1", "B.Tech 1st year", true], ["E2", "B.Tech 2nd year", true], ["E3", "B.Tech 3rd year", true], ["E4", "B.Tech 4th year", true]];
 // ---------- student branch: each student sees the doubts of their own branch and the common subjects ----------
 // The branch is the student's own choice (saved in dd-branch; "*" means "my branch is not listed, show me everything"). Nothing is stored on the post: the branch of a doubt comes from its subject.
 const BRANCH_KEY = "dd-branch";
@@ -2538,13 +2538,13 @@ function showEligibility() {
   const msg = el("p", { class: "ob-say", role: "status" }, "");
   const ov = el("div", { class: "welcome", id: "rgElig", role: "dialog", "aria-modal": "true", "aria-label": "Which year are you in?" });
   const choose = (k, ok) => {
-    if (!ok) { msg.textContent = "Thank you. " + BRAND + " is open to RGUKT B.Tech 2nd year students and above for now, because of the age policy. Please come back when you reach B.Tech 2nd year. Meanwhile you can read the About page."; return; }
+    if (!ok) { msg.textContent = "Thank you. " + BRAND + " is open to RGUKT B.Tech 1st year students and above for now, because of the age policy. Please come back when you reach B.Tech 1st year. Meanwhile you can read the About page."; return; }
     writeJSON("dd-rgukt-year", { year: k, at: Date.now() });
     try { curState.year = k; const o = readJSON("dd-curio-prof", {}) || {}; o.year = Number(k[1]) || o.year; writeJSON("dd-curio-prof", o); } catch (_) {}
     ov.remove(); render();
   };
   ov.append(el("div", { class: "welcome-card ob-card" }, el("div", { class: "ob-loopy ob-brand" }, brandMark(72)), el("h2", {}, "Which year are you in?"),
-    el("p", { class: "ob-say" }, "RGUKT is a six-year integrated course. " + BRAND + " is for B.Tech 2nd year students and above."),
+    el("p", { class: "ob-say" }, "RGUKT is a six-year integrated course. " + BRAND + " is for B.Tech 1st year students and above."),
     el("div", { class: "rg-opts", role: "group", "aria-label": "Your year" }, ...RG_YEARS.map(([k, t, ok]) => el("button", { class: "rg-opt" + (ok ? " ok" : ""), type: "button", onclick: () => choose(k, ok) }, el("span", { class: "rg-name" }, t), el("small", {}, ok ? "Open \u2713" : "Not yet")))), msg,
     el("p", { class: "hint" }, "This is your own declaration. Please answer honestly. Details are in the ", el("a", { href: "terms.html", target: "_blank", rel: "noopener" }, "Terms"), ".")));
   document.body.append(ov);
