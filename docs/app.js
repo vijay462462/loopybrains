@@ -854,7 +854,7 @@ function myHiddenCount() {
   const ids = allMyIds(); let n = 0;
   for (const k of [...CAMPUS_COLLS, "replies"]) for (const x of state[k] || []) {
     if (!ids.has(x.authorId) || x.deleted) continue;
-    const r = x.reports || []; if (r.length >= REPORT_LIMIT || r.filter(v => String(v).endsWith("|o")).length >= 2 || r.filter(v => /\|[bp]$/.test(String(v))).length >= 2) n++;
+    const r = x.reports || []; if (r.length >= REPORT_LIMIT || r.filter(v => String(v).endsWith("|o")).length >= 2 || r.filter(v => /\|[bpi]$/.test(String(v))).length >= 2) n++;
   }
   return n;
 }
@@ -891,8 +891,10 @@ function notePosted() {
 // Posts reported by this many classmates are hidden until the teacher checks them in Firebase.
 const REPORT_LIMIT = 3;
 // A report is the reporter's id, optionally with a reason: "<id>|o" off-topic, "|a" abuse, "|s" spam.
-// "|b" bullying or unsafe, "|p" personal info: two of these hide a post at once. Two off-topic reports (or three of any kind) hide a post for everyone.
-const isHidden = (x) => { const r = x.reports || []; return (r.length >= REPORT_LIMIT || r.filter(v => String(v).endsWith("|o")).length >= 2 || r.filter(v => /\|[bp]$/.test(String(v))).length >= 2 || reportedByMe(x)) && !mine(x); };
+// "|b" bullying or unsafe, "|p" personal info, "|i" vulgar picture: two of these hide a post at once. Two off-topic reports (or three of any kind) hide a post for everyone.
+const isHidden = (x) => { const r = x.reports || []; return (r.length >= REPORT_LIMIT || r.filter(v => String(v).endsWith("|o")).length >= 2 || r.filter(v => /\|[bpi]$/.test(String(v))).length >= 2 || reportedByMe(x)) && !mine(x); };
+// One picture report ("|i") covers the post's pictures for everyone until an admin checks them; two hide the whole post.
+const pictureReported = (x) => (x.reports || []).some(v => String(v).endsWith("|i"));
 const reportedByMe = (x) => store && (x.reports || []).some(v => String(v).split("|")[0] === store.uid);
 // Academic tabs only: blocks greetings and one-word chatter, and asks for a real question or answer.
 const CHATTER = /^(hi+|hello+|hey+|hii+|hlo|ok+|okay|k|hmm+|lol|haha+|bro|anyone|any ?one( there)?|yes|no|yo|sup|wassup|good (morning|night|evening|afternoon)|gm|gn|how are you|test|testing|\.+|\?+)[\s!.?,]*$/i;
@@ -907,7 +909,7 @@ function academicProblem(kind, text, hasAttachment) {
 async function reportPost(coll, x, reason) {
   if (!store || reportedByMe(x)) return;
   const reports = [...(x.reports || []), store.uid + (reason ? "|" + reason : "")].slice(-100);
-  try { await store.update(coll, x.id, { reports }); showNotice("Thanks. The post was reported. Posts with " + REPORT_LIMIT + " reports are hidden for everyone."); }
+  try { await store.update(coll, x.id, { reports }); showNotice(reason === "i" ? "Thanks. The picture is now covered for everyone until an admin checks it." : "Thanks. The post was reported. Posts with " + REPORT_LIMIT + " reports are hidden for everyone."); }
   catch (e) { showNotice(errText(e)); }
 }
 function reportButton(coll, x) {
@@ -916,7 +918,7 @@ function reportButton(coll, x) {
   const wrap = el("span", { class: "report-wrap" });
   const reset = () => wrap.replaceChildren(el("button", { class: "linkbtn danger", type: "button", title: "Report a post", onclick: choose }, "🚩 Report"));
   const choose = () => {
-    wrap.replaceChildren(el("small", { class: "hint" }, "Why? "), ...[["o", "Off-topic"], ["a", "Abuse"], ["s", "Spam"], ["b", "Bullying or unsafe"], ["p", "Personal info"]].map(([code, label]) => el("button", { class: "linkbtn danger", type: "button", onclick: (e) => { e.currentTarget.disabled = true; reportPost(coll, x, code); wrap.replaceChildren(el("span", { class: "hint" }, "🚩 Reported")); } }, label)));
+    wrap.replaceChildren(el("small", { class: "hint" }, "Why? "), ...[["o", "Off-topic"], ["a", "Abuse"], ["s", "Spam"], ["i", "Vulgar picture"], ["b", "Bullying or unsafe"], ["p", "Personal info"]].map(([code, label]) => el("button", { class: "linkbtn danger", type: "button", onclick: (e) => { e.currentTarget.disabled = true; reportPost(coll, x, code); wrap.replaceChildren(el("span", { class: "hint" }, "🚩 Reported")); } }, label)));
     setTimeout(() => { if (wrap.isConnected && wrap.querySelector("button:not([disabled])")) reset(); }, 6000);
   };
   reset();
@@ -1111,11 +1113,18 @@ async function loadPage(id) {
   return url;
 }
 
-function pagesView(ids) {
+// Pictures in other people's posts are blurred until the student taps them ("Tap to view"). After a "Vulgar picture" report they stay covered for everyone except the author and admins.
+function pagesView(ids, post) {
+  const own = !!post && (mine(post) || (typeof isAdmin === "function" && isAdmin()));
+  const covered = !!post && pictureReported(post) && !own;
+  const blurIt = !!post && !own;
+  if (covered) return el("div", { class: "thumbs" }, el("p", { class: "pic-covered", role: "status" }, "\u{1F6AB} Picture hidden after a report. An admin will check it."));
   return el("div", { class: "thumbs" }, ids.map((id, i) => {
     const img = el("img", { alt: "Notebook page " + (i + 1) });
     loadPage(id).then(u => { if (u) img.src = u; else img.alt = "Page not available"; });
-    return el("button", { type: "button", class: "thumb", "aria-label": "Open page " + (i + 1), onclick: () => openViewer(ids, i) }, img);
+    const tag = blurIt ? el("span", { class: "pic-tap" }, "Tap to view") : null;
+    const b = el("button", { type: "button", class: "thumb" + (blurIt ? " blur" : ""), "aria-label": (blurIt ? "Show page " : "Open page ") + (i + 1), onclick: () => { if (b.classList.contains("blur")) { b.classList.remove("blur"); if (tag) tag.remove(); b.setAttribute("aria-label", "Open page " + (i + 1)); return; } openViewer(ids, i); } }, img, tag);
+    return b;
   }));
 }
 
@@ -9691,7 +9700,7 @@ function renderView() {
       )
     );
   }
-  if (d.pages && d.pages.length) out.push(pagesView(d.pages));
+  if (d.pages && d.pages.length) out.push(pagesView(d.pages, d));
   if (d.fileAttachments && d.fileAttachments.length) out.push(renderFileAttachments(d.fileAttachments));
 
   // Challenge-specific UI
@@ -9794,7 +9803,7 @@ function renderView() {
       r.body && r.body !== PAGE_ONLY && (isAcademicTab(state.tab) ? richAnswer(r.body, d.title + " " + (d.subject || "")) : el("p", { class: "body" }, r.body)),
       r.body && r.body !== PAGE_ONLY && renderYtCards(r.body),
       own && best && state.tab === "doubts" && r.body && !r.body.startsWith("\u{1F4DD} Study note") ? studyNoteBox(d, r.body) : null,
-      r.pages && r.pages.length ? pagesView(r.pages) : null,
+      r.pages && r.pages.length ? pagesView(r.pages, r) : null,
       r.fileAttachments && r.fileAttachments.length ? renderFileAttachments(r.fileAttachments) : null,
       own && state.tab === "doubts" && !mine(r) && r.body && r.body !== PAGE_ONLY ? aiCheckBox("r" + r.id, d.title + (d.body ? ". " + d.body : ""), async () => ({ answer: r.body, img: "" })) : null,
       reactionBar(r)));
