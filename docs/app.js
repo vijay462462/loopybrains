@@ -5231,7 +5231,16 @@ const brainModesMod = async () => { try { return _modes = _modes || await import
 const PREF_KEY = "dd-bs-prefs", SAVED_KEY = "dd-bs-saved";
 const bsPrefs = () => { const p = readJSON(PREF_KEY, {}); return p && typeof p === "object" ? p : {}; };
 const bsState = () => state.bs || (state.bs = (() => { const p = bsPrefs(), ok = p.remember !== false;
-  return { q: "", level: ok && Number.isInteger(p.level) && p.level >= 1 && p.level <= 5 ? p.level : IS_RGUKT ? 2 : 1, size: ok && ["brief", "standard", "detailed", "full"].includes(p.size) ? p.size : IS_RGUKT ? "standard" : "brief", effort: ok && ["low", "medium", "high"].includes(p.effort) ? p.effort : undefined, easy: ok && p.easy === false ? false : true, mode: ok && BS_MODES.some(m => m[0] === p.mode) ? p.mode : "atlas", tab: "all", busy: false, res: null, ans: "", id: 0, lock: 0, pending: "" }; })());
+  return { q: "", level: ok && Number.isInteger(p.level) && p.level >= 1 && p.level <= 5 ? p.level : IS_RGUKT ? 2 : 1, size: ok && ["brief", "standard", "detailed", "full"].includes(p.size) ? p.size : IS_RGUKT ? "standard" : "brief", effort: ok && ["low", "medium", "high"].includes(p.effort) ? p.effort : undefined, easy: ok && p.easy === false ? false : true, mode: ok && BS_MODES.some(m => m[0] === p.mode) ? p.mode : "atlas", tab: "all", busy: false, res: null, ans: "", id: 0, lock: 0, pending: "", history: [] }; })());
+// Session memory: store up to 5 recent Q&A pairs so Chitti can give context-aware follow-up answers.
+function bsAddHistory(q, a) { const bs = bsState(), h = bs.history; h.push({ q: String(q).slice(0, 120), a: String(a).slice(0, 300), t: Date.now() }); if (h.length > 5) h.shift(); }
+function bsContextFor(q) {
+  const bs = bsState(), h = bs.history; if (!h.length) return "";
+  const tq = q.toLowerCase();
+  const isFollowUp = /\b(it|that|this|they|the above|more about|explain more|tell me more|what about|and also|also|same topic|go on|continue|next|details|detail|elaborate|example|examples|why|how so|means|meaning)\b/.test(tq) || tq.split(" ").length <= 4;
+  if (!isFollowUp) return "";
+  const last = h[h.length - 1]; return last ? "Previous topic: " + last.q + ". " : "";
+}
 function bsRemember() { const bs = bsState(), p = bsPrefs(); if (p.remember === false) return; writeJSON(PREF_KEY, { remember: true, level: bs.level, size: bs.size, effort: bs.effort || "", easy: bs.easy !== false, mode: bs.mode || "atlas" }); }
 // ----- saved library: reports kept on this phone, readable offline, free of credits -----
 const bsSavedList = () => { const r = readJSON(SAVED_KEY, []); return Array.isArray(r) ? r.filter(x => x && typeof x.id === "string" && x.title) : []; };
@@ -5513,12 +5522,17 @@ function bsChat(q) {
   const t = String(q || "").toLowerCase().replace(/[^a-z\s']/g, " ").replace(/\s+/g, " ").trim(); if (!t || t.split(" ").length > 8) return "";
   const name = ((readJSON("dd-name", "") || "") + "").split(" ")[0], hi = name ? ", " + name : "", pick = (a) => a[dayNum() % a.length];
   const ask = " What would you like to learn today? You can ask a doubt, a topic, a maths problem, or tap Forge for code.";
-  if (/^(thanks?|thank you|thx|ty|thanku|thank u)( so much| a lot| loopy)?$/.test(t)) return pick(["You are welcome" + hi + "! Happy to help. Ask me anything else anytime.", "Anytime" + hi + "! Keep learning, you are doing great."]);
-  if (/^(bye|goodbye|good night|gn|see you|see ya|tata|cya)( loopy)?$/.test(t)) return "Bye" + hi + "! Come back whenever you have a doubt. Good luck with your studies.";
-  if (/(how are you|how r u|how are u|hows it going|how is it going|whats up|what s up|wassup|sup)\b/.test(t) && !/\b(compare|difference|what is|define)\b/.test(t)) return "I am fine, thank you" + hi + "! How are you?" + ask;
-  if (/^(who are you|what are you|what is your name|your name|who is loopy|are you ai|are you a robot)$/.test(t)) return "I am Loopy, the study helper inside Loopy Brains. I find explanations, pictures, code, project plans and security guides for students. I make mistakes sometimes, so check important facts with your books and teachers.";
-  if (/^(what can you do|help|help me|how to use|what do you do|how do you work)$/.test(t)) return "I can explain topics in easy words, solve maths and conversions, find code in Forge, plan projects in Launchpad and teach security in Aegis. Type a topic and press Search." ;
-  if (/^((hey|hi|hii+|hello+|hlo|helo|hola|yo|namaste|hey there|hi there|hello there|good morning|good afternoon|good evening|gm)( |$))+(loopy|bro|there|buddy|friend|all)?$/.test(t) || /^(hey+|hi+|hello+|hlo|hola|yo|namaste)$/.test(t)) return pick(["Hi" + hi + "! I am Loopy.", "Hello" + hi + "! Nice to see you.", "Hey" + hi + "! Good to see you."]) + ask;
+  if (/^(thanks?|thank you|thx|ty|thanku|thank u)( so much| a lot| loopy)?$/.test(t)) return pick(["You are welcome" + hi + "! 😊 Happy to help anytime.", "Anytime" + hi + "! 🌟 Keep learning, you are doing great!", "So glad I could help" + hi + "! Come back whenever you need me. 💪"]);
+  if (/^(bye|goodbye|good night|gn|see you|see ya|tata|cya)( loopy)?$/.test(t)) return pick(["Bye" + hi + "! 👋 Come back whenever you have a doubt. You are doing amazing!", "Good night" + hi + "! 🌙 Rest well and come back fresh tomorrow.", "See you soon" + hi + "! Every session makes you smarter. 🚀"]);
+  if (/(how are you|how r u|how are u|hows it going|how is it going|whats up|what s up|wassup|sup)\b/.test(t) && !/\b(compare|difference|what is|define)\b/.test(t)) return pick(["I am excited" + hi + "! 🤩 Helping you learn is the best part of my day. How are you?", "Feeling great" + hi + "! 😄 Ready to dive into any topic you throw at me. What shall we explore?", "I am doing wonderfully" + hi + "! 🌟 Every question you ask makes me happy. What do you want to learn?"]) + ask;
+  if (/^(who are you|what are you|what is your name|your name|who is loopy|are you ai|are you a robot|who is chitti)$/.test(t)) return "I am Chitti, your Loopy AI study buddy! 🤖✨ I live inside Loopy Brains and I am here 24×7 to help you learn anything — topics, maths, code, projects and security. I make mistakes sometimes, so check important facts with your books and teachers. But I will always try my best for you" + hi + "!";
+  if (/^(what can you do|help|help me|how to use|what do you do|how do you work)$/.test(t)) return "I can explain topics in easy words 📖, solve maths and conversions 🔢, find code in Forge 💻, plan projects in Launchpad 🚀, and teach security in Aegis 🛡️. I also remember what we talked about in this session so you can ask follow-up questions! Type a topic and press Search.";
+  if (/^((hey|hi|hii+|hello+|hlo|helo|hola|yo|namaste|hey there|hi there|hello there|good morning|good afternoon|good evening|gm)( |$))+(loopy|bro|there|buddy|friend|all|chitti)?$/.test(t) || /^(hey+|hi+|hello+|hlo|hola|yo|namaste)$/.test(t)) return pick(["Hi" + hi + "! 😊 I am Chitti, your Loopy AI! I am so happy you are here.", "Hello" + hi + "! ✨ Great to see you! Let us learn something amazing today.", "Hey" + hi + "! 🤩 I was just waiting for you! What shall we explore?"]) + ask;
+  if (/\b(i got it|i understand|i understood|now i get it|got it|makes sense|clear now|acha|oh i see)\b/.test(t)) return pick(["That is wonderful" + hi + "! 🎉 You are getting it! Now try a practice question on this topic.", "Yes! 💡 That click moment is the best feeling. Keep going, you are on a roll!", "Brilliant" + hi + "! 🌟 Understanding is step one. Practice will make it permanent."]);
+  if (/\b(i (am|m) (happy|excited|great|good|awesome|feeling good|in a good mood))\b/.test(t)) return pick(["Love the energy" + hi + "! 🔥 Let us channel that into some serious learning! What topic is on your mind?", "That makes me happy too! 😄 When you are in a good mood, studying is so much easier. Let us go!", "Amazing" + hi + "! ✨ Good vibes and good learning go together. What shall we tackle today?"]);
+  if (/\b(proud|i did it|i passed|i scored|i got marks|result came|result is good)\b/.test(t)) return pick(["I am SO proud of you" + hi + "! 🏆🎉 You worked hard and it showed. Celebrate this moment!", "YES!! 🎊 This is what all those study sessions were for! You did it" + hi + "!", "That is incredible" + hi + "! 🌟 Your dedication paid off. Keep this energy going!"]);
+  if (/\b(i (am|m) (confused|stuck|lost|not getting|not understanding|dont understand|don t understand))\b/.test(t)) return pick(["No worries" + hi + "! 🤗 That is exactly why I am here. Tell me the topic or question and we will break it down together, step by step.", "Getting confused means you are thinking deeply" + hi + "! 😊 That is actually a good sign. Share the topic and let us untangle it.", "I totally get it" + hi + "! 💙 Some things need a few tries. Type your question and I will explain it in the easiest way I know."]);
+  if (/\b(failed|fail|i failed|i fail|bad marks|got low marks|disappointed|so sad about exam)\b/.test(t)) return pick(["I hear you" + hi + "! 💙 One result does not define you. Every topper has a story of failing and coming back stronger. Let us study smarter together.", "It hurts, I know" + hi + "! 🤗 But you are still here, still trying. That is more courage than most people show. What topic shall we work on?", "Failure is not the end, it is feedback" + hi + "! 💪 The fact that you are here means you have not given up. Let us turn this around."]);
   return "";
 }
 // Fun answers for everyday questions: jokes, riddles, fun facts, mood, coin and dice. Free, instant, no network.
@@ -5646,6 +5660,7 @@ function bsExportSheet() {
 }
 async function bsSubmit(q) {
   q = lsClean(q); if (q.length < 2) return; const bs = bsState();
+  { const ctx = bsContextFor(q); if (ctx) q = lsClean(ctx + q); }
   if (/[^\u0000-\u024F\u2000-\u206F\u00A0-\u00FF]/.test(q) && ahWords(q).length === 0) { showNotice("Loopy Search works with English words for now. Please type your topic in English.", "err"); return; }
   if (!(await safetyGate(q))) return;
   { const mm = await brainModesMod(); if (mm && mm.offensive(q)) { safeModal("I can\u2019t help with attacking people or systems", ["Loopy AI teaches security so you can defend, not so you can break into accounts, devices or websites. That could hurt real people and is against the law.", "Try Aegis to learn how attacks work and how to stop them, or practise legally on free labs such as PortSwigger Academy, picoCTF or TryHackMe."], false); return; } }
@@ -5678,7 +5693,7 @@ async function bsRun(q, solved) {
   bs.q = q; bs.busy = true; bs.tab = "all"; bs.lock = 0; bsSave(q); bsPaint(true);
   const topic = brainIntent(q, "").topic || q, short = ahWords(topic).slice(0, 3).join(" ") || topic;
   if (!solved && bs.mode && bs.mode !== "atlas") { await bsRunMode(bs.mode, q, id, lv, size); return; }
-  if (solved) { if (id !== bs.id) return; bs.res = { topic: q, solved: true, lv, size, board: lv >= 2 ? brainBoard(q, 3) : [], syl: [], imgs: [], models: [], page: "", report: null, papers: [] }; bs.ans = solved; bs.busy = false; bsPaint(true); return; }
+  if (solved) { if (id !== bs.id) return; bs.res = { topic: q, solved: true, lv, size, board: lv >= 2 ? brainBoard(q, 3) : [], syl: [], imgs: [], models: [], page: "", report: null, papers: [] }; bs.ans = solved; bs.busy = false; bsAddHistory(q, solved); bsPaint(true); return; }
   const cmpIntent = brainCompareIntent(q);
   if (cmpIntent) {
     const cmp = await brainCompare(cmpIntent.a, cmpIntent.b); if (id !== bs.id) return;
@@ -5702,7 +5717,7 @@ async function bsRun(q, solved) {
   const res = { pack, cross: pack && wiki ? bsCross(pack, wiki) : null, own: wiki && !pack ? ownDiagram(wiki.title + " " + T) : null, uses: mod && wiki && size !== "brief" ? mod.uses(wiki, size === "full" ? 8 : size === "detailed" ? 6 : 4) : [], effort: eff, related, keyImgs, topic: T, easyCard: simpleOk, easyFn: mod ? mod.easy : null, readable, defs, wikiInfo: wiki ? { touched: wiki.touched, page: wiki.page } : null, caution: wiki ? mod2cautions(wiki) : [], simpleInfo: simpleOk ? { page: simpleOk.page } : null, lv, size, board: lv >= 2 ? brainBoard(T, 5) : [], syl: lv >= 2 ? brainSyllabus(T) : [], imgs: imgs.slice(0, 8), models, page: wiki ? wiki.page : "", papers: papersH, report: mod && wiki ? mod.buildReport(wiki, size) : null, hl: mod ? mod.highlight : null, deep: "", exam: "", quiz: "" };
   if (lv >= 4 && wiki && !res.report) res.deep = wiki.sections.slice(0, 8).map(x => "- **" + x.h + ":** " + (brainSentences(x.t).slice(0, 2).join(" ") || x.t.slice(0, 240))).join("\n");
   if (lv >= 5) { [res.exam, res.quiz] = await Promise.all([brainReply("Exam answer for " + T, { topic: T }).catch(() => ""), brainReply("Quiz me on " + T, { topic: T }).catch(() => "")]); }
-  bs.res = res; bs.ans = ans || notFoundMsg(topic); bs.busy = false; bsPaint(true);
+  bs.res = res; bs.ans = ans || notFoundMsg(topic); bs.busy = false; bsAddHistory(q, bs.ans); bsPaint(true);
 }
 async function rosettaFind(task) {
   try {
