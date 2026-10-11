@@ -2335,7 +2335,11 @@ function renderHome() {
         el("button", { type: "button", class: "hb-action", onclick: () => { state.ai = state.ai || { msgs: [], busy: false, note: "" }; showPanel("ai"); } },
           el("span", { class: "hb-action-ic" }, "✨"),
           el("b", {}, "Ask Loopy AI"), el("small", {}, "answers in seconds")
-        )
+        ),
+        Object.keys(DEPT_MAP).length ? el("button", { type: "button", class: "hb-action hb-action-branch", onclick: () => showBranchPicker(true) },
+          el("span", { class: "hb-action-ic" }, "🏫"),
+          el("b", {}, myBranch() && myBranch() !== "*" ? myBranch() : "All branches"), el("small", {}, "Change branch")
+        ) : null
       )
     )
   );
@@ -10553,7 +10557,7 @@ function render() { const snap = snapUI(); try { renderCore(); } finally { resto
 function renderCore() {
   try {
     document.body.dataset.tab = state.tab; applyFocus();
-    renderHeader(); renderTrendBar(); renderStoryBar(); renderRail(); try { renderGuide(); } catch (_) {} try { renderHome(); } catch (_) {} renderList(); renderBottomNav(); try { if (IS_RGUKT && !readJSON("dd-rgukt-year", null) && !welcomePending && !document.querySelector(".welcome, .cr, #splash")) showEligibility(); } catch (_) {} try { if (Object.keys(DEPT_MAP).length && !myBranch() && !welcomePending && (!IS_RGUKT || readJSON("dd-rgukt-year", null)) && localStorage.getItem("dd-welcome-done") && !document.querySelector(".welcome, .cr, #splash")) showBranchPicker(); } catch (_) {} try { document.body.classList.toggle("simple", isSimple()); renderBell(); notifPing(); claimStudentIdOnce(); autoMailIds(); } catch (_) {}
+    renderHeader(); renderTrendBar(); renderStoryBar(); renderRail(); try { renderGuide(); } catch (_) {} try { renderHome(); } catch (_) {} renderList(); renderBottomNav(); try { if (IS_RGUKT && !readJSON("dd-rgukt-year", null) && !welcomePending && !document.querySelector(".welcome, .cr, #splash")) showEligibility(); } catch (_) {} try { if (Object.keys(DEPT_MAP).length && !myBranch() && !welcomePending && (!IS_RGUKT || readJSON("dd-rgukt-year", null)) && localStorage.getItem("dd-welcome-done") && !document.querySelector(".welcome, .cr, #splash") && !sessionStorage.getItem("dd-branch-asked")) { sessionStorage.setItem("dd-branch-asked", "1"); showBranchPicker(); } } catch (_) {} try { document.body.classList.toggle("simple", isSimple()); renderBell(); notifPing(); claimStudentIdOnce(); autoMailIds(); } catch (_) {}
     // Forms keep what the student is typing while live updates arrive.
     const key = ["ask", "edit", "name", "alumniJoin", "alumniJob", "fun", "lab", "college", "plus"].includes(state.mode) ? state.mode + state.tab : "";
     if (key && key === sheetKey) return;

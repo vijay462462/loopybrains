@@ -2539,6 +2539,10 @@ body.simple .tabs button[aria-selected="true"] { display: inline-flex; }
 .acct-head, .acct-head > div { text-align: left; }
 
 .sp2-brand { display: inline-flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+.sp2-brand-center { display: flex; justify-content: center; margin-bottom: 18px; }
+.sp2-brand-center .sp2-bname b { font-size: 28px; letter-spacing: .14em; }
+.sp2-brand-center .sp2-bname i { font-size: 16px; letter-spacing: .55em; }
+.sp2-brand-center .sp2-bname { text-align: left; }
 .sp2-promo { display: block; width: 100%; max-width: 380px; border-radius: 16px; margin: 10px 0 14px; object-fit: cover; }
 .sp2-bmark svg { display: block; filter: drop-shadow(0 8px 14px rgba(99, 102, 241, .45)); }
 .sp2-bname { display: block; line-height: 1; }
@@ -4063,6 +4067,8 @@ body header.top .tabs button[aria-selected="true"] { color: #0d1030; }
 .hb-prompt-msg { margin: 0; flex: 1; font-size: 13px; font-weight: 600; color: #fff; min-width: 0; }
 .hb-prompt-btn { border: 0; background: none; color: #fdba74; font-weight: 800; font-size: 13px; cursor: pointer; white-space: nowrap; }
 .hb-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; position: relative; z-index: 1; }
+.hb-actions:has(.hb-action-branch) { grid-template-columns: 1fr 1fr 1fr; }
+.hb-action-branch { background: var(--accent-soft, #e0fdf4) !important; color: var(--ink) !important; }
 .hb-action { display: flex; flex-direction: column; align-items: center; gap: 4px; background: #fff; color: #10281a; border: 0; border-radius: 16px; padding: 12px 8px; cursor: pointer; box-shadow: 0 6px 16px -8px rgb(0 0 0 / .4); }
 .hb-action-ic { font-size: 22px; line-height: 1; }
 .hb-action b { font-size: 13px; }
