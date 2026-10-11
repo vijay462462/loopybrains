@@ -2314,7 +2314,6 @@ function renderHome() {
         el("button", { type: "button", class: "hb-close", "aria-label": "Close welcome card", onclick: () => { box.hidden = true; } }, "×"),
         el("div", { class: "hb-chip" }, chip)
       ),
-      el("img", { class: "hb-promo", src: "brand/loopy-brains-promo-480.png", alt: "Loopy Brains", loading: "lazy" }),
       el("div", { class: "hb-hero-row" },
         el("div", { class: "hb-greet-col" },
           el("p", { class: "hb-college-name" }, college),
@@ -5421,7 +5420,7 @@ function bsMount() {
   if (bsEl()) return; const bs = bsState();
   const bar = el("div", { class: "bsf-bar" },
     el("button", { type: "button", class: "bsf-back", "aria-label": "Close Loopy Search", onclick: () => bsClose() }, svgIcon("back")),
-    el("img", { class: "bsf-brand", src: "icon-192.png", alt: "", width: "28", height: "28" }), el("strong", { class: "bsf-title" }, el("span", { class: "bsf-t-big" }, "Loopy"), el("small", { class: "bsf-t-sm" }, "AI")),
+    el("strong", { class: "bsf-title" }, el("span", { class: "bsf-t-big" }, "Chitti")),
     el("button", { type: "button", class: "bsf-night", id: "bsNight", onclick: () => { try { localStorage.setItem("dd-bs-night", bsNightOn() ? "0" : "1"); } catch (_) {} bsApplyNight(); } }, "\u2600"),
     el("button", { type: "button", class: "bsf-save", id: "bsSave", hidden: "", onclick: () => { const b = bsState(); if (!b.res) return; if (bsIsSaved(b.res)) { bsPutSaved(bsSavedList().filter(x => x.id !== "s" + fnv(b.res.topic.toLowerCase() + "|" + b.res.size))); showNotice("Removed from Saved.", "ok"); } else if (bsSaveOne(b.res, b.q)) showNotice("Saved. Find it under Saved on the search page.", "ok"); else showNotice("Could not save: this phone is out of space.", "err"); bsPaint(); } }, "Save"),
     el("button", { type: "button", class: "bsf-pdf", id: "bsPdf", hidden: "", "aria-haspopup": "dialog", "aria-label": "Save as PDF or JPEG", onclick: () => bsExportSheet() }, "PDF/JPG"));
@@ -10781,15 +10780,10 @@ if (themeBtn) {
 
 // Brand lockup from the brand guide: the monogram C, then "LOOPY" in bold serif with wide spacing and a small spaced gold "BRAINS".
 function brandLockup(title) {
-  const words = String(title || "Loopy Brains").trim().split(/\s+/), last = words.length > 1 ? words.pop() : "", rest = words.join(" ") || String(title);
-  const tpl = document.getElementById("brandMarkTpl"), src = (tpl && tpl.content && tpl.content.firstElementChild) || document.querySelector(".sp2-bmark svg"); let mark = null;
-  if (src) {
-    mark = src.cloneNode(true); mark.removeAttribute("width"); mark.removeAttribute("height"); mark.setAttribute("class", "bmark hd-mark"); mark.setAttribute("aria-hidden", "true"); mark.setAttribute("focusable", "false");
-    mark.querySelectorAll("[id]").forEach(n => { n.id = n.id + "H"; });   // gradient ids must stay unique
-    mark.querySelectorAll("*").forEach(n => { for (const a of ["fill", "stroke"]) { const v = n.getAttribute(a); if (v && v.includes("url(#")) n.setAttribute(a, v.replace(/url\(#([^)]+)\)/, "url(#$1H)")); } });
-  }
-  const wm = el("img", { class: "bname-img", src: "brand/loopy-brains-wordmark-56h.png", alt: "Loopy Brains", width: "131", height: "28" });
-  return [mark, wm].filter(Boolean);
+  const words = String(title || "Loopy Brains").trim().split(/\s+/), first = words.shift() || "Loopy", rest = words.join(" ");
+  const mark = el("span", { class: "hd-tile", "aria-hidden": "true" }, el("img", { src: "brand/loopy-brains-mark.svg", alt: "", width: "30", height: "30" }));
+  const wm = el("span", { class: "bname-text", "aria-label": String(title || "Loopy Brains") }, el("b", {}, first.toUpperCase()), rest ? el("i", {}, rest.toUpperCase()) : null);
+  return [mark, wm];
 }
 // Update page title from config
 if (CFG.title) { document.title = CFG.title; }

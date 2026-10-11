@@ -4311,3 +4311,32 @@ p a:not(.btn):not(.linkbtn):visited, .welcome-card a:not(.btn):visited, #rgElig 
 .bsfull .bs-dock { background: var(--paper) !important; }
 .bsfull .bsf-bar, .bsfull header.bsf-bar { background: var(--paper) !important; }
 .bsfull .bs-comp, .bsfull .bs-comp:focus-within { box-shadow: none !important; }
+/* Home welcome card: plain background (no green); colour only on buttons */
+.hb-hero { background: var(--sheet) !important; color: var(--ink) !important; border: 1px solid var(--line); box-shadow: none !important; }
+.hb-hero::after { display: none; }
+.hb-greet, .hb-prompt-msg, .hb-choice { color: var(--ink) !important; }
+.hb-tagline { color: var(--muted) !important; }
+.hb-college-name, .hb-prompt-btn { color: var(--accent) !important; }
+.hb-prompt { background: var(--accent-soft) !important; border-color: var(--line) !important; }
+.hb-prompt-dot { background: var(--accent) !important; }
+.hb-close { background: var(--accent-soft) !important; color: var(--ink) !important; border-color: var(--line) !important; }
+.hb-action { background: var(--paper) !important; border: 1px solid var(--line) !important; color: var(--ink) !important; }
+.hb-action small { color: var(--muted) !important; }
+.hb-college-name, .hb-prompt-btn { color: #c2410c !important; }
+.hb-prompt-dot { background: #f97316 !important; }
+.hb-prompt { background: var(--paper) !important; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .hb-college-name, :root:not([data-theme="light"]) .hb-prompt-btn { color: #fdba74 !important; } }
+:root[data-theme="dark"] .hb-college-name, :root[data-theme="dark"] .hb-prompt-btn { color: #fdba74 !important; }
+/* New header logo: LB mark on a dark tile with a plain LOOPY / BRAINS name */
+.hd-tile { display: inline-grid; place-items: center; width: 40px; height: 40px; flex: none; border-radius: 12px; background: #0a1128; }
+.hd-tile img { width: 30px; height: 30px; display: block; }
+.bname-text { display: inline-flex; flex-direction: column; line-height: 1; letter-spacing: .14em; font-weight: 800; color: var(--ink); }
+.bname-text b { font-size: 15px; letter-spacing: .12em; }
+.bname-text i { font-style: normal; font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: .34em; margin-top: 3px; }
+.bsf-title .bsf-t-big { color: var(--ink); }
+:root body header.top .brand h1 .hd-tile { background: #0a1128 !important; border-radius: 12px !important; width: 40px !important; height: 40px !important; padding: 0 !important; box-shadow: none !important; display: inline-grid !important; }
+:root body header.top .brand h1 .bname-text { display: inline-flex !important; flex-direction: column !important; background: none !important; -webkit-text-fill-color: initial !important; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif !important; color: var(--ink) !important; }
+:root body header.top .brand h1 .bname-text b { background: none !important; -webkit-text-fill-color: var(--ink) !important; color: var(--ink) !important; font-family: inherit !important; font-weight: 800 !important; font-size: 15px !important; filter: none !important; }
+:root body header.top .brand h1 .bname-text i { background: none !important; -webkit-text-fill-color: var(--muted) !important; color: var(--muted) !important; font-family: inherit !important; font-style: normal !important; font-size: 11px !important; filter: none !important; }
+:root body header.top .brand h1 .bname-text, :root body header.top .brand h1 .bname-text * { text-shadow: none !important; }
+:root body header.top .brand h1 { text-shadow: none !important; filter: none !important; }
