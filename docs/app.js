@@ -2506,8 +2506,8 @@ function renderCurious() {
     el("div", { class: "rowbtns" }, back),
   ].filter(Boolean);
 }
-// RGUKT is open from B.Tech 2nd year (E2) onwards (the six-year integrated course starts with P1, P2 and E1). This is a self-declaration shown once on RGUKT.
-const RG_YEARS = [["P1", "Pre-University 1", false], ["P2", "Pre-University 2", false], ["E1", "B.Tech 1st year", false], ["E2", "B.Tech 2nd year", true], ["E3", "B.Tech 3rd year", true], ["E4", "B.Tech 4th year", true]];
+// RGUKT is open from B.Tech 1st year (E1) onwards (the six-year integrated course starts with P1, P2 and E1). This is a self-declaration shown once on RGUKT.
+const RG_YEARS = [["P1", "Pre-University 1", false], ["P2", "Pre-University 2", false], ["E1", "B.Tech 1st year", true], ["E2", "B.Tech 2nd year", true], ["E3", "B.Tech 3rd year", true], ["E4", "B.Tech 4th year", true]];
 // ---------- student branch: each student sees the doubts of their own branch and the common subjects ----------
 // The branch is the student's own choice (saved in dd-branch; "*" means "my branch is not listed, show me everything"). Nothing is stored on the post: the branch of a doubt comes from its subject.
 const BRANCH_KEY = "dd-branch";
@@ -2538,13 +2538,13 @@ function showEligibility() {
   const msg = el("p", { class: "ob-say", role: "status" }, "");
   const ov = el("div", { class: "welcome", id: "rgElig", role: "dialog", "aria-modal": "true", "aria-label": "Which year are you in?" });
   const choose = (k, ok) => {
-    if (!ok) { msg.textContent = "Thank you. " + BRAND + " is open to RGUKT B.Tech 2nd year students and above for now, because of the age policy. Please come back when you reach B.Tech 2nd year. Meanwhile you can read the About page."; return; }
+    if (!ok) { msg.textContent = "Thank you. " + BRAND + " is open to RGUKT B.Tech 1st year students and above for now, because of the age policy. Please come back when you reach B.Tech 1st year. Meanwhile you can read the About page."; return; }
     writeJSON("dd-rgukt-year", { year: k, at: Date.now() });
     try { curState.year = k; const o = readJSON("dd-curio-prof", {}) || {}; o.year = Number(k[1]) || o.year; writeJSON("dd-curio-prof", o); } catch (_) {}
     ov.remove(); render();
   };
   ov.append(el("div", { class: "welcome-card ob-card" }, el("div", { class: "ob-loopy ob-brand" }, brandMark(72)), el("h2", {}, "Which year are you in?"),
-    el("p", { class: "ob-say" }, "RGUKT is a six-year integrated course. " + BRAND + " is for B.Tech 2nd year students and above."),
+    el("p", { class: "ob-say" }, "RGUKT is a six-year integrated course. " + BRAND + " is for B.Tech 1st year students and above."),
     el("div", { class: "rg-opts", role: "group", "aria-label": "Your year" }, ...RG_YEARS.map(([k, t, ok]) => el("button", { class: "rg-opt" + (ok ? " ok" : ""), type: "button", onclick: () => choose(k, ok) }, el("span", { class: "rg-name" }, t), el("small", {}, ok ? "Open \u2713" : "Not yet")))), msg,
     el("p", { class: "hint" }, "This is your own declaration. Please answer honestly. Details are in the ", el("a", { href: "terms.html", target: "_blank", rel: "noopener" }, "Terms"), ".")));
   document.body.append(ov);
@@ -10446,14 +10446,10 @@ function openStories(authorId) {
       ? [el("button", { type: "button", class: "st-x", "aria-label": "Who saw this", onclick: () => { vlist.hidden = !vlist.hidden; } }, "👁 " + viewers.length),
          el("button", { type: "button", class: "st-x", "aria-label": "Delete story", onclick: async () => { if (!confirm("Delete this story?")) return; try { await softDelete("stories", s.id); state.stories = state.stories.filter(x => x.id !== s.id); close(); } catch (e) { showNotice(errText(e)); } } }, "🗑")]
       : [el("button", { type: "button", class: "st-x", "aria-label": "Report story", onclick: async () => { if (!confirm("Report this story as inappropriate?")) return; try { const reports = [...new Set([...(s.reports || []), store.uid])].slice(0, 100); s.reports = reports; await store.update("stories", s.id, { reports }); showNotice("Reported. Thank you."); setTimeout(() => showNotice(""), 2500); } catch (e) { showNotice(errText(e)); } next(); } }, "🚩"), el("button", { type: "button", class: "st-x", "aria-label": "Report this person\u2019s photo or status", title: "Report photo or status", onclick: () => openProfileReport(g.authorId, g.name) }, "\u{1F464}")];
-    // Deterrent only (a website cannot block screenshots): the viewer's own name is tiled faintly over others' stories.
-    const wmName = (getName() || BRAND).slice(0, 20);
-    const wm = ownS ? null : el("div", { class: "st-wm", "aria-hidden": "true" }, Array.from({ length: 24 }, () => el("span", {}, wmName)));
-    ov.oncontextmenu = (ev) => { ev.preventDefault(); };
     ov.replaceChildren(
       el("div", { class: "st-bars" }, segs),
       el("div", { class: "st-top" }, avatarEl(dpOfId(g.authorId, g.name), "av st-av sm" + frameOf(g.authorId)), el("div", { class: "st-who" }, el("strong", {}, (ownS ? "Your story" : g.name) + markOf(g.authorId)), el("small", {}, ago(s.createdAt) + (statusOfId(g.authorId) ? " · " + statusOfId(g.authorId) : ""))), ...actions, el("button", { type: "button", class: "st-x", "aria-label": "Close", onclick: close }, "✕")),
-      body, wm, ownS ? null : el("p", { class: "st-note" }, "📸 Screenshots can be traced to your name. Please don't share others' stories."), vlist,
+      body, vlist,
       el("button", { type: "button", class: "st-tap l", "aria-label": "Previous", onclick: prev }), el("button", { type: "button", class: "st-tap r", "aria-label": "Next", onclick: next }));
     const run = (ms) => { if (my !== gen) return; fill.style.setProperty("animation-duration", ms + "ms"); fill.classList.add("run"); timer = setTimeout(next, ms); };
     if (s.kind === "quiz") {
@@ -10515,9 +10511,6 @@ function openStories(authorId) {
 }
 
 // Privacy: blur the app while it is in the background so the recent-apps preview does not show posts or stories.
-document.addEventListener("visibilitychange", () => { document.body.classList.toggle("priv-blur", document.visibilityState === "hidden"); });
-window.addEventListener("pagehide", () => { document.body.classList.add("priv-blur"); });
-window.addEventListener("pageshow", () => { if (document.visibilityState === "visible") document.body.classList.remove("priv-blur"); });
 // Focus mode: hides everything that is not academic (Ideas, Clubs, Challenges, Market, Jobs, stories, Entertainment).
 const focusOn = () => { try { return localStorage.getItem("dd-focus") === "1"; } catch (_) { return false; } };
 function applyFocus() {
