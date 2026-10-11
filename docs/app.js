@@ -1142,7 +1142,7 @@ function attachPicker(list, max) {
     say("");
     for (const f of files) {
       if (list.length >= max) { say("You can attach up to " + max + " pages."); break; }
-      try { const img = await loadImage(f); const why = await imageProblem(img); if (why) { say(why); continue; } list.push(toJpeg(img, img.naturalWidth, img.naturalHeight)); }
+      try { const img = await loadImage(f); const why = await imageProblem(img); if (why) { say(why); continue; } say("Checking the picture\u2026"); const bad = await serverImageCheck(smallJpeg(img)); say(""); if (bad) { say(bad); continue; } list.push(toJpeg(img, img.naturalWidth, img.naturalHeight)); }
       catch (_) { say("Could not read that file. Use a JPG or PNG photo."); }
     }
     // The answer box may have been redrawn by a live update while the file picker was open.
@@ -10254,6 +10254,23 @@ async function imageProblem(src) {
   if (face || sk > 0.18 || (sk > 0.1 && pa < 0.6)) return "📵 This looks like a personal photo. Only academic images are allowed here: notes, textbook pages, diagrams, questions and quiz screenshots.";
   return "";
 }
+// Second check by Loopy AI on the server: it looks at the picture and refuses nude, sexual, violent or abusive images.
+// Fails open: if the check is not switched on (no functionsUrl), not deployed or not reachable, the picture is allowed and the on-device check, blurring and reports still apply.
+// `jpeg` is a small JPEG data URL (at most about 340,000 characters).
+async function serverImageCheck(jpeg) {
+  if (!PLUS.functionsUrl || !store || !store.idToken || typeof jpeg !== "string" || jpeg.length > 345000) return "";
+  try {
+    const tok = await store.idToken(); if (!tok) return "";
+    const r = await fetch(PLUS.functionsUrl.replace(/\/$/, "") + "/checkImage", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + tok }, body: JSON.stringify({ img: jpeg }) });
+    if (r.status === 429) { const d = await r.json().catch(() => ({})); return d.error || "Please wait a little before adding more pictures."; }
+    if (!r.ok) return "";
+    const d = await r.json().catch(() => ({}));
+    if (d && d.ok === false) return "\u{1F6AB} This picture was not allowed because it looks inappropriate. Only academic and respectful pictures can be shared.";
+  } catch (_) {}
+  return "";
+}
+// A small copy of a picture element or bitmap, for the server check.
+const smallJpeg = (src) => { const w = src.naturalWidth || src.width, h = src.naturalHeight || src.height, k = Math.min(1, 640 / Math.max(w, h)); return toJpeg(src, Math.max(1, Math.round(w * k)), Math.max(1, Math.round(h * k)), 300000); };
 // Photo -> small JPEG data URL (square crop for DP). Nothing is uploaded until the student posts it.
 // createImageBitmap fails on some phone photos; fall back to a plain <img> element.
 async function decodeImage(file) {
@@ -10316,6 +10333,7 @@ function pickDp() {
     try {
       const url = await imgToJpeg(inp.files[0], 96, 0.8, true);
       if (!DP_OK.test(url)) throw new Error("Could not use that photo. Try another one.");
+      { const bad = await serverImageCheck(url); if (bad) throw new Error(bad); }
       try { localStorage.setItem("dd-dp", url); } catch (_) { throw new Error("This browser would not save the photo. Turn off private mode and try again."); }
     } catch (e) { state.dpMsg = "⚠️ " + ((e && e.message) || "Could not read that photo. Try a JPG or PNG."); render(); return; }
     state.dpMsg = "✅ Photo saved on this phone. Sharing with classmates…"; render();
@@ -10434,6 +10452,7 @@ function openStoryAdd() {
       { const bmp = await decodeImage(file.files[0]); const why = await imageProblem(bmp); if (bmp.close) bmp.close(); if (why) throw new Error(why); }
       let u = await imgToJpeg(file.files[0], 720, 0.65, false); if (u.length > 280000) u = await imgToJpeg(file.files[0], 600, 0.5, false);
       if (!IMG_OK.test(u) || u.length > 280000) throw new Error("That photo is too big. Try a smaller one.");
+      { const bad = await serverImageCheck(u); if (bad) throw new Error(bad); }
       img = u; draw();
     } catch (e) { err.textContent = (e && e.message) || "Could not read that photo."; }
   });
