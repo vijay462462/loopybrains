@@ -4576,3 +4576,12 @@ p a:not(.btn):not(.linkbtn):visited, .welcome-card a:not(.btn):visited, #rgElig 
 .sp2-brain { display: block; width: 84px; height: 84px; border-radius: 22px; margin: 0 0 14px; }
 .welcome .ob-brand, .welcome .ob-loopy { display: block !important; width: 72px; height: 72px; margin: 0 auto 10px; border-radius: 18px; background: url(icon-192.png) center / cover no-repeat; }
 .welcome .ob-brand > *, .welcome .ob-loopy > * { display: none !important; }
+/* Home welcome card text: dark black on light themes, light on dark themes */
+#homeBento .hb-action b, #homeBento .hb-greet, #homeBento .hb-choice, #homeBento .hb-prompt-msg, #homeBento .hb-tagline { color: #0a0a0a !important; }
+#homeBento .hb-action small { color: #1f2937 !important; }
+#homeBento .hb-college-name { color: #b91c1c !important; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) #homeBento .hb-action b, :root:not([data-theme="light"]) #homeBento .hb-greet, :root:not([data-theme="light"]) #homeBento .hb-choice, :root:not([data-theme="light"]) #homeBento .hb-prompt-msg, :root:not([data-theme="light"]) #homeBento .hb-tagline { color: #f3f4f6 !important; } :root:not([data-theme="light"]) #homeBento .hb-action small { color: #cbd5e1 !important; } }
+:root[data-theme="dark"] #homeBento .hb-action b, :root[data-theme="dark"] #homeBento .hb-greet, :root[data-theme="dark"] #homeBento .hb-choice, :root[data-theme="dark"] #homeBento .hb-prompt-msg, :root[data-theme="dark"] #homeBento .hb-tagline { color: #f3f4f6 !important; }
+:root[data-theme="dark"] #homeBento .hb-action small { color: #cbd5e1 !important; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) #homeBento .hb-college-name { color: #fca5a5 !important; } }
+:root[data-theme="dark"] #homeBento .hb-college-name { color: #fca5a5 !important; }
