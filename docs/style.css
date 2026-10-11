@@ -4300,3 +4300,6 @@ p a:not(.btn):not(.linkbtn):visited, .welcome-card a:not(.btn):visited, #rgElig 
 .bsfull .pk-remember { background: var(--sheet) !important; color: var(--ink); border: 1px solid var(--line); box-shadow: none !important; }
 .bsfull .pk-remember small { color: var(--muted); }
 .bsfull .pk-remember .pk-rgrid > * { background: var(--accent-soft) !important; border-color: var(--line) !important; color: var(--ink); }
+/* Chitti dark look: deep midnight blue instead of grey; colour still only on buttons */
+:root[data-theme="dark"] .bsfull.calm, .bsfull.calm.night { --paper: #0a1128; --sheet: #121c3d; --line: #25346a; --ink: #eef2ff; --muted: #9eabd6; --accent-soft: #1a2750; }
+.bsfull.calm.night, :root[data-theme="dark"] .bsfull.calm { background: var(--paper); }
