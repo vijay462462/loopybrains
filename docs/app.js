@@ -24,17 +24,21 @@ const fsDoc = (d) => Object.fromEntries(Object.entries((d && d.fields) || {}).ma
 // Update checker: when a newer version of the site has been published, show a "Refresh" bar so students are never stuck on an old copy.
 (function () {
   const cur = ((document.querySelector('script[src*="app.js"]') || {}).src || "").match(/[?&]v=(\d+)/);
-  if (!cur) return; const mine = Number(cur[1]); let shown = false;
+  if (!cur) return; const mine = Number(cur[1]); let shown = false, first = true;
   const check = async () => {
     if (shown || !navigator.onLine) return;
+    const isFirst = first; first = false;
     try {
       const r = await fetch(location.pathname.replace(/[^/]*$/, "") + "index.html?cb=" + Date.now(), { cache: "no-store" }); if (!r.ok) return;
       const m = (await r.text()).match(/app\.js\?v=(\d+)/); if (!m || Number(m[1]) <= mine) return;
       shown = true;
+      const fresh = async () => { try { if (navigator.serviceWorker) { const rs = await navigator.serviceWorker.getRegistrations(); await Promise.all(rs.map(x => x.update().catch(() => {}))); } if (window.caches) { const ks = await caches.keys(); await Promise.all(ks.map(k => caches.delete(k))); } } catch (_) {} location.replace(location.pathname + location.search.replace(/[?&]r=\d+/, "") + (location.search ? "&" : "?") + "r=" + m[1]); };
+      let tried = ""; try { tried = sessionStorage.getItem("dd-autoupd") || ""; } catch (_) {}
+      if (isFirst && tried !== m[1]) { try { sessionStorage.setItem("dd-autoupd", m[1]); } catch (_) {} return fresh(); }   // a stale copy refreshes itself once, so nobody keeps an old screen
       const bar = document.createElement("div"); bar.className = "update-bar"; bar.setAttribute("role", "status");
       const t = document.createElement("span"); t.textContent = "A new version is ready.";
       const b = document.createElement("button"); b.type = "button"; b.textContent = "Refresh now";
-      b.onclick = async () => { try { if (navigator.serviceWorker) { const rs = await navigator.serviceWorker.getRegistrations(); await Promise.all(rs.map(x => x.update().catch(() => {}))); } if (window.caches) { const ks = await caches.keys(); await Promise.all(ks.map(k => caches.delete(k))); } } catch (_) {} location.replace(location.pathname + location.search.replace(/[?&]r=\d+/, "") + (location.search ? "&" : "?") + "r=" + m[1]); };
+      b.onclick = fresh;
       const x = document.createElement("button"); x.type = "button"; x.className = "x"; x.setAttribute("aria-label", "Later"); x.textContent = "\u2715"; x.onclick = () => bar.remove();
       bar.append(t, b, x); document.body.append(bar);
     } catch (_) {}
@@ -1450,16 +1454,17 @@ function renderBottomNav() {
   const icons = { doubts: 'doubts', ideas: 'ideas', clubs: 'clubs', gate: 'gate', challenges: 'gate', market: 'market' };
   const labels = { doubts: 'Doubts', ideas: 'Ideas', clubs: 'Clubs', gate: EXAM_LABEL.length > 8 ? EXAM_LABEL.split(/[ /]/)[0] : EXAM_LABEL, challenges: 'Challenges', market: 'Market' };
   nav.replaceChildren(
-    el('button', { type: 'button', class: 'bnav-btn' + (state.mode === 'intro' && !state.selected ? ' active' : ''), onclick: () => {
-      state.mode = 'intro'; state.selected = null; state.query = ''; $('search') && ($('search').value = '');
-      try { history.replaceState(null, '', '#' + state.tab); } catch (_) {}
+    el('button', { type: 'button', class: 'bnav-btn' + (isHomeView() ? ' active' : ''), onclick: () => {
+      state.tab = 'doubts'; state.group = 'All'; state.filter = 'all'; state.homeView = true; state.mode = 'intro'; state.selected = null; state.query = ''; $('search') && ($('search').value = '');
+      try { history.replaceState(null, '', '#doubts'); } catch (_) {}
       render(); window.scrollTo({ top: 0, behavior: 'smooth' });
     } },
       el('span', { class: 'bnav-icon' }, svgIcon('home')), el('span', { class: 'bnav-label' }, 'Home')),
     ...['doubts', 'ideas', 'clubs', 'market', 'gate'].filter(tab => (!isSimple() || tab === 'doubts' || tab === 'ideas' || state.tab === tab) && (!focusOn() || isAcademicTab(tab)) && featureOn(tab === 'market' ? 'market' : 'doubts')).map(tab => {
       const cnt = state[TABS[tab].coll].length;
-      return el('button', { type: 'button', class: 'bnav-btn' + (state.tab === tab ? ' active' : ''), onclick: () => {
-        if (state.tab === tab) { openAsk(); return; }
+      return el('button', { type: 'button', class: 'bnav-btn' + (state.tab === tab && !isHomeView() ? ' active' : ''), onclick: () => {
+        if (tab === 'doubts') state.homeView = false;
+        if (state.tab === tab) { if (tab === 'doubts') render(); openAsk(); return; }
         state.tab = tab; state.group = 'All'; state.filter = 'all'; state.query = '';
         state.selected = null; state.mode = 'intro'; state.gateYearPick = null; state.gateResView = null; $('search').value = '';
         try { history.replaceState(null, '', '#' + tab); } catch (_) {} render(); openAsk();
@@ -1774,6 +1779,7 @@ async function loadWelcomeNote() {
   } catch (_) {}
 }
 // "Today" card under the header: a personal greeting with the things that bring students back (streak, daily quiz, exam countdown).
+const WORDS = ["Welcome to " + BRAND + " family", "Respect your teachers, help your juniors. 🙏", "Every question is welcome here.", "Kind words build a strong campus. 🌱", "Thank you for being part of our family.", "Learn together, grow together.", "Our teachers and staff work hard for you. Say thank you today. 🙏"];
 let todayKey = "";
 // Small Loopy face for the Today card (same robot as the welcome screen).
 // Loopy's costumes: unlocked by your best streak. Drawn on top of the robot face (same 60x60 picture).
@@ -2035,19 +2041,12 @@ function renderToday() {
     left = plan && plan.date ? Math.ceil((new Date(plan.date + "T00:00:00").getTime() - new Date().setHours(0, 0, 0, 0)) / 864e5) : null;
   const note = state.welcomeNote && readJSON("dd-note-gone", 0) !== state.welcomeNote.updatedAt ? state.welcomeNote : null;
   const key = [hello, name, streak, quizDone, left, equippedCostume(), storyGroups().length, readJSON("dd-launch", false) ? 1 : 0, readJSON("dd-launch-gone", false) ? 1 : 0, state.dataReady ? 1 : 0, boxToday() ? 1 : 0, questSteps().filter(s => s[2]).length, state.replies.length, state.doubts.length, readJSON("dd-tip", {}).gone ? 1 : 0, mistakeList().length, state.weekly.length, dayNum(), (typeof weekPoints === "function" ? weekPoints() : 0), note ? note.updatedAt : 0, openDrives().length, upcomingEvents().length, unansweredDoubts().length, readJSON("dd-today-closed", "") === dayStr() ? 1 : 0, (doubtOfDay() || {}).id || "", fbDone() ? 1 : 0, curioPoints(), (helperOfWeek() || {}).id || "", reviseDueCount()].join("|"); if (key === todayKey && !bar.hidden) return; todayKey = key;
-  if (readJSON("dd-today-closed", "") === dayStr()) { bar.hidden = false; bar.replaceChildren(el("button", { class: "today-reopen", type: "button", onclick: () => { writeJSON("dd-today-closed", ""); todayKey = ""; renderToday(); } }, "Show today\u2019s card")); return; }
   const chip = (txt, cls, fn) => el("button", { class: "today-chip " + (cls || ""), type: "button", onclick: fn }, txt);
-  const WORDS = ["Welcome to " + BRAND + " family", "Respect your teachers, help your juniors. 🙏", "Every question is welcome here.", "Kind words build a strong campus. 🌱", "Thank you for being part of our family.", "Learn together, grow together.", "Our teachers and staff work hard for you. Say thank you today. 🙏"];
   const newbie = !readJSON("dd-quest-done", false) && (readJSON("dd-visits", { n: 1 }).n || 1) <= 21 && questSteps().filter(s => s[2]).length < 3;
   const stat = (num, label, cls, fn) => el("button", { class: "today-stat " + (cls || ""), type: "button", onclick: fn }, el("b", {}, String(num)), el("span", {}, label));
   const pts = typeof weekPoints === "function" ? weekPoints() : 0;
   const lb = launchBanner(name);
-  bar.replaceChildren(lb, lb ? null : el("div", { class: "today-hero" }, el("button", { class: "today-close", type: "button", "aria-label": "Close this card", title: "Close for today", onclick: () => { writeJSON("dd-today-closed", dayStr()); todayKey = ""; renderToday(); } }, "\u2715"), NO_COLLEGE ? null : el("div", { class: "hero-crest" }, crestEl(54)), el("button", { class: "hero-loopy", type: "button", "aria-label": "Chat with Loopy", onclick: loopyTap }, loopyMini()),
-    el("div", { class: "hero-text" }, el("small", { class: "hero-kicker" }, " " + COLLEGE), el("strong", { class: "today-hello" }, hello + (name ? ", " + name : "") + " 👋"), el("small", { class: "today-words" }, WORDS[dayNum() % WORDS.length])),
-    el("button", { class: "hero-say", type: "button", onclick: loopyTap }, el("span", { class: "hero-say-dot" }), el("span", {}, loopyPrompt().label), el("b", {}, "Ask Chitti \u203A")),
-    el("div", { class: "hero-acts" },
-      el("button", { class: "hero-ask", type: "button", onclick: () => { const b = $("askBtn"); if (b) b.click(); } }, "❓ Ask a doubt"),
-      el("button", { class: "hero-ask", type: "button", onclick: () => { state.ai = state.ai || { msgs: [], busy: false, note: "" }; showPanel("ai"); } }, "\u2728 Loopy AI"))),
+  bar.replaceChildren(lb, null,
     (() => { if (newbie) return null; const t = loopyTip(), st = readJSON("dd-tip", {}); if (st.gone && st.day === dayStr()) return null;
       return el("div", { class: "today-tip" }, el("small", {}, "💡 Loopy\u2019s tip for today"), el("p", {}, t.text), el("div", { class: "rowbtns" }, t.cta ? el("button", { class: "btn sm primary", type: "button", onclick: t.cta[1] }, t.cta[0]) : null, el("button", { class: "btn sm", type: "button", onclick: () => { writeJSON("dd-tip", { ...readJSON("dd-tip", {}), day: dayStr(), gone: true }); todayKey = ""; renderToday(); } }, "Got it"))); })(),
     note ? el("div", { class: "today-note" }, el("strong", {}, "💬 " + (note.from ? "A note from " + note.from : "A note from your college")), el("p", {}, note.text), el("button", { class: "of-x", type: "button", "aria-label": "Dismiss note", onclick: () => { writeJSON("dd-note-gone", note.updatedAt); todayKey = ""; renderToday(); } }, "✕")) : null, null, 
@@ -2298,9 +2297,10 @@ const TAB_GUIDE = {
   gate: { safe: "Use papers from official or trusted sources.", icon: "\u{1F3AF}", purpose: "Exam preparation: previous papers, tips and discussions for your exam.", steps: ["Pick your branch and subject.", "Open the previous papers and try them with a timer.", "Stuck on a question? Post it in the discussion."], next: () => ["\u{1F4DD} Open previous papers", () => { const b = document.querySelector(".pyq-panel, .subj-chip"); if (b) b.scrollIntoView({ behavior: "smooth" }); }] },
 };
 // Home block on top of the Doubts feed: a greeting, one big call to action and four shortcut tiles.
+function isHomeView() { return state.tab === "doubts" && state.group === "All" && !state.query.trim() && !state.selected && !NO_COLLEGE && state.homeView !== false; }
 function renderHome() {
   const box = $("homeBento"); if (!box) return;
-  const show = state.tab === "doubts" && state.group === "All" && !state.query.trim() && !NO_COLLEGE && !state.selected;
+  const show = state.tab === "doubts" && state.group === "All" && !state.query.trim() && !NO_COLLEGE && !state.selected && state.homeView !== false;
   if (!show) { box.hidden = true; return; }
   const hr = new Date().getHours();
   const greet = hr < 5 ? "Good night" : hr < 12 ? "Good morning" : hr < 17 ? "Good afternoon" : "Good evening";
@@ -2318,15 +2318,15 @@ function renderHome() {
         el("div", { class: "hb-greet-col" },
           el("p", { class: "hb-college-name" }, college),
           el("h2", { class: "hb-greet" }, greet + (name ? ", " + name : "") + " 👋"),
-          el("p", { class: "hb-tagline" }, "Every question is welcome here.")
+          el("p", { class: "hb-tagline" }, WORDS[dayNum() % WORDS.length])
         )
       ),
       el("div", { class: "hb-prompt" },
         el("span", { class: "hb-prompt-dot", "aria-hidden": "true" }),
-        el("p", { class: "hb-prompt-msg" }, "Stuck on a topic? Chitti can explain it simply"),
-        el("button", { type: "button", class: "hb-prompt-btn", onclick: () => { state.ai = state.ai || { msgs: [], busy: false, note: "" }; showPanel("ai"); } }, "Ask Chitti ›")
+        el("p", { class: "hb-prompt-msg" }, loopyPrompt().label),
+        el("button", { type: "button", class: "hb-prompt-btn", onclick: () => { state.ai = state.ai || { msgs: [], busy: false, note: "" }; state.ai.prefill = loopyPrompt().q; showPanel("ai"); } }, "Ask Chitti ›")
       ),
-      el("p", { class: "hb-choice" }, "Ask a doubt to your friend or classmate, or ask Chitti the Loopy AI"),
+      el("p", { class: "hb-choice" }, "Ask a doubt to your friend or classmate, or ask Chitti, the Loopy AI. It is your choice."),
       el("div", { class: "hb-actions" },
         el("button", { type: "button", class: "hb-action", onclick: () => openAsk() },
           el("span", { class: "hb-action-ic" }, "❓"),
@@ -2334,8 +2334,12 @@ function renderHome() {
         ),
         el("button", { type: "button", class: "hb-action", onclick: () => { state.ai = state.ai || { msgs: [], busy: false, note: "" }; showPanel("ai"); } },
           el("span", { class: "hb-action-ic" }, "✨"),
-          el("b", {}, "Ask Chitti"), el("small", {}, "answers in seconds")
-        )
+          el("b", {}, "Ask Chitti"), el("small", {}, "the Loopy AI")
+        ),
+        Object.keys(DEPT_MAP).length ? el("button", { type: "button", class: "hb-action hb-action-branch", onclick: () => showBranchPicker(true) },
+          el("span", { class: "hb-action-ic" }, "🏫"),
+          el("b", {}, myBranch() && myBranch() !== "*" ? myBranch() : "All branches"), el("small", {}, "Change branch")
+        ) : null
       )
     )
   );
@@ -2502,8 +2506,8 @@ function renderCurious() {
     el("div", { class: "rowbtns" }, back),
   ].filter(Boolean);
 }
-// RGUKT is open from B.Tech 2nd year (E2) onwards (the six-year integrated course starts with P1, P2 and E1). This is a self-declaration shown once on RGUKT.
-const RG_YEARS = [["P1", "Pre-University 1", false], ["P2", "Pre-University 2", false], ["E1", "B.Tech 1st year", false], ["E2", "B.Tech 2nd year", true], ["E3", "B.Tech 3rd year", true], ["E4", "B.Tech 4th year", true]];
+// RGUKT is open from B.Tech 1st year (E1) onwards (the six-year integrated course starts with P1, P2 and E1). This is a self-declaration shown once on RGUKT.
+const RG_YEARS = [["P1", "Pre-University 1", false], ["P2", "Pre-University 2", false], ["E1", "B.Tech 1st year", true], ["E2", "B.Tech 2nd year", true], ["E3", "B.Tech 3rd year", true], ["E4", "B.Tech 4th year", true]];
 // ---------- student branch: each student sees the doubts of their own branch and the common subjects ----------
 // The branch is the student's own choice (saved in dd-branch; "*" means "my branch is not listed, show me everything"). Nothing is stored on the post: the branch of a doubt comes from its subject.
 const BRANCH_KEY = "dd-branch";
@@ -2534,13 +2538,13 @@ function showEligibility() {
   const msg = el("p", { class: "ob-say", role: "status" }, "");
   const ov = el("div", { class: "welcome", id: "rgElig", role: "dialog", "aria-modal": "true", "aria-label": "Which year are you in?" });
   const choose = (k, ok) => {
-    if (!ok) { msg.textContent = "Thank you. " + BRAND + " is open to RGUKT B.Tech 2nd year students and above for now, because of the age policy. Please come back when you reach B.Tech 2nd year. Meanwhile you can read the About page."; return; }
+    if (!ok) { msg.textContent = "Thank you. " + BRAND + " is open to RGUKT B.Tech 1st year students and above for now, because of the age policy. Please come back when you reach B.Tech 1st year. Meanwhile you can read the About page."; return; }
     writeJSON("dd-rgukt-year", { year: k, at: Date.now() });
     try { curState.year = k; const o = readJSON("dd-curio-prof", {}) || {}; o.year = Number(k[1]) || o.year; writeJSON("dd-curio-prof", o); } catch (_) {}
     ov.remove(); render();
   };
   ov.append(el("div", { class: "welcome-card ob-card" }, el("div", { class: "ob-loopy ob-brand" }, brandMark(72)), el("h2", {}, "Which year are you in?"),
-    el("p", { class: "ob-say" }, "RGUKT is a six-year integrated course. " + BRAND + " is for B.Tech 2nd year students and above."),
+    el("p", { class: "ob-say" }, "RGUKT is a six-year integrated course. " + BRAND + " is for B.Tech 1st year students and above."),
     el("div", { class: "rg-opts", role: "group", "aria-label": "Your year" }, ...RG_YEARS.map(([k, t, ok]) => el("button", { class: "rg-opt" + (ok ? " ok" : ""), type: "button", onclick: () => choose(k, ok) }, el("span", { class: "rg-name" }, t), el("small", {}, ok ? "Open \u2713" : "Not yet")))), msg,
     el("p", { class: "hint" }, "This is your own declaration. Please answer honestly. Details are in the ", el("a", { href: "terms.html", target: "_blank", rel: "noopener" }, "Terms"), ".")));
   document.body.append(ov);
@@ -5944,14 +5948,8 @@ function securityView(r) {
   return out;
 }
 function brandSpin(cls) {
-  // Loopy AI logo: the LB monogram stays still while the coral loop around it turns (it turns faster while Loopy is thinking).
-  const A = (n, a, ...k) => sv(n, a, ...k), stop = (o, c) => A("stop", { offset: o, "stop-color": c });
-  const defs = A("defs", {}, A("linearGradient", { id: "bsBg", x1: 0, y1: 0, x2: 1, y2: 1 }, stop(0, "#22c55e"), stop(.55, "#166534"), stop(1, "#0f3d22")), A("linearGradient", { id: "bsRing", x1: 0, y1: 0, x2: 1, y2: 1 }, stop(0, "#fdba74"), stop(1, "#f97316")));
-  const ring = A("g", { class: "bs-spinc" }, A("circle", { cx: 256, cy: 256, r: 196, fill: "none", stroke: "url(#bsRing)", "stroke-width": 30, "stroke-linecap": "round", "stroke-dasharray": "960 272", transform: "rotate(-75 256 256)" }), A("circle", { cx: 404, cy: 132, r: 17, fill: "#fff4ec" }));
-  const lb = A("g", { fill: "none", stroke: "#fff4ec", "stroke-width": 34, "stroke-linecap": "round", "stroke-linejoin": "round", transform: "translate(-41 0)" }, A("path", { d: "M194 168V340H234" }), A("path", { d: "M302 168V340" }), A("path", { d: "M302 168H336C366 168 380 188 380 210C380 234 364 252 330 252H302" }), A("path", { d: "M302 252H338C378 252 394 274 394 298C394 322 376 340 338 340H302" }));
-  return A("svg", { viewBox: "0 0 1024 1024", class: cls, role: "img", "aria-label": "Loopy AI" }, defs, A("rect", { width: 1024, height: 1024, rx: 230, fill: "url(#bsBg)" }), A("g", { transform: "translate(206 70) scale(1.2)" }, ring, lb),
-    A("text", { x: 512, y: 826, "text-anchor": "middle", "font-size": 110, "font-weight": 700, "letter-spacing": 6, fill: "#fff4ec", "font-family": "Georgia, 'Times New Roman', serif" }, "LOOPY"),
-    A("text", { x: 512, y: 944, "text-anchor": "middle", "font-size": 84, "font-weight": 700, "letter-spacing": 40, fill: "#fb923c", "font-family": "Georgia, 'Times New Roman', serif" }, "AI"));
+  // Loopy AI brain icon: it flips around while Chitti is thinking, inside a turning ring.
+  return el("span", { class: "bs-brain " + (cls || ""), role: "img", "aria-label": "Loopy AI" }, el("i", { class: "bs-brain-ring", "aria-hidden": "true" }), el("img", { class: "bs-brain-img", src: "icon-192.png", alt: "", width: "56", height: "56" }));
 }
 function brainSpin() {
   const ring = sv("svg", { viewBox: "0 0 100 100", class: "bs-brain-ring", "aria-hidden": "true" }); ring.append(sv("circle", { cx: 50, cy: 50, r: 44, fill: "none", stroke: "#fb923c", "stroke-width": 6, "stroke-linecap": "round", "stroke-dasharray": "190 87", transform: "rotate(-75 50 50)" }), sv("circle", { cx: 88, cy: 30, r: 4.5, fill: "#fff4ec" }));
@@ -6010,7 +6008,8 @@ function brainViewInner(ui) {
   const optRow = el("div", { class: "bs-optrow" }, easyBtn), compact = true;
   const opts = compact ? el("details", { class: "bs-opts", open: bs.lock || bs.optsOpen ? "" : null, ontoggle: (e) => { bs.optsOpen = e.target.open; } }, el("summary", {}, mi[1] + " \u00B7 " + bsName(cur[0]) + " \u00B7 " + effNow[1] + " effort \u00B7 Easy words " + (bs.easy !== false ? "on" : "off") + "  \u2014 change"), lvBar, modelLine, rgNote, effRow, optRow) : null;
   const head = el("div", { class: "bs-head bsf-noprint" }, modeBar, bs.res ? null : modeLine, ...(compact ? [opts] : [lvBar, modelLine, rgNote, effRow, optRow]), offerBar, meter, lockCard);
-  const sheet = el("div", { class: "bs-sheet bsf-noprint", id: "bsSheet", hidden: bs.sheet || bs.lock ? null : "" }, el("small", { class: "bs-sheet-h" }, "Model and effort"), lvBar, modelLine, rgNote, effRow, optRow, offerBar, meter, lockCard);
+  const sheetHead = el("small", { class: "bs-sheet-h" }, "Model and effort", IS_RGUKT ? el("span", { class: "bs-rg-tag" }, "✓ RGUKT Free") : null);
+  const sheet = el("div", { class: "bs-sheet bsf-noprint", id: "bsSheet", hidden: bs.sheet || bs.lock ? null : "" }, sheetHead, lvBar, modelLine, rgNote, effRow, optRow, offerBar, meter, lockCard);
   const foot = el("p", { class: "bs-foot bsf-noprint" }, "Today: " + L.day + " of " + L.caps.day + " credits \u00B7 Check important facts");
   ui.bar = bar; ui.head = head; ui.dock = el("div", { class: "bs-dock bsf-noprint" }, sheet, sug, form, foot);
   const chips = (list, onTap) => el("div", { class: "bs-chips" }, ...list.map(t => el("button", { type: "button", class: "tp-sub", onclick: () => onTap(t) }, t)));
@@ -6018,13 +6017,14 @@ function brainViewInner(ui) {
     el("div", { class: "bsr-lines", "aria-hidden": "true" }, el("i", {}), el("i", {}), el("i", {})))] : [];
   ui.thinking = bs.busy && bs.res ? thinkingEls : [];
   if (bs.pending) {
-    return [bar, head, el("section", { class: "bsr-ask bsr-reveal in" }, el("small", {}, "Your question"), el("h2", {}, bs.pending), el("p", { class: "hint" }, "How much do you need?"),
-      el("div", { class: "bsr-sizes" }, ...BS_SIZES.map(([id, name, hint, need], i) => { const open = bsOpen(need); return el("button", { type: "button", class: "bsr-size z" + i + (bs.size === id ? " pre" : ""), onclick: () => bsPickSize(id) }, el("b", {}, name), el("span", {}, hint), open ? null : el("i", {}, IS_RGUKT ? "\u{1F512} Locked" : "\u{1F512} Plus")); })))];
+    const freeNote = IS_RGUKT ? el("p", { class: "bsr-free-banner" }, "🎓 RGUKT — all sizes free for you") : null;
+    return [bar, head, el("section", { class: "bsr-ask bsr-reveal in" }, el("small", {}, "Your question"), el("h2", {}, bs.pending), freeNote,
+      el("div", { class: "bsr-sizes" }, ...BS_SIZES.map(([id, name, hint, need], i) => { const open = bsOpen(need); return el("button", { type: "button", class: "bsr-size z" + i + (bs.size === id ? " pre" : ""), onclick: () => bsPickSize(id) }, el("div", { class: "bsr-size-info" }, el("b", {}, name), el("span", {}, hint)), el("i", { class: "bsr-size-badge" + (open ? "" : " locked") }, open ? "FREE" : (IS_RGUKT ? "\u{1F512}" : "Plus"))); })))];
   }
   if (!bs.res) {
     const C = window.RGUKT_CURRICULUM, rows = C ? ((C.data[curState.year] || {})[curState.branch] || []).map(r => r[0]).slice(0, 8) : [], rec = bsRecent();
     const hr = new Date().getHours(), greet = hr < 5 ? "Good night" : hr < 12 ? "Good morning" : hr < 17 ? "Good afternoon" : "Good evening", nm = String(getName() || "").trim().split(" ")[0];
-    const hero = el("section", { class: "bsc-hero" + (bs.busy ? " busy" : "") }, bs.busy ? null : el("div", { class: "bsc-orbit", "aria-hidden": "true" }, el("i", { class: "r1" }), el("i", { class: "r2" }), el("b", { class: "d1" }), el("b", { class: "d2" }), el("b", { class: "d3" }), brandSpin("bsc-brand live")), el("p", { class: "bsc-brand-name", "aria-label": "Chitti The Loopy AI" }, el("span", { class: "bsc-bn-big" }, "Chitti"), el("small", { class: "bsc-bn-sm" }, "The Loopy AI")), bs.busy ? null : el("h2", { class: "bsc-hi" }, greet + (nm ? ", " : ""), nm ? el("span", {}, nm) : null), bs.busy ? null : el("p", { class: "bsc-sub" }, "Ask your syllabus anything. Easy words, diagrams, exact answers."));
+    const hero = el("section", { class: "bsc-hero" + (bs.busy ? " busy" : "") }, bs.busy ? null : el("div", { class: "bsc-orbit", "aria-hidden": "true" }, el("i", { class: "r1" }), el("i", { class: "r2" }), el("b", { class: "d1" }), el("b", { class: "d2" }), el("b", { class: "d3" }), brandSpin("bsc-brand live")), el("p", { class: "bsc-brand-name", "aria-label": "Chitti The Loopy AI" }, el("span", { class: "chi-row", "aria-hidden": "true" }, el("span", { class: "chi-orb" }), el("span", { class: "bsc-bn-big" }, "Chitti"), el("span", { class: "chi-wave" }, el("i"), el("i"), el("i"), el("i"), el("i"))), el("small", { class: "bsc-bn-sm" }, "The Loopy AI")), bs.busy ? null : el("h2", { class: "bsc-hi" }, greet + (nm ? ", " : ""), nm ? el("span", {}, nm) : null), bs.busy ? null : el("p", { class: "bsc-sub" }, "Ask your syllabus anything. Easy words, diagrams, exact answers."));
     const TRY = { atlas: [["\u{1F4C8}", "Explain the Bode plot", "Control systems"], ["\u2795", "Half adder circuit", "Digital logic"], ["\u{1F3B2}", "Bayes theorem with an example", "Probability"], ["\u{1F50C}", "BJT biasing and the Q point", "Analog circuits"], ["\u{1F4E1}", "Sampling theorem and aliasing", "Signal processing"], ["\u{1F9EE}", "Compare FIR and IIR filters", "Signal processing"]],
       launchpad: [["\u{1F326}\uFE0F", "IoT weather station", "Project plan"], ["\u{1F4F7}", "Student attendance system", "Project plan"], ["\u{1F331}", "Smart irrigation", "Project plan"], ["\u{1F4DA}", "Library management website", "Project plan"]],
       forge: [["\u{1F50D}", "binary search in Python", "Code"], ["\u{1F9EE}", "Verilog code for a counter", "Hardware"], ["\u{1F4CA}", "bubble sort in C", "Code"], ["\u2615", "factorial in Java", "Code"]],
@@ -9026,6 +9026,7 @@ function renderGateIntro() {
       ),
 
       el("div", { class: "rowbtns" },
+        el("button", { class: "btn", type: "button", onclick: () => history.back() }, "← Back"),
         el("button", { class: "btn primary", type: "button", onclick: openAsk }, "Post GATE Discussion"),
         el("button", { class: "btn", type: "button", onclick: () => { state.filter = "all"; $("filter").value = "all"; state.gateYearPick = null; render(); } }, "📋 All Discussions"),
       ),
@@ -9064,6 +9065,7 @@ function renderIntro() {
     statsRow,
     el("p", { class: "body hiw-steps" }, steps),
     el("div", { class: "rowbtns" },
+      el("button", { class: "btn", type: "button", onclick: () => history.back() }, "← Back"),
       el("button", { class: "btn primary", type: "button", onclick: openAsk }, t.ask),
       el("button", { class: "btn", type: "button", onclick: () => showPanel("network") }, "🌐 College network")),
     kbHint,
@@ -10459,14 +10461,10 @@ function openStories(authorId) {
       ? [el("button", { type: "button", class: "st-x", "aria-label": "Who saw this", onclick: () => { vlist.hidden = !vlist.hidden; } }, "👁 " + viewers.length),
          el("button", { type: "button", class: "st-x", "aria-label": "Delete story", onclick: async () => { if (!confirm("Delete this story?")) return; try { await softDelete("stories", s.id); state.stories = state.stories.filter(x => x.id !== s.id); close(); } catch (e) { showNotice(errText(e)); } } }, "🗑")]
       : [el("button", { type: "button", class: "st-x", "aria-label": "Report story", onclick: async () => { if (!confirm("Report this story as inappropriate?")) return; try { const reports = [...new Set([...(s.reports || []), store.uid])].slice(0, 100); s.reports = reports; await store.update("stories", s.id, { reports }); showNotice("Reported. Thank you."); setTimeout(() => showNotice(""), 2500); } catch (e) { showNotice(errText(e)); } next(); } }, "🚩"), el("button", { type: "button", class: "st-x", "aria-label": "Report this person\u2019s photo or status", title: "Report photo or status", onclick: () => openProfileReport(g.authorId, g.name) }, "\u{1F464}")];
-    // Deterrent only (a website cannot block screenshots): the viewer's own name is tiled faintly over others' stories.
-    const wmName = (getName() || BRAND).slice(0, 20);
-    const wm = ownS ? null : el("div", { class: "st-wm", "aria-hidden": "true" }, Array.from({ length: 24 }, () => el("span", {}, wmName)));
-    ov.oncontextmenu = (ev) => { ev.preventDefault(); };
     ov.replaceChildren(
       el("div", { class: "st-bars" }, segs),
       el("div", { class: "st-top" }, avatarEl(dpOfId(g.authorId, g.name), "av st-av sm" + frameOf(g.authorId)), el("div", { class: "st-who" }, el("strong", {}, (ownS ? "Your story" : g.name) + markOf(g.authorId)), el("small", {}, ago(s.createdAt) + (statusOfId(g.authorId) ? " · " + statusOfId(g.authorId) : ""))), ...actions, el("button", { type: "button", class: "st-x", "aria-label": "Close", onclick: close }, "✕")),
-      body, wm, ownS ? null : el("p", { class: "st-note" }, "📸 Screenshots can be traced to your name. Please don't share others' stories."), vlist,
+      body, vlist,
       el("button", { type: "button", class: "st-tap l", "aria-label": "Previous", onclick: prev }), el("button", { type: "button", class: "st-tap r", "aria-label": "Next", onclick: next }));
     const run = (ms) => { if (my !== gen) return; fill.style.setProperty("animation-duration", ms + "ms"); fill.classList.add("run"); timer = setTimeout(next, ms); };
     if (s.kind === "quiz") {
@@ -10528,9 +10526,6 @@ function openStories(authorId) {
 }
 
 // Privacy: blur the app while it is in the background so the recent-apps preview does not show posts or stories.
-document.addEventListener("visibilitychange", () => { document.body.classList.toggle("priv-blur", document.visibilityState === "hidden"); });
-window.addEventListener("pagehide", () => { document.body.classList.add("priv-blur"); });
-window.addEventListener("pageshow", () => { if (document.visibilityState === "visible") document.body.classList.remove("priv-blur"); });
 // Focus mode: hides everything that is not academic (Ideas, Clubs, Challenges, Market, Jobs, stories, Entertainment).
 const focusOn = () => { try { return localStorage.getItem("dd-focus") === "1"; } catch (_) { return false; } };
 function applyFocus() {
@@ -10574,7 +10569,7 @@ function render() { const snap = snapUI(); try { renderCore(); } finally { resto
 function renderCore() {
   try {
     document.body.dataset.tab = state.tab; applyFocus();
-    renderHeader(); renderTrendBar(); renderStoryBar(); renderRail(); try { renderGuide(); } catch (_) {} try { renderHome(); } catch (_) {} renderList(); renderBottomNav(); try { if (IS_RGUKT && !readJSON("dd-rgukt-year", null) && !welcomePending && !document.querySelector(".welcome, .cr, #splash")) showEligibility(); } catch (_) {} try { if (Object.keys(DEPT_MAP).length && !myBranch() && !welcomePending && (!IS_RGUKT || readJSON("dd-rgukt-year", null)) && localStorage.getItem("dd-welcome-done") && !document.querySelector(".welcome, .cr, #splash")) showBranchPicker(); } catch (_) {} try { document.body.classList.toggle("simple", isSimple()); renderBell(); notifPing(); claimStudentIdOnce(); autoMailIds(); } catch (_) {}
+    renderHeader(); renderTrendBar(); renderStoryBar(); renderRail(); try { renderGuide(); } catch (_) {} try { renderHome(); } catch (_) {} renderList(); renderBottomNav(); try { if (IS_RGUKT && !readJSON("dd-rgukt-year", null) && !welcomePending && !document.querySelector(".welcome, .cr, #splash")) showEligibility(); } catch (_) {} try { if (Object.keys(DEPT_MAP).length && !myBranch() && !welcomePending && (!IS_RGUKT || readJSON("dd-rgukt-year", null)) && localStorage.getItem("dd-welcome-done") && !document.querySelector(".welcome, .cr, #splash") && !sessionStorage.getItem("dd-branch-asked")) { sessionStorage.setItem("dd-branch-asked", "1"); showBranchPicker(); } } catch (_) {} try { document.body.classList.toggle("simple", isSimple()); renderBell(); notifPing(); claimStudentIdOnce(); autoMailIds(); } catch (_) {}
     // Forms keep what the student is typing while live updates arrive.
     const key = ["ask", "edit", "name", "alumniJoin", "alumniJob", "fun", "lab", "college", "plus"].includes(state.mode) ? state.mode + state.tab : "";
     if (key && key === sheetKey) return;
@@ -10778,18 +10773,17 @@ if (themeBtn) {
 }
 
 
-// Brand lockup from the brand guide: the monogram C, then "LOOPY" in bold serif with wide spacing and a small spaced gold "BRAINS".
-function brandLockup(title) {
-  const words = String(title || "Loopy Brains").trim().split(/\s+/), first = words.shift() || "Loopy", rest = words.join(" ");
-  const mark = el("span", { class: "hd-tile", "aria-hidden": "true" }, el("img", { src: "brand/loopy-brains-mark.svg", alt: "", width: "30", height: "30" }));
-  const wm = el("span", { class: "bname-text", "aria-label": String(title || "Loopy Brains") }, el("b", {}, first.toUpperCase()), rest ? el("i", {}, rest.toUpperCase()) : null);
-  return [mark, wm];
+// Header lockup: the new brain icon and the "loopybrains" name.
+function brandLockup() {
+  const ic = el("img", { class: "hd-mark hd-icon", src: "icon-192.png", alt: "", width: "38", height: "38" });
+  const wm = el("strong", { class: "hd-word", "aria-label": "Loopy Brains" }, el("b", {}, "loopy"), el("i", {}, "brains"));
+  return [ic, wm];
 }
 // Update page title from config
 if (CFG.title) { document.title = CFG.title; }
 {
   const h1 = $("siteTitle");
-  if (h1) { try { h1.replaceChildren(...brandLockup(CFG.title)); } catch (_) { h1.textContent = CFG.title; } }
+  if (h1) { try { h1.replaceChildren(...brandLockup()); } catch (_) { h1.textContent = CFG.title; } }
   const sc = $("streakChip"); if (sc) sc.addEventListener("click", () => showPanel("me"));
   const cb = $("collegeBtn"); if (cb) { cb.replaceChildren(...(TENANT && TENANT.crest ? [crestEl(22), " "] : [icon("school", 15), " "]), (TENANT ? TENANT.name : IS_RGUKT ? "RGUKT AP" : "Choose your college") + " ▾");
   try { if (TENANT && TENANT.crest) localStorage.setItem("dd-crest", TENANT.crest); else localStorage.removeItem("dd-crest"); localStorage.setItem("dd-college-name", COLLEGE || ""); } catch (_) {} cb.addEventListener("click", () => showPanel("college")); }
