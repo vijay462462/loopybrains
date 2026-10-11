@@ -5523,6 +5523,27 @@ function ownDiagram(text) {
   return el("section", { class: "bsr-card bsr-reveal in od" }, el("h3", {}, "Diagram"), svg, el("p", { class: "od-cap" }, hit[1]), el("small", { class: "hint" }, "Drawn by Chitti. A simple picture of the idea, not an exam-ready circuit."));
 }
 // Friendly small talk, so "hey hi" gets a real reply instead of a random article. Free: no credits and no network.
+// Chitti ignores its own name and polite filler so "Chitti smile please" is understood like "smile".
+function bsClean(q) {
+  const raw = String(q || "").trim(); if (!raw) return raw;
+  let t = " " + raw.toLowerCase().replace(/[^a-z0-9\s']/g, " ").replace(/\s+/g, " ") + " ";
+  t = t.replace(/ (chitti|chiti|chitty|chitthi|loopy ai|loopy) /g, " ").replace(/ (chitti|chiti|chitty|loopy) /g, " ").replace(/ (please|pls|plz|kindly|once|na|ra|bro|buddy|dear) /g, " ").replace(/ (can you|could you|will you|would you|can u|could u) /g, " ").replace(/\s+/g, " ").trim();
+  if (!t) return /(chitti|chiti|chitty|loopy)/i.test(raw) ? "hi" : raw;
+  return t;
+}
+// Feelings and requests aimed at Chitti itself: instant, friendly, no search.
+function bsPlay(q) {
+  const t = String(q || "").toLowerCase().replace(/[^a-z\s']/g, " ").replace(/\s+/g, " ").trim(); if (!t || t.split(" ").length > 7) return "";
+  const name = ((readJSON("dd-name", "") || "") + "").split(" ")[0], hi = name ? ", " + name : "", pick = (a) => a[Math.floor(Math.random() * a.length)];
+  if (/^(smile|give me a smile|show me a smile|be happy|cheer up|say something happy|make me smile|make me happy|laugh with me)$/.test(t)) return pick(["\u{1F60A} Here is my biggest smile for you" + hi + "! Keep smiling, every doubt gets solved one step at a time. What shall we learn today?", "\u{1F604}\u{1F604} Smiling just for you" + hi + "! You are doing better than you think. Ask me anything.", "\u{1F601} There you go" + hi + "! A smile makes studying lighter. Want a joke or a fun fact next?"]);
+  if (/^(sing|sing a song|sing for me|dance|dance for me|do a dance)$/.test(t)) return "\u{1F3B5} I cannot sing or dance, I live inside your phone, but I can tell you a joke, a riddle or a fun fact. Just ask" + hi + "! \u{1F604}";
+  if (/^(i love you|love you|i like you|you are cute|you are sweet|you are good|you are great|you are awesome|good job|well done|nice|super|superb|great|awesome|wow|cool|excellent|good bot|good boy)$/.test(t)) return pick(["Aww, thank you" + hi + "! \u{1F970} You made my day. Let us learn something new together.", "That is so kind" + hi + "! \u{1F31F} I am always here for you. What is your next doubt?", "Thank you" + hi + "! \u{1F604} You are the reason I love helping. Ask me anything."]);
+  if (/^(sorry|i am sorry|im sorry|my bad|oops)$/.test(t)) return "No problem at all" + hi + "! \u{1F60A} Nothing to be sorry about. Ask me anything.";
+  if (/^(ok|okay|k|fine|hmm|hmmm|yes|yeah|yep|no|nope|haha|hehe|lol|lmao)$/.test(t)) return "\u{1F60A} I am here" + hi + ". Type a topic, a doubt, or ask for a joke, riddle or fun fact.";
+  if (/^(are you there|are you listening|can you hear me|hello are you there|wake up)$/.test(t)) return "Yes, I am right here" + hi + "! \u{1F916} Ask me anything.";
+  if (/^(you are wrong|that is wrong|wrong answer|wrong|this is wrong|not correct|incorrect)$/.test(t)) return "I am sorry" + hi + ". I can make mistakes. \u{1F64F} Please type your question again with a few more words (for example the subject and topic) and I will try again. For important facts, check your textbook or ask a classmate in Doubts.";
+  return "";
+}
 function bsChat(q) {
   const t = String(q || "").toLowerCase().replace(/[^a-z\s']/g, " ").replace(/\s+/g, " ").trim(); if (!t || t.split(" ").length > 8) return "";
   const name = ((readJSON("dd-name", "") || "") + "").split(" ")[0], hi = name ? ", " + name : "", pick = (a) => a[dayNum() % a.length];
@@ -5669,7 +5690,7 @@ async function bsSubmit(q) {
   if (/[^\u0000-\u024F\u2000-\u206F\u00A0-\u00FF]/.test(q) && ahWords(q).length === 0) { showNotice("Loopy Search works with English words for now. Please type your topic in English.", "err"); return; }
   if (!(await safetyGate(q))) return;
   { const mm = await brainModesMod(); if (mm && mm.offensive(q)) { safeModal("I can\u2019t help with attacking people or systems", ["Loopy AI teaches security so you can defend, not so you can break into accounts, devices or websites. That could hurt real people and is against the law.", "Try Aegis to learn how attacks work and how to stop them, or practise legally on free labs such as PortSwigger Academy, picoCTF or TryHackMe."], false); return; } }
-  { const talk = bsChat(q) || bsFun(q); if (talk) { bs.pending = ""; bsRun(q, talk); return; } }
+  { const cq = bsClean(q), talk = bsChat(cq) || bsFun(cq) || bsPlay(cq); if (talk) { bs.pending = ""; bsRun(q, talk); return; } }
   const solved = bs.forcePack ? null : await brainSolve(q); if (solved) { bs.pending = ""; bsRun(q, solved); return; }
   { const mm = await brainModesMod(), sg = bs.forcePack ? "" : (mm && mm.suggestMode ? mm.suggestMode(q) : ""); if (sg && sg !== (bs.mode || "atlas")) { const nm = (BS_MODES.find(x => x[0] === sg) || [])[1] || sg; bs.mode = sg; showNotice("This looks like a " + (sg === "forge" ? "code" : sg === "aegis" ? "security" : "project") + " question, so I switched to " + nm + " for a better answer.", "ok"); } }
   if (bs.mode && bs.mode !== "atlas") { bs.pending = ""; bsRun(q); return; }
