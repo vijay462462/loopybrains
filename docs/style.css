@@ -4613,3 +4613,17 @@ p a:not(.btn):not(.linkbtn):visited, .welcome-card a:not(.btn):visited, #rgElig 
 .ob-pick .pk-src.ok b, .ob-pick .pk-src b { color: #c2410c; }
 .ob-pick .pk-chips i, .ob-pick .pk-chips span { background: #f3f4f6; color: #111827; border-color: #e5e7eb; }
 .ob-pick .pk-change { background: #fff; color: #111827; border: 1.5px solid #d1d5db; }
+
+/* ===== First screen: light pastel tiles with dark text (premium look), darker subtitle ===== */
+#splash .sp2-row { border: 1px solid rgb(15 23 42 / .06) !important; background-color: var(--wc, #fde7dc) !important; background-image: none !important; box-shadow: 0 10px 24px -16px rgb(15 23 42 / .28) !important; }
+#splash .sp2-row:nth-child(1) { --wc: #fde4d8; } #splash .sp2-row:nth-child(2) { --wc: #d9f0f5; } #splash .sp2-row:nth-child(3) { --wc: #fdebd0; }
+#splash .sp2-row:nth-child(4) { --wc: #ebe3fb; } #splash .sp2-row:nth-child(5) { --wc: #d8f3e6; } #splash .sp2-row:nth-child(6) { --wc: #fbdfeb; }
+#splash .sp2-row::after { background: rgb(255 255 255 / .55) !important; }
+#splash .sp2-row b { color: #14202b !important; } #splash .sp2-row span { color: #44525f !important; }
+#splash .sp2-row .sp2-ic { background: rgb(255 255 255 / .75) !important; box-shadow: 0 1px 2px rgb(15 23 42 / .08) !important; }
+#splash .sp2-row:nth-child(1) .sp2-ic { stroke: #c2410c !important; color: #c2410c !important; } #splash .sp2-row:nth-child(2) .sp2-ic { stroke: #0e7490 !important; color: #0e7490 !important; }
+#splash .sp2-row:nth-child(3) .sp2-ic { stroke: #b45309 !important; color: #b45309 !important; } #splash .sp2-row:nth-child(4) .sp2-ic { stroke: #6d28d9 !important; color: #6d28d9 !important; }
+#splash .sp2-row:nth-child(5) .sp2-ic { stroke: #047857 !important; color: #047857 !important; } #splash .sp2-row:nth-child(6) .sp2-ic { stroke: #be185d !important; color: #be185d !important; }
+#splash .sp2-sub { color: #1f2d3a !important; font-weight: 600; }
+.sp2-more { margin: 2px auto 0; text-align: center; font-size: .78rem; color: #44525f; }
+.sp2-more a { color: #c2410c; font-weight: 700; }
