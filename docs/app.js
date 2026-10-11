@@ -5686,11 +5686,11 @@ function bsExportSheet() {
 }
 async function bsSubmit(q) {
   q = lsClean(q); if (q.length < 2) return; const bs = bsState();
+  { const cq = bsClean(q), talk = bsChat(cq) || bsFun(cq) || bsPlay(cq); if (talk) { bs.pending = ""; bsRun(q, talk, true); return; } }
   { const ctx = bsContextFor(q); if (ctx) q = lsClean(ctx + q); }
   if (/[^\u0000-\u024F\u2000-\u206F\u00A0-\u00FF]/.test(q) && ahWords(q).length === 0) { showNotice("Loopy Search works with English words for now. Please type your topic in English.", "err"); return; }
   if (!(await safetyGate(q))) return;
   { const mm = await brainModesMod(); if (mm && mm.offensive(q)) { safeModal("I can\u2019t help with attacking people or systems", ["Loopy AI teaches security so you can defend, not so you can break into accounts, devices or websites. That could hurt real people and is against the law.", "Try Aegis to learn how attacks work and how to stop them, or practise legally on free labs such as PortSwigger Academy, picoCTF or TryHackMe."], false); return; } }
-  { const cq = bsClean(q), talk = bsChat(cq) || bsFun(cq) || bsPlay(cq); if (talk) { bs.pending = ""; bsRun(q, talk); return; } }
   const solved = bs.forcePack ? null : await brainSolve(q); if (solved) { bs.pending = ""; bsRun(q, solved); return; }
   { const mm = await brainModesMod(), sg = bs.forcePack ? "" : (mm && mm.suggestMode ? mm.suggestMode(q) : ""); if (sg && sg !== (bs.mode || "atlas")) { const nm = (BS_MODES.find(x => x[0] === sg) || [])[1] || sg; bs.mode = sg; showNotice("This looks like a " + (sg === "forge" ? "code" : sg === "aegis" ? "security" : "project") + " question, so I switched to " + nm + " for a better answer.", "ok"); } }
   if (bs.mode && bs.mode !== "atlas") { bs.pending = ""; bsRun(q); return; }
@@ -5712,14 +5712,14 @@ function mod2cautions(wiki) {
   const all = brainSentences(wiki.intro + " " + wiki.sections.map(x => x.t).join(" "));
   return all.filter(t => /\b(however|limitation|disadvantage|drawback|criticis\w*|cannot|although|despite|controvers\w*|common mistake|misconception)\b/i.test(t)).slice(0, 3);
 }
-async function bsRun(q, solved) {
+async function bsRun(q, solved, isChat) {
   q = lsClean(q); if (q.length < 2) return;
   const bs = bsState(), id = ++bs.id; let lv = bs.level; if (!bsOpen(lv)) lv = IS_RGUKT ? 2 : 1; const size = bs.size || "standard";
   if (!solved) { const cost = bsEffort(bs)[3], key = q + "|" + cost + "|" + (bs.mode || "atlas"); if (bs.charged !== key) { if (!(await bsSpend(cost))) { bs.pending = q; bs.q = q; bsPaint(true); return; } bs.charged = key; } }
   bs.q = q; bs.busy = true; bs.tab = "all"; bs.lock = 0; bsSave(q); bsPaint(true);
   const topic = brainIntent(q, "").topic || q, short = ahWords(topic).slice(0, 3).join(" ") || topic;
   if (!solved && bs.mode && bs.mode !== "atlas") { await bsRunMode(bs.mode, q, id, lv, size); return; }
-  if (solved) { if (id !== bs.id) return; bs.res = { topic: q, solved: true, lv, size, board: lv >= 2 ? brainBoard(q, 3) : [], syl: [], imgs: [], models: [], page: "", report: null, papers: [] }; bs.ans = solved; bs.busy = false; bsAddHistory(q, solved); bsPaint(true); return; }
+  if (solved) { if (id !== bs.id) return; bs.res = { topic: q, solved: true, chat: !!isChat, lv, size, board: lv >= 2 ? brainBoard(q, 3) : [], syl: [], imgs: [], models: [], page: "", report: null, papers: [] }; bs.ans = solved; bs.busy = false; bsAddHistory(q, solved); bsPaint(true); return; }
   const cmpIntent = brainCompareIntent(q);
   if (cmpIntent) {
     const cmp = await brainCompare(cmpIntent.a, cmpIntent.b); if (id !== bs.id) return;
@@ -6065,6 +6065,10 @@ function brainViewInner(ui) {
       el("div", { class: "rowbtns" }, back)].filter(Boolean);
   }
   const r = bs.res, q = r.topic, lv = r.lv;
+  if (r.chat) {
+    const emo = (String(bs.ans).match(/\p{Extended_Pictographic}/u) || ["\u{1F60A}"])[0];
+    return [bar, el("section", { class: "bs-card ans bsr-chat" }, el("span", { class: "bsr-chat-emo", "aria-hidden": "true" }, emo), el("p", { class: "bsr-chat-q" }, bs.q), aiFormat(bs.ans)), el("div", { class: "rowbtns bsf-noprint" }, el("button", { class: "btn primary", type: "button", onclick: () => { bs.res = null; bs.q = ""; bs.pending = ""; bsPaint(true); } }, "Ask something else"), back)];
+  }
   const noteCard = r.savedId ? (() => { const ta = el("textarea", { rows: "3", maxlength: "500", class: "bs-note", placeholder: "Write your own notes here", "aria-label": "My notes" }); ta.value = r.note || ""; return el("section", { class: "bsr-card note bsf-noprint" }, el("h3", {}, "My notes"), ta, el("div", { class: "rowbtns" }, el("button", { class: "btn sm primary", type: "button", onclick: () => { const l = bsSavedList(); const it = l.find(x => x.id === r.savedId); if (it) { it.note = ta.value.slice(0, 500); bsPutSaved(l); r.note = it.note; showNotice("Note saved.", "ok"); } } }, "Save note"), el("small", { class: "hint" }, "Saved on this phone. Reading this is free and works offline."))); })() : null;
   if (r.disambig) return [bar, head, el("section", { class: "bsr-card bsr-reveal in" }, el("h3", {}, "I am not sure what you mean"), el("p", {}, "I could not find a clear article for \u201C" + bs.q + "\u201D, and I would rather ask than show you the wrong answer."), r.disambig.length ? el("p", { class: "hint" }, "Did you mean one of these?") : el("p", { class: "hint" }, "Try the full name of the topic, or add the subject, for example \u201Csequential logic\u201D."), el("div", { class: "bs-chips" }, ...r.disambig.map(t => el("button", { type: "button", class: "tp-sub", onclick: () => { bs.charged = ""; bsSubmit(t); } }, t)))), el("div", { class: "rowbtns bsf-noprint" }, el("button", { class: "btn", type: "button", onclick: () => { bs.res = null; bs.q = ""; bs.pending = ""; bsPaint(true); } }, "New search"), back)];
   if (r.mode && r.mode !== "atlas") return [bar, head, noteCard, ...(r.mode === "forge" ? codeView(r) : r.mode === "launchpad" ? projectView(r) : securityView(r)), el("p", { class: "hint ai-fine" }, "Loopy AI gives guidance for learning. Check important facts and follow your college rules."), el("div", { class: "rowbtns bsf-noprint" }, el("button", { class: "btn", type: "button", onclick: () => { bs.res = null; bs.q = ""; bs.pending = ""; bsPaint(true); } }, "New search"), back)];
