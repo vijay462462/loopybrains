@@ -26,10 +26,10 @@ window.DOUBT_DESK_CONFIG = {
   welcomeEveryVisit: false,
 
   // Shown on the About screen when someone joins. Fill these in: they build trust. Leave a value empty to hide it.
-  about: { founder: "Vijay M", college: "", email: "v.bhaskar462@gmail.com" },
+  about: { founder: "Coding Team", college: "", email: "loopybrains@gmail.com" },
 
   // Site title shown in the header
-  title: "Loopy Brain",
+  title: "Loopy Brains",
 
   // Paste your Firebase web app config here (Firebase console > Project settings > Your apps).
   firebase: {
