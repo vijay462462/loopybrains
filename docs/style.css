@@ -3328,7 +3328,7 @@ html.bs-open, html.bs-open body { overflow: hidden; }
 .bsf-pdf { border: 0; border-radius: 999px; background: var(--btn); color: var(--btn-ink); font: inherit; font-weight: 700; padding: 9px 16px; cursor: pointer; min-height: 40px; }
 .bsf-pdf[hidden] { display: none; }
 .bsf-prog { height: 3px; background: var(--line); } .bsf-prog i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #86efac, #22c55e, #fb923c, #f59e0b); transition: width .1s linear; }
-.bsf-scroll { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 16px 16px calc(env(safe-area-inset-bottom, 0px) + 40px); max-width: 820px; width: 100%; margin: 0 auto; }
+.bsf-scroll { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; padding: 16px 16px calc(env(safe-area-inset-bottom, 0px) + 40px); max-width: 820px; width: 100%; margin: 0 auto; }
 .bsr-welcome { padding: 18px 2px 6px; } .bsr-welcome h2 { font-size: 1.7rem; margin: 0 0 6px; }
 .bsfull .bs-bar { padding: 8px 8px 8px 18px; box-shadow: 0 6px 26px rgb(0 0 0 / .1); }
 .bsfull .bs-in { font-size: 17px; padding: 14px 0; }
@@ -4080,7 +4080,7 @@ body header.top .tabs button[aria-selected="true"] { color: #0d1030; }
 }
 
 /* ===== Loopy AI study desk: ruled notebook, sticker search box, topic rows, numbered lesson cards ===== */
-.bsfull .bsf-scroll { counter-reset: lesson; background-image: repeating-linear-gradient(to bottom, transparent 0 31px, color-mix(in srgb, var(--accent) 9%, transparent) 31px 32px); background-attachment: local; }
+.bsfull .bsf-scroll { counter-reset: lesson; background-image: repeating-linear-gradient(to bottom, transparent 0 31px, color-mix(in srgb, var(--accent) 9%, transparent) 31px 32px); }
 .bsfull .bsc-orbit:not(.sm), .bsfull .bsc-hero .bsc-brand { display: none; }
 .bsfull.calm .bsf-scroll:has(.bsc-hero) { display: block; }
 .bsc-hero { flex: none !important; min-height: 0 !important; align-items: flex-start !important; justify-content: flex-start !important; text-align: left !important; gap: 8px !important; margin: 4px 0 14px; padding: 18px 16px !important; border-radius: 18px; color: #fff; background: linear-gradient(140deg, #0f3d22 0%, #166534 55%, #16a34a 100%); box-shadow: 4px 4px 0 var(--gold); position: relative; overflow: hidden; }
