@@ -3929,7 +3929,7 @@ body header.top .tabs button[aria-selected="true"] { color: #0d1030; }
 /* ===== Page 1 (welcome) and page 2 (About / first-run steps): one-screen, thumb-friendly layout that fits any phone ===== */
 :root .splash.sp2 { display: flex; flex-direction: column; justify-content: flex-start; gap: 14px; padding: calc(env(safe-area-inset-top, 0px) + 18px) 18px 0; overflow-y: auto; overscroll-behavior: contain; text-align: left; }
 :root .splash.sp2 .sp2-main { display: grid; gap: 10px; width: 100%; max-width: 34rem; margin: 0 auto; }
-:root .splash.sp2 .sp2-welcome-banner { display: block; width: 100%; border-radius: 14px; object-fit: cover; aspect-ratio: 1240/520; box-shadow: 0 8px 24px -10px rgb(0 0 0 / .5); }
+:root .splash.sp2 .sp2-welcome-banner { display: block; width: 100%; border-radius: 14px; object-fit: contain; background: #0d0b08; box-shadow: 0 8px 28px -10px rgb(0 0 0 / .55); }
 :root .splash.sp2 .sp2-h { font-size: clamp(2rem, 8.5vw, 3rem); line-height: 1.08; margin: 6px 0 0; font-weight: 900; letter-spacing: -.025em; }
 :root .splash.sp2 .sp2-sub { margin: 0; font-size: .98rem; }
 :root .splash.sp2 .sp2-rows { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 34rem; margin: 0 auto; border: 0; padding: 0; }
@@ -4643,25 +4643,25 @@ p a:not(.btn):not(.linkbtn):visited, .welcome-card a:not(.btn):visited, #rgElig 
 .ob-pick .pk-chips i, .ob-pick .pk-chips span { background: #f3f4f6; color: #111827; border-color: #e5e7eb; }
 .ob-pick .pk-change { background: #fff; color: #111827; border: 1.5px solid #d1d5db; }
 
-/* ===== First screen: light pastel tiles with dark text (premium look), darker subtitle ===== */
-#splash .sp2-row { border: 1px solid rgb(15 23 42 / .06) !important; background-color: var(--wc, #fde7dc) !important; background-image: none !important; box-shadow: 0 10px 24px -16px rgb(15 23 42 / .28) !important; }
-#splash .sp2-row:nth-child(1) { --wc: #fde4d8; } #splash .sp2-row:nth-child(2) { --wc: #d9f0f5; } #splash .sp2-row:nth-child(3) { --wc: #fdebd0; }
-#splash .sp2-row:nth-child(4) { --wc: #ebe3fb; } #splash .sp2-row:nth-child(5) { --wc: #d8f3e6; } #splash .sp2-row:nth-child(6) { --wc: #fbdfeb; }
-#splash .sp2-row::after { background: rgb(255 255 255 / .55) !important; }
-#splash .sp2-row b { color: #14202b !important; } #splash .sp2-row span { color: #44525f !important; }
-#splash .sp2-row .sp2-ic { background: rgb(255 255 255 / .75) !important; box-shadow: 0 1px 2px rgb(15 23 42 / .08) !important; }
+/* ===== First screen: premium gradient tiles with dark text ===== */
+#splash .sp2-row { border: 0 !important; background-color: var(--wc, #fde7dc) !important; background-image: linear-gradient(135deg, var(--wc, #fde4d8) 0%, var(--wc2, #fef0eb) 100%) !important; box-shadow: 0 4px 16px -4px var(--wcs, rgb(194 65 12 / .18)), 0 1px 3px rgb(15 23 42 / .06) !important; border-left: 3.5px solid var(--wcb, #e07050) !important; border-radius: 16px !important; }
+#splash .sp2-row:nth-child(1) { --wc: #fdddd0; --wc2: #fff1ec; --wcb: #e04414; --wcs: rgb(224 68 20 / .22); }
+#splash .sp2-row:nth-child(2) { --wc: #ceedf5; --wc2: #eaf7fb; --wcb: #0891b2; --wcs: rgb(8 145 178 / .20); }
+#splash .sp2-row:nth-child(3) { --wc: #fde3b8; --wc2: #fef3dc; --wcb: #d97706; --wcs: rgb(217 119 6 / .22); }
+#splash .sp2-row:nth-child(4) { --wc: #e6dcfc; --wc2: #f3edff; --wcb: #7c3aed; --wcs: rgb(124 58 237 / .20); }
+#splash .sp2-row:nth-child(5) { --wc: #c8f0de; --wc2: #e6faf1; --wcb: #059669; --wcs: rgb(5 150 105 / .20); }
+#splash .sp2-row:nth-child(6) { --wc: #fad4e6; --wc2: #fdeef6; --wcb: #db2777; --wcs: rgb(219 39 119 / .20); }
+#splash .sp2-row::after { display: none !important; }
+#splash .sp2-row b { color: #0f1c27 !important; font-weight: 800 !important; font-size: .97rem !important; } #splash .sp2-row span { color: #3a4f5e !important; }
+#splash .sp2-row .sp2-ic { background: rgb(255 255 255 / .82) !important; box-shadow: 0 1px 4px rgb(15 23 42 / .10) !important; border-radius: 12px !important; }
 #splash .sp2-row:nth-child(1) .sp2-ic { stroke: #c2410c !important; color: #c2410c !important; } #splash .sp2-row:nth-child(2) .sp2-ic { stroke: #0e7490 !important; color: #0e7490 !important; }
 #splash .sp2-row:nth-child(3) .sp2-ic { stroke: #b45309 !important; color: #b45309 !important; } #splash .sp2-row:nth-child(4) .sp2-ic { stroke: #6d28d9 !important; color: #6d28d9 !important; }
 #splash .sp2-row:nth-child(5) .sp2-ic { stroke: #047857 !important; color: #047857 !important; } #splash .sp2-row:nth-child(6) .sp2-ic { stroke: #be185d !important; color: #be185d !important; }
 #splash .sp2-sub { color: #1f2d3a !important; font-weight: 600; }
 .sp2-more { margin: 2px auto 0; text-align: center; font-size: .78rem; color: #44525f; }
 .sp2-more a { color: #c2410c; font-weight: 700; }
-/* First-screen tiles: flat, no shadow or shading */
-#splash .sp2-row { box-shadow: none !important; background-image: none !important; }
-#splash .sp2-row::after { display: none !important; }
-#splash .sp2-row .sp2-ic { box-shadow: none !important; }
 /* First screen: Chitti, the Loopy AI, as a full-width seventh tile */
-#splash .sp2-row:nth-child(7) { --wc: #e1e7fb; grid-column: 1 / -1; }
+#splash .sp2-row:nth-child(7) { --wc: #d8dcfc; --wc2: #eceffe; --wcb: #4338ca; --wcs: rgb(67 56 202 / .20); grid-column: 1 / -1; }
 #splash .sp2-row:nth-child(7) .sp2-ic { stroke: #3730a3 !important; color: #3730a3 !important; }
 #splash .sp2-row:nth-child(7) span { -webkit-line-clamp: 3; }
 
