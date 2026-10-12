@@ -4081,9 +4081,7 @@ body header.top .tabs button[aria-selected="true"] { color: #0d1030; }
 
 /* ===== Loopy AI study desk: ruled notebook, sticker search box, topic rows, numbered lesson cards ===== */
 .bsfull .bsf-scroll { counter-reset: lesson; background-image: repeating-linear-gradient(to bottom, transparent 0 31px, color-mix(in srgb, var(--accent) 9%, transparent) 31px 32px); }
-/* Hide the orbit rings but show the plain LB logo in the hero */
-.bsfull .bsc-orbit:not(.sm) .r1, .bsfull .bsc-orbit:not(.sm) .r2, .bsfull .bsc-orbit:not(.sm) b { display: none; }
-.bsfull .bsc-orbit:not(.sm) { display: grid; }
+.bsfull .bsc-orbit:not(.sm), .bsfull .bsc-hero .bsc-brand { display: none; }
 .bsfull.calm .bsf-scroll:has(.bsc-hero) { display: block; }
 .bsc-hero { flex: none !important; min-height: 0 !important; align-items: flex-start !important; justify-content: flex-start !important; text-align: left !important; gap: 8px !important; margin: 4px 0 14px; padding: 18px 16px !important; border-radius: 18px; color: #fff; background: linear-gradient(140deg, #0f3d22 0%, #166534 55%, #16a34a 100%); box-shadow: 4px 4px 0 var(--gold); position: relative; overflow: hidden; }
 .bsc-hero .bsc-cap { color: #fdba74; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; font-size: .72rem; }
