@@ -112,7 +112,7 @@ function hslToHex(h, sat, l) {
 const shiftColor = (hex, dh, dl) => { const [h, sat, l] = hexToHsl(hex); return hslToHex(h + dh, sat, l + dl); };
 // [main colour, partner colour] for each state, picked from its flag, landscape or culture.
 const STATE_COLORS = {
-  "Andhra Pradesh": ["#e11d48", "#f59e0b"], "Telangana": ["#15803d", "#f97316"], "Tamil Nadu": ["#b91c1c", "#f59e0b"], "Karnataka": ["#dc2626", "#eab308"],
+  "Andhra Pradesh": ["#1e3a8a", "#38bdf8"], "Telangana": ["#15803d", "#f97316"], "Tamil Nadu": ["#b91c1c", "#f59e0b"], "Karnataka": ["#dc2626", "#eab308"],
   "Kerala": ["#15803d", "#facc15"], "Maharashtra": ["#ea580c", "#1d4ed8"], "Gujarat": ["#f97316", "#0d9488"], "Rajasthan": ["#f97316", "#f59e0b"],
   "Punjab": ["#2563eb", "#f97316"], "Haryana": ["#16a34a", "#ca8a04"], "Delhi": ["#166534", "#f43f5e"], "Uttar Pradesh": ["#d97706", "#16a34a"],
   "Bihar": ["#ca8a04", "#16a34a"], "West Bengal": ["#e11d48", "#2563eb"], "Odisha": ["#0891b2", "#f59e0b"], "Assam": ["#16a34a", "#dc2626"],
