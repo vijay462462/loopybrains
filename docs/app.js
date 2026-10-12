@@ -5410,7 +5410,7 @@ function bsApplyNight() { const o = bsEl(); if (!o) return; const on = bsNightOn
 function bsMount() {
   if (bsEl()) return; const bs = bsState();
   const bar = el("div", { class: "bsf-bar" },
-    el("button", { type: "button", class: "bsf-back", "aria-label": "Close Loopy Search", onclick: () => bsClose() }, svgIcon("back")),
+    el("button", { type: "button", class: "bsf-back", "aria-label": "Back", onclick: () => { const b = bsState(); if (b.res || b.pending || b.q) { b.res = null; b.q = ""; b.pending = ""; b.draft = null; bsPaint(true); } else bsClose(); } }, svgIcon("back")),
     el("img", { class: "bsf-brand", src: "icon-192.png", alt: "", width: "28", height: "28" }), el("strong", { class: "bsf-title" }, el("span", { class: "bsf-t-big" }, "Loopy"), el("small", { class: "bsf-t-sm" }, "Brain")),
     el("button", { type: "button", class: "bsf-night", id: "bsNight", onclick: () => { try { localStorage.setItem("dd-bs-night", bsNightOn() ? "0" : "1"); } catch (_) {} bsApplyNight(); } }, "\u2600"),
     el("button", { type: "button", class: "bsf-save", id: "bsSave", hidden: "", onclick: () => { const b = bsState(); if (!b.res) return; if (bsIsSaved(b.res)) { bsPutSaved(bsSavedList().filter(x => x.id !== "s" + fnv(b.res.topic.toLowerCase() + "|" + b.res.size))); showNotice("Removed from Saved.", "ok"); } else if (bsSaveOne(b.res, b.q)) showNotice("Saved. Find it under Saved on the search page.", "ok"); else showNotice("Could not save: this phone is out of space.", "err"); bsPaint(); } }, "Save"),
