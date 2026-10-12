@@ -17,7 +17,7 @@ window.DOUBT_DESK_CONFIG = {
   brainOffers: [],
   // Background push alerts (needs the push function deployed). Paste the Web Push certificate key from Firebase console > Project settings > Cloud Messaging. It is a public key, safe to publish.
   push: { vapidKey: "" },
-  plus: { enabled: false, weekly: 19, semester: 149, monthly: 49, yearly: 399, functionsUrl: "",
+  plus: { enabled: false, weekly: 19, semester: 149, monthly: 49, yearly: 399, functionsUrl: "https://asia-south1-doubt-desk-e6f39.cloudfunctions.net",
     // Launch offer on the yearly plan until the date below (also set OFFER in functions/index.js). Set offer: null to remove it.
     offer: { label: "Founding student offer", yearly: 299, until: "2026-12-31" },
     trialDays: 7 },
@@ -26,10 +26,10 @@ window.DOUBT_DESK_CONFIG = {
   welcomeEveryVisit: false,
 
   // Shown on the About screen when someone joins. Fill these in: they build trust. Leave a value empty to hide it.
-  about: { founder: "Vijay M", college: "", email: "v.bhaskar462@gmail.com" },
+  about: { founder: "Vijay M", college: "", email: "loopybrains@gmail.com" },
 
   // Site title shown in the header
-  title: "Loopy Brain",
+  title: "Loopy Brains",
 
   // Paste your Firebase web app config here (Firebase console > Project settings > Your apps).
   firebase: {
