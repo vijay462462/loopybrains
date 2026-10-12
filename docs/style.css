@@ -3931,8 +3931,17 @@ body header.top .tabs button[aria-selected="true"] { color: #0d1030; }
 :root .splash.sp2 .sp2-main { display: grid; gap: 10px; width: 100%; max-width: 34rem; margin: 0 auto; }
 :root .splash.sp2 .sp2-h { font-size: clamp(1.55rem, 6.6vw, 2.3rem); line-height: 1.12; margin: 6px 0 0; font-weight: 750; letter-spacing: -.015em; }
 :root .splash.sp2 .sp2-sub { margin: 0; font-size: .98rem; }
-:root .splash.sp2 .sp2-rows { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 34rem; margin: 0 auto; border: 0; padding: 0; }
-:root .splash.sp2 .sp2-row { display: grid; grid-template-columns: 38px minmax(0, 1fr); align-items: start; gap: 10px; min-height: 0; padding: 12px; border-radius: 18px; background: var(--sheet); color: var(--ink); border: 1px solid var(--line); box-shadow: var(--shadow); background-image: none; animation: none; }
+:root .splash.sp2 .sp2-rows { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 34rem; margin: 0 auto; border: 0; padding: 0; }
+:root .splash.sp2 .sp2-row { display: grid; grid-template-columns: 38px minmax(0, 1fr); align-items: center; gap: 10px; min-height: 0; padding: 13px 14px; border-radius: 18px; background: var(--sheet); color: var(--ink); border: 1px solid var(--line); box-shadow: var(--shadow); background-image: none; animation: sp2CardIn .4s ease both; }
+:root .splash.sp2 .sp2-row:nth-child(1) { animation-delay: .04s; }
+:root .splash.sp2 .sp2-row:nth-child(2) { animation-delay: .10s; }
+:root .splash.sp2 .sp2-row:nth-child(3) { animation-delay: .16s; }
+:root .splash.sp2 .sp2-row:nth-child(4) { animation-delay: .22s; }
+:root .splash.sp2 .sp2-row:nth-child(5) { animation-delay: .28s; }
+:root .splash.sp2 .sp2-row:nth-child(6) { animation-delay: .34s; }
+:root .splash.sp2 .sp2-row:nth-child(7) { animation-delay: .40s; }
+@keyframes sp2CardIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { :root .splash.sp2 .sp2-row { animation: none; } }
 :root .splash.sp2 .sp2-row::after { display: none; }
 :root .splash.sp2 .sp2-row .sp2-ic { width: 38px; height: 38px; padding: 8px; border-radius: 12px; background: var(--accent-soft); color: var(--accent); border: 0; }
 :root .splash.sp2 .sp2-row b { color: var(--ink); font-size: .95rem; font-weight: 700; }
@@ -3941,7 +3950,7 @@ body header.top .tabs button[aria-selected="true"] { color: #0d1030; }
 @media (min-height: 800px) { :root .splash.sp2 .sp2-guide { display: flex; } }
 :root .splash.sp2 .sp2-go { position: sticky; bottom: 0; width: 100%; max-width: 34rem; margin: auto auto 0; padding: 16px 20px; border-radius: 18px; font-size: 1.05rem; font-weight: 800; background: linear-gradient(135deg, var(--gold-2, #e8cd8f), var(--gold, #c9a45c)); color: var(--gold-ink, #1d1606); border: 0; box-shadow: 0 -14px 24px 6px var(--paper), 0 16px 28px -16px color-mix(in srgb, var(--gold, #c9a45c) 90%, transparent); }
 :root .splash.sp2 .sp2-trust { text-align: center; margin: 0 auto; padding: 4px 0 calc(14px + env(safe-area-inset-bottom, 0px)); background: var(--paper); width: 100%; max-width: 34rem; }
-@media (min-width: 700px) { :root .splash.sp2 { padding-top: 40px; } :root .splash.sp2 .sp2-rows { grid-template-columns: repeat(3, 1fr); max-width: 44rem; } :root .splash.sp2 .sp2-main, :root .splash.sp2 .sp2-go, :root .splash.sp2 .sp2-trust { max-width: 44rem; } }
+@media (min-width: 700px) { :root .splash.sp2 { padding-top: 40px; } :root .splash.sp2 .sp2-rows { max-width: 44rem; } :root .splash.sp2 .sp2-main, :root .splash.sp2 .sp2-go, :root .splash.sp2 .sp2-trust { max-width: 44rem; } }
 /* Page 2: a full-height sheet on phones, a calm centred card on larger screens */
 :root .welcome { padding: 0; place-items: stretch; background: var(--paper); backdrop-filter: none; }
 :root .welcome .welcome-card.ob-card { width: 100%; max-width: 34rem; margin: 0 auto; height: 100dvh; max-height: none; border-radius: 0; box-shadow: none; border: 0; background: var(--paper); text-align: left; align-items: stretch; padding: calc(env(safe-area-inset-top, 0px) + 14px) 20px calc(14px + env(safe-area-inset-bottom, 0px)); gap: 12px; }
