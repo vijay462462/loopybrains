@@ -2,7 +2,7 @@
 
 **Name:** The Campus Loop (written "THE CAMPUS" large, "LOOP" small and spaced)
 **Tagline:** Where every doubt finds answers.
-**Founder:** Vijay M, Visakhapatnam, India
+**Founder:** Vijay M, Coding Team, G Block, RGUKT Ongole, India
 **Mascot:** Loopy, the friendly guide robot (used inside the app)
 
 ## Final share banner (locked)
