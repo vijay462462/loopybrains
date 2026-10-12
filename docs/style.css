@@ -4211,3 +4211,12 @@ body.dldq-open { overflow: hidden; }
 .lo-btns .btn, .lo-out { min-height: 46px; height: auto; border-radius: 14px; font-size: 15px; font-weight: 700; }
 .lo-out { border: 1.5px solid #d93a3a; background: transparent; color: #c0292b; cursor: pointer; }
 .lo-out:active { background: #fdecec; }
+
+/* ── Gold Luxury palette ── */
+:root[data-palette="goldlux"] { --paper:#faf8f2;--sheet:#f4f0e6;--raised:#ffffff;--grid:#f0ece0;--ink:#1a1208;--muted:#6b6050;--line:#e0d8c8;--accent:#b5820a;--accent-soft:#fff9ec;--btn:#b5820a;--btn-ink:#ffffff;--mark:#f0c040;--mark-ink:#0d0d0d;--hdr:#1a1208;--hdr-brand:#c9960c;--grad:linear-gradient(120deg,#b5820a,#c9960c 60%,#f0c040);--shadow:0 1px 2px rgb(181 130 10 / .08),0 14px 34px -18px rgb(181 130 10 / .22);--gold:#c9960c;--gold-2:#f0c040;--gold-ink:#0d0d0d;--gold-dark:#7a5c0a; }
+:root[data-palette="goldlux"][data-theme="dark"] { --paper:#0d0d0d;--sheet:#141414;--raised:#1a1a1a;--grid:#0d0d0d;--ink:#f0ece0;--muted:#8a8278;--line:#2a2a2a;--accent:#c9960c;--accent-soft:#181408;--btn:#c9960c;--btn-ink:#0d0d0d;--mark:#c9960c;--mark-ink:#0d0d0d;--hdr:#0d0d0d;--hdr-brand:#f0c040;--grad:linear-gradient(120deg,#c9960c,#f0c040 60%,#8a6200);--shadow:0 1px 2px rgb(0 0 0 / .5),0 18px 40px -20px rgb(0 0 0 / .8);--gold:#c9960c;--gold-2:#f0c040;--gold-ink:#0d0d0d;--gold-dark:#7a5c0a; }
+:root[data-palette="goldlux"][data-theme="dark"][data-tone="black"] { --paper:#060504;--sheet:#0d0d0b;--raised:#141410;--grid:#080706;--line:#222018; }
+@media (prefers-color-scheme: dark) { :root[data-palette="goldlux"]:not([data-theme="light"]):not([data-theme="dark"]) { --paper:#0d0d0d;--sheet:#141414;--raised:#1a1a1a;--grid:#0d0d0d;--ink:#f0ece0;--muted:#8a8278;--line:#2a2a2a;--accent:#c9960c;--accent-soft:#181408;--btn:#c9960c;--btn-ink:#0d0d0d;--gold:#c9960c;--gold-2:#f0c040;--gold-dark:#7a5c0a;--shadow:0 1px 2px rgb(0 0 0 / .5),0 18px 40px -20px rgb(0 0 0 / .8); } }
+:root[data-palette="goldlux"] .splash.sp2 { --w1:#b5820a;--w2:#c9960c;--w3:#a07008;--w4:#7a5c0a;--w5:#8a6200;--w6:#c9960c; }
+:root[data-palette="goldlux"] .sp2-bname i, :root[data-palette="goldlux"] .brand h1 i { background: linear-gradient(90deg, #f0c040, #c9960c); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
+:root[data-palette="goldlux"] body header.top .brand h1 .hd-mark { background: #181408; }
