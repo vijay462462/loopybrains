@@ -1,0 +1,741 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Loopy Brains — ECE Study Platform for RGUKT Students</title>
+<meta name="description" content="Loopy Brains delivers curated electronics and communication engineering courses built by students. Ask doubts, use Loopy AI, and ace your exams.">
+<meta property="og:title" content="Loopy Brains">
+<meta property="og:description" content="By students, for students — making ECE education accessible and effective.">
+<meta property="og:image" content="https://loopybrains.com/brand/loopy-brains-banner-1200x630.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@300;400;500;600&family=Rajdhani:wght@600;700&display=swap">
+<style>
+  :root {
+    --bg:        #0d0d0d;
+    --surface:   #141414;
+    --card:      #1a1a1a;
+    --border:    #2a2a2a;
+    --gold:      #c9960c;
+    --gold-lt:   #f0c040;
+    --gold-dim:  #7a5c0a;
+    --fg:        #f0ece0;
+    --muted:     #8a8278;
+    --accent-bg: #181408;
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg:       #faf8f2;
+      --surface:  #f4f0e6;
+      --card:     #ffffff;
+      --border:   #e0d8c8;
+      --gold:     #b5820a;
+      --gold-lt:  #c9960c;
+      --gold-dim: #d4a826;
+      --fg:       #1a1208;
+      --muted:    #6b6050;
+      --accent-bg:#fff9ec;
+      color-scheme: light;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg:       #faf8f2;
+    --surface:  #f4f0e6;
+    --card:     #ffffff;
+    --border:   #e0d8c8;
+    --gold:     #b5820a;
+    --gold-lt:  #c9960c;
+    --gold-dim: #d4a826;
+    --fg:       #1a1208;
+    --muted:    #6b6050;
+    --accent-bg:#fff9ec;
+    color-scheme: light;
+  }
+  :root[data-theme="dark"] {
+    --bg:        #0d0d0d;
+    --surface:   #141414;
+    --card:      #1a1a1a;
+    --border:    #2a2a2a;
+    --gold:      #c9960c;
+    --gold-lt:   #f0c040;
+    --gold-dim:  #7a5c0a;
+    --fg:        #f0ece0;
+    --muted:     #8a8278;
+    --accent-bg: #181408;
+    color-scheme: dark;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: env(safe-area-inset-top,0); left: 0; right: 0;
+    z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 clamp(16px,5vw,64px);
+    height: 70px;
+    background: rgba(13,13,13,0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-logo {
+    display: flex; align-items: baseline; gap: 2px;
+    text-decoration: none;
+  }
+  .nav-logo .l1 {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 1.6rem; font-weight: 700; letter-spacing: .04em;
+    background: linear-gradient(135deg, #f0c040 0%, #c9960c 60%, #8a6200 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .nav-logo .l2 {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.4rem; font-weight: 300; color: var(--fg);
+    padding-left: 2px;
+  }
+  .nav-links {
+    display: flex; gap: 32px; list-style: none;
+  }
+  .nav-links a {
+    text-decoration: none; color: var(--muted);
+    font-size: .85rem; font-weight: 500; letter-spacing: .06em; text-transform: uppercase;
+    transition: color .2s;
+  }
+  .nav-links a:hover { color: var(--gold-lt); }
+  .nav-cta {
+    padding: 8px 22px;
+    background: linear-gradient(135deg, var(--gold) 0%, #8a6200 100%);
+    color: #0d0d0d; font-weight: 600; font-size: .85rem; letter-spacing: .06em;
+    text-transform: uppercase; border: none; border-radius: 2px;
+    cursor: pointer; text-decoration: none;
+    transition: opacity .2s;
+  }
+  .nav-cta:hover { opacity: .85; }
+  @media (max-width: 680px) {
+    .nav-links { display: none; }
+  }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column; justify-content: center; align-items: flex-start;
+    padding: 120px clamp(16px,8vw,96px) 80px;
+    position: relative; overflow: hidden;
+  }
+  .hero-bg {
+    position: absolute; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse 60% 60% at 80% 40%, rgba(201,150,12,.12) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 40% at 20% 70%, rgba(201,150,12,.06) 0%, transparent 60%),
+      var(--bg);
+  }
+  .hero-cap-line {
+    font-size: .75rem; font-weight: 600; letter-spacing: .22em; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 20px; position: relative; z-index: 1;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .hero-cap-line::before {
+    content: ''; display: block; width: 32px; height: 1px; background: var(--gold);
+  }
+  .hero h1 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: clamp(3rem, 8vw, 6.5rem);
+    font-weight: 900; line-height: 1.05;
+    text-wrap: balance;
+    position: relative; z-index: 1;
+    max-width: 800px;
+  }
+  .hero h1 .gold-word {
+    background: linear-gradient(135deg, #f0c040 0%, #c9960c 55%, #8a6200 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero-sub {
+    margin-top: 24px;
+    font-size: clamp(.95rem,2vw,1.15rem); color: var(--muted); font-weight: 300;
+    max-width: 520px; position: relative; z-index: 1; line-height: 1.8;
+  }
+  .hero-actions {
+    margin-top: 40px; display: flex; gap: 16px; flex-wrap: wrap;
+    position: relative; z-index: 1;
+  }
+  .btn-primary {
+    padding: 14px 36px;
+    background: linear-gradient(135deg, #f0c040 0%, #c9960c 100%);
+    color: #0d0d0d; font-weight: 700; font-size: .9rem; letter-spacing: .08em;
+    text-transform: uppercase; border: none; border-radius: 2px;
+    cursor: pointer; text-decoration: none;
+    box-shadow: 0 8px 32px rgba(201,150,12,.3);
+    transition: transform .2s, box-shadow .2s;
+    display: inline-block;
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(201,150,12,.45); }
+  .btn-outline {
+    padding: 13px 36px;
+    background: transparent;
+    color: var(--fg); font-weight: 500; font-size: .9rem; letter-spacing: .08em;
+    text-transform: uppercase; border: 1px solid var(--border); border-radius: 2px;
+    cursor: pointer; text-decoration: none;
+    transition: border-color .2s, color .2s;
+    display: inline-block;
+  }
+  .btn-outline:hover { border-color: var(--gold); color: var(--gold-lt); }
+  .hero-stats {
+    margin-top: 64px; display: flex; gap: clamp(24px,5vw,64px); flex-wrap: wrap;
+    position: relative; z-index: 1;
+  }
+  .stat { display: flex; flex-direction: column; gap: 4px; }
+  .stat-num {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: clamp(2rem,4vw,2.8rem); font-weight: 700; line-height: 1;
+    background: linear-gradient(135deg, #f0c040 0%, #c9960c 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-label {
+    font-size: .75rem; color: var(--muted); letter-spacing: .1em; text-transform: uppercase;
+  }
+
+  /* DIVIDER */
+  .gold-rule {
+    border: none; border-top: 1px solid;
+    border-image: linear-gradient(90deg, transparent, var(--gold), transparent) 1;
+    margin: 0;
+  }
+
+  /* SECTION BASE */
+  section {
+    padding: clamp(60px,10vw,120px) clamp(16px,8vw,96px);
+  }
+  .section-eyebrow {
+    font-size: .72rem; font-weight: 600; letter-spacing: .2em; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 12px;
+  }
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem,4vw,3rem); font-weight: 700;
+    text-wrap: balance; line-height: 1.15; margin-bottom: 16px;
+  }
+  .section-sub {
+    font-size: 1rem; color: var(--muted); max-width: 560px; line-height: 1.8;
+  }
+
+  /* FEATURES */
+  .features { background: var(--surface); }
+  .features-header { margin-bottom: 56px; }
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(280px,100%), 1fr));
+    gap: 2px;
+  }
+  .feat-card {
+    background: var(--card);
+    padding: 36px 32px;
+    position: relative; overflow: hidden;
+    transition: background .25s;
+  }
+  .feat-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--gold), var(--gold-lt), var(--gold));
+    transform: scaleX(0); transform-origin: left;
+    transition: transform .3s ease;
+  }
+  .feat-card:hover { background: #1f1f1f; }
+  .feat-card:hover::before { transform: scaleX(1); }
+  .feat-icon {
+    width: 48px; height: 48px; margin-bottom: 20px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--accent-bg); border: 1px solid var(--border);
+    border-radius: 4px;
+  }
+  .feat-icon svg {
+    width: 24px; height: 24px;
+    stroke: var(--gold); fill: none;
+    stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+  }
+  .feat-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem; font-weight: 700; margin-bottom: 10px;
+  }
+  .feat-desc { font-size: .9rem; color: var(--muted); line-height: 1.7; }
+
+  /* COURSES */
+  .courses-header {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    flex-wrap: wrap; gap: 16px; margin-bottom: 48px;
+  }
+  .courses-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(300px,100%), 1fr));
+    gap: 24px;
+  }
+  .course-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    transition: transform .25s, box-shadow .25s;
+  }
+  .course-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 48px rgba(0,0,0,.4), 0 0 0 1px var(--gold-dim);
+  }
+  .course-thumb {
+    height: 160px;
+    display: flex; align-items: center; justify-content: center;
+    position: relative; overflow: hidden;
+  }
+  .course-thumb .thumb-label {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 3.5rem; font-weight: 700;
+    opacity: .18; color: var(--gold); letter-spacing: .04em;
+  }
+  .course-thumb .badge {
+    position: absolute; top: 12px; right: 12px;
+    background: var(--gold); color: #0d0d0d;
+    font-size: .68rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+    padding: 4px 10px; border-radius: 2px;
+  }
+  .thumb-vlsi { background: linear-gradient(135deg, #1a1206 0%, #2a1e08 100%); }
+  .thumb-digi { background: linear-gradient(135deg, #060f1a 0%, #0a1a2a 100%); }
+  .thumb-comm { background: linear-gradient(135deg, #0a0a1a 0%, #14142a 100%); }
+  .thumb-emb  { background: linear-gradient(135deg, #0a1206 0%, #121e0a 100%); }
+  .course-body { padding: 20px 22px 24px; }
+  .course-tag {
+    font-size: .68rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 8px;
+  }
+  .course-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem; font-weight: 700; line-height: 1.35; margin-bottom: 10px;
+  }
+  .course-desc { font-size: .85rem; color: var(--muted); line-height: 1.6; }
+  .course-meta {
+    display: flex; gap: 16px; font-size: .78rem; color: var(--muted); margin-top: 16px;
+    border-top: 1px solid var(--border); padding-top: 14px;
+  }
+
+  /* TESTIMONIALS */
+  .testimonials { background: var(--surface); }
+  .testi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(340px,100%), 1fr));
+    gap: 24px; margin-top: 48px;
+  }
+  .testi-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 32px 28px;
+    border-radius: 4px;
+  }
+  .testi-quote {
+    font-family: 'Playfair Display', serif;
+    font-size: 3rem; line-height: 1; color: var(--gold-dim); margin-bottom: 12px;
+    display: block;
+  }
+  .testi-text {
+    font-size: .95rem; line-height: 1.8; color: var(--fg); margin-bottom: 24px;
+    font-style: italic;
+  }
+  .testi-author { display: flex; align-items: center; gap: 12px; }
+  .testi-avatar {
+    width: 42px; height: 42px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold), var(--gold-dim));
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Rajdhani', sans-serif; font-size: 1.1rem; font-weight: 700;
+    color: #0d0d0d; flex-shrink: 0;
+  }
+  .testi-name { font-weight: 600; font-size: .9rem; }
+  .testi-role { font-size: .78rem; color: var(--muted); }
+  .stars { color: var(--gold); font-size: .8rem; letter-spacing: 2px; margin-bottom: 12px; }
+
+  /* CTA BANNER */
+  .cta-banner {
+    background: var(--accent-bg);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: clamp(60px,8vw,100px) clamp(16px,8vw,96px);
+    text-align: center;
+    position: relative; overflow: hidden;
+  }
+  .cta-banner::before {
+    content: '';
+    position: absolute; top: -80px; left: 50%; transform: translateX(-50%);
+    width: 600px; height: 300px;
+    background: radial-gradient(ellipse, rgba(201,150,12,.15) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .cta-banner .section-title { margin-bottom: 14px; }
+  .cta-banner .section-sub { margin: 0 auto 36px; text-align: center; }
+  .cta-actions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+
+  /* FOOTER */
+  footer {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 56px clamp(16px,8vw,96px) 32px;
+  }
+  .footer-top {
+    display: grid;
+    grid-template-columns: 2fr repeat(3,1fr);
+    gap: 48px;
+    margin-bottom: 48px;
+  }
+  @media (max-width: 860px) {
+    .footer-top { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 500px) {
+    .footer-top { grid-template-columns: 1fr; }
+  }
+  .footer-brand .nav-logo { margin-bottom: 14px; display: inline-flex; }
+  .footer-brand p { font-size: .88rem; color: var(--muted); line-height: 1.7; max-width: 280px; }
+  .footer-col h4 {
+    font-size: .72rem; font-weight: 600; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 16px;
+  }
+  .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .footer-col a {
+    text-decoration: none; color: var(--muted); font-size: .88rem;
+    transition: color .2s;
+  }
+  .footer-col a:hover { color: var(--gold-lt); }
+  .footer-bottom {
+    border-top: 1px solid var(--border);
+    padding-top: 24px;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 12px;
+  }
+  .footer-bottom p { font-size: .78rem; color: var(--muted); }
+  .footer-bottom a { color: var(--gold); text-decoration: none; }
+
+  /* THEME TOGGLE */
+  .theme-btn {
+    position: fixed; bottom: 28px; right: 20px; z-index: 200;
+    width: 44px; height: 44px; border-radius: 50%;
+    background: var(--card); border: 1px solid var(--border);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; transition: border-color .2s, box-shadow .2s;
+    box-shadow: 0 4px 16px rgba(0,0,0,.3);
+  }
+  .theme-btn:hover { border-color: var(--gold); box-shadow: 0 4px 20px rgba(201,150,12,.3); }
+  .theme-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition-duration: 0ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo" aria-label="Loopy Brains home">
+    <span class="l1">LOOPY</span><span class="l2">brains</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#courses">Courses</a></li>
+    <li><a href="#features">Why Us</a></li>
+    <li><a href="#testimonials">Reviews</a></li>
+    <li><a href="#about">About</a></li>
+  </ul>
+  <a href="index.html" class="nav-cta">Open App</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero" aria-label="Hero">
+  <div class="hero-bg" aria-hidden="true"></div>
+  <p class="hero-cap-line">By Students, For Students</p>
+  <h1>
+    Master <span class="gold-word">ECE Concepts</span><br>
+    the Smart Way
+  </h1>
+  <p class="hero-sub">
+    Loopy Brains delivers curated electronics &amp; communication engineering courses
+    built by students who cracked it — so you can too.
+  </p>
+  <div class="hero-actions">
+    <a href="#courses" class="btn-primary">Explore Courses</a>
+    <a href="#features" class="btn-outline">How It Works</a>
+  </div>
+  <div class="hero-stats">
+    <div class="stat">
+      <span class="stat-num">12K+</span>
+      <span class="stat-label">Students Enrolled</span>
+    </div>
+    <div class="stat">
+      <span class="stat-num">80+</span>
+      <span class="stat-label">Expert Modules</span>
+    </div>
+    <div class="stat">
+      <span class="stat-num">4.9★</span>
+      <span class="stat-label">Average Rating</span>
+    </div>
+  </div>
+</section>
+
+<hr class="gold-rule">
+
+<!-- FEATURES -->
+<section class="features" id="features">
+  <div class="features-header">
+    <p class="section-eyebrow">Why Choose Us</p>
+    <h2 class="section-title">Learning built<br>for real results</h2>
+    <p class="section-sub">Every resource on Loopy Brains is crafted by those who have been exactly where you are.</p>
+  </div>
+  <div class="features-grid">
+    <div class="feat-card">
+      <div class="feat-icon">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      </div>
+      <h3 class="feat-title">Structured Curriculum</h3>
+      <p class="feat-desc">Courses follow a logical progression — from fundamentals to advanced applications, mirroring university syllabi.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      <h3 class="feat-title">Peer-Crafted Notes</h3>
+      <p class="feat-desc">All study material is written by students who aced the same exams — plain language, no textbook jargon overload.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      </div>
+      <h3 class="feat-title">Practice &amp; Tests</h3>
+      <p class="feat-desc">Hundreds of MCQs, previous year papers, and mock tests to sharpen exam readiness under time pressure.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </div>
+      <h3 class="feat-title">Learn at Your Pace</h3>
+      <p class="feat-desc">No deadlines, no pressure. Revisit lectures, rewatch explanations, and master concepts before moving on.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+      </div>
+      <h3 class="feat-title">Loopy AI</h3>
+      <p class="feat-desc">Ask anything to Loopy AI — your 24×7 study partner. Instant answers on digital logic, communications, VLSI and more.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      </div>
+      <h3 class="feat-title">Community Doubts</h3>
+      <p class="feat-desc">Post a doubt and get answers from classmates and seniors — no question is too basic on Loopy Brains.</p>
+    </div>
+  </div>
+</section>
+
+<!-- COURSES -->
+<section id="courses">
+  <div class="courses-header">
+    <div>
+      <p class="section-eyebrow">Explore</p>
+      <h2 class="section-title">Popular Courses</h2>
+    </div>
+    <a href="index.html" class="btn-outline" style="white-space:nowrap;font-size:.8rem;padding:10px 24px;">Open App →</a>
+  </div>
+  <div class="courses-grid">
+    <article class="course-card">
+      <div class="course-thumb thumb-vlsi">
+        <span class="thumb-label">VLSI</span>
+        <span class="badge">Trending</span>
+      </div>
+      <div class="course-body">
+        <p class="course-tag">VLSI &amp; Chip Design</p>
+        <h3 class="course-title">CMOS Digital Design &amp; Chiplet Architecture</h3>
+        <p class="course-desc">From transistor-level logic to chiplet integration — the complete VLSI pathway.</p>
+        <div class="course-meta">
+          <span>📚 42 Modules</span>
+          <span>⏱ 38 hrs</span>
+          <span>★ 4.9</span>
+        </div>
+      </div>
+    </article>
+    <article class="course-card">
+      <div class="course-thumb thumb-digi">
+        <span class="thumb-label">DLD</span>
+      </div>
+      <div class="course-body">
+        <p class="course-tag">Digital Logic</p>
+        <h3 class="course-title">Digital Logic Design — Complete Crash Course</h3>
+        <p class="course-desc">Gates to flip-flops to finite-state machines, with worked examples and MCQs.</p>
+        <div class="course-meta">
+          <span>📚 28 Modules</span>
+          <span>⏱ 22 hrs</span>
+          <span>★ 4.8</span>
+        </div>
+      </div>
+    </article>
+    <article class="course-card">
+      <div class="course-thumb thumb-comm">
+        <span class="thumb-label">Comm</span>
+        <span class="badge">New</span>
+      </div>
+      <div class="course-body">
+        <p class="course-tag">Communications</p>
+        <h3 class="course-title">Analog &amp; Digital Communication Systems</h3>
+        <p class="course-desc">Modulation, noise analysis, and Shannon's theorem made intuitive.</p>
+        <div class="course-meta">
+          <span>📚 35 Modules</span>
+          <span>⏱ 30 hrs</span>
+          <span>★ 4.7</span>
+        </div>
+      </div>
+    </article>
+    <article class="course-card">
+      <div class="course-thumb thumb-emb">
+        <span class="thumb-label">EMB</span>
+      </div>
+      <div class="course-body">
+        <p class="course-tag">Embedded Systems</p>
+        <h3 class="course-title">Embedded C &amp; Microcontroller Programming</h3>
+        <p class="course-desc">From ARM architecture to real-time OS basics — practical, project-driven.</p>
+        <div class="course-meta">
+          <span>📚 32 Modules</span>
+          <span>⏱ 28 hrs</span>
+          <span>★ 4.9</span>
+        </div>
+      </div>
+    </article>
+  </div>
+</section>
+
+<hr class="gold-rule">
+
+<!-- TESTIMONIALS -->
+<section class="testimonials" id="testimonials">
+  <p class="section-eyebrow">Student Reviews</p>
+  <h2 class="section-title">What learners say</h2>
+  <div class="testi-grid">
+    <div class="testi-card">
+      <div class="stars">★★★★★</div>
+      <span class="testi-quote">"</span>
+      <p class="testi-text">Loopy Brains explained VLSI concepts better than my entire semester. The peer-written notes feel like talking to a senior who already cracked the exam.</p>
+      <div class="testi-author">
+        <div class="testi-avatar">AR</div>
+        <div>
+          <p class="testi-name">Arjun Rao</p>
+          <p class="testi-role">B.Tech ECE, NIT Warangal</p>
+        </div>
+      </div>
+    </div>
+    <div class="testi-card">
+      <div class="stars">★★★★★</div>
+      <span class="testi-quote">"</span>
+      <p class="testi-text">I was struggling with Digital Logic Design. After two weeks on Loopy Brains I scored 92 in my internals. The practice tests are gold.</p>
+      <div class="testi-author">
+        <div class="testi-avatar">PS</div>
+        <div>
+          <p class="testi-name">Priya Sharma</p>
+          <p class="testi-role">3rd Year, RGUKT Ongole</p>
+        </div>
+      </div>
+    </div>
+    <div class="testi-card">
+      <div class="stars">★★★★★</div>
+      <span class="testi-quote">"</span>
+      <p class="testi-text">The communication systems course is the clearest resource I found online. Even Fourier transform applications finally clicked for me here.</p>
+      <div class="testi-author">
+        <div class="testi-avatar">VK</div>
+        <div>
+          <p class="testi-name">Vinod Kumar</p>
+          <p class="testi-role">M.Tech Student, JNTUK</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA BANNER -->
+<section class="cta-banner" id="about">
+  <p class="section-eyebrow" style="text-align:center">Ready to Begin?</p>
+  <h2 class="section-title">Your exam breakthrough<br>starts today</h2>
+  <p class="section-sub">Join thousands of ECE students already learning smarter on Loopy Brains.</p>
+  <div class="cta-actions">
+    <a href="index.html" class="btn-primary">Get Started Free</a>
+    <a href="#courses" class="btn-outline">Browse Courses</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-top">
+    <div class="footer-brand">
+      <a href="#" class="nav-logo" aria-label="Loopy Brains">
+        <span class="l1">LOOPY</span><span class="l2">brains</span>
+      </a>
+      <p>By students, for students — making ECE education accessible, relatable, and effective for every engineering learner.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Courses</h4>
+      <ul>
+        <li><a href="index.html">VLSI Design</a></li>
+        <li><a href="index.html">Digital Logic</a></li>
+        <li><a href="index.html">Communication</a></li>
+        <li><a href="index.html">Embedded Systems</a></li>
+        <li><a href="index.html">Signals &amp; Systems</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Resources</h4>
+      <ul>
+        <li><a href="index.html">Previous Papers</a></li>
+        <li><a href="index.html">Daily Quiz</a></li>
+        <li><a href="index.html">Loopy AI</a></li>
+        <li><a href="index.html">Study Lab</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Info</h4>
+      <ul>
+        <li><a href="about.html">About</a></li>
+        <li><a href="terms.html">Terms of Use</a></li>
+        <li><a href="privacy.html">Privacy Policy</a></li>
+        <li><a href="https://www.loopybrains.com" target="_blank" rel="noopener">loopybrains.com</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2024 Loopy Brains. All rights reserved.</p>
+    <p>Built with ❤️ for ECE students · <a href="https://www.loopybrains.com" target="_blank" rel="noopener">www.loopybrains.com</a></p>
+  </div>
+</footer>
+
+<!-- THEME TOGGLE -->
+<button class="theme-btn" id="themeBtn" aria-label="Toggle light/dark theme" title="Toggle light / dark">🌓</button>
+
+<script>
+  const root = document.documentElement;
+  const btn  = document.getElementById('themeBtn');
+  const saved = (() => { try { return localStorage.getItem('lb-theme'); } catch { return null; } })();
+  if (saved) root.setAttribute('data-theme', saved);
+  btn.addEventListener('click', () => {
+    const cur  = root.getAttribute('data-theme');
+    const isDark = cur === 'dark' || (!cur && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    const next = isDark ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('lb-theme', next); } catch {}
+  });
+</script>
+</body>
+</html>
