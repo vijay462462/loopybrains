@@ -4266,3 +4266,100 @@ body.dldq-open { overflow: hidden; }
   .hb-sc-logo { width: 100px; height: 100px; }
   .hb-sc-tile b { font-size: 12px; }
 }
+
+/* ── Study Comrade-style splash redesign (sp2 v2) ── */
+/* Override the dark background with a clean light layout */
+.splash.sp2 {
+  background: #fff;
+  color: #1a2e2e;
+  justify-content: flex-start;
+  align-items: stretch;
+  gap: 0;
+  padding: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  text-align: left;
+}
+/* remove the old animated blobs - they're hidden by sp2-inner wrapper */
+.splash.sp2 .sp2-bg { display: none; }
+
+/* scrollable inner + sticky footer */
+.sp2-inner { flex: 1; overflow-y: auto; padding: 20px 18px 12px; display: flex; flex-direction: column; gap: 0; max-width: 480px; width: 100%; margin: 0 auto; box-sizing: border-box; }
+.sp2-footer { padding: 12px 18px calc(16px + env(safe-area-inset-bottom)); max-width: 480px; width: 100%; margin: 0 auto; box-sizing: border-box; background: #fff; border-top: 1px solid #f0f0f0; }
+
+/* brand row */
+.splash.sp2 .sp2-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.splash.sp2 .sp2-bname { line-height: 1.1; }
+.splash.sp2 .sp2-bname b { font-size: 16px; font-weight: 900; letter-spacing: .1em; color: #fb923c; display: block; }
+.splash.sp2 .sp2-bname i { font-style: normal; font-size: 10px; letter-spacing: .55em; font-weight: 700; color: #0d9488; display: block; }
+
+/* hero row */
+.sp2-hero { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 20px; }
+.sp2-text { flex: 1; min-width: 0; }
+.sp2-together { font-size: 11.5px; font-weight: 600; color: #e2481a; margin-bottom: 8px; display: flex; align-items: center; gap: 5px; }
+/* headline */
+.splash.sp2 .sp2-h { font-size: clamp(1.45rem, 6.5vw, 1.9rem); line-height: 1.15; font-weight: 900; color: #111; margin: 0 0 8px; letter-spacing: -.02em; animation: none; }
+.splash.sp2 .sp2-h span { background: linear-gradient(90deg, #fb923c, #f97316); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.splash.sp2 .sp2-sub { font-size: 13.5px; color: #555; line-height: 1.45; margin: 0 0 12px; min-height: 0; animation: none; opacity: 1; font-weight: 600; }
+/* enroll stats */
+.sp2-enroll { display: flex; align-items: center; gap: 10px; }
+.sp2-stars { color: #fb923c; font-size: 13px; letter-spacing: 1px; line-height: 1; }
+.sp2-enroll-txt { display: flex; flex-direction: column; }
+.sp2-enroll-txt b { font-size: 12px; font-weight: 700; color: #111; line-height: 1.2; }
+.sp2-enroll-txt span { font-size: 11px; color: #777; }
+
+/* visual: circle + floating badges */
+.sp2-visual { position: relative; flex: 0 0 138px; height: 160px; }
+.sp2-circ { width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, #fb923c 0%, #f97316 60%, #ea580c 100%); display: grid; place-items: center; overflow: hidden; margin: 14px auto 0; box-shadow: 0 10px 30px -8px rgb(251 146 60 / .5); }
+.sp2-circ-img { width: 100px; height: 100px; object-fit: contain; mix-blend-mode: screen; }
+.sp2-flt { position: absolute; background: #fff; border-radius: 10px; box-shadow: 0 4px 14px -4px rgb(0 0 0 / .16); font-size: 10px; font-weight: 700; color: #1a2e2e; padding: 5px 8px; white-space: nowrap; line-height: 1.3; }
+.sp2-flt-tr { top: 0; right: 0; }
+.sp2-flt-r { top: 60px; right: -6px; color: #0d9488; }
+.sp2-flt-bl { bottom: 6px; left: 0; background: #fb923c; color: #fff; }
+
+/* feature rows – colored cards like Study Comrade */
+.splash.sp2 .sp2-rows { list-style: none; margin: 0 0 10px; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+/* first two rows: full width */
+.splash.sp2 .sp2-rows .sp2-r1,
+.splash.sp2 .sp2-rows .sp2-r2 { grid-column: 1 / -1; }
+/* last row: full width */
+.splash.sp2 .sp2-rows .sp2-r7 { grid-column: 1 / -1; }
+.splash.sp2 .sp2-row { display: flex; align-items: center; gap: 12px; padding: 14px 14px; border-radius: 16px; cursor: default; }
+.splash.sp2 .sp2-row .sp2-ic { flex: none; width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; }
+.splash.sp2 .sp2-row .sp2-ic path, .splash.sp2 .sp2-row .sp2-ic line, .splash.sp2 .sp2-row .sp2-ic rect { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.splash.sp2 .sp2-row div { display: flex; flex-direction: column; gap: 2px; }
+.splash.sp2 .sp2-row b { font-size: 14px; font-weight: 700; line-height: 1.2; color: #111; }
+.splash.sp2 .sp2-row span { font-size: 12px; color: #555; line-height: 1.3; }
+/* per-card colors (pastel, like SC) */
+.sp2-r1 { background: #fff0eb; } .sp2-r1 .sp2-ic { background: #fb923c22; color: #ea580c; }
+.sp2-r2 { background: #eef3ff; } .sp2-r2 .sp2-ic { background: #6366f122; color: #4f46e5; }
+.sp2-r3 { background: #e8faf4; } .sp2-r3 .sp2-ic { background: #10b98122; color: #059669; }
+.sp2-r4 { background: #fff8e6; } .sp2-r4 .sp2-ic { background: #f59e0b22; color: #d97706; }
+.sp2-r5 { background: #f0ebff; } .sp2-r5 .sp2-ic { background: #8b5cf622; color: #7c3aed; }
+.sp2-r6 { background: #e8faf0; } .sp2-r6 .sp2-ic { background: #22c55e22; color: #16a34a; }
+.sp2-r7 { background: #ffeef3; } .sp2-r7 .sp2-ic { background: #f4437622; color: #e11d48; }
+
+/* "Read more" line */
+.sp2-readmore { font-size: 13px; color: #888; text-align: center; margin: 4px 0 0; }
+.sp2-readlink { color: #0d9488; font-weight: 700; text-decoration: underline; }
+
+/* CTA button */
+.splash.sp2 .sp2-go { width: 100%; border-radius: 16px; padding: 15px 22px; font-size: 17px; font-weight: 800; background: #fb923c; color: #fff; border: 0; box-shadow: 0 10px 28px -8px rgb(251 146 60 / .6); margin: 0 0 10px; animation: none; }
+.splash.sp2 .sp2-trust { text-align: center; font-size: 12px; color: #888; margin: 0; }
+
+/* bubble hidden but kept in DOM for splash.js */
+.sp2-bubble[hidden] { display: none !important; }
+
+/* crest slot */
+.splash.sp2 .sp2-crest-slot:empty { display: none; }
+.splash.sp2 .sp2-crest-slot .splash-crest { color: #111; justify-content: flex-start; }
+
+/* narrow phones */
+@media (max-width: 360px) {
+  .sp2-hero { flex-direction: column; }
+  .sp2-visual { width: 100%; height: 80px; flex: none; display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
+  .sp2-circ { width: 72px; height: 72px; margin: 0; }
+  .sp2-circ-img { width: 56px; height: 56px; }
+  .sp2-flt { position: static; }
+  .sp2-flt-r, .sp2-flt-bl { display: none; }
+}
