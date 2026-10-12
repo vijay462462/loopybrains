@@ -24,7 +24,6 @@
     var crest = localStorage.getItem("dd-crest") || "", cname = localStorage.getItem("dd-college-name") || "";
     if (cname && cname.toLowerCase() !== "your college") { var box = document.createElement("div"); box.className = "splash-crest"; if (/^data:image\/(png|jpeg|webp);base64,/.test(crest)) { var im = document.createElement("img"); im.src = crest; im.alt = ""; box.appendChild(im); } var nm = document.createElement("span"); nm.textContent = cname; box.appendChild(nm); var slot = document.getElementById("splashCrestSlot"); if (slot) slot.appendChild(box); else title.parentNode.insertBefore(box, title.nextSibling); }
   } catch (e) {}
-  try { var tr = el.querySelector(".sp2-trust"); if (tr && ver) tr.textContent = tr.textContent + "  \u00B7  v" + ver; } catch (e) {}
   el.setAttribute("data-live", "1");                    // JS is running: switch off the CSS safety timer
   var done = false;
   function close() { if (done) return; done = true; clearInterval(typer); try { document.dispatchEvent(new Event("splash-closed")); } catch (e) {} el.classList.add("splash-out"); setTimeout(function () { if (el.parentNode) el.remove(); }, 200); }

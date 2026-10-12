@@ -245,6 +245,39 @@ exports.askAI = onRequest({ secrets: [ANTHROPIC_KEY], cors: ALLOWED_ORIGINS, reg
 });
 
 
+// ---------- Picture check: Loopy AI looks at ONE picture before it is posted and refuses nude, sexual, violent or abusive images ----------
+// The app calls this after its own on-device check. If this function is not deployed or cannot be reached, the app lets the picture through
+// (reports and blurring still protect students). Limits: 40 pictures per student per hour, 150 per day. Blocked pictures are logged in `imageFlags` (server only).
+const AI_IMAGE_SYSTEM = "You are the picture safety checker of Loopy Brains, a study app for college students. Look at ONE image and reply with ONLY a JSON object: " +
+  "{\"ok\": true or false, \"reason\": \"none\" or \"nudity\" or \"sexual\" or \"gore\" or \"hate\" or \"harassment\" or \"other\"}. " +
+  "Set ok to false for nudity or sexual content (including sexualised poses, underwear or swimwear shots), graphic violence or gore, hate symbols, images made to bully or humiliate a person, and other vulgar or adult content. " +
+  "Notes, textbook pages, diagrams, circuits, charts, screenshots, ordinary photos of people, places and objects, and harmless memes are ok. When you are not sure, set ok to true. Never describe the image.";
+exports.checkImage = onRequest({ secrets: [ANTHROPIC_KEY], cors: ALLOWED_ORIGINS, region: "asia-south1", timeoutSeconds: 30, memory: "256MiB", maxInstances: 5 }, async (req, res) => {
+  try {
+    if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
+    const m = /^Bearer (.+)$/.exec(req.get("Authorization") || "");
+    if (!m) return res.status(401).json({ error: "Please sign in first." });
+    const user = await getAuth().verifyIdToken(m[1]);
+    const img = typeof (req.body || {}).img === "string" ? req.body.img : "", mm = /^data:image\/jpeg;base64,([A-Za-z0-9+/=]+)$/.exec(img);
+    if (!mm || img.length > 350000) return res.status(400).json({ error: "The picture is not valid." });
+    if (!(await allow(user.uid, "img", 40, 3600000)) || !(await allow(user.uid, "imgd", 150, 86400000))) return res.status(429).json({ error: "You have added many pictures. Please wait a little and try again." });
+    const r = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-api-key": ANTHROPIC_KEY.value(), "anthropic-version": "2023-06-01" },
+      body: JSON.stringify({ model: AI_MODEL, max_tokens: 60, system: AI_IMAGE_SYSTEM, messages: [{ role: "user", content: [{ type: "image", source: { type: "base64", media_type: "image/jpeg", data: mm[1] } }, { type: "text", text: "Check this image." }] }] }),
+    });
+    if (!r.ok) { console.error("checkImage upstream", r.status, (await r.text()).slice(0, 300)); return res.status(502).json({ error: "The picture check is busy." }); }
+    const data = await r.json(), reply = ((data.content || []).filter(b => b.type === "text").map(b => b.text).join(" ") || "");
+    let o = {}; try { o = JSON.parse(reply.slice(reply.indexOf("{"), reply.lastIndexOf("}") + 1)); } catch (_) {}
+    const ok = o.ok !== false, reason = ["nudity", "sexual", "gore", "hate", "harassment", "other"].includes(o.reason) ? o.reason : (ok ? "none" : "other");
+    if (!ok) { console.warn("checkImage blocked", user.uid, reason); db.collection("imageFlags").add({ uid: user.uid, reason, at: Date.now() }).catch(() => {}); }
+    return res.json({ ok, reason });
+  } catch (e) {
+    console.error("checkImage", e);
+    return res.status(500).json({ error: "Something went wrong." });
+  }
+});
+
 // ---------- Push: tell a student when their doubt gets an answer ----------
 // Runs when a reply is created. Only the doubt's owner (ownerUid) is told, never the answerer, and at most 3 pushes per student per hour.
 // Messages are data-only and carry just a short title, so nothing private is shown on a locked screen. Tokens live in pushTokens/<uid> (written by the student's own app, readable only here).
