@@ -26,7 +26,7 @@ window.DOUBT_DESK_CONFIG = {
   welcomeEveryVisit: false,
 
   // Shown on the About screen when someone joins. Fill these in: they build trust. Leave a value empty to hide it.
-  about: { founder: "Coding Team", college: "", email: "loopybrains@gmail.com" },
+  about: { founder: "Vijay M", college: "", email: "loopybrains@gmail.com" },
 
   // Site title shown in the header
   title: "Loopy Brains",
