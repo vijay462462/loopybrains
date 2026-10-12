@@ -2316,66 +2316,39 @@ function renderHome() {
   const name = (getName() || "").trim().split(/\s+/)[0] || "";
   const college = COLLEGE || "Your campus";
   const chip = college.replace(/RGUKT\s*/i, "").trim().slice(0, 6).toUpperCase() || college.slice(0, 5).toUpperCase();
-  const openAI = () => { state.ai = state.ai || { msgs: [], busy: false, note: "" }; showPanel("ai"); };
   box.hidden = false;
   box.replaceChildren(
-    el("div", { class: "hb-sc-wrap" },
-      /* ── top bar: college chip + close ── */
-      el("div", { class: "hb-sc-topbar" },
-        el("div", { class: "hb-sc-chip" }, chip),
-        el("button", { type: "button", class: "hb-sc-x", "aria-label": "Close", onclick: () => { box.hidden = true; } }, "×")
+    el("div", { class: "hb-hero" },
+      el("div", { class: "hb-hero-top" },
+        el("button", { type: "button", class: "hb-close", "aria-label": "Close welcome card", onclick: () => { box.hidden = true; } }, "×"),
+        el("div", { class: "hb-chip" }, chip)
       ),
-      /* ── hero: text left, visual right ── */
-      el("div", { class: "hb-sc-hero" },
-        el("div", { class: "hb-sc-text" },
-          el("div", { class: "hb-sc-badge-pill" }, "❤️ Together we learn better"),
-          el("h2", { class: "hb-sc-headline" },
-            greet + (name ? ", " + name : "") + " 👋"
-          ),
-          el("p", { class: "hb-sc-sub" }, "Ask doubts, get AI answers and grow with your campus community."),
-          el("div", { class: "hb-sc-stats" },
-            el("div", { class: "hb-sc-stat" }, el("b", {}, "500+"), el("span", {}, "Packs")),
-            el("div", { class: "hb-sc-stat-div" }),
-            el("div", { class: "hb-sc-stat" }, el("b", {}, "24×7"), el("span", {}, "AI help")),
-            el("div", { class: "hb-sc-stat-div" }),
-            el("div", { class: "hb-sc-stat" }, el("b", {}, "Free"), el("span", {}, "Always"))
-          ),
-          el("button", { type: "button", class: "hb-sc-cta", onclick: openAI },
-            "Ask Loopy AI  ›"
-          )
-        ),
-        el("div", { class: "hb-sc-visual" },
-          el("div", { class: "hb-sc-circle" },
-            el("img", { src: "brand/loopy-brains-promo-480.png", alt: "Loopy Brains", class: "hb-sc-logo" })
-          ),
-          el("div", { class: "hb-sc-fl hb-sc-fl-tr" }, "⭐ 4.9 Rating"),
-          el("div", { class: "hb-sc-fl hb-sc-fl-br" }, "100% Free"),
-          el("div", { class: "hb-sc-fl hb-sc-fl-bl" }, college.slice(0, 8))
+      el("div", { class: "hb-hero-row" },
+        el("div", { class: "hb-greet-col" },
+          el("p", { class: "hb-college-name" }, college),
+          el("h2", { class: "hb-greet" }, greet + (name ? ", " + name : "") + " 👋"),
+          el("p", { class: "hb-tagline" }, WORDS[dayNum() % WORDS.length])
         )
       ),
-      /* ── four feature tiles ── */
-      el("p", { class: "hb-sc-tiles-label" }, "What would you like to do?"),
-      el("div", { class: "hb-sc-tiles" },
-        el("button", { type: "button", class: "hb-sc-tile", onclick: () => openAsk() },
-          el("span", { class: "hb-sc-tile-ic" }, "❓"),
-          el("b", {}, "Ask a Doubt"),
-          el("small", {}, "to classmates")
+      el("div", { class: "hb-prompt" },
+        el("span", { class: "hb-prompt-dot", "aria-hidden": "true" }),
+        el("p", { class: "hb-prompt-msg" }, loopyPrompt().label),
+        el("button", { type: "button", class: "hb-prompt-btn", onclick: () => { state.ai = state.ai || { msgs: [], busy: false, note: "" }; state.ai.prefill = loopyPrompt().q; showPanel("ai"); } }, "Ask Chitti ›")
+      ),
+      el("p", { class: "hb-choice" }, "Ask a doubt to your friend or classmate, or ask Chitti, the Loopy AI. It is your choice."),
+      el("div", { class: "hb-actions" },
+        el("button", { type: "button", class: "hb-action", onclick: () => openAsk() },
+          el("span", { class: "hb-action-ic" }, "❓"),
+          el("b", {}, "Ask a doubt"), el("small", {}, "to a friend or classmate")
         ),
-        el("button", { type: "button", class: "hb-sc-tile", onclick: openAI },
-          el("span", { class: "hb-sc-tile-ic" }, "✨"),
-          el("b", {}, "Loopy AI"),
-          el("small", {}, "instant answers")
+        el("button", { type: "button", class: "hb-action", onclick: () => { state.ai = state.ai || { msgs: [], busy: false, note: "" }; showPanel("ai"); } },
+          el("span", { class: "hb-action-ic" }, "✨"),
+          el("b", {}, "Ask Chitti"), el("small", {}, "the Loopy AI")
         ),
-        el("button", { type: "button", class: "hb-sc-tile", onclick: () => showPanel("lab") },
-          el("span", { class: "hb-sc-tile-ic" }, "🧪"),
-          el("b", {}, "Study Lab"),
-          el("small", {}, "tools & packs")
-        ),
-        el("button", { type: "button", class: "hb-sc-tile", onclick: () => showPanel("quiz") },
-          el("span", { class: "hb-sc-tile-ic" }, "🏆"),
-          el("b", {}, "Daily Quiz"),
-          el("small", {}, "build your streak")
-        )
+        Object.keys(DEPT_MAP).length ? el("button", { type: "button", class: "hb-action hb-action-branch", onclick: () => showBranchPicker(true) },
+          el("span", { class: "hb-action-ic" }, "🏫"),
+          el("b", {}, myBranch() && myBranch() !== "*" ? myBranch() : "All branches"), el("small", {}, "Change branch")
+        ) : null
       )
     )
   );
