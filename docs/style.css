@@ -3749,7 +3749,7 @@ html.is-scrolling .bsh-orb { animation-play-state: paused !important; }
 /* ===== Campus Loop identity for Loopy Search: indigo night, aurora glow, orbit mark ===== */
 .bsfull.calm { --paper: #f6f4ff; --sheet: #ffffff; --line: #ddd7f7; --ink: #1a1642; --muted: #6d6a98; --glow1: rgb(22 163 74 / .18); --glow2: rgb(245 158 11 / .12); background: radial-gradient(60rem 28rem at 85% -8%, var(--glow1), transparent 70%), radial-gradient(46rem 26rem at -10% 4%, var(--glow2), transparent 70%), var(--paper); }
 :root[data-theme="dark"] .bsfull.calm { --paper: #0a0920; --sheet: #14123a; --line: #2c2968; --ink: #eef0ff; --muted: #9b9ccb; --accent: #4ade80; --accent-soft: #221f55; --glow1: rgb(124 58 237 / .34); --glow2: rgb(245 158 11 / .14); }
-.bsfull.calm .bsf-bar { border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent); background: color-mix(in srgb, var(--paper) 80%, transparent); backdrop-filter: blur(10px); }
+.bsfull.calm .bsf-bar { border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent); background: color-mix(in srgb, var(--paper) 70%, transparent); backdrop-filter: blur(10px); }
 .bsc-hero { gap: 12px; padding-top: 10px; }
 .bsc-orbit { position: relative; width: 150px; height: 150px; display: grid; place-items: center; margin-bottom: 4px; }
 .bsc-orbit.sm { width: 104px; height: 104px; margin: 0 auto 14px; }
@@ -4079,20 +4079,20 @@ body header.top .tabs button[aria-selected="true"] { color: #0d1030; }
   header.top .brand, header.top .hdr-actions { min-width: 0; flex-wrap: wrap; }
 }
 
-/* ===== Loopy AI — search engine home: clean centered logo + search bar, cards below ===== */
-.bsfull .bsf-scroll { counter-reset: lesson; }
-.bsfull:not(.calm) .bsc-orbit:not(.sm), .bsfull:not(.calm) .bsc-hero .bsc-brand { display: none; }
-.bsfull.calm .bsf-scroll:has(.bsc-hero) { display: flex; }
-/* Search-engine hero: clean white, centered, compact */
-.bsc-hero { flex: 1 1 auto !important; min-height: 0 !important; align-items: center !important; justify-content: center !important; text-align: center !important; gap: 10px !important; margin: 0 !important; padding: 24px 20px 20px !important; border-radius: 0 !important; color: var(--ink) !important; background: none !important; box-shadow: none !important; }
-.bsc-hero .bsc-cap { color: var(--muted); font-weight: 700; letter-spacing: .1em; font-size: .7rem; }
-.bsc-hero .bsc-hi { font: 700 clamp(1.4rem, 6vw, 1.9rem)/1.2 inherit !important; font-family: inherit !important; color: var(--ink) !important; letter-spacing: -.02em; }
-.bsc-hero .bsc-hi span { -webkit-text-fill-color: transparent !important; background: linear-gradient(90deg, #16a34a, #fb923c 70%) !important; -webkit-background-clip: text !important; background-clip: text !important; }
-.bsc-hero .bsc-sub { color: var(--muted) !important; font-size: .9rem !important; max-width: 22em; line-height: 1.5; }
+/* ===== Loopy AI study desk: ruled notebook, sticker search box, topic rows, numbered lesson cards ===== */
+.bsfull .bsf-scroll { counter-reset: lesson; background-image: repeating-linear-gradient(to bottom, transparent 0 31px, color-mix(in srgb, var(--accent) 9%, transparent) 31px 32px); }
+/* Hide the orbit rings but show the plain LB logo in the hero */
+.bsfull .bsc-orbit:not(.sm) .r1, .bsfull .bsc-orbit:not(.sm) .r2, .bsfull .bsc-orbit:not(.sm) b { display: none; }
+.bsfull .bsc-orbit:not(.sm) { display: grid; }
+.bsfull.calm .bsf-scroll:has(.bsc-hero) { display: block; }
+.bsc-hero { flex: none !important; min-height: 0 !important; align-items: flex-start !important; justify-content: flex-start !important; text-align: left !important; gap: 8px !important; margin: 4px 0 14px; padding: 18px 16px !important; border-radius: 18px; color: #fff; background: linear-gradient(140deg, #0f3d22 0%, #166534 55%, #16a34a 100%); box-shadow: 4px 4px 0 var(--gold); position: relative; overflow: hidden; }
+.bsc-hero .bsc-cap { color: #fdba74; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; font-size: .72rem; }
+.bsc-hero .bsc-hi { font: 800 clamp(1.45rem, 6.4vw, 2rem)/1.15 inherit !important; font-family: inherit !important; color: #fff; letter-spacing: -.01em; }
+.bsc-hero .bsc-hi span { -webkit-text-fill-color: #fdba74; background: none; }
+.bsc-hero .bsc-sub { color: rgb(255 255 255 / .8) !important; font-size: .95rem !important; }
 .bsc-steps { display: flex; gap: 8px; margin: 6px 0 0; padding: 0; list-style: none; counter-reset: st; flex-wrap: wrap; }
-.bsc-steps li { counter-increment: st; display: inline-flex; align-items: center; gap: 6px; background: var(--sheet); border: 1.5px solid var(--line); border-radius: 999px; padding: 5px 12px 5px 6px; font-size: .8rem; font-weight: 700; color: var(--ink); }
-.bsc-steps li::before { content: counter(st); width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; background: var(--btn); color: var(--btn-ink); font-size: .72rem; font-weight: 800; }
-/* Search bar — sticker flat style (study desk) */
+.bsc-steps li { counter-increment: st; display: inline-flex; align-items: center; gap: 6px; background: rgb(255 255 255 / .12); border: 1px solid rgb(255 255 255 / .22); border-radius: 999px; padding: 5px 12px 5px 6px; font-size: .8rem; font-weight: 700; }
+.bsc-steps li::before { content: counter(st); width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; background: #fb923c; color: #2b1000; font-size: .72rem; font-weight: 800; }
 .bsfull .bs-dock { background: linear-gradient(to bottom, transparent, var(--paper) 16px); }
 .bsfull .bs-comp, .bsfull .bs-comp:focus-within { border: 2px solid var(--accent); background: var(--sheet); border-radius: 14px; box-shadow: 4px 4px 0 var(--gold); }
 .bsfull .bs-comp:focus-within { box-shadow: 4px 4px 0 var(--gold), 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
@@ -4100,15 +4100,11 @@ body header.top .tabs button[aria-selected="true"] { color: #0d1030; }
 .bsfull .bs-comp .bs-mic, .bsfull .bs-plus, .bsfull .bs-chip { border-radius: 12px; }
 .bsfull .bs-modes.pills .bs-mode { border-radius: 10px; border: 1.5px solid var(--line); background: var(--sheet); }
 .bsfull .bs-modes.pills .bs-mode.on { background: var(--btn) !important; color: var(--btn-ink) !important; border-color: var(--btn) !important; box-shadow: 0 3px 0 var(--gold) !important; }
-/* Section headings */
 .bsfull .bs-secthead { display: inline-block; margin: 6px 0 8px; padding-bottom: 3px; border-bottom: 3px solid var(--gold); color: var(--ink); font-weight: 800; letter-spacing: .06em; text-transform: uppercase; font-size: .72rem; }
-/* Try-cards: horizontal list rows */
 .bsfull .bs-try { grid-template-columns: 1fr; gap: 8px; }
 .bsfull .bs-try .bs-tc { display: grid; grid-template-columns: 40px 1fr; column-gap: 12px; align-items: center; border-radius: 12px; border: 1.5px solid var(--line); border-left: 5px solid var(--accent); background: var(--sheet); padding: 10px 12px; }
 .bsfull .bs-try .bs-tc i { grid-row: span 2; width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; background: var(--accent-soft); }
 .bsfull .bs-tiles .bs-tile { border-radius: 12px; border-left: 6px solid rgb(0 0 0 / .25); }
-/* Answer cards — ruled notebook lines */
-.bsfull .bsf-scroll { background-image: repeating-linear-gradient(to bottom, transparent 0 31px, color-mix(in srgb, var(--accent) 9%, transparent) 31px 32px); }
 .bsfull .bsr-card, .bsfull .bsr-ask { border-radius: 14px; border: 1.5px solid var(--line); border-left: 5px solid var(--accent); background: var(--sheet); }
 .bsfull .bsr-card > h3 { display: flex; align-items: center; gap: 10px; }
 .bsfull .bsr-card > h3::before { counter-increment: lesson; content: counter(lesson); flex: none; width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; background: var(--btn); color: var(--btn-ink); font-size: .8rem; font-weight: 800; }
