@@ -2,8 +2,7 @@
 
 A thin Android wrapper (Capacitor) around the website. It loads
 https://loopybrains.com/ so website updates reach the app immediately,
-and it turns on Android's `FLAG_SECURE`, so **screenshots, screen recording and the
-recent-apps preview are blocked inside the app**.
+and screenshots and screen recording are allowed.
 
 Firebase App Check is wired to **Play Integrity** so only genuine, unmodified Android
 devices can access Firestore, Storage and Auth.
@@ -18,7 +17,6 @@ devices can access Firestore, Storage and Auth.
 The APK is signed with Android's debug key, which is fine for sharing inside the class.
 Publishing on the Play Store needs your own release key and a developer account.
 
-Android only. The website itself (in Chrome) can still be screenshotted; only this app blocks it.
 
 ---
 
