@@ -3713,7 +3713,7 @@ html.is-scrolling .bsh-orb { animation-play-state: paused !important; }
 .bs-sheet[hidden] { display: none; }
 .bs-sheet-h { display: block; margin: 4px 2px 6px; color: var(--muted); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; font-size: .7rem; }
 .bs-foot { margin: 7px 8px 0; text-align: center; font-size: .72rem; color: var(--muted); }
-.bs-dock .bs-sug { margin: 0 4px 8px; }
+.bs-dock .bs-sug { position: absolute; bottom: 100%; left: 12px; right: 12px; margin: 0; z-index: 10; background: var(--paper); border-radius: 16px 16px 0 0; box-shadow: 0 -6px 20px rgb(0 0 0 / .1); max-height: 220px; overflow-y: auto; }
 /* Desktop / laptop responsive fixes for Loopy Search */
 @media (min-width: 700px) {
   /* Align top bar icons with the 820px content column */
