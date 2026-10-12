@@ -10714,7 +10714,7 @@ let currentTheme = (() => { try { const v = localStorage.getItem("dd-theme"); re
 applyThemeName(currentTheme);
 // Colour palettes: the student chooses one (Forest is the default). Each has a light, dark and black version.
 const PALETTES = { goldlux: ["Gold Luxury", ["#c9960c", "#f0c040", "#0d0d0d"], "p"], tealcoral: ["Fresh green", ["#166534", "#f97316", "#f6fbf7"], "p"], midnight: ["Midnight", ["#171a45", "#c9a45c", "#f6f4ee"], "p"], royal: ["Royal", ["#0f2c52", "#e2bd64", "#f4f1ea"], "p"], emerald: ["Emerald", ["#0d4a38", "#e3cf94", "#f3f2ec"], "p"], burgundy: ["Burgundy", ["#5b1a2b", "#e9b49f", "#f6efeb"], "p"], obsidian: ["Obsidian", ["#181818", "#d4af37", "#f2f1ee"], "p"], forest: ["Forest", ["#2d452f", "#6b9d4a", "#cfe2ce"], "c"], indigo: ["Indigo", ["#312c51", "#48426d", "#f0c38e"], "c"], terracotta: ["Terracotta", ["#c9532f", "#c78a9a", "#5e8c74"], "c"], ocean: ["Ocean", ["#1a73e8", "#8ab4f8", "#fdd663"], "c"], slate: ["Slate", ["#2f3a46", "#9db4c8", "#e5e7eb"], "c"] };
-let currentPalette = (() => { try { const v = localStorage.getItem("dd-palette"); return PALETTES[v] ? v : "goldlux"; } catch (_) { return "goldlux"; } })();
+let currentPalette = (() => { try { const v = localStorage.getItem("dd-palette"); if (v === "tealcoral") { localStorage.setItem("dd-palette", "goldlux"); return "goldlux"; } return PALETTES[v] ? v : "goldlux"; } catch (_) { return "goldlux"; } })();
 document.documentElement.setAttribute("data-palette", currentPalette);
 let updateThemeLabel = () => {};
 function setPalette(k) { if (!PALETTES[k]) return; currentPalette = k; document.documentElement.setAttribute("data-palette", k); try { localStorage.setItem("dd-palette", k); } catch (_) {} render(); }
