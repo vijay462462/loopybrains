@@ -1752,11 +1752,11 @@ function showCollegeReveal() {
         el("button", { class: "btn primary cr-go", type: "button", onclick: close }, "Enter " + (COLLEGE.length > 22 ? "my college" : COLLEGE) + " \u2192"))));
   ov.style.setProperty("--c1", c1); ov.style.setProperty("--c2", c2);
   const open = () => { if (welcomePending || document.getElementById("welcome") || document.querySelector(".ag")) { setTimeout(open, 400); return; } document.body.append(ov); };
-  if (document.getElementById("splash")) document.addEventListener("splash-closed", () => setTimeout(open, 60), { once: true }); else open();
+  if (document.getElementById("splash")) document.addEventListener("splash-closed", () => setTimeout(open, 500), { once: true }); else open();
 }
 function maybeWelcome() {
   let resume = ""; try { resume = sessionStorage.getItem("dd-ob-resume") || ""; sessionStorage.removeItem("dd-ob-resume"); } catch (_) {}
-  const open = (start) => { welcomePending = true; const viaSplash = !!document.getElementById("splash"); const go = () => setTimeout(() => { try { if (viaSplash) sessionStorage.setItem("dd-ob-splash", "1"); } catch (_) {} showWelcome(false, start); if (!document.getElementById("welcome")) welcomePending = false; }, viaSplash ? 800 : 60); if (document.getElementById("splash")) document.addEventListener("splash-closed", go, { once: true }); else go(); };
+  const open = (start) => { welcomePending = true; const viaSplash = !!document.getElementById("splash"); const go = () => setTimeout(() => { try { if (viaSplash) sessionStorage.setItem("dd-ob-splash", "1"); } catch (_) {} showWelcome(false, start); if (!document.getElementById("welcome")) welcomePending = false; }, viaSplash ? 800 : 300); if (document.getElementById("splash")) document.addEventListener("splash-closed", go, { once: true }); else go(); };
   if (resume) { try { sessionStorage.setItem("dd-ob-shown", "1"); } catch (_) {} open(resume); return; }   // just picked a college: continue with the name step
   if (NO_COLLEGE) { try { sessionStorage.setItem("dd-ob-shown", "1"); } catch (_) {} const seenAbout = (() => { try { return !!localStorage.getItem("dd-about-seen"); } catch(_) { return false; } })(); open(seenAbout ? "college" : undefined); return; }      // brand-new visitors choose their college first
   // welcomeEveryVisit (config.js): show the welcome steps after the opening screen on every visit (handy for testing). Set it to false before launch.
