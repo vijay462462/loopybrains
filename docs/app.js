@@ -5434,7 +5434,7 @@ function bsMount() {
   if (bsEl()) return; const bs = bsState();
   const bar = el("div", { class: "bsf-bar" },
     el("button", { type: "button", class: "bsf-back", "aria-label": "Close Loopy Search", onclick: () => bsClose() }, svgIcon("back")),
-    el("strong", { class: "bsf-title" }, el("span", { class: "bsf-t-big" }, "Chitti")),
+    el("button", { type: "button", class: "bsf-title", "aria-label": "New search", onclick: () => { const b = bsState(); b.res = null; b.q = ""; b.pending = ""; b.draft = null; bsPaint(true); } }, el("span", { class: "bsf-t-big" }, "Chitti")),
     el("button", { type: "button", class: "bsf-night", id: "bsNight", onclick: () => { try { localStorage.setItem("dd-bs-night", bsNightOn() ? "0" : "1"); } catch (_) {} bsApplyNight(); } }, "\u2600"),
     el("button", { type: "button", class: "bsf-save", id: "bsSave", hidden: "", onclick: () => { const b = bsState(); if (!b.res) return; if (bsIsSaved(b.res)) { bsPutSaved(bsSavedList().filter(x => x.id !== "s" + fnv(b.res.topic.toLowerCase() + "|" + b.res.size))); showNotice("Removed from Saved.", "ok"); } else if (bsSaveOne(b.res, b.q)) showNotice("Saved. Find it under Saved on the search page.", "ok"); else showNotice("Could not save: this phone is out of space.", "err"); bsPaint(); } }, "Save"),
     el("button", { type: "button", class: "bsf-pdf", id: "bsPdf", hidden: "", "aria-haspopup": "dialog", "aria-label": "Save as PDF or JPEG", onclick: () => bsExportSheet() }, "PDF/JPG"));
@@ -6035,9 +6035,10 @@ function brainViewInner(ui) {
   const curL = BS_LEVELS[(bs.lock || bs.level) - 1], effC = bsEffort(bs);
   const tuneIc = (() => { const v = sv("svg", { viewBox: "0 0 24 24", class: "bs-tuneic", "aria-hidden": "true" }); v.append(sv("line", { x1: 3, y1: 7, x2: 21, y2: 7 }), sv("line", { x1: 3, y1: 17, x2: 21, y2: 17 }), sv("circle", { cx: 15, cy: 7, r: 2.6 }), sv("circle", { cx: 9, cy: 17, r: 2.6 })); return v; })();
   const plusBtn = el("button", { type: "button", class: "bs-plus" + (bs.sheet ? " on" : ""), id: "bsPlus", "aria-label": "Tune model and effort", "aria-expanded": String(!!bs.sheet), onclick: toggleSheet }, tuneIc, el("span", {}, "Tune"));
-  const chipBtn = el("button", { type: "button", class: "bs-chip", "aria-label": "Change model and effort", onclick: toggleSheet }, el("b", {}, bsName(curL[0])), el("span", { class: "bs-lvdots", "aria-hidden": "true" }, "\u25CF".repeat(curL[0]) + "\u25CB".repeat(5 - curL[0])), el("span", { class: "bs-chip-e" }, effC[1]));
+  const modelPills = el("div", { class: "bs-mpills", role: "group", "aria-label": "Loopy model" },
+    ...BS_LEVELS.map(([n, t]) => { const open = bsOpen(n); return el("button", { type: "button", class: "bs-mpill" + (bs.level === n && !bs.lock ? " on" : "") + (open ? "" : " premium"), "aria-pressed": String(bs.level === n && !bs.lock), onclick: () => setLevel(n) }, t, open ? null : el("i", { class: "bs-mpill-star", "aria-hidden": "true" }, "\u2605")); }));
   const engStrip = el("div", { class: "bs-eng", role: "tablist", "aria-label": "Loopy engine" }, ...BS_MODES.map(m => el("button", { type: "button", role: "tab", class: "bs-engb" + (bs.mode === m[0] ? " on" : ""), "aria-selected": String(bs.mode === m[0]), onclick: () => setMode(m[0]) }, svgIcon(m[0]), el("span", {}, m[1]))));
-  const form = el("form", { class: "bs-comp", onsubmit: (e) => { e.preventDefault(); input.blur(); bs.draft = null; go(input.value); } }, engStrip, el("div", { class: "bs-comp-top" }, input, clearBtn), el("div", { class: "bs-comp-row" }, plusBtn, chipBtn, el("span", { class: "bs-sp" }), mic, goBtn));
+  const form = el("form", { class: "bs-comp", onsubmit: (e) => { e.preventDefault(); input.blur(); bs.draft = null; go(input.value); } }, engStrip, el("div", { class: "bs-comp-top" }, input, clearBtn), modelPills, el("div", { class: "bs-comp-row" }, plusBtn, el("span", { class: "bs-sp" }), mic, goBtn));
   const setLevel = (lv) => { if (!bsOpen(lv)) { bs.lock = lv; bsPaint(); return; } bs.level = lv; bs.lock = 0; bsRemember(); if (bs.q && bs.res) bsRun(bs.q); else bsPaint(); };
   const lvBar = el("div", { class: "bs-lvs bsf-noprint", role: "group", "aria-label": "Loopy model" }, ...BS_LEVELS.map(([n, t, , plus]) => { const open = bsOpen(n); return el("button", { type: "button", class: "bs-lv" + (bs.level === n && !bs.lock ? " on" : "") + (open ? "" : " locked"), "aria-pressed": String(bs.level === n), onclick: () => setLevel(n) }, el("b", {}, String(n)), el("span", {}, t), el("i", { class: "bs-tier" + (bsFree(n) ? "" : " plus") }, bsFree(n) ? "FREE" : open ? (IS_RGUKT ? "BONUS" : "PLUS") : IS_RGUKT ? "\u{1F512} LOCKED" : "\u{1F512} PLUS")); }));
   const cur = BS_LEVELS[(bs.lock || bs.level) - 1], modelLine = el("p", { class: "bs-model bsf-noprint" }, el("b", {}, bsName(cur[0])), " · " + cur[2] + " ", el("span", { class: "bs-dots", "aria-label": "Depth " + cur[0] + " of 5" }, "●".repeat(cur[0]) + "○".repeat(5 - cur[0])));
@@ -6089,7 +6090,8 @@ function brainViewInner(ui) {
       ...CHITTI_COLORS.map(c => el("button", { type: "button", class: "bsc-colorchip" + (c.id === chittiColorId ? " on" : ""), "data-cid": c.id, "aria-label": "Colour: " + c.id, onclick: () => { try { localStorage.setItem("dd-chitti-color", c.id); } catch(e) {} bsPaint(); } })));
     const hero = el("section", { class: "bsc-hero" + (bs.busy ? " busy" : "") },
       bs.busy ? null : brandSpin("bsc-brand live bsc-hero-ic"),
-      bs.busy ? null : el("h2", { class: "bsc-hi" }, "What\u2019s the vibe" + (nm ? ", " : "?"), nm ? el("span", {}, nm + "?") : null),
+      bs.busy ? null : el("h2", { class: "bsc-hi" }, "Chitti 3.0"),
+      bs.busy ? null : el("p", { class: "bsc-hi-sub" }, nm ? "Hey " + nm + ", what\u2019s the vibe?" : "the Loopy AI"),
       bs.busy ? null : el("div", { class: "bs-try" }, ...tryItems),
       bs.busy ? null : colorPicker);
     hero.style.setProperty("--chitti-bg", activeChittiColor.g);
