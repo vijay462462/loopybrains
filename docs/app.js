@@ -5432,7 +5432,10 @@ function bsApplyNight() { const o = bsEl(); if (!o) return; const on = bsNightOn
   applyThemeName(on && currentTheme !== "dark" && currentTheme !== "black" ? "dark" : currentTheme); }
 function bsMount() {
   if (bsEl()) return; const bs = bsState();
+  const toggleSidebar = () => { const o = bsEl(); if (o) o.classList.toggle("sb-open"); };
+  const closeSidebar = () => { const o = bsEl(); if (o) o.classList.remove("sb-open"); };
   const bar = el("div", { class: "bsf-bar" },
+    el("button", { type: "button", class: "bsf-menu-btn", "aria-label": "Open menu", onclick: toggleSidebar }, "\u2630"),
     el("button", { type: "button", class: "bsf-back", "aria-label": "Close Loopy Search", onclick: () => bsClose() }, svgIcon("back")),
     el("button", { type: "button", class: "bsf-title", "aria-label": "New search", onclick: () => { const b = bsState(); b.res = null; b.q = ""; b.pending = ""; b.draft = null; bsPaint(true); } }, el("span", { class: "bsf-t-big" }, "Chitti")),
     el("button", { type: "button", class: "bsf-night", id: "bsNight", onclick: () => { try { localStorage.setItem("dd-bs-night", bsNightOn() ? "0" : "1"); } catch (_) {} bsApplyNight(); } }, "\u2600"),
@@ -5441,7 +5444,8 @@ function bsMount() {
   const prog = el("div", { class: "bsf-prog" }, el("i", { id: "bsProg" }));
   const scroll = el("div", { class: "bsf-scroll", id: "bsScroll" });
   const sidebar = el("nav", { class: "bsf-sidebar", id: "bsSidebar", "aria-label": "Chitti navigation" });
-  const ov = el("div", { class: "bsfull calm", id: "bsFull", role: "dialog", "aria-modal": "true", "aria-label": "Loopy Search" }, sidebar, bar, prog, scroll);
+  const backdrop = el("div", { class: "bsf-backdrop", "aria-hidden": "true", onclick: closeSidebar });
+  const ov = el("div", { class: "bsfull calm", id: "bsFull", role: "dialog", "aria-modal": "true", "aria-label": "Loopy Search" }, backdrop, sidebar, bar, prog, scroll);
   document.body.append(ov); document.documentElement.classList.add("bs-open"); bsApplyNight();
   let tick = false; scroll.addEventListener("scroll", () => { if (tick) return; tick = true; requestAnimationFrame(() => { tick = false; const p = $("bsProg"); if (p) p.style.width = Math.min(100, Math.round(scroll.scrollTop / Math.max(1, scroll.scrollHeight - scroll.clientHeight) * 100)) + "%"; }); }, { passive: true });
   { let last = 0; scroll.addEventListener("scroll", () => { const t = scroll.scrollTop, d = t - last; if (Math.abs(d) < 8) return; last = t; if (d > 0 && t > 160 && bs.res) ov.classList.add("dock-min"); else if (d < 0 || t < 120) ov.classList.remove("dock-min"); }, { passive: true }); }
@@ -6486,8 +6490,16 @@ function logoutBlock() {
       el("div", { class: "lo-btns" }, el("button", { class: "btn primary lo-stay", type: "button", onclick: close }, "Stay signed in"), el("button", { class: "lo-out", type: "button", onclick: go }, "Yes, log out"))));
     document.body.append(ov);
   };
+  const resetAsk = () => {
+    const close = () => ov2.remove();
+    const ov2 = el("div", { class: "welcome lo-ov", role: "dialog", "aria-modal": "true", "aria-label": "Reset app", onclick: (e) => { if (e.target === ov2) close(); } }, el("div", { class: "lo-card" },
+      el("div", { class: "lo-ic", "aria-hidden": "true" }, "\u267b\ufe0f"), el("h2", {}, "Reset app?"), el("p", { class: "lo-text" }, "This clears all your local data (name, college, progress, session) and reloads the app fresh. Use it to test the welcome flow."),
+      el("div", { class: "lo-btns" }, el("button", { class: "btn primary lo-stay", type: "button", onclick: close }, "Cancel"), el("button", { class: "lo-out", type: "button", onclick: go }, "Yes, reset everything"))));
+    document.body.append(ov2);
+  };
   return el("div", { class: "logout-block" }, el("div", { class: "acct-head" }, el("span", { class: "acct-ic", "aria-hidden": "true" }, "\u{1F464}"), el("div", {}, el("strong", { class: "acct-title" }, "Account"), el("small", { class: "acct-sub" }, acc.verified ? "Signed in as " + acc.email + " \u2714 verified" : "This device only. Verify your email to keep your points safe."))),
-    el("button", { class: "btn logout-btn", type: "button", onclick: ask }, "\u{1F6AA} Log out"), msg);
+    el("button", { class: "btn logout-btn", type: "button", onclick: ask }, "\u{1F6AA} Log out"),
+    el("button", { class: "btn reset-btn", type: "button", onclick: resetAsk }, "\u267b\ufe0f Reset app data"), msg);
 }
 
 // ---------- confetti ----------
