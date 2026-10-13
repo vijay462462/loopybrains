@@ -853,6 +853,17 @@ service cloud.firestore {
         allow delete: if false;
       }
 
+      // ---------- in-app problem reports ----------
+      match /feedback/{id} {
+        allow read: if isAdmin();
+        allow create: if request.auth != null
+          && request.resource.data.keys().hasOnly(['college', 'screen', 'ua', 'text', 'uid', 'name', 'errors', 'createdAt'])
+          && request.resource.data.uid == request.auth.uid
+          && str(request.resource.data.text, 1, 500)
+          && recent(request.resource.data.createdAt);
+        allow update, delete: if false;
+      }
+
       // ---------- challenge scores (document id is <challengeId>_<uid>) ----------
       match /chal_scores/{id} {
         allow read: if member();

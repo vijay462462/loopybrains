@@ -52,11 +52,39 @@ const fsDoc = (d) => Object.fromEntries(Object.entries((d && d.fields) || {}).ma
   addEventListener("unhandledrejection", (e) => keep("promise: " + ((e.reason && (e.reason.message || e.reason.code)) || e.reason || "rejected")));
 })();
 function reportProblem() {
-  let log = []; try { log = JSON.parse(localStorage.getItem("dd-errlog") || "[]"); } catch (_) {}
-  const info = ["App: " + BRAND, "College: " + COLLEGE, "Screen: " + innerWidth + "x" + innerHeight, "Browser: " + navigator.userAgent.slice(0, 120), "Recent errors:", ...(log.length ? log.map(x => "- " + x.t + " v" + x.v + " " + x.m) : ["- none"])].join("\n");
-  const to = (window.DOUBT_DESK_CONFIG && window.DOUBT_DESK_CONFIG.about && window.DOUBT_DESK_CONFIG.about.email) || "";
-  const url = "mailto:" + encodeURIComponent(to) + "?subject=" + encodeURIComponent(BRAND + " problem report") + "&body=" + encodeURIComponent("Please describe what went wrong:\n\n\n---\n" + info);
-  window.location.href = url;
+  const overlay = el("div", { class: "modal-overlay", role: "dialog", "aria-modal": "true", "aria-label": "Report a problem" });
+  const msg = el("p", { class: "hint", role: "status" });
+  const ta = el("textarea", { rows: "5", maxlength: "500", placeholder: "Describe what went wrong — e.g. 'The quiz button did not open' or 'Post not sending'", "aria-label": "Problem description", class: "rp-ta" });
+  const send = el("button", { type: "button", class: "btn primary", onclick: async () => {
+    const text = ta.value.trim();
+    if (!text) { msg.textContent = "Please write what went wrong first."; return; }
+    send.disabled = true; send.textContent = "Sending…";
+    let log = []; try { log = JSON.parse(localStorage.getItem("dd-errlog") || "[]"); } catch (_) {}
+    const rec = {
+      college: COLLEGE, screen: innerWidth + "x" + innerHeight,
+      ua: navigator.userAgent.slice(0, 120), text: text.slice(0, 500),
+      uid: store ? store.uid : "", name: getName().slice(0, 40),
+      errors: log.slice(-3).map(x => x.t + " v" + x.v + " " + x.m).join(" | ").slice(0, 200),
+      createdAt: Date.now()
+    };
+    try {
+      await store.set("feedback", Date.now() + "_" + (store ? store.uid : "anon").slice(0, 20), rec);
+      msg.textContent = "✅ Sent! Thank you — we'll look into it.";
+      send.textContent = "Sent"; ta.disabled = true;
+    } catch (e) {
+      send.disabled = false; send.textContent = "Send";
+      msg.textContent = "Could not send right now. Try again or screenshot and share on WhatsApp.";
+    }
+  } }, "Send");
+  const card = el("div", { class: "modal-card rp-card" },
+    el("h3", {}, "🐛 Report a problem"),
+    el("p", { class: "hint" }, "Tell us what went wrong. No email needed — it goes straight to the Loopy Brains team."),
+    ta, msg,
+    el("div", { class: "rowbtns" }, send, el("button", { type: "button", class: "btn", onclick: () => overlay.remove() }, "Cancel")));
+  overlay.appendChild(card);
+  overlay.addEventListener("click", e => { if (e.target === overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+  ta.focus();
 }
 // Which college is this visitor on? "" = not chosen yet, "rgukt" = the original built-in board, anything else = a tenant.
 function pickCollege() {
