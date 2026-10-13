@@ -4082,8 +4082,12 @@ body header.top .tabs button[aria-selected="true"] { color: #0d1030; }
 :root[data-palette="tealcoral"]:not([data-theme="dark"]) .brand h1 i { background: linear-gradient(90deg, #ea580c, #c2410c); -webkit-background-clip: text; background-clip: text; }
 @media (prefers-color-scheme: dark) { :root[data-palette="tealcoral"]:not([data-theme="light"]) .brand h1 i { background: linear-gradient(90deg, #fdba74, #fb923c); -webkit-background-clip: text; background-clip: text; } }
 :root[data-palette="tealcoral"][data-theme="dark"] .brand h1 i { background: linear-gradient(90deg, #fdba74, #fb923c); -webkit-background-clip: text; background-clip: text; }
-/* College reveal card: always white + dark text in the teal-coral palette */
-:root[data-palette="tealcoral"] .cr-card { background: #ffffff; color: #10281a; }
+/* College reveal card: white + dark text for goldlux (default) and tealcoral palettes */
+:root[data-palette="goldlux"] .cr-card, :root[data-palette="tealcoral"] .cr-card { background: #ffffff; color: #1a1200; }
+:root[data-palette="goldlux"] .cr-art { background: linear-gradient(160deg, #fef9ec, #fdefc4); }
+:root[data-palette="goldlux"] .cr-art::after { opacity: .35; }
+:root[data-palette="goldlux"] .cr-body h2 { background: none; color: #92690a; -webkit-text-fill-color: #92690a; }
+:root[data-palette="goldlux"] .cr-mono { background: none; color: #c9960c; -webkit-text-fill-color: #c9960c; }
 :root[data-palette="tealcoral"] .cr-art { background: linear-gradient(160deg, #e6f7ee, #c8e8d8); }
 :root[data-palette="tealcoral"] .cr-art::after { opacity: .4; }
 :root[data-palette="tealcoral"] .cr-body h2 { background: none; color: #166534; -webkit-text-fill-color: #166534; }
