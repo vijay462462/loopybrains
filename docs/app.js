@@ -1479,8 +1479,7 @@ function renderBottomNav() {
         try { history.replaceState(null, '', '#' + tab); } catch (_) {} render(); openAsk();
       } },
         el('span', { class: 'bnav-icon' }, svgIcon(icons[tab])),
-        el('span', { class: 'bnav-label' }, labels[tab]),
-        cnt > 0 && el('span', { class: 'bnav-count' }, cnt > 99 ? '99+' : String(cnt))
+        el('span', { class: 'bnav-label' }, labels[tab])
       );
     }),
     el('button', { type: 'button', class: 'bnav-btn', onclick: () => showPanel('leaders') },
