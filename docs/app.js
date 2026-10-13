@@ -1470,8 +1470,12 @@ function renderBottomNav() {
     } },
       el('span', { class: 'bnav-icon' }, svgIcon('home')), el('span', { class: 'bnav-label' }, 'Home')),
     ...['doubts', 'ideas', 'clubs', 'market', 'gate'].filter(tab => (!isSimple() || tab === 'doubts' || tab === 'ideas' || state.tab === tab) && (!focusOn() || isAcademicTab(tab)) && featureOn(tab === 'market' ? 'market' : 'doubts')).map(tab => {
-      const cnt = state[TABS[tab].coll].length;
-      return el('button', { type: 'button', class: 'bnav-btn' + (state.tab === tab && !isHomeView() ? ' active' : ''), onclick: () => {
+      const lastSeen = readJSON('dd-tab-seen-' + tab, Date.now() - 86400000);
+      const coll = state[TABS[tab].coll] || [];
+      const newCnt = coll.filter(d => !d.deleted && (d.createdAt || 0) > lastSeen).length;
+      const isActive = state.tab === tab && !isHomeView();
+      return el('button', { type: 'button', class: 'bnav-btn' + (isActive ? ' active' : ''), onclick: () => {
+        try { localStorage.setItem('dd-tab-seen-' + tab, String(Date.now())); } catch (_) {}
         if (tab === 'doubts') state.homeView = false;
         if (state.tab === tab) { if (tab === 'doubts') render(); openAsk(); return; }
         state.tab = tab; state.group = 'All'; state.filter = 'all'; state.query = '';
@@ -1479,7 +1483,8 @@ function renderBottomNav() {
         try { history.replaceState(null, '', '#' + tab); } catch (_) {} render(); openAsk();
       } },
         el('span', { class: 'bnav-icon' }, svgIcon(icons[tab])),
-        el('span', { class: 'bnav-label' }, labels[tab])
+        el('span', { class: 'bnav-label' }, labels[tab]),
+        (!isActive && newCnt > 0) ? el('span', { class: 'bnav-count' }, newCnt > 99 ? '99+' : String(newCnt)) : null
       );
     }),
     el('button', { type: 'button', class: 'bnav-btn', onclick: () => showPanel('leaders') },
