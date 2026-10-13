@@ -4794,3 +4794,24 @@ button.bsf-title .bsf-t-big { color: inherit; }
 .bs-mpill.premium { border-style: dashed; }
 .bs-mpill-star { font-size: 9px; color: #f59e0b; line-height: 1; }
 .bs-mpill.on .bs-mpill-star { color: #ffe08a; }
+
+/* ===== v558: compact below-hero layout, no Recent ===== */
+/* Hide hero smoothly when input is focused (mobile keyboard) */
+.bsfull .bsf-scroll:has(.bs-in:focus) .bsc-hero { display: none !important; }
+
+/* Tighter section blocks below hero */
+.bsfull .bs-blk { margin: 8px 0 !important; }
+.bsfull .bs-secthead { font-size: .7rem !important; letter-spacing: .08em !important; color: var(--muted) !important; font-weight: 700 !important; margin-bottom: 8px !important; }
+
+/* Subject tiles → compact horizontal scroll row */
+.bsfull .bs-tiles { display: flex !important; flex-direction: row !important; gap: 8px !important; overflow-x: auto !important; scrollbar-width: none !important; padding-bottom: 2px !important; grid-template-columns: unset !important; }
+.bsfull .bs-tiles::-webkit-scrollbar { display: none !important; }
+.bsfull .bs-tile { flex-shrink: 0 !important; width: auto !important; min-width: 120px !important; min-height: 52px !important; padding: 10px 14px !important; border-radius: 14px !important; font-size: .82rem !important; grid-column: unset !important; display: flex !important; flex-direction: column !important; gap: 2px !important; background: var(--sheet) !important; border: 1.5px solid var(--line) !important; box-shadow: none !important; }
+.bsfull .bs-tile b { font-size: .82rem !important; font-weight: 600 !important; }
+.bsfull .bs-tile small { font-size: .7rem !important; opacity: .65 !important; }
+/* Last tile spanning full row removed — flex row handles it */
+.bsfull .bs-tile:last-child:nth-child(odd) { grid-column: unset !important; }
+
+/* Chips (syllabus, subjects) more compact */
+.bsfull .bs-chips { gap: 6px !important; }
+.bsfull .bs-chips .tp-sub { font-size: .78rem !important; padding: 5px 11px !important; border-radius: 20px !important; }

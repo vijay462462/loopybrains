@@ -6103,11 +6103,8 @@ function brainViewInner(ui) {
       open === "Digital electronics" && allPk.length ? dldHub(allPk, bs, go) : open ? el("div", { class: "bs-chips bs-packlist" }, ...(allPk.filter(p => p.subject === open).length ? allPk.filter(p => p.subject === open).map(p => el("button", { type: "button", class: "tp-sub", onclick: () => { bs.forcePack = p.id; go(p.title.replace(/\\s*\\(.*?\\)\\s*/g, " ").trim()); } }, p.title)) : [el("small", { class: "hint" }, "Loading the topic list\u2026")])) : null) : null;
     if (bs.busy) return [hero, ...thinkingEls, bar, head];
     return [hero, ...thinkingEls, bar, head, tryBlock, tiles,
-      rec.length ? el("div", { class: "bs-blk" }, el("small", { class: "bs-secthead" }, "Recent"), chips(rec, go)) : null,
       rows.length ? el("div", { class: "bs-blk" }, el("small", { class: "bs-secthead" }, "Your syllabus"), chips(rows, go)) : null,
-      mySubjectsBlock(bs, go), savedBlock(bs, go),
-      el("div", { class: "bs-blk bs-fbk" }, el("small", { class: "hint" }, "Help us make Loopy AI better"), el("div", { class: "rowbtns" }, el("button", { type: "button", class: "btn sm", onclick: () => { state.fbCat = "Loopy AI"; bsClose(); showPanel("feedback"); } }, "\u{1F4AC} Send feedback or an idea"))),
-      el("div", { class: "rowbtns" }, back)].filter(Boolean);
+      mySubjectsBlock(bs, go), savedBlock(bs, go)].filter(Boolean);
   }
   const r = bs.res, q = r.topic, lv = r.lv;
   if (r.chat) {
