@@ -3744,7 +3744,7 @@ html.is-scrolling .bsh-orb { animation-play-state: paused !important; }
 .bs-chip { flex: none; display: inline-flex; align-items: center; gap: 7px; height: 42px; max-width: 58%; padding: 0 16px; border-radius: 999px; border: 1px solid var(--line); background: color-mix(in srgb, var(--ink) 7%, transparent); color: var(--ink); font: inherit; font-size: .95rem; cursor: pointer; white-space: nowrap; }
 .bs-chip b { font-weight: 600; } .bs-chip span { color: var(--muted); }
 .bs-comp .bs-mic { flex: none; width: 42px; height: 42px; border-radius: 50%; background: color-mix(in srgb, var(--ink) 9%, transparent); color: var(--ink); }
-.bs-comp .bs-go { flex: none; width: 44px; height: 44px; min-height: 44px; border-radius: 50%; padding: 0; display: grid; place-items: center; background: var(--ink); color: var(--paper); }
+.bs-comp .bs-go { flex: none; width: 36px; height: 36px; min-height: 36px; border-radius: 50%; padding: 0; display: grid; place-items: center; background: transparent; color: var(--ink); border: none; box-shadow: none; }
 .bs-comp .bs-go svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
 .bs-sheet { max-height: 54vh; overflow-y: auto; margin-bottom: 8px; padding: 12px; border-radius: 22px; background: var(--sheet); border: 1px solid var(--line); box-shadow: 0 14px 40px -18px rgb(0 0 0 / .6); }
 .bs-sheet[hidden] { display: none; }
@@ -3817,7 +3817,7 @@ html.is-scrolling .bsh-orb { animation-play-state: paused !important; }
 .bs-chip { height: 40px; padding: 0 13px; gap: 6px; font-size: .86rem; min-width: 0; overflow: hidden; }
 .bs-lvdots { font-size: .55rem; letter-spacing: 1.5px; color: #4ade80; }
 .bs-chip-e { color: var(--muted); }
-.bs-comp .bs-go { background: linear-gradient(135deg, #22c55e, #16a34a 55%, #f97316); color: #fff; box-shadow: 0 10px 22px -8px rgb(22 163 74 / .9); }
+.bs-comp .bs-go { background: transparent; color: var(--ink); box-shadow: none; }
 .bs-comp .bs-mic { width: 40px; height: 40px; }
 .bs-comp .bs-in { font-size: 16.5px; padding: 6px 4px 10px; }
 .bs-sheet { border-radius: 20px; }
