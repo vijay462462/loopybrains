@@ -2137,7 +2137,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 .hero-say:active { transform: scale(.98); }
 @media (prefers-reduced-motion: reduce) { .loopy-mini .lp-eyes, .loopy-mini.lp-hop, .hero-loopy::before, .hero-say-dot { animation: none; } }
 
-.logout-block { display: grid; gap: 8px; margin-top: 8px; } .logout-btn { justify-self: start; border-color: #fca5a5; color: #b91c1c; }
+.logout-block { display: grid; gap: 8px; margin-top: 8px; } .logout-btn { justify-self: start; border-color: #fca5a5; color: #b91c1c; } .reset-btn { justify-self: start; border-color: var(--line); color: var(--muted); font-size: .82rem; }
 .logout-confirm { padding: 12px; border: 1px dashed #fca5a5; border-radius: 14px; background: color-mix(in srgb, #ef4444 7%, var(--sheet)); } .logout-confirm[hidden] { display: none; } .logout-confirm p { margin: 0 0 8px; }
 .btn.danger { background: #dc2626; border-color: #dc2626; color: #fff; }
 
@@ -4823,18 +4823,45 @@ button.bsf-title .bsf-t-big { color: inherit; }
 .bsfull .bs-chips { gap: 6px !important; }
 .bsfull .bs-chips .tp-sub { font-size: .78rem !important; padding: 5px 11px !important; border-radius: 20px !important; }
 
-/* ── Chitti page: sidebar hidden on all phones and small tablets (mobile-first) ── */
-.bsf-sidebar { display: none; }
+/* ── Chitti page: mobile-first base ── */
+/* Sidebar: flex column (needed both as drawer and desktop panel) */
+.bsf-sidebar {
+  display: flex; flex-direction: column; gap: 2px; padding: 54px 10px 10px;
+  overflow-y: auto; background: var(--sheet); border-right: 1px solid var(--line);
+  /* Off-screen by default on mobile */
+  position: fixed; top: 0; bottom: 0; left: 0; width: 260px; z-index: 14500;
+  transform: translateX(-100%);
+  transition: transform .28s cubic-bezier(.4,0,.2,1);
+  box-shadow: none;
+}
+/* Backdrop: hidden by default */
+.bsf-backdrop {
+  display: none; position: fixed; inset: 0; z-index: 14400;
+  background: rgb(0 0 0 / .52);
+}
+/* Hamburger button: shown on mobile only */
+.bsf-menu-btn {
+  display: grid; place-items: center;
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--accent-soft); border: 1.5px solid var(--line);
+  font-size: 16px; color: var(--ink); cursor: pointer; flex: none;
+}
+/* Open state: slide in sidebar + show backdrop */
+.bsfull.sb-open .bsf-sidebar {
+  transform: translateX(0);
+  box-shadow: 6px 0 32px rgb(0 0 0 / .38);
+}
+.bsfull.sb-open .bsf-backdrop { display: block; }
 
-/* ── Chitti page: compact top bar and dock on mobile (≤1023px covers all phones) ── */
+/* ── Chitti page: compact top bar and dock on mobile (≤1023px) ── */
 @media (max-width: 1023px) {
-  .bsfull.calm .bsf-bar { padding: 4px 6px 4px 10px !important; min-height: 0 !important; }
-  .bsfull.calm .bsf-bar .bsf-t-big { font-size: 1rem !important; }
-  .bsfull.calm .bsf-bar .bsf-back { padding: 5px 8px !important; font-size: .82rem !important; }
-  .bsfull.calm .bsf-bar button:not(.bsf-back) { width: 32px !important; height: 32px !important; font-size: 15px !important; }
-  .bsfull.calm .bs-bar { padding: 4px 4px 4px 10px !important; border-radius: 18px !important; }
-  .bsfull.calm .bs-in { font-size: 15px !important; padding: 9px 4px !important; }
-  /* Send button: larger, round, and colourful so it's impossible to miss */
+  .bsfull.calm .bsf-bar { padding: 4px 6px 4px 8px !important; min-height: 0 !important; }
+  .bsfull.calm .bsf-bar .bsf-t-big { font-size: .96rem !important; }
+  .bsfull.calm .bsf-bar .bsf-back { padding: 4px 8px !important; font-size: .8rem !important; }
+  .bsfull.calm .bsf-bar button:not(.bsf-back):not(.bsf-menu-btn) { width: 30px !important; height: 30px !important; font-size: 14px !important; }
+  .bsfull.calm .bs-bar { padding: 3px 3px 3px 10px !important; border-radius: 18px !important; }
+  .bsfull.calm .bs-in { font-size: 15px !important; padding: 8px 4px !important; }
+  /* Send button: large round gradient — impossible to miss */
   .bsfull.calm .bs-go {
     width: 42px !important; height: 42px !important; min-height: 42px !important;
     font-size: 20px !important; border-radius: 50% !important;
@@ -4842,34 +4869,47 @@ button.bsf-title .bsf-t-big { color: inherit; }
     color: #fff !important; flex: none !important;
     box-shadow: 0 6px 18px -6px rgb(109 74 255 / .65) !important;
   }
-  .bsfull.calm .bs-dock { padding: 6px 8px calc(env(safe-area-inset-bottom, 0px) + 2px) !important; }
-  .bsfull.calm .bs-modebar { gap: 3px !important; margin-bottom: 3px !important; flex-wrap: nowrap !important; overflow-x: auto !important; }
-  .bsfull.calm .bs-mode { padding: 4px 9px !important; font-size: .76rem !important; white-space: nowrap !important; }
-  .bsfull.calm .bs-foot { font-size: .70rem !important; margin-top: 3px !important; }
+  .bsfull.calm .bs-dock { padding: 4px 8px calc(env(safe-area-inset-bottom, 0px) + 2px) !important; }
+  .bsfull.calm .bs-modebar { gap: 3px !important; margin-bottom: 2px !important; flex-wrap: nowrap !important; overflow-x: auto !important; }
+  .bsfull.calm .bs-mode { padding: 3px 8px !important; font-size: .74rem !important; white-space: nowrap !important; }
+  .bsfull.calm .bs-foot { font-size: .68rem !important; margin-top: 2px !important; }
   .bsfull.calm .bs-eng { gap: 4px !important; }
-  .bsfull.calm .bs-engb { padding: 5px 8px !important; font-size: .76rem !important; }
+  .bsfull.calm .bs-engb { padding: 4px 7px !important; font-size: .74rem !important; }
 }
 
-/* ── Chitti page: Gemini-style sidebar layout on wide screens only (≥1024px) ── */
+/* ── Chitti page: permanent sidebar on wide screens (≥1024px) ── */
 @media (min-width: 1024px) {
-  .bsf-sidebar { display: flex; flex-direction: column; gap: 2px; padding: 14px 10px 10px; overflow-y: auto; border-right: 1px solid var(--line); background: var(--sheet); grid-column: 1; grid-row: 1 / 4; }
+  /* Reset sidebar to normal flow (not fixed drawer) */
+  .bsf-sidebar {
+    position: static; transform: none; transition: none; box-shadow: none;
+    padding: 14px 10px 10px;
+    grid-column: 1; grid-row: 1 / 4;
+  }
+  /* Hide mobile-only controls */
+  .bsf-menu-btn { display: none !important; }
+  .bsf-backdrop { display: none !important; }
   .bsfull.calm { display: grid; grid-template-columns: 260px 1fr; grid-template-rows: auto auto 1fr; }
   .bsf-bar { grid-column: 2; grid-row: 1; }
   .bsf-prog { grid-column: 2; grid-row: 2; }
   .bsf-scroll { grid-column: 2; grid-row: 3; }
-  .bsf-sb-top { padding: 4px 8px 14px; }
-  .bsf-sb-brand { display: flex; align-items: baseline; gap: 8px; }
-  .bsf-sb-logo { font-size: 1.4rem; font-weight: 900; color: var(--ink); letter-spacing: -.02em; }
-  .bsf-sb-tag { font-size: .7rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
-  .bsf-newq { display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 14px; background: var(--accent-soft); border: 1.5px solid var(--accent); border-radius: 28px; font-size: .88rem; font-weight: 700; color: var(--ink); cursor: pointer; text-align: left; transition: background .15s; }
-  .bsf-newq:hover { background: var(--accent); color: #fff; }
-  .bsf-sb-sec { margin-top: 12px; flex: 1; min-height: 0; overflow: hidden; }
-  .bsf-rhead { display: block; padding: 4px 10px 6px; font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
-  .bsf-ritem { display: block; width: 100%; padding: 8px 12px; border-radius: 10px; font-size: .84rem; text-align: left; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; background: none; border: none; }
-  .bsf-ritem:hover { background: var(--accent-soft); }
-  .bsf-ritem.on { background: var(--accent-soft); font-weight: 700; }
-  .bsf-sb-foot { margin-top: auto; padding-top: 12px; border-top: 1px solid var(--line); }
-  .bsf-sb-user { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 12px; cursor: default; }
-  .bsf-sb-avatar { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: #fff; font-size: .85rem; font-weight: 800; flex: none; }
-  .bsf-sb-name { font-size: .88rem; font-weight: 700; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
+/* Sidebar content styles (apply at all sizes since sidebar is used as both drawer and panel) */
+.bsf-sb-top { padding: 4px 8px 14px; }
+.bsf-sb-brand { display: flex; align-items: baseline; gap: 8px; }
+.bsf-sb-logo { font-size: 1.4rem; font-weight: 900; color: var(--ink); letter-spacing: -.02em; }
+.bsf-sb-tag { font-size: .7rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.bsf-newq { display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 14px; background: var(--accent-soft); border: 1.5px solid var(--accent); border-radius: 28px; font-size: .88rem; font-weight: 700; color: var(--ink); cursor: pointer; text-align: left; transition: background .15s; }
+.bsf-newq:hover { background: var(--accent); color: #fff; }
+.bsf-sb-sec { margin-top: 12px; flex: 1; min-height: 0; overflow: hidden; }
+.bsf-rhead { display: block; padding: 4px 10px 6px; font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.bsf-ritem { display: block; width: 100%; padding: 8px 12px; border-radius: 10px; font-size: .84rem; text-align: left; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; background: none; border: none; }
+.bsf-ritem:hover { background: var(--accent-soft); }
+.bsf-ritem.on { background: var(--accent-soft); font-weight: 700; }
+.bsf-sb-foot { margin-top: auto; padding-top: 12px; border-top: 1px solid var(--line); }
+.bsf-sb-user { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 12px; cursor: default; }
+.bsf-sb-avatar { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: #fff; font-size: .85rem; font-weight: 800; flex: none; }
+.bsf-sb-name { font-size: .88rem; font-weight: 700; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── Welcome step fade-slide animation ── */
+@keyframes obStepIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+.ob-card { animation: obStepIn .26s ease; }
