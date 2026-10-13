@@ -6091,25 +6091,16 @@ function brainViewInner(ui) {
       forge: [["\u{1F50D}", "binary search in Python"], ["\u{1F9EE}", "Verilog code for a counter"], ["\u{1F4CA}", "bubble sort in C"], ["\u2615", "factorial in Java"]],
       aegis: [["\u{1F489}", "SQL injection"], ["\u{1F3A3}", "Phishing"], ["\u{1F511}", "Password security"], ["\u{1F512}", "Two factor authentication"]] };
     const tryItems = (TRY[bs.mode] || TRY.atlas).slice(0, 4).map(([ic, t]) => el("button", { type: "button", class: "bs-tc", onclick: () => go(t) }, el("i", { "aria-hidden": "true" }, ic), el("b", {}, t)));
-    const CHITTI_COLORS = [
-      { id: "violet", g: "linear-gradient(150deg,#667eea 0%,#764ba2 100%)" },
-      { id: "rose",   g: "linear-gradient(150deg,#f093fb 0%,#f5576c 100%)" },
-      { id: "teal",   g: "linear-gradient(150deg,#0d7377 0%,#14a085 100%)" },
-      { id: "coral",  g: "linear-gradient(150deg,#ff6b35 0%,#f97316 100%)" },
-      { id: "ocean",  g: "linear-gradient(150deg,#1a1a2e 0%,#0f3460 100%)" },
-      { id: "aurora", g: "linear-gradient(150deg,#00b4db 0%,#6dd5ed 100%)" },
-    ];
-    const chittiColorId = (function(){ try { return localStorage.getItem("dd-chitti-color") || "violet"; } catch(e) { return "violet"; } })();
-    const activeChittiColor = CHITTI_COLORS.find(c => c.id === chittiColorId) || CHITTI_COLORS[0];
-    const colorPicker = el("div", { class: "bsc-colors", "aria-label": "Hero colour" },
-      ...CHITTI_COLORS.map(c => el("button", { type: "button", class: "bsc-colorchip" + (c.id === chittiColorId ? " on" : ""), "data-cid": c.id, "aria-label": "Colour: " + c.id, onclick: () => { try { localStorage.setItem("dd-chitti-color", c.id); } catch(e) {} bsPaint(); } })));
-    const hero = el("section", { class: "bsc-hero" + (bs.busy ? " busy" : "") },
+    const isDark = currentTheme === "dark" || currentTheme === "black";
+    const themeToggle = el("button", { type: "button", class: "bsc-theme-toggle", "aria-label": isDark ? "Switch to light mode" : "Switch to dark mode",
+      onclick: () => { setThemeMode(isDark ? "light" : "dark"); } },
+      isDark ? "\u2600\ufe0f Light" : "\ud83c\udf19 Dark");
+    const hero = el("section", { class: "bsc-hero" + (bs.busy ? " busy" : "") + (isDark ? " dark" : " light") },
       bs.busy ? null : brandSpin("bsc-brand live bsc-hero-ic"),
       bs.busy ? null : el("h2", { class: "bsc-hi" }, "Chitti 3.0"),
       bs.busy ? null : el("p", { class: "bsc-hi-sub" }, nm ? "Hey " + nm + ", what\u2019s the vibe?" : "the Loopy AI"),
       bs.busy ? null : el("div", { class: "bs-try" }, ...tryItems),
-      bs.busy ? null : colorPicker);
-    hero.style.setProperty("--chitti-bg", activeChittiColor.g);
+      bs.busy ? null : themeToggle);
     const tryBlock = null;
     if (!_packs && !bs._pkTried) { bs._pkTried = true; brainPacksMod().then(() => { if (bsEl() && !bsState().res) bsPaint(); }); }
     const SUBJ = [["Digital electronics", "\u{1F522} Digital logic", "#fb923c"], ["Analog electronic circuits", "\u{1F50C} Analog circuits", "#ea580c"], ["Digital signal processing", "\u{1F4C8} Signal processing", "#0891b2"], ["Control systems", "\u{1F39B}\uFE0F Control systems", "#16a34a"], ["Probability and random variables", "\u{1F3B2} Probability", "#f97316"]];
