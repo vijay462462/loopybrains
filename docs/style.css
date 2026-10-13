@@ -2189,7 +2189,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 .cr { position: fixed; inset: 0; z-index: 13000; display: grid; place-items: center; padding: 16px; background: rgb(4 8 24 / .86); backdrop-filter: blur(14px) saturate(1.4); animation: ssFade .3s ease; }
 .cr.out { opacity: 0; transition: opacity .28s ease; }
 .cr-card { width: min(100%, 420px); border-radius: 32px; overflow: hidden; background: linear-gradient(160deg, #0e1628 0%, #0a101f 60%, #0d1525 100%); color: #e8eaf6; box-shadow: 0 50px 100px -24px rgb(0 0 0 / .85), 0 0 0 1px rgb(255 255 255 / .08), inset 0 1px 0 rgb(255 255 255 / .06); animation: crPop .55s cubic-bezier(.18, .9, .28, 1.18) both; }
-.cr-art { position: relative; height: 260px; display: grid; place-items: center; overflow: hidden; isolation: isolate;
+.cr-art { position: relative; height: 190px; display: grid; place-items: center; overflow: hidden; isolation: isolate;
   background: radial-gradient(80% 70% at 80% 10%, color-mix(in srgb, var(--c2) 60%, #1a0a40) 0%, transparent 55%),
               radial-gradient(70% 80% at 10% 90%, color-mix(in srgb, var(--c1) 70%, #000) 0%, transparent 55%),
               linear-gradient(155deg, #0d1a3a 0%, #07112a 50%, #0a0d1e 100%); }
@@ -2219,7 +2219,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 .cr-stats span { padding: 6px 13px; border-radius: 99px; background: rgb(255 255 255 / .06); border: 1px solid rgb(255 255 255 / .10); font-weight: 700; font-size: 12px; color: rgb(200 215 255 / .90); }
 .cr-src { font-size: 12px; color: rgb(160 175 210 / .75); } .cr-src.ok b { color: #6ee7b7; } .cr-src b { color: rgb(220 200 120 / .85); }
 .cr-disc { margin: 0 0 4px; font-size: 11px; color: rgb(150 165 200 / .55); }
-.cr-go { width: 100%; padding: 16px 20px; font-size: 16px; font-weight: 800; border-radius: 18px; border: 0; color: #05101e;
+.cr-go { width: 100%; padding: 18px 20px; font-size: 17px; font-weight: 800; border-radius: 18px; border: 0; color: #05101e;
   background: linear-gradient(120deg, #fbbf24, #f6d860 45%, #f59e0b);
   box-shadow: 0 18px 36px -16px rgb(251 191 36 / .60), 0 0 0 1px rgb(251 191 36 / .25);
   letter-spacing: .01em; }
@@ -2271,9 +2271,12 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 
 /* ---- Interest chips: a colour for each ---- */
 .ob-chips { gap: 10px; }
-.ob-chip { --c1: #7c3aed; --c2: #a855f7; padding: 12px 18px; font-size: 15px; border: 1.5px solid color-mix(in srgb, var(--c1) 40%, transparent); background: color-mix(in srgb, var(--c1) 10%, var(--sheet)); color: var(--ink); }
-.ob-chip[data-k="doubts"] { --c1: #7c3aed; --c2: #a855f7; } .ob-chip[data-k="exams"] { --c1: #6d28d9; --c2: #8b5cf6; } .ob-chip[data-k="placements"] { --c1: #5b21b6; --c2: #7c3aed; }
-.ob-chip[data-k="friends"] { --c1: #9333ea; --c2: #c026d3; } .ob-chip[data-k="explore"] { --c1: #7e22ce; --c2: #a21caf; }
+.ob-chip { --c1: #0d9488; --c2: #0891b2; padding: 14px 22px; font-size: 16px; border: 1.5px solid color-mix(in srgb, var(--c1) 40%, transparent); background: color-mix(in srgb, var(--c1) 10%, var(--sheet)); color: var(--ink); }
+.ob-chip[data-k="doubts"] { --c1: #0d9488; --c2: #0891b2; }
+.ob-chip[data-k="exams"] { --c1: #7c3aed; --c2: #4f46e5; }
+.ob-chip[data-k="placements"] { --c1: #059669; --c2: #0284c7; }
+.ob-chip[data-k="friends"] { --c1: #e11d48; --c2: #be185d; }
+.ob-chip[data-k="explore"] { --c1: #d97706; --c2: #b45309; }
 .ob-chip.on { background: linear-gradient(120deg, var(--c1), var(--c2)); border-color: transparent; color: #fff; box-shadow: 0 12px 24px -12px var(--c1); }
 .ob-chip.on::after { content: " \2713"; font-weight: 900; }
 
@@ -4079,6 +4082,12 @@ body header.top .tabs button[aria-selected="true"] { color: #0d1030; }
 :root[data-palette="tealcoral"]:not([data-theme="dark"]) .brand h1 i { background: linear-gradient(90deg, #ea580c, #c2410c); -webkit-background-clip: text; background-clip: text; }
 @media (prefers-color-scheme: dark) { :root[data-palette="tealcoral"]:not([data-theme="light"]) .brand h1 i { background: linear-gradient(90deg, #fdba74, #fb923c); -webkit-background-clip: text; background-clip: text; } }
 :root[data-palette="tealcoral"][data-theme="dark"] .brand h1 i { background: linear-gradient(90deg, #fdba74, #fb923c); -webkit-background-clip: text; background-clip: text; }
+/* College reveal card: always white + dark text in the teal-coral palette */
+:root[data-palette="tealcoral"] .cr-card { background: #ffffff; color: #10281a; }
+:root[data-palette="tealcoral"] .cr-art { background: linear-gradient(160deg, #e6f7ee, #c8e8d8); }
+:root[data-palette="tealcoral"] .cr-art::after { opacity: .4; }
+:root[data-palette="tealcoral"] .cr-body h2 { background: none; color: #166534; -webkit-text-fill-color: #166534; }
+:root[data-palette="tealcoral"] .cr-mono { background: none; color: #166534; -webkit-text-fill-color: #166534; }
 /* ===== Loopy AI screen follows the brand colours (teal and coral); the LB logo stays still while its coral loop turns ===== */
 .bsc-orbit .r1, .bsc-orbit .r2 { background: conic-gradient(from 0deg, #4ade80, #22c55e, #f97316, #fdba74, #4ade80) border-box; }
 .bsc-orbit b { background: #fb923c; box-shadow: 0 0 14px 2px rgb(255 138 115 / .7); }
