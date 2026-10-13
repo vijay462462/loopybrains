@@ -4769,6 +4769,8 @@ body header.top #themeBtn svg { stroke: #1a1f2e !important; color: #1a1f2e !impo
 .bsfull .bsc-hero .bs-try .bs-tc i { width: auto !important; height: auto !important; border-radius: 0 !important; background: transparent !important; font-size: 20px !important; color: rgb(255 255 255 / .85) !important; grid-row: unset !important; }
 .bsfull .bsc-hero .bs-try .bs-tc b { font-size: .97rem !important; font-weight: 400 !important; color: #fff !important; line-height: 1.35 !important; }
 .bsfull .bsc-hero .bs-try .bs-tc small, .bsfull .bsc-hero .bs-try .bs-tc span { display: none !important; }
+/* Chitti 3.0 subtitle */
+.bsfull .bsc-hero .bsc-hi-sub { color: rgb(255 255 255 / .8) !important; font-size: 1rem !important; font-weight: 400 !important; margin: -14px 0 28px !important; letter-spacing: .01em !important; }
 /* colour picker row */
 .bsfull .bsc-hero .bsc-colors { display: flex !important; gap: 10px !important; justify-content: center !important; margin-top: 24px !important; }
 .bsfull .bsc-hero .bsc-colorchip { width: 26px !important; height: 26px !important; border-radius: 50% !important; border: 2px solid rgb(255 255 255 / .3) !important; cursor: pointer !important; padding: 0 !important; box-shadow: 0 2px 8px rgb(0 0 0 / .3) !important; transition: transform .15s, border-color .15s !important; }
@@ -4779,3 +4781,16 @@ body header.top #themeBtn svg { stroke: #1a1f2e !important; color: #1a1f2e !impo
 .bsfull .bsc-hero .bsc-colorchip[data-cid="coral"]  { background: linear-gradient(150deg,#ff6b35,#f97316) !important; }
 .bsfull .bsc-hero .bsc-colorchip[data-cid="ocean"]  { background: linear-gradient(150deg,#1a1a2e,#0f3460) !important; }
 .bsfull .bsc-hero .bsc-colorchip[data-cid="aurora"] { background: linear-gradient(150deg,#00b4db,#6dd5ed) !important; }
+
+/* ===== Chitti title as clickable reset button ===== */
+button.bsf-title { background: none; border: none; padding: 0; cursor: pointer; font: inherit; }
+button.bsf-title .bsf-t-big { color: inherit; }
+
+/* ===== Inline model pills (replace single chip) ===== */
+.bs-mpills { display: flex; gap: 6px; align-items: center; padding: 6px 12px 0; overflow-x: auto; scrollbar-width: none; }
+.bs-mpills::-webkit-scrollbar { display: none; }
+.bs-mpill { flex-shrink: 0; padding: 5px 11px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--sheet); color: var(--muted); font-size: .78rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: background .15s, color .15s, border-color .15s; }
+.bs-mpill.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+.bs-mpill.premium { border-style: dashed; }
+.bs-mpill-star { font-size: 9px; color: #f59e0b; line-height: 1; }
+.bs-mpill.on .bs-mpill-star { color: #ffe08a; }
