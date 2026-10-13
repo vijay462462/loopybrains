@@ -5440,7 +5440,8 @@ function bsMount() {
     el("button", { type: "button", class: "bsf-pdf", id: "bsPdf", hidden: "", "aria-haspopup": "dialog", "aria-label": "Save as PDF or JPEG", onclick: () => bsExportSheet() }, "PDF/JPG"));
   const prog = el("div", { class: "bsf-prog" }, el("i", { id: "bsProg" }));
   const scroll = el("div", { class: "bsf-scroll", id: "bsScroll" });
-  const ov = el("div", { class: "bsfull calm", id: "bsFull", role: "dialog", "aria-modal": "true", "aria-label": "Loopy Search" }, bar, prog, scroll);
+  const sidebar = el("nav", { class: "bsf-sidebar", id: "bsSidebar", "aria-label": "Chitti navigation" });
+  const ov = el("div", { class: "bsfull calm", id: "bsFull", role: "dialog", "aria-modal": "true", "aria-label": "Loopy Search" }, sidebar, bar, prog, scroll);
   document.body.append(ov); document.documentElement.classList.add("bs-open"); bsApplyNight();
   let tick = false; scroll.addEventListener("scroll", () => { if (tick) return; tick = true; requestAnimationFrame(() => { tick = false; const p = $("bsProg"); if (p) p.style.width = Math.min(100, Math.round(scroll.scrollTop / Math.max(1, scroll.scrollHeight - scroll.clientHeight) * 100)) + "%"; }); }, { passive: true });
   { let last = 0; scroll.addEventListener("scroll", () => { const t = scroll.scrollTop, d = t - last; if (Math.abs(d) < 8) return; last = t; if (d > 0 && t > 160 && bs.res) ov.classList.add("dock-min"); else if (d < 0 || t < 120) ov.classList.remove("dock-min"); }, { passive: true }); }
@@ -5502,6 +5503,16 @@ function bsPaint(top) {
   const sc = $("bsScroll"); if (!sc) return; const keep = sc.scrollTop;
   let nodes; try { nodes = brainView(); } catch (e) { const bs0 = bsState(); bs0.res = null; bs0.busy = false; bs0.pending = ""; nodes = [el("section", { class: "bsr-card" }, el("h3", {}, "Something went wrong showing this"), el("p", {}, "Sorry, this result could not be displayed. Your credits are not lost, and nothing was saved incorrectly."), el("button", { class: "btn primary", type: "button", onclick: () => bsPaint(true) }, "Start a new search"))]; try { console.error("Loopy Search view error", e); } catch (_) {} }
   sc.replaceChildren(...nodes); sc.scrollTop = top ? 0 : keep;
+  const sb = document.getElementById("bsSidebar");
+  if (sb) {
+    const bsb = bsState(), rec = bsRecent();
+    const newQBtn = el("button", { class: "bsf-newq", type: "button", onclick: () => { bsb.res = null; bsb.q = ""; bsb.pending = ""; bsPaint(true); } }, el("span", { "aria-hidden": "true" }, "✏"), " New question");
+    const nm = String(getName() || "").trim() || "Student";
+    const sbTop = el("div", { class: "bsf-sb-top" }, el("div", { class: "bsf-sb-brand" }, el("span", { class: "bsf-sb-logo" }, "Chitti"), el("small", { class: "bsf-sb-tag" }, "Loopy AI")));
+    const sbBottom = el("div", { class: "bsf-sb-foot" }, el("div", { class: "bsf-sb-user" }, el("span", { class: "bsf-sb-avatar" }, nm[0].toUpperCase()), el("span", { class: "bsf-sb-name" }, nm)));
+    const recSec = rec.length ? el("div", { class: "bsf-sb-sec" }, el("small", { class: "bsf-rhead" }, "Recent"), ...rec.map(q => el("button", { type: "button", class: "bsf-ritem" + (bsb.q === q ? " on" : ""), onclick: () => { const b2 = bsState(); b2.res = null; b2.pending = ""; bsSubmit(q); } }, q))) : null;
+    sb.replaceChildren(sbTop, newQBtn, ...(recSec ? [recSec] : []), sbBottom);
+  }
   const pdf = $("bsPdf"); if (pdf) pdf.hidden = !bsState().res; const sv = $("bsSave"); if (sv) { const r0 = bsState().res; sv.hidden = !r0 || !!r0.disambig; sv.textContent = r0 && bsIsSaved(r0) ? "Saved \u2713" : "Save"; sv.classList.toggle("on", !!(r0 && bsIsSaved(r0))); }
   const items = [...sc.querySelectorAll(".bsr-reveal")];
   if (!("IntersectionObserver" in window)) items.forEach(n => n.classList.add("in")); else { const io = new IntersectionObserver((es) => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), { threshold: .08 }); items.forEach(n => io.observe(n)); requestAnimationFrame(() => { if (!sc.parentNode) return; const sv = sc.getBoundingClientRect(); items.forEach(n => { try { const r = n.getBoundingClientRect(); if (r.top < sv.bottom && r.bottom > sv.top) n.classList.add("in"); } catch (_) {} }); }); }
