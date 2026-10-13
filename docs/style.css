@@ -4823,23 +4823,35 @@ button.bsf-title .bsf-t-big { color: inherit; }
 .bsfull .bs-chips { gap: 6px !important; }
 .bsfull .bs-chips .tp-sub { font-size: .78rem !important; padding: 5px 11px !important; border-radius: 20px !important; }
 
-/* ── Chitti page: sidebar hidden by default (mobile-first) ── */
+/* ── Chitti page: sidebar hidden on all phones and small tablets (mobile-first) ── */
 .bsf-sidebar { display: none; }
 
-/* ── Chitti page: compact top bar and dock on mobile ── */
-@media (max-width: 700px) {
-  .bsfull.calm .bsf-bar { padding: 5px 8px 5px 12px !important; min-height: 0 !important; }
+/* ── Chitti page: compact top bar and dock on mobile (≤1023px covers all phones) ── */
+@media (max-width: 1023px) {
+  .bsfull.calm .bsf-bar { padding: 4px 6px 4px 10px !important; min-height: 0 !important; }
+  .bsfull.calm .bsf-bar .bsf-t-big { font-size: 1rem !important; }
+  .bsfull.calm .bsf-bar .bsf-back { padding: 5px 8px !important; font-size: .82rem !important; }
+  .bsfull.calm .bsf-bar button:not(.bsf-back) { width: 32px !important; height: 32px !important; font-size: 15px !important; }
   .bsfull.calm .bs-bar { padding: 4px 4px 4px 10px !important; border-radius: 18px !important; }
   .bsfull.calm .bs-in { font-size: 15px !important; padding: 9px 4px !important; }
-  .bsfull.calm .bs-go { width: 36px !important; height: 36px !important; min-height: 36px !important; font-size: 18px !important; }
-  .bsfull.calm .bs-dock { padding: 8px 10px calc(env(safe-area-inset-bottom, 0px) + 4px) !important; }
-  .bsfull.calm .bs-modebar { gap: 4px !important; margin-bottom: 4px !important; }
-  .bsfull.calm .bs-mode { padding: 5px 10px !important; font-size: .78rem !important; }
-  .bsfull.calm .bs-foot { font-size: .72rem !important; margin-top: 4px !important; }
+  /* Send button: larger, round, and colourful so it's impossible to miss */
+  .bsfull.calm .bs-go {
+    width: 42px !important; height: 42px !important; min-height: 42px !important;
+    font-size: 20px !important; border-radius: 50% !important;
+    background: linear-gradient(135deg, #6d4aff, #e11d48) !important;
+    color: #fff !important; flex: none !important;
+    box-shadow: 0 6px 18px -6px rgb(109 74 255 / .65) !important;
+  }
+  .bsfull.calm .bs-dock { padding: 6px 8px calc(env(safe-area-inset-bottom, 0px) + 2px) !important; }
+  .bsfull.calm .bs-modebar { gap: 3px !important; margin-bottom: 3px !important; flex-wrap: nowrap !important; overflow-x: auto !important; }
+  .bsfull.calm .bs-mode { padding: 4px 9px !important; font-size: .76rem !important; white-space: nowrap !important; }
+  .bsfull.calm .bs-foot { font-size: .70rem !important; margin-top: 3px !important; }
+  .bsfull.calm .bs-eng { gap: 4px !important; }
+  .bsfull.calm .bs-engb { padding: 5px 8px !important; font-size: .76rem !important; }
 }
 
-/* ── Chitti page: Gemini-style sidebar layout on desktop only ── */
-@media (min-width: 701px) {
+/* ── Chitti page: Gemini-style sidebar layout on wide screens only (≥1024px) ── */
+@media (min-width: 1024px) {
   .bsf-sidebar { display: flex; flex-direction: column; gap: 2px; padding: 14px 10px 10px; overflow-y: auto; border-right: 1px solid var(--line); background: var(--sheet); grid-column: 1; grid-row: 1 / 4; }
   .bsfull.calm { display: grid; grid-template-columns: 260px 1fr; grid-template-rows: auto auto 1fr; }
   .bsf-bar { grid-column: 2; grid-row: 1; }
